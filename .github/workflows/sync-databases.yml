@@ -18,8 +18,15 @@ jobs:
           PROD_DATABASE_URL: ${{ secrets.NEON_PROD_DATABASE_URL }}
         run: |
           echo "Dumping production database..."
-          pg_dump "$PROD_DATABASE_URL" --clean --if-exists --create --no-owner --no-acl -f prod_dump.sql
+          echo "Production DB host: $(echo $PROD_DATABASE_URL | sed 's/.*@\(.*\)\/.*sslmode.*/\1/')"
+          pg_dump "$PROD_DATABASE_URL" --clean --if-exists --no-owner --no-acl -f prod_dump.sql
           echo "Production dump complete ($(wc -l < prod_dump.sql) lines)"
+          echo ""
+          echo "Checking dump contents..."
+          echo "DROP TABLE statements: $(grep -c 'DROP TABLE' prod_dump.sql || echo 0)"
+          echo "CREATE TABLE statements: $(grep -c 'CREATE TABLE' prod_dump.sql || echo 0)"
+          echo "INSERT statements: $(grep -c '^INSERT' prod_dump.sql || echo 0)"
+          echo ""
           echo "First 50 lines of dump:"
           head -50 prod_dump.sql
 
@@ -28,11 +35,23 @@ jobs:
           DEV_DATABASE_URL: ${{ secrets.NEON_DEV_DATABASE_URL }}
         run: |
           echo "Restoring data to dev database..."
+          echo "Dev DB host: $(echo $DEV_DATABASE_URL | sed 's/.*@\(.*\)\/.*sslmode.*/\1/')"
           echo "This will drop existing tables and recreate them with production data"
+          echo ""
           psql "$DEV_DATABASE_URL" -f prod_dump.sql 2>&1 | tee restore_output.log
-          echo "Restore complete"
-          echo "Restore output:"
-          cat restore_output.log
+          exit_code=$?
+          echo ""
+          echo "Restore exit code: $exit_code"
+          if [ $exit_code -ne 0 ]; then
+            echo "ERROR: Restore failed!"
+            echo "Restore output:"
+            cat restore_output.log
+            exit $exit_code
+          else
+            echo "Restore completed successfully"
+            echo "Last 20 lines of restore output:"
+            tail -20 restore_output.log
+          fi
 
       - name: Verify sync
         env:
