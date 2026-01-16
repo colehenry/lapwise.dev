@@ -18,7 +18,7 @@ jobs:
           PROD_DATABASE_URL: ${{ secrets.NEON_PROD_DATABASE_URL }}
         run: |
           echo "Dumping production database..."
-          pg_dump "$PROD_DATABASE_URL" --clean --if-exists --no-owner --no-acl -f prod_dump.sql
+          pg_dump "$PROD_DATABASE_URL" --clean --if-exists --create --no-owner --no-acl -f prod_dump.sql
           echo "Production dump complete ($(wc -l < prod_dump.sql) lines)"
           echo "First 50 lines of dump:"
           head -50 prod_dump.sql
