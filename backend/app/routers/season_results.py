@@ -67,6 +67,92 @@ async def get_available_seasons(
     return seasons
 
 
+@router.get("/latest", response_model=RoundSummary)
+async def get_latest_race(
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key)
+):
+    """
+    Get the most recent race result with top 3 finishers.
+
+    Returns the latest race session ordered by date, showing podium finishers.
+    Used for the homepage to display a quick preview of the most recent race.
+    """
+
+    # Get the most recent race session
+    latest_session_query = (
+        select(Session)
+        .where(Session.session_type == "race")
+        .order_by(Session.date.desc())
+        .limit(1)
+    )
+
+    session_result = await db.execute(latest_session_query)
+    latest_session = session_result.scalar_one_or_none()
+
+    if not latest_session:
+        raise HTTPException(
+            status_code=404, detail="No race results found"
+        )
+
+    # Get top 3 finishers for this race
+    query = (
+        select(
+            Session.round,
+            Session.event_name,
+            Session.date,
+            Session.session_type,
+            Circuit.name.label("circuit_name"),
+            SessionResult.position,
+            Driver.full_name,
+            Driver.driver_code,
+            SessionResult.headshot_url,
+            Team.name.label("team_name"),
+            Team.team_color,
+            SessionResult.fastest_lap,
+        )
+        .join(SessionResult, Session.id == SessionResult.session_id)
+        .join(Driver, SessionResult.driver_id == Driver.id)
+        .join(Team, SessionResult.team_id == Team.id)
+        .join(Circuit, Session.circuit_id == Circuit.id)
+        .where(Session.id == latest_session.id)
+        .where(SessionResult.position.between(1, 3))
+        .order_by(SessionResult.position)
+    )
+
+    result = await db.execute(query)
+    rows = result.all()
+
+    if not rows:
+        raise HTTPException(
+            status_code=404, detail="No podium results found for latest race"
+        )
+
+    # Build podium list
+    podium = [
+        RoundPodiumDriver(
+            full_name=row.full_name,
+            driver_code=row.driver_code,
+            team_name=row.team_name,
+            team_color=row.team_color,
+            headshot_url=row.headshot_url,
+            fastest_lap=row.fastest_lap,
+        )
+        for row in rows
+    ]
+
+    # Return the round summary
+    first_row = rows[0]
+    return RoundSummary(
+        round=first_row.round,
+        event_name=first_row.event_name,
+        date=first_row.date,
+        circuit_name=first_row.circuit_name,
+        session_type=first_row.session_type,
+        podium=podium,
+    )
+
+
 @router.get("/{season}/standings", response_model=StandingsResponse)
 async def get_season_standings(
     season: int,

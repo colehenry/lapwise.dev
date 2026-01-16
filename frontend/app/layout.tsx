@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
+import QueryProvider from "@/components/QueryProvider";
 
 export const metadata: Metadata = {
   title: "lapwise.dev",
@@ -15,8 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <Navigation />
-        <main className="pt-16">{children}</main>
+        <QueryProvider>
+          <Navigation />
+          <main className="pt-16">{children}</main>
+        </QueryProvider>
       </body>
     </html>
   );
