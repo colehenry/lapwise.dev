@@ -8,12 +8,12 @@ async function getLatestSeason(): Promise<number> {
   });
 
   if (!res.ok) {
-    // Fallback to 2024 if API fails
-    return 2024;
+    // Fallback to 2025 if API fails
+    return 2025;
   }
 
   const seasons: number[] = await res.json();
-  // Return the highest season number
+  // Return the highest season number (API returns in descending order, so first element is newest)
   return Math.max(...seasons);
 }
 

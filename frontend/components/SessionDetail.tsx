@@ -132,35 +132,41 @@ export default function SessionDetail({
 
         {/* Results Table */}
         <div className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-lg overflow-hidden">
-          <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-[#252530] border-b-2 border-[#2a2a35]">
+              <tr>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Pos
+                </th>
+                <th className="pl-1 pr-4 py-3"></th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Driver
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Team
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Time
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Points
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Status
+                </th>
+              </tr>
+            </thead>
+          </table>
+          <div
+            className="overflow-y-auto"
+            style={{
+              maxHeight: expandedResults ? '760px' : '380px',
+              minHeight: expandedResults ? '760px' : '380px'
+            }}
+          >
             <table className="w-full">
-              <thead className="bg-[#252530] border-b-2 border-[#2a2a35]">
-                <tr>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Pos
-                  </th>
-                  <th className="pl-1 pr-4 py-3"></th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Driver
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Team
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Time
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Points
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Status
-                  </th>
-                </tr>
-              </thead>
               <tbody className="divide-y divide-[#2a2a35]">
-                {results
-                  .slice(0, expandedResults ? undefined : 5)
-                  .map((result) => (
+                {results.map((result) => (
                   <tr
                     key={`${result.driver.driver_code}-${result.position}`}
                     className="hover:bg-[#252530] transition-colors"

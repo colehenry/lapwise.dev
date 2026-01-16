@@ -64,6 +64,11 @@ export default function ResultsPage() {
   const [expandedStandings, setExpandedStandings] = useState<boolean>(false);
   const [availableYears, setAvailableYears] = useState<number[]>([]);
 
+  // Scroll to top when season changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [season]);
+
   // Fetch available years once on mount
   useEffect(() => {
     (async () => {
@@ -171,13 +176,18 @@ export default function ResultsPage() {
           {/* Driver and Constructor Standings Side by Side */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Driver Standings */}
-            <div className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-4">
+            <div className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-4 flex flex-col">
               <h3 className="text-lg font-bold text-white mb-3">
                 Driver's Championship
               </h3>
-              <div className="space-y-2">
+              <div
+                className="space-y-2 overflow-y-auto"
+                style={{
+                  maxHeight: expandedStandings ? '660px' : '330px',
+                  minHeight: expandedStandings ? '660px' : '330px'
+                }}
+              >
                 {standings?.drivers
-                  .slice(0, expandedStandings ? undefined : 5)
                   .map((driver, idx) => (
                     <div
                       key={`${driver.driver_code}-${driver.team_name}-${idx}`}
@@ -229,13 +239,18 @@ export default function ResultsPage() {
             </div>
 
             {/* Constructor Standings */}
-            <div className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-4">
+            <div className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-4 flex flex-col">
               <h3 className="text-lg font-bold text-white mb-3">
                 Constructor's Championship
               </h3>
-              <div className="space-y-2">
+              <div
+                className="space-y-2 overflow-y-auto"
+                style={{
+                  maxHeight: expandedStandings ? '660px' : '330px',
+                  minHeight: expandedStandings ? '660px' : '330px'
+                }}
+              >
                 {standings?.constructors
-                  .slice(0, expandedStandings ? undefined : 5)
                   .map((team, idx) => (
                     <div
                       key={`${team.team_name}-${idx}`}

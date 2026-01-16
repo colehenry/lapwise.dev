@@ -64,6 +64,11 @@ export default function SprintDetailPage() {
   const [data, setData] = useState<SessionResultsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Scroll to top on page load
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     if (!season || !round) return;
 
