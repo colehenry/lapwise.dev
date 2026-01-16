@@ -1,4 +1,4 @@
-name: Deploy Frontend to Netlify
+name: deploy frontend
 
 on:
   workflow_dispatch:
