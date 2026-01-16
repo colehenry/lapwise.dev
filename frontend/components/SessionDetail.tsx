@@ -132,39 +132,59 @@ export default function SessionDetail({
 
         {/* Results Table */}
         <div className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-lg overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-[#252530] border-b-2 border-[#2a2a35]">
-              <tr>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Pos
-                </th>
-                <th className="pl-1 pr-4 py-3"></th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Driver
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Team
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Time
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Points
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Status
-                </th>
-              </tr>
-            </thead>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full table-fixed">
+              <colgroup>
+                <col style={{ width: '60px' }} />
+                <col style={{ width: '60px' }} />
+                <col style={{ width: '280px' }} />
+                <col style={{ width: '200px' }} />
+                <col style={{ width: '140px' }} />
+                <col style={{ width: '80px' }} />
+                <col style={{ width: '120px' }} />
+              </colgroup>
+              <thead className="bg-[#252530] border-b-2 border-[#2a2a35]">
+                <tr>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Pos
+                  </th>
+                  <th className="pl-1 pr-4 py-3" aria-label="Position change" />
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Driver
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Team
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Time
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Points
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+            </table>
+          </div>
           <div
-            className="overflow-y-auto"
+            className="overflow-y-auto overflow-x-auto"
             style={{
               maxHeight: expandedResults ? '760px' : '380px',
               minHeight: expandedResults ? '760px' : '380px'
             }}
           >
-            <table className="w-full">
+            <table className="w-full table-fixed">
+              <colgroup>
+                <col style={{ width: '60px' }} />
+                <col style={{ width: '60px' }} />
+                <col style={{ width: '280px' }} />
+                <col style={{ width: '200px' }} />
+                <col style={{ width: '140px' }} />
+                <col style={{ width: '80px' }} />
+                <col style={{ width: '120px' }} />
+              </colgroup>
               <tbody className="divide-y divide-[#2a2a35]">
                 {results.map((result) => (
                   <tr
@@ -179,7 +199,7 @@ export default function SessionDetail({
                     </td>
 
                     {/* Position Change */}
-                    <td className="pl-1 pr-4 py-4">
+                    <td className="pl-1 pr-4 py-4 text-center">
                       {result.position &&
                         result.grid_position &&
                         (() => {
@@ -334,7 +354,7 @@ export default function SessionDetail({
 
         {/* Lap Time Graph */}
         <div className="mt-6">
-          <LapTimeByLapGraph season={session.year} round={session.round} />
+          <LapTimeByLapGraph season={session.year} round={session.round} isSprint={isSprint} />
         </div>
       </div>
     </main>

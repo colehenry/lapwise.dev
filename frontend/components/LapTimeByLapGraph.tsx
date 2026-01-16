@@ -46,6 +46,7 @@ type ViewMode = "lapTime" | "gapToLeader";
 interface LapTimeByLapGraphProps {
 	season: number;
 	round: number;
+	isSprint?: boolean;
 }
 
 // Helper to format seconds to MM:SS.mmm
@@ -188,6 +189,7 @@ const CustomTooltip = ({ active, payload, label, viewMode }: any) => {
 export default function LapTimeByLapGraph({
 	season,
 	round,
+	isSprint = false,
 }: LapTimeByLapGraphProps) {
 	const [data, setData] = useState<LapTimesResponse | null>(null);
 	const [loading, setLoading] = useState<boolean>(true);
@@ -218,13 +220,23 @@ export default function LapTimeByLapGraph({
 		(async () => {
 			try {
 				setLoading(true);
+				const endpoint = isSprint
+					? `/api/results/${season}/${round}/sprint/lap-times`
+					: `/api/results/${season}/${round}/lap-times`;
 				const response = await fetch(
-					apiUrl(`/api/results/${season}/${round}/lap-times`),
+					apiUrl(endpoint),
 					{
 						cache: "no-store",
 					headers: apiHeaders(),
 					},
 				);
+
+				if (!response.ok) {
+					console.error(`Failed to fetch lap times: ${response.status}`);
+					setData(null);
+					return;
+				}
+
 				const lapTimesData = await response.json();
 				setData(lapTimesData);
 
@@ -237,15 +249,16 @@ export default function LapTimeByLapGraph({
 				}
 			} catch (error) {
 				console.error("Failed to fetch lap times:", error);
+				setData(null);
 			} finally {
 				setLoading(false);
 			}
 		})();
-	}, [season, round]);
+	}, [season, round, isSprint]);
 
 	// Calculate gap to leader data
 	const getGapToLeaderData = (): ChartDataPoint[] => {
-		if (!data) return [];
+		if (!data || !data.drivers) return [];
 
 		const filteredDrivers = data.drivers.filter((driver) =>
 			selectedDrivers.includes(driver.driver_code),
@@ -317,7 +330,7 @@ export default function LapTimeByLapGraph({
 
 	// Transform data for Recharts
 	const getChartData = (): ChartDataPoint[] => {
-		if (!data) return [];
+		if (!data || !data.drivers) return [];
 
 		if (viewMode === "gapToLeader") {
 			return getGapToLeaderData();
@@ -357,7 +370,7 @@ export default function LapTimeByLapGraph({
 
 	// Get drivers for dropdown (sorted by final position)
 	const getDrivers = () => {
-		if (!data) return [];
+		if (!data || !data.drivers) return [];
 		return [...data.drivers].sort(
 			(a, b) => (a.final_position || 999) - (b.final_position || 999),
 		);
@@ -416,11 +429,11 @@ export default function LapTimeByLapGraph({
 		);
 	}
 
-	if (!data) {
+	if (!data || !data.drivers) {
 		return (
 			<div className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6">
-				<p className="text-center text-red-400">
-					Failed to load lap time data.
+				<p className="text-center text-gray-400">
+					Lap time data not available for this session.
 				</p>
 			</div>
 		);
