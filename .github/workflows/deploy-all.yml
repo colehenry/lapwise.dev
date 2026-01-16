@@ -1,0 +1,151 @@
+name: deploy all (frontend + backend)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-backend:
+    name: Deploy Backend (Railway)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate Railway secrets
+        run: |
+          echo "Checking if Railway secrets are configured..."
+          if [ -z "${{ secrets.RAILWAY_TOKEN }}" ]; then
+            echo "ERROR: RAILWAY_TOKEN is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.RAILWAY_SERVICE_ID }}" ]; then
+            echo "ERROR: RAILWAY_SERVICE_ID is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.RAILWAY_ENVIRONMENT_ID }}" ]; then
+            echo "ERROR: RAILWAY_ENVIRONMENT_ID is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.RAILWAY_PROJECT_ID }}" ]; then
+            echo "ERROR: RAILWAY_PROJECT_ID is not set"
+            exit 1
+          fi
+          echo "✓ All Railway secrets are set"
+
+      - name: Test Railway authentication
+        run: |
+          echo "Testing Railway API authentication..."
+          response=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
+            https://backboard.railway.app/graphql/v2 \
+            -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"query": "query { me { id email } }"}')
+
+          http_code=$(echo "$response" | grep HTTP_CODE | cut -d: -f2)
+          body=$(echo "$response" | sed '/HTTP_CODE/d')
+
+          echo "HTTP Status: $http_code"
+
+          if [ "$http_code" != "200" ]; then
+            echo "ERROR: Authentication failed. Check your RAILWAY_TOKEN"
+            exit 1
+          fi
+
+          if echo "$body" | grep -q "error"; then
+            echo "ERROR: API returned an error. Check your RAILWAY_TOKEN"
+            exit 1
+          fi
+
+          echo "✓ Railway authentication successful"
+
+      - name: Trigger Railway deployment
+        run: |
+          echo "Triggering backend deployment on Railway..."
+          response=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
+            https://backboard.railway.app/graphql/v2 \
+            -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "query": "mutation serviceInstanceRedeploy($serviceId: String!, $environmentId: String!) { serviceInstanceRedeploy(serviceId: $serviceId, environmentId: $environmentId) }",
+              "variables": {
+                "serviceId": "${{ secrets.RAILWAY_SERVICE_ID }}",
+                "environmentId": "${{ secrets.RAILWAY_ENVIRONMENT_ID }}"
+              }
+            }')
+
+          http_code=$(echo "$response" | grep HTTP_CODE | cut -d: -f2)
+          body=$(echo "$response" | sed '/HTTP_CODE/d')
+
+          echo "HTTP Status: $http_code"
+
+          if [ "$http_code" != "200" ]; then
+            echo "ERROR: Deployment request failed with HTTP $http_code"
+            exit 1
+          fi
+
+          if echo "$body" | grep -q '"errors"'; then
+            echo "ERROR: Deployment failed. Response:"
+            echo "$body" | grep -o '"message":"[^"]*"' || echo "$body"
+            exit 1
+          fi
+
+          echo "✓ Backend deployment triggered successfully"
+          echo "View at: https://railway.app/project/${{ secrets.RAILWAY_PROJECT_ID }}"
+
+  deploy-frontend:
+    name: Deploy Frontend (Netlify)
+    runs-on: ubuntu-latest
+    needs: deploy-backend  # Wait for backend to complete first
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate Netlify secrets
+        run: |
+          echo "Checking if Netlify secrets are configured..."
+          if [ -z "${{ secrets.NETLIFY_BUILD_HOOK }}" ]; then
+            echo "ERROR: NETLIFY_BUILD_HOOK is not set"
+            exit 1
+          fi
+          echo "✓ All Netlify secrets are set"
+
+      - name: Trigger Netlify deployment
+        run: |
+          echo "Triggering frontend deployment on Netlify..."
+          response=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST -d {} \
+            "https://api.netlify.com/build_hooks/${{ secrets.NETLIFY_BUILD_HOOK }}")
+
+          http_code=$(echo "$response" | grep HTTP_CODE | cut -d: -f2)
+
+          if [ "$http_code" != "200" ]; then
+            echo "ERROR: Netlify build trigger failed with HTTP $http_code"
+            exit 1
+          fi
+
+          echo "✓ Frontend deployment triggered successfully"
+          if [ -n "${{ secrets.NETLIFY_SITE_ID }}" ]; then
+            echo "View at: https://app.netlify.com/sites/${{ secrets.NETLIFY_SITE_ID }}/deploys"
+          fi
+
+  deployment-summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+    if: always()
+
+    steps:
+      - name: Check deployment status
+        run: |
+          echo "==================================="
+          echo "Deployment Summary"
+          echo "==================================="
+          echo ""
+          echo "Backend (Railway): ${{ needs.deploy-backend.result }}"
+          echo "Frontend (Netlify): ${{ needs.deploy-frontend.result }}"
+          echo ""
+
+          if [ "${{ needs.deploy-backend.result }}" != "success" ] || [ "${{ needs.deploy-frontend.result }}" != "success" ]; then
+            echo "❌ One or more deployments failed"
+            exit 1
+          else
+            echo "✅ All deployments completed successfully"
+          fi
