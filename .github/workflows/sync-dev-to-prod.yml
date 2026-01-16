@@ -1,0 +1,81 @@
+name: sync dev db → prod db
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync-databases:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Dump dev database
+        env:
+          DEV_DATABASE_URL: ${{ secrets.NEON_DEV_DATABASE_URL }}
+        run: |
+          echo "Dumping dev database..."
+          echo "Dev DB host: $(echo $DEV_DATABASE_URL | sed 's/.*@\(.*\)\/.*sslmode.*/\1/')"
+          pg_dump "$DEV_DATABASE_URL" --clean --if-exists --no-owner --no-acl -f dev_dump.sql
+          echo "Dev dump complete ($(wc -l < dev_dump.sql) lines)"
+          echo ""
+          echo "Checking dump contents..."
+          echo "DROP TABLE statements: $(grep -c 'DROP TABLE' dev_dump.sql || echo 0)"
+          echo "CREATE TABLE statements: $(grep -c 'CREATE TABLE' dev_dump.sql || echo 0)"
+          echo "INSERT statements: $(grep -c '^INSERT' dev_dump.sql || echo 0)"
+          echo ""
+          echo "First 50 lines of dump:"
+          head -50 dev_dump.sql
+
+      - name: Restore to production database
+        env:
+          PROD_DATABASE_URL: ${{ secrets.NEON_PROD_DATABASE_URL }}
+        run: |
+          echo "⚠️  WARNING: Restoring to PRODUCTION database ⚠️"
+          echo "Production DB host: $(echo $PROD_DATABASE_URL | sed 's/.*@\(.*\)\/.*sslmode.*/\1/')"
+          echo "This will drop existing tables and recreate them with dev data"
+          echo ""
+          psql "$PROD_DATABASE_URL" -f dev_dump.sql 2>&1 | tee restore_output.log
+          exit_code=$?
+          echo ""
+          echo "Restore exit code: $exit_code"
+          if [ $exit_code -ne 0 ]; then
+            echo "ERROR: Restore failed!"
+            echo "Restore output:"
+            cat restore_output.log
+            exit $exit_code
+          else
+            echo "Restore completed successfully"
+            echo "Last 20 lines of restore output:"
+            tail -20 restore_output.log
+          fi
+
+      - name: Verify sync
+        env:
+          PROD_DATABASE_URL: ${{ secrets.NEON_PROD_DATABASE_URL }}
+        run: |
+          echo "Waiting 5 seconds for Neon connection pooler to sync..."
+          sleep 5
+          echo ""
+          echo "Verifying connection to production database..."
+          echo "Production DB host: $(echo $PROD_DATABASE_URL | sed 's/.*@\(.*\)\/.*sslmode.*/\1/')"
+          psql "$PROD_DATABASE_URL" -c "SELECT version();" || { echo "ERROR: Cannot connect to production database"; exit 1; }
+          echo ""
+          echo "Verifying data..."
+          echo "Tables in production database:"
+          psql "$PROD_DATABASE_URL" -c "\dt public.*"
+          echo ""
+          echo "Row counts:"
+          psql "$PROD_DATABASE_URL" -c "SELECT 'drivers' as table_name, COUNT(*) as rows FROM public.drivers
+                                          UNION ALL SELECT 'teams', COUNT(*) FROM public.teams
+                                          UNION ALL SELECT 'sessions', COUNT(*) FROM public.sessions
+                                          UNION ALL SELECT 'session_results', COUNT(*) FROM public.session_results
+                                          UNION ALL SELECT 'laps', COUNT(*) FROM public.laps;"
+
+      - name: Summary
+        run: |
+          echo "✅ Database sync complete"
+          echo "Dev data has been copied to production database"
