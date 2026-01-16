@@ -1,4 +1,4 @@
-name: Sync Production to Dev Database
+name: sync prod db -> dev db
 
 on:
   workflow_dispatch:
