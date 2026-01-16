@@ -423,18 +423,32 @@ export default function LapTimeByLapGraph({
 
 	if (loading) {
 		return (
-			<div className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6">
-				<p className="text-center text-gray-400">Loading lap times...</p>
+			<div className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6" style={{ minHeight: '540px' }}>
+				<div className="h-8 mb-4 flex items-center">
+					<div className="h-6 bg-[#2a2a35] rounded w-64 animate-pulse" />
+				</div>
+				<div className="relative" style={{ height: '400px' }}>
+					<div className="absolute inset-0 flex items-center justify-center">
+						<p className="text-center text-gray-400">Loading lap times...</p>
+					</div>
+				</div>
 			</div>
 		);
 	}
 
 	if (!data || !data.drivers) {
 		return (
-			<div className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6">
-				<p className="text-center text-gray-400">
-					Lap time data not available for this session.
-				</p>
+			<div className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6" style={{ minHeight: '540px' }}>
+				<div className="h-8 mb-4 flex items-center">
+					<div className="h-6 bg-[#2a2a35] rounded w-64" />
+				</div>
+				<div className="relative" style={{ height: '400px' }}>
+					<div className="absolute inset-0 flex items-center justify-center">
+						<p className="text-center text-gray-400">
+							Lap time data not available for this session.
+						</p>
+					</div>
+				</div>
 			</div>
 		);
 	}
@@ -477,7 +491,7 @@ export default function LapTimeByLapGraph({
 	};
 
 	return (
-		<div className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6">
+		<div className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6" style={{ minHeight: '540px' }}>
 			<div className="flex items-center justify-between mb-4">
 				<h3 className="text-lg font-bold text-white">
 					{data.event_name} -{" "}
@@ -559,123 +573,127 @@ export default function LapTimeByLapGraph({
 			</div>
 
 			{/* Chart */}
-			{chartData.length > 0 ? (
-				<div className="relative">
-					<ResponsiveContainer width="100%" height={400}>
-						<LineChart
-							data={chartData}
-							margin={{ top: 20, right: 20, left: 60, bottom: 20 }}
-						>
-							<defs>
+			<div className="relative" style={{ minHeight: '400px' }}>
+				{chartData.length > 0 ? (
+					<>
+						<ResponsiveContainer width="100%" height={400}>
+							<LineChart
+								data={chartData}
+								margin={{ top: 20, right: 20, left: 60, bottom: 20 }}
+							>
+								<defs>
+									{drivers
+										.filter((driver) =>
+											selectedDrivers.includes(driver.driver_code),
+										)
+										.map((driver) => {
+											return (
+												<filter
+													key={`glow-${driver.driver_code}`}
+													id={`glow-${driver.driver_code}`}
+													x="-50%"
+													y="-50%"
+													width="200%"
+													height="200%"
+												>
+													<feGaussianBlur stdDeviation="2" result="coloredBlur" />
+													<feMerge>
+														<feMergeNode in="coloredBlur" />
+														<feMergeNode in="SourceGraphic" />
+													</feMerge>
+												</filter>
+											);
+										})}
+								</defs>
+								<CartesianGrid strokeDasharray="3 3" stroke="#2a2a35" />
+								<XAxis
+									dataKey="lap_number"
+									stroke="#999"
+									label={{
+										value: "Lap Number",
+										position: "insideBottom",
+										offset: -20,
+										style: { fontWeight: "bold", fill: "white" },
+									}}
+									tick={<CustomXAxisTick />}
+								/>
+								<YAxis
+									stroke="#999"
+									label={{
+										value: viewMode === "lapTime" ? "Lap Time" : "Gap to Leader",
+										angle: -90,
+										position: "center",
+										dx: -45,
+										style: { fontWeight: "bold", fill: "white" },
+									}}
+									tick={<CustomYAxisTick />}
+									domain={getYAxisDomain()}
+									reversed={true}
+								/>
+								<Tooltip content={<CustomTooltip viewMode={viewMode} />} />
 								{drivers
 									.filter((driver) =>
 										selectedDrivers.includes(driver.driver_code),
 									)
 									.map((driver) => {
 										return (
-											<filter
-												key={`glow-${driver.driver_code}`}
-												id={`glow-${driver.driver_code}`}
-												x="-50%"
-												y="-50%"
-												width="200%"
-												height="200%"
-											>
-												<feGaussianBlur stdDeviation="2" result="coloredBlur" />
-												<feMerge>
-													<feMergeNode in="coloredBlur" />
-													<feMergeNode in="SourceGraphic" />
-												</feMerge>
-											</filter>
+											<Line
+												key={driver.driver_code}
+												type="linear"
+												dataKey={driver.driver_code}
+												name={driver.full_name}
+												stroke={getDriverColor(driver)}
+												strokeWidth={2}
+												dot={<CustomDot />}
+												activeDot={{ r: 6 }}
+												filter={`url(#glow-${driver.driver_code})`}
+												isAnimationActive={true}
+												animationDuration={1500}
+												animationBegin={0}
+												animationEasing="ease-in-out"
+												connectNulls={false}
+											/>
 										);
 									})}
-							</defs>
-							<CartesianGrid strokeDasharray="3 3" stroke="#2a2a35" />
-							<XAxis
-								dataKey="lap_number"
-								stroke="#999"
-								label={{
-									value: "Lap Number",
-									position: "insideBottom",
-									offset: -20,
-									style: { fontWeight: "bold", fill: "white" },
-								}}
-								tick={<CustomXAxisTick />}
-							/>
-							<YAxis
-								stroke="#999"
-								label={{
-									value: viewMode === "lapTime" ? "Lap Time" : "Gap to Leader",
-									angle: -90,
-									position: "center",
-									dx: -45,
-									style: { fontWeight: "bold", fill: "white" },
-								}}
-								tick={<CustomYAxisTick />}
-								domain={getYAxisDomain()}
-								reversed={true}
-							/>
-							<Tooltip content={<CustomTooltip viewMode={viewMode} />} />
-							{drivers
-								.filter((driver) =>
-									selectedDrivers.includes(driver.driver_code),
-								)
-								.map((driver) => {
-									return (
-										<Line
-											key={driver.driver_code}
-											type="linear"
-											dataKey={driver.driver_code}
-											name={driver.full_name}
-											stroke={getDriverColor(driver)}
-											strokeWidth={2}
-											dot={<CustomDot />}
-											activeDot={{ r: 6 }}
-											filter={`url(#glow-${driver.driver_code})`}
-											isAnimationActive={true}
-											animationDuration={1500}
-											animationBegin={0}
-											animationEasing="ease-in-out"
-											connectNulls={false}
-										/>
-									);
-								})}
-						</LineChart>
-					</ResponsiveContainer>
+							</LineChart>
+						</ResponsiveContainer>
 
-					{/* Custom Legend */}
-					<div className="absolute bottom-16 left-35 bg-[#1e1e28]/90 border border-[#2a2a35] rounded-lg p-3 backdrop-blur-sm pointer-events-none">
-						<div className="flex flex-col gap-1">
-							{drivers
-								.filter((driver) =>
-									selectedDrivers.includes(driver.driver_code),
-								)
-								.map((driver) => {
-									const color = getDriverColor(driver);
-									return (
-										<div
-											key={driver.driver_code}
-											className="flex items-center gap-2"
-										>
+						{/* Custom Legend */}
+						<div className="absolute bottom-16 left-35 bg-[#1e1e28]/90 border border-[#2a2a35] rounded-lg p-3 backdrop-blur-sm pointer-events-none">
+							<div className="flex flex-col gap-1">
+								{drivers
+									.filter((driver) =>
+										selectedDrivers.includes(driver.driver_code),
+									)
+									.map((driver) => {
+										const color = getDriverColor(driver);
+										return (
 											<div
-												className="w-3 h-3 rounded-full"
-												style={{ backgroundColor: color }}
-											/>
-											<span className="text-sm font-bold text-white">
-												{driver.full_name}
-											</span>
-										</div>
-									);
-								})}
+												key={driver.driver_code}
+												className="flex items-center gap-2"
+											>
+												<div
+													className="w-3 h-3 rounded-full"
+													style={{ backgroundColor: color }}
+												/>
+												<span className="text-sm font-bold text-white">
+													{driver.full_name}
+												</span>
+											</div>
+										);
+									})}
+							</div>
 						</div>
+					</>
+				) : (
+					<div className="absolute inset-0 flex items-center justify-center">
+						<p className="text-center text-gray-400">
+							No lap time data available. Select at least one driver to view lap
+							times.
+						</p>
 					</div>
-				</div>
-			) : (
-				<p className="text-center text-gray-400 py-8">
-					No lap time data available. Select at least one driver to view lap
-					times.
-				</p>
-			)}
+				)}
+			</div>
 		</div>
 	);
 }

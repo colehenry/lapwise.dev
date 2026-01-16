@@ -325,8 +325,15 @@ export default function PointsByRoundGraph({
 
 	if (loading) {
 		return (
-			<div className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6">
-				<p className="text-center text-gray-400">Loading progression data...</p>
+			<div className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6" style={{ minHeight: '540px' }}>
+				<div className="h-8 mb-4 flex items-center">
+					<div className="h-6 bg-[#2a2a35] rounded w-96 animate-pulse" />
+				</div>
+				<div className="relative" style={{ height: '400px' }}>
+					<div className="absolute inset-0 flex items-center justify-center">
+						<p className="text-center text-gray-400">Loading progression data...</p>
+					</div>
+				</div>
 			</div>
 		);
 	}
@@ -355,7 +362,7 @@ export default function PointsByRoundGraph({
 	};
 
 	return (
-		<div className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6">
+		<div className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6" style={{ minHeight: '540px' }}>
 			<div className="flex items-center justify-between mb-4">
 				<h3 className="text-lg font-bold text-white">
 					{season} {mode === "drivers" ? "Drivers'" : "Constructors'"} Total
@@ -445,13 +452,14 @@ export default function PointsByRoundGraph({
 			</div>
 
 			{/* Chart */}
-			{chartData.length > 0 ? (
-				<div className="relative">
-					<ResponsiveContainer width="100%" height={400}>
-						<LineChart
-							data={chartData}
-							margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
-						>
+			<div className="relative" style={{ minHeight: '400px' }}>
+				{chartData.length > 0 ? (
+					<>
+						<ResponsiveContainer width="100%" height={400}>
+							<LineChart
+								data={chartData}
+								margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
+							>
 							<defs>
 								{entities
 									.filter((entity) => {
@@ -584,13 +592,16 @@ export default function PointsByRoundGraph({
 								})}
 						</div>
 					</div>
-				</div>
-			) : (
-				<p className="text-center text-gray-400 py-8">
-					No data available. Select at least one{" "}
-					{mode === "drivers" ? "driver" : "constructor"} to view progression.
-				</p>
-			)}
+				</>
+				) : (
+					<div className="absolute inset-0 flex items-center justify-center">
+						<p className="text-center text-gray-400">
+							No data available. Select at least one{" "}
+							{mode === "drivers" ? "driver" : "constructor"} to view progression.
+						</p>
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }
