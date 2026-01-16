@@ -45,6 +45,8 @@ import fastf1
 import sys
 import os
 import time
+import json
+from datetime import datetime
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
@@ -58,12 +60,63 @@ from app.config import settings
 DEFAULT_SESSION_TYPES = ['race', 'qualifying', 'sprint_race', 'sprint_qualifying']
 
 
+def write_failure_log(season_year, failures):
+    """
+    Write ingestion failures to a persistent log file.
+
+    Args:
+        season_year: Season year
+        failures: List of (round, event_name, session_type, error) tuples
+    """
+    if not failures:
+        return
+
+    log_dir = os.path.join(os.path.dirname(__file__), "../logs")
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    log_file = os.path.join(log_dir, f"ingestion_failures_{season_year}.json")
+
+    failure_records = []
+    for round_num, event_name, session_type, error in failures:
+        failure_records.append({
+            "timestamp": datetime.now().isoformat(),
+            "season": season_year,
+            "round": round_num,
+            "event_name": event_name,
+            "session_type": session_type,
+            "error": str(error)
+        })
+
+    # Append to existing log or create new
+    existing_failures = []
+    if os.path.exists(log_file):
+        try:
+            with open(log_file, 'r') as f:
+                existing_failures = json.load(f)
+        except Exception:
+            pass  # If can't read, start fresh
+
+    all_failures = existing_failures + failure_records
+
+    with open(log_file, 'w') as f:
+        json.dump(all_failures, f, indent=2)
+
+    print(f"\n📝 Failure log written to: {log_file}")
+
+
 def get_db_session():
     """Create a synchronous database session for ingestion."""
     # Convert async URL to sync URL for script usage
     database_url = settings.database_url.replace(
         "postgresql+asyncpg://", "postgresql://"
     )
+
+    # Handle SSL parameter for Neon/cloud databases
+    # psycopg2 expects sslmode instead of ssl
+    if "?ssl=require" in database_url:
+        database_url = database_url.replace("?ssl=require", "?sslmode=require")
+
     engine = create_engine(database_url, echo=False)
     SessionLocal = sessionmaker(bind=engine)
     return SessionLocal()
@@ -960,27 +1013,65 @@ def ingest_session(db, year, round_num, event, session_type_name, fastf1_session
 
         # STEP 5: Ingest results (only if needed)
         if needs_results:
-            if session_type_name in ['race', 'sprint_race']:
-                ingest_race_results(db, fastf1_sess, session_id, year)
-            elif session_type_name in ['qualifying', 'sprint_qualifying']:
-                ingest_qualifying_results(db, fastf1_sess, session_id, year)
+            try:
+                if session_type_name in ['race', 'sprint_race']:
+                    ingest_race_results(db, fastf1_sess, session_id, year)
+                elif session_type_name in ['qualifying', 'sprint_qualifying']:
+                    ingest_qualifying_results(db, fastf1_sess, session_id, year)
+            except Exception as e:
+                print(f"  ❌ Error ingesting results: {e}")
+                if strict_mode:
+                    raise
+                return False
 
         # STEP 6: Ingest additional data (only what's needed)
         # Each function has its own DB check, but we can skip the call entirely if data exists
         if needs_laps or needs_weather or needs_track_status or needs_messages:
             print(f"\n  📥 Ingesting additional session data...")
 
+        # Track which data ingestions fail (for partial failure detection)
+        partial_failures = []
+
         if needs_laps:
-            ingest_lap_data(db, fastf1_sess, session_id)
+            try:
+                ingest_lap_data(db, fastf1_sess, session_id)
+            except Exception as e:
+                print(f"  ⚠️  Failed to ingest lap data: {e}")
+                partial_failures.append('laps')
+                if strict_mode:
+                    raise
 
         if needs_weather:
-            ingest_weather_data(db, fastf1_sess, session_id)
+            try:
+                ingest_weather_data(db, fastf1_sess, session_id)
+            except Exception as e:
+                print(f"  ⚠️  Failed to ingest weather data: {e}")
+                partial_failures.append('weather')
+                if strict_mode:
+                    raise
 
         if needs_track_status:
-            ingest_track_status(db, fastf1_sess, session_id)
+            try:
+                ingest_track_status(db, fastf1_sess, session_id)
+            except Exception as e:
+                print(f"  ⚠️  Failed to ingest track status: {e}")
+                partial_failures.append('track_status')
+                if strict_mode:
+                    raise
 
         if needs_messages:
-            ingest_race_control_messages(db, fastf1_sess, session_id)
+            try:
+                ingest_race_control_messages(db, fastf1_sess, session_id)
+            except Exception as e:
+                print(f"  ⚠️  Failed to ingest race control messages: {e}")
+                partial_failures.append('messages')
+                if strict_mode:
+                    raise
+
+        if partial_failures:
+            print(f"  ⚠️  Partial ingestion: missing {', '.join(partial_failures)}")
+            # Still return False to track as failure
+            return False
 
         return True
 
@@ -1114,6 +1205,14 @@ def ingest_season(season_year, session_types=None, strict_mode=False):
             print(f"\n⚠️  Failed sessions:")
             for round_num, event_name, session_type, error in stats['failures']:
                 print(f"   - R{round_num} {event_name} ({session_type}): {error}")
+
+            # Write failures to log file for tracking
+            write_failure_log(season_year, stats['failures'])
+
+            # Recommend running audit
+            print(f"\n💡 Recommendation:")
+            print(f"   Run audit to verify database state:")
+            print(f"   PYTHONPATH=$PWD python scripts/audit_database.py {season_year}")
 
         print(f"{'='*60}\n")
 
