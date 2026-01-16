@@ -75,17 +75,17 @@ export default function RecentRaceCard() {
   });
 
   return (
-    <Link
-      href={`/results/${year}/${data.round}`}
-      className="block bg-gradient-to-br from-[#1e1e2e] to-[#2a2a3e] rounded-lg p-8 hover:from-[#252535] hover:to-[#30303e] transition-all duration-300 shadow-xl hover:shadow-2xl group"
-    >
+    <div className="bg-gradient-to-br from-[#1e1e2e] to-[#2a2a3e] rounded-lg p-8 hover:from-[#252535] hover:to-[#30303e] transition-all duration-300 shadow-xl hover:shadow-2xl group">
       <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div>
-            <h2 className="text-3xl font-bold text-white group-hover:text-[#e10600] transition-colors">
+            <Link
+              href={`/results/${year}/${data.round}`}
+              className="text-3xl font-bold text-white hover:text-[#e10600] transition-colors"
+            >
               {data.event_name}
-            </h2>
+            </Link>
             <p className="text-gray-400 mt-1">{formattedDate}</p>
           </div>
           <div className="text-right">
@@ -140,9 +140,12 @@ export default function RecentRaceCard() {
                   )}
 
                   <div className="flex-1">
-                    <p className="font-bold text-white text-lg">
+                    <Link
+                      href={`/drivers/${driver.driver_code}`}
+                      className="font-bold text-white text-lg hover:text-[#e10600] transition-colors inline-block"
+                    >
                       {driver.driver_code}
-                    </p>
+                    </Link>
                     <p className="text-sm text-gray-400">{driver.team_name}</p>
                     {driver.fastest_lap && (
                       <p className="text-xs text-purple-400 mt-1 flex items-center gap-1">
@@ -162,11 +165,14 @@ export default function RecentRaceCard() {
 
         {/* CTA */}
         <div className="text-center pt-4 border-t border-gray-700">
-          <p className="text-gray-400 group-hover:text-white transition-colors">
+          <Link
+            href={`/results/${year}/${data.round}`}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
             View Full Results →
-          </p>
+          </Link>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

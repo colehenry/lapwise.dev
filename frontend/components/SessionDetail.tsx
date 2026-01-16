@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import LapTimeByLapGraph from "./LapTimeByLapGraph";
 
@@ -237,9 +238,12 @@ export default function SessionDetail({
                             />
                           )}
                         <div>
-                          <div className="font-semibold text-white">
+                          <Link
+                            href={`/drivers/${result.driver.driver_code}`}
+                            className="font-semibold text-white hover:text-[#e10600] transition-colors"
+                          >
                             {result.driver.full_name}
-                          </div>
+                          </Link>
                           <div className="text-sm text-gray-400">
                             {result.driver.driver_code}
                             {result.driver.driver_number &&

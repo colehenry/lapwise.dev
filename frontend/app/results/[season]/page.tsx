@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import PointsByRoundGraph from "@/components/PointsByRoundGraph";
@@ -214,9 +215,12 @@ export default function ResultsPage() {
 
                       {/* Driver Info */}
                       <div className="flex-1 flex flex-col justify-center">
-                        <div className="font-semibold text-white text-sm">
+                        <Link
+                          href={`/drivers/${driver.driver_code}`}
+                          className="font-semibold text-white text-sm hover:text-[#e10600] transition-colors"
+                        >
                           {driver.full_name}
-                        </div>
+                        </Link>
                         <div
                           className="text-xs font-medium"
                           style={{
@@ -279,7 +283,13 @@ export default function ResultsPage() {
                             {getTeamDrivers(team.team_name).map(
                               (driver, driverIdx) => (
                                 <span key={driver.driver_code}>
-                                  {driver.full_name} ({driver.total_points})
+                                  <Link
+                                    href={`/drivers/${driver.driver_code}`}
+                                    className="hover:text-white transition-colors"
+                                  >
+                                    {driver.full_name}
+                                  </Link>
+                                  {" "}({driver.total_points})
                                   {driverIdx <
                                     getTeamDrivers(team.team_name).length - 1 &&
                                     ", "}

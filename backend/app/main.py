@@ -46,6 +46,7 @@ async def health_check():
     }
 
 
-from app.routers import season_results
+from app.routers import season_results, drivers
 
 app.include_router(season_results.router, prefix="/api/results", tags=["results"])
+app.include_router(drivers.router, prefix="/api/drivers", tags=["drivers"])
