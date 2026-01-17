@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { apiUrl, apiHeaders } from "@/lib/api";
+import { apiHeaders, apiUrl } from "@/lib/api";
 
 interface SeasonHistory {
   year: number;
@@ -230,9 +230,7 @@ const CustomTooltip = ({ active, payload, graphMode }: any) => {
   // Race view tooltip
   return (
     <div className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg p-3 shadow-xl">
-      <p className="font-bold text-white mb-2">
-        {data.race_name || "Race"}
-      </p>
+      <p className="font-bold text-white mb-2">{data.race_name || "Race"}</p>
       <div className="space-y-1">
         <p className="text-sm text-gray-300">
           <span className="font-semibold">Season:</span> {data.year || "N/A"} R
@@ -308,27 +306,26 @@ const CustomActiveDot = (props: any) => {
   const color = payload.team_color ? `#${payload.team_color}` : "#a020f0";
 
   return (
-    <circle
-      cx={cx}
-      cy={cy}
-      r={6}
-      fill={color}
-      stroke={color}
-      strokeWidth={2}
-    />
+    <circle cx={cx} cy={cy} r={6} fill={color} stroke={color} strokeWidth={2} />
   );
 };
 
 export default function DriverSeasonHistoryGraph({
   driverCode,
 }: DriverSeasonHistoryGraphProps) {
-  const [seasonData, setSeasonData] = useState<DriverSeasonHistoryResponse | null>(null);
-  const [raceData, setRaceData] = useState<DriverRaceHistoryResponse | null>(null);
+  const [seasonData, setSeasonData] =
+    useState<DriverSeasonHistoryResponse | null>(null);
+  const [raceData, setRaceData] = useState<DriverRaceHistoryResponse | null>(
+    null,
+  );
   const [loading, setLoading] = useState<boolean>(true);
   const [graphMode, setGraphMode] = useState<GraphMode>("season");
   const [dataMode, setDataMode] = useState<DataMode>("position");
   const [showRangeSelector, setShowRangeSelector] = useState(false);
-  const [yearRange, setYearRange] = useState<{ start: number; end: number } | null>(null);
+  const [yearRange, setYearRange] = useState<{
+    start: number;
+    end: number;
+  } | null>(null);
 
   // Fetch season data
   useEffect(() => {
@@ -340,7 +337,7 @@ export default function DriverSeasonHistoryGraph({
           {
             cache: "no-store",
             headers: apiHeaders(),
-          }
+          },
         );
         const historyData = await response.json();
 
@@ -356,7 +353,7 @@ export default function DriverSeasonHistoryGraph({
               prevPosition: prevSeason.championship_position,
               prevPoints: prevSeason.total_points,
             };
-          }
+          },
         );
 
         setSeasonData({ ...historyData, seasons: enrichedSeasons });
@@ -385,7 +382,7 @@ export default function DriverSeasonHistoryGraph({
             {
               cache: "no-store",
               headers: apiHeaders(),
-            }
+            },
           );
           const historyData = await response.json();
           setRaceData(historyData);
@@ -395,7 +392,9 @@ export default function DriverSeasonHistoryGraph({
             const endYear = historyData.available_years[0];
             const startYear = Math.max(
               endYear - 4,
-              historyData.available_years[historyData.available_years.length - 1]
+              historyData.available_years[
+                historyData.available_years.length - 1
+              ],
             );
             setYearRange({ start: startYear, end: endYear });
           }
@@ -425,7 +424,11 @@ export default function DriverSeasonHistoryGraph({
 
   const currentData = graphMode === "season" ? seasonData : raceData;
 
-  if (!currentData || (graphMode === "season" && seasonData?.seasons.length === 0) || (graphMode === "race" && raceData?.races.length === 0)) {
+  if (
+    !currentData ||
+    (graphMode === "season" && seasonData?.seasons.length === 0) ||
+    (graphMode === "race" && raceData?.races.length === 0)
+  ) {
     return (
       <div className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-lg p-6">
         <h3 className="text-lg font-bold text-white mb-4">
@@ -437,17 +440,20 @@ export default function DriverSeasonHistoryGraph({
   }
 
   // Prepare chart data based on mode
-  const chartData = graphMode === "season" ? seasonData?.seasons : raceData?.races;
+  const chartData =
+    graphMode === "season" ? seasonData?.seasons : raceData?.races;
 
   // For race mode, we need to add year labels at appropriate positions
-  const raceChartData = graphMode === "race" && raceData
-    ? raceData.races.map((race, index) => ({
-        ...race,
-        raceIndex: index,
-        yearLabel: race.year.toString(), // Always show year for tooltip access
-        showYearLabel: index === 0 || race.year !== raceData.races[index - 1]?.year,
-      }))
-    : [];
+  const raceChartData =
+    graphMode === "race" && raceData
+      ? raceData.races.map((race, index) => ({
+          ...race,
+          raceIndex: index,
+          yearLabel: race.year.toString(), // Always show year for tooltip access
+          showYearLabel:
+            index === 0 || race.year !== raceData.races[index - 1]?.year,
+        }))
+      : [];
 
   const finalChartData = graphMode === "season" ? chartData : raceChartData;
 
@@ -455,7 +461,9 @@ export default function DriverSeasonHistoryGraph({
   const getLineColor = () => {
     if (graphMode === "season" && seasonData) {
       const latestSeason = seasonData.seasons[seasonData.seasons.length - 1];
-      return latestSeason.team_color ? `#${latestSeason.team_color}` : "#a020f0";
+      return latestSeason.team_color
+        ? `#${latestSeason.team_color}`
+        : "#a020f0";
     }
     return "#a020f0";
   };
@@ -539,7 +547,13 @@ export default function DriverSeasonHistoryGraph({
           <CartesianGrid strokeDasharray="3 3" stroke="#2a2a35" />
           <XAxis
             dataKey={graphMode === "season" ? "year" : "raceIndex"}
-            tick={graphMode === "season" ? <CustomXAxisTickSeason /> : <CustomXAxisTickRace />}
+            tick={
+              graphMode === "season" ? (
+                <CustomXAxisTickSeason />
+              ) : (
+                <CustomXAxisTickRace />
+              )
+            }
             stroke="#666"
             tickLine={false}
             interval={graphMode === "season" ? 0 : "preserveStart"}
@@ -555,7 +569,8 @@ export default function DriverSeasonHistoryGraph({
             stroke="#666"
             tickLine={false}
             label={{
-              value: dataMode === "position" ? "Finishing Position" : "Total Points",
+              value:
+                dataMode === "position" ? "Finishing Position" : "Total Points",
               angle: -90,
               position: "insideLeft",
               fill: "#999",
@@ -587,7 +602,10 @@ export default function DriverSeasonHistoryGraph({
       {showRangeSelector && raceData && (
         <RangeSelector
           availableYears={raceData.available_years}
-          currentStart={yearRange?.start || raceData.available_years[raceData.available_years.length - 1]}
+          currentStart={
+            yearRange?.start ||
+            raceData.available_years[raceData.available_years.length - 1]
+          }
           currentEnd={yearRange?.end || raceData.available_years[0]}
           onRangeSelect={handleRangeSelect}
           onClose={() => setShowRangeSelector(false)}

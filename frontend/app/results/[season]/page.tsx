@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import PointsByRoundGraph from "@/components/PointsByRoundGraph";
-import { apiUrl, apiHeaders } from "@/lib/api";
+import { apiHeaders, apiUrl } from "@/lib/api";
 
 // Type definitions matching our API responses
 type DriverStanding = {
@@ -184,61 +184,60 @@ export default function ResultsPage() {
               <div
                 className="space-y-2 overflow-y-auto"
                 style={{
-                  maxHeight: expandedStandings ? '660px' : '330px',
-                  minHeight: expandedStandings ? '660px' : '330px'
+                  maxHeight: expandedStandings ? "660px" : "330px",
+                  minHeight: expandedStandings ? "660px" : "330px",
                 }}
               >
-                {standings?.drivers
-                  .map((driver, idx) => (
-                    <div
-                      key={`${driver.driver_code}-${driver.team_name}-${idx}`}
-                      className="flex items-center gap-2 py-2 border-b border-[#2a2a35] last:border-0 min-h-[60px]"
-                    >
-                      {/* Position */}
-                      <div className="text-xl font-bold text-gray-500 w-6">
-                        {driver.position}
-                      </div>
+                {standings?.drivers.map((driver, idx) => (
+                  <div
+                    key={`${driver.driver_code}-${driver.team_name}-${idx}`}
+                    className="flex items-center gap-2 py-2 border-b border-[#2a2a35] last:border-0 min-h-[60px]"
+                  >
+                    {/* Position */}
+                    <div className="text-xl font-bold text-gray-500 w-6">
+                      {driver.position}
+                    </div>
 
-                      {/* Driver Photo */}
-                      {driver.headshot_url &&
-                        driver.headshot_url !== "None" &&
-                        driver.headshot_url !== "nan" &&
-                        driver.headshot_url.startsWith("http") && (
-                          <Image
-                            src={driver.headshot_url}
-                            alt={driver.full_name}
-                            width={40}
-                            height={40}
-                            className="rounded-full object-cover border border-gray-700"
-                          />
-                        )}
+                    {/* Driver Photo */}
+                    {driver.headshot_url &&
+                      driver.headshot_url !== "None" &&
+                      driver.headshot_url !== "nan" &&
+                      driver.headshot_url.startsWith("http") && (
+                        <Image
+                          src={driver.headshot_url}
+                          alt={driver.full_name}
+                          width={40}
+                          height={40}
+                          className="rounded-full object-cover border border-gray-700"
+                        />
+                      )}
 
-                      {/* Driver Info */}
-                      <div className="flex-1 flex flex-col justify-center">
-                        <Link
-                          href={`/drivers/${driver.driver_code}`}
-                          className="font-semibold text-white text-sm hover:text-[#e10600] transition-colors"
-                        >
-                          {driver.full_name}
-                        </Link>
-                        <div
-                          className="text-xs font-medium"
-                          style={{
-                            color: driver.team_color
-                              ? `#${driver.team_color}`
-                              : "#999",
-                          }}
-                        >
-                          {driver.team_name}
-                        </div>
-                      </div>
-
-                      {/* Points */}
-                      <div className="text-lg font-bold text-white">
-                        {driver.total_points}
+                    {/* Driver Info */}
+                    <div className="flex-1 flex flex-col justify-center">
+                      <Link
+                        href={`/drivers/${driver.driver_code}`}
+                        className="font-semibold text-white text-sm hover:text-[#e10600] transition-colors"
+                      >
+                        {driver.full_name}
+                      </Link>
+                      <div
+                        className="text-xs font-medium"
+                        style={{
+                          color: driver.team_color
+                            ? `#${driver.team_color}`
+                            : "#999",
+                        }}
+                      >
+                        {driver.team_name}
                       </div>
                     </div>
-                  ))}
+
+                    {/* Points */}
+                    <div className="text-lg font-bold text-white">
+                      {driver.total_points}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -250,62 +249,61 @@ export default function ResultsPage() {
               <div
                 className="space-y-2 overflow-y-auto"
                 style={{
-                  maxHeight: expandedStandings ? '660px' : '330px',
-                  minHeight: expandedStandings ? '660px' : '330px'
+                  maxHeight: expandedStandings ? "660px" : "330px",
+                  minHeight: expandedStandings ? "660px" : "330px",
                 }}
               >
-                {standings?.constructors
-                  .map((team, idx) => (
-                    <div
-                      key={`${team.team_name}-${idx}`}
-                      className="py-2 border-b border-[#2a2a35] last:border-0 min-h-[60px]"
-                    >
-                      <div className="flex items-center gap-2">
-                        {/* Position */}
-                        <div className="text-xl font-bold text-gray-500 w-6">
-                          {team.position}
-                        </div>
+                {standings?.constructors.map((team, idx) => (
+                  <div
+                    key={`${team.team_name}-${idx}`}
+                    className="py-2 border-b border-[#2a2a35] last:border-0 min-h-[60px]"
+                  >
+                    <div className="flex items-center gap-2">
+                      {/* Position */}
+                      <div className="text-xl font-bold text-gray-500 w-6">
+                        {team.position}
+                      </div>
 
-                        {/* Team Info */}
-                        <div className="flex-1 flex flex-col justify-center">
-                          <div
-                            className="font-bold text-sm"
-                            style={{
-                              color: team.team_color
-                                ? `#${team.team_color}`
-                                : "#fff",
-                            }}
-                          >
-                            {team.team_name}
-                          </div>
-                          {/* Team Drivers */}
-                          <div className="text-xs text-gray-400">
-                            {getTeamDrivers(team.team_name).map(
-                              (driver, driverIdx) => (
-                                <span key={driver.driver_code}>
-                                  <Link
-                                    href={`/drivers/${driver.driver_code}`}
-                                    className="hover:text-white transition-colors"
-                                  >
-                                    {driver.full_name}
-                                  </Link>
-                                  {" "}({driver.total_points})
-                                  {driverIdx <
-                                    getTeamDrivers(team.team_name).length - 1 &&
-                                    ", "}
-                                </span>
-                              ),
-                            )}
-                          </div>
+                      {/* Team Info */}
+                      <div className="flex-1 flex flex-col justify-center">
+                        <div
+                          className="font-bold text-sm"
+                          style={{
+                            color: team.team_color
+                              ? `#${team.team_color}`
+                              : "#fff",
+                          }}
+                        >
+                          {team.team_name}
                         </div>
-
-                        {/* Points */}
-                        <div className="text-lg font-bold text-white">
-                          {team.total_points}
+                        {/* Team Drivers */}
+                        <div className="text-xs text-gray-400">
+                          {getTeamDrivers(team.team_name).map(
+                            (driver, driverIdx) => (
+                              <span key={driver.driver_code}>
+                                <Link
+                                  href={`/drivers/${driver.driver_code}`}
+                                  className="hover:text-white transition-colors"
+                                >
+                                  {driver.full_name}
+                                </Link>{" "}
+                                ({driver.total_points})
+                                {driverIdx <
+                                  getTeamDrivers(team.team_name).length - 1 &&
+                                  ", "}
+                              </span>
+                            ),
+                          )}
                         </div>
                       </div>
+
+                      {/* Points */}
+                      <div className="text-lg font-bold text-white">
+                        {team.total_points}
+                      </div>
                     </div>
-                  ))}
+                  </div>
+                ))}
               </div>
             </div>
           </div>

@@ -12,6 +12,7 @@ from typing import Optional, List
 
 class CircuitInfo(BaseModel):
     """Circuit metadata embedded in session response"""
+
     name: str
     location: str
     country: str
@@ -26,6 +27,7 @@ class SessionInfo(BaseModel):
     Session metadata (race, qualifying, sprint, etc.).
     This is the top-level information about a specific F1 session.
     """
+
     id: int
     year: int
     round: int
@@ -40,9 +42,11 @@ class SessionInfo(BaseModel):
 
 class DriverInfo(BaseModel):
     """Driver metadata embedded in result"""
+
     driver_number: Optional[int] = None
     driver_code: str
     full_name: str
+    country_code: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -50,6 +54,7 @@ class DriverInfo(BaseModel):
 
 class TeamInfo(BaseModel):
     """Team metadata embedded in result"""
+
     name: str
     team_color: Optional[str] = None  # Hex without #
 
@@ -65,6 +70,7 @@ class SessionResultDetail(BaseModel):
     - Race/Sprint: points, time_seconds, fastest_lap, etc.
     - Qualifying: q1_time_seconds, q2_time_seconds, q3_time_seconds
     """
+
     # Universal fields
     position: Optional[int] = None
     status: str
@@ -97,6 +103,7 @@ class SessionResultsResponse(BaseModel):
     Returns session metadata plus an array of driver results.
     Results are typically sorted by position (P1 first).
     """
+
     session: SessionInfo
     results: List[SessionResultDetail]
 
@@ -108,11 +115,14 @@ class SessionResultsResponse(BaseModel):
 # Standings Schemas (for /api/results/{season}/standings)
 # ============================================================================
 
+
 class DriverStanding(BaseModel):
     """Individual driver's championship standing for a season"""
+
     position: int  # Championship position (1st, 2nd, 3rd, etc.)
     driver_code: str
     full_name: str
+    country_code: Optional[str] = None
     team_name: str
     team_color: Optional[str] = None
     total_points: float
@@ -124,6 +134,7 @@ class DriverStanding(BaseModel):
 
 class ConstructorStanding(BaseModel):
     """Individual constructor's championship standing for a season"""
+
     position: int  # Championship position (1st, 2nd, 3rd, etc.)
     team_name: str
     team_color: Optional[str] = None
@@ -139,6 +150,7 @@ class StandingsResponse(BaseModel):
 
     Returns driver and constructor standings for an entire season.
     """
+
     year: int
     drivers: List[DriverStanding]
     constructors: List[ConstructorStanding]
@@ -151,10 +163,13 @@ class StandingsResponse(BaseModel):
 # Season Rounds Schemas (for /api/results/{season})
 # ============================================================================
 
+
 class RoundPodiumDriver(BaseModel):
     """Driver information for podium finisher"""
+
     full_name: str
     driver_code: str
+    country_code: Optional[str] = None
     team_name: str
     team_color: Optional[str] = None
     headshot_url: Optional[str] = None
@@ -170,6 +185,7 @@ class RoundSummary(BaseModel):
 
     Used in the main results page to display all rounds for a season.
     """
+
     round: int
     event_name: str
     date: date
@@ -187,6 +203,7 @@ class SeasonRoundsResponse(BaseModel):
 
     Returns all rounds for a season with top 3 finishers for each.
     """
+
     year: int
     rounds: List[RoundSummary]
 
@@ -198,8 +215,10 @@ class SeasonRoundsResponse(BaseModel):
 # Points Progression Schemas (for /api/results/{season}/points-progression)
 # ============================================================================
 
+
 class PointsProgressionRound(BaseModel):
     """Single round's cumulative points total"""
+
     round: str  # Round identifier: "21" for race, "21-sprint" for sprint
     cumulative_points: float
     event_name: Optional[str] = None  # Grand Prix name (e.g., "Chinese Grand Prix")
@@ -210,6 +229,7 @@ class PointsProgressionRound(BaseModel):
 
 class DriverProgressionData(BaseModel):
     """Driver with cumulative points progression across all rounds"""
+
     driver_code: str
     full_name: str
     team_color: Optional[str] = None
@@ -222,6 +242,7 @@ class DriverProgressionData(BaseModel):
 
 class ConstructorProgressionData(BaseModel):
     """Constructor with cumulative points progression across all rounds"""
+
     team_name: str
     team_color: Optional[str] = None
     final_position: int  # Final championship position for sorting
@@ -238,6 +259,7 @@ class PointsProgressionResponse(BaseModel):
     Returns cumulative points progression throughout the season.
     The 'type' field determines whether data contains drivers or constructors.
     """
+
     year: int
     type: str  # 'drivers' or 'constructors'
     drivers: Optional[List[DriverProgressionData]] = None
@@ -251,8 +273,10 @@ class PointsProgressionResponse(BaseModel):
 # Lap Times Schemas (for /api/results/{season}/{round}/lap-times)
 # ============================================================================
 
+
 class LapData(BaseModel):
     """Individual lap timing and metadata"""
+
     lap_number: int
     lap_time_seconds: Optional[float] = None  # NULL for in/out laps, deleted laps
     compound: Optional[str] = None  # SOFT, MEDIUM, HARD, INTERMEDIATE, WET
@@ -265,8 +289,10 @@ class LapData(BaseModel):
 
 class DriverLapTimesData(BaseModel):
     """Driver metadata with all their lap times for a session"""
+
     driver_code: str
     full_name: str
+    country_code: Optional[str] = None
     team_color: Optional[str] = None
     final_position: Optional[int] = None  # Finishing position in this race
     laps: List[LapData]
@@ -281,6 +307,7 @@ class LapTimesResponse(BaseModel):
 
     Returns lap-by-lap timing data for all drivers in a specific race session.
     """
+
     year: int
     round: int
     event_name: str

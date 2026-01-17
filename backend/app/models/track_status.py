@@ -36,13 +36,20 @@ class TrackStatus(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     # Foreign key
-    session_id = Column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False, index=True)
+    session_id = Column(
+        Integer,
+        ForeignKey("sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
 
     # Timestamp (seconds since session start)
     session_time_seconds = Column(Float, nullable=False)
 
     # Status information
-    status = Column(String(10), nullable=False)  # Status code ("1", "2", "4", "5", "6", "7")
+    status = Column(
+        String(10), nullable=False
+    )  # Status code ("1", "2", "4", "5", "6", "7")
     message = Column(Text, nullable=True)  # Human-readable message from FastF1
 
     # Relationships
@@ -51,7 +58,7 @@ class TrackStatus(Base):
     # Constraints
     __table_args__ = (
         # Optimize for time-based queries (get status at time, status changes during range)
-        Index('idx_session_time', 'session_id', 'session_time_seconds'),
+        Index("idx_session_time", "session_id", "session_time_seconds"),
     )
 
     def __repr__(self):

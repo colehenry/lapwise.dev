@@ -27,7 +27,7 @@ router = APIRouter()
 async def get_driver_profile(
     driver_code: str,
     db: AsyncSession = Depends(get_db),
-    api_key: str = Depends(verify_api_key)
+    api_key: str = Depends(verify_api_key),
 ):
     """
     Get complete driver profile with career statistics.
@@ -49,8 +49,7 @@ async def get_driver_profile(
 
     if not driver:
         raise HTTPException(
-            status_code=404,
-            detail=f"Driver with code '{driver_code}' not found"
+            status_code=404, detail=f"Driver with code '{driver_code}' not found"
         )
 
     # ========================================================================
@@ -124,10 +123,7 @@ async def get_driver_profile(
     for year in seasons:
         # Get championship standings for this year
         standings_query = (
-            select(
-                Driver.id,
-                func.sum(SessionResult.points).label("total_points")
-            )
+            select(Driver.id, func.sum(SessionResult.points).label("total_points"))
             .join(SessionResult, Driver.id == SessionResult.driver_id)
             .join(Session, SessionResult.session_id == Session.id)
             .where(Session.year == year)
@@ -174,7 +170,7 @@ async def get_driver_profile(
 async def get_driver_season_history(
     driver_code: str,
     db: AsyncSession = Depends(get_db),
-    api_key: str = Depends(verify_api_key)
+    api_key: str = Depends(verify_api_key),
 ):
     """
     Get driver's championship position and points for each season.
@@ -195,8 +191,7 @@ async def get_driver_season_history(
 
     if not driver:
         raise HTTPException(
-            status_code=404,
-            detail=f"Driver with code '{driver_code}' not found"
+            status_code=404, detail=f"Driver with code '{driver_code}' not found"
         )
 
     # Get all race results grouped by season
@@ -234,10 +229,7 @@ async def get_driver_season_history(
 
         # Get championship standings for this year
         standings_query = (
-            select(
-                Driver.id,
-                func.sum(SessionResult.points).label("total_points")
-            )
+            select(Driver.id, func.sum(SessionResult.points).label("total_points"))
             .join(SessionResult, Driver.id == SessionResult.driver_id)
             .join(Session, SessionResult.session_id == Session.id)
             .where(Session.year == year)
@@ -280,7 +272,7 @@ async def get_driver_race_history(
     start_year: Optional[int] = None,
     end_year: Optional[int] = None,
     db: AsyncSession = Depends(get_db),
-    api_key: str = Depends(verify_api_key)
+    api_key: str = Depends(verify_api_key),
 ):
     """
     Get driver's race-by-race results across their career.
@@ -301,8 +293,7 @@ async def get_driver_race_history(
 
     if not driver:
         raise HTTPException(
-            status_code=404,
-            detail=f"Driver with code '{driver_code}' not found"
+            status_code=404, detail=f"Driver with code '{driver_code}' not found"
         )
 
     # Get all available years for this driver
@@ -329,14 +320,13 @@ async def get_driver_race_history(
     if end_year is None:
         end_year = available_years[0]  # Most recent year
     if start_year is None:
-        start_year = max(end_year - 4, available_years[-1])  # 5 years or start of career
+        start_year = max(
+            end_year - 4, available_years[-1]
+        )  # 5 years or start of career
 
     # Validate range
     if end_year - start_year > 4:
-        raise HTTPException(
-            status_code=400,
-            detail="Year range cannot exceed 5 years"
-        )
+        raise HTTPException(status_code=400, detail="Year range cannot exceed 5 years")
 
     # Get all race results in the year range
     race_results_query = (

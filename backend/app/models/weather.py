@@ -28,7 +28,12 @@ class Weather(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     # Foreign key
-    session_id = Column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False, index=True)
+    session_id = Column(
+        Integer,
+        ForeignKey("sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
 
     # Timestamp (seconds since session start)
     session_time_seconds = Column(Float, nullable=False)
@@ -54,7 +59,7 @@ class Weather(Base):
     # Constraints
     __table_args__ = (
         # Optimize for time-based queries (get weather at specific time, weather during range)
-        Index('idx_session_time', 'session_id', 'session_time_seconds'),
+        Index("idx_session_time", "session_id", "session_time_seconds"),
     )
 
     def __repr__(self):

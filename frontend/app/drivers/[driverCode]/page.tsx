@@ -1,9 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import DriverSeasonHistoryGraph from "@/components/DriverSeasonHistoryGraph";
+import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
 
 interface DriverProfile {
   driver_code: string;
@@ -23,9 +24,7 @@ interface DriverProfile {
   latest_season: number | null;
 }
 
-async function fetchDriverProfile(
-  driverCode: string
-): Promise<DriverProfile> {
+async function fetchDriverProfile(driverCode: string): Promise<DriverProfile> {
   const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/drivers/${driverCode}`,
@@ -33,7 +32,7 @@ async function fetchDriverProfile(
       headers: {
         "X-API-Key": apiKey,
       },
-    }
+    },
   );
 
   if (!res.ok) {
@@ -41,30 +40,6 @@ async function fetchDriverProfile(
   }
 
   return res.json();
-}
-
-function getCountryName(countryCode: string | null): string {
-  const countries: Record<string, string> = {
-    NED: "Netherlands",
-    GBR: "Great Britain",
-    MON: "Monaco",
-    ESP: "Spain",
-    MEX: "Mexico",
-    CAN: "Canada",
-    AUS: "Australia",
-    JPN: "Japan",
-    CHN: "China",
-    THA: "Thailand",
-    FRA: "France",
-    GER: "Germany",
-    FIN: "Finland",
-    DEN: "Denmark",
-    USA: "United States",
-    NZL: "New Zealand",
-    ARG: "Argentina",
-  };
-
-  return countryCode ? countries[countryCode] || countryCode : "Unknown";
 }
 
 function getOrdinalSuffix(position: number): string {
@@ -113,7 +88,9 @@ export default function DriverProfilePage() {
       <div className="min-h-screen bg-[#15151e] p-8">
         <div className="max-w-5xl mx-auto">
           <div className="bg-[#1e1e2e] rounded-lg p-8">
-            <h1 className="text-2xl font-bold text-white mb-4">Driver Not Found</h1>
+            <h1 className="text-2xl font-bold text-white mb-4">
+              Driver Not Found
+            </h1>
             <p className="text-gray-400 mb-6">
               Could not find driver with code: {driverCode.toUpperCase()}
             </p>
@@ -196,7 +173,12 @@ export default function DriverProfilePage() {
                 {data.country_code && (
                   <>
                     <span>•</span>
-                    <span>{getCountryName(data.country_code)}</span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-xl">
+                        {getDriverFlagEmoji(data.country_code)}
+                      </span>
+                      {getCountryName(data.country_code)}
+                    </span>
                   </>
                 )}
               </div>
