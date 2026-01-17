@@ -160,48 +160,86 @@ async def get_season_standings(
     """
     Get driver and constructor championship standings for a season.
 
-    Calculates total points by summing all session results (races, sprints, etc.)
-    for each driver and team.
+    Calculates total points by summing all session results
+    (races, sprints, etc.) for each driver and team.
     """
 
-    # ========================================================================
+    # ====================================================================
     # Driver Standings Query
-    # ========================================================================
-    # Sum points grouped by driver, ordered by total points descending
-    # Note: We get headshot_url from the session_results (it's stored per session)
-    # We'll get the first non-null headshot for each driver
-    driver_query = (
+    # ====================================================================
+    # First, get total points per driver
+    # (aggregating across all teams they drove for)
+    points_subquery = (
         select(
+            Driver.id.label("driver_id"),
             Driver.driver_code,
             Driver.full_name,
             Driver.country_code,
-            Team.name.label("team_name"),
-            Team.team_color,
-            func.max(SessionResult.headshot_url).label(
-                "headshot_url"
-            ),  # Get any headshot
             func.sum(SessionResult.points).label("total_points"),
         )
         .join(SessionResult, Driver.id == SessionResult.driver_id)
-        .join(Team, SessionResult.team_id == Team.id)
         .join(Session, SessionResult.session_id == Session.id)
         .where(Session.year == season)
-        .where(SessionResult.points.isnot(None))  # Exclude NULL points
+        .where(SessionResult.points.isnot(None))
         .group_by(
             Driver.id,
             Driver.driver_code,
             Driver.full_name,
             Driver.country_code,
-            Team.name,
-            Team.team_color,
         )
-        .order_by(func.sum(SessionResult.points).desc())
+        .subquery()
     )
 
-    driver_result = await db.execute(driver_query)
-    driver_rows = driver_result.all()
+    # Then, for each driver, get their most recent session
+    # For each driver, get the session_id of their most recent race
+    # We'll use a lateral subquery to get exactly one result per driver
+    latest_results = {}
+    for driver_row in await db.execute(
+        select(Driver.id)
+        .distinct()
+        .join(SessionResult, Driver.id == SessionResult.driver_id)
+        .join(Session, SessionResult.session_id == Session.id)
+        .where(Session.year == season)
+    ):
+        driver_id = driver_row[0]
+        # Get the most recent session_result for this driver
+        latest_result_query = (
+            select(SessionResult, Team)
+            .join(Session, SessionResult.session_id == Session.id)
+            .join(Team, SessionResult.team_id == Team.id)
+            .where(SessionResult.driver_id == driver_id)
+            .where(Session.year == season)
+            .order_by(Session.date.desc(), Session.round.desc())
+            .limit(1)
+        )
+        result = await db.execute(latest_result_query)
+        row = result.first()
+        if row:
+            latest_results[driver_id] = row
 
-    if not driver_rows:
+    # Build driver standings by combining points with latest team info
+    driver_standings = []
+    for driver_row in await db.execute(
+        select(points_subquery).order_by(points_subquery.c.total_points.desc())
+    ):
+        driver_id = driver_row.driver_id
+        if driver_id in latest_results:
+            session_result, team = latest_results[driver_id]
+            driver_standings.append(
+                {
+                    "driver_code": driver_row.driver_code,
+                    "full_name": driver_row.full_name,
+                    "country_code": driver_row.country_code,
+                    "total_points": driver_row.total_points,
+                    "team_name": team.name,
+                    "team_color": team.team_color,
+                    "headshot_url": session_result.headshot_url
+                    if session_result.headshot_url != "None"
+                    else None,
+                }
+            )
+
+    if not driver_standings:
         raise HTTPException(
             status_code=404, detail=f"No results found for season {season}"
         )
@@ -210,15 +248,15 @@ async def get_season_standings(
     drivers = [
         DriverStanding(
             position=idx + 1,
-            driver_code=row.driver_code,
-            full_name=row.full_name,
-            country_code=row.country_code,
-            team_name=row.team_name,
-            team_color=row.team_color,
-            total_points=float(row.total_points),
-            headshot_url=row.headshot_url,
+            driver_code=row["driver_code"],
+            full_name=row["full_name"],
+            country_code=row["country_code"],
+            team_name=row["team_name"],
+            team_color=row["team_color"],
+            total_points=float(row["total_points"]),
+            headshot_url=row["headshot_url"],
         )
-        for idx, row in enumerate(driver_rows)
+        for idx, row in enumerate(driver_standings)
     ]
 
     # ========================================================================
