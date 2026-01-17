@@ -29,10 +29,12 @@ export default function Navigation() {
     }
   }, [isDropdownOpen]);
 
+  const [showConstructorsOption, setShowConstructorsOption] = useState(false);
+
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/results", label: "Results" },
-    { href: "/drivers", label: "Drivers" },
+    { href: "/drivers", label: "Drivers", hasAlternative: true },
     { href: "/blog", label: "Blog" },
     { href: "/about", label: "About" },
   ];
@@ -69,22 +71,62 @@ export default function Navigation() {
 
           {/* Navigation links - center (desktop) */}
           <div className="hidden md:flex items-center space-x-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-                  isActive(link.href)
-                    ? "text-purple-400 bg-purple-500/10"
-                    : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
-                }`}
-              >
-                {link.label}
-                {isActive(link.href) && (
-                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent rounded-full" />
-                )}
-              </Link>
-            ))}
+            {navLinks.map((link) =>
+              link.hasAlternative ? (
+                <div
+                  key={link.href}
+                  className="relative"
+                  onMouseEnter={() => setShowConstructorsOption(true)}
+                  onMouseLeave={() => setShowConstructorsOption(false)}
+                  role="navigation"
+                >
+                  <Link
+                    href={link.href}
+                    className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      isActive(link.href) || isActive("/constructors")
+                        ? "text-purple-400 bg-purple-500/10"
+                        : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
+                    }`}
+                  >
+                    {isActive("/constructors") ? "Constructors" : link.label}
+                    {(isActive(link.href) || isActive("/constructors")) && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent rounded-full" />
+                    )}
+                  </Link>
+                  {showConstructorsOption && (
+                    <div className="absolute top-full left-0 mt-1 bg-bg-tertiary rounded-lg shadow-xl border border-border-primary overflow-hidden min-w-[150px] animate-slideDown">
+                      <Link
+                        href="/drivers"
+                        className="block px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors duration-200"
+                      >
+                        Drivers
+                      </Link>
+                      <Link
+                        href="/constructors"
+                        className="block px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors duration-200"
+                      >
+                        Constructors
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    isActive(link.href)
+                      ? "text-purple-400 bg-purple-500/10"
+                      : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
+                  }`}
+                >
+                  {link.label}
+                  {isActive(link.href) && (
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent rounded-full" />
+                  )}
+                </Link>
+              ),
+            )}
           </div>
 
           {/* Right side actions */}
@@ -266,20 +308,72 @@ export default function Navigation() {
         {/* Mobile menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-border-primary animate-slideDown">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                  isActive(link.href)
-                    ? "text-purple-400 bg-purple-500/10"
-                    : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
-                }`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
+            <Link
+              href="/"
+              className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                isActive("/")
+                  ? "text-purple-400 bg-purple-500/10"
+                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Home
+            </Link>
+            <Link
+              href="/results"
+              className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                isActive("/results")
+                  ? "text-purple-400 bg-purple-500/10"
+                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Results
+            </Link>
+            <Link
+              href="/drivers"
+              className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                isActive("/drivers")
+                  ? "text-purple-400 bg-purple-500/10"
+                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Drivers
+            </Link>
+            <Link
+              href="/constructors"
+              className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                isActive("/constructors")
+                  ? "text-purple-400 bg-purple-500/10"
+                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Constructors
+            </Link>
+            <Link
+              href="/blog"
+              className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                isActive("/blog")
+                  ? "text-purple-400 bg-purple-500/10"
+                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Blog
+            </Link>
+            <Link
+              href="/about"
+              className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                isActive("/about")
+                  ? "text-purple-400 bg-purple-500/10"
+                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              About
+            </Link>
           </div>
         )}
       </div>
