@@ -6,9 +6,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-white mb-4">
-            F1 Analytics
-          </h1>
+          <h1 className="text-5xl font-bold text-white mb-4">lapwise</h1>
           <p className="text-xl text-gray-400">
             Dive deep into Formula 1 data, telemetry, and race results
           </p>
@@ -16,7 +14,9 @@ export default function Home() {
 
         {/* Latest Race Card */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6">Latest Result</h2>
+          <h2 className="text-2xl font-bold text-white mb-6">
+            Latest Race Results
+          </h2>
           <RecentRaceCard />
         </div>
 
