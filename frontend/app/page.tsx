@@ -22,7 +22,7 @@ export default function Home() {
 
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           <Badge variant="purple" size="lg" className="mb-6">
-            Professional F1 Analytics
+            Formula 1 Analytics
           </Badge>
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary mb-6 animate-fadeIn">
             <span className="text-purple-400">Lap</span>
@@ -30,8 +30,6 @@ export default function Home() {
           </h1>
           <p className="text-xl md:text-2xl text-text-tertiary mb-8 animate-slideUp">
             Dive deep into Formula 1 data, telemetry, and race results.
-            <br />
-            Professional analytics for passionate F1 fans.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slideUp">
             <Button variant="primary" size="lg" className="group">
