@@ -66,12 +66,15 @@ export default function ResultsPage() {
   const [availableYears, setAvailableYears] = useState<number[]>([]);
 
   // Scroll to top when season changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: We intentionally want to scroll when season changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [season]);
 
   // Fetch available years once on mount
   useEffect(() => {
+    let isMounted = true;
+
     (async () => {
       try {
         const response = await fetch(apiUrl("/api/results/seasons"), {
@@ -79,18 +82,32 @@ export default function ResultsPage() {
           headers: apiHeaders(),
         });
         const years = await response.json();
-        setAvailableYears(years);
+
+        if (isMounted) {
+          setAvailableYears(years);
+        }
       } catch (error) {
-        console.error("Failed to fetch available seasons:", error);
+        // Suppress fetch errors during prefetch (development behavior)
+        if (isMounted && document.visibilityState === "visible") {
+          console.error("Failed to fetch available seasons:", error);
+        }
         // Fallback to current year if fetch fails
-        setAvailableYears([2024]);
+        if (isMounted) {
+          setAvailableYears([2024]);
+        }
       }
     })();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Fetch standings and rounds when season changes
   useEffect(() => {
     if (!season) return;
+
+    let isMounted = true;
 
     (async () => {
       try {
@@ -108,17 +125,30 @@ export default function ResultsPage() {
           }),
         ]);
 
+        // Only update state if component is still mounted
+        if (!isMounted) return;
+
         const standingsData = await standingsRes.json();
         const roundsData = await roundsRes.json();
 
         setStandings(standingsData);
         setRounds(roundsData);
       } catch (error) {
-        console.error("Failed to fetch results:", error);
+        // Suppress fetch errors during prefetch (development behavior)
+        // Only log if component is actually mounted and visible
+        if (isMounted && document.visibilityState === "visible") {
+          console.error("Failed to fetch results:", error);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     })();
+
+    return () => {
+      isMounted = false;
+    };
   }, [season]);
 
   const handleYearChange = (newYear: string) => {
