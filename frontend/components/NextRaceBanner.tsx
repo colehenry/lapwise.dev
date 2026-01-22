@@ -18,7 +18,7 @@ interface UpcomingEvent {
 async function fetchUpcomingEvents(): Promise<UpcomingEvent[]> {
   const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/events/upcoming?limit=4`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/events/upcoming?limit=10`,
     {
       headers: {
         "X-API-Key": apiKey,
@@ -74,74 +74,88 @@ export default function NextRaceBanner() {
           Upcoming Events
         </h2>
 
-        {/* Events Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {events.map((event) => {
-            const daysUntil = getDaysUntilEvent(event.event_date);
-            const formattedDate = formatEventDate(event.event_date);
-            const isTesting = event.event_type === "testing";
-            const flag = getCircuitFlagEmoji(event.country);
-            const year = new Date(event.event_date).getFullYear();
+        {/* Horizontal Scrollable Events */}
+        <div className="overflow-x-auto overflow-y-hidden -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 scrollbar-thin scrollbar-thumb-purple-500/20 scrollbar-track-transparent hover:scrollbar-thumb-purple-500/40">
+          <div className="flex gap-4 pb-4 min-w-min">
+            {events.map((event) => {
+              const daysUntil = getDaysUntilEvent(event.event_date);
+              const formattedDate = formatEventDate(event.event_date);
+              const isTesting = event.event_type === "testing";
+              const flag = getCircuitFlagEmoji(event.country);
+              const year = new Date(event.event_date).getFullYear();
+              const lastYear = year - 1;
 
-            // Determine link URL - projections for races, no link for testing
-            const linkUrl =
-              !isTesting && event.round_number
-                ? `/projections/${year}/${event.round_number}`
-                : null;
+              // Determine if this circuit/event is new
+              // For 2026: Madrid is new, rest are returning
+              const isNewCircuit =
+                event.event_name.includes("Madrid") ||
+                event.circuit_id === null;
 
-            const content = (
-              <div
-                key={`${event.event_date}-${event.event_name}`}
-                className={`
-                bg-bg-primary border border-border-primary rounded-lg p-4
-                ${linkUrl ? "hover:border-purple-500/50 hover:bg-bg-primary/80 cursor-pointer transition-all duration-200" : ""}
-              `}
-              >
-                <div className="flex items-center gap-4">
-                  {/* Countdown - Vertical on Left */}
-                  <div className="flex flex-col items-center justify-center border-r border-border-primary pr-3">
-                    <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide">
-                      In
-                    </span>
-                    <span className="text-2xl font-bold text-text-primary my-1">
-                      {daysUntil}
-                    </span>
-                    <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide">
-                      {daysUntil === 1 ? "Day" : "Days"}
-                    </span>
-                  </div>
+              // Show last year link only for races (not testing) that aren't new circuits
+              const showLastYearLink =
+                !isTesting && event.round_number && !isNewCircuit;
 
-                  {/* Event Info - Right Side */}
-                  <div className="flex-1 text-center">
-                    <h3 className="text-sm font-bold text-text-primary mb-2">
-                      {event.event_name}
-                    </h3>
-                    <div className="text-3xl mb-2">{flag}</div>
-                    <span className="text-xs font-semibold text-text-tertiary uppercase tracking-wider block mb-2">
-                      {isTesting ? "Testing" : "Grand Prix"}
-                    </span>
-                    <p className="text-xs text-text-tertiary">
-                      {event.location}
-                    </p>
-                    <p className="text-xs text-text-muted mt-1">
-                      {formattedDate}
-                    </p>
+              const content = (
+                <div
+                  key={`${event.event_date}-${event.event_name}`}
+                  className="flex-shrink-0 w-80 bg-bg-primary border border-border-primary rounded-lg p-4"
+                >
+                  <div className="flex items-center gap-4">
+                    {/* Countdown - Vertical on Left */}
+                    <div className="flex flex-col items-center justify-center border-r border-border-primary pr-3">
+                      <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide">
+                        In
+                      </span>
+                      <span className="text-2xl font-bold text-text-primary my-1">
+                        {daysUntil}
+                      </span>
+                      <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide">
+                        {daysUntil === 1 ? "Day" : "Days"}
+                      </span>
+                    </div>
+
+                    {/* Event Info - Right Side */}
+                    <div className="flex-1 text-center flex flex-col">
+                      <h3 className="text-sm font-bold text-text-primary mb-2 truncate">
+                        {event.event_name}
+                      </h3>
+                      <div className="text-3xl mb-2">{flag}</div>
+                      <span className="text-xs font-semibold text-text-tertiary uppercase tracking-wider block mb-2">
+                        {isTesting ? "Testing" : "Grand Prix"}
+                      </span>
+                      <p className="text-xs text-text-tertiary truncate">
+                        {event.location}
+                      </p>
+                      <p className="text-xs text-text-muted mt-1 mb-3 truncate">
+                        {formattedDate}
+                      </p>
+
+                      {/* Action Button/Badge */}
+                      {isNewCircuit && !isTesting && (
+                        <div className="mt-auto">
+                          <span className="inline-block px-3 py-1 text-xs font-semibold bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded">
+                            New Circuit
+                          </span>
+                        </div>
+                      )}
+                      {showLastYearLink && (
+                        <div className="mt-auto">
+                          <Link
+                            href={`/results/${lastYear}/${event.round_number}`}
+                            className="inline-block px-3 py-1 text-xs font-semibold bg-bg-secondary text-text-tertiary border border-border-primary rounded hover:border-purple-500/50 hover:text-purple-400 transition-colors duration-200"
+                          >
+                            View {lastYear} Results
+                          </Link>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
+              );
 
-            return linkUrl ? (
-              <Link
-                key={`${event.event_date}-${event.event_name}`}
-                href={linkUrl}
-              >
-                {content}
-              </Link>
-            ) : (
-              content
-            );
-          })}
+              return content;
+            })}
+          </div>
         </div>
       </div>
     </div>
