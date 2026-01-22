@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { getCircuitFlagEmoji } from "@/lib/flags";
+import { getCircuitFlagEmoji, getDriverFlagEmoji } from "@/lib/flags";
 
 interface UpcomingEvent {
   event_name: string;
@@ -69,94 +69,266 @@ export default function NextRaceBanner() {
   return (
     <div className="w-full bg-bg-secondary py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Title */}
-        <h2 className="text-3xl font-bold text-text-primary text-center mb-8">
-          Upcoming Events
-        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left: Latest Race Result */}
+          <div>
+            <h2 className="text-3xl font-bold text-text-primary mb-6">
+              Latest Race Result
+            </h2>
+            <LatestRaceCompact />
+          </div>
 
-        {/* Horizontal Scrollable Events */}
-        <div className="overflow-x-auto overflow-y-hidden -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 scrollbar-thin scrollbar-thumb-purple-500/20 scrollbar-track-transparent hover:scrollbar-thumb-purple-500/40">
-          <div className="flex gap-4 pb-4 min-w-min">
-            {events.map((event) => {
-              const daysUntil = getDaysUntilEvent(event.event_date);
-              const formattedDate = formatEventDate(event.event_date);
-              const isTesting = event.event_type === "testing";
-              const flag = getCircuitFlagEmoji(event.country);
-              const year = new Date(event.event_date).getFullYear();
-              const lastYear = year - 1;
+          {/* Right: Upcoming Events */}
+          <div>
+            <h2 className="text-3xl font-bold text-text-primary mb-6">
+              Upcoming Events
+            </h2>
+            {/* Horizontal Scrollable Events */}
+            <div className="overflow-x-auto overflow-y-hidden -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 scrollbar-thin scrollbar-thumb-purple-500/20 scrollbar-track-transparent hover:scrollbar-thumb-purple-500/40">
+              <div className="flex gap-4 pb-4 min-w-min">
+                {events.map((event) => {
+                  const daysUntil = getDaysUntilEvent(event.event_date);
+                  const formattedDate = formatEventDate(event.event_date);
+                  const isTesting = event.event_type === "testing";
+                  const flag = getCircuitFlagEmoji(event.country);
+                  const year = new Date(event.event_date).getFullYear();
+                  const lastYear = year - 1;
 
-              // Determine if this circuit/event is new
-              // For 2026: Madrid is new, rest are returning
-              const isNewCircuit =
-                event.event_name.includes("Madrid") ||
-                event.circuit_id === null;
+                  // Determine if this circuit/event is new
+                  // For 2026: Madrid is new, rest are returning
+                  const isNewCircuit =
+                    event.event_name.includes("Madrid") ||
+                    event.circuit_id === null;
 
-              // Show last year link only for races (not testing) that aren't new circuits
-              const showLastYearLink =
-                !isTesting && event.round_number && !isNewCircuit;
+                  // Show last year link only for races (not testing) that aren't new circuits
+                  const showLastYearLink =
+                    !isTesting && event.round_number && !isNewCircuit;
 
-              const content = (
-                <div
-                  key={`${event.event_date}-${event.event_name}`}
-                  className="flex-shrink-0 w-80 bg-bg-primary border border-border-primary rounded-lg p-4"
-                >
-                  <div className="flex items-center gap-4">
-                    {/* Countdown - Vertical on Left */}
-                    <div className="flex flex-col items-center justify-center border-r border-border-primary pr-3">
-                      <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide">
-                        In
-                      </span>
-                      <span className="text-2xl font-bold text-text-primary my-1">
-                        {daysUntil}
-                      </span>
-                      <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide">
-                        {daysUntil === 1 ? "Day" : "Days"}
-                      </span>
-                    </div>
-
-                    {/* Event Info - Right Side */}
-                    <div className="flex-1 text-center flex flex-col">
-                      <h3 className="text-sm font-bold text-text-primary mb-2 truncate">
-                        {event.event_name}
-                      </h3>
-                      <div className="text-3xl mb-2">{flag}</div>
-                      <span className="text-xs font-semibold text-text-tertiary uppercase tracking-wider block mb-2">
-                        {isTesting ? "Testing" : "Grand Prix"}
-                      </span>
-                      <p className="text-xs text-text-tertiary truncate">
-                        {event.location}
-                      </p>
-                      <p className="text-xs text-text-muted mt-1 mb-3 truncate">
-                        {formattedDate}
-                      </p>
-
-                      {/* Action Button/Badge */}
-                      {isNewCircuit && !isTesting && (
-                        <div className="mt-auto">
-                          <span className="inline-block px-3 py-1 text-xs font-semibold bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded">
-                            New Circuit
+                  const content = (
+                    <div
+                      key={`${event.event_date}-${event.event_name}`}
+                      className="flex-shrink-0 w-80 bg-bg-primary border border-border-primary rounded-lg p-4"
+                    >
+                      <div className="flex items-center gap-4">
+                        {/* Countdown - Vertical on Left */}
+                        <div className="flex flex-col items-center justify-center border-r border-border-primary pr-3">
+                          <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide">
+                            In
+                          </span>
+                          <span className="text-2xl font-bold text-text-primary my-1">
+                            {daysUntil}
+                          </span>
+                          <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide">
+                            {daysUntil === 1 ? "Day" : "Days"}
                           </span>
                         </div>
-                      )}
-                      {showLastYearLink && (
-                        <div className="mt-auto">
-                          <Link
-                            href={`/results/${lastYear}/${event.round_number}`}
-                            className="inline-block px-3 py-1 text-xs font-semibold bg-bg-secondary text-text-tertiary border border-border-primary rounded hover:border-purple-500/50 hover:text-purple-400 transition-colors duration-200"
-                          >
-                            View {lastYear} Results
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
 
-              return content;
-            })}
+                        {/* Event Info - Right Side */}
+                        <div className="flex-1 text-center flex flex-col">
+                          <h3 className="text-sm font-bold text-text-primary mb-2 truncate">
+                            {event.event_name}
+                          </h3>
+                          <div className="text-3xl mb-2">{flag}</div>
+                          <span className="text-xs font-semibold text-text-tertiary uppercase tracking-wider block mb-2">
+                            {isTesting ? "Testing" : "Grand Prix"}
+                          </span>
+                          <p className="text-xs text-text-tertiary truncate">
+                            {event.location}
+                          </p>
+                          <p className="text-xs text-text-muted mt-1 mb-3 truncate">
+                            {formattedDate}
+                          </p>
+
+                          {/* Action Button/Badge */}
+                          {isNewCircuit && !isTesting && (
+                            <div className="mt-auto">
+                              <span className="inline-block px-3 py-1 text-xs font-semibold bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded">
+                                New Circuit
+                              </span>
+                            </div>
+                          )}
+                          {showLastYearLink && (
+                            <div className="mt-auto">
+                              <Link
+                                href={`/results/${lastYear}/${event.round_number}`}
+                                className="inline-block px-3 py-1 text-xs font-semibold bg-bg-secondary text-text-tertiary border border-border-primary rounded hover:border-purple-500/50 hover:text-purple-400 transition-colors duration-200"
+                              >
+                                View {lastYear} Results
+                              </Link>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+
+                  return content;
+                })}
+              </div>
+            </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Latest Race Compact Component
+interface LatestRacePodiumDriver {
+  full_name: string;
+  driver_code: string;
+  country_code: string | null;
+  team_name: string;
+  team_color: string | null;
+  fastest_lap: boolean;
+}
+
+interface LatestRaceCompactData {
+  round: number;
+  event_name: string;
+  date: string;
+  circuit_name: string;
+  session_type: string;
+  podium: LatestRacePodiumDriver[];
+}
+
+async function fetchLatestRaceCompact(): Promise<LatestRaceCompactData> {
+  const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/results/latest`,
+    {
+      headers: {
+        "X-API-Key": apiKey,
+      },
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch latest race");
+  }
+
+  return res.json();
+}
+
+function LatestRaceCompact() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["latest-race-compact"],
+    queryFn: fetchLatestRaceCompact,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="bg-bg-primary border border-border-primary rounded-lg p-4">
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 bg-bg-secondary rounded w-3/4" />
+          <div className="h-4 bg-bg-secondary rounded w-1/2" />
+          <div className="space-y-2">
+            <div className="h-12 bg-bg-secondary rounded" />
+            <div className="h-12 bg-bg-secondary rounded" />
+            <div className="h-12 bg-bg-secondary rounded" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="bg-bg-primary border border-border-primary rounded-lg p-4">
+        <p className="text-red-400 text-sm">Failed to load latest race</p>
+      </div>
+    );
+  }
+
+  const year = new Date(data.date).getFullYear();
+  const formattedDate = new Date(data.date).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+  const flag = getCircuitFlagEmoji(data.circuit_name);
+
+  return (
+    <div className="bg-bg-primary border border-border-primary rounded-lg p-4">
+      {/* Header */}
+      <div className="text-center mb-4">
+        <h3 className="text-lg font-bold text-text-primary mb-1 truncate">
+          {data.event_name}
+        </h3>
+        <div className="text-4xl mb-2">{flag}</div>
+        <p className="text-xs text-text-tertiary">{data.circuit_name}</p>
+        <p className="text-xs text-text-muted mt-1">{formattedDate}</p>
+      </div>
+
+      {/* Top 3 Finishers */}
+      <div className="space-y-2 mb-4">
+        {data.podium.map((driver, index) => {
+          const position = index + 1;
+          const positionBg =
+            position === 1
+              ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+              : position === 2
+                ? "bg-gray-400/20 text-gray-300 border-gray-400/30"
+                : "bg-amber-600/20 text-amber-500 border-amber-600/30";
+
+          const driverFlag = driver.country_code
+            ? getDriverFlagEmoji(driver.country_code)
+            : "";
+
+          return (
+            <div
+              key={driver.driver_code}
+              className="flex items-center gap-3 bg-bg-secondary border border-border-primary rounded p-2"
+            >
+              {/* Position */}
+              <div
+                className={`flex-shrink-0 w-8 h-8 rounded-full ${positionBg} border flex items-center justify-center font-bold text-sm`}
+              >
+                {position}
+              </div>
+
+              {/* Driver Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  {driverFlag && <span className="text-sm">{driverFlag}</span>}
+                  <Link
+                    href={`/drivers/${driver.driver_code}`}
+                    className="font-semibold text-text-primary text-sm hover:text-purple-400 transition-colors truncate"
+                  >
+                    {driver.driver_code}
+                  </Link>
+                </div>
+                <p className="text-xs text-text-muted truncate">
+                  {driver.team_name}
+                </p>
+              </div>
+
+              {/* Fastest Lap Badge */}
+              {driver.fastest_lap && (
+                <div className="flex-shrink-0">
+                  <svg
+                    className="w-4 h-4 text-purple-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <title>Fastest Lap</title>
+                    <path d="M10 2L13 8L19 9L14.5 13.5L15.5 19L10 16L4.5 19L5.5 13.5L1 9L7 8L10 2Z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* View Full Results Link */}
+      <div className="pt-3 border-t border-border-primary">
+        <Link
+          href={`/results/${year}/${data.round}`}
+          className="block text-center px-3 py-2 text-xs font-semibold bg-bg-secondary text-text-tertiary border border-border-primary rounded hover:border-purple-500/50 hover:text-purple-400 transition-colors duration-200"
+        >
+          View Full Results
+        </Link>
       </div>
     </div>
   );

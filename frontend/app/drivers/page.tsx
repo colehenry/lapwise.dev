@@ -87,7 +87,7 @@ function DriverCard({ driver }: { driver: DriverStanding }) {
         </div>
 
         {/* Headshot */}
-        {hasValidHeadshot ? (
+        {hasValidHeadshot && driver.headshot_url ? (
           <Image
             src={driver.headshot_url}
             alt={driver.full_name}
