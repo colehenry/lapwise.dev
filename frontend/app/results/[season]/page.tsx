@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import JumpToRace from "@/components/JumpToRace";
 import PointsByRoundGraph from "@/components/PointsByRoundGraph";
 import { apiHeaders, apiUrl } from "@/lib/api";
 
@@ -185,22 +186,30 @@ export default function ResultsPage() {
     <main className="min-h-screen bg-[#15151e] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header with year selector and title */}
-        <div className="mb-6 flex items-center gap-3">
-          {/* Year Dropdown */}
-          <select
-            value={season}
-            onChange={(e) => handleYearChange(e.target.value)}
-            className="px-3 py-1.5 border border-[#2a2a35] rounded bg-[#1e1e28] text-2xl text-white font-bold focus:outline-none focus:border-[#a020f0] hover:border-[#a020f0]/50 transition-all cursor-pointer"
-          >
-            {availableYears.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Year Dropdown */}
+            <select
+              value={season}
+              onChange={(e) => handleYearChange(e.target.value)}
+              className="px-3 py-1.5 border border-[#2a2a35] rounded bg-[#1e1e28] text-2xl text-white font-bold focus:outline-none focus:border-[#a020f0] hover:border-[#a020f0]/50 transition-all cursor-pointer"
+            >
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
 
-          {/* Title */}
-          <h1 className="text-2xl font-bold text-white">Season Results</h1>
+            {/* Title */}
+            <h1 className="text-2xl font-bold text-white">Season Results</h1>
+          </div>
+
+          {/* Jump to Race Button */}
+          <JumpToRace
+            currentSeason={season}
+            availableSeasons={availableYears}
+          />
         </div>
         {/* Final Standings Section */}
         <div className="mb-6">
