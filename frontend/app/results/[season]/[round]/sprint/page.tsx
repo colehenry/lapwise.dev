@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import SessionDetail from "@/components/SessionDetail";
-import { apiUrl, apiHeaders } from "@/lib/api";
+import { apiHeaders, apiUrl } from "@/lib/api";
 
 // Type definitions matching our API responses
 type CircuitInfo = {

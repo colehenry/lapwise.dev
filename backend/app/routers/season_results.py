@@ -24,6 +24,8 @@ def sanitize_float(value: Optional[float]) -> Optional[float]:
     if math.isnan(value) or math.isinf(value):
         return None
     return value
+
+
 from app.schemas.result import (
     StandingsResponse,
     DriverStanding,
@@ -46,8 +48,7 @@ router = APIRouter()
 
 @router.get("/seasons", response_model=List[int])
 async def get_available_seasons(
-    db: AsyncSession = Depends(get_db),
-    api_key: str = Depends(verify_api_key)
+    db: AsyncSession = Depends(get_db), api_key: str = Depends(verify_api_key)
 ):
     """
     Get all available seasons/years that have session data.
@@ -60,17 +61,14 @@ async def get_available_seasons(
     seasons = [row[0] for row in result.all()]
 
     if not seasons:
-        raise HTTPException(
-            status_code=404, detail="No seasons found"
-        )
+        raise HTTPException(status_code=404, detail="No seasons found")
 
     return seasons
 
 
 @router.get("/latest", response_model=RoundSummary)
 async def get_latest_race(
-    db: AsyncSession = Depends(get_db),
-    api_key: str = Depends(verify_api_key)
+    db: AsyncSession = Depends(get_db), api_key: str = Depends(verify_api_key)
 ):
     """
     Get the most recent race result with top 3 finishers.
@@ -91,9 +89,7 @@ async def get_latest_race(
     latest_session = session_result.scalar_one_or_none()
 
     if not latest_session:
-        raise HTTPException(
-            status_code=404, detail="No race results found"
-        )
+        raise HTTPException(status_code=404, detail="No race results found")
 
     # Get top 3 finishers for this race
     query = (
@@ -106,6 +102,7 @@ async def get_latest_race(
             SessionResult.position,
             Driver.full_name,
             Driver.driver_code,
+            Driver.country_code,
             SessionResult.headshot_url,
             Team.name.label("team_name"),
             Team.team_color,
@@ -133,6 +130,7 @@ async def get_latest_race(
         RoundPodiumDriver(
             full_name=row.full_name,
             driver_code=row.driver_code,
+            country_code=row.country_code,
             team_name=row.team_name,
             team_color=row.team_color,
             headshot_url=row.headshot_url,
@@ -157,49 +155,91 @@ async def get_latest_race(
 async def get_season_standings(
     season: int,
     db: AsyncSession = Depends(get_db),
-    api_key: str = Depends(verify_api_key)
+    api_key: str = Depends(verify_api_key),
 ):
     """
     Get driver and constructor championship standings for a season.
 
-    Calculates total points by summing all session results (races, sprints, etc.)
-    for each driver and team.
+    Calculates total points by summing all session results
+    (races, sprints, etc.) for each driver and team.
     """
 
-    # ========================================================================
+    # ====================================================================
     # Driver Standings Query
-    # ========================================================================
-    # Sum points grouped by driver, ordered by total points descending
-    # Note: We get headshot_url from the session_results (it's stored per session)
-    # We'll get the first non-null headshot for each driver
-    driver_query = (
+    # ====================================================================
+    # First, get total points per driver
+    # (aggregating across all teams they drove for)
+    points_subquery = (
         select(
+            Driver.id.label("driver_id"),
             Driver.driver_code,
             Driver.full_name,
-            Team.name.label("team_name"),
-            Team.team_color,
-            func.max(SessionResult.headshot_url).label("headshot_url"),  # Get any headshot
+            Driver.country_code,
             func.sum(SessionResult.points).label("total_points"),
         )
         .join(SessionResult, Driver.id == SessionResult.driver_id)
-        .join(Team, SessionResult.team_id == Team.id)
         .join(Session, SessionResult.session_id == Session.id)
         .where(Session.year == season)
-        .where(SessionResult.points.isnot(None))  # Exclude NULL points
+        .where(SessionResult.points.isnot(None))
         .group_by(
             Driver.id,
             Driver.driver_code,
             Driver.full_name,
-            Team.name,
-            Team.team_color,
+            Driver.country_code,
         )
-        .order_by(func.sum(SessionResult.points).desc())
+        .subquery()
     )
 
-    driver_result = await db.execute(driver_query)
-    driver_rows = driver_result.all()
+    # Then, for each driver, get their most recent session
+    # For each driver, get the session_id of their most recent race
+    # We'll use a lateral subquery to get exactly one result per driver
+    latest_results = {}
+    for driver_row in await db.execute(
+        select(Driver.id)
+        .distinct()
+        .join(SessionResult, Driver.id == SessionResult.driver_id)
+        .join(Session, SessionResult.session_id == Session.id)
+        .where(Session.year == season)
+    ):
+        driver_id = driver_row[0]
+        # Get the most recent session_result for this driver
+        latest_result_query = (
+            select(SessionResult, Team)
+            .join(Session, SessionResult.session_id == Session.id)
+            .join(Team, SessionResult.team_id == Team.id)
+            .where(SessionResult.driver_id == driver_id)
+            .where(Session.year == season)
+            .order_by(Session.date.desc(), Session.round.desc())
+            .limit(1)
+        )
+        result = await db.execute(latest_result_query)
+        row = result.first()
+        if row:
+            latest_results[driver_id] = row
 
-    if not driver_rows:
+    # Build driver standings by combining points with latest team info
+    driver_standings = []
+    for driver_row in await db.execute(
+        select(points_subquery).order_by(points_subquery.c.total_points.desc())
+    ):
+        driver_id = driver_row.driver_id
+        if driver_id in latest_results:
+            session_result, team = latest_results[driver_id]
+            driver_standings.append(
+                {
+                    "driver_code": driver_row.driver_code,
+                    "full_name": driver_row.full_name,
+                    "country_code": driver_row.country_code,
+                    "total_points": driver_row.total_points,
+                    "team_name": team.name,
+                    "team_color": team.team_color,
+                    "headshot_url": session_result.headshot_url
+                    if session_result.headshot_url != "None"
+                    else None,
+                }
+            )
+
+    if not driver_standings:
         raise HTTPException(
             status_code=404, detail=f"No results found for season {season}"
         )
@@ -208,14 +248,15 @@ async def get_season_standings(
     drivers = [
         DriverStanding(
             position=idx + 1,
-            driver_code=row.driver_code,
-            full_name=row.full_name,
-            team_name=row.team_name,
-            team_color=row.team_color,
-            total_points=float(row.total_points),
-            headshot_url=row.headshot_url,
+            driver_code=row["driver_code"],
+            full_name=row["full_name"],
+            country_code=row["country_code"],
+            team_name=row["team_name"],
+            team_color=row["team_color"],
+            total_points=float(row["total_points"]),
+            headshot_url=row["headshot_url"],
         )
-        for idx, row in enumerate(driver_rows)
+        for idx, row in enumerate(driver_standings)
     ]
 
     # ========================================================================
@@ -257,7 +298,7 @@ async def get_points_progression(
     season: int,
     mode: str = "drivers",
     db: AsyncSession = Depends(get_db),
-    api_key: str = Depends(verify_api_key)
+    api_key: str = Depends(verify_api_key),
 ):
     """
     Get cumulative points progression throughout a season.
@@ -271,8 +312,7 @@ async def get_points_progression(
     """
     if mode not in ["drivers", "constructors"]:
         raise HTTPException(
-            status_code=400,
-            detail="Mode must be either 'drivers' or 'constructors'"
+            status_code=400, detail="Mode must be either 'drivers' or 'constructors'"
         )
 
     if mode == "drivers":
@@ -286,12 +326,15 @@ async def get_points_progression(
                 Session.round,
                 Session.session_type,
                 Circuit.name.label("circuit_name"),
-                func.sum(
-                    func.coalesce(SessionResult.points, 0)
-                ).over(
+                func.sum(func.coalesce(SessionResult.points, 0))
+                .over(
                     partition_by=Driver.id,
-                    order_by=(Session.round, Session.session_type.desc())  # sprint_race before race
-                ).label("cumulative_points")
+                    order_by=(
+                        Session.round,
+                        Session.session_type.desc(),
+                    ),  # sprint_race before race
+                )
+                .label("cumulative_points"),
             )
             .join(SessionResult, Driver.id == SessionResult.driver_id)
             .join(Session, SessionResult.session_id == Session.id)
@@ -299,7 +342,13 @@ async def get_points_progression(
             .join(Circuit, Session.circuit_id == Circuit.id)
             .where(Session.year == season)
             .where(Session.session_type.in_(["race", "sprint_race"]))
-            .distinct(Driver.id, Session.round, Session.session_type, Team.team_color, Circuit.name)
+            .distinct(
+                Driver.id,
+                Session.round,
+                Session.session_type,
+                Team.team_color,
+                Circuit.name,
+            )
             .order_by(Driver.id, Session.round, Session.session_type.desc())
         )
 
@@ -308,23 +357,23 @@ async def get_points_progression(
 
         if not rows:
             raise HTTPException(
-                status_code=404,
-                detail=f"No points data found for season {season}"
+                status_code=404, detail=f"No points data found for season {season}"
             )
 
         # Get all sessions (sprint and race) with their details
         sessions_query = (
-            select(
-                Session.round,
-                Session.event_name,
-                Session.session_type
-            )
+            select(Session.round, Session.event_name, Session.session_type)
             .where(Session.year == season)
             .where(Session.session_type.in_(["race", "sprint_race"]))
-            .order_by(Session.round, Session.session_type.desc())  # sprint_race before race alphabetically
+            .order_by(
+                Session.round, Session.session_type.desc()
+            )  # sprint_race before race alphabetically
         )
         sessions_result = await db.execute(sessions_query)
-        all_sessions = [(row.round, row.event_name, row.session_type) for row in sessions_result.all()]
+        all_sessions = [
+            (row.round, row.event_name, row.session_type)
+            for row in sessions_result.all()
+        ]
 
         # Group by driver and track points per session
         drivers_dict = {}
@@ -335,16 +384,22 @@ async def get_points_progression(
                     "driver_code": row.driver_code,
                     "full_name": row.full_name,
                     "team_color": row.team_color,
-                    "sessions_data": {}
+                    "sessions_data": {},
                 }
             # Store cumulative points per round
             if row.round not in drivers_dict[key]["sessions_data"]:
                 drivers_dict[key]["sessions_data"][row.round] = {}
-            drivers_dict[key]["sessions_data"][row.round][row.session_type] = float(row.cumulative_points)
+            drivers_dict[key]["sessions_data"][row.round][row.session_type] = float(
+                row.cumulative_points
+            )
 
         # Build progression with sprint and race as separate data points
         for driver_data in drivers_dict.values():
-            progression = [PointsProgressionRound(round="0", cumulative_points=0.0, event_name=None)]
+            progression = [
+                PointsProgressionRound(
+                    round="0", cumulative_points=0.0, event_name=None
+                )
+            ]
             last_points = 0.0
 
             for round_num, event_name, session_type in all_sessions:
@@ -356,13 +411,17 @@ async def get_points_progression(
                 # If not, carry forward last_points
 
                 # Create round identifier: "21-sprint" for sprint, "21" for race
-                round_id = f"{round_num}-sprint" if session_type == "sprint_race" else str(round_num)
+                round_id = (
+                    f"{round_num}-sprint"
+                    if session_type == "sprint_race"
+                    else str(round_num)
+                )
 
                 progression.append(
                     PointsProgressionRound(
                         round=round_id,
                         cumulative_points=last_points,
-                        event_name=event_name
+                        event_name=event_name,
                     )
                 )
 
@@ -373,20 +432,15 @@ async def get_points_progression(
         sorted_drivers = sorted(
             drivers_dict.values(),
             key=lambda d: d["progression"][-1].cumulative_points,
-            reverse=True
+            reverse=True,
         )
         for idx, driver_data in enumerate(sorted_drivers):
             driver_data["final_position"] = idx + 1
 
-        drivers = [
-            DriverProgressionData(**data) for data in drivers_dict.values()
-        ]
+        drivers = [DriverProgressionData(**data) for data in drivers_dict.values()]
 
         return PointsProgressionResponse(
-            year=season,
-            type="drivers",
-            drivers=drivers,
-            constructors=None
+            year=season, type="drivers", drivers=drivers, constructors=None
         )
 
     else:
@@ -398,12 +452,12 @@ async def get_points_progression(
                 Session.round,
                 Session.session_type,
                 Circuit.name.label("circuit_name"),
-                func.sum(
-                    func.coalesce(SessionResult.points, 0)
-                ).over(
+                func.sum(func.coalesce(SessionResult.points, 0))
+                .over(
                     partition_by=Team.id,
-                    order_by=(Session.round, Session.session_type.desc())
-                ).label("cumulative_points")
+                    order_by=(Session.round, Session.session_type.desc()),
+                )
+                .label("cumulative_points"),
             )
             .join(SessionResult, Team.id == SessionResult.team_id)
             .join(Session, SessionResult.session_id == Session.id)
@@ -419,23 +473,21 @@ async def get_points_progression(
 
         if not rows:
             raise HTTPException(
-                status_code=404,
-                detail=f"No points data found for season {season}"
+                status_code=404, detail=f"No points data found for season {season}"
             )
 
         # Get all sessions (sprint and race) with their details
         sessions_query = (
-            select(
-                Session.round,
-                Session.event_name,
-                Session.session_type
-            )
+            select(Session.round, Session.event_name, Session.session_type)
             .where(Session.year == season)
             .where(Session.session_type.in_(["race", "sprint_race"]))
             .order_by(Session.round, Session.session_type.desc())
         )
         sessions_result = await db.execute(sessions_query)
-        all_sessions = [(row.round, row.event_name, row.session_type) for row in sessions_result.all()]
+        all_sessions = [
+            (row.round, row.event_name, row.session_type)
+            for row in sessions_result.all()
+        ]
 
         # Group by team and track points per session
         teams_dict = {}
@@ -445,15 +497,21 @@ async def get_points_progression(
                 teams_dict[key] = {
                     "team_name": row.team_name,
                     "team_color": row.team_color,
-                    "sessions_data": {}
+                    "sessions_data": {},
                 }
             if row.round not in teams_dict[key]["sessions_data"]:
                 teams_dict[key]["sessions_data"][row.round] = {}
-            teams_dict[key]["sessions_data"][row.round][row.session_type] = float(row.cumulative_points)
+            teams_dict[key]["sessions_data"][row.round][row.session_type] = float(
+                row.cumulative_points
+            )
 
         # Build progression with sprint and race as separate data points
         for team_data in teams_dict.values():
-            progression = [PointsProgressionRound(round="0", cumulative_points=0.0, event_name=None)]
+            progression = [
+                PointsProgressionRound(
+                    round="0", cumulative_points=0.0, event_name=None
+                )
+            ]
             last_points = 0.0
 
             for round_num, event_name, session_type in all_sessions:
@@ -463,13 +521,17 @@ async def get_points_progression(
                     last_points = round_data[session_type]
 
                 # Create round identifier: "21-sprint" for sprint, "21" for race
-                round_id = f"{round_num}-sprint" if session_type == "sprint_race" else str(round_num)
+                round_id = (
+                    f"{round_num}-sprint"
+                    if session_type == "sprint_race"
+                    else str(round_num)
+                )
 
                 progression.append(
                     PointsProgressionRound(
                         round=round_id,
                         cumulative_points=last_points,
-                        event_name=event_name
+                        event_name=event_name,
                     )
                 )
 
@@ -480,7 +542,7 @@ async def get_points_progression(
         sorted_teams = sorted(
             teams_dict.values(),
             key=lambda t: t["progression"][-1].cumulative_points,
-            reverse=True
+            reverse=True,
         )
         for idx, team_data in enumerate(sorted_teams):
             team_data["final_position"] = idx + 1
@@ -490,10 +552,7 @@ async def get_points_progression(
         ]
 
         return PointsProgressionResponse(
-            year=season,
-            type="constructors",
-            drivers=None,
-            constructors=constructors
+            year=season, type="constructors", drivers=None, constructors=constructors
         )
 
 
@@ -501,7 +560,7 @@ async def get_points_progression(
 async def get_season_rounds(
     season: int,
     db: AsyncSession = Depends(get_db),
-    api_key: str = Depends(verify_api_key)
+    api_key: str = Depends(verify_api_key),
 ):
     """
     Get all rounds for a season with top 3 finishers for each.
@@ -522,6 +581,7 @@ async def get_season_rounds(
             SessionResult.position,
             Driver.full_name,
             Driver.driver_code,
+            Driver.country_code,
             SessionResult.headshot_url,
             Team.name.label("team_name"),
             Team.team_color,
@@ -532,12 +592,14 @@ async def get_season_rounds(
         .join(Team, SessionResult.team_id == Team.id)
         .join(Circuit, Session.circuit_id == Circuit.id)
         .where(Session.year == season)
-        .where(Session.session_type.in_(["race", "sprint_race"]))  # Only races, not qualifying
+        .where(
+            Session.session_type.in_(["race", "sprint_race"])
+        )  # Only races, not qualifying
         .where(SessionResult.position.between(1, 3))  # Top 3 only
         .order_by(
             Session.round,
             Session.date,  # Order by date to get sprint before race (sprint happens earlier)
-            SessionResult.position
+            SessionResult.position,
         )
     )
 
@@ -566,6 +628,7 @@ async def get_season_rounds(
             RoundPodiumDriver(
                 full_name=row.full_name,
                 driver_code=row.driver_code,
+                country_code=row.country_code,
                 team_name=row.team_name,
                 team_color=row.team_color,
                 headshot_url=row.headshot_url,
@@ -584,7 +647,7 @@ async def get_sprint_lap_times(
     season: int,
     round: int,
     db: AsyncSession = Depends(get_db),
-    api_key: str = Depends(verify_api_key)
+    api_key: str = Depends(verify_api_key),
 ):
     """
     Get lap-by-lap timing data for all drivers in a specific sprint race.
@@ -621,6 +684,7 @@ async def get_sprint_lap_times(
             Lap.track_status,
             Driver.driver_code,
             Driver.full_name,
+            Driver.country_code,
             Team.team_color,
             SessionResult.position.label("final_position"),
         )
@@ -653,6 +717,7 @@ async def get_sprint_lap_times(
             drivers_dict[driver_code] = {
                 "driver_code": driver_code,
                 "full_name": row.full_name,
+                "country_code": row.country_code,
                 "team_color": row.team_color,
                 "final_position": row.final_position,
                 "laps": [],
@@ -681,7 +746,7 @@ async def get_sprint_details(
     season: int,
     round: int,
     db: AsyncSession = Depends(get_db),
-    api_key: str = Depends(verify_api_key)
+    api_key: str = Depends(verify_api_key),
 ):
     """
     Get full results for a specific sprint race.
@@ -757,6 +822,7 @@ async def get_sprint_details(
                 driver_number=result.Driver.driver_number,
                 driver_code=result.Driver.driver_code,
                 full_name=result.Driver.full_name,
+                country_code=result.Driver.country_code,
             ),
             team=TeamInfo(
                 name=result.Team.name,
@@ -782,7 +848,7 @@ async def get_round_details(
     season: int,
     round: int,
     db: AsyncSession = Depends(get_db),
-    api_key: str = Depends(verify_api_key)
+    api_key: str = Depends(verify_api_key),
 ):
     """
     Get full results for a specific round (main race).
@@ -859,6 +925,7 @@ async def get_round_details(
                 driver_number=result.Driver.driver_number,
                 driver_code=result.Driver.driver_code,
                 full_name=result.Driver.full_name,
+                country_code=result.Driver.country_code,
             ),
             team=TeamInfo(
                 name=result.Team.name,
@@ -878,12 +945,13 @@ async def get_round_details(
 
     return SessionResultsResponse(session=session_info, results=session_results)
 
+
 @router.get("/{season}/{round}/lap-times", response_model=LapTimesResponse)
 async def get_lap_times(
     season: int,
     round: int,
     db: AsyncSession = Depends(get_db),
-    api_key: str = Depends(verify_api_key)
+    api_key: str = Depends(verify_api_key),
 ):
     """
     Get lap-by-lap timing data for all drivers in a specific race.
@@ -920,6 +988,7 @@ async def get_lap_times(
             Lap.track_status,
             Driver.driver_code,
             Driver.full_name,
+            Driver.country_code,
             Team.team_color,
             SessionResult.position.label("final_position"),
         )
@@ -952,6 +1021,7 @@ async def get_lap_times(
             drivers_dict[driver_code] = {
                 "driver_code": driver_code,
                 "full_name": row.full_name,
+                "country_code": row.country_code,
                 "team_color": row.team_color,
                 "final_position": row.final_position,
                 "laps": [],

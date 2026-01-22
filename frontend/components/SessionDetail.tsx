@@ -3,6 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import {
+  getCircuitFlagEmoji,
+  getDriverFlagEmoji,
+  getTeamFlagEmoji,
+} from "@/lib/flags";
 import LapTimeByLapGraph from "./LapTimeByLapGraph";
 
 // Type definitions matching our API responses
@@ -17,6 +22,7 @@ type DriverInfo = {
   driver_number: number | null;
   driver_code: string;
   full_name: string;
+  country_code: string | null;
 };
 
 type TeamInfo = {
@@ -99,7 +105,12 @@ export default function SessionDetail({
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-white">
+                <h1 className="text-3xl font-bold text-white inline-flex items-center gap-2">
+                  {session.circuit.country && (
+                    <span className="text-2xl">
+                      {getCircuitFlagEmoji(session.circuit.country)}
+                    </span>
+                  )}
                   {session.event_name}
                 </h1>
                 {isSprint && (
@@ -136,13 +147,13 @@ export default function SessionDetail({
           <div className="overflow-x-auto">
             <table className="w-full table-fixed">
               <colgroup>
-                <col style={{ width: '60px' }} />
-                <col style={{ width: '60px' }} />
-                <col style={{ width: '280px' }} />
-                <col style={{ width: '200px' }} />
-                <col style={{ width: '140px' }} />
-                <col style={{ width: '80px' }} />
-                <col style={{ width: '120px' }} />
+                <col style={{ width: "60px" }} />
+                <col style={{ width: "60px" }} />
+                <col style={{ width: "280px" }} />
+                <col style={{ width: "200px" }} />
+                <col style={{ width: "140px" }} />
+                <col style={{ width: "80px" }} />
+                <col style={{ width: "120px" }} />
               </colgroup>
               <thead className="bg-[#252530] border-b-2 border-[#2a2a35]">
                 <tr>
@@ -172,19 +183,19 @@ export default function SessionDetail({
           <div
             className="overflow-y-auto overflow-x-auto"
             style={{
-              maxHeight: expandedResults ? '760px' : '380px',
-              minHeight: expandedResults ? '760px' : '380px'
+              maxHeight: expandedResults ? "760px" : "380px",
+              minHeight: expandedResults ? "760px" : "380px",
             }}
           >
             <table className="w-full table-fixed">
               <colgroup>
-                <col style={{ width: '60px' }} />
-                <col style={{ width: '60px' }} />
-                <col style={{ width: '280px' }} />
-                <col style={{ width: '200px' }} />
-                <col style={{ width: '140px' }} />
-                <col style={{ width: '80px' }} />
-                <col style={{ width: '120px' }} />
+                <col style={{ width: "60px" }} />
+                <col style={{ width: "60px" }} />
+                <col style={{ width: "280px" }} />
+                <col style={{ width: "200px" }} />
+                <col style={{ width: "140px" }} />
+                <col style={{ width: "80px" }} />
+                <col style={{ width: "120px" }} />
               </colgroup>
               <tbody className="divide-y divide-[#2a2a35]">
                 {results.map((result) => (
@@ -240,8 +251,13 @@ export default function SessionDetail({
                         <div>
                           <Link
                             href={`/drivers/${result.driver.driver_code}`}
-                            className="font-semibold text-white hover:text-[#e10600] transition-colors"
+                            className="font-semibold text-white hover:text-[#e10600] transition-colors inline-flex items-center gap-1.5"
                           >
+                            {result.driver.country_code && (
+                              <span className="text-sm">
+                                {getDriverFlagEmoji(result.driver.country_code)}
+                              </span>
+                            )}
                             {result.driver.full_name}
                           </Link>
                           <div className="text-sm text-gray-400">
@@ -261,13 +277,16 @@ export default function SessionDetail({
                     {/* Team */}
                     <td className="px-4 py-4">
                       <div
-                        className="font-semibold"
+                        className="font-semibold inline-flex items-center gap-1.5"
                         style={{
                           color: result.team.team_color
                             ? `#${result.team.team_color}`
                             : "#fff",
                         }}
                       >
+                        <span className="text-sm">
+                          {getTeamFlagEmoji(result.team.name)}
+                        </span>
                         {result.team.name}
                       </div>
                     </td>
@@ -358,7 +377,11 @@ export default function SessionDetail({
 
         {/* Lap Time Graph */}
         <div className="mt-6">
-          <LapTimeByLapGraph season={session.year} round={session.round} isSprint={isSprint} />
+          <LapTimeByLapGraph
+            season={session.year}
+            round={session.round}
+            isSprint={isSprint}
+          />
         </div>
       </div>
     </main>

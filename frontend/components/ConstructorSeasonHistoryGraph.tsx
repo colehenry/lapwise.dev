@@ -12,40 +12,38 @@ import {
 } from "recharts";
 import { apiHeaders, apiUrl } from "@/lib/api";
 
-interface SeasonHistory {
+interface ConstructorSeasonHistory {
   year: number;
   championship_position: number | null;
   total_points: number;
-  team_name: string;
   team_color: string | null;
 }
 
-interface DriverSeasonHistoryResponse {
-  driver_code: string;
-  full_name: string;
-  seasons: SeasonHistory[];
+interface ConstructorSeasonHistoryResponse {
+  team_name: string;
+  seasons: ConstructorSeasonHistory[];
 }
 
-interface RaceHistory {
+interface ConstructorRaceHistory {
   year: number;
   round: number;
   race_name: string;
-  position: number | null;
-  points: number | null;
-  team_name: string;
-  team_color: string | null;
-  status: string;
+  best_position: number | null;
+  total_points: number;
+  driver_1_name: string | null;
+  driver_1_position: number | null;
+  driver_2_name: string | null;
+  driver_2_position: number | null;
 }
 
-interface DriverRaceHistoryResponse {
-  driver_code: string;
-  full_name: string;
-  races: RaceHistory[];
+interface ConstructorRaceHistoryResponse {
+  team_name: string;
+  races: ConstructorRaceHistory[];
   available_years: number[];
 }
 
-interface DriverSeasonHistoryGraphProps {
-  driverCode: string;
+interface ConstructorSeasonHistoryGraphProps {
+  teamName: string;
 }
 
 type GraphMode = "season" | "race";
@@ -177,9 +175,6 @@ const CustomTooltip = ({ active, payload, graphMode }: any) => {
         <p className="font-bold text-white mb-2">{data.year}</p>
         <div className="space-y-1">
           <p className="text-sm text-gray-300">
-            <span className="font-semibold">Team:</span> {data.team_name}
-          </p>
-          <p className="text-sm text-gray-300">
             <span className="font-semibold">Position:</span>{" "}
             {data.championship_position
               ? `P${data.championship_position}`
@@ -237,21 +232,25 @@ const CustomTooltip = ({ active, payload, graphMode }: any) => {
           {data.round || "?"}
         </p>
         <p className="text-sm text-gray-300">
-          <span className="font-semibold">Team:</span>{" "}
-          {data.team_name || "Unknown"}
+          <span className="font-semibold">Best Position:</span>{" "}
+          {data.best_position ? `P${data.best_position}` : "N/A"}
         </p>
         <p className="text-sm text-gray-300">
-          <span className="font-semibold">Position:</span>{" "}
-          {data.position ? `P${data.position}` : data.status || "N/A"}
+          <span className="font-semibold">Total Points:</span>{" "}
+          {data.total_points?.toFixed(1) || "0"}
         </p>
-        <p className="text-sm text-gray-300">
-          <span className="font-semibold">Points:</span>{" "}
-          {data.points !== null && data.points !== undefined
-            ? data.points
-            : data.position && data.position <= 10
-              ? "(missing data)"
-              : "0"}
-        </p>
+        {data.driver_1_name && (
+          <p className="text-sm text-gray-300">
+            <span className="font-semibold">{data.driver_1_name}:</span>{" "}
+            {data.driver_1_position ? `P${data.driver_1_position}` : "DNF"}
+          </p>
+        )}
+        {data.driver_2_name && (
+          <p className="text-sm text-gray-300">
+            <span className="font-semibold">{data.driver_2_name}:</span>{" "}
+            {data.driver_2_position ? `P${data.driver_2_position}` : "DNF"}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -272,7 +271,7 @@ const CustomXAxisTickSeason = (props: any) => {
 
 // Custom X-axis Tick Component for Race Mode
 const CustomXAxisTickRace = (props: any) => {
-  const { x, y, payload, index } = props;
+  const { x, y, payload } = props;
 
   // Only show label if this is a year boundary
   if (!payload || !payload.value) return null;
@@ -310,14 +309,13 @@ const CustomActiveDot = (props: any) => {
   );
 };
 
-export default function DriverSeasonHistoryGraph({
-  driverCode,
-}: DriverSeasonHistoryGraphProps) {
+export default function ConstructorSeasonHistoryGraph({
+  teamName,
+}: ConstructorSeasonHistoryGraphProps) {
   const [seasonData, setSeasonData] =
-    useState<DriverSeasonHistoryResponse | null>(null);
-  const [raceData, setRaceData] = useState<DriverRaceHistoryResponse | null>(
-    null,
-  );
+    useState<ConstructorSeasonHistoryResponse | null>(null);
+  const [raceData, setRaceData] =
+    useState<ConstructorRaceHistoryResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [graphMode, setGraphMode] = useState<GraphMode>("season");
   const [dataMode, setDataMode] = useState<DataMode>("position");
@@ -333,7 +331,7 @@ export default function DriverSeasonHistoryGraph({
       try {
         setLoading(true);
         const response = await fetch(
-          apiUrl(`/api/drivers/${driverCode}/season-history`),
+          apiUrl(`/api/constructors/${teamName}/season-history`),
           {
             cache: "no-store",
             headers: apiHeaders(),
@@ -343,7 +341,7 @@ export default function DriverSeasonHistoryGraph({
 
         // Add previous season data for change calculations
         const enrichedSeasons = historyData.seasons.map(
-          (season: SeasonHistory, index: number) => {
+          (season: ConstructorSeasonHistory, index: number) => {
             if (index === 0) {
               return season;
             }
@@ -358,12 +356,12 @@ export default function DriverSeasonHistoryGraph({
 
         setSeasonData({ ...historyData, seasons: enrichedSeasons });
       } catch (error) {
-        console.error("Failed to fetch driver season history:", error);
+        console.error("Failed to fetch constructor season history:", error);
       } finally {
         setLoading(false);
       }
     })();
-  }, [driverCode]);
+  }, [teamName]);
 
   // Fetch race data when switching to race mode or changing year range
   useEffect(() => {
@@ -378,7 +376,7 @@ export default function DriverSeasonHistoryGraph({
           }
 
           const response = await fetch(
-            apiUrl(`/api/drivers/${driverCode}/race-history?${params}`),
+            apiUrl(`/api/constructors/${teamName}/race-history?${params}`),
             {
               cache: "no-store",
               headers: apiHeaders(),
@@ -399,13 +397,13 @@ export default function DriverSeasonHistoryGraph({
             setYearRange({ start: startYear, end: endYear });
           }
         } catch (error) {
-          console.error("Failed to fetch driver race history:", error);
+          console.error("Failed to fetch constructor race history:", error);
         } finally {
           setLoading(false);
         }
       })();
     }
-  }, [driverCode, graphMode, yearRange]);
+  }, [teamName, graphMode, yearRange]);
 
   const handleRangeSelect = (start: number, end: number) => {
     setYearRange({ start, end });
@@ -449,7 +447,7 @@ export default function DriverSeasonHistoryGraph({
       ? raceData.races.map((race, index) => ({
           ...race,
           raceIndex: index,
-          yearLabel: race.year.toString(), // Always show year for tooltip access
+          yearLabel: race.year.toString(),
           showYearLabel:
             index === 0 || race.year !== raceData.races[index - 1]?.year,
         }))
@@ -511,7 +509,7 @@ export default function DriverSeasonHistoryGraph({
                   : "bg-[#252530] text-gray-400 hover:bg-[#2a2a35]"
               }`}
             >
-              Finishing Position
+              Championship Position
             </button>
             <button
               type="button"
@@ -562,7 +560,7 @@ export default function DriverSeasonHistoryGraph({
             reversed={dataMode === "position"}
             domain={
               dataMode === "position"
-                ? [1, (dataMax: number) => Math.max(dataMax, 20)]
+                ? [1, (dataMax: number) => Math.max(dataMax, 10)]
                 : [0, "auto"]
             }
             tick={{ fill: "#999", fontSize: 12 }}
@@ -570,7 +568,9 @@ export default function DriverSeasonHistoryGraph({
             tickLine={false}
             label={{
               value:
-                dataMode === "position" ? "Finishing Position" : "Total Points",
+                dataMode === "position"
+                  ? "Championship Position"
+                  : "Total Points",
               angle: -90,
               position: "insideLeft",
               fill: "#999",
@@ -586,8 +586,8 @@ export default function DriverSeasonHistoryGraph({
                   ? "championship_position"
                   : "total_points"
                 : dataMode === "position"
-                  ? "position"
-                  : "points"
+                  ? "best_position"
+                  : "total_points"
             }
             stroke={getLineColor()}
             strokeWidth={3}

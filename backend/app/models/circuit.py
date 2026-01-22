@@ -27,7 +27,9 @@ class Circuit(Base):
     name = Column(String, nullable=False)  # "Bahrain International Circuit"
     location = Column(String, nullable=False)  # "Sakhir"
     country = Column(String, nullable=False)  # "Bahrain"
-    track_length_km = Column(Float, nullable=True)  # Track length in kilometers (e.g., 5.412)
+    track_length_km = Column(
+        Float, nullable=True
+    )  # Track length in kilometers (e.g., 5.412)
 
     # Optional: Geographic coordinates for mapping
     latitude = Column(Float, nullable=True)

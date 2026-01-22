@@ -6,7 +6,15 @@ Replaces the previous 'races' table with a more flexible structure that
 supports all session types (race, sprint_race, qualifying, sprint_qualifying).
 """
 
-from sqlalchemy import Column, Integer, String, Date, ForeignKey, UniqueConstraint, Index
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Date,
+    ForeignKey,
+    UniqueConstraint,
+    Index,
+)
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -35,27 +43,39 @@ class Session(Base):
     # Session identification
     year = Column(Integer, nullable=False, index=True)  # 2024, 2023, etc.
     round = Column(Integer, nullable=False)  # 1, 2, 3, ... 24
-    session_type = Column(String, nullable=False)  # 'race', 'sprint_race', 'qualifying', 'sprint_qualifying'
+    session_type = Column(
+        String, nullable=False
+    )  # 'race', 'sprint_race', 'qualifying', 'sprint_qualifying'
 
     # Event metadata
     event_name = Column(String, nullable=False)  # "Bahrain Grand Prix"
     date = Column(Date, nullable=False)  # Session date
 
     # Foreign key to circuits table
-    circuit_id = Column(Integer, ForeignKey("circuits.id", ondelete="RESTRICT"), nullable=False)
+    circuit_id = Column(
+        Integer, ForeignKey("circuits.id", ondelete="RESTRICT"), nullable=False
+    )
 
     # Relationships
     circuit = relationship("Circuit", back_populates="sessions")
-    results = relationship("SessionResult", back_populates="session", cascade="all, delete-orphan")
+    results = relationship(
+        "SessionResult", back_populates="session", cascade="all, delete-orphan"
+    )
     laps = relationship("Lap", back_populates="session", cascade="all, delete-orphan")
-    weather_data = relationship("Weather", back_populates="session", cascade="all, delete-orphan")
-    track_status = relationship("TrackStatus", back_populates="session", cascade="all, delete-orphan")
-    race_control_messages = relationship("RaceControlMessage", back_populates="session", cascade="all, delete-orphan")
+    weather_data = relationship(
+        "Weather", back_populates="session", cascade="all, delete-orphan"
+    )
+    track_status = relationship(
+        "TrackStatus", back_populates="session", cascade="all, delete-orphan"
+    )
+    race_control_messages = relationship(
+        "RaceControlMessage", back_populates="session", cascade="all, delete-orphan"
+    )
 
     # Constraints
     __table_args__ = (
-        UniqueConstraint('year', 'round', 'session_type', name='uq_year_round_session'),
-        Index('idx_year_session_type', 'year', 'session_type'),
+        UniqueConstraint("year", "round", "session_type", name="uq_year_round_session"),
+        Index("idx_year_session_type", "year", "session_type"),
     )
 
     def __repr__(self):

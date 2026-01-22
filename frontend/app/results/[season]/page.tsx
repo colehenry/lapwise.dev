@@ -4,8 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import JumpToRace from "@/components/JumpToRace";
 import PointsByRoundGraph from "@/components/PointsByRoundGraph";
-import { apiUrl, apiHeaders } from "@/lib/api";
+import { apiHeaders, apiUrl } from "@/lib/api";
 
 // Type definitions matching our API responses
 type DriverStanding = {
@@ -66,12 +67,15 @@ export default function ResultsPage() {
   const [availableYears, setAvailableYears] = useState<number[]>([]);
 
   // Scroll to top when season changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: We intentionally want to scroll when season changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [season]);
 
   // Fetch available years once on mount
   useEffect(() => {
+    let isMounted = true;
+
     (async () => {
       try {
         const response = await fetch(apiUrl("/api/results/seasons"), {
@@ -79,18 +83,32 @@ export default function ResultsPage() {
           headers: apiHeaders(),
         });
         const years = await response.json();
-        setAvailableYears(years);
+
+        if (isMounted) {
+          setAvailableYears(years);
+        }
       } catch (error) {
-        console.error("Failed to fetch available seasons:", error);
+        // Suppress fetch errors during prefetch (development behavior)
+        if (isMounted && document.visibilityState === "visible") {
+          console.error("Failed to fetch available seasons:", error);
+        }
         // Fallback to current year if fetch fails
-        setAvailableYears([2024]);
+        if (isMounted) {
+          setAvailableYears([2024]);
+        }
       }
     })();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Fetch standings and rounds when season changes
   useEffect(() => {
     if (!season) return;
+
+    let isMounted = true;
 
     (async () => {
       try {
@@ -108,17 +126,30 @@ export default function ResultsPage() {
           }),
         ]);
 
+        // Only update state if component is still mounted
+        if (!isMounted) return;
+
         const standingsData = await standingsRes.json();
         const roundsData = await roundsRes.json();
 
         setStandings(standingsData);
         setRounds(roundsData);
       } catch (error) {
-        console.error("Failed to fetch results:", error);
+        // Suppress fetch errors during prefetch (development behavior)
+        // Only log if component is actually mounted and visible
+        if (isMounted && document.visibilityState === "visible") {
+          console.error("Failed to fetch results:", error);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     })();
+
+    return () => {
+      isMounted = false;
+    };
   }, [season]);
 
   const handleYearChange = (newYear: string) => {
@@ -155,22 +186,30 @@ export default function ResultsPage() {
     <main className="min-h-screen bg-[#15151e] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header with year selector and title */}
-        <div className="mb-6 flex items-center gap-3">
-          {/* Year Dropdown */}
-          <select
-            value={season}
-            onChange={(e) => handleYearChange(e.target.value)}
-            className="px-3 py-1.5 border border-[#2a2a35] rounded bg-[#1e1e28] text-2xl text-white font-bold focus:outline-none focus:border-[#a020f0] hover:border-[#a020f0]/50 transition-all cursor-pointer"
-          >
-            {availableYears.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Year Dropdown */}
+            <select
+              value={season}
+              onChange={(e) => handleYearChange(e.target.value)}
+              className="px-3 py-1.5 border border-[#2a2a35] rounded bg-[#1e1e28] text-2xl text-white font-bold focus:outline-none focus:border-[#a020f0] hover:border-[#a020f0]/50 transition-all cursor-pointer"
+            >
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
 
-          {/* Title */}
-          <h1 className="text-2xl font-bold text-white">Season Results</h1>
+            {/* Title */}
+            <h1 className="text-2xl font-bold text-white">Season Results</h1>
+          </div>
+
+          {/* Jump to Race Button */}
+          <JumpToRace
+            currentSeason={season}
+            availableSeasons={availableYears}
+          />
         </div>
         {/* Final Standings Section */}
         <div className="mb-6">
@@ -184,61 +223,60 @@ export default function ResultsPage() {
               <div
                 className="space-y-2 overflow-y-auto"
                 style={{
-                  maxHeight: expandedStandings ? '660px' : '330px',
-                  minHeight: expandedStandings ? '660px' : '330px'
+                  maxHeight: expandedStandings ? "660px" : "330px",
+                  minHeight: expandedStandings ? "660px" : "330px",
                 }}
               >
-                {standings?.drivers
-                  .map((driver, idx) => (
-                    <div
-                      key={`${driver.driver_code}-${driver.team_name}-${idx}`}
-                      className="flex items-center gap-2 py-2 border-b border-[#2a2a35] last:border-0 min-h-[60px]"
-                    >
-                      {/* Position */}
-                      <div className="text-xl font-bold text-gray-500 w-6">
-                        {driver.position}
-                      </div>
+                {standings?.drivers.map((driver, idx) => (
+                  <div
+                    key={`${driver.driver_code}-${driver.team_name}-${idx}`}
+                    className="flex items-center gap-2 py-2 border-b border-[#2a2a35] last:border-0 min-h-[60px]"
+                  >
+                    {/* Position */}
+                    <div className="text-xl font-bold text-gray-500 w-6">
+                      {driver.position}
+                    </div>
 
-                      {/* Driver Photo */}
-                      {driver.headshot_url &&
-                        driver.headshot_url !== "None" &&
-                        driver.headshot_url !== "nan" &&
-                        driver.headshot_url.startsWith("http") && (
-                          <Image
-                            src={driver.headshot_url}
-                            alt={driver.full_name}
-                            width={40}
-                            height={40}
-                            className="rounded-full object-cover border border-gray-700"
-                          />
-                        )}
+                    {/* Driver Photo */}
+                    {driver.headshot_url &&
+                      driver.headshot_url !== "None" &&
+                      driver.headshot_url !== "nan" &&
+                      driver.headshot_url.startsWith("http") && (
+                        <Image
+                          src={driver.headshot_url}
+                          alt={driver.full_name}
+                          width={40}
+                          height={40}
+                          className="rounded-full object-cover border border-gray-700"
+                        />
+                      )}
 
-                      {/* Driver Info */}
-                      <div className="flex-1 flex flex-col justify-center">
-                        <Link
-                          href={`/drivers/${driver.driver_code}`}
-                          className="font-semibold text-white text-sm hover:text-[#e10600] transition-colors"
-                        >
-                          {driver.full_name}
-                        </Link>
-                        <div
-                          className="text-xs font-medium"
-                          style={{
-                            color: driver.team_color
-                              ? `#${driver.team_color}`
-                              : "#999",
-                          }}
-                        >
-                          {driver.team_name}
-                        </div>
-                      </div>
-
-                      {/* Points */}
-                      <div className="text-lg font-bold text-white">
-                        {driver.total_points}
+                    {/* Driver Info */}
+                    <div className="flex-1 flex flex-col justify-center">
+                      <Link
+                        href={`/drivers/${driver.driver_code}`}
+                        className="font-semibold text-white text-sm hover:text-[#e10600] transition-colors"
+                      >
+                        {driver.full_name}
+                      </Link>
+                      <div
+                        className="text-xs font-medium"
+                        style={{
+                          color: driver.team_color
+                            ? `#${driver.team_color}`
+                            : "#999",
+                        }}
+                      >
+                        {driver.team_name}
                       </div>
                     </div>
-                  ))}
+
+                    {/* Points */}
+                    <div className="text-lg font-bold text-white">
+                      {driver.total_points}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -250,62 +288,61 @@ export default function ResultsPage() {
               <div
                 className="space-y-2 overflow-y-auto"
                 style={{
-                  maxHeight: expandedStandings ? '660px' : '330px',
-                  minHeight: expandedStandings ? '660px' : '330px'
+                  maxHeight: expandedStandings ? "660px" : "330px",
+                  minHeight: expandedStandings ? "660px" : "330px",
                 }}
               >
-                {standings?.constructors
-                  .map((team, idx) => (
-                    <div
-                      key={`${team.team_name}-${idx}`}
-                      className="py-2 border-b border-[#2a2a35] last:border-0 min-h-[60px]"
-                    >
-                      <div className="flex items-center gap-2">
-                        {/* Position */}
-                        <div className="text-xl font-bold text-gray-500 w-6">
-                          {team.position}
-                        </div>
+                {standings?.constructors.map((team, idx) => (
+                  <div
+                    key={`${team.team_name}-${idx}`}
+                    className="py-2 border-b border-[#2a2a35] last:border-0 min-h-[60px]"
+                  >
+                    <div className="flex items-center gap-2">
+                      {/* Position */}
+                      <div className="text-xl font-bold text-gray-500 w-6">
+                        {team.position}
+                      </div>
 
-                        {/* Team Info */}
-                        <div className="flex-1 flex flex-col justify-center">
-                          <div
-                            className="font-bold text-sm"
-                            style={{
-                              color: team.team_color
-                                ? `#${team.team_color}`
-                                : "#fff",
-                            }}
-                          >
-                            {team.team_name}
-                          </div>
-                          {/* Team Drivers */}
-                          <div className="text-xs text-gray-400">
-                            {getTeamDrivers(team.team_name).map(
-                              (driver, driverIdx) => (
-                                <span key={driver.driver_code}>
-                                  <Link
-                                    href={`/drivers/${driver.driver_code}`}
-                                    className="hover:text-white transition-colors"
-                                  >
-                                    {driver.full_name}
-                                  </Link>
-                                  {" "}({driver.total_points})
-                                  {driverIdx <
-                                    getTeamDrivers(team.team_name).length - 1 &&
-                                    ", "}
-                                </span>
-                              ),
-                            )}
-                          </div>
+                      {/* Team Info */}
+                      <div className="flex-1 flex flex-col justify-center">
+                        <div
+                          className="font-bold text-sm"
+                          style={{
+                            color: team.team_color
+                              ? `#${team.team_color}`
+                              : "#fff",
+                          }}
+                        >
+                          {team.team_name}
                         </div>
-
-                        {/* Points */}
-                        <div className="text-lg font-bold text-white">
-                          {team.total_points}
+                        {/* Team Drivers */}
+                        <div className="text-xs text-gray-400">
+                          {getTeamDrivers(team.team_name).map(
+                            (driver, driverIdx) => (
+                              <span key={driver.driver_code}>
+                                <Link
+                                  href={`/drivers/${driver.driver_code}`}
+                                  className="hover:text-white transition-colors"
+                                >
+                                  {driver.full_name}
+                                </Link>{" "}
+                                ({driver.total_points})
+                                {driverIdx <
+                                  getTeamDrivers(team.team_name).length - 1 &&
+                                  ", "}
+                              </span>
+                            ),
+                          )}
                         </div>
                       </div>
+
+                      {/* Points */}
+                      <div className="text-lg font-bold text-white">
+                        {team.total_points}
+                      </div>
                     </div>
-                  ))}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
