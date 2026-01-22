@@ -37,8 +37,8 @@ class Team(Base):
 
     # Constraints
     __table_args__ = (
-        UniqueConstraint('year', 'name', name='uq_team_year_name'),
-        Index('idx_team_year', 'year'),
+        UniqueConstraint("year", "name", name="uq_team_year_name"),
+        Index("idx_team_year", "year"),
     )
 
     def __repr__(self):

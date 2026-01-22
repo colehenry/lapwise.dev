@@ -14,6 +14,7 @@ class DriverProfileResponse(BaseModel):
 
     Used for GET /api/drivers/{driver_code} endpoint.
     """
+
     # Basic info
     driver_code: str
     full_name: str
@@ -43,6 +44,7 @@ class DriverProfileResponse(BaseModel):
 
 class SeasonHistory(BaseModel):
     """Single season championship result for a driver"""
+
     year: int
     championship_position: Optional[int] = None
     total_points: float
@@ -59,6 +61,7 @@ class DriverSeasonHistoryResponse(BaseModel):
 
     Used for GET /api/drivers/{driver_code}/season-history endpoint.
     """
+
     driver_code: str
     full_name: str
     seasons: List[SeasonHistory]
@@ -69,6 +72,7 @@ class DriverSeasonHistoryResponse(BaseModel):
 
 class RaceHistory(BaseModel):
     """Single race result for a driver"""
+
     year: int
     round: int
     race_name: str
@@ -88,6 +92,7 @@ class DriverRaceHistoryResponse(BaseModel):
 
     Used for GET /api/drivers/{driver_code}/race-history endpoint.
     """
+
     driver_code: str
     full_name: str
     races: List[RaceHistory]

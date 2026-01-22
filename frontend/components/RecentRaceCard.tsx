@@ -1,11 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import { getDriverFlagEmoji } from "@/lib/flags";
 
 interface PodiumDriver {
   full_name: string;
   driver_code: string;
+  country_code: string | null;
   team_name: string;
   team_color: string | null;
   headshot_url: string | null;
@@ -29,7 +31,7 @@ async function fetchLatestRace(): Promise<LatestRaceData> {
       headers: {
         "X-API-Key": apiKey,
       },
-    }
+    },
   );
 
   if (!res.ok) {
@@ -142,14 +144,23 @@ export default function RecentRaceCard() {
                   <div className="flex-1">
                     <Link
                       href={`/drivers/${driver.driver_code}`}
-                      className="font-bold text-white text-lg hover:text-[#e10600] transition-colors inline-block"
+                      className="font-bold text-white text-lg hover:text-[#e10600] transition-colors inline-flex items-center gap-1.5"
                     >
+                      {driver.country_code && (
+                        <span className="text-base">
+                          {getDriverFlagEmoji(driver.country_code)}
+                        </span>
+                      )}
                       {driver.driver_code}
                     </Link>
                     <p className="text-sm text-gray-400">{driver.team_name}</p>
                     {driver.fastest_lap && (
                       <p className="text-xs text-purple-400 mt-1 flex items-center gap-1">
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <svg
+                          className="w-3 h-3"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
                           <title>Fastest Lap</title>
                           <path d="M10 2L13 8L19 9L14.5 13.5L15.5 19L10 16L4.5 19L5.5 13.5L1 9L7 8L10 2Z" />
                         </svg>

@@ -3,15 +3,11 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import DriverSeasonHistoryGraph from "@/components/DriverSeasonHistoryGraph";
-import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
+import ConstructorSeasonHistoryGraph from "@/components/ConstructorSeasonHistoryGraph";
 
-interface DriverProfile {
-  driver_code: string;
-  full_name: string;
-  driver_number: number | null;
-  country_code: string | null;
-  headshot_url: string | null;
+interface ConstructorProfile {
+  team_name: string;
+  team_color: string | null;
   total_seasons: number;
   total_races: number;
   total_championships: number;
@@ -19,15 +15,15 @@ interface DriverProfile {
   total_podiums: number;
   total_points: number;
   best_finish: number | null;
-  current_team: string | null;
-  current_team_color: string | null;
   latest_season: number | null;
 }
 
-async function fetchDriverProfile(driverCode: string): Promise<DriverProfile> {
+async function fetchConstructorProfile(
+  teamName: string,
+): Promise<ConstructorProfile> {
   const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/drivers/${driverCode}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/constructors/${teamName}`,
     {
       headers: {
         "X-API-Key": apiKey,
@@ -36,7 +32,7 @@ async function fetchDriverProfile(driverCode: string): Promise<DriverProfile> {
   );
 
   if (!res.ok) {
-    throw new Error("Failed to fetch driver profile");
+    throw new Error("Failed to fetch constructor profile");
   }
 
   return res.json();
@@ -57,13 +53,13 @@ function getOrdinalSuffix(position: number): string {
   return `${position}th`;
 }
 
-export default function DriverProfilePage() {
+export default function ConstructorProfilePage() {
   const params = useParams();
-  const driverCode = params.driverCode as string;
+  const teamName = params.teamName as string;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["driver-profile", driverCode],
-    queryFn: () => fetchDriverProfile(driverCode),
+    queryKey: ["constructor-profile", teamName],
+    queryFn: () => fetchConstructorProfile(teamName),
   });
 
   if (isLoading) {
@@ -74,6 +70,7 @@ export default function DriverProfilePage() {
             <div className="h-12 bg-[#2a2a3e] rounded w-1/3" />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[...Array(8)].map((_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: Static loading skeleton items
                 <div key={i} className="h-32 bg-[#2a2a3e] rounded" />
               ))}
             </div>
@@ -89,16 +86,16 @@ export default function DriverProfilePage() {
         <div className="max-w-5xl mx-auto">
           <div className="bg-[#1e1e2e] rounded-lg p-8">
             <h1 className="text-2xl font-bold text-white mb-4">
-              Driver Not Found
+              Constructor Not Found
             </h1>
             <p className="text-gray-400 mb-6">
-              Could not find driver with code: {driverCode.toUpperCase()}
+              Could not find constructor: {teamName.replace(/-/g, " ")}
             </p>
             <Link
-              href="/"
+              href="/constructors"
               className="text-[#e10600] hover:text-[#ff0800] transition-colors"
             >
-              ← Back to Home
+              ← Back to Constructors
             </Link>
           </div>
         </div>
@@ -121,63 +118,44 @@ export default function DriverProfilePage() {
         {/* Header */}
         <div className="mb-8">
           <Link
-            href="/"
+            href="/constructors"
             className="text-gray-400 hover:text-white transition-colors mb-4 inline-block"
           >
             ← Back
           </Link>
 
           <div className="flex items-center gap-6 mb-4">
-            {data.headshot_url && (
-              <img
-                src={data.headshot_url}
-                alt={data.full_name}
-                className="w-32 h-32 rounded-full object-cover border-4"
-                style={{
-                  borderColor: data.current_team_color
-                    ? `#${data.current_team_color}`
-                    : "#888",
-                }}
-              />
-            )}
-            {!data.headshot_url && (
-              <div
-                className="w-32 h-32 rounded-full flex items-center justify-center text-4xl font-bold text-gray-400 border-4 bg-[#1e1e2e]"
-                style={{
-                  borderColor: data.current_team_color
-                    ? `#${data.current_team_color}`
-                    : "#888",
-                }}
-              >
-                {data.driver_code}
-              </div>
-            )}
+            {/* Team Color Badge */}
+            <div
+              className="w-32 h-32 rounded-full border-4 flex items-center justify-center"
+              style={{
+                backgroundColor: data.team_color
+                  ? `#${data.team_color}`
+                  : "#888",
+                borderColor: data.team_color ? `#${data.team_color}` : "#888",
+              }}
+            >
+              <span className="text-white font-bold text-2xl text-center px-4">
+                {data.team_name
+                  .split(" ")
+                  .map((word) => word[0])
+                  .join("")}
+              </span>
+            </div>
+
             <div>
               <h1 className="text-5xl font-bold text-white mb-2">
-                {data.full_name}
+                {data.team_name}
               </h1>
               <div className="flex items-center gap-4 text-gray-400 text-lg">
-                <span className="text-2xl font-mono">{data.driver_code}</span>
-                {data.driver_number && (
-                  <>
-                    <span>•</span>
-                    <span>#{data.driver_number}</span>
-                  </>
+                {data.latest_season && (
+                  <span>Active in {data.latest_season}</span>
                 )}
-                {data.current_team && (
+                {data.best_finish && (
                   <>
                     <span>•</span>
-                    <span>{data.current_team}</span>
-                  </>
-                )}
-                {data.country_code && (
-                  <>
-                    <span>•</span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="text-xl">
-                        {getDriverFlagEmoji(data.country_code)}
-                      </span>
-                      {getCountryName(data.country_code)}
+                    <span>
+                      Best Finish: {getOrdinalSuffix(data.best_finish)}
                     </span>
                   </>
                 )}
@@ -199,10 +177,10 @@ export default function DriverProfilePage() {
           ))}
         </div>
 
-        {/* Career Highlights */}
+        {/* Team Highlights */}
         <div className="bg-gradient-to-br from-[#1e1e2e] to-[#2a2a3e] rounded-lg p-8 border border-gray-800">
           <h2 className="text-2xl font-bold text-white mb-6">
-            Career Highlights
+            Team Highlights
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
@@ -234,7 +212,7 @@ export default function DriverProfilePage() {
 
         {/* Championship History Graph */}
         <div className="mt-8">
-          <DriverSeasonHistoryGraph driverCode={driverCode} />
+          <ConstructorSeasonHistoryGraph teamName={teamName} />
         </div>
       </div>
     </div>

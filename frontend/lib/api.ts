@@ -5,8 +5,7 @@
  * Uses NEXT_PUBLIC_API_URL environment variable for backend API base URL.
  */
 
-const API_BASE_URL =
-	process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
 
 /**
@@ -22,9 +21,9 @@ const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
  * ```
  */
 export const apiUrl = (path: string): string => {
-	// Ensure path starts with /
-	const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-	return `${API_BASE_URL}${normalizedPath}`;
+  // Ensure path starts with /
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${API_BASE_URL}${normalizedPath}`;
 };
 
 /**
@@ -38,7 +37,7 @@ export const apiUrl = (path: string): string => {
  * ```
  */
 export const apiHeaders = (): HeadersInit => {
-	return {
-		"X-API-Key": API_KEY,
-	};
+  return {
+    "X-API-Key": API_KEY,
+  };
 };
