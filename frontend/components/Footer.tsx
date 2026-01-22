@@ -5,16 +5,16 @@ export default function Footer() {
 
   const footerLinks = {
     Product: [
-      { label: "Results", href: "/results" },
-      { label: "Drivers", href: "/drivers" },
-      { label: "Blog", href: "/blog" },
-      { label: "About", href: "/about" },
+      { label: "Results", href: "/results", external: false },
+      { label: "Drivers", href: "/drivers", external: false },
+      { label: "Blog", href: "/blog", external: false },
+      { label: "About", href: "/about", external: false },
     ],
     Resources: [
-      { label: "FAQ", href: "/faq" },
-      { label: "Contact", href: "/contact" },
-      { label: "Privacy", href: "/privacy" },
-      { label: "Terms", href: "/terms" },
+      { label: "FAQ", href: "/faq", external: false },
+      { label: "Contact", href: "/contact", external: false },
+      { label: "Privacy", href: "/privacy", external: false },
+      { label: "Terms", href: "/terms", external: false },
     ],
     Social: [
       { label: "Twitter", href: "https://twitter.com", external: true },
