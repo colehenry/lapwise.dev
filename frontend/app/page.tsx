@@ -1,6 +1,5 @@
 import Link from "next/link";
 import NextRaceBanner from "@/components/NextRaceBanner";
-import RecentRaceCard from "@/components/RecentRaceCard";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -78,40 +77,6 @@ export default function Home() {
 
       {/* Next Race Banner */}
       <NextRaceBanner />
-
-      {/* Latest Race Results */}
-      <Section spacing="lg" background="primary">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-3xl font-bold text-text-primary mb-2">
-              Latest Race Results
-            </h2>
-            <p className="text-text-tertiary">
-              Check out the most recent Grand Prix results
-            </p>
-          </div>
-          <Link href="/results">
-            <Button variant="ghost">
-              View All
-              <svg
-                className="w-4 h-4 ml-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <title>Arrow right</title>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </Button>
-          </Link>
-        </div>
-        <RecentRaceCard />
-      </Section>
 
       {/* Features Section */}
       <Section spacing="lg" background="secondary">

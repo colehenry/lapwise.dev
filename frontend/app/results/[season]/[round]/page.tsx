@@ -17,6 +17,7 @@ type DriverInfo = {
   driver_number: number | null;
   driver_code: string;
   full_name: string;
+  country_code: string | null;
 };
 
 type TeamInfo = {
