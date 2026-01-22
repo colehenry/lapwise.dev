@@ -30,7 +30,8 @@ export default function Home() {
             <span className="text-text-primary">wise</span>
           </h1>
           <p className="text-xl md:text-2xl text-text-tertiary mb-8 animate-slideUp">
-            Dive deep into Formula 1 data, telemetry, and race results.
+            Dive deep into the story behind every race, every lap, every
+            millisecond.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slideUp">
             <Button variant="primary" size="lg" className="group">
