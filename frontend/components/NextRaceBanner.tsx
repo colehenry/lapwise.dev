@@ -217,18 +217,18 @@ function LatestRaceCompact() {
 
   if (isLoading) {
     return (
-      <div className="bg-bg-primary border border-border-primary rounded-lg p-8 shadow-lg">
-        <div className="animate-pulse space-y-6">
-          <div className="text-center space-y-3">
-            <div className="h-8 bg-bg-secondary rounded w-2/3 mx-auto" />
-            <div className="h-16 w-16 bg-bg-secondary rounded-full mx-auto" />
-            <div className="h-4 bg-bg-secondary rounded w-1/3 mx-auto" />
+      <div className="bg-bg-primary border border-border-primary rounded-lg p-6 shadow-lg">
+        <div className="animate-pulse space-y-4">
+          <div className="text-center space-y-2">
+            <div className="h-6 bg-bg-secondary rounded w-2/3 mx-auto" />
+            <div className="h-12 w-12 bg-bg-secondary rounded-full mx-auto" />
+            <div className="h-3 bg-bg-secondary rounded w-1/3 mx-auto" />
             <div className="h-3 bg-bg-secondary rounded w-1/2 mx-auto" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            <div className="h-48 bg-bg-secondary rounded-lg" />
-            <div className="h-48 bg-bg-secondary rounded-lg" />
-            <div className="h-48 bg-bg-secondary rounded-lg" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <div className="h-32 bg-bg-secondary rounded-lg" />
+            <div className="h-32 bg-bg-secondary rounded-lg" />
+            <div className="h-32 bg-bg-secondary rounded-lg" />
           </div>
         </div>
       </div>
@@ -237,7 +237,7 @@ function LatestRaceCompact() {
 
   if (error || !data) {
     return (
-      <div className="bg-bg-primary border border-border-primary rounded-lg p-8 shadow-lg">
+      <div className="bg-bg-primary border border-border-primary rounded-lg p-6 shadow-lg">
         <p className="text-red-400 text-sm text-center">
           Failed to load latest race
         </p>
@@ -254,22 +254,22 @@ function LatestRaceCompact() {
   const flag = getCircuitFlagEmoji(data.circuit_name);
 
   return (
-    <div className="bg-bg-primary border border-border-primary rounded-lg p-8 shadow-lg hover:border-purple-500/30 transition-all duration-300">
+    <div className="bg-bg-primary border border-border-primary rounded-lg p-6 shadow-lg hover:border-purple-500/30 transition-all duration-300">
       {/* Header - Centered */}
-      <div className="text-center mb-8">
-        <h3 className="text-2xl font-bold text-text-primary mb-3">
+      <div className="text-center mb-6">
+        <h3 className="text-xl font-bold text-text-primary mb-2">
           {data.event_name}
         </h3>
-        <div className="text-5xl mb-3">{flag}</div>
-        <span className="inline-block px-3 py-1 text-xs font-semibold text-text-tertiary uppercase tracking-wider bg-bg-secondary border border-border-primary rounded-full mb-2">
+        <div className="text-3xl mb-2">{flag}</div>
+        <span className="inline-block px-2.5 py-0.5 text-[10px] font-semibold text-text-tertiary uppercase tracking-wider bg-bg-secondary border border-border-primary rounded-full mb-1.5">
           Grand Prix
         </span>
-        <p className="text-sm text-text-tertiary mt-2">{data.circuit_name}</p>
-        <p className="text-sm text-text-muted mt-1">{formattedDate}</p>
+        <p className="text-xs text-text-tertiary mt-1.5">{data.circuit_name}</p>
+        <p className="text-xs text-text-muted mt-0.5">{formattedDate}</p>
       </div>
 
       {/* Top 3 Finishers - Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {data.podium.map((driver, index) => {
           const position = index + 1;
           const positionColor =
@@ -286,31 +286,31 @@ function LatestRaceCompact() {
           return (
             <div
               key={driver.driver_code}
-              className="relative bg-bg-secondary border-2 border-border-primary rounded-lg p-5 hover:border-purple-500/50 hover:shadow-xl transition-all duration-200 group"
+              className="relative bg-bg-secondary border border-border-primary rounded-lg p-3 hover:border-purple-500/50 transition-all duration-200 group"
               style={{
                 borderTopColor: driver.team_color
                   ? `#${driver.team_color}`
                   : undefined,
-                borderTopWidth: "4px",
+                borderTopWidth: "3px",
               }}
             >
               {/* Position Badge */}
               <div
-                className={`absolute -top-4 -left-4 w-12 h-12 rounded-full ${positionColor} border-4 border-bg-primary flex items-center justify-center font-bold text-xl shadow-lg`}
+                className={`absolute -top-2.5 -left-2.5 w-9 h-9 rounded-full ${positionColor} border-3 border-bg-primary flex items-center justify-center font-bold text-base shadow-md`}
               >
                 {position}
               </div>
 
               {/* Driver Info - Centered */}
-              <div className="flex flex-col items-center gap-3 mt-3">
+              <div className="flex flex-col items-center gap-2 mt-1">
                 {driver.headshot_url ? (
                   <img
                     src={driver.headshot_url}
                     alt={driver.full_name}
-                    className="w-20 h-20 rounded-full object-cover bg-bg-primary border-2 border-border-primary group-hover:border-purple-500/50 transition-all duration-200 shadow-md"
+                    className="w-14 h-14 rounded-full object-cover bg-bg-primary border border-border-primary group-hover:border-purple-500/50 transition-all duration-200"
                   />
                 ) : (
-                  <div className="w-20 h-20 rounded-full bg-bg-primary flex items-center justify-center text-text-muted font-bold border-2 border-border-primary text-lg">
+                  <div className="w-14 h-14 rounded-full bg-bg-primary flex items-center justify-center text-text-muted font-bold border border-border-primary text-sm">
                     {driver.driver_code}
                   </div>
                 )}
@@ -318,20 +318,20 @@ function LatestRaceCompact() {
                 <div className="text-center">
                   <Link
                     href={`/drivers/${driver.driver_code}`}
-                    className="font-bold text-text-primary text-xl hover:text-purple-400 transition-colors inline-flex items-center gap-2"
+                    className="font-bold text-text-primary text-base hover:text-purple-400 transition-colors inline-flex items-center gap-1.5"
                   >
                     {driverFlag && (
-                      <span className="text-lg">{driverFlag}</span>
+                      <span className="text-sm">{driverFlag}</span>
                     )}
                     {driver.driver_code}
                   </Link>
-                  <p className="text-sm text-text-tertiary mt-1.5">
+                  <p className="text-xs text-text-tertiary mt-0.5">
                     {driver.team_name}
                   </p>
                   {driver.fastest_lap && (
-                    <div className="mt-3 inline-flex items-center gap-1.5 px-2 py-1 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-full text-xs font-semibold">
+                    <div className="mt-1.5 inline-flex items-center gap-1 px-1.5 py-0.5 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-full text-[10px] font-semibold">
                       <svg
-                        className="w-3.5 h-3.5"
+                        className="w-2.5 h-2.5"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -349,10 +349,10 @@ function LatestRaceCompact() {
       </div>
 
       {/* View Full Results Link */}
-      <div className="pt-6 border-t border-border-primary">
+      <div className="pt-4 border-t border-border-primary">
         <Link
           href={`/results/${year}/${data.round}`}
-          className="block text-center px-4 py-3 text-sm font-semibold bg-bg-secondary text-text-tertiary border border-border-primary rounded-lg hover:border-purple-500/50 hover:text-purple-400 hover:bg-purple-500/5 transition-all duration-200"
+          className="block text-center px-3 py-2 text-xs font-semibold bg-bg-secondary text-text-tertiary border border-border-primary rounded-lg hover:border-purple-500/50 hover:text-purple-400 hover:bg-purple-500/5 transition-all duration-200"
         >
           View Full Results →
         </Link>
