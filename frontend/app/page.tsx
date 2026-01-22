@@ -1,4 +1,5 @@
 import Link from "next/link";
+import NextRaceBanner from "@/components/NextRaceBanner";
 import RecentRaceCard from "@/components/RecentRaceCard";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
@@ -73,6 +74,9 @@ export default function Home() {
           </div>
         </div>
       </Section>
+
+      {/* Next Race Banner */}
+      <NextRaceBanner />
 
       {/* Latest Race Results */}
       <Section spacing="lg" background="primary">

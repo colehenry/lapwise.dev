@@ -46,10 +46,11 @@ async def health_check():
     }
 
 
-from app.routers import season_results, drivers, constructors
+from app.routers import season_results, drivers, constructors, events
 
 app.include_router(season_results.router, prefix="/api/results", tags=["results"])
 app.include_router(drivers.router, prefix="/api/drivers", tags=["drivers"])
 app.include_router(
     constructors.router, prefix="/api/constructors", tags=["constructors"]
 )
+app.include_router(events.router, prefix="/api/events", tags=["events"])
