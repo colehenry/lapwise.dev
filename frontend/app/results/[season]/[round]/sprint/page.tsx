@@ -7,10 +7,12 @@ import { apiHeaders, apiUrl } from "@/lib/api";
 
 // Type definitions matching our API responses
 type CircuitInfo = {
+  id: number;
   name: string;
   location: string;
   country: string;
   track_length_km: number | null;
+  track_map_url: string | null;
 };
 
 type DriverInfo = {

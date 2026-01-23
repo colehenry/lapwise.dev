@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { getCircuitFlagEmoji, getDriverFlagEmoji } from "@/lib/flags";
 
@@ -187,6 +188,7 @@ interface LatestRaceCompactData {
   event_name: string;
   date: string;
   circuit_name: string;
+  circuit_id: number;
   session_type: string;
   podium: LatestRacePodiumDriver[];
 }
@@ -253,23 +255,39 @@ function LatestRaceCompact() {
   });
   const flag = getCircuitFlagEmoji(data.circuit_name);
 
+  const trackMapUrl = `/track-maps/${data.circuit_id}.png`;
+
   return (
     <div className="bg-bg-primary border border-border-primary rounded-lg p-6 shadow-lg hover:border-purple-500/30 transition-all duration-300">
-      {/* Header - Centered */}
-      <div className="text-center mb-6">
-        <h3 className="text-xl font-bold text-text-primary mb-2">
-          {data.event_name}
-        </h3>
-        <div className="text-3xl mb-2">{flag}</div>
-        <span className="inline-block px-2.5 py-0.5 text-[10px] font-semibold text-text-tertiary uppercase tracking-wider bg-bg-secondary border border-border-primary rounded-full mb-1.5">
-          Grand Prix
-        </span>
-        <p className="text-xs text-text-tertiary mt-1.5">{data.circuit_name}</p>
-        <p className="text-xs text-text-muted mt-0.5">{formattedDate}</p>
+      {/* Header with Track Map */}
+      <div className="flex items-start justify-between gap-6 mb-6">
+        {/* Race Info - Left Side */}
+        <div className="flex-1 text-center">
+          <h3 className="text-xl font-bold text-text-primary mb-2">
+            {data.event_name}
+          </h3>
+          <div className="text-3xl mb-2">{flag}</div>
+          <span className="inline-block px-2.5 py-0.5 text-[10px] font-semibold text-text-tertiary uppercase tracking-wider bg-bg-secondary border border-border-primary rounded-full mb-1.5">
+            Grand Prix
+          </span>
+          <p className="text-xs text-text-tertiary mt-1.5">{data.circuit_name}</p>
+          <p className="text-xs text-text-muted mt-0.5">{formattedDate}</p>
+        </div>
+
+        {/* Track Map - Right Side */}
+        <div className="flex-shrink-0">
+          <Image
+            src={trackMapUrl}
+            alt={`${data.circuit_name} track map`}
+            width={160}
+            height={160}
+            className="object-contain"
+          />
+        </div>
       </div>
 
-      {/* Top 3 Finishers - Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      {/* Top 3 Finishers - Grid Layout (Smaller Cards) */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
         {data.podium.map((driver, index) => {
           const position = index + 1;
           const positionColor =
@@ -286,7 +304,7 @@ function LatestRaceCompact() {
           return (
             <div
               key={driver.driver_code}
-              className="relative bg-bg-secondary border border-border-primary rounded-lg p-3 hover:border-purple-500/50 transition-all duration-200 group"
+              className="relative bg-bg-secondary border border-border-primary rounded-lg p-2 hover:border-purple-500/50 transition-all duration-200 group"
               style={{
                 borderTopColor: driver.team_color
                   ? `#${driver.team_color}`
@@ -294,23 +312,23 @@ function LatestRaceCompact() {
                 borderTopWidth: "3px",
               }}
             >
-              {/* Position Badge */}
+              {/* Position Badge - Smaller */}
               <div
-                className={`absolute -top-2.5 -left-2.5 w-9 h-9 rounded-full ${positionColor} border-3 border-bg-primary flex items-center justify-center font-bold text-base shadow-md`}
+                className={`absolute -top-2 -left-2 w-7 h-7 rounded-full ${positionColor} border-2 border-bg-primary flex items-center justify-center font-bold text-sm shadow-md`}
               >
                 {position}
               </div>
 
-              {/* Driver Info - Centered */}
-              <div className="flex flex-col items-center gap-2 mt-1">
+              {/* Driver Info - Centered & Compact */}
+              <div className="flex flex-col items-center gap-1.5 mt-0.5">
                 {driver.headshot_url ? (
                   <img
                     src={driver.headshot_url}
                     alt={driver.full_name}
-                    className="w-14 h-14 rounded-full object-cover bg-bg-primary border border-border-primary group-hover:border-purple-500/50 transition-all duration-200"
+                    className="w-10 h-10 rounded-full object-cover bg-bg-primary border border-border-primary group-hover:border-purple-500/50 transition-all duration-200"
                   />
                 ) : (
-                  <div className="w-14 h-14 rounded-full bg-bg-primary flex items-center justify-center text-text-muted font-bold border border-border-primary text-sm">
+                  <div className="w-10 h-10 rounded-full bg-bg-primary flex items-center justify-center text-text-muted font-bold border border-border-primary text-xs">
                     {driver.driver_code}
                   </div>
                 )}
@@ -318,27 +336,27 @@ function LatestRaceCompact() {
                 <div className="text-center">
                   <Link
                     href={`/drivers/${driver.driver_code}`}
-                    className="font-bold text-text-primary text-base hover:text-purple-400 transition-colors inline-flex items-center gap-1.5"
+                    className="font-bold text-text-primary text-sm hover:text-purple-400 transition-colors inline-flex items-center gap-1"
                   >
                     {driverFlag && (
-                      <span className="text-sm">{driverFlag}</span>
+                      <span className="text-xs">{driverFlag}</span>
                     )}
                     {driver.driver_code}
                   </Link>
-                  <p className="text-xs text-text-tertiary mt-0.5">
+                  <p className="text-[10px] text-text-tertiary mt-0.5 truncate max-w-[100px]">
                     {driver.team_name}
                   </p>
                   {driver.fastest_lap && (
-                    <div className="mt-1.5 inline-flex items-center gap-1 px-1.5 py-0.5 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-full text-[10px] font-semibold">
+                    <div className="mt-1 inline-flex items-center gap-0.5 px-1 py-0.5 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-full text-[9px] font-semibold">
                       <svg
-                        className="w-2.5 h-2.5"
+                        className="w-2 h-2"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
                         <title>Fastest Lap</title>
                         <path d="M10 2L13 8L19 9L14.5 13.5L15.5 19L10 16L4.5 19L5.5 13.5L1 9L7 8L10 2Z" />
                       </svg>
-                      Fastest Lap
+                      FL
                     </div>
                   )}
                 </div>

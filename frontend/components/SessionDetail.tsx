@@ -12,10 +12,12 @@ import LapTimeByLapGraph from "./LapTimeByLapGraph";
 
 // Type definitions matching our API responses
 type CircuitInfo = {
+  id: number;
   name: string;
   location: string;
   country: string;
   track_length_km: number | null;
+  track_map_url: string | null;
 };
 
 type DriverInfo = {
@@ -102,8 +104,8 @@ export default function SessionDetail({
 
         {/* Session Header */}
         <div className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-lg p-6 mb-6">
-          <div className="flex items-start justify-between">
-            <div>
+          <div className="flex items-start justify-between gap-6">
+            <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold text-white inline-flex items-center gap-2">
                   {session.circuit.country && (
@@ -131,14 +133,23 @@ export default function SessionDetail({
                   year: "numeric",
                 })}
               </p>
-            </div>
-            <div className="text-right">
               {session.circuit.track_length_km && (
-                <div className="text-sm text-gray-400">
-                  {session.circuit.track_length_km} km
-                </div>
+                <p className="text-sm text-gray-400 mt-1">
+                  Circuit Length: {session.circuit.track_length_km} km
+                </p>
               )}
             </div>
+            {session.circuit.track_map_url && (
+              <div className="flex-shrink-0">
+                <Image
+                  src={session.circuit.track_map_url}
+                  alt={`${session.circuit.name} track map`}
+                  width={200}
+                  height={200}
+                  className="object-contain"
+                />
+              </div>
+            )}
           </div>
         </div>
 
