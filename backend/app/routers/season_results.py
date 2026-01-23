@@ -99,6 +99,7 @@ async def get_latest_race(
             Session.date,
             Session.session_type,
             Circuit.name.label("circuit_name"),
+            Circuit.id.label("circuit_id"),
             SessionResult.position,
             Driver.full_name,
             Driver.driver_code,
@@ -146,6 +147,7 @@ async def get_latest_race(
         event_name=first_row.event_name,
         date=first_row.date,
         circuit_name=first_row.circuit_name,
+        circuit_id=first_row.circuit_id,
         session_type=first_row.session_type,
         podium=podium,
     )
@@ -578,6 +580,7 @@ async def get_season_rounds(
             Session.date,
             Session.session_type,
             Circuit.name.label("circuit_name"),
+            Circuit.id.label("circuit_id"),
             SessionResult.position,
             Driver.full_name,
             Driver.driver_code,
@@ -621,6 +624,7 @@ async def get_season_rounds(
                 "event_name": row.event_name,
                 "date": row.date,
                 "circuit_name": row.circuit_name,
+                "circuit_id": row.circuit_id,
                 "session_type": row.session_type,
                 "podium": [],
             }
@@ -806,10 +810,12 @@ async def get_sprint_details(
         event_name=session.event_name,
         date=session.date,
         circuit=CircuitInfo(
+            id=circuit.id,
             name=circuit.name,
             location=circuit.location,
             country=circuit.country,
             track_length_km=circuit.track_length_km,
+            track_map_url=f"/track-maps/{circuit.id}.png",
         ),
     )
 
@@ -909,10 +915,12 @@ async def get_round_details(
         event_name=session.event_name,
         date=session.date,
         circuit=CircuitInfo(
+            id=circuit.id,
             name=circuit.name,
             location=circuit.location,
             country=circuit.country,
             track_length_km=circuit.track_length_km,
+            track_map_url=f"/track-maps/{circuit.id}.png",
         ),
     )
 
