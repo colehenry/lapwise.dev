@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { getCircuitFlagEmoji } from "@/lib/flags";
 
@@ -26,14 +26,11 @@ interface CircuitsResponse {
 
 async function fetchCircuits(): Promise<CircuitsResponse> {
   const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/circuits`,
-    {
-      headers: {
-        "X-API-Key": apiKey,
-      },
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/circuits`, {
+    headers: {
+      "X-API-Key": apiKey,
     },
-  );
+  });
 
   if (!res.ok) {
     throw new Error("Failed to fetch circuits");
@@ -72,7 +69,9 @@ function CircuitCard({ circuit }: { circuit: Circuit }) {
               </span>
               <span>•</span>
               {circuit.track_length_km && (
-                <span className="text-[#e10600] font-semibold">{circuit.track_length_km.toFixed(3)} km</span>
+                <span className="text-[#e10600] font-semibold">
+                  {circuit.track_length_km.toFixed(3)} km
+                </span>
               )}
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">

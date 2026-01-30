@@ -40,9 +40,7 @@ async def get_upcoming_events(
 
     # Validate limit
     if limit < 1 or limit > 10:
-        raise HTTPException(
-            status_code=400, detail="Limit must be between 1 and 10"
-        )
+        raise HTTPException(status_code=400, detail="Limit must be between 1 and 10")
 
     # Get current year (check current year first, then next year)
     current_year = datetime.now().year
@@ -51,29 +49,30 @@ async def get_upcoming_events(
     # Try current year first
     try:
         schedule = fastf1.get_event_schedule(current_year, include_testing=True)
-        all_events = schedule.sort_values('EventDate')
+        all_events = schedule.sort_values("EventDate")
 
         # Filter for upcoming events
         upcoming = all_events[
-            all_events['EventDate'].apply(
-                lambda x: x.date() if hasattr(x, 'date') else x
-            ) >= today
+            all_events["EventDate"].apply(
+                lambda x: x.date() if hasattr(x, "date") else x
+            )
+            >= today
         ]
 
         # If no upcoming events in current year, try next year
         if len(upcoming) == 0:
             schedule = fastf1.get_event_schedule(current_year + 1, include_testing=True)
-            all_events = schedule.sort_values('EventDate')
+            all_events = schedule.sort_values("EventDate")
             upcoming = all_events[
-                all_events['EventDate'].apply(
-                    lambda x: x.date() if hasattr(x, 'date') else x
-                ) >= today
+                all_events["EventDate"].apply(
+                    lambda x: x.date() if hasattr(x, "date") else x
+                )
+                >= today
             ]
 
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch event schedule: {str(e)}"
+            status_code=500, detail=f"Failed to fetch event schedule: {str(e)}"
         )
 
     if len(upcoming) == 0:
@@ -91,8 +90,7 @@ async def get_upcoming_events(
 
         # Match by location and country
         circuit_query = select(Circuit).where(
-            Circuit.location == event['Location'],
-            Circuit.country == event['Country']
+            Circuit.location == event["Location"], Circuit.country == event["Country"]
         )
         circuit_result = await db.execute(circuit_query)
         circuit = circuit_result.scalar_one_or_none()
@@ -102,23 +100,25 @@ async def get_upcoming_events(
             circuit_name = circuit.name
 
         # Determine event type
-        event_type = "testing" if event['RoundNumber'] == 0 else "race"
+        event_type = "testing" if event["RoundNumber"] == 0 else "race"
 
         # Convert EventDate to string for JSON serialization
-        event_date = event['EventDate']
-        if hasattr(event_date, 'date'):
+        event_date = event["EventDate"]
+        if hasattr(event_date, "date"):
             event_date_str = event_date.date().isoformat()
         else:
             event_date_str = str(event_date)
 
         response_events.append(
             UpcomingEventResponse(
-                event_name=event['EventName'],
+                event_name=event["EventName"],
                 event_type=event_type,
                 event_date=event_date_str,
-                location=event['Location'],
-                country=event['Country'],
-                round_number=int(event['RoundNumber']) if event['RoundNumber'] != 0 else None,
+                location=event["Location"],
+                country=event["Country"],
+                round_number=int(event["RoundNumber"])
+                if event["RoundNumber"] != 0
+                else None,
                 circuit_id=circuit_id,
                 circuit_name=circuit_name,
             )

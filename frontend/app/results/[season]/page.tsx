@@ -436,7 +436,10 @@ export default function ResultsPage() {
                         )}
                       </div>
                       <p className="text-xs text-gray-400 truncate">
-                        {round.circuit_name} • {round.track_length_km ? `${round.track_length_km.toFixed(3)} km • ` : ""}
+                        {round.circuit_name} •{" "}
+                        {round.track_length_km
+                          ? `${round.track_length_km.toFixed(3)} km • `
+                          : ""}
                         {new Date(round.date).toLocaleDateString("en-US", {
                           month: "long",
                           day: "numeric",

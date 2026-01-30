@@ -64,17 +64,18 @@ TRACK_LENGTHS = {
     "Sochi": 5.848,
 }
 
+
 async def main():
     print("Populating track length data...")
     async for session in get_db():
         result = await session.execute(select(Circuit))
         circuits = result.scalars().all()
-        
+
         updated_count = 0
         for circuit in circuits:
             # Try exact match
             length = TRACK_LENGTHS.get(circuit.name)
-            
+
             # Try partial/fuzzy match if needed (manual aliases handled in dict)
             if not length:
                 # Special cases
@@ -84,17 +85,18 @@ async def main():
                     length = 4.304
                 elif "Villeneuve" in circuit.name:
                     length = 4.361
-            
+
             if length:
                 circuit.track_length_km = length
                 updated_count += 1
                 print(f"✅ Updated {circuit.name} to {length} km")
             else:
                 print(f"⚠️ No data for {circuit.name}")
-        
+
         await session.commit()
         print(f"\nSuccessfully updated {updated_count}/{len(circuits)} circuits.")
         break
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -40,13 +40,13 @@ async def populate_country_codes():
             print(f"\nFetching driver data from {year} season...")
             try:
                 # Get first race of the season
-                f1_session = fastf1.get_session(year, 1, 'R')
+                f1_session = fastf1.get_session(year, 1, "R")
                 f1_session.load()
 
                 # Get driver results
                 for _, driver_row in f1_session.results.iterrows():
-                    driver_code = driver_row['Abbreviation']
-                    country_code = driver_row.get('CountryCode')
+                    driver_code = driver_row["Abbreviation"]
+                    country_code = driver_row.get("CountryCode")
 
                     if driver_code and country_code:
                         if driver_code not in driver_country_map:
@@ -73,7 +73,9 @@ async def populate_country_codes():
                 )
                 await session.execute(stmt)
                 updated_count += 1
-                print(f"Updated {driver.driver_code}: {driver.full_name} -> {country_code}")
+                print(
+                    f"Updated {driver.driver_code}: {driver.full_name} -> {country_code}"
+                )
 
         # Commit all changes
         await session.commit()
