@@ -130,16 +130,17 @@ async def get_circuit_mapping():
                 mapping["monaco"] = circuit.id
             if "marina bay" in circuit.location.lower():
                 mapping["singapore"] = circuit.id
-            if "yas island" in circuit.location.lower() or "yas marina" in circuit.location.lower():
+            if (
+                "yas island" in circuit.location.lower()
+                or "yas marina" in circuit.location.lower()
+            ):
                 mapping["abu dhabi"] = circuit.id
         break
     return mapping
 
 
 async def async_main():
-    parser = argparse.ArgumentParser(
-        description="Generate F1 track maps for a season"
-    )
+    parser = argparse.ArgumentParser(description="Generate F1 track maps for a season")
     parser.add_argument("season", type=int, help="Season year (e.g., 2025)")
     parser.add_argument(
         "--output-dir",

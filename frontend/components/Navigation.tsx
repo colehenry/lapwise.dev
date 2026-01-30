@@ -83,13 +83,17 @@ export default function Navigation() {
                   <Link
                     href={link.href}
                     className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-                      isActive(link.href) || isActive("/constructors") || isActive("/circuits")
+                      isActive(link.href) ||
+                      isActive("/constructors") ||
+                      isActive("/circuits")
                         ? "text-purple-400 bg-purple-500/10"
                         : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
                     }`}
                   >
                     {link.label}
-                    {(isActive(link.href) || isActive("/constructors") || isActive("/circuits")) && (
+                    {(isActive(link.href) ||
+                      isActive("/constructors") ||
+                      isActive("/circuits")) && (
                       <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent rounded-full" />
                     )}
                   </Link>

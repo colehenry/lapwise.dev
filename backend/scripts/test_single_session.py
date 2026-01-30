@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     # Ingest only race for round 1 of 2024
     # We'll pass session types as 'race' only
-    ingest_season(2024, session_types=['race'], strict_mode=False)
+    ingest_season(2024, session_types=["race"], strict_mode=False)
 
     print()
     print("=" * 70)
