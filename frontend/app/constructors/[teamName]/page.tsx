@@ -180,7 +180,7 @@ export default function ConstructorProfilePage() {
         {/* Team Highlights */}
         <div className="bg-gradient-to-br from-[#1e1e2e] to-[#2a2a3e] rounded-lg p-8 border border-gray-800">
           <h2 className="text-2xl font-bold text-white mb-6">
-            Team Highlights
+            Constructor Highlights
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>

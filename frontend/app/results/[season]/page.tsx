@@ -41,6 +41,7 @@ type RoundSummary = {
   date: string;
   circuit_name: string;
   circuit_id: number;
+  track_length_km: number | null;
   session_type: string;
   podium: RoundPodiumDriver[];
 };
@@ -435,7 +436,7 @@ export default function ResultsPage() {
                         )}
                       </div>
                       <p className="text-xs text-gray-400 truncate">
-                        {round.circuit_name} •{" "}
+                        {round.circuit_name} • {round.track_length_km ? `${round.track_length_km.toFixed(3)} km • ` : ""}
                         {new Date(round.date).toLocaleDateString("en-US", {
                           month: "long",
                           day: "numeric",
@@ -445,14 +446,14 @@ export default function ResultsPage() {
                     </div>
 
                     {/* Podium - Horizontal Layout with minimal spacing */}
-                    <div className="flex items-center">
+                    <div className="flex items-center gap-3">
                       {round.podium.map((driver, idx) => {
                         const medals = ["🥇", "🥈", "🥉"];
 
                         return (
                           <div
                             key={driver.driver_code}
-                            className="flex items-center gap-1 flex-1 min-w-0"
+                            className="flex items-center gap-0.5"
                           >
                             {/* Medal */}
                             <span className="text-lg flex-shrink-0">
@@ -474,7 +475,7 @@ export default function ResultsPage() {
                               )}
 
                             {/* Driver Name - Team colored, centered vertically */}
-                            <div className="flex items-center min-w-0">
+                            <div className="flex items-center">
                               <div
                                 className="font-bold text-sm truncate"
                                 style={{
@@ -486,7 +487,7 @@ export default function ResultsPage() {
                                 {driver.driver_code}
                                 {driver.fastest_lap && (
                                   <span
-                                    className="text-[10px] text-[#c77dff] ml-1 cursor-help"
+                                    className="text-[10px] text-[#c77dff] ml-0.5"
                                     title="Fastest Lap"
                                   >
                                     ⚡
@@ -500,14 +501,14 @@ export default function ResultsPage() {
                     </div>
                   </div>
 
-                  {/* Right side: Track map - centered vertically */}
-                  <div className="flex-shrink-0 flex items-center h-full">
+                  {/* Right side: Track map - centered vertically with consistent height */}
+                  <div className="flex-shrink-0 flex items-center justify-center w-45 h-25">
                     <Image
                       src={`/track-maps/${round.circuit_id}.png`}
                       alt={`${round.circuit_name} track map`}
-                      width={150}
-                      height={150}
-                      className="object-contain max-h-full"
+                      width={180}
+                      height={100}
+                      className="object-contain w-full h-full"
                     />
                   </div>
                 </div>

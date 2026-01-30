@@ -193,6 +193,7 @@ class RoundSummary(BaseModel):
     date: date
     circuit_name: str
     circuit_id: int  # For track map URL
+    track_length_km: Optional[float] = None
     session_type: str  # 'race', 'sprint_race', 'qualifying', 'sprint_qualifying'
     podium: List[RoundPodiumDriver]  # Top 3 drivers
 

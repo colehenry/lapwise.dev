@@ -581,6 +581,7 @@ async def get_season_rounds(
             Session.session_type,
             Circuit.name.label("circuit_name"),
             Circuit.id.label("circuit_id"),
+            Circuit.track_length_km,
             SessionResult.position,
             Driver.full_name,
             Driver.driver_code,
@@ -625,6 +626,7 @@ async def get_season_rounds(
                 "date": row.date,
                 "circuit_name": row.circuit_name,
                 "circuit_id": row.circuit_id,
+                "track_length_km": row.track_length_km,
                 "session_type": row.session_type,
                 "podium": [],
             }

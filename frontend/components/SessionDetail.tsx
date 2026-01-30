@@ -176,7 +176,7 @@ export default function SessionDetail({
                     Driver
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Team
+                    Constructor
                   </th>
                   <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     Time
@@ -278,7 +278,10 @@ export default function SessionDetail({
                           </div>
                         </div>
                         {result.fastest_lap && (
-                          <span className="text-[#c77dff] font-semibold text-sm">
+                          <span
+                            className="text-[#c77dff] font-semibold text-sm"
+                            title="Fastest Lap"
+                          >
                             ⚡
                           </span>
                         )}
@@ -287,18 +290,21 @@ export default function SessionDetail({
 
                     {/* Team */}
                     <td className="px-4 py-4">
-                      <div
-                        className="font-semibold inline-flex items-center gap-1.5"
-                        style={{
-                          color: result.team.team_color
-                            ? `#${result.team.team_color}`
-                            : "#fff",
-                        }}
-                      >
-                        <span className="text-sm">
-                          {getTeamFlagEmoji(result.team.name)}
-                        </span>
-                        {result.team.name}
+                      <div className="font-semibold inline-flex items-center gap-1.5">
+                        <Link
+                          href={`/constructors/${result.team.name.replace(/ /g, "-")}`}
+                          className="hover:text-[#e10600] transition-colors flex items-center gap-1.5"
+                          style={{
+                            color: result.team.team_color
+                              ? `#${result.team.team_color}`
+                              : "#fff",
+                          }}
+                        >
+                          <span className="text-sm">
+                            {getTeamFlagEmoji(result.team.name)}
+                          </span>
+                          {result.team.name}
+                        </Link>
                       </div>
                     </td>
 

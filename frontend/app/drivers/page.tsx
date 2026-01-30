@@ -202,7 +202,7 @@ export default function DriversPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            F1 Drivers
+            Drivers
           </h1>
 
           {/* Year Selector and Search */}
@@ -226,7 +226,7 @@ export default function DriversPage() {
             <div className="flex-1">
               <input
                 type="text"
-                placeholder="Search drivers, teams, or countries..."
+                placeholder="Search drivers, constructors, or countries..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full px-4 py-2 bg-[#1e1e2e] text-white border border-gray-700 rounded-lg focus:outline-none focus:border-[#e10600] transition-colors placeholder-gray-500"

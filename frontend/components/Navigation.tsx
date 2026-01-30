@@ -34,7 +34,7 @@ export default function Navigation() {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/results", label: "Results" },
-    { href: "/drivers", label: "Drivers", hasAlternative: true },
+    { href: "/drivers", label: "Explore", hasAlternative: true },
     { href: "/blog", label: "Blog" },
     { href: "/about", label: "About" },
   ];
@@ -83,29 +83,35 @@ export default function Navigation() {
                   <Link
                     href={link.href}
                     className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-                      isActive(link.href) || isActive("/constructors")
+                      isActive(link.href) || isActive("/constructors") || isActive("/circuits")
                         ? "text-purple-400 bg-purple-500/10"
                         : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
                     }`}
                   >
-                    {isActive("/constructors") ? "Constructors" : link.label}
-                    {(isActive(link.href) || isActive("/constructors")) && (
+                    {link.label}
+                    {(isActive(link.href) || isActive("/constructors") || isActive("/circuits")) && (
                       <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent rounded-full" />
                     )}
                   </Link>
                   {showConstructorsOption && (
-                    <div className="absolute top-full left-0 mt-1 bg-bg-tertiary rounded-lg shadow-xl border border-border-primary overflow-hidden min-w-[150px] animate-slideDown">
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-bg-tertiary rounded-lg shadow-xl border border-border-primary overflow-hidden min-w-[150px] animate-slideDown">
                       <Link
                         href="/drivers"
-                        className="block px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors duration-200"
+                        className="block px-4 py-2.5 text-sm text-center text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors duration-200"
                       >
                         Drivers
                       </Link>
                       <Link
                         href="/constructors"
-                        className="block px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors duration-200"
+                        className="block px-4 py-2.5 text-sm text-center text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors duration-200"
                       >
                         Constructors
+                      </Link>
+                      <Link
+                        href="/circuits"
+                        className="block px-4 py-2.5 text-sm text-center text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors duration-200"
+                      >
+                        Circuits
                       </Link>
                     </div>
                   )}
@@ -351,6 +357,17 @@ export default function Navigation() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Constructors
+            </Link>
+            <Link
+              href="/circuits"
+              className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                isActive("/circuits")
+                  ? "text-purple-400 bg-purple-500/10"
+                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Circuits
             </Link>
             <Link
               href="/blog"
