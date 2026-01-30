@@ -163,7 +163,7 @@ export default function Footer() {
           </div>
           <div className="mt-4 text-center">
             <p className="text-text-muted text-xs">
-              Not affiliated with Formula 1, FIA, or any F1 teams. All
+              Not affiliated with Formula 1, FIA, or any F1 constructors. All
               trademarks are property of their respective owners.
             </p>
           </div>
