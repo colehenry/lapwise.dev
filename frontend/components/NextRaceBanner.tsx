@@ -221,7 +221,7 @@ function LatestRaceCompact() {
     return (
       <div className="bg-bg-primary border border-border-primary rounded-lg p-8 shadow-lg h-[280px]">
         <div className="animate-pulse h-full flex items-center justify-center">
-          <div className="text-gray-400">Loading latest race...</div>
+          <div className="text-text-tertiary">Loading latest race...</div>
         </div>
       </div>
     );
@@ -242,26 +242,26 @@ function LatestRaceCompact() {
   return (
     <div className="space-y-4">
       {/* Race Result Card - Scaled 2x */}
-      <div className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-lg p-8 hover:border-[#a020f0] transition-all h-[280px]">
+      <div className="bg-bg-tertiary border border-border-primary rounded-lg shadow-lg p-8 hover:border-purple-500 transition-all h-[280px]">
         <div className="flex items-center gap-8 h-full">
           {/* Left side: Race info and podium */}
           <div className="flex-1 min-w-0 h-full flex flex-col">
             {/* Race Header */}
-            <div className="mb-6 pb-4 border-b border-[#2a2a35]">
+            <div className="mb-6 pb-4 border-b border-border-secondary">
               <div className="flex items-center gap-4 flex-wrap mb-2">
                 <h3 className="text-2xl font-bold text-white truncate">
-                  <span className="text-gray-400 font-normal">
+                  <span className="text-text-tertiary font-normal">
                     Round {data.round}
                   </span>{" "}
                   • {data.event_name}
                 </h3>
                 {data.session_type === "sprint_race" && (
-                  <span className="bg-[#a020f0] text-white px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap">
+                  <span className="bg-purple-500 text-white px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap">
                     SPRINT
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-400 truncate">
+              <p className="text-sm text-text-tertiary truncate">
                 {data.circuit_name} •{" "}
                 {new Date(data.date).toLocaleDateString("en-US", {
                   month: "long",
@@ -293,7 +293,7 @@ function LatestRaceCompact() {
                         alt={driver.full_name}
                         width={80}
                         height={80}
-                        className="rounded-full object-cover border-2 border-gray-700 flex-shrink-0"
+                        className="rounded-full object-cover border-2 border-border-secondary flex-shrink-0"
                       />
                     )}
 
@@ -341,7 +341,7 @@ function LatestRaceCompact() {
       <div className="flex justify-center">
         <Link
           href={`/results/${year}/${data.round}`}
-          className="px-6 py-3 text-sm font-semibold bg-[#1e1e28] text-gray-300 border-2 border-[#2a2a35] rounded-lg hover:border-[#a020f0] hover:text-purple-400 hover:bg-purple-500/5 transition-all duration-200"
+          className="px-6 py-3 text-sm font-semibold bg-bg-tertiary text-text-secondary border-2 border-border-primary rounded-lg hover:border-purple-500 hover:text-purple-400 hover:bg-purple-500/5 transition-all duration-200"
         >
           View Full Results →
         </Link>
