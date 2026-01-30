@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import MobileMenu from "@/components/MobileMenu";
+import NavLink from "@/components/ui/NavLink";
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -35,6 +37,16 @@ export default function Navigation() {
     { href: "/", label: "Home" },
     { href: "/results", label: "Results" },
     { href: "/drivers", label: "Explore", hasAlternative: true },
+    { href: "/blog", label: "Blog" },
+    { href: "/about", label: "About" },
+  ];
+
+  const mobileMenuLinks = [
+    { href: "/", label: "Home" },
+    { href: "/results", label: "Results" },
+    { href: "/drivers", label: "Drivers" },
+    { href: "/constructors", label: "Constructors" },
+    { href: "/circuits", label: "Circuits" },
     { href: "/blog", label: "Blog" },
     { href: "/about", label: "About" },
   ];
@@ -121,20 +133,12 @@ export default function Navigation() {
                   )}
                 </div>
               ) : (
-                <Link
+                <NavLink
                   key={link.href}
                   href={link.href}
-                  className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-                    isActive(link.href)
-                      ? "text-purple-400 bg-purple-500/10"
-                      : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
-                  }`}
-                >
-                  {link.label}
-                  {isActive(link.href) && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent rounded-full" />
-                  )}
-                </Link>
+                  label={link.label}
+                  isActive={isActive(link.href)}
+                />
               ),
             )}
           </div>
@@ -316,87 +320,12 @@ export default function Navigation() {
         </div>
 
         {/* Mobile menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border-primary animate-slideDown">
-            <Link
-              href="/"
-              className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                isActive("/")
-                  ? "text-purple-400 bg-purple-500/10"
-                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
-              }`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Home
-            </Link>
-            <Link
-              href="/results"
-              className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                isActive("/results")
-                  ? "text-purple-400 bg-purple-500/10"
-                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
-              }`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Results
-            </Link>
-            <Link
-              href="/drivers"
-              className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                isActive("/drivers")
-                  ? "text-purple-400 bg-purple-500/10"
-                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
-              }`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Drivers
-            </Link>
-            <Link
-              href="/constructors"
-              className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                isActive("/constructors")
-                  ? "text-purple-400 bg-purple-500/10"
-                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
-              }`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Constructors
-            </Link>
-            <Link
-              href="/circuits"
-              className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                isActive("/circuits")
-                  ? "text-purple-400 bg-purple-500/10"
-                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
-              }`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Circuits
-            </Link>
-            <Link
-              href="/blog"
-              className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                isActive("/blog")
-                  ? "text-purple-400 bg-purple-500/10"
-                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
-              }`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Blog
-            </Link>
-            <Link
-              href="/about"
-              className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                isActive("/about")
-                  ? "text-purple-400 bg-purple-500/10"
-                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
-              }`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              About
-            </Link>
-          </div>
-        )}
+        <MobileMenu
+          isOpen={isMobileMenuOpen}
+          links={mobileMenuLinks}
+          isActive={isActive}
+          onClose={() => setIsMobileMenuOpen(false)}
+        />
       </div>
     </nav>
   );
