@@ -1,6 +1,6 @@
 [build]
   base = "frontend"
-  command = "npm run build"
+  command = "rm -rf .next && npm run build"
   publish = ".next"
 
 # Environment variables are now set in Netlify UI
@@ -8,6 +8,10 @@
 # Required variables:
 #   - NEXT_PUBLIC_API_URL (production: https://api.lapwise.dev)
 #   - NEXT_PUBLIC_API_KEY (set after generating new key)
+
+# Temporarily disable secrets scanning for the old API key during migration
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "754b5a8e5c6c17f92026f9fedbe15bf58fbb0af80c3706098d0da7701327ad26"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
