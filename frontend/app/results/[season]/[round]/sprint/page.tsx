@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import SessionDetail from "@/components/SessionDetail";
 import { apiHeaders, apiUrl } from "@/lib/api";
@@ -60,20 +60,29 @@ type SessionResultsResponse = {
 
 export default function SprintDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const season = params.season as string;
   const round = params.round as string;
+  const initialMode = searchParams.get("mode") === "qualifying" ? "qualifying" : "race";
 
   const [data, setData] = useState<SessionResultsResponse | null>(null);
   const [qualifyingData, setQualifyingData] =
     useState<SessionResultsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [viewMode, setViewMode] = useState<"race" | "qualifying">("race");
+  const [sessionType, setSessionType] = useState<"race" | "qualifying">(initialMode);
 
   // Scroll to top on page load
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Update sessionType if initialMode changes (e.g. back/forward navigation)
+  useEffect(() => {
+    if (initialMode) {
+      setSessionType(initialMode);
+    }
+  }, [initialMode]);
 
   useEffect(() => {
     if (!season || !round) return;
@@ -101,7 +110,10 @@ export default function SprintDetailPage() {
           cache: "no-store",
           headers: apiHeaders(),
         })
-          .then((res) => res.json())
+          .then((res) => {
+            if (!res.ok) throw new Error("Sprint qualifying data not found");
+            return res.json();
+          })
           .then((qualData) => {
             if (isMounted) {
               setQualifyingData(qualData);
@@ -152,7 +164,7 @@ export default function SprintDetailPage() {
   }
 
   // Get the current data to display based on view mode
-  const displayData = viewMode === "qualifying" ? qualifyingData : data;
+  const displayData = sessionType === "qualifying" ? qualifyingData : data;
 
   return (
     <SessionDetail
@@ -160,8 +172,8 @@ export default function SprintDetailPage() {
       qualifyingData={qualifyingData}
       season={season}
       isSprint={true}
-      viewMode={viewMode}
-      onViewModeChange={setViewMode}
+      sessionType={sessionType}
+      onSessionTypeChange={setSessionType}
       onBack={() => router.push(`/results/${season}`)}
     />
   );
