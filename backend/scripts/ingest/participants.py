@@ -1,6 +1,7 @@
 
 from sqlalchemy import select
 from app.models import Driver, Team
+from .team_colors import enrich_team_color
 
 def ingest_driver(db, driver_data):
     """
@@ -49,11 +50,9 @@ def ingest_team(db, team_data, year):
     Returns: team_id
     """
     team_name = team_data["TeamName"]
-    team_color = team_data.get("TeamColor", "")
 
-    # Remove '#' from color if present
-    if team_color and team_color.startswith("#"):
-        team_color = team_color[1:]
+    # Use enriched color (includes historical mapping for pre-2018)
+    team_color = enrich_team_color(team_data, year)
 
     # Check if team exists for this year
     team = db.execute(
@@ -61,11 +60,15 @@ def ingest_team(db, team_data, year):
     ).scalar_one_or_none()
 
     if team:
+        # Update color if we now have one and team doesn't
+        if team_color and not team.team_color:
+            team.team_color = team_color
+            db.commit()
         return team.id
     else:
-        print(f"    + New team for {year}: {team_name}")
+        print(f"    + New team for {year}: {team_name} (color: {team_color or 'none'})")
         team = Team(
-            year=year, name=team_name, team_color=team_color if team_color else None
+            year=year, name=team_name, team_color=team_color
         )
         db.add(team)
         db.commit()

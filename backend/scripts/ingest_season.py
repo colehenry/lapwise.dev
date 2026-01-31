@@ -203,21 +203,19 @@ def main():
                             db, fastf1_session, session_id, season_year
                         )
 
-                    # Ingest Telemetry (only for completed sessions)
-                    # Note: We ingest telemetry even if results already existed?
-                    # No, we only reach here if should_process is True (new session)
-                    # OR if we want to backfill data.
-                    # Current logic: only if session was just created or we force it.
-                    # shoud_process comes from ingest_session_metadata logic.
+                    # Ingest Telemetry (only available for 2018+ seasons)
+                    # Pre-2018: FastF1 does not have lap timing, weather, or track status data
+                    if season_year >= 2018:
+                        # Ingest Laps
+                        ingest_lap_data(db, fastf1_session, session_id)
 
-                    # Ingest Laps
-                    ingest_lap_data(db, fastf1_session, session_id)
+                        # Ingest Weather
+                        ingest_weather_data(db, fastf1_session, session_id)
 
-                    # Ingest Weather
-                    ingest_weather_data(db, fastf1_session, session_id)
-
-                    # Ingest Track Status
-                    ingest_track_status(db, fastf1_session, session_id)
+                        # Ingest Track Status
+                        ingest_track_status(db, fastf1_session, session_id)
+                    else:
+                        print(f"  ℹ️  Skipping telemetry ingestion (pre-2018 season)")
 
                 except Exception as e:
                     print(

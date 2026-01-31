@@ -133,12 +133,22 @@ def datetime_or_timedelta_to_seconds(value, session_start=None):
 def load_session_with_retry(year, round_num, session_name, max_retries=3):
     """
     Load a FastF1 session with retry logic and exponential backoff.
+
+    Note: For pre-2018 seasons, laps, weather, and messages data are not available.
+    The function automatically adjusts what data to load based on the year.
     """
     for attempt in range(max_retries):
         try:
             fastf1_sess = fastf1.get_session(year, round_num, session_name)
-            # Load all data types (laps includes track_status)
-            fastf1_sess.load(laps=True, weather=True, messages=True)
+
+            # Pre-2018: Only load basic session data (no laps, weather, or messages)
+            # 2018+: Load all data types (laps includes track_status)
+            if year < 2018:
+                print(f"    ℹ️  Loading basic data only (pre-2018 season)")
+                fastf1_sess.load(laps=False, weather=False, messages=False)
+            else:
+                fastf1_sess.load(laps=True, weather=True, messages=True)
+
             return fastf1_sess
         except Exception as e:
             error_msg = str(e).lower()
