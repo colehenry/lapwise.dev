@@ -9,5 +9,9 @@
 #   - NEXT_PUBLIC_API_URL (production: https://api.lapwise.dev)
 #   - NEXT_PUBLIC_API_KEY (set in Netlify dashboard)
 
+# Disable secrets scanning - NEXT_PUBLIC_* vars are intentionally bundled in client JS
+[build.environment]
+  SECRETS_SCAN_ENABLED = "false"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
