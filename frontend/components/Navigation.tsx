@@ -12,6 +12,16 @@ export default function Navigation() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -32,6 +42,7 @@ export default function Navigation() {
   }, [isDropdownOpen]);
 
   const [showConstructorsOption, setShowConstructorsOption] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -58,6 +69,26 @@ export default function Navigation() {
     return pathname.startsWith(href);
   };
 
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    setIsExiting(false);
+    setShowConstructorsOption(true);
+  };
+
+  const handleMouseLeave = () => {
+    // Stage 1: Wait for hover delay (200ms)
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsExiting(true);
+      // Stage 2: Wait for animation duration (300ms) before unmounting
+      hoverTimeoutRef.current = setTimeout(() => {
+        setShowConstructorsOption(false);
+        setIsExiting(false);
+      }, 300);
+    }, 200);
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 bg-bg-secondary/95 backdrop-blur-md border-b border-border-primary shadow-lg z-[var(--z-fixed)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -80,55 +111,57 @@ export default function Navigation() {
               </span>
             </Link>
           </div>
+ 
+           {/* Navigation links - center (desktop) */}
+           <div className="hidden md:flex items-center space-x-1">
+             {navLinks.map((link) =>
+               link.hasAlternative ? (
+                 <div
+                   key={link.href}
+                   className="relative"
+                   onMouseEnter={handleMouseEnter}
+                   onMouseLeave={handleMouseLeave}
+                   role="navigation"
+                 >
+                   <div
+                     className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-default ${
+                       isActive(link.href) ||
+                       isActive("/constructors") ||
+                       isActive("/circuits")
+                         ? "text-purple-400 bg-purple-500/10"
+                         : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
+                     }`}
+                   >
+                     {link.label}
+                     {(isActive(link.href) ||
+                       isActive("/constructors") ||
+                       isActive("/circuits")) && (
+                       <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent rounded-full" />
+                     )}
+                   </div>
+                   {showConstructorsOption && (
+                     <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 z-50">
+                       <div className={`bg-bg-tertiary rounded-lg shadow-xl border border-border-primary overflow-hidden whitespace-nowrap ${isExiting ? 'animate-slideDownExit' : 'animate-slideDown'}`}>
 
-          {/* Navigation links - center (desktop) */}
-          <div className="hidden md:flex items-center space-x-1">
-            {navLinks.map((link) =>
-              link.hasAlternative ? (
-                <div
-                  key={link.href}
-                  className="relative"
-                  onMouseEnter={() => setShowConstructorsOption(true)}
-                  onMouseLeave={() => setShowConstructorsOption(false)}
-                  role="navigation"
-                >
-                  <Link
-                    href={link.href}
-                    className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-                      isActive(link.href) ||
-                      isActive("/constructors") ||
-                      isActive("/circuits")
-                        ? "text-purple-400 bg-purple-500/10"
-                        : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
-                    }`}
-                  >
-                    {link.label}
-                    {(isActive(link.href) ||
-                      isActive("/constructors") ||
-                      isActive("/circuits")) && (
-                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent rounded-full" />
-                    )}
-                  </Link>
-                  {showConstructorsOption && (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-bg-tertiary rounded-lg shadow-xl border border-border-primary overflow-hidden min-w-[150px] animate-slideDown">
-                      <Link
-                        href="/drivers"
-                        className="block px-4 py-2.5 text-sm text-center text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors duration-200"
-                      >
-                        Drivers
-                      </Link>
-                      <Link
-                        href="/constructors"
-                        className="block px-4 py-2.5 text-sm text-center text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors duration-200"
-                      >
-                        Constructors
-                      </Link>
-                      <Link
-                        href="/circuits"
-                        className="block px-4 py-2.5 text-sm text-center text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors duration-200"
-                      >
-                        Circuits
-                      </Link>
+                        <Link
+                          href="/drivers"
+                          className="block px-6 py-2.5 text-sm text-center text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors duration-200"
+                        >
+                          Drivers
+                        </Link>
+                        <Link
+                          href="/constructors"
+                          className="block px-6 py-2.5 text-sm text-center text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors duration-200"
+                        >
+                          Constructors
+                        </Link>
+                        <Link
+                          href="/circuits"
+                          className="block px-6 py-2.5 text-sm text-center text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors duration-200"
+                        >
+                          Circuits
+                        </Link>
+                      </div>
                     </div>
                   )}
                 </div>
