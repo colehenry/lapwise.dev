@@ -5,7 +5,7 @@ Business logic for fetching and processing season results data.
 Extracted from season_results.py router for better separation of concerns.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
@@ -106,12 +106,16 @@ class ResultsService:
         return result.all()
 
     @staticmethod
-    async def get_season_standings(db: AsyncSession, season: int) -> Optional[StandingsResponse]:
+    async def get_season_standings(
+        db: AsyncSession, season: int
+    ) -> Optional[StandingsResponse]:
         """
         Get driver and constructor championship standings for a season.
         """
         # Check if season exists
-        season_check = await db.execute(select(Session.id).where(Session.year == season).limit(1))
+        season_check = await db.execute(
+            select(Session.id).where(Session.year == season).limit(1)
+        )
         if not season_check.first():
             return None
 
@@ -149,7 +153,7 @@ class ResultsService:
             .join(Session, SessionResult.session_id == Session.id)
             .where(Session.year == season)
         )
-        
+
         for driver_row in distinct_drivers:
             driver_id = driver_row[0]
             # Get the most recent session_result for this driver
@@ -172,7 +176,7 @@ class ResultsService:
         standings_result = await db.execute(
             select(points_subquery).order_by(points_subquery.c.total_points.desc())
         )
-        
+
         for driver_row in standings_result:
             driver_id = driver_row.driver_id
             if driver_id in latest_results:
@@ -240,7 +244,9 @@ class ResultsService:
             for idx, row in enumerate(constructor_rows)
         ]
 
-        return StandingsResponse(year=season, drivers=drivers, constructors=constructors)
+        return StandingsResponse(
+            year=season, drivers=drivers, constructors=constructors
+        )
 
     @staticmethod
     async def get_points_progression(
@@ -342,7 +348,7 @@ class ResultsService:
 
                 if session_type in round_data:
                     last_points = round_data[session_type]
-                
+
                 round_id = (
                     f"{round_num}-sprint"
                     if session_type == "sprint_race"
@@ -446,7 +452,7 @@ class ResultsService:
 
             for round_num, event_name, session_type in all_sessions:
                 round_data = team_data["sessions_data"].get(round_num, {})
-                
+
                 if session_type in round_data:
                     last_points = round_data[session_type]
 
@@ -568,19 +574,21 @@ class ResultsService:
             select(Session)
             .where(Session.year == season)
             .where(Session.round == round_num)
-            .where(Session.session_type == "sprint_race") # Corrected from "sprint" based on usage elsewhere
+            .where(
+                Session.session_type == "sprint_race"
+            )  # Corrected from "sprint" based on usage elsewhere
         )
 
         session_result = await db.execute(session_query)
         session = session_result.scalar_one_or_none()
-        
+
         # Try finding 'sprint' if 'sprint_race' not found (sometimes data varies)
         if not session:
             session_query = (
                 select(Session)
                 .where(Session.year == season)
                 .where(Session.round == round_num)
-                .where(Session.session_type == "sprint") 
+                .where(Session.session_type == "sprint")
             )
             session_result = await db.execute(session_query)
             session = session_result.scalar_one_or_none()
@@ -636,7 +644,9 @@ class ResultsService:
             drivers_dict[driver_code]["laps"].append(
                 LapData(
                     lap_number=row.lap_number,
-                    lap_time_seconds=ResultsService.sanitize_float(row.lap_time_seconds),
+                    lap_time_seconds=ResultsService.sanitize_float(
+                        row.lap_time_seconds
+                    ),
                     compound=row.compound,
                     tyre_life=row.tyre_life,
                     track_status=row.track_status,
@@ -666,7 +676,7 @@ class ResultsService:
 
         session_result = await db.execute(session_query)
         session = session_result.scalar_one_or_none()
-        
+
         # Fallback for session type name
         if not session:
             session_query = (
@@ -731,11 +741,19 @@ class ResultsService:
                 grid_position=result.SessionResult.grid_position,
                 points=ResultsService.sanitize_float(result.SessionResult.points),
                 laps_completed=result.SessionResult.laps_completed,
-                time_seconds=ResultsService.sanitize_float(result.SessionResult.time_seconds),
+                time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.time_seconds
+                ),
                 fastest_lap=result.SessionResult.fastest_lap,
-                q1_time_seconds=ResultsService.sanitize_float(result.SessionResult.q1_time_seconds),
-                q2_time_seconds=ResultsService.sanitize_float(result.SessionResult.q2_time_seconds),
-                q3_time_seconds=ResultsService.sanitize_float(result.SessionResult.q3_time_seconds),
+                q1_time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.q1_time_seconds
+                ),
+                q2_time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.q2_time_seconds
+                ),
+                q3_time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.q3_time_seconds
+                ),
             )
             for result in result_rows
         ]
@@ -812,11 +830,19 @@ class ResultsService:
                 grid_position=result.SessionResult.grid_position,
                 points=ResultsService.sanitize_float(result.SessionResult.points),
                 laps_completed=result.SessionResult.laps_completed,
-                time_seconds=ResultsService.sanitize_float(result.SessionResult.time_seconds),
+                time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.time_seconds
+                ),
                 fastest_lap=result.SessionResult.fastest_lap,
-                q1_time_seconds=ResultsService.sanitize_float(result.SessionResult.q1_time_seconds),
-                q2_time_seconds=ResultsService.sanitize_float(result.SessionResult.q2_time_seconds),
-                q3_time_seconds=ResultsService.sanitize_float(result.SessionResult.q3_time_seconds),
+                q1_time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.q1_time_seconds
+                ),
+                q2_time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.q2_time_seconds
+                ),
+                q3_time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.q3_time_seconds
+                ),
             )
             for result in result_rows
         ]
@@ -893,7 +919,9 @@ class ResultsService:
             drivers_dict[driver_code]["laps"].append(
                 LapData(
                     lap_number=row.lap_number,
-                    lap_time_seconds=ResultsService.sanitize_float(row.lap_time_seconds),
+                    lap_time_seconds=ResultsService.sanitize_float(
+                        row.lap_time_seconds
+                    ),
                     compound=row.compound,
                     tyre_life=row.tyre_life,
                     track_status=row.track_status,
@@ -906,3 +934,256 @@ class ResultsService:
         return LapTimesResponse(
             year=season, round=round_num, event_name=session.event_name, drivers=drivers
         )
+
+    @staticmethod
+    async def get_qualifying_details(
+        db: AsyncSession, season: int, round_num: int
+    ) -> Optional[SessionResultsResponse]:
+        """
+        Get full qualifying results for a specific round.
+        """
+        session_query = (
+            select(Session)
+            .options(selectinload(Session.circuit))
+            .where(Session.year == season)
+            .where(Session.round == round_num)
+            .where(Session.session_type == "qualifying")
+        )
+
+        session_result = await db.execute(session_query)
+        session = session_result.scalar_one_or_none()
+
+        if not session:
+            return None
+
+        # Get all results for this qualifying session with driver/team info
+        results_query = (
+            select(SessionResult, Driver, Team)
+            .join(Driver, SessionResult.driver_id == Driver.id)
+            .join(Team, SessionResult.team_id == Team.id)
+            .where(SessionResult.session_id == session.id)
+            .order_by(SessionResult.position)
+        )
+
+        results = await db.execute(results_query)
+        result_rows = results.all()
+
+        circuit = session.circuit
+
+        session_info = SessionInfo(
+            id=session.id,
+            year=session.year,
+            round=session.round,
+            session_type=session.session_type,
+            event_name=session.event_name,
+            date=session.date,
+            circuit=CircuitInfo(
+                id=circuit.id,
+                name=circuit.name,
+                location=circuit.location,
+                country=circuit.country,
+                track_length_km=circuit.track_length_km,
+                track_map_url=f"/track-maps/{circuit.id}.png",
+            ),
+        )
+
+        session_results = [
+            SessionResultDetail(
+                position=result.SessionResult.position,
+                status=result.SessionResult.status,
+                headshot_url=result.SessionResult.headshot_url,
+                driver=DriverInfo(
+                    driver_number=result.Driver.driver_number,
+                    driver_code=result.Driver.driver_code,
+                    full_name=result.Driver.full_name,
+                    country_code=result.Driver.country_code,
+                ),
+                team=TeamInfo(
+                    name=result.Team.name,
+                    team_color=result.Team.team_color,
+                ),
+                grid_position=result.SessionResult.grid_position,
+                points=ResultsService.sanitize_float(result.SessionResult.points),
+                laps_completed=result.SessionResult.laps_completed,
+                time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.time_seconds
+                ),
+                fastest_lap=result.SessionResult.fastest_lap,
+                q1_time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.q1_time_seconds
+                ),
+                q2_time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.q2_time_seconds
+                ),
+                q3_time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.q3_time_seconds
+                ),
+            )
+            for result in result_rows
+        ]
+
+        return SessionResultsResponse(session=session_info, results=session_results)
+
+    @staticmethod
+    async def get_sprint_qualifying_details(
+        db: AsyncSession, season: int, round_num: int
+    ) -> Optional[SessionResultsResponse]:
+        """
+        Get full sprint qualifying results for a specific round.
+        """
+        session_query = (
+            select(Session)
+            .options(selectinload(Session.circuit))
+            .where(Session.year == season)
+            .where(Session.round == round_num)
+            .where(Session.session_type == "sprint_qualifying")
+        )
+
+        session_result = await db.execute(session_query)
+        session = session_result.scalar_one_or_none()
+
+        if not session:
+            return None
+
+        # Get all results for this sprint qualifying session with driver/team info
+        results_query = (
+            select(SessionResult, Driver, Team)
+            .join(Driver, SessionResult.driver_id == Driver.id)
+            .join(Team, SessionResult.team_id == Team.id)
+            .where(SessionResult.session_id == session.id)
+            .order_by(SessionResult.position)
+        )
+
+        results = await db.execute(results_query)
+        result_rows = results.all()
+
+        circuit = session.circuit
+
+        session_info = SessionInfo(
+            id=session.id,
+            year=session.year,
+            round=session.round,
+            session_type=session.session_type,
+            event_name=session.event_name,
+            date=session.date,
+            circuit=CircuitInfo(
+                id=circuit.id,
+                name=circuit.name,
+                location=circuit.location,
+                country=circuit.country,
+                track_length_km=circuit.track_length_km,
+                track_map_url=f"/track-maps/{circuit.id}.png",
+            ),
+        )
+
+        session_results = [
+            SessionResultDetail(
+                position=result.SessionResult.position,
+                status=result.SessionResult.status,
+                headshot_url=result.SessionResult.headshot_url,
+                driver=DriverInfo(
+                    driver_number=result.Driver.driver_number,
+                    driver_code=result.Driver.driver_code,
+                    full_name=result.Driver.full_name,
+                    country_code=result.Driver.country_code,
+                ),
+                team=TeamInfo(
+                    name=result.Team.name,
+                    team_color=result.Team.team_color,
+                ),
+                grid_position=result.SessionResult.grid_position,
+                points=ResultsService.sanitize_float(result.SessionResult.points),
+                laps_completed=result.SessionResult.laps_completed,
+                time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.time_seconds
+                ),
+                fastest_lap=result.SessionResult.fastest_lap,
+                q1_time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.q1_time_seconds
+                ),
+                q2_time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.q2_time_seconds
+                ),
+                q3_time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.q3_time_seconds
+                ),
+            )
+            for result in result_rows
+        ]
+
+        return SessionResultsResponse(session=session_info, results=session_results)
+
+    @staticmethod
+    async def get_season_qualifying_rounds(
+        db: AsyncSession, season: int
+    ) -> Optional[SeasonRoundsResponse]:
+        """
+        Get all qualifying rounds for a season with top 3 qualifiers for each.
+        Includes both regular qualifying and sprint qualifying.
+        """
+        query = (
+            select(
+                Session.round,
+                Session.event_name,
+                Session.date,
+                Session.session_type,
+                Circuit.name.label("circuit_name"),
+                Circuit.id.label("circuit_id"),
+                Circuit.track_length_km,
+                SessionResult.position,
+                Driver.full_name,
+                Driver.driver_code,
+                Driver.country_code,
+                SessionResult.headshot_url,
+                Team.name.label("team_name"),
+                Team.team_color,
+                SessionResult.fastest_lap,
+            )
+            .join(SessionResult, Session.id == SessionResult.session_id)
+            .join(Driver, SessionResult.driver_id == Driver.id)
+            .join(Team, SessionResult.team_id == Team.id)
+            .join(Circuit, Session.circuit_id == Circuit.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(["qualifying", "sprint_qualifying"]))
+            .where(SessionResult.position.between(1, 3))
+            .order_by(
+                Session.round,
+                Session.date,
+                SessionResult.position,
+            )
+        )
+
+        result = await db.execute(query)
+        rows = result.all()
+
+        if not rows:
+            return None
+
+        rounds_dict = {}
+        for row in rows:
+            key = (row.round, row.session_type)
+            if key not in rounds_dict:
+                rounds_dict[key] = {
+                    "round": row.round,
+                    "event_name": row.event_name,
+                    "date": row.date,
+                    "circuit_name": row.circuit_name,
+                    "circuit_id": row.circuit_id,
+                    "track_length_km": row.track_length_km,
+                    "session_type": row.session_type,
+                    "podium": [],
+                }
+            rounds_dict[key]["podium"].append(
+                RoundPodiumDriver(
+                    full_name=row.full_name,
+                    driver_code=row.driver_code,
+                    country_code=row.country_code,
+                    team_name=row.team_name,
+                    team_color=row.team_color,
+                    headshot_url=row.headshot_url,
+                    fastest_lap=row.fastest_lap,
+                )
+            )
+
+        rounds = [RoundSummary(**round_data) for round_data in rounds_dict.values()]
+        return SeasonRoundsResponse(year=season, rounds=rounds)

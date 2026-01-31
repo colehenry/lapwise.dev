@@ -64,9 +64,12 @@ type SessionResultsResponse = {
 };
 
 interface SessionDetailProps {
-  data: SessionResultsResponse;
+  data: SessionResultsResponse | null;
+  qualifyingData?: SessionResultsResponse | null;
   season: string;
   isSprint?: boolean;
+  viewMode?: "race" | "qualifying";
+  onViewModeChange?: (mode: "race" | "qualifying") => void;
   onBack: () => void;
 }
 
@@ -83,12 +86,19 @@ const formatTime = (seconds: number | null, isLeader: boolean): string => {
 
 export default function SessionDetail({
   data,
+  qualifyingData,
   season,
   isSprint = false,
+  viewMode = "race",
+  onViewModeChange,
   onBack,
 }: SessionDetailProps) {
-  const { session, results } = data;
   const [expandedResults, setExpandedResults] = useState<boolean>(false);
+  const isQualifying = viewMode === "qualifying";
+
+  if (!data) return null;
+
+  const { session, results } = data;
 
   return (
     <main className="min-h-screen bg-[#15151e] p-8">
@@ -104,6 +114,35 @@ export default function SessionDetail({
 
         {/* Session Header */}
         <div className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-lg p-6 mb-6">
+          {/* Race/Qualifying Toggle */}
+          {onViewModeChange && qualifyingData && (
+            <div className="flex justify-end mb-4">
+              <div className="flex items-center gap-2 bg-bg-tertiary rounded-lg p-1 border border-border-secondary">
+                <button
+                  type="button"
+                  onClick={() => onViewModeChange("race")}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    viewMode === "race"
+                      ? "bg-purple-500 text-white"
+                      : "text-text-secondary hover:text-text-primary"
+                  }`}
+                >
+                  {isSprint ? "Sprint" : "Race"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onViewModeChange("qualifying")}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    viewMode === "qualifying"
+                      ? "bg-purple-500 text-white"
+                      : "text-text-secondary hover:text-text-primary"
+                  }`}
+                >
+                  Qualifying
+                </button>
+              </div>
+            </div>
+          )}
           <div className="flex items-start justify-between gap-6">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
@@ -171,22 +210,46 @@ export default function SessionDetail({
                   <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     Pos
                   </th>
-                  <th className="pl-1 pr-4 py-3" aria-label="Position change" />
+                  {!isQualifying && (
+                    <th
+                      className="pl-1 pr-4 py-3"
+                      aria-label="Position change"
+                    />
+                  )}
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     Driver
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     Constructor
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Time
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Points
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Status
-                  </th>
+                  {isQualifying ? (
+                    <>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Q1
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Q2
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Q3
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Gap
+                      </th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Time
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Points
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Status
+                      </th>
+                    </>
+                  )}
                 </tr>
               </thead>
             </table>
@@ -221,30 +284,33 @@ export default function SessionDetail({
                       </div>
                     </td>
 
-                    {/* Position Change */}
-                    <td className="pl-1 pr-4 py-4 text-center">
-                      {result.position &&
-                        result.grid_position &&
-                        (() => {
-                          const change = result.grid_position - result.position;
-                          if (change === 0) {
+                    {/* Position Change (Race only) */}
+                    {!isQualifying && (
+                      <td className="pl-1 pr-4 py-4 text-center">
+                        {result.position &&
+                          result.grid_position &&
+                          (() => {
+                            const change =
+                              result.grid_position - result.position;
+                            if (change === 0) {
+                              return (
+                                <span className="text-base font-bold text-blue-500">
+                                  -
+                                </span>
+                              );
+                            }
                             return (
-                              <span className="text-base font-bold text-blue-500">
-                                -
+                              <span
+                                className={`text-base font-bold ${
+                                  change > 0 ? "text-green-500" : "text-red-500"
+                                }`}
+                              >
+                                {change > 0 ? `+${change}` : change}
                               </span>
                             );
-                          }
-                          return (
-                            <span
-                              className={`text-base font-bold ${
-                                change > 0 ? "text-green-500" : "text-red-500"
-                              }`}
-                            >
-                              {change > 0 ? `+${change}` : change}
-                            </span>
-                          );
-                        })()}
-                    </td>
+                          })()}
+                      </td>
+                    )}
 
                     {/* Driver */}
                     <td className="px-4 py-4">
@@ -308,34 +374,101 @@ export default function SessionDetail({
                       </div>
                     </td>
 
-                    {/* Time */}
-                    <td className="px-4 py-4 text-right">
-                      <div className="font-mono text-white">
-                        {formatTime(result.time_seconds, result.position === 1)}
-                      </div>
-                    </td>
+                    {/* Race columns */}
+                    {!isQualifying && (
+                      <>
+                        {/* Time */}
+                        <td className="px-4 py-4 text-right">
+                          <div className="font-mono text-white">
+                            {formatTime(
+                              result.time_seconds,
+                              result.position === 1,
+                            )}
+                          </div>
+                        </td>
 
-                    {/* Points */}
-                    <td className="px-4 py-4 text-center">
-                      <div className="font-bold text-white">
-                        {result.points || "-"}
-                      </div>
-                    </td>
+                        {/* Points */}
+                        <td className="px-4 py-4 text-center">
+                          <div className="font-bold text-white">
+                            {result.points || "-"}
+                          </div>
+                        </td>
 
-                    {/* Status */}
-                    <td className="px-4 py-4 text-center">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          result.status === "Finished"
-                            ? "bg-green-900/50 text-green-300"
-                            : result.status === "Lapped"
-                              ? "bg-blue-900/50 text-blue-300"
-                              : "bg-red-900/50 text-red-300"
-                        }`}
-                      >
-                        {result.status}
-                      </span>
-                    </td>
+                        {/* Status */}
+                        <td className="px-4 py-4 text-center">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                              result.status === "Finished"
+                                ? "bg-green-900/50 text-green-300"
+                                : result.status === "Lapped"
+                                  ? "bg-blue-900/50 text-blue-300"
+                                  : "bg-red-900/50 text-red-300"
+                            }`}
+                          >
+                            {result.status}
+                          </span>
+                        </td>
+                      </>
+                    )}
+
+                    {/* Qualifying columns */}
+                    {isQualifying && (
+                      <>
+                        {/* Q1 Time */}
+                        <td className="px-4 py-4 text-right">
+                          <div className="font-mono text-white text-sm">
+                            {result.q1_time_seconds
+                              ? formatTime(
+                                  result.q1_time_seconds,
+                                  false,
+                                ).replace("+", "")
+                              : "-"}
+                          </div>
+                        </td>
+
+                        {/* Q2 Time */}
+                        <td className="px-4 py-4 text-right">
+                          <div className="font-mono text-white text-sm">
+                            {result.q2_time_seconds
+                              ? formatTime(
+                                  result.q2_time_seconds,
+                                  false,
+                                ).replace("+", "")
+                              : "-"}
+                          </div>
+                        </td>
+
+                        {/* Q3 Time */}
+                        <td className="px-4 py-4 text-right">
+                          <div className="font-mono text-white text-sm font-bold">
+                            {result.q3_time_seconds
+                              ? formatTime(
+                                  result.q3_time_seconds,
+                                  false,
+                                ).replace("+", "")
+                              : "-"}
+                          </div>
+                        </td>
+
+                        {/* Gap to Pole */}
+                        <td className="px-4 py-4 text-right">
+                          <div className="font-mono text-gray-400 text-sm">
+                            {result.position === 1
+                              ? "-"
+                              : result.q3_time_seconds &&
+                                  results[0].q3_time_seconds
+                                ? `+${(result.q3_time_seconds - results[0].q3_time_seconds).toFixed(3)}`
+                                : result.q2_time_seconds &&
+                                    results[0].q2_time_seconds
+                                  ? `+${(result.q2_time_seconds - results[0].q2_time_seconds).toFixed(3)}`
+                                  : result.q1_time_seconds &&
+                                      results[0].q1_time_seconds
+                                    ? `+${(result.q1_time_seconds - results[0].q1_time_seconds).toFixed(3)}`
+                                    : "-"}
+                          </div>
+                        </td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -392,14 +525,79 @@ export default function SessionDetail({
           </button>
         </div>
 
-        {/* Lap Time Graph */}
-        <div className="mt-6">
-          <LapTimeByLapGraph
-            season={session.year}
-            round={session.round}
-            isSprint={isSprint}
-          />
-        </div>
+        {/* Lap Time Graph (Race) or Gap Chart (Qualifying) */}
+        {!isQualifying ? (
+          <div className="mt-6">
+            <LapTimeByLapGraph
+              season={session.year}
+              round={session.round}
+              isSprint={isSprint}
+            />
+          </div>
+        ) : (
+          <div className="mt-6">
+            <div className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-lg p-6">
+              <h3 className="text-xl font-bold text-white mb-4">
+                Gap to Pole Position
+              </h3>
+              <div className="space-y-2">
+                {results.slice(0, 10).map((result) => {
+                  const bestTime =
+                    result.q3_time_seconds ||
+                    result.q2_time_seconds ||
+                    result.q1_time_seconds;
+                  const poleTime =
+                    results[0].q3_time_seconds ||
+                    results[0].q2_time_seconds ||
+                    results[0].q1_time_seconds;
+                  const gap = bestTime && poleTime ? bestTime - poleTime : 0;
+                  const maxGap = Math.max(
+                    ...results.slice(0, 10).map((r) => {
+                      const rBest =
+                        r.q3_time_seconds ||
+                        r.q2_time_seconds ||
+                        r.q1_time_seconds;
+                      return rBest && poleTime ? rBest - poleTime : 0;
+                    }),
+                  );
+                  const widthPercent = maxGap > 0 ? (gap / maxGap) * 100 : 0;
+
+                  return (
+                    <div
+                      key={result.driver.driver_code}
+                      className="flex items-center gap-3"
+                    >
+                      <div className="w-8 text-right text-gray-400 text-sm font-bold">
+                        {result.position}
+                      </div>
+                      <div className="w-24 text-right text-white text-sm truncate">
+                        {result.driver.driver_code}
+                      </div>
+                      <div className="flex-1">
+                        <div
+                          className="h-8 rounded transition-all flex items-center justify-end pr-2"
+                          style={{
+                            width: `${widthPercent}%`,
+                            minWidth: gap === 0 ? "0%" : "10%",
+                            backgroundColor: result.team.team_color
+                              ? `#${result.team.team_color}`
+                              : "#a020f0",
+                          }}
+                        >
+                          {gap > 0 && (
+                            <span className="text-white text-xs font-mono">
+                              +{gap.toFixed(3)}s
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

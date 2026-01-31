@@ -12,10 +12,6 @@ from typing import List
 from app.database import get_db
 from app.services.results_service import ResultsService
 from app.security import verify_api_key
-
-# Helper function for sanitizing floats
-sanitize_float = ResultsService.sanitize_float
-
 from app.schemas.result import (
     StandingsResponse,
     SeasonRoundsResponse,
@@ -24,6 +20,9 @@ from app.schemas.result import (
     PointsProgressionResponse,
     LapTimesResponse,
 )
+
+# Helper function for sanitizing floats
+sanitize_float = ResultsService.sanitize_float
 
 router = APIRouter()
 
@@ -152,6 +151,28 @@ async def get_points_progression(
     return progression
 
 
+@router.get("/{season}/qualifying", response_model=SeasonRoundsResponse)
+async def get_season_qualifying_rounds(
+    season: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Get all qualifying rounds for a season with top 3 qualifiers for each.
+
+    Returns qualifying sessions (both regular and sprint qualifying) showing top 3.
+    Used for the /results/[season] page in qualifying view mode.
+    """
+    rounds = await ResultsService.get_season_qualifying_rounds(db, season)
+
+    if not rounds:
+        raise HTTPException(
+            status_code=404, detail=f"No qualifying results found for season {season}"
+        )
+
+    return rounds
+
+
 @router.get("/{season}", response_model=SeasonRoundsResponse)
 async def get_season_rounds(
     season: int,
@@ -220,6 +241,56 @@ async def get_sprint_details(
         raise HTTPException(
             status_code=404,
             detail=f"No sprint race found for season {season}, round {round}",
+        )
+
+    return results
+
+
+@router.get("/{season}/{round}/qualifying", response_model=SessionResultsResponse)
+async def get_qualifying_details(
+    season: int,
+    round: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Get full qualifying results for a specific round.
+
+    Returns all drivers and their qualifying session data (Q1/Q2/Q3 times).
+    Used for the /results/[season]/[round] page in qualifying view mode.
+    """
+    results = await ResultsService.get_qualifying_details(db, season, round)
+
+    if not results:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No qualifying session found for season {season}, round {round}",
+        )
+
+    return results
+
+
+@router.get(
+    "/{season}/{round}/sprint-qualifying", response_model=SessionResultsResponse
+)
+async def get_sprint_qualifying_details(
+    season: int,
+    round: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Get full sprint qualifying results for a specific round.
+
+    Returns all drivers and their sprint qualifying session data (Q1/Q2/Q3 times).
+    Used for the /results/[season]/[round]/sprint page in qualifying view mode.
+    """
+    results = await ResultsService.get_sprint_qualifying_details(db, season, round)
+
+    if not results:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No sprint qualifying session found for season {season}, round {round}",
         )
 
     return results

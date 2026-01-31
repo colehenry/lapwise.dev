@@ -65,7 +65,10 @@ export default function RoundDetailPage() {
   const round = params.round as string;
 
   const [data, setData] = useState<SessionResultsResponse | null>(null);
+  const [qualifyingData, setQualifyingData] =
+    useState<SessionResultsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [viewMode, setViewMode] = useState<"race" | "qualifying">("race");
 
   // Scroll to top on page load
   useEffect(() => {
@@ -75,9 +78,12 @@ export default function RoundDetailPage() {
   useEffect(() => {
     if (!season || !round) return;
 
+    let isMounted = true;
+
     (async () => {
       try {
         setLoading(true);
+        // Fetch race data first
         const response = await fetch(
           apiUrl(`/api/results/${season}/${round}`),
           {
@@ -86,13 +92,41 @@ export default function RoundDetailPage() {
           },
         );
         const sessionData = await response.json();
+
+        if (!isMounted) return;
         setData(sessionData);
+
+        // Prefetch qualifying data in background
+        fetch(apiUrl(`/api/results/${season}/${round}/qualifying`), {
+          cache: "no-store",
+          headers: apiHeaders(),
+        })
+          .then((res) => res.json())
+          .then((qualData) => {
+            if (isMounted) {
+              setQualifyingData(qualData);
+            }
+          })
+          .catch((error) => {
+            // Silently fail - qualifying data is optional
+            if (isMounted) {
+              console.log("Qualifying data not available:", error);
+            }
+          });
       } catch (error) {
-        console.error("Failed to fetch round details:", error);
+        if (isMounted) {
+          console.error("Failed to fetch round details:", error);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     })();
+
+    return () => {
+      isMounted = false;
+    };
   }, [season, round]);
 
   if (loading) {
@@ -117,11 +151,17 @@ export default function RoundDetailPage() {
     );
   }
 
+  // Get the current data to display based on view mode
+  const displayData = viewMode === "qualifying" ? qualifyingData : data;
+
   return (
     <SessionDetail
-      data={data}
+      data={displayData}
+      qualifyingData={qualifyingData}
       season={season}
       isSprint={false}
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
       onBack={() => router.push(`/results/${season}`)}
     />
   );

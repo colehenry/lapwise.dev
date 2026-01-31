@@ -64,9 +64,13 @@ export default function ResultsPage() {
 
   const [standings, setStandings] = useState<StandingsData | null>(null);
   const [rounds, setRounds] = useState<RoundsData | null>(null);
+  const [qualifyingRounds, setQualifyingRounds] = useState<RoundsData | null>(
+    null,
+  );
   const [loading, setLoading] = useState<boolean>(true);
   const [expandedStandings, setExpandedStandings] = useState<boolean>(false);
   const [availableYears, setAvailableYears] = useState<number[]>([]);
+  const [viewMode, setViewMode] = useState<"race" | "qualifying">("race");
 
   // Scroll to top when season changes
   // biome-ignore lint/correctness/useExhaustiveDependencies: We intentionally want to scroll when season changes
@@ -116,7 +120,7 @@ export default function ResultsPage() {
       try {
         setLoading(true);
 
-        // Fetch standings and rounds in parallel
+        // Fetch standings and rounds in parallel (race data first)
         const [standingsRes, roundsRes] = await Promise.all([
           fetch(apiUrl(`/api/results/${season}/standings`), {
             cache: "no-store",
@@ -136,6 +140,24 @@ export default function ResultsPage() {
 
         setStandings(standingsData);
         setRounds(roundsData);
+
+        // Prefetch qualifying data in background (non-blocking)
+        fetch(apiUrl(`/api/results/${season}/qualifying`), {
+          cache: "no-store",
+          headers: apiHeaders(),
+        })
+          .then((res) => res.json())
+          .then((qualifyingData) => {
+            if (isMounted) {
+              setQualifyingRounds(qualifyingData);
+            }
+          })
+          .catch((error) => {
+            // Silently fail - qualifying data is optional
+            if (isMounted && document.visibilityState === "visible") {
+              console.log("Qualifying data not available:", error);
+            }
+          });
       } catch (error) {
         // Suppress fetch errors during prefetch (development behavior)
         // Only log if component is actually mounted and visible
@@ -159,12 +181,15 @@ export default function ResultsPage() {
   };
 
   const handleRoundClick = (round: number, sessionType: string) => {
-    if (sessionType === "sprint_race") {
+    if (sessionType === "sprint_race" || sessionType === "sprint_qualifying") {
       router.push(`/results/${season}/${round}/sprint`);
     } else {
       router.push(`/results/${season}/${round}`);
     }
   };
+
+  // Get the current rounds to display based on view mode
+  const displayRounds = viewMode === "qualifying" ? qualifyingRounds : rounds;
 
   // Helper function to get drivers for a team
   const getTeamDrivers = (teamName: string) => {
@@ -404,11 +429,41 @@ export default function ResultsPage() {
           <PointsByRoundGraph season={season} />
         </div>
 
-        {/* Races Section */}
+        {/* Races/Qualifying Section */}
         <div>
-          <h2 className="text-xl font-bold text-white mb-3">Race Results</h2>
+          {/* Header with toggle */}
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xl font-bold text-white">
+              {viewMode === "race" ? "Race Results" : "Qualifying Results"}
+            </h2>
+            {/* Race/Qualifying Toggle */}
+            <div className="flex items-center gap-2 bg-bg-tertiary rounded-lg p-1 border border-border-secondary">
+              <button
+                type="button"
+                onClick={() => setViewMode("race")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  viewMode === "race"
+                    ? "bg-purple-500 text-white"
+                    : "text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                Race
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("qualifying")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  viewMode === "qualifying"
+                    ? "bg-purple-500 text-white"
+                    : "text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                Qualifying
+              </button>
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {rounds?.rounds.map((round) => (
+            {displayRounds?.rounds.map((round) => (
               <button
                 type="button"
                 key={`${round.round}-${round.session_type}`}
@@ -420,7 +475,7 @@ export default function ResultsPage() {
                 <div className="flex items-center gap-4">
                   {/* Left side: Race info and podium */}
                   <div className="flex-1 min-w-0">
-                    {/* Race Header - Horizontal */}
+                    {/* Race/Qualifying Header - Horizontal */}
                     <div className="mb-3 pb-2 border-b border-[#2a2a35]">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-lg font-bold text-white truncate">
@@ -428,8 +483,16 @@ export default function ResultsPage() {
                             Round {round.round}
                           </span>{" "}
                           • {round.event_name}
+                          {(round.session_type === "qualifying" ||
+                            round.session_type === "sprint_qualifying") &&
+                            " Qualifying"}
                         </h3>
                         {round.session_type === "sprint_race" && (
+                          <span className="bg-[#a020f0] text-white px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap">
+                            SPRINT
+                          </span>
+                        )}
+                        {round.session_type === "sprint_qualifying" && (
                           <span className="bg-[#a020f0] text-white px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap">
                             SPRINT
                           </span>
