@@ -32,6 +32,8 @@ ENDPOINTS = [
     "/results/2023/standings",         # Fixed path
     "/results/2023",                   # Season rounds
     "/results/2023/points-progression", # Fixed path
+    "/results/2023/1",                 # Round detail (NEW)
+    "/results/2023/1/lap-times",       # Lap times (NEW)
 ]
 
 async def verify_endpoint(client, path):
