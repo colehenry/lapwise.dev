@@ -13,10 +13,12 @@ from typing import Optional, List
 class CircuitInfo(BaseModel):
     """Circuit metadata embedded in session response"""
 
+    id: int  # Circuit ID used to construct track map URL
     name: str
     location: str
     country: str
     track_length_km: Optional[float] = None
+    track_map_url: Optional[str] = None  # Computed: /track-maps/{id}.png
 
     class Config:
         from_attributes = True
@@ -190,6 +192,8 @@ class RoundSummary(BaseModel):
     event_name: str
     date: date
     circuit_name: str
+    circuit_id: int  # For track map URL
+    track_length_km: Optional[float] = None
     session_type: str  # 'race', 'sprint_race', 'qualifying', 'sprint_qualifying'
     podium: List[RoundPodiumDriver]  # Top 3 drivers
 

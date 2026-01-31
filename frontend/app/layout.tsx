@@ -3,6 +3,7 @@ import "./globals.css";
 import Footer from "@/components/Footer";
 import Navigation from "@/components/Navigation";
 import QueryProvider from "@/components/QueryProvider";
+import ScrollbarHandler from "@/components/ScrollbarHandler";
 
 export const metadata: Metadata = {
   title: "Lapwise - F1 Analytics & Telemetry",
@@ -19,6 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <QueryProvider>
+          <ScrollbarHandler />
           <Navigation />
           <main className="pt-16 min-h-screen">{children}</main>
           <Footer />
@@ -27,3 +29,4 @@ export default function RootLayout({
     </html>
   );
 }
+
