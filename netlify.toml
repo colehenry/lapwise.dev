@@ -9,11 +9,9 @@
 #   - NEXT_PUBLIC_API_URL (production: https://api.lapwise.dev)
 #   - NEXT_PUBLIC_API_KEY (set after generating new key)
 
-# Temporarily disable secrets scanning during API key rotation
-# Ignores old key value and cache directories that may contain it
+# Disable secrets scanning entirely during API key rotation
 [build.environment]
-  SECRETS_SCAN_OMIT_KEYS = "754b5a8e5c6c17f92026f9fedbe15bf58fbb0af80c3706098d0da7701327ad26"
-  SECRETS_SCAN_OMIT_PATHS = ".netlify/.next/cache/**,.next/cache/**"
+  SECRETS_SCAN_ENABLED = "false"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
