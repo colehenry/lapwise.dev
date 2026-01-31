@@ -3,17 +3,11 @@
   command = "npm run build"
   publish = ".next"
 
-[build.environment]
-  NEXT_PUBLIC_API_URL = "https://api.lapwise.dev"
-  NEXT_PUBLIC_API_KEY = "754b5a8e5c6c17f92026f9fedbe15bf58fbb0af80c3706098d0da7701327ad26"
-
-[context.production.environment]
-  NEXT_PUBLIC_API_URL = "https://api.lapwise.dev"
-  NEXT_PUBLIC_API_KEY = "754b5a8e5c6c17f92026f9fedbe15bf58fbb0af80c3706098d0da7701327ad26"
-
-[context.branch-deploy.environment]
-  NEXT_PUBLIC_API_URL = "https://lapwisedev-dev.up.railway.app"
-  NEXT_PUBLIC_API_KEY = "754b5a8e5c6c17f92026f9fedbe15bf58fbb0af80c3706098d0da7701327ad26"
+# Environment variables are now set in Netlify UI
+# Site settings → Environment variables
+# Required variables:
+#   - NEXT_PUBLIC_API_URL (production: https://api.lapwise.dev)
+#   - NEXT_PUBLIC_API_KEY (set after generating new key)
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

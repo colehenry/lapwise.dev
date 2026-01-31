@@ -57,8 +57,10 @@ jobs:
             echo "DATABASE_URL=${{ secrets.NEON_DEV_DATABASE_URL }}" >> $GITHUB_ENV
           fi
 
-      - name: Set API key
-        run: echo "API_KEY=${{ secrets.LAPWISE_API_KEY }}" >> $GITHUB_ENV
+      - name: Set API key and secret
+        run: |
+          echo "LAPWISE_API_KEY=${{ secrets.LAPWISE_API_KEY }}" >> $GITHUB_ENV
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> $GITHUB_ENV
 
       - name: Create cache directory
         run: mkdir -p backend/.fastf1_cache
