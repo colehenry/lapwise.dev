@@ -1,0 +1,140 @@
+name: Ingest Historical F1 Data
+
+# Manual trigger only - allows you to select which seasons to ingest
+on:
+  workflow_dispatch:
+    inputs:
+      start_year:
+        description: 'Start year (e.g., 1950)'
+        required: true
+        type: number
+        default: 1950
+      end_year:
+        description: 'End year (e.g., 2017)'
+        required: true
+        type: number
+        default: 2017
+      session_types:
+        description: 'Session types (comma-separated: race,qualifying,sprint_race,sprint_qualifying)'
+        required: true
+        type: string
+        default: 'race,qualifying'
+      target_database:
+        description: 'Target database (dev or prod)'
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+        default: dev
+
+jobs:
+  ingest-historical-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 480  # 8 hours max (historical ingestion can be slow)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.14'
+          cache: 'pip'
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Set database URL
+        run: |
+          if [ "${{ inputs.target_database }}" = "prod" ]; then
+            echo "DATABASE_URL=${{ secrets.NEON_PROD_DATABASE_URL }}" >> $GITHUB_ENV
+          else
+            echo "DATABASE_URL=${{ secrets.NEON_DEV_DATABASE_URL }}" >> $GITHUB_ENV
+          fi
+
+      - name: Set API key
+        run: echo "API_KEY=${{ secrets.LAPWISE_API_KEY }}" >> $GITHUB_ENV
+
+      - name: Create cache directory
+        run: mkdir -p backend/.fastf1_cache
+
+      - name: Restore FastF1 cache
+        uses: actions/cache@v4
+        with:
+          path: backend/.fastf1_cache
+          key: fastf1-cache-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            fastf1-cache-
+
+      - name: Ingest historical seasons
+        working-directory: ./backend
+        run: |
+          echo "========================================="
+          echo "Historical F1 Data Ingestion"
+          echo "========================================="
+          echo "Start Year: ${{ inputs.start_year }}"
+          echo "End Year: ${{ inputs.end_year }}"
+          echo "Session Types: ${{ inputs.session_types }}"
+          echo "Target DB: ${{ inputs.target_database }}"
+          echo "========================================="
+          echo ""
+
+          # Loop through each year
+          for year in $(seq ${{ inputs.start_year }} ${{ inputs.end_year }}); do
+            echo "========== Processing $year =========="
+            PYTHONPATH=$PWD python scripts/ingest_season.py $year ${{ inputs.session_types }} || {
+              echo "⚠️  Season $year failed, continuing with next season..."
+              continue
+            }
+            echo "✅ Season $year complete"
+            echo ""
+          done
+
+          echo "========================================="
+          echo "✨ Historical ingestion complete!"
+          echo "========================================="
+
+      - name: Backfill team colors for historical seasons
+        working-directory: ./backend
+        run: |
+          echo ""
+          echo "========================================="
+          echo "Backfilling Team Colors"
+          echo "========================================="
+          PYTHONPATH=$PWD python scripts/backfill_team_colors.py ${{ inputs.start_year }} ${{ inputs.end_year }}
+          echo "✅ Team color backfill complete"
+
+      - name: Upload failure logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ingestion-logs-${{ inputs.start_year }}-${{ inputs.end_year }}
+          path: backend/logs/
+          retention-days: 30
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Historical data ingestion failed!"
+          echo "Check the logs artifact for details."
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Ingestion Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Years**: ${{ inputs.start_year }} - ${{ inputs.end_year }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Session Types**: ${{ inputs.session_types }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target Database**: ${{ inputs.target_database }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Count failure logs if they exist
+          if [ -d "backend/logs" ]; then
+            failure_count=$(ls -1 backend/logs/ingestion_failures_*.json 2>/dev/null | wc -l)
+            echo "- **Failure logs created**: $failure_count" >> $GITHUB_STEP_SUMMARY
+          fi

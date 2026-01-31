@@ -18,14 +18,18 @@ def ingest_race_results(db: SQLAlchemySession, fastf1_session, session_id, year)
     results = fastf1_session.results
     print(f"  📊 Processing {len(results)} driver results...")
 
-    # Get fastest lap info from laps data
-    try:
-        laps = fastf1_session.laps
-        fastest_lap = laps.pick_fastest()
-        fastest_lap_driver = fastest_lap["Driver"] if fastest_lap is not None else None
-    except Exception as e:
-        print(f"    ⚠️  Could not determine fastest lap: {e}")
-        fastest_lap_driver = None
+    # Get fastest lap info from laps data (only available for 2018+)
+    fastest_lap_driver = None
+    if year >= 2018:
+        try:
+            laps = fastf1_session.laps
+            if laps is not None and len(laps) > 0:
+                fastest_lap = laps.pick_fastest()
+                fastest_lap_driver = fastest_lap["Driver"] if fastest_lap is not None else None
+        except Exception as e:
+            print(f"    ⚠️  Could not determine fastest lap: {e}")
+    else:
+        print(f"    ℹ️  Fastest lap data not available for pre-2018 seasons")
 
     new_results = 0
     for idx, driver_result in results.iterrows():
