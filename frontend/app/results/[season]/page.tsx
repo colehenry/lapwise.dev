@@ -70,7 +70,7 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [expandedStandings, setExpandedStandings] = useState<boolean>(false);
   const [availableYears, setAvailableYears] = useState<number[]>([]);
-  const [viewMode, setViewMode] = useState<"race" | "qualifying">("race");
+  const [sessionType, setSessionType] = useState<"race" | "qualifying">("race");
 
   // Scroll to top when season changes
   // biome-ignore lint/correctness/useExhaustiveDependencies: We intentionally want to scroll when season changes
@@ -146,7 +146,10 @@ export default function ResultsPage() {
           cache: "no-store",
           headers: apiHeaders(),
         })
-          .then((res) => res.json())
+          .then((res) => {
+            if (!res.ok) throw new Error("Qualifying data not found");
+            return res.json();
+          })
           .then((qualifyingData) => {
             if (isMounted) {
               setQualifyingRounds(qualifyingData);
@@ -180,16 +183,17 @@ export default function ResultsPage() {
     router.push(`/results/${newYear}`);
   };
 
-  const handleRoundClick = (round: number, sessionType: string) => {
-    if (sessionType === "sprint_race" || sessionType === "sprint_qualifying") {
-      router.push(`/results/${season}/${round}/sprint`);
+  const handleRoundClick = (round: number, roundSessionType: string) => {
+    const modeParam = sessionType === "qualifying" ? "?mode=qualifying" : "";
+    if (roundSessionType === "sprint_race" || roundSessionType === "sprint_qualifying") {
+      router.push(`/results/${season}/${round}/sprint${modeParam}`);
     } else {
-      router.push(`/results/${season}/${round}`);
+      router.push(`/results/${season}/${round}${modeParam}`);
     }
   };
 
   // Get the current rounds to display based on view mode
-  const displayRounds = viewMode === "qualifying" ? qualifyingRounds : rounds;
+  const displayRounds = sessionType === "qualifying" ? qualifyingRounds : rounds;
 
   // Helper function to get drivers for a team
   const getTeamDrivers = (teamName: string) => {
@@ -434,15 +438,19 @@ export default function ResultsPage() {
           {/* Header with toggle */}
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xl font-bold text-white">
-              {viewMode === "race" ? "Race Results" : "Qualifying Results"}
+              {sessionType === "race" ? "Race Results" : "Qualifying Results"}
             </h2>
             {/* Race/Qualifying Toggle */}
-            <div className="flex items-center gap-2 bg-bg-tertiary rounded-lg p-1 border border-border-secondary">
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider ml-1">
+                Session Type
+              </span>
+              <div className="flex items-center gap-2 bg-[#1e1e28] rounded-lg p-1 border border-[#2a2a35]">
               <button
                 type="button"
-                onClick={() => setViewMode("race")}
+                onClick={() => setSessionType("race")}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  viewMode === "race"
+                  sessionType === "race"
                     ? "bg-purple-500 text-white"
                     : "text-text-secondary hover:text-text-primary"
                 }`}
@@ -451,9 +459,9 @@ export default function ResultsPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setViewMode("qualifying")}
+                onClick={() => setSessionType("qualifying")}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  viewMode === "qualifying"
+                  sessionType === "qualifying"
                     ? "bg-purple-500 text-white"
                     : "text-text-secondary hover:text-text-primary"
                 }`}
@@ -462,6 +470,7 @@ export default function ResultsPage() {
               </button>
             </div>
           </div>
+        </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {displayRounds?.rounds.map((round) => (
               <button
@@ -482,7 +491,7 @@ export default function ResultsPage() {
                           <span className="text-gray-400 font-normal">
                             Round {round.round}
                           </span>{" "}
-                          • {round.event_name}
+                          • {round.event_name.replace("Grand Prix", "GP")}
                           {(round.session_type === "qualifying" ||
                             round.session_type === "sprint_qualifying") &&
                             " Qualifying"}

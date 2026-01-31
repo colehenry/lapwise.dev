@@ -68,15 +68,19 @@ interface SessionDetailProps {
   qualifyingData?: SessionResultsResponse | null;
   season: string;
   isSprint?: boolean;
-  viewMode?: "race" | "qualifying";
-  onViewModeChange?: (mode: "race" | "qualifying") => void;
+  sessionType?: "race" | "qualifying";
+  onSessionTypeChange?: (mode: "race" | "qualifying") => void;
   onBack: () => void;
 }
 
 // Helper to format time in seconds to "MM:SS.mmm" or "+SS.mmm"
-const formatTime = (seconds: number | null, isLeader: boolean): string => {
+const formatTime = (
+  seconds: number | null,
+  isLeader: boolean,
+  forceFullTime = false,
+): string => {
   if (seconds === null) return "-";
-  if (isLeader) {
+  if (isLeader || forceFullTime) {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toFixed(3).padStart(6, "0")}`;
@@ -89,12 +93,12 @@ export default function SessionDetail({
   qualifyingData,
   season,
   isSprint = false,
-  viewMode = "race",
-  onViewModeChange,
+  sessionType = "race",
+  onSessionTypeChange,
   onBack,
 }: SessionDetailProps) {
   const [expandedResults, setExpandedResults] = useState<boolean>(false);
-  const isQualifying = viewMode === "qualifying";
+  const isQualifying = sessionType === "qualifying";
 
   if (!data) return null;
 
@@ -103,39 +107,41 @@ export default function SessionDetail({
   return (
     <main className="min-h-screen bg-[#15151e] p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Back Button */}
-        <button
-          type="button"
-          onClick={onBack}
-          className="mb-4 text-[#a020f0] hover:text-[#c77dff] font-semibold transition-colors"
-        >
-          ← Back to {season} Results
-        </button>
+        {/* Top Header: Back Button and Toggle */}
+        <div className="flex items-center justify-between mb-4">
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-[#a020f0] hover:text-[#c77dff] font-semibold transition-colors"
+          >
+            ← Back to {season} Results
+          </button>
 
-        {/* Session Header */}
-        <div className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-lg p-6 mb-6">
           {/* Race/Qualifying Toggle */}
-          {onViewModeChange && qualifyingData && (
-            <div className="flex justify-end mb-4">
-              <div className="flex items-center gap-2 bg-bg-tertiary rounded-lg p-1 border border-border-secondary">
+          {onSessionTypeChange && qualifyingData && (
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider ml-1">
+                Session Type
+              </span>
+              <div className="flex items-center gap-2 bg-[#1e1e28] rounded-lg p-1 border border-[#2a2a35]">
                 <button
                   type="button"
-                  onClick={() => onViewModeChange("race")}
+                  onClick={() => onSessionTypeChange("race")}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                    viewMode === "race"
+                    sessionType === "race"
                       ? "bg-purple-500 text-white"
-                      : "text-text-secondary hover:text-text-primary"
+                      : "text-gray-400 hover:text-white"
                   }`}
                 >
                   {isSprint ? "Sprint" : "Race"}
                 </button>
                 <button
                   type="button"
-                  onClick={() => onViewModeChange("qualifying")}
+                  onClick={() => onSessionTypeChange("qualifying")}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                    viewMode === "qualifying"
+                    sessionType === "qualifying"
                       ? "bg-purple-500 text-white"
-                      : "text-text-secondary hover:text-text-primary"
+                      : "text-gray-400 hover:text-white"
                   }`}
                 >
                   Qualifying
@@ -143,6 +149,11 @@ export default function SessionDetail({
               </div>
             </div>
           )}
+        </div>
+
+        {/* Session Header */}
+        <div className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-lg p-6 mb-6">
+
           <div className="flex items-start justify-between gap-6">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
@@ -152,11 +163,12 @@ export default function SessionDetail({
                       {getCircuitFlagEmoji(session.circuit.country)}
                     </span>
                   )}
-                  {session.event_name}
+                  {session.event_name.replace("Grand Prix", "GP")}
+                  {isQualifying && " Qualifying"}
                 </h1>
                 {isSprint && (
                   <span className="bg-[#a020f0] text-white px-3 py-1 rounded-full text-sm font-semibold">
-                    SPRINT RACE
+                    {isQualifying ? "SPRINT QUALIFYING" : "SPRINT RACE"}
                   </span>
                 )}
               </div>
@@ -196,82 +208,66 @@ export default function SessionDetail({
         <div className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full table-fixed">
-              <colgroup>
-                <col style={{ width: "60px" }} />
-                <col style={{ width: "60px" }} />
-                <col style={{ width: "280px" }} />
-                <col style={{ width: "200px" }} />
-                <col style={{ width: "140px" }} />
-                <col style={{ width: "80px" }} />
-                <col style={{ width: "120px" }} />
-              </colgroup>
-              <thead className="bg-[#252530] border-b-2 border-[#2a2a35]">
-                <tr>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Pos
-                  </th>
-                  {!isQualifying && (
-                    <th
-                      className="pl-1 pr-4 py-3"
-                      aria-label="Position change"
-                    />
-                  )}
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Driver
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Constructor
-                  </th>
-                  {isQualifying ? (
-                    <>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                        Q1
-                      </th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                        Q2
-                      </th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                        Q3
-                      </th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                        Gap
-                      </th>
-                    </>
-                  ) : (
-                    <>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                        Time
-                      </th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                        Points
-                      </th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                        Status
-                      </th>
-                    </>
-                  )}
-                </tr>
-              </thead>
-            </table>
-          </div>
-          <div
-            className="overflow-y-auto overflow-x-auto"
-            style={{
-              maxHeight: expandedResults ? "760px" : "380px",
-              minHeight: expandedResults ? "760px" : "380px",
-            }}
-          >
-            <table className="w-full table-fixed">
-              <colgroup>
-                <col style={{ width: "60px" }} />
-                <col style={{ width: "60px" }} />
-                <col style={{ width: "280px" }} />
-                <col style={{ width: "200px" }} />
-                <col style={{ width: "140px" }} />
-                <col style={{ width: "80px" }} />
-                <col style={{ width: "120px" }} />
-              </colgroup>
-              <tbody className="divide-y divide-[#2a2a35]">
+                <colgroup><col style={{ width: "60px" }} />{!isQualifying && <col style={{ width: "60px" }} />}<col style={{ width: "280px" }} /><col style={{ width: "200px" }} />{isQualifying ? (<><col style={{ width: "100px" }} /><col style={{ width: "100px" }} /><col style={{ width: "100px" }} /><col style={{ width: "100px" }} /></>) : (<><col style={{ width: "140px" }} /><col style={{ width: "80px" }} /><col style={{ width: "120px" }} /></>)}</colgroup>
+                <thead className="bg-[#252530] border-b-2 border-[#2a2a35]">
+                  <tr>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                      Pos
+                    </th>
+                    {!isQualifying && (
+                      <th
+                        className="pl-1 pr-4 py-3"
+                        aria-label="Position change"
+                      />
+                    )}
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                      Driver
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                      Constructor
+                    </th>
+                    {isQualifying ? (
+                      <>
+                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                          Q1
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                          Q2
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                          Q3
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                          Gap
+                        </th>
+                      </>
+                    ) : (
+                      <>
+                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                          Time
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                          Points
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                          Status
+                        </th>
+                      </>
+                    )}
+                  </tr>
+                </thead>
+              </table>
+            </div>
+            <div
+              className="overflow-y-auto overflow-x-auto"
+              style={{
+                maxHeight: expandedResults ? "760px" : "380px",
+                minHeight: expandedResults ? "760px" : "380px",
+              }}
+            >
+              <table className="w-full table-fixed">
+                <colgroup><col style={{ width: "60px" }} />{!isQualifying && <col style={{ width: "60px" }} />}<col style={{ width: "280px" }} /><col style={{ width: "200px" }} />{isQualifying ? (<><col style={{ width: "100px" }} /><col style={{ width: "100px" }} /><col style={{ width: "100px" }} /><col style={{ width: "100px" }} /></>) : (<><col style={{ width: "140px" }} /><col style={{ width: "80px" }} /><col style={{ width: "120px" }} /></>)}</colgroup>
+                <tbody className="divide-y divide-[#2a2a35]">
                 {results.map((result) => (
                   <tr
                     key={`${result.driver.driver_code}-${result.position}`}
@@ -418,10 +414,7 @@ export default function SessionDetail({
                         <td className="px-4 py-4 text-right">
                           <div className="font-mono text-white text-sm">
                             {result.q1_time_seconds
-                              ? formatTime(
-                                  result.q1_time_seconds,
-                                  false,
-                                ).replace("+", "")
+                              ? formatTime(result.q1_time_seconds, false, true)
                               : "-"}
                           </div>
                         </td>
@@ -430,10 +423,7 @@ export default function SessionDetail({
                         <td className="px-4 py-4 text-right">
                           <div className="font-mono text-white text-sm">
                             {result.q2_time_seconds
-                              ? formatTime(
-                                  result.q2_time_seconds,
-                                  false,
-                                ).replace("+", "")
+                              ? formatTime(result.q2_time_seconds, false, true)
                               : "-"}
                           </div>
                         </td>
@@ -442,10 +432,7 @@ export default function SessionDetail({
                         <td className="px-4 py-4 text-right">
                           <div className="font-mono text-white text-sm font-bold">
                             {result.q3_time_seconds
-                              ? formatTime(
-                                  result.q3_time_seconds,
-                                  false,
-                                ).replace("+", "")
+                              ? formatTime(result.q3_time_seconds, false, true)
                               : "-"}
                           </div>
                         </td>

@@ -92,7 +92,7 @@ export default function RecentRaceCard() {
               href={`/results/${year}/${data.round}`}
               className="text-3xl font-bold text-white hover:text-red-500 transition-colors"
             >
-              {data.event_name}
+              {data.event_name.replace("Grand Prix", "GP")}
             </Link>
             <p className="text-text-tertiary mt-1">{formattedDate}</p>
           </div>
