@@ -1,0 +1,184 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { getCircuitFlagEmoji } from "@/lib/flags";
+
+interface Circuit {
+  id: number;
+  name: string;
+  location: string;
+  country: string;
+  track_length_km: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  total_races: number;
+  first_year: number;
+  most_recent_year: number;
+}
+
+interface CircuitsResponse {
+  circuits: Circuit[];
+  total: number;
+}
+
+async function fetchCircuits(): Promise<CircuitsResponse> {
+  const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/circuits`, {
+    headers: {
+      "X-API-Key": apiKey,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch circuits");
+  }
+
+  return res.json();
+}
+
+function CircuitCard({ circuit }: { circuit: Circuit }) {
+  return (
+    <Link href={`/circuits/${circuit.id}`} className="block h-full">
+      <div className="group bg-gradient-to-br from-[#1e1e2e] to-[#2a2a3e] rounded-lg p-4 border border-gray-800 hover:border-gray-600 transition-all hover:scale-105 h-full">
+        <div className="flex items-center gap-4">
+          {/* Circuit Icon */}
+          <div className="flex-shrink-0 w-24 h-24 rounded-xl bg-[#15151e] flex items-center justify-center border-4 border-gray-700 group-hover:border-[#e10600] transition-colors p-2">
+            <Image
+              src={`/track-maps/${circuit.id}.png`}
+              alt={`${circuit.name} track map`}
+              width={96}
+              height={96}
+              className="object-contain w-full h-full"
+            />
+          </div>
+
+          {/* Circuit Info */}
+          <div className="flex-1 min-w-0">
+            <h3 className="text-white font-bold text-lg truncate group-hover:text-[#e10600] transition-colors">
+              {circuit.name}
+            </h3>
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <span>{circuit.location}</span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <span>{getCircuitFlagEmoji(circuit.country)}</span>
+                <span>{circuit.country}</span>
+              </span>
+              <span>•</span>
+              {circuit.track_length_km && (
+                <span className="text-[#e10600] font-semibold">
+                  {circuit.track_length_km.toFixed(3)} km
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+              <span>
+                {circuit.first_year === circuit.most_recent_year
+                  ? circuit.first_year
+                  : `${circuit.first_year} - ${circuit.most_recent_year}`}
+              </span>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="flex-shrink-0 text-right">
+            <div className="text-2xl font-bold text-white">
+              {circuit.total_races}
+            </div>
+            <div className="text-xs text-gray-500">races</div>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+export default function TracksPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Fetch circuits
+  const { data: circuitsData, isLoading } = useQuery({
+    queryKey: ["circuits"],
+    queryFn: fetchCircuits,
+  });
+
+  // Filter circuits based on search query
+  const filteredCircuits = useMemo(() => {
+    if (!circuitsData) return [];
+
+    return circuitsData.circuits.filter((circuit) => {
+      const query = searchQuery.toLowerCase();
+      return (
+        circuit.name.toLowerCase().includes(query) ||
+        circuit.location.toLowerCase().includes(query) ||
+        circuit.country.toLowerCase().includes(query)
+      );
+    });
+  }, [circuitsData, searchQuery]);
+
+  return (
+    <div className="min-h-screen bg-[#15151e] p-4 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            Circuits
+          </h1>
+
+          {/* Search Bar */}
+          <div className="mb-6">
+            <input
+              type="text"
+              placeholder="Search circuits, locations, or countries..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 bg-[#1e1e2e] text-white border border-gray-700 rounded-lg focus:outline-none focus:border-[#e10600] transition-colors placeholder-gray-500"
+            />
+          </div>
+
+          {/* Stats */}
+          {circuitsData && (
+            <div className="text-gray-400 text-sm">
+              {filteredCircuits.length} circuit
+              {filteredCircuits.length !== 1 ? "s" : ""} across F1 history
+            </div>
+          )}
+        </div>
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Array.from({ length: 20 }, (_, i) => (
+              <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: Static loading skeleton items
+                key={`skeleton-${i}`}
+                className="h-24 bg-[#2a2a3e] rounded-lg animate-pulse"
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Circuits Grid */}
+        {!isLoading && filteredCircuits && filteredCircuits.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredCircuits.map((circuit) => (
+              <CircuitCard key={circuit.id} circuit={circuit} />
+            ))}
+          </div>
+        )}
+
+        {/* No Results */}
+        {!isLoading && filteredCircuits && filteredCircuits.length === 0 && (
+          <div className="bg-[#1e1e2e] rounded-lg p-8 text-center">
+            <p className="text-gray-400 text-lg">
+              No circuits found matching "{searchQuery}"
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

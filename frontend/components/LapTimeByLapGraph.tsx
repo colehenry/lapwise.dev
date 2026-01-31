@@ -217,6 +217,13 @@ export default function LapTimeByLapGraph({
 
   // Fetch data when season or round changes
   useEffect(() => {
+    // Skip API call for pre-2018 seasons (no lap data available)
+    if (season < 2018) {
+      setLoading(false);
+      setData(null);
+      return;
+    }
+
     (async () => {
       try {
         setLoading(true);
@@ -437,19 +444,31 @@ export default function LapTimeByLapGraph({
   }
 
   if (!data || !data.drivers) {
+    // Show specific message for pre-2018 seasons
+    const isPre2018 = season < 2018;
     return (
       <div
         className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6"
         style={{ minHeight: "540px" }}
       >
         <div className="h-8 mb-4 flex items-center">
-          <div className="h-6 bg-[#2a2a35] rounded w-64" />
+          <h3 className="text-lg font-bold text-white">Lap Time Analysis</h3>
         </div>
         <div className="relative" style={{ height: "400px" }}>
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-center text-gray-400">
-              Lap time data not available for this session.
-            </p>
+            <div className="text-center max-w-md">
+              <p className="text-gray-400 mb-2">
+                {isPre2018
+                  ? "Lap timing data is not available for races before 2018."
+                  : "Lap time data not available for this session."}
+              </p>
+              {isPre2018 && (
+                <p className="text-sm text-gray-500">
+                  Historical telemetry data (lap times, weather, track status) is
+                  only available from the 2018 season onwards.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

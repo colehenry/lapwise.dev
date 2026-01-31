@@ -40,6 +40,8 @@ type RoundSummary = {
   event_name: string;
   date: string;
   circuit_name: string;
+  circuit_id: number;
+  track_length_km: number | null;
   session_type: string;
   podium: RoundPodiumDriver[];
 };
@@ -413,84 +415,105 @@ export default function ResultsPage() {
                 onClick={() =>
                   handleRoundClick(round.round, round.session_type)
                 }
-                className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-lg p-4 hover:border-[#a020f0] transition-all cursor-pointer text-left"
+                className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-lg p-4 hover:border-[#a020f0] transition-all cursor-pointer text-left h-[140px]"
               >
-                {/* Race Header - Horizontal */}
-                <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#2a2a35]">
-                  <div>
-                    <h3 className="text-lg font-bold text-white">
-                      <span className="text-gray-400 font-normal">
-                        Round {round.round}
-                      </span>{" "}
-                      • {round.event_name}
-                    </h3>
-                    <p className="text-xs text-gray-400">
-                      {round.circuit_name} •{" "}
-                      {new Date(round.date).toLocaleDateString("en-US", {
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </p>
-                  </div>
-                  {round.session_type === "sprint_race" && (
-                    <span className="bg-[#a020f0] text-white px-2 py-1 rounded-full text-xs font-semibold">
-                      SPRINT
-                    </span>
-                  )}
-                </div>
-
-                {/* Podium - Horizontal Layout */}
-                <div className="flex items-center justify-between gap-4">
-                  {round.podium.map((driver, idx) => {
-                    const medals = ["🥇", "🥈", "🥉"];
-
-                    return (
-                      <div
-                        key={driver.driver_code}
-                        className="flex items-center gap-2 flex-1"
-                      >
-                        {/* Medal */}
-                        <span className="text-2xl">{medals[idx]}</span>
-
-                        {/* Driver Photo */}
-                        {driver.headshot_url &&
-                          driver.headshot_url !== "None" &&
-                          driver.headshot_url !== "nan" &&
-                          driver.headshot_url.startsWith("http") && (
-                            <Image
-                              src={driver.headshot_url}
-                              alt={driver.full_name}
-                              width={44}
-                              height={44}
-                              className="rounded-full object-cover border border-gray-700"
-                            />
-                          )}
-
-                        {/* Driver Info */}
-                        <div className="flex-1">
-                          <div className="font-bold text-white text-sm">
-                            {driver.driver_code}
-                          </div>
-                          <div
-                            className="text-xs font-semibold"
-                            style={{
-                              color: driver.team_color
-                                ? `#${driver.team_color}`
-                                : "#999",
-                            }}
-                          >
-                            {driver.team_name}
-                          </div>
-                          {driver.fastest_lap && (
-                            <div className="text-[10px] text-[#c77dff] font-semibold">
-                              ⚡ Fastest Lap
-                            </div>
-                          )}
-                        </div>
+                <div className="flex items-center gap-4">
+                  {/* Left side: Race info and podium */}
+                  <div className="flex-1 min-w-0">
+                    {/* Race Header - Horizontal */}
+                    <div className="mb-3 pb-2 border-b border-[#2a2a35]">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-lg font-bold text-white truncate">
+                          <span className="text-gray-400 font-normal">
+                            Round {round.round}
+                          </span>{" "}
+                          • {round.event_name}
+                        </h3>
+                        {round.session_type === "sprint_race" && (
+                          <span className="bg-[#a020f0] text-white px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap">
+                            SPRINT
+                          </span>
+                        )}
                       </div>
-                    );
-                  })}
+                      <p className="text-xs text-gray-400 truncate">
+                        {round.circuit_name} •{" "}
+                        {round.track_length_km
+                          ? `${round.track_length_km.toFixed(3)} km • `
+                          : ""}
+                        {new Date(round.date).toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+
+                    {/* Podium - Horizontal Layout with minimal spacing */}
+                    <div className="flex items-center gap-3">
+                      {round.podium.map((driver, idx) => {
+                        const medals = ["🥇", "🥈", "🥉"];
+
+                        return (
+                          <div
+                            key={driver.driver_code}
+                            className="flex items-center gap-0.5"
+                          >
+                            {/* Medal */}
+                            <span className="text-lg flex-shrink-0">
+                              {medals[idx]}
+                            </span>
+
+                            {/* Driver Photo */}
+                            {driver.headshot_url &&
+                              driver.headshot_url !== "None" &&
+                              driver.headshot_url !== "nan" &&
+                              driver.headshot_url.startsWith("http") && (
+                                <Image
+                                  src={driver.headshot_url}
+                                  alt={driver.full_name}
+                                  width={40}
+                                  height={40}
+                                  className="rounded-full object-cover border border-gray-700 flex-shrink-0"
+                                />
+                              )}
+
+                            {/* Driver Name - Team colored, centered vertically */}
+                            <div className="flex items-center">
+                              <div
+                                className="font-bold text-sm truncate"
+                                style={{
+                                  color: driver.team_color
+                                    ? `#${driver.team_color}`
+                                    : "#fff",
+                                }}
+                              >
+                                {driver.driver_code}
+                                {driver.fastest_lap && (
+                                  <span
+                                    className="text-[10px] text-[#c77dff] ml-0.5"
+                                    title="Fastest Lap"
+                                  >
+                                    ⚡
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Right side: Track map - centered vertically with consistent height */}
+                  <div className="flex-shrink-0 flex items-center justify-center w-45 h-25">
+                    <Image
+                      src={`/track-maps/${round.circuit_id}.png`}
+                      alt={`${round.circuit_name} track map`}
+                      width={180}
+                      height={100}
+                      className="object-contain w-full h-full"
+                    />
+                  </div>
                 </div>
               </button>
             ))}

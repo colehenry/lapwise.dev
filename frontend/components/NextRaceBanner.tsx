@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { getCircuitFlagEmoji, getDriverFlagEmoji } from "@/lib/flags";
 
@@ -83,7 +84,7 @@ export default function NextRaceBanner() {
             Upcoming Events
           </h2>
           {/* Horizontal Scrollable Events */}
-          <div className="overflow-x-auto overflow-y-hidden -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 scrollbar-thin scrollbar-thumb-purple-500/20 scrollbar-track-transparent hover:scrollbar-thumb-purple-500/40">
+          <div className="overflow-x-auto overflow-y-hidden -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 scrollbar-permanent">
             <div className="flex gap-4 pb-4 min-w-min">
               {events.map((event) => {
                 const daysUntil = getDaysUntilEvent(event.event_date);
@@ -187,6 +188,7 @@ interface LatestRaceCompactData {
   event_name: string;
   date: string;
   circuit_name: string;
+  circuit_id: number;
   session_type: string;
   podium: LatestRacePodiumDriver[];
 }
@@ -217,19 +219,9 @@ function LatestRaceCompact() {
 
   if (isLoading) {
     return (
-      <div className="bg-bg-primary border border-border-primary rounded-lg p-8 shadow-lg">
-        <div className="animate-pulse space-y-6">
-          <div className="text-center space-y-3">
-            <div className="h-8 bg-bg-secondary rounded w-2/3 mx-auto" />
-            <div className="h-16 w-16 bg-bg-secondary rounded-full mx-auto" />
-            <div className="h-4 bg-bg-secondary rounded w-1/3 mx-auto" />
-            <div className="h-3 bg-bg-secondary rounded w-1/2 mx-auto" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            <div className="h-48 bg-bg-secondary rounded-lg" />
-            <div className="h-48 bg-bg-secondary rounded-lg" />
-            <div className="h-48 bg-bg-secondary rounded-lg" />
-          </div>
+      <div className="bg-bg-primary border border-border-primary rounded-lg p-8 shadow-lg h-[280px]">
+        <div className="animate-pulse h-full flex items-center justify-center">
+          <div className="text-text-tertiary">Loading latest race...</div>
         </div>
       </div>
     );
@@ -237,7 +229,7 @@ function LatestRaceCompact() {
 
   if (error || !data) {
     return (
-      <div className="bg-bg-primary border border-border-primary rounded-lg p-8 shadow-lg">
+      <div className="bg-bg-primary border border-border-primary rounded-lg p-8 shadow-lg h-[280px]">
         <p className="text-red-400 text-sm text-center">
           Failed to load latest race
         </p>
@@ -246,113 +238,110 @@ function LatestRaceCompact() {
   }
 
   const year = new Date(data.date).getFullYear();
-  const formattedDate = new Date(data.date).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-  const flag = getCircuitFlagEmoji(data.circuit_name);
 
   return (
-    <div className="bg-bg-primary border border-border-primary rounded-lg p-8 shadow-lg hover:border-purple-500/30 transition-all duration-300">
-      {/* Header - Centered */}
-      <div className="text-center mb-8">
-        <h3 className="text-2xl font-bold text-text-primary mb-3">
-          {data.event_name}
-        </h3>
-        <div className="text-5xl mb-3">{flag}</div>
-        <span className="inline-block px-3 py-1 text-xs font-semibold text-text-tertiary uppercase tracking-wider bg-bg-secondary border border-border-primary rounded-full mb-2">
-          Grand Prix
-        </span>
-        <p className="text-sm text-text-tertiary mt-2">{data.circuit_name}</p>
-        <p className="text-sm text-text-muted mt-1">{formattedDate}</p>
-      </div>
-
-      {/* Top 3 Finishers - Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {data.podium.map((driver, index) => {
-          const position = index + 1;
-          const positionColor =
-            position === 1
-              ? "text-yellow-400 bg-yellow-400/10 border-yellow-400/30"
-              : position === 2
-                ? "text-gray-300 bg-gray-300/10 border-gray-300/30"
-                : "text-amber-600 bg-amber-600/10 border-amber-600/30";
-
-          const driverFlag = driver.country_code
-            ? getDriverFlagEmoji(driver.country_code)
-            : "";
-
-          return (
-            <div
-              key={driver.driver_code}
-              className="relative bg-bg-secondary border-2 border-border-primary rounded-lg p-5 hover:border-purple-500/50 hover:shadow-xl transition-all duration-200 group"
-              style={{
-                borderTopColor: driver.team_color
-                  ? `#${driver.team_color}`
-                  : undefined,
-                borderTopWidth: "4px",
-              }}
-            >
-              {/* Position Badge */}
-              <div
-                className={`absolute -top-4 -left-4 w-12 h-12 rounded-full ${positionColor} border-4 border-bg-primary flex items-center justify-center font-bold text-xl shadow-lg`}
-              >
-                {position}
-              </div>
-
-              {/* Driver Info - Centered */}
-              <div className="flex flex-col items-center gap-3 mt-3">
-                {driver.headshot_url ? (
-                  <img
-                    src={driver.headshot_url}
-                    alt={driver.full_name}
-                    className="w-20 h-20 rounded-full object-cover bg-bg-primary border-2 border-border-primary group-hover:border-purple-500/50 transition-all duration-200 shadow-md"
-                  />
-                ) : (
-                  <div className="w-20 h-20 rounded-full bg-bg-primary flex items-center justify-center text-text-muted font-bold border-2 border-border-primary text-lg">
-                    {driver.driver_code}
-                  </div>
+    <div className="space-y-4">
+      {/* Race Result Card - Scaled 2x */}
+      <div className="bg-bg-tertiary border border-border-primary rounded-lg shadow-lg p-8 hover:border-purple-500 transition-all h-[280px]">
+        <div className="flex items-center gap-8 h-full">
+          {/* Left side: Race info and podium */}
+          <div className="flex-1 min-w-0 h-full flex flex-col">
+            {/* Race Header */}
+            <div className="mb-6 pb-4 border-b border-border-secondary">
+              <div className="flex items-center gap-4 flex-wrap mb-2">
+                <h3 className="text-2xl font-bold text-white truncate">
+                  <span className="text-text-tertiary font-normal">
+                    Round {data.round}
+                  </span>{" "}
+                  • {data.event_name}
+                </h3>
+                {data.session_type === "sprint_race" && (
+                  <span className="bg-purple-500 text-white px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap">
+                    SPRINT
+                  </span>
                 )}
-
-                <div className="text-center">
-                  <Link
-                    href={`/drivers/${driver.driver_code}`}
-                    className="font-bold text-text-primary text-xl hover:text-purple-400 transition-colors inline-flex items-center gap-2"
-                  >
-                    {driverFlag && (
-                      <span className="text-lg">{driverFlag}</span>
-                    )}
-                    {driver.driver_code}
-                  </Link>
-                  <p className="text-sm text-text-tertiary mt-1.5">
-                    {driver.team_name}
-                  </p>
-                  {driver.fastest_lap && (
-                    <div className="mt-3 inline-flex items-center gap-1.5 px-2 py-1 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-full text-xs font-semibold">
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <title>Fastest Lap</title>
-                        <path d="M10 2L13 8L19 9L14.5 13.5L15.5 19L10 16L4.5 19L5.5 13.5L1 9L7 8L10 2Z" />
-                      </svg>
-                      Fastest Lap
-                    </div>
-                  )}
-                </div>
               </div>
+              <p className="text-sm text-text-tertiary truncate">
+                {data.circuit_name} •{" "}
+                {new Date(data.date).toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </p>
             </div>
-          );
-        })}
+
+            {/* Podium - Horizontal Layout */}
+            <div className="flex items-center flex-1">
+              {data.podium.map((driver, idx) => {
+                const medals = ["🥇", "🥈", "🥉"];
+
+                return (
+                  <div
+                    key={driver.driver_code}
+                    className="flex items-center gap-2 flex-1 min-w-0"
+                  >
+                    {/* Medal */}
+                    <span className="text-3xl flex-shrink-0">
+                      {medals[idx]}
+                    </span>
+
+                    {/* Driver Photo */}
+                    {driver.headshot_url && (
+                      <Image
+                        src={driver.headshot_url}
+                        alt={driver.full_name}
+                        width={80}
+                        height={80}
+                        className="rounded-full object-cover border-2 border-border-secondary flex-shrink-0"
+                      />
+                    )}
+
+                    {/* Driver Name - Team colored, centered vertically */}
+                    <div className="flex items-center min-w-0">
+                      <div
+                        className="font-bold text-xl truncate"
+                        style={{
+                          color: driver.team_color
+                            ? `#${driver.team_color}`
+                            : "#fff",
+                        }}
+                      >
+                        {driver.driver_code}
+                        {driver.fastest_lap && (
+                          <span
+                            className="text-base text-[#c77dff] ml-2 cursor-help"
+                            title="Fastest Lap"
+                          >
+                            ⚡
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right side: Track map - centered vertically */}
+          <div className="flex-shrink-0 flex items-center h-full">
+            <Image
+              src={`/track-maps/${data.circuit_id}.png`}
+              alt={`${data.circuit_name} track map`}
+              width={300}
+              height={300}
+              className="object-contain max-h-full"
+            />
+          </div>
+        </div>
       </div>
 
-      {/* View Full Results Link */}
-      <div className="pt-6 border-t border-border-primary">
+      {/* View Full Results Button */}
+      <div className="flex justify-center">
         <Link
           href={`/results/${year}/${data.round}`}
-          className="block text-center px-4 py-3 text-sm font-semibold bg-bg-secondary text-text-tertiary border border-border-primary rounded-lg hover:border-purple-500/50 hover:text-purple-400 hover:bg-purple-500/5 transition-all duration-200"
+          className="px-6 py-3 text-sm font-semibold bg-bg-tertiary text-text-secondary border-2 border-border-primary rounded-lg hover:border-purple-500 hover:text-purple-400 hover:bg-purple-500/5 transition-all duration-200"
         >
           View Full Results →
         </Link>
