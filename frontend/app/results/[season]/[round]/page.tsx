@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import SessionDetail from "@/components/SessionDetail";
 import { apiHeaders, apiUrl } from "@/lib/api";
@@ -60,24 +60,39 @@ type SessionResultsResponse = {
 
 export default function RoundDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const season = params.season as string;
   const round = params.round as string;
+  const initialMode = searchParams.get("mode") === "qualifying" ? "qualifying" : "race";
 
   const [data, setData] = useState<SessionResultsResponse | null>(null);
+  const [qualifyingData, setQualifyingData] =
+    useState<SessionResultsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [sessionType, setSessionType] = useState<"race" | "qualifying">(initialMode);
 
   // Scroll to top on page load
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
+  // Update sessionType if initialMode changes (e.g. back/forward navigation)
+  useEffect(() => {
+    if (initialMode) {
+      setSessionType(initialMode);
+    }
+  }, [initialMode]);
+
   useEffect(() => {
     if (!season || !round) return;
+
+    let isMounted = true;
 
     (async () => {
       try {
         setLoading(true);
+        // Fetch race data first
         const response = await fetch(
           apiUrl(`/api/results/${season}/${round}`),
           {
@@ -86,13 +101,44 @@ export default function RoundDetailPage() {
           },
         );
         const sessionData = await response.json();
+
+        if (!isMounted) return;
         setData(sessionData);
+
+        // Prefetch qualifying data in background
+        fetch(apiUrl(`/api/results/${season}/${round}/qualifying`), {
+          cache: "no-store",
+          headers: apiHeaders(),
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error("Qualifying data not found");
+            return res.json();
+          })
+          .then((qualData) => {
+            if (isMounted) {
+              setQualifyingData(qualData);
+            }
+          })
+          .catch((error) => {
+            // Silently fail - qualifying data is optional
+            if (isMounted) {
+              console.log("Qualifying data not available:", error);
+            }
+          });
       } catch (error) {
-        console.error("Failed to fetch round details:", error);
+        if (isMounted) {
+          console.error("Failed to fetch round details:", error);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     })();
+
+    return () => {
+      isMounted = false;
+    };
   }, [season, round]);
 
   if (loading) {
@@ -117,11 +163,16 @@ export default function RoundDetailPage() {
     );
   }
 
+  // Get the current data to display based on view mode
+  const displayData = sessionType === "qualifying" ? qualifyingData : data;
+
   return (
     <SessionDetail
-      data={data}
+      data={displayData}
+      qualifyingData={qualifyingData}
       season={season}
-      isSprint={false}
+      sessionType={sessionType}
+      onSessionTypeChange={setSessionType}
       onBack={() => router.push(`/results/${season}`)}
     />
   );
