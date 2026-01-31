@@ -39,9 +39,7 @@ export default function JumpToRace({
       try {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const apiKey =
-          process.env.NEXT_PUBLIC_API_KEY ||
-          "754b5a8e5c6c17f92026f9fedbe15bf58fbb0af80c3706098d0da7701327ad26";
+        const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
 
         const endpoint = sessionType === "qualifying" 
           ? `${apiUrl}/api/results/${selectedSeason}/qualifying`

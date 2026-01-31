@@ -1,10 +1,11 @@
 import httpx
 import asyncio
 import sys
+import os
 
 
 BASE_URL = "http://localhost:8000/api"
-API_KEY = "754b5a8e5c6c17f92026f9fedbe15bf58fbb0af80c3706098d0da7701327ad26"
+API_KEY = os.getenv("API_KEY", "")  # Set API_KEY environment variable before running
 
 # Endpoints that should work
 ENDPOINTS = [
