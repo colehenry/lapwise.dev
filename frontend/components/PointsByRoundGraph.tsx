@@ -88,7 +88,7 @@ const CustomTooltip = ({ active, payload, label, mode }: any) => {
   if (label === "0") return null;
 
   // Get event name from first payload entry
-  const eventName = payload[0]?.payload?.event_name || `Round ${label}`;
+  const eventName = (payload[0]?.payload?.event_name || `Round ${label}`).replace("Grand Prix", "GP");
   const isSprint = label?.endsWith("-sprint");
   const displayName = isSprint ? `${eventName}: Sprint` : eventName;
 

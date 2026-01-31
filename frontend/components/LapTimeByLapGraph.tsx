@@ -519,7 +519,7 @@ export default function LapTimeByLapGraph({
     >
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-white">
-          {data.event_name} -{" "}
+          {data.event_name.replace("Grand Prix", "GP")} -{" "}
           {viewMode === "lapTime" ? "Lap Times" : "Gap to Leader"}
         </h3>
 

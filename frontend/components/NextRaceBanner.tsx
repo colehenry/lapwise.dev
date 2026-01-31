@@ -126,11 +126,11 @@ export default function NextRaceBanner() {
                       {/* Event Info - Right Side */}
                       <div className="flex-1 text-center flex flex-col min-h-[200px]">
                         <h3 className="text-sm font-bold text-text-primary mb-2 truncate">
-                          {event.event_name}
+                          {event.event_name.replace("Grand Prix", "GP")}
                         </h3>
                         <div className="text-3xl mb-2">{flag}</div>
                         <span className="text-xs font-semibold text-text-tertiary uppercase tracking-wider block mb-2">
-                          {isTesting ? "Testing" : "Grand Prix"}
+                          {isTesting ? "Testing" : "GP"}
                         </span>
                         <p className="text-xs text-text-tertiary truncate">
                           {event.location}
@@ -253,7 +253,7 @@ function LatestRaceCompact() {
                   <span className="text-text-tertiary font-normal">
                     Round {data.round}
                   </span>{" "}
-                  • {data.event_name}
+                  • {data.event_name.replace("Grand Prix", "GP")}
                 </h3>
                 {data.session_type === "sprint_race" && (
                   <span className="bg-purple-500 text-white px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap">

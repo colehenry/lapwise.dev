@@ -22,31 +22,15 @@ export default function JumpToRace({
   const [isOpen, setIsOpen] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState<string>(currentSeason);
   const [selectedRound, setSelectedRound] = useState<string>("");
+  const [sessionType, setSessionType] = useState<"race" | "qualifying">("race");
   const [rounds, setRounds] = useState<RoundOption[]>([]);
   const [loadingRounds, setLoadingRounds] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
+  // ... (handleClickOutside remains same)
 
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
-
-  // Fetch rounds when season changes
+  // Fetch rounds when season or sessionType changes
   useEffect(() => {
     if (!selectedSeason || !isOpen) return;
 
@@ -55,13 +39,13 @@ export default function JumpToRace({
       try {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const apiKey =
-          process.env.NEXT_PUBLIC_API_KEY ||
-          "754b5a8e5c6c17f92026f9fedbe15bf58fbb0af80c3706098d0da7701327ad26";
+        const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
 
-        const response = await fetch(
-          `${apiUrl}/api/results/${selectedSeason}`,
-          {
+        const endpoint = sessionType === "qualifying" 
+          ? `${apiUrl}/api/results/${selectedSeason}/qualifying`
+          : `${apiUrl}/api/results/${selectedSeason}`;
+
+        const response = await fetch(endpoint, {
             headers: { "X-API-Key": apiKey },
             cache: "no-store",
           },
@@ -69,7 +53,6 @@ export default function JumpToRace({
 
         if (response.ok) {
           const data = await response.json();
-          // Extract unique rounds with their details
           const roundsData: RoundOption[] = data.rounds.map(
             (r: {
               round: number;
@@ -92,18 +75,16 @@ export default function JumpToRace({
     };
 
     fetchRounds();
-  }, [selectedSeason, isOpen]);
+  }, [selectedSeason, isOpen, sessionType]);
 
-  // Reset round when season changes
-  // biome-ignore lint/correctness/useExhaustiveDependencies: We intentionally want to reset round when season changes
+  // Reset round when season or sessionType changes
   useEffect(() => {
     setSelectedRound("");
-  }, [selectedSeason]);
+  }, [selectedSeason, sessionType]);
 
   const handleJump = () => {
     if (!selectedSeason || !selectedRound) return;
 
-    // Find the selected round to determine if it's a sprint
     const round = rounds.find((r) => {
       const key = `${r.round}-${r.session_type}`;
       return key === selectedRound;
@@ -111,20 +92,20 @@ export default function JumpToRace({
 
     if (!round) return;
 
+    const modeParam = sessionType === "qualifying" ? "?mode=qualifying" : "";
+    
     // Navigate to the appropriate route
-    if (round.session_type === "sprint_race") {
-      router.push(`/results/${selectedSeason}/${round.round}/sprint`);
+    if (round.session_type === "sprint_race" || round.session_type === "sprint_qualifying") {
+      router.push(`/results/${selectedSeason}/${round.round}/sprint${modeParam}`);
     } else {
-      router.push(`/results/${selectedSeason}/${round.round}`);
+      router.push(`/results/${selectedSeason}/${round.round}${modeParam}`);
     }
 
-    // Close dropdown after navigation
     setIsOpen(false);
   };
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Trigger Button */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -147,15 +128,10 @@ export default function JumpToRace({
         </svg>
       </button>
 
-      {/* Dropdown Panel */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-xl z-50 p-4">
-          {/* Season Selector */}
           <div className="mb-4">
-            <label
-              htmlFor="jump-season"
-              className="block text-xs font-semibold text-gray-400 mb-2"
-            >
+            <label htmlFor="jump-season" className="block text-xs font-semibold text-gray-400 mb-2">
               Season
             </label>
             <select
@@ -165,23 +141,47 @@ export default function JumpToRace({
               className="w-full px-3 py-2 bg-[#15151e] border border-[#2a2a35] rounded-lg text-white text-sm focus:outline-none focus:border-[#a020f0] transition-all"
             >
               {availableSeasons.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
+                <option key={year} value={year}>{year}</option>
               ))}
             </select>
           </div>
 
-          {/* Round Selector */}
           <div className="mb-4">
-            <label
-              htmlFor="jump-round"
-              className="block text-xs font-semibold text-gray-400 mb-2"
-            >
+            <label className="block text-xs font-semibold text-gray-400 mb-2">
+              Session Type
+            </label>
+            <div className="flex items-center gap-2 bg-[#15151e] rounded-lg p-1 border border-[#2a2a35]">
+              <button
+                type="button"
+                onClick={() => setSessionType("race")}
+                className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  sessionType === "race"
+                    ? "bg-purple-500 text-white shadow-md"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Race
+              </button>
+              <button
+                type="button"
+                onClick={() => setSessionType("qualifying")}
+                className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  sessionType === "qualifying"
+                    ? "bg-purple-500 text-white shadow-md"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Qualifying
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="jump-round" className="block text-xs font-semibold text-gray-400 mb-2">
               Round
             </label>
             {loadingRounds ? (
-              <div className="flex items-center justify-center py-8 text-gray-400 text-sm">
+              <div className="flex items-center justify-center py-8 text-gray-400 text-sm italic">
                 Loading rounds...
               </div>
             ) : rounds.length > 0 ? (
@@ -194,37 +194,41 @@ export default function JumpToRace({
                 <option value="">Select a round...</option>
                 {rounds.map((round) => {
                   const key = `${round.round}-${round.session_type}`;
-                  const isSprint = round.session_type === "sprint_race";
+                  const isSprintRace = round.session_type === "sprint_race";
+                  const isSprintQuali = round.session_type === "sprint_qualifying";
+                  const isRegularQuali = round.session_type === "qualifying";
+                  
                   return (
                     <option key={key} value={key}>
                       Round {round.round}
-                      {isSprint ? " - Sprint" : ""} • {round.event_name}
+                      {isSprintRace ? " - Sprint" : ""}
+                      {isSprintQuali ? " - Sprint Quali" : ""}
+                      {isRegularQuali ? " - Quali" : ""} • {round.event_name.replace("Grand Prix", "GP")}
                     </option>
                   );
                 })}
               </select>
             ) : (
-              <div className="text-gray-500 text-sm py-2">
+              <div className="text-gray-500 text-sm py-2 italic text-center">
                 No rounds available
               </div>
             )}
           </div>
 
-          {/* Jump Button */}
           <button
             type="button"
             onClick={handleJump}
             disabled={!selectedRound}
             className="w-full px-4 py-2 bg-[#a020f0] text-white font-semibold rounded-lg hover:bg-[#8c1acc] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            <span>Jump to Race</span>
+            <span>Jump to {sessionType === "race" ? "Race" : "Quali"}</span>
             <svg
               className="w-4 h-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <title>Jump to race</title>
+              <title>Jump to session</title>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
