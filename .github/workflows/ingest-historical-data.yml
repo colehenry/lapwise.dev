@@ -73,6 +73,13 @@ jobs:
           restore-keys: |
             fastf1-cache-
 
+      - name: Run database migrations
+        working-directory: ./backend
+        run: |
+          echo "Running Alembic migrations..."
+          alembic upgrade head
+          echo "✅ Migrations complete"
+
       - name: Ingest historical seasons
         working-directory: ./backend
         run: |

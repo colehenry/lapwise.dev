@@ -4,32 +4,18 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { apiHeaders, apiUrl } from "@/lib/api";
 import { getCircuitFlagEmoji } from "@/lib/flags";
-
-interface Circuit {
-  id: number;
-  name: string;
-  location: string;
-  country: string;
-  track_length_km: number | null;
-  latitude: number | null;
-  longitude: number | null;
-  total_races: number;
-  first_year: number;
-  most_recent_year: number;
-}
+import type { CircuitInfo } from "@/lib/types";
 
 interface CircuitsResponse {
-  circuits: Circuit[];
+  circuits: CircuitInfo[];
   total: number;
 }
 
 async function fetchCircuits(): Promise<CircuitsResponse> {
-  const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/circuits`, {
-    headers: {
-      "X-API-Key": apiKey,
-    },
+  const res = await fetch(apiUrl("/api/circuits"), {
+    headers: apiHeaders(),
   });
 
   if (!res.ok) {
@@ -39,13 +25,13 @@ async function fetchCircuits(): Promise<CircuitsResponse> {
   return res.json();
 }
 
-function CircuitCard({ circuit }: { circuit: Circuit }) {
+function CircuitCard({ circuit }: { circuit: CircuitInfo }) {
   return (
     <Link href={`/circuits/${circuit.id}`} className="block h-full">
-      <div className="group bg-gradient-to-br from-[#1e1e2e] to-[#2a2a3e] rounded-lg p-4 border border-gray-800 hover:border-gray-600 transition-all hover:scale-105 h-full">
+      <div className="group bg-gradient-to-br from-bg-tertiary to-bg-elevated rounded-lg p-4 border border-gray-800 hover:border-gray-600 transition-all hover:scale-105 h-full">
         <div className="flex items-center gap-4">
           {/* Circuit Icon */}
-          <div className="flex-shrink-0 w-24 h-24 rounded-xl bg-[#15151e] flex items-center justify-center border-4 border-gray-700 group-hover:border-[#e10600] transition-colors p-2">
+          <div className="flex-shrink-0 w-24 h-24 rounded-xl bg-bg-secondary flex items-center justify-center border-4 border-gray-700 group-hover:border-red-500 transition-colors p-2">
             <Image
               src={`/track-maps/${circuit.id}.png`}
               alt={`${circuit.name} track map`}
@@ -57,7 +43,7 @@ function CircuitCard({ circuit }: { circuit: Circuit }) {
 
           {/* Circuit Info */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-white font-bold text-lg truncate group-hover:text-[#e10600] transition-colors">
+            <h3 className="text-white font-bold text-lg truncate group-hover:text-red-500 transition-colors">
               {circuit.name}
             </h3>
             <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -69,7 +55,7 @@ function CircuitCard({ circuit }: { circuit: Circuit }) {
               </span>
               <span>•</span>
               {circuit.track_length_km && (
-                <span className="text-[#e10600] font-semibold">
+                <span className="text-red-500 font-semibold">
                   {circuit.track_length_km.toFixed(3)} km
                 </span>
               )}
@@ -99,13 +85,11 @@ function CircuitCard({ circuit }: { circuit: Circuit }) {
 export default function TracksPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch circuits
   const { data: circuitsData, isLoading } = useQuery({
     queryKey: ["circuits"],
     queryFn: fetchCircuits,
   });
 
-  // Filter circuits based on search query
   const filteredCircuits = useMemo(() => {
     if (!circuitsData) return [];
 
@@ -120,7 +104,7 @@ export default function TracksPage() {
   }, [circuitsData, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-[#15151e] p-4 md:p-8">
+    <div className="min-h-screen bg-bg-secondary p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -135,7 +119,7 @@ export default function TracksPage() {
               placeholder="Search circuits, locations, or countries..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 bg-[#1e1e2e] text-white border border-gray-700 rounded-lg focus:outline-none focus:border-[#e10600] transition-colors placeholder-gray-500"
+              className="w-full px-4 py-2 bg-bg-tertiary text-white border border-gray-700 rounded-lg focus:outline-none focus:border-red-500 transition-colors placeholder-gray-500"
             />
           </div>
 
@@ -155,7 +139,7 @@ export default function TracksPage() {
               <div
                 // biome-ignore lint/suspicious/noArrayIndexKey: Static loading skeleton items
                 key={`skeleton-${i}`}
-                className="h-24 bg-[#2a2a3e] rounded-lg animate-pulse"
+                className="h-24 bg-bg-elevated rounded-lg animate-pulse"
               />
             ))}
           </div>
@@ -172,7 +156,7 @@ export default function TracksPage() {
 
         {/* No Results */}
         {!isLoading && filteredCircuits && filteredCircuits.length === 0 && (
-          <div className="bg-[#1e1e2e] rounded-lg p-8 text-center">
+          <div className="bg-bg-tertiary rounded-lg p-8 text-center">
             <p className="text-gray-400 text-lg">
               No circuits found matching "{searchQuery}"
             </p>

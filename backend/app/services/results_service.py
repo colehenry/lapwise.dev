@@ -266,6 +266,7 @@ class ResultsService:
     ) -> Optional[PointsProgressionResponse]:
         query = (
             select(
+                Driver.id.label("driver_id"),
                 Driver.driver_code,
                 Driver.full_name,
                 Team.team_color,
@@ -317,13 +318,13 @@ class ResultsService:
             for row in sessions_result.all()
         ]
 
-        # Group by driver
+        # Group by driver ID (integer PK) — driver_code may be NULL for pre-2003 drivers
         drivers_dict = {}
         for row in rows:
-            key = row.driver_code
+            key = row.driver_id
             if key not in drivers_dict:
                 drivers_dict[key] = {
-                    "driver_code": row.driver_code,
+                    "driver_code": row.driver_code or row.full_name,
                     "full_name": row.full_name,
                     "team_color": row.team_color,
                     "sessions_data": {},

@@ -29,7 +29,10 @@ export default function ScrollbarHandler() {
     };
 
     // Capture phase listener to catch scrolls on any element
-    window.addEventListener("scroll", handleScroll, { capture: true, passive: true });
+    window.addEventListener("scroll", handleScroll, {
+      capture: true,
+      passive: true,
+    });
 
     return () => {
       window.removeEventListener("scroll", handleScroll, { capture: true });

@@ -111,38 +111,39 @@ export default function Navigation() {
               </span>
             </Link>
           </div>
- 
-           {/* Navigation links - center (desktop) */}
-           <div className="hidden md:flex items-center space-x-1">
-             {navLinks.map((link) =>
-               link.hasAlternative ? (
-                 <div
-                   key={link.href}
-                   className="relative"
-                   onMouseEnter={handleMouseEnter}
-                   onMouseLeave={handleMouseLeave}
-                   role="navigation"
-                 >
-                   <div
-                     className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-default ${
-                       isActive(link.href) ||
-                       isActive("/constructors") ||
-                       isActive("/circuits")
-                         ? "text-purple-400 bg-purple-500/10"
-                         : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
-                     }`}
-                   >
-                     {link.label}
-                     {(isActive(link.href) ||
-                       isActive("/constructors") ||
-                       isActive("/circuits")) && (
-                       <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent rounded-full" />
-                     )}
-                   </div>
-                   {showConstructorsOption && (
-                     <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 z-50">
-                       <div className={`bg-bg-tertiary rounded-lg shadow-xl border border-border-primary overflow-hidden whitespace-nowrap ${isExiting ? 'animate-slideDownExit' : 'animate-slideDown'}`}>
 
+          {/* Navigation links - center (desktop) */}
+          <div className="hidden md:flex items-center space-x-1">
+            {navLinks.map((link) =>
+              link.hasAlternative ? (
+                <div
+                  key={link.href}
+                  className="relative"
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                  role="navigation"
+                >
+                  <div
+                    className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-default ${
+                      isActive(link.href) ||
+                      isActive("/constructors") ||
+                      isActive("/circuits")
+                        ? "text-purple-400 bg-purple-500/10"
+                        : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
+                    }`}
+                  >
+                    {link.label}
+                    {(isActive(link.href) ||
+                      isActive("/constructors") ||
+                      isActive("/circuits")) && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent rounded-full" />
+                    )}
+                  </div>
+                  {showConstructorsOption && (
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 z-50">
+                      <div
+                        className={`bg-bg-tertiary rounded-lg shadow-xl border border-border-primary overflow-hidden whitespace-nowrap ${isExiting ? "animate-slideDownExit" : "animate-slideDown"}`}
+                      >
                         <Link
                           href="/drivers"
                           className="block px-6 py-2.5 text-sm text-center text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors duration-200"
