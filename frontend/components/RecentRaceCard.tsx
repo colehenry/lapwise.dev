@@ -3,37 +3,14 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import Skeleton from "@/components/ui/Skeleton";
+import { apiHeaders, apiUrl } from "@/lib/api";
 import { getDriverFlagEmoji } from "@/lib/flags";
+import type { RoundSummary } from "@/lib/types";
 
-interface PodiumDriver {
-  full_name: string;
-  driver_code: string;
-  country_code: string | null;
-  team_name: string;
-  team_color: string | null;
-  headshot_url: string | null;
-  fastest_lap: boolean;
-}
-
-interface LatestRaceData {
-  round: number;
-  event_name: string;
-  date: string;
-  circuit_name: string;
-  session_type: string;
-  podium: PodiumDriver[];
-}
-
-async function fetchLatestRace(): Promise<LatestRaceData> {
-  const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/results/latest`,
-    {
-      headers: {
-        "X-API-Key": apiKey,
-      },
-    },
-  );
+async function fetchLatestRace(): Promise<RoundSummary> {
+  const res = await fetch(apiUrl("/api/results/latest"), {
+    headers: apiHeaders(),
+  });
 
   if (!res.ok) {
     throw new Error("Failed to fetch latest race");
@@ -43,7 +20,7 @@ async function fetchLatestRace(): Promise<LatestRaceData> {
 }
 
 export default function RecentRaceCard() {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<RoundSummary>({
     queryKey: ["latest-race"],
     queryFn: fetchLatestRace,
   });

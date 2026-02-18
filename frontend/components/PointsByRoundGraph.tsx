@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import {
   CartesianGrid,
@@ -10,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { CHART_COLORS, CustomDot } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
 
 // Type definitions
@@ -57,26 +59,17 @@ const CustomXAxisTick = (props: any) => {
 
   return (
     <g transform={`translate(${x},${y})`}>
-      <text x={0} y={0} dy={16} textAnchor="middle" fill="#999" fontSize={12}>
+      <text
+        x={0}
+        y={0}
+        dy={16}
+        textAnchor="middle"
+        fill={CHART_COLORS.textTertiary}
+        fontSize={12}
+      >
         {payload.value}
       </text>
     </g>
-  );
-};
-
-// Custom Dot Component
-const CustomDot = (props: any) => {
-  const { cx, cy, stroke } = props;
-
-  return (
-    <circle
-      cx={cx}
-      cy={cy}
-      r={4}
-      fill={stroke}
-      stroke={stroke}
-      strokeWidth={1}
-    />
   );
 };
 
@@ -88,15 +81,16 @@ const CustomTooltip = ({ active, payload, label, mode }: any) => {
   if (label === "0") return null;
 
   // Get event name from first payload entry
-  const eventName = (payload[0]?.payload?.event_name || `Round ${label}`).replace("Grand Prix", "GP");
+  const eventName = (
+    payload[0]?.payload?.event_name || `Round ${label}`
+  ).replace("Grand Prix", "GP");
   const isSprint = label?.endsWith("-sprint");
   const displayName = isSprint ? `${eventName}: Sprint` : eventName;
 
   return (
-    <div className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg p-3 shadow-xl">
+    <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
       <p className="font-bold text-white mb-2">{displayName}</p>
       {payload.map((entry: any) => {
-        // Calculate points gained this round
         const currentPoints = entry.value;
         const previousPoints = entry.payload[`_prev_${entry.dataKey}`] || 0;
         const pointsGained = currentPoints - previousPoints;
@@ -133,8 +127,6 @@ export default function PointsByRoundGraph({
   season,
 }: PointsByRoundGraphProps) {
   const [mode, setMode] = useState<"drivers" | "constructors">("drivers");
-  const [data, setData] = useState<ProgressionResponse | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -156,48 +148,40 @@ export default function PointsByRoundGraph({
     };
   }, []);
 
-  // Fetch data when season or mode changes
-  useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(
-          apiUrl(`/api/results/${season}/points-progression?mode=${mode}`),
-          {
-            cache: "no-store",
-            headers: apiHeaders(),
-          },
-        );
-        const progressionData = await response.json();
-        setData(progressionData);
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ["points-progression", season, mode],
+    queryFn: async () => {
+      const response = await fetch(
+        apiUrl(`/api/results/${season}/points-progression?mode=${mode}`),
+        { headers: apiHeaders() },
+      );
+      return response.json() as Promise<ProgressionResponse>;
+    },
+  });
 
-        // Auto-select top 3 by final points
-        if (mode === "drivers" && progressionData.drivers) {
-          const sorted = [...progressionData.drivers].sort((a, b) => {
-            const aFinal =
-              a.progression[a.progression.length - 1]?.cumulative_points || 0;
-            const bFinal =
-              b.progression[b.progression.length - 1]?.cumulative_points || 0;
-            return bFinal - aFinal;
-          });
-          setSelectedEntities(sorted.slice(0, 3).map((d) => d.driver_code));
-        } else if (mode === "constructors" && progressionData.constructors) {
-          const sorted = [...progressionData.constructors].sort((a, b) => {
-            const aFinal =
-              a.progression[a.progression.length - 1]?.cumulative_points || 0;
-            const bFinal =
-              b.progression[b.progression.length - 1]?.cumulative_points || 0;
-            return bFinal - aFinal;
-          });
-          setSelectedEntities(sorted.slice(0, 3).map((c) => c.team_name));
-        }
-      } catch (error) {
-        console.error("Failed to fetch points progression:", error);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [season, mode]);
+  // Auto-select top 3 when data loads or mode changes
+  useEffect(() => {
+    if (!data) return;
+    if (mode === "drivers" && data.drivers) {
+      const sorted = [...data.drivers].sort((a, b) => {
+        const aFinal =
+          a.progression[a.progression.length - 1]?.cumulative_points || 0;
+        const bFinal =
+          b.progression[b.progression.length - 1]?.cumulative_points || 0;
+        return bFinal - aFinal;
+      });
+      setSelectedEntities(sorted.slice(0, 3).map((d) => d.driver_code));
+    } else if (mode === "constructors" && data.constructors) {
+      const sorted = [...data.constructors].sort((a, b) => {
+        const aFinal =
+          a.progression[a.progression.length - 1]?.cumulative_points || 0;
+        const bFinal =
+          b.progression[b.progression.length - 1]?.cumulative_points || 0;
+        return bFinal - aFinal;
+      });
+      setSelectedEntities(sorted.slice(0, 3).map((c) => c.team_name));
+    }
+  }, [data, mode]);
 
   // Transform data for Recharts
   const getChartData = (): ChartDataPoint[] => {
@@ -215,10 +199,7 @@ export default function PointsByRoundGraph({
 
     if (filteredEntities.length === 0) return [];
 
-    // Get all unique progression points from first entity
     const allProgressionPoints = filteredEntities[0]?.progression || [];
-
-    // Create data points for each progression point
     const chartData: ChartDataPoint[] = [];
 
     for (let i = 0; i < allProgressionPoints.length; i++) {
@@ -234,14 +215,12 @@ export default function PointsByRoundGraph({
             ? (entity as DriverProgression).driver_code
             : (entity as ConstructorProgression).team_name;
 
-        // Find matching progression point by round identifier
         const matchingPoint = entity.progression.find(
           (p) => p.round === progressionPoint.round,
         );
         const currentPoints = matchingPoint?.cumulative_points || 0;
         dataPoint[key] = currentPoints;
 
-        // Store previous round's points for tooltip calculation
         if (i > 0) {
           const prevPoint = entity.progression.find(
             (p) => p.round === allProgressionPoints[i - 1].round,
@@ -258,7 +237,6 @@ export default function PointsByRoundGraph({
     return chartData;
   };
 
-  // Get entities for dropdown (sorted by final position)
   const getEntities = () => {
     if (!data) return [];
     const entities =
@@ -266,7 +244,6 @@ export default function PointsByRoundGraph({
     return [...entities].sort((a, b) => a.final_position - b.final_position);
   };
 
-  // Toggle entity selection
   const toggleEntity = (key: string) => {
     setSelectedEntities((prev) => {
       if (prev.includes(key)) {
@@ -278,7 +255,7 @@ export default function PointsByRoundGraph({
 
   // Darken color for teammates (reduce brightness by 20%)
   const darkenColor = (hex: string | null, amount = 0.2): string => {
-    if (!hex) return "#999999";
+    if (!hex) return CHART_COLORS.textTertiary;
     const color = hex.startsWith("#") ? hex : `#${hex}`;
     const num = Number.parseInt(color.slice(1), 16);
     const r = Math.floor(((num >> 16) & 0xff) * (1 - amount));
@@ -287,15 +264,15 @@ export default function PointsByRoundGraph({
     return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
   };
 
-  // Get color for entity (with teammate differentiation)
   const getEntityColor = (
     entity: DriverProgression | ConstructorProgression,
   ) => {
     if (mode === "constructors") {
-      return entity.team_color ? `#${entity.team_color}` : "#999999";
+      return entity.team_color
+        ? `#${entity.team_color}`
+        : CHART_COLORS.textTertiary;
     }
 
-    // For drivers, check if there's a teammate with same team color
     const drivers = data?.drivers || [];
     const driverEntity = entity as DriverProgression;
     const sameTeamDrivers = drivers.filter(
@@ -303,7 +280,6 @@ export default function PointsByRoundGraph({
     );
 
     if (sameTeamDrivers.length > 1) {
-      // Find which teammate this is (by points order)
       const sortedTeammates = [...sameTeamDrivers].sort((a, b) => {
         const aFinal =
           a.progression[a.progression.length - 1]?.cumulative_points || 0;
@@ -315,22 +291,23 @@ export default function PointsByRoundGraph({
         (d) => d.driver_code === driverEntity.driver_code,
       );
       if (index > 0) {
-        // Second teammate gets darker color
         return darkenColor(driverEntity.team_color, 0.3);
       }
     }
 
-    return driverEntity.team_color ? `#${driverEntity.team_color}` : "#999999";
+    return driverEntity.team_color
+      ? `#${driverEntity.team_color}`
+      : CHART_COLORS.textTertiary;
   };
 
   if (loading) {
     return (
       <div
-        className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6"
+        className="bg-bg-tertiary rounded-lg border border-border-primary shadow-lg p-6"
         style={{ minHeight: "540px" }}
       >
         <div className="h-8 mb-4 flex items-center">
-          <div className="h-6 bg-[#2a2a35] rounded w-96 animate-pulse" />
+          <div className="h-6 bg-bg-elevated rounded w-96 animate-pulse" />
         </div>
         <div className="relative" style={{ height: "400px" }}>
           <div className="absolute inset-0 flex items-center justify-center">
@@ -346,7 +323,6 @@ export default function PointsByRoundGraph({
   const chartData = getChartData();
   const entities = getEntities();
 
-  // Calculate dynamic Y-axis max (round up to nearest 50)
   const getYAxisMax = (): number => {
     if (chartData.length === 0) return 500;
 
@@ -362,13 +338,12 @@ export default function PointsByRoundGraph({
       }
     }
 
-    // Round up to nearest 50
     return Math.ceil(maxPoints / 50) * 50;
   };
 
   return (
     <div
-      className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6"
+      className="bg-bg-tertiary rounded-lg border border-border-primary shadow-lg p-6"
       style={{ minHeight: "540px" }}
     >
       <div className="flex items-center justify-between mb-4">
@@ -380,13 +355,13 @@ export default function PointsByRoundGraph({
         {/* Filter Buttons */}
         <div className="flex gap-2 relative" ref={dropdownRef}>
           {/* Mode Selector */}
-          <div className="flex gap-1 bg-[#15151e] border border-[#2a2a35] rounded p-1">
+          <div className="flex gap-1 bg-bg-secondary border border-border-primary rounded p-1">
             <button
               type="button"
               onClick={() => setMode("drivers")}
               className={`px-3 py-1 rounded text-sm font-semibold transition-all ${
                 mode === "drivers"
-                  ? "bg-[#a020f0] text-white"
+                  ? "bg-purple-500 text-white"
                   : "text-gray-400 hover:text-white"
               }`}
             >
@@ -397,7 +372,7 @@ export default function PointsByRoundGraph({
               onClick={() => setMode("constructors")}
               className={`px-3 py-1 rounded text-sm font-semibold transition-all ${
                 mode === "constructors"
-                  ? "bg-[#a020f0] text-white"
+                  ? "bg-purple-500 text-white"
                   : "text-gray-400 hover:text-white"
               }`}
             >
@@ -409,14 +384,14 @@ export default function PointsByRoundGraph({
           <button
             type="button"
             onClick={() => setShowDropdown(!showDropdown)}
-            className="px-3 py-1.5 bg-[#15151e] border border-[#2a2a35] rounded text-sm font-semibold text-white hover:border-[#a020f0] transition-all"
+            className="px-3 py-1.5 bg-bg-secondary border border-border-primary rounded text-sm font-semibold text-white hover:border-purple-500 transition-all"
           >
             Select ({selectedEntities.length})
           </button>
 
           {/* Dropdown Menu */}
           {showDropdown && (
-            <div className="absolute right-0 top-full mt-1 bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-xl z-10 min-w-[250px] max-h-[300px] overflow-y-auto">
+            <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-lg shadow-xl z-10 min-w-[250px] max-h-[300px] overflow-y-auto">
               {entities.map((entity) => {
                 const key =
                   mode === "drivers"
@@ -429,18 +404,18 @@ export default function PointsByRoundGraph({
                 const isSelected = selectedEntities.includes(key);
                 const teamColor = entity.team_color
                   ? `#${entity.team_color}`
-                  : "#999";
+                  : CHART_COLORS.textTertiary;
 
                 return (
                   <label
                     key={key}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-[#2a2a35] cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-bg-elevated cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleEntity(key)}
-                      className="w-4 h-4 accent-[#a020f0]"
+                      className="w-4 h-4 accent-purple-500"
                     />
                     <span className="text-sm text-gray-500 w-5">
                       {entity.final_position}
@@ -503,10 +478,13 @@ export default function PointsByRoundGraph({
                       );
                     })}
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a35" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={CHART_COLORS.borderPrimary}
+                />
                 <XAxis
                   dataKey="round"
-                  stroke="#999"
+                  stroke={CHART_COLORS.textTertiary}
                   label={{
                     value: "Round",
                     position: "insideBottom",
@@ -517,7 +495,7 @@ export default function PointsByRoundGraph({
                   interval={0}
                 />
                 <YAxis
-                  stroke="#999"
+                  stroke={CHART_COLORS.textTertiary}
                   label={{
                     value: "Total Points",
                     angle: -90,
@@ -568,7 +546,7 @@ export default function PointsByRoundGraph({
             </ResponsiveContainer>
 
             {/* Custom Legend - Positioned in top-left */}
-            <div className="absolute top-8 left-25 bg-[#1e1e28]/90 border border-[#2a2a35] rounded-lg p-3 backdrop-blur-sm pointer-events-none">
+            <div className="absolute top-8 left-25 bg-bg-tertiary/90 border border-border-primary rounded-lg p-3 backdrop-blur-sm pointer-events-none">
               <div className="flex flex-col gap-1">
                 {entities
                   .filter((entity) => {

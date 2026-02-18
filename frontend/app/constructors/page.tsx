@@ -3,67 +3,20 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-
-interface ConstructorStanding {
-  position: number;
-  team_name: string;
-  team_color: string | null;
-  total_points: number;
-}
-
-interface StandingsResponse {
-  year: number;
-  constructors: ConstructorStanding[];
-}
-
-async function fetchSeasons(): Promise<number[]> {
-  const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/results/seasons`,
-    {
-      headers: {
-        "X-API-Key": apiKey,
-      },
-    },
-  );
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch seasons");
-  }
-
-  return res.json();
-}
-
-async function fetchStandings(season: number): Promise<StandingsResponse> {
-  const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/results/${season}/standings`,
-    {
-      headers: {
-        "X-API-Key": apiKey,
-      },
-    },
-  );
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch standings");
-  }
-
-  return res.json();
-}
+import { fetchSeasons, fetchStandings } from "@/lib/api";
+import type { ConstructorStanding } from "@/lib/types";
 
 function ConstructorCard({ team }: { team: ConstructorStanding }) {
-  // URL-encode the team name for the link
   const teamNameUrl = team.team_name.replace(/ /g, "-");
 
   return (
     <Link
       href={`/constructors/${teamNameUrl}`}
-      className="group bg-gradient-to-br from-[#1e1e2e] to-[#2a2a3e] rounded-lg p-4 border border-gray-800 hover:border-gray-600 transition-all hover:scale-105"
+      className="group bg-gradient-to-br from-bg-tertiary to-bg-elevated rounded-lg p-4 border border-gray-800 hover:border-gray-600 transition-all hover:scale-105"
     >
       <div className="flex items-center gap-4">
         {/* Position Badge */}
-        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#15151e] flex items-center justify-center">
+        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-bg-secondary flex items-center justify-center">
           <span className="text-white font-bold text-lg">{team.position}</span>
         </div>
 
@@ -78,7 +31,7 @@ function ConstructorCard({ team }: { team: ConstructorStanding }) {
 
         {/* Constructor Info */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-white font-bold text-lg truncate group-hover:text-[#e10600] transition-colors">
+          <h3 className="text-white font-bold text-lg truncate group-hover:text-red-500 transition-colors">
             {team.team_name}
           </h3>
           <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -104,7 +57,6 @@ export default function ConstructorsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
 
-  // Fetch available seasons
   const { data: seasons } = useQuery({
     queryKey: ["seasons"],
     queryFn: fetchSeasons,
@@ -117,19 +69,15 @@ export default function ConstructorsPage() {
     }
   }, [seasons, selectedYear]);
 
-  // Fetch standings for selected year
   const { data: standings, isLoading } = useQuery({
     queryKey: ["standings", selectedYear],
     queryFn: () => {
-      if (selectedYear === null) {
-        throw new Error("No year selected");
-      }
+      if (selectedYear === null) throw new Error("No year selected");
       return fetchStandings(selectedYear);
     },
     enabled: selectedYear !== null,
   });
 
-  // Filter constructors based on search query
   const filteredConstructors = useMemo(() => {
     if (!standings) return [];
 
@@ -140,7 +88,7 @@ export default function ConstructorsPage() {
   }, [standings, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-[#15151e] p-4 md:p-8">
+    <div className="min-h-screen bg-bg-secondary p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -155,7 +103,7 @@ export default function ConstructorsPage() {
               <select
                 value={selectedYear || ""}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="w-full sm:w-auto px-4 py-2 bg-[#1e1e2e] text-white border border-gray-700 rounded-lg focus:outline-none focus:border-[#e10600] transition-colors"
+                className="w-full sm:w-auto px-4 py-2 bg-bg-tertiary text-white border border-gray-700 rounded-lg focus:outline-none focus:border-red-500 transition-colors"
               >
                 {seasons?.map((year) => (
                   <option key={year} value={year}>
@@ -172,7 +120,7 @@ export default function ConstructorsPage() {
                 placeholder="Search constructors..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 bg-[#1e1e2e] text-white border border-gray-700 rounded-lg focus:outline-none focus:border-[#e10600] transition-colors placeholder-gray-500"
+                className="w-full px-4 py-2 bg-bg-tertiary text-white border border-gray-700 rounded-lg focus:outline-none focus:border-red-500 transition-colors placeholder-gray-500"
               />
             </div>
           </div>
@@ -190,8 +138,8 @@ export default function ConstructorsPage() {
                   onClick={() => setSelectedYear(year)}
                   className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                     selectedYear === year
-                      ? "bg-[#e10600] text-white"
-                      : "bg-[#1e1e2e] text-gray-400 hover:text-white hover:bg-[#2a2a3e]"
+                      ? "bg-red-500 text-white"
+                      : "bg-bg-tertiary text-gray-400 hover:text-white hover:bg-bg-elevated"
                   }`}
                 >
                   {year}
@@ -208,7 +156,7 @@ export default function ConstructorsPage() {
               <div
                 // biome-ignore lint/suspicious/noArrayIndexKey: Static loading skeleton items
                 key={`skeleton-${i}`}
-                className="h-24 bg-[#2a2a3e] rounded-lg animate-pulse"
+                className="h-24 bg-bg-elevated rounded-lg animate-pulse"
               />
             ))}
           </div>
@@ -235,7 +183,7 @@ export default function ConstructorsPage() {
         {!isLoading &&
           filteredConstructors &&
           filteredConstructors.length === 0 && (
-            <div className="bg-[#1e1e2e] rounded-lg p-8 text-center">
+            <div className="bg-bg-tertiary rounded-lg p-8 text-center">
               <p className="text-gray-400 text-lg">
                 No constructors found matching "{searchQuery}"
               </p>

@@ -8,9 +8,9 @@ import {
   getDriverFlagEmoji,
   getTeamFlagEmoji,
 } from "@/lib/flags";
+import type { DriverInfo, TeamInfo } from "@/lib/types";
 import LapTimeByLapGraph from "./LapTimeByLapGraph";
 
-// Type definitions matching our API responses
 type CircuitInfo = {
   id: number;
   name: string;
@@ -18,18 +18,6 @@ type CircuitInfo = {
   country: string;
   track_length_km: number | null;
   track_map_url: string | null;
-};
-
-type DriverInfo = {
-  driver_number: number | null;
-  driver_code: string;
-  full_name: string;
-  country_code: string | null;
-};
-
-type TeamInfo = {
-  name: string;
-  team_color: string | null;
 };
 
 type SessionResultDetail = {
@@ -105,14 +93,14 @@ export default function SessionDetail({
   const { session, results } = data;
 
   return (
-    <main className="min-h-screen bg-[#15151e] p-8">
+    <main className="min-h-screen bg-bg-secondary p-8">
       <div className="max-w-7xl mx-auto">
         {/* Top Header: Back Button and Toggle */}
         <div className="flex items-center justify-between mb-4">
           <button
             type="button"
             onClick={onBack}
-            className="text-[#a020f0] hover:text-[#c77dff] font-semibold transition-colors"
+            className="text-purple-500 hover:text-purple-300 font-semibold transition-colors"
           >
             ← Back to {season} Results
           </button>
@@ -123,7 +111,7 @@ export default function SessionDetail({
               <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider ml-1">
                 Session Type
               </span>
-              <div className="flex items-center gap-2 bg-[#1e1e28] rounded-lg p-1 border border-[#2a2a35]">
+              <div className="flex items-center gap-2 bg-bg-tertiary rounded-lg p-1 border border-border-primary">
                 <button
                   type="button"
                   onClick={() => onSessionTypeChange("race")}
@@ -152,8 +140,7 @@ export default function SessionDetail({
         </div>
 
         {/* Session Header */}
-        <div className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-lg p-6 mb-6">
-
+        <div className="bg-bg-tertiary border border-border-primary rounded-lg shadow-lg p-6 mb-6">
           <div className="flex items-start justify-between gap-6">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
@@ -167,7 +154,7 @@ export default function SessionDetail({
                   {isQualifying && " Qualifying"}
                 </h1>
                 {isSprint && (
-                  <span className="bg-[#a020f0] text-white px-3 py-1 rounded-full text-sm font-semibold">
+                  <span className="bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
                     {isQualifying ? "SPRINT QUALIFYING" : "SPRINT RACE"}
                   </span>
                 )}
@@ -205,73 +192,111 @@ export default function SessionDetail({
         </div>
 
         {/* Results Table */}
-        <div className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-lg overflow-hidden">
+        <div className="bg-bg-tertiary border border-border-primary rounded-lg shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full table-fixed">
-                <colgroup><col style={{ width: "60px" }} />{!isQualifying && <col style={{ width: "60px" }} />}<col style={{ width: "280px" }} /><col style={{ width: "200px" }} />{isQualifying ? (<><col style={{ width: "100px" }} /><col style={{ width: "100px" }} /><col style={{ width: "100px" }} /><col style={{ width: "100px" }} /></>) : (<><col style={{ width: "140px" }} /><col style={{ width: "80px" }} /><col style={{ width: "120px" }} /></>)}</colgroup>
-                <thead className="bg-[#252530] border-b-2 border-[#2a2a35]">
-                  <tr>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                      Pos
-                    </th>
-                    {!isQualifying && (
-                      <th
-                        className="pl-1 pr-4 py-3"
-                        aria-label="Position change"
-                      />
-                    )}
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                      Driver
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                      Constructor
-                    </th>
-                    {isQualifying ? (
-                      <>
-                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                          Q1
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                          Q2
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                          Q3
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                          Gap
-                        </th>
-                      </>
-                    ) : (
-                      <>
-                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                          Time
-                        </th>
-                        <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                          Points
-                        </th>
-                        <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                          Status
-                        </th>
-                      </>
-                    )}
-                  </tr>
-                </thead>
-              </table>
-            </div>
-            <div
-              className="overflow-y-auto overflow-x-auto"
-              style={{
-                maxHeight: expandedResults ? "760px" : "380px",
-                minHeight: expandedResults ? "760px" : "380px",
-              }}
-            >
-              <table className="w-full table-fixed">
-                <colgroup><col style={{ width: "60px" }} />{!isQualifying && <col style={{ width: "60px" }} />}<col style={{ width: "280px" }} /><col style={{ width: "200px" }} />{isQualifying ? (<><col style={{ width: "100px" }} /><col style={{ width: "100px" }} /><col style={{ width: "100px" }} /><col style={{ width: "100px" }} /></>) : (<><col style={{ width: "140px" }} /><col style={{ width: "80px" }} /><col style={{ width: "120px" }} /></>)}</colgroup>
-                <tbody className="divide-y divide-[#2a2a35]">
+              <colgroup>
+                <col style={{ width: "60px" }} />
+                {!isQualifying && <col style={{ width: "60px" }} />}
+                <col style={{ width: "280px" }} />
+                <col style={{ width: "200px" }} />
+                {isQualifying ? (
+                  <>
+                    <col style={{ width: "100px" }} />
+                    <col style={{ width: "100px" }} />
+                    <col style={{ width: "100px" }} />
+                    <col style={{ width: "100px" }} />
+                  </>
+                ) : (
+                  <>
+                    <col style={{ width: "140px" }} />
+                    <col style={{ width: "80px" }} />
+                    <col style={{ width: "120px" }} />
+                  </>
+                )}
+              </colgroup>
+              <thead className="bg-bg-elevated border-b-2 border-border-primary">
+                <tr>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Pos
+                  </th>
+                  {!isQualifying && (
+                    <th
+                      className="pl-1 pr-4 py-3"
+                      aria-label="Position change"
+                    />
+                  )}
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Driver
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Constructor
+                  </th>
+                  {isQualifying ? (
+                    <>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Q1
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Q2
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Q3
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Gap
+                      </th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Time
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Points
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Status
+                      </th>
+                    </>
+                  )}
+                </tr>
+              </thead>
+            </table>
+          </div>
+          <div
+            className="overflow-y-auto overflow-x-auto"
+            style={{
+              maxHeight: expandedResults ? "760px" : "380px",
+              minHeight: expandedResults ? "760px" : "380px",
+            }}
+          >
+            <table className="w-full table-fixed">
+              <colgroup>
+                <col style={{ width: "60px" }} />
+                {!isQualifying && <col style={{ width: "60px" }} />}
+                <col style={{ width: "280px" }} />
+                <col style={{ width: "200px" }} />
+                {isQualifying ? (
+                  <>
+                    <col style={{ width: "100px" }} />
+                    <col style={{ width: "100px" }} />
+                    <col style={{ width: "100px" }} />
+                    <col style={{ width: "100px" }} />
+                  </>
+                ) : (
+                  <>
+                    <col style={{ width: "140px" }} />
+                    <col style={{ width: "80px" }} />
+                    <col style={{ width: "120px" }} />
+                  </>
+                )}
+              </colgroup>
+              <tbody className="divide-y divide-border-primary">
                 {results.map((result) => (
                   <tr
                     key={`${result.driver.driver_code}-${result.position}`}
-                    className="hover:bg-[#252530] transition-colors"
+                    className="hover:bg-bg-elevated transition-colors"
                   >
                     {/* Position */}
                     <td className="px-4 py-4 text-center">
@@ -324,7 +349,7 @@ export default function SessionDetail({
                         <div>
                           <Link
                             href={`/drivers/${result.driver.driver_code}`}
-                            className="font-semibold text-white hover:text-[#e10600] transition-colors inline-flex items-center gap-1.5"
+                            className="font-semibold text-white hover:text-red-500 transition-colors inline-flex items-center gap-1.5"
                           >
                             {result.driver.country_code && (
                               <span className="text-sm">
@@ -341,7 +366,7 @@ export default function SessionDetail({
                         </div>
                         {result.fastest_lap && (
                           <span
-                            className="text-[#c77dff] font-semibold text-sm"
+                            className="text-purple-300 font-semibold text-sm"
                             title="Fastest Lap"
                           >
                             ⚡
@@ -355,7 +380,7 @@ export default function SessionDetail({
                       <div className="font-semibold inline-flex items-center gap-1.5">
                         <Link
                           href={`/constructors/${result.team.name.replace(/ /g, "-")}`}
-                          className="hover:text-[#e10600] transition-colors flex items-center gap-1.5"
+                          className="hover:text-red-500 transition-colors flex items-center gap-1.5"
                           style={{
                             color: result.team.team_color
                               ? `#${result.team.team_color}`
@@ -468,7 +493,7 @@ export default function SessionDetail({
           <button
             type="button"
             onClick={() => setExpandedResults(!expandedResults)}
-            className="w-48 px-4 py-2 bg-[#1e1e28] border-2 border-[#2a2a35] rounded-lg text-white text-sm font-semibold hover:border-[#a020f0] transition-all flex items-center justify-center gap-2"
+            className="w-48 px-4 py-2 bg-bg-tertiary border-2 border-border-primary rounded-lg text-white text-sm font-semibold hover:border-purple-500 transition-all flex items-center justify-center gap-2"
           >
             {expandedResults ? (
               <>
@@ -523,7 +548,7 @@ export default function SessionDetail({
           </div>
         ) : (
           <div className="mt-6">
-            <div className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-lg p-6">
+            <div className="bg-bg-tertiary border border-border-primary rounded-lg shadow-lg p-6">
               <h3 className="text-xl font-bold text-white mb-4">
                 Gap to Pole Position
               </h3>
