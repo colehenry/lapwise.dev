@@ -11,6 +11,102 @@ Colors are stored WITHOUT the '#' prefix (just hex values like 'DC0000').
 # Team color mapping (case-insensitive team names)
 # Colors sourced from historical F1 liveries and official team colors
 HISTORICAL_TEAM_COLORS = {
+    # ── 1950s–1960s ERA ─────────────────────────────────────────────────────
+    # Alfa Romeo (Italian national racing red)
+    "alfa romeo": "C8102E",
+    "alfa romeo racing": "C8102E",
+
+    # Maserati (Italian national racing red)
+    "maserati": "C8102E",
+
+    # BRM – British Racing Green
+    "brm": "215732",
+    "british racing motors": "215732",
+
+    # Cooper – British Racing Green
+    "cooper": "215732",
+    "cooper climax": "215732",
+    "cooper bristol": "215732",
+    "cooper alta": "215732",
+    "cooper maserati": "215732",
+    "cooper borgward": "215732",
+    "cooper ferrari": "215732",
+
+    # Vanwall – British Racing Green
+    "vanwall": "00563B",
+
+    # Connaught – British Racing Green
+    "connaught": "215732",
+    "connaught alta": "215732",
+
+    # Team Lotus / Lotus Climax (BRG until mid-60s, then gold/black)
+    "team lotus": "215732",
+    "lotus climax": "215732",
+    "lotus brmv8": "215732",
+    "lotus ford": "215732",
+
+    # Gordini – French Racing Blue
+    "gordini": "1B3F8A",
+    "simca gordini": "1B3F8A",
+    "simca-gordini": "1B3F8A",
+
+    # Talbot-Lago – French Racing Blue
+    "talbot lago": "1B3F8A",
+    "talbot-lago": "1B3F8A",
+
+    # ERA – British Racing Green
+    "era": "215732",
+
+    # HWM – British Racing Green
+    "hwm": "215732",
+    "hwm alta": "215732",
+
+    # Veritas – German silver
+    "veritas": "C0C0C0",
+    "veritas meteor": "C0C0C0",
+
+    # AFM – German silver
+    "afm": "C0C0C0",
+
+    # Osca – Italian red
+    "osca": "C8102E",
+
+    # Arzani-Volpini – Italian red
+    "arzani-volpini": "C8102E",
+
+    # Frazer Nash – British Racing Green
+    "frazer nash": "215732",
+
+    # Thin Wall Special (Ferrari-based British entry)
+    "thin wall special": "C8102E",
+
+    # Emeryson – British Racing Green
+    "emeryson": "215732",
+    "emeryson climax": "215732",
+
+    # Brabham – from 1962, Brabham used green then later other colours
+    "brabham": "215732",
+    "brabham climax": "215732",
+    "brabham repco": "215732",
+    "brabham ford": "215732",
+
+    # Porsche – silver/white (German)
+    "porsche": "C0C0C0",
+
+    # De Tomaso – Italian red
+    "de tomaso": "C8102E",
+    "de tomaso ford": "C8102E",
+
+    # LDS – South African
+    "lds": "C0C0C0",
+
+    # Scarab – American blue
+    "scarab": "1B3F8A",
+
+    # Lotus (general, post-BRG liveries handled above)
+    "lotus": "215732",
+
+    # ── 1970s–2000s ADDITIONS (teams not yet mapped) ─────────────────────
     # Ferrari (always red)
     "ferrari": "DC0000",
     "scuderia ferrari": "DC0000",
