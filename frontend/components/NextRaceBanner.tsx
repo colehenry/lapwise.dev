@@ -3,7 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { getCircuitFlagEmoji, getDriverFlagEmoji } from "@/lib/flags";
+import { apiHeaders, apiUrl } from "@/lib/api";
+import { getCircuitFlagEmoji } from "@/lib/flags";
+import type { RoundSummary } from "@/lib/types";
 
 interface UpcomingEvent {
   event_name: string;
@@ -17,15 +19,9 @@ interface UpcomingEvent {
 }
 
 async function fetchUpcomingEvents(): Promise<UpcomingEvent[]> {
-  const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/events/upcoming?limit=10`,
-    {
-      headers: {
-        "X-API-Key": apiKey,
-      },
-    },
-  );
+  const res = await fetch(apiUrl("/api/events/upcoming?limit=10"), {
+    headers: apiHeaders(),
+  });
 
   if (!res.ok) {
     throw new Error("Failed to fetch upcoming events");
@@ -173,36 +169,10 @@ export default function NextRaceBanner() {
 }
 
 // Latest Race Compact Component
-interface LatestRacePodiumDriver {
-  full_name: string;
-  driver_code: string;
-  country_code: string | null;
-  headshot_url: string | null;
-  team_name: string;
-  team_color: string | null;
-  fastest_lap: boolean;
-}
-
-interface LatestRaceCompactData {
-  round: number;
-  event_name: string;
-  date: string;
-  circuit_name: string;
-  circuit_id: number;
-  session_type: string;
-  podium: LatestRacePodiumDriver[];
-}
-
-async function fetchLatestRaceCompact(): Promise<LatestRaceCompactData> {
-  const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/results/latest`,
-    {
-      headers: {
-        "X-API-Key": apiKey,
-      },
-    },
-  );
+async function fetchLatestRaceCompact(): Promise<RoundSummary> {
+  const res = await fetch(apiUrl("/api/results/latest"), {
+    headers: apiHeaders(),
+  });
 
   if (!res.ok) {
     throw new Error("Failed to fetch latest race");
@@ -212,7 +182,7 @@ async function fetchLatestRaceCompact(): Promise<LatestRaceCompactData> {
 }
 
 function LatestRaceCompact() {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<RoundSummary>({
     queryKey: ["latest-race-compact"],
     queryFn: fetchLatestRaceCompact,
   });

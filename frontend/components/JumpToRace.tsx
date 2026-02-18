@@ -41,15 +41,15 @@ export default function JumpToRace({
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
 
-        const endpoint = sessionType === "qualifying" 
-          ? `${apiUrl}/api/results/${selectedSeason}/qualifying`
-          : `${apiUrl}/api/results/${selectedSeason}`;
+        const endpoint =
+          sessionType === "qualifying"
+            ? `${apiUrl}/api/results/${selectedSeason}/qualifying`
+            : `${apiUrl}/api/results/${selectedSeason}`;
 
         const response = await fetch(endpoint, {
-            headers: { "X-API-Key": apiKey },
-            cache: "no-store",
-          },
-        );
+          headers: { "X-API-Key": apiKey },
+          cache: "no-store",
+        });
 
         if (response.ok) {
           const data = await response.json();
@@ -93,10 +93,15 @@ export default function JumpToRace({
     if (!round) return;
 
     const modeParam = sessionType === "qualifying" ? "?mode=qualifying" : "";
-    
+
     // Navigate to the appropriate route
-    if (round.session_type === "sprint_race" || round.session_type === "sprint_qualifying") {
-      router.push(`/results/${selectedSeason}/${round.round}/sprint${modeParam}`);
+    if (
+      round.session_type === "sprint_race" ||
+      round.session_type === "sprint_qualifying"
+    ) {
+      router.push(
+        `/results/${selectedSeason}/${round.round}/sprint${modeParam}`,
+      );
     } else {
       router.push(`/results/${selectedSeason}/${round.round}${modeParam}`);
     }
@@ -131,7 +136,10 @@ export default function JumpToRace({
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-xl z-50 p-4">
           <div className="mb-4">
-            <label htmlFor="jump-season" className="block text-xs font-semibold text-gray-400 mb-2">
+            <label
+              htmlFor="jump-season"
+              className="block text-xs font-semibold text-gray-400 mb-2"
+            >
               Season
             </label>
             <select
@@ -141,7 +149,9 @@ export default function JumpToRace({
               className="w-full px-3 py-2 bg-[#15151e] border border-[#2a2a35] rounded-lg text-white text-sm focus:outline-none focus:border-[#a020f0] transition-all"
             >
               {availableSeasons.map((year) => (
-                <option key={year} value={year}>{year}</option>
+                <option key={year} value={year}>
+                  {year}
+                </option>
               ))}
             </select>
           </div>
@@ -177,7 +187,10 @@ export default function JumpToRace({
           </div>
 
           <div className="mb-4">
-            <label htmlFor="jump-round" className="block text-xs font-semibold text-gray-400 mb-2">
+            <label
+              htmlFor="jump-round"
+              className="block text-xs font-semibold text-gray-400 mb-2"
+            >
               Round
             </label>
             {loadingRounds ? (
@@ -195,15 +208,17 @@ export default function JumpToRace({
                 {rounds.map((round) => {
                   const key = `${round.round}-${round.session_type}`;
                   const isSprintRace = round.session_type === "sprint_race";
-                  const isSprintQuali = round.session_type === "sprint_qualifying";
+                  const isSprintQuali =
+                    round.session_type === "sprint_qualifying";
                   const isRegularQuali = round.session_type === "qualifying";
-                  
+
                   return (
                     <option key={key} value={key}>
                       Round {round.round}
                       {isSprintRace ? " - Sprint" : ""}
                       {isSprintQuali ? " - Sprint Quali" : ""}
-                      {isRegularQuali ? " - Quali" : ""} • {round.event_name.replace("Grand Prix", "GP")}
+                      {isRegularQuali ? " - Quali" : ""} •{" "}
+                      {round.event_name.replace("Grand Prix", "GP")}
                     </option>
                   );
                 })}

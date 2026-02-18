@@ -64,13 +64,16 @@ export default function SprintDetailPage() {
   const router = useRouter();
   const season = params.season as string;
   const round = params.round as string;
-  const initialMode = searchParams.get("mode") === "qualifying" ? "qualifying" : "race";
+  const initialMode =
+    searchParams.get("mode") === "qualifying" ? "qualifying" : "race";
 
   const [data, setData] = useState<SessionResultsResponse | null>(null);
   const [qualifyingData, setQualifyingData] =
     useState<SessionResultsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [sessionType, setSessionType] = useState<"race" | "qualifying">(initialMode);
+  const [sessionType, setSessionType] = useState<"race" | "qualifying">(
+    initialMode,
+  );
 
   // Scroll to top on page load
   useEffect(() => {
