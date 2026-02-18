@@ -154,6 +154,11 @@ def main():
                 if session_type == "race":
                     fastf1_name = "Race"
                 elif session_type == "qualifying":
+                    # Qualifying lap times are only available from 1994 onwards via Jolpica.
+                    # Pre-1994 qualifying was not timed in a way that's captured in the data.
+                    if season_year < 1994:
+                        print(f"  ⏭️  Skipping qualifying for {season_year} (data not available pre-1994)")
+                        continue
                     fastf1_name = "Qualifying"
                 elif session_type == "sprint_race":
                     fastf1_name = "Sprint"
@@ -186,6 +191,7 @@ def main():
                         continue
 
                     # Load FastF1 session data
+                    # Load flags match the telemetry availability windows below
                     print(f"  📥 Loading FastF1 data for {fastf1_name}...")
                     fastf1_session = load_session_with_retry(
                         season_year, round_num, fastf1_name
@@ -203,19 +209,24 @@ def main():
                             db, fastf1_session, session_id, season_year
                         )
 
-                    # Ingest Telemetry (only available for 2018+ seasons)
-                    # Pre-2018: FastF1 does not have lap timing, weather, or track status data
+                    # Ingest Telemetry (availability depends on era)
+                    # 2018+:      Full telemetry from F1 Live Timing API (laps, weather, track status)
+                    # 1996-2017:  Basic lap times + weather from Jolpica (no track status/messages)
+                    # 1951-1995:  Weather only from Jolpica
+                    # pre-1951:   No telemetry available
                     if season_year >= 2018:
-                        # Ingest Laps
                         ingest_lap_data(db, fastf1_session, session_id)
-
-                        # Ingest Weather
                         ingest_weather_data(db, fastf1_session, session_id)
-
-                        # Ingest Track Status
                         ingest_track_status(db, fastf1_session, session_id)
+                    elif season_year >= 1996:
+                        ingest_lap_data(db, fastf1_session, session_id)
+                        ingest_weather_data(db, fastf1_session, session_id)
+                        print(f"  ℹ️  Track status not available for pre-2018 seasons")
+                    elif season_year >= 1951:
+                        ingest_weather_data(db, fastf1_session, session_id)
+                        print(f"  ℹ️  Lap timing not available for pre-1996 seasons")
                     else:
-                        print(f"  ℹ️  Skipping telemetry ingestion (pre-2018 season)")
+                        print(f"  ℹ️  No telemetry available for {season_year}")
 
                 except Exception as e:
                     print(

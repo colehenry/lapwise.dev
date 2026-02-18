@@ -464,8 +464,8 @@ export default function LapTimeByLapGraph({
               </p>
               {isPre2018 && (
                 <p className="text-sm text-gray-500">
-                  Historical telemetry data (lap times, weather, track status) is
-                  only available from the 2018 season onwards.
+                  Historical telemetry data (lap times, weather, track status)
+                  is only available from the 2018 season onwards.
                 </p>
               )}
             </div>

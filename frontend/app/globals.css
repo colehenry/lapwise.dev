@@ -285,8 +285,6 @@ body {
   background-color: var(--text-muted) !important;
 }
 
-
-
 /* Selection Styling */
 ::selection {
   background: var(--purple-500);
@@ -333,4 +331,3 @@ body {
 .animate-scaleIn {
   animation: scaleIn 0.2s ease-out;
 }
-

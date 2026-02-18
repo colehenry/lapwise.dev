@@ -4,90 +4,26 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { fetchSeasons, fetchStandings, isValidHeadshotUrl } from "@/lib/api";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
-
-interface DriverStanding {
-  position: number;
-  driver_code: string;
-  full_name: string;
-  country_code: string | null;
-  team_name: string;
-  team_color: string | null;
-  total_points: number;
-  headshot_url: string | null;
-}
-
-interface ConstructorStanding {
-  position: number;
-  team_name: string;
-  team_color: string | null;
-  total_points: number;
-}
-
-interface StandingsResponse {
-  year: number;
-  drivers: DriverStanding[];
-  constructors: ConstructorStanding[];
-}
-
-async function fetchSeasons(): Promise<number[]> {
-  const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/results/seasons`,
-    {
-      headers: {
-        "X-API-Key": apiKey,
-      },
-    },
-  );
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch seasons");
-  }
-
-  return res.json();
-}
-
-async function fetchStandings(season: number): Promise<StandingsResponse> {
-  const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/results/${season}/standings`,
-    {
-      headers: {
-        "X-API-Key": apiKey,
-      },
-    },
-  );
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch standings");
-  }
-
-  return res.json();
-}
+import type { DriverStanding } from "@/lib/types";
 
 function DriverCard({ driver }: { driver: DriverStanding }) {
-  // Check if headshot_url is valid (not null, not "None", and is a valid URL)
-  const hasValidHeadshot =
-    driver.headshot_url &&
-    driver.headshot_url !== "None" &&
-    driver.headshot_url.startsWith("http");
-
   return (
-    <div className="group bg-gradient-to-br from-[#1e1e2e] to-[#2a2a3e] rounded-lg p-4 border border-gray-800 hover:border-gray-600 transition-all">
+    <div className="group bg-gradient-to-br from-bg-tertiary to-bg-elevated rounded-lg p-4 border border-gray-800 hover:border-gray-600 transition-all">
       <Link
         href={`/drivers/${driver.driver_code}`}
         className="flex items-center gap-4"
       >
         {/* Position Badge */}
-        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#15151e] flex items-center justify-center">
+        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-bg-secondary flex items-center justify-center">
           <span className="text-white font-bold text-lg">
             {driver.position}
           </span>
         </div>
 
         {/* Headshot */}
-        {hasValidHeadshot && driver.headshot_url ? (
+        {isValidHeadshotUrl(driver.headshot_url) ? (
           <Image
             src={driver.headshot_url}
             alt={driver.full_name}
@@ -100,7 +36,7 @@ function DriverCard({ driver }: { driver: DriverStanding }) {
           />
         ) : (
           <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-sm font-bold text-gray-400 border-2 bg-[#15151e]"
+            className="w-16 h-16 rounded-full flex items-center justify-center text-sm font-bold text-gray-400 border-2 bg-bg-secondary"
             style={{
               borderColor: driver.team_color ? `#${driver.team_color}` : "#888",
             }}
@@ -111,7 +47,7 @@ function DriverCard({ driver }: { driver: DriverStanding }) {
 
         {/* Driver Info */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-white font-bold text-lg truncate group-hover:text-[#e10600] transition-colors">
+          <h3 className="text-white font-bold text-lg truncate group-hover:text-red-500 transition-colors">
             {driver.full_name}
           </h3>
           <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -142,7 +78,7 @@ function DriverCard({ driver }: { driver: DriverStanding }) {
       {/* Team Link - Clickable separately */}
       <Link
         href={`/constructors/${driver.team_name.replace(/ /g, "-")}`}
-        className="block text-sm text-gray-500 hover:text-[#e10600] transition-colors mt-2 truncate"
+        className="block text-sm text-gray-500 hover:text-red-500 transition-colors mt-2 truncate"
         onClick={(e) => e.stopPropagation()}
       >
         {driver.team_name}
@@ -155,7 +91,6 @@ export default function DriversPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
 
-  // Fetch available seasons
   const { data: seasons } = useQuery({
     queryKey: ["seasons"],
     queryFn: fetchSeasons,
@@ -168,19 +103,15 @@ export default function DriversPage() {
     }
   }, [seasons, selectedYear]);
 
-  // Fetch standings for selected year
   const { data: standings, isLoading } = useQuery({
     queryKey: ["standings", selectedYear],
     queryFn: () => {
-      if (selectedYear === null) {
-        throw new Error("No year selected");
-      }
+      if (selectedYear === null) throw new Error("No year selected");
       return fetchStandings(selectedYear);
     },
     enabled: selectedYear !== null,
   });
 
-  // Filter drivers based on search query
   const filteredDrivers = useMemo(() => {
     if (!standings) return [];
 
@@ -197,7 +128,7 @@ export default function DriversPage() {
   }, [standings, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-[#15151e] p-4 md:p-8">
+    <div className="min-h-screen bg-bg-secondary p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -212,7 +143,7 @@ export default function DriversPage() {
               <select
                 value={selectedYear || ""}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="w-full sm:w-auto px-4 py-2 bg-[#1e1e2e] text-white border border-gray-700 rounded-lg focus:outline-none focus:border-[#e10600] transition-colors"
+                className="w-full sm:w-auto px-4 py-2 bg-bg-tertiary text-white border border-gray-700 rounded-lg focus:outline-none focus:border-red-500 transition-colors"
               >
                 {seasons?.map((year) => (
                   <option key={year} value={year}>
@@ -229,7 +160,7 @@ export default function DriversPage() {
                 placeholder="Search drivers, constructors, or countries..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 bg-[#1e1e2e] text-white border border-gray-700 rounded-lg focus:outline-none focus:border-[#e10600] transition-colors placeholder-gray-500"
+                className="w-full px-4 py-2 bg-bg-tertiary text-white border border-gray-700 rounded-lg focus:outline-none focus:border-red-500 transition-colors placeholder-gray-500"
               />
             </div>
           </div>
@@ -247,8 +178,8 @@ export default function DriversPage() {
                   onClick={() => setSelectedYear(year)}
                   className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                     selectedYear === year
-                      ? "bg-[#e10600] text-white"
-                      : "bg-[#1e1e2e] text-gray-400 hover:text-white hover:bg-[#2a2a3e]"
+                      ? "bg-red-500 text-white"
+                      : "bg-bg-tertiary text-gray-400 hover:text-white hover:bg-bg-elevated"
                   }`}
                 >
                   {year}
@@ -265,7 +196,7 @@ export default function DriversPage() {
               <div
                 // biome-ignore lint/suspicious/noArrayIndexKey: Static loading skeleton items
                 key={`skeleton-${i}`}
-                className="h-24 bg-[#2a2a3e] rounded-lg animate-pulse"
+                className="h-24 bg-bg-elevated rounded-lg animate-pulse"
               />
             ))}
           </div>
@@ -288,7 +219,7 @@ export default function DriversPage() {
 
         {/* No Results */}
         {!isLoading && filteredDrivers && filteredDrivers.length === 0 && (
-          <div className="bg-[#1e1e2e] rounded-lg p-8 text-center">
+          <div className="bg-bg-tertiary rounded-lg p-8 text-center">
             <p className="text-gray-400 text-lg">
               No drivers found matching "{searchQuery}"
             </p>

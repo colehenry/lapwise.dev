@@ -141,13 +141,22 @@ def load_session_with_retry(year, round_num, session_name, max_retries=3):
         try:
             fastf1_sess = fastf1.get_session(year, round_num, session_name)
 
-            # Pre-2018: Only load basic session data (no laps, weather, or messages)
-            # 2018+: Load all data types (laps includes track_status)
-            if year < 2018:
-                print(f"    ℹ️  Loading basic data only (pre-2018 season)")
-                fastf1_sess.load(laps=False, weather=False, messages=False)
-            else:
+            # Load flags by era to match Jolpica/Live Timing data availability:
+            # 2018+:      Full data from F1 Live Timing (laps, weather, messages)
+            # 1996-2017:  Basic laps + weather from Jolpica, no messages
+            # 1951-1995:  Weather only from Jolpica
+            # pre-1951:   Basic session data only
+            if year >= 2018:
                 fastf1_sess.load(laps=True, weather=True, messages=True)
+            elif year >= 1996:
+                print(f"    ℹ️  Loading laps + weather only (1996-2017 season)")
+                fastf1_sess.load(laps=True, weather=True, messages=False)
+            elif year >= 1951:
+                print(f"    ℹ️  Loading weather only (1951-1995 season)")
+                fastf1_sess.load(laps=False, weather=True, messages=False)
+            else:
+                print(f"    ℹ️  Loading basic data only (pre-1951 season)")
+                fastf1_sess.load(laps=False, weather=False, messages=False)
 
             return fastf1_sess
         except Exception as e:
