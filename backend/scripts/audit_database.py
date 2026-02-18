@@ -256,99 +256,80 @@ class DatabaseAuditor:
 
         for session in sessions:
             data = self.audit_session_data(session)
+            year = session.year
 
-            # Expected data presence by session type
-            expected = {
-                "race": {
-                    "results": True,
-                    "laps": True,  # Should have lap data
-                    "weather": True,
-                    "track_status": True,
-                    "messages": True,
-                },
-                "qualifying": {
-                    "results": True,
-                    "laps": True,  # Qualifying has laps too
-                    "weather": True,
-                    "track_status": True,
-                    "messages": True,
-                },
-                "sprint_race": {
-                    "results": True,
-                    "laps": True,
-                    "weather": True,
-                    "track_status": True,
-                    "messages": True,
-                },
-                "sprint_qualifying": {
-                    "results": True,
-                    "laps": True,
-                    "weather": True,
-                    "track_status": True,
-                    "messages": True,
-                },
-            }
+            # Data availability varies by era:
+            # Results:      all years (always expected for race/qualifying)
+            # Laps:         1996+ (Jolpica basic), full telemetry from 2018+
+            # Weather:      1951+
+            # Track status: 2018+ (F1 Live Timing only)
+            # Messages:     2018+ (F1 Live Timing only)
+            expect_results = session.session_type in [
+                "race", "qualifying", "sprint_race", "sprint_qualifying"
+            ]
+            expect_laps = year >= 1996 and session.session_type in [
+                "race", "qualifying", "sprint_race", "sprint_qualifying"
+            ]
+            expect_weather = year >= 1951
+            expect_track_status = year >= 2018
+            expect_messages = year >= 2018
 
             issues_found = []
 
-            # Check what should be present
-            if session.session_type in expected:
-                expectations = expected[session.session_type]
+            if expect_results and data["results"] == 0:
+                issues_found.append("results")
+                self.add_issue(
+                    "ERROR",
+                    "missing_data",
+                    season,
+                    session.round,
+                    session.session_type,
+                    f"No results data for {session.session_type}",
+                )
 
-                if expectations["results"] and data["results"] == 0:
-                    issues_found.append("results")
-                    self.add_issue(
-                        "ERROR",
-                        "missing_data",
-                        season,
-                        session.round,
-                        session.session_type,
-                        f"No results data for {session.session_type}",
-                    )
+            if expect_laps and data["laps"] == 0:
+                issues_found.append("laps")
+                self.add_issue(
+                    "ERROR",
+                    "missing_data",
+                    season,
+                    session.round,
+                    session.session_type,
+                    f"No lap data for {session.session_type}",
+                )
 
-                if expectations["laps"] and data["laps"] == 0:
-                    issues_found.append("laps")
-                    self.add_issue(
-                        "ERROR",
-                        "missing_data",
-                        season,
-                        session.round,
-                        session.session_type,
-                        f"No lap data for {session.session_type}",
-                    )
+            if expect_weather and data["weather"] == 0:
+                issues_found.append("weather")
+                self.add_issue(
+                    "WARNING",
+                    "missing_data",
+                    season,
+                    session.round,
+                    session.session_type,
+                    f"No weather data for {session.session_type}",
+                )
 
-                if expectations["weather"] and data["weather"] == 0:
-                    issues_found.append("weather")
-                    self.add_issue(
-                        "WARNING",
-                        "missing_data",
-                        season,
-                        session.round,
-                        session.session_type,
-                        f"No weather data for {session.session_type}",
-                    )
+            if expect_track_status and data["track_status"] == 0:
+                issues_found.append("track_status")
+                self.add_issue(
+                    "WARNING",
+                    "missing_data",
+                    season,
+                    session.round,
+                    session.session_type,
+                    f"No track status data for {session.session_type}",
+                )
 
-                if expectations["track_status"] and data["track_status"] == 0:
-                    issues_found.append("track_status")
-                    self.add_issue(
-                        "WARNING",
-                        "missing_data",
-                        season,
-                        session.round,
-                        session.session_type,
-                        f"No track status data for {session.session_type}",
-                    )
-
-                if expectations["messages"] and data["messages"] == 0:
-                    issues_found.append("messages")
-                    self.add_issue(
-                        "WARNING",
-                        "missing_data",
-                        season,
-                        session.round,
-                        session.session_type,
-                        f"No race control messages for {session.session_type}",
-                    )
+            if expect_messages and data["messages"] == 0:
+                issues_found.append("messages")
+                self.add_issue(
+                    "WARNING",
+                    "missing_data",
+                    season,
+                    session.round,
+                    session.session_type,
+                    f"No race control messages for {session.session_type}",
+                )
 
             if issues_found:
                 incomplete_sessions.append(

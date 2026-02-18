@@ -21,10 +21,10 @@ def ingest_lap_data(db, fastf1_session, session_id):
 
         print(f"  📊 Processing {len(laps)} laps...")
 
-        # Check if lap data already exists
-        existing_count = (
-            db.execute(select(Lap).where(Lap.session_id == session_id)).scalars().all()
-        )
+        # sessions.py clears laps before re-ingestion; this is a safety net only
+        existing_count = db.execute(
+            select(Lap).where(Lap.session_id == session_id)
+        ).scalars().all()
 
         if len(existing_count) > 0:
             print(f"  ✓ Lap data already exists ({len(existing_count)} laps), skipping")
@@ -154,17 +154,13 @@ def ingest_weather_data(db, fastf1_session, session_id):
 
         print(f"  🌤️  Processing {len(weather_data)} weather readings...")
 
-        # Check if weather data already exists
-        existing_count = (
-            db.execute(select(Weather).where(Weather.session_id == session_id))
-            .scalars()
-            .all()
-        )
+        # sessions.py clears weather before re-ingestion; this is a safety net only
+        existing_count = db.execute(
+            select(Weather).where(Weather.session_id == session_id)
+        ).scalars().all()
 
         if len(existing_count) > 0:
-            print(
-                f"  ✓ Weather data already exists ({len(existing_count)} readings), skipping"
-            )
+            print(f"  ✓ Weather data already exists ({len(existing_count)} readings), skipping")
             return
 
         new_readings = 0
@@ -213,17 +209,13 @@ def ingest_track_status(db, fastf1_session, session_id):
 
         print(f"  🚦 Processing {len(track_status_data)} track status changes...")
 
-        # Check if track status data already exists
-        existing_count = (
-            db.execute(select(TrackStatus).where(TrackStatus.session_id == session_id))
-            .scalars()
-            .all()
-        )
+        # sessions.py clears track status before re-ingestion; this is a safety net only
+        existing_count = db.execute(
+            select(TrackStatus).where(TrackStatus.session_id == session_id)
+        ).scalars().all()
 
         if len(existing_count) > 0:
-            print(
-                f"  ✓ Track status data already exists ({len(existing_count)} changes), skipping"
-            )
+            print(f"  ✓ Track status data already exists ({len(existing_count)} changes), skipping")
             return
 
         new_statuses = 0
