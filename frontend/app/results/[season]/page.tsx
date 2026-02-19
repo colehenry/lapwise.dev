@@ -31,6 +31,115 @@ type RoundsData = {
   rounds: RoundSummary[];
 };
 
+/* ── SVG Pattern Components ── */
+
+function GridPattern({ id = "grid-pattern" }: { id?: string }) {
+  return (
+    <svg
+      className="absolute inset-0 w-full h-full text-purple-500 opacity-10 pointer-events-none"
+      aria-hidden="true"
+    >
+      <title>Grid pattern</title>
+      <defs>
+        <pattern id={id} width="10" height="10" patternUnits="userSpaceOnUse">
+          <path
+            d="M 10 0 L 0 0 0 10"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.4"
+          />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill={`url(#${id})`} />
+    </svg>
+  );
+}
+
+function ConcentricPattern({ id = "concentric-pattern" }: { id?: string }) {
+  return (
+    <svg
+      className="absolute inset-0 w-full h-full text-purple-500 opacity-10 pointer-events-none"
+      viewBox="0 0 180 100"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
+      <title>Concentric circles pattern</title>
+      <defs>
+        <pattern id={id} width="180" height="100" patternUnits="userSpaceOnUse">
+          <circle
+            cx="90"
+            cy="50"
+            r="15"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.4"
+          />
+          <circle
+            cx="90"
+            cy="50"
+            r="30"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.4"
+          />
+          <circle
+            cx="90"
+            cy="50"
+            r="45"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.4"
+          />
+          <line
+            x1="0"
+            y1="50"
+            x2="180"
+            y2="50"
+            stroke="currentColor"
+            strokeWidth="0.3"
+          />
+          <line
+            x1="90"
+            y1="0"
+            x2="90"
+            y2="100"
+            stroke="currentColor"
+            strokeWidth="0.3"
+          />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill={`url(#${id})`} />
+    </svg>
+  );
+}
+
+function TrianglePattern({ id = "triangle-pattern" }: { id?: string }) {
+  return (
+    <svg
+      className="absolute inset-0 w-full h-full text-purple-500 opacity-8 pointer-events-none"
+      aria-hidden="true"
+    >
+      <title>Triangle pattern</title>
+      <defs>
+        <pattern
+          id={id}
+          width="20"
+          height="17.32"
+          patternUnits="userSpaceOnUse"
+        >
+          <path
+            d="M0 17.32 L10 0 L20 17.32 Z M10 17.32 L20 0 L30 17.32 Z M-10 17.32 L0 0 L10 17.32 Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.4"
+          />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill={`url(#${id})`} />
+    </svg>
+  );
+}
+
 export default function ResultsPage() {
   const params = useParams();
   const router = useRouter();
@@ -111,23 +220,25 @@ export default function ResultsPage() {
     return (
       <main className="min-h-screen bg-bg-secondary p-8">
         <div className="max-w-7xl mx-auto">
-          <p className="text-center text-gray-400">Loading results...</p>
+          <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
+            Loading results...
+          </p>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-bg-secondary p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header with year selector and title */}
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* Year Dropdown */}
+    <main className="min-h-screen bg-bg-secondary">
+      {/* ── Sticky Header ── */}
+      <div className="sticky top-0 z-40 bg-bg-secondary border-b border-border-primary h-16 flex items-center px-6">
+        <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {/* Season Selector — terminal input style */}
             <select
               value={season}
               onChange={(e) => handleYearChange(e.target.value)}
-              className="px-3 py-1.5 border border-border-primary rounded bg-bg-tertiary text-2xl text-white font-bold focus:outline-none focus:border-purple-500 hover:border-purple-500/50 transition-all cursor-pointer"
+              className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xl font-bold px-3 py-1.5 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer"
             >
               {availableYears.map((year) => (
                 <option key={year} value={year}>
@@ -135,28 +246,61 @@ export default function ResultsPage() {
                 </option>
               ))}
             </select>
-
-            {/* Title */}
-            <h1 className="text-2xl font-bold text-white">Season Results</h1>
+            <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
+              Season Results
+            </span>
           </div>
 
-          {/* Jump to Race Button */}
-          <JumpToRace
-            currentSeason={season}
-            availableSeasons={availableYears}
-          />
+          <div className="flex items-center gap-4">
+            {/* Session Type Toggle */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setSessionType("race")}
+                className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
+                  sessionType === "race"
+                    ? "bg-purple-500/20 border border-purple-500 text-purple-300"
+                    : "border border-transparent text-text-muted hover:text-text-secondary"
+                }`}
+              >
+                Race
+              </button>
+              <button
+                type="button"
+                onClick={() => setSessionType("qualifying")}
+                className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
+                  sessionType === "qualifying"
+                    ? "bg-purple-500/20 border border-purple-500 text-purple-300"
+                    : "border border-transparent text-text-muted hover:text-text-secondary"
+                }`}
+              >
+                Qualifying
+              </button>
+            </div>
+
+            <JumpToRace
+              currentSeason={season}
+              availableSeasons={availableYears}
+            />
+          </div>
         </div>
-        {/* Final Standings Section */}
+      </div>
+
+      <div className="max-w-7xl mx-auto p-6">
+        {/* ── Championship Standings ── */}
         <div className="mb-6">
-          {/* Driver and Constructor Standings Side by Side */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Driver Standings */}
-            <div className="bg-bg-tertiary rounded-lg border border-border-primary shadow-lg p-4 flex flex-col">
-              <h3 className="text-lg font-bold text-white mb-3">
-                Driver's Championship
-              </h3>
+            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm flex flex-col">
+              {/* Header band with Pattern A */}
+              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                <GridPattern id="driver-grid" />
+                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                  Driver Championship
+                </span>
+              </div>
               <div
-                className="space-y-2 overflow-y-auto"
+                className="overflow-y-auto"
                 style={{
                   maxHeight: expandedStandings ? "660px" : "330px",
                   minHeight: expandedStandings ? "660px" : "330px",
@@ -165,10 +309,10 @@ export default function ResultsPage() {
                 {standings?.drivers.map((driver, idx) => (
                   <div
                     key={`${driver.driver_code}-${driver.team_name}-${idx}`}
-                    className="flex items-center gap-2 py-2 border-b border-border-primary last:border-0 min-h-[60px]"
+                    className="flex items-center gap-2 py-2 px-4 border-b border-border-primary last:border-0 min-h-[60px]"
                   >
                     {/* Position */}
-                    <div className="text-xl font-bold text-gray-500 w-6">
+                    <div className="text-lg font-bold text-text-muted w-8 font-mono">
                       {driver.position}
                     </div>
 
@@ -179,7 +323,7 @@ export default function ResultsPage() {
                         alt={driver.full_name}
                         width={40}
                         height={40}
-                        className="rounded-full object-cover border border-gray-700"
+                        className="rounded-sm object-cover border border-border-secondary"
                       />
                     )}
 
@@ -187,7 +331,7 @@ export default function ResultsPage() {
                     <div className="flex-1 flex flex-col justify-center">
                       <Link
                         href={`/drivers/${driver.driver_code}`}
-                        className="font-semibold text-white text-sm hover:text-red-500 transition-colors"
+                        className="font-semibold text-text-primary text-sm hover:text-purple-300 transition-colors duration-150"
                       >
                         {driver.full_name}
                       </Link>
@@ -204,8 +348,13 @@ export default function ResultsPage() {
                     </div>
 
                     {/* Points */}
-                    <div className="text-lg font-bold text-white">
-                      {driver.total_points}
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-[9px] text-text-muted tracking-widest font-mono">
+                        PTS
+                      </span>
+                      <span className="text-lg font-bold text-text-primary font-mono">
+                        {driver.total_points}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -213,12 +362,16 @@ export default function ResultsPage() {
             </div>
 
             {/* Constructor Standings */}
-            <div className="bg-bg-tertiary rounded-lg border border-border-primary shadow-lg p-4 flex flex-col">
-              <h3 className="text-lg font-bold text-white mb-3">
-                Constructor's Championship
-              </h3>
+            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm flex flex-col">
+              {/* Header band with Pattern A */}
+              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                <GridPattern id="constructor-grid" />
+                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                  Constructor Championship
+                </span>
+              </div>
               <div
-                className="space-y-2 overflow-y-auto"
+                className="overflow-y-auto"
                 style={{
                   maxHeight: expandedStandings ? "660px" : "330px",
                   minHeight: expandedStandings ? "660px" : "330px",
@@ -227,18 +380,18 @@ export default function ResultsPage() {
                 {standings?.constructors.map((team, idx) => (
                   <div
                     key={`${team.team_name}-${idx}`}
-                    className="py-2 border-b border-border-primary last:border-0 min-h-[60px]"
+                    className="py-2 px-4 border-b border-border-primary last:border-0 min-h-[60px]"
                   >
                     <div className="flex items-center gap-2">
                       {/* Position */}
-                      <div className="text-xl font-bold text-gray-500 w-6">
+                      <div className="text-lg font-bold text-text-muted w-8 font-mono">
                         {team.position}
                       </div>
 
                       {/* Team Info */}
                       <div className="flex-1 flex flex-col justify-center">
                         <div
-                          className="font-bold text-sm"
+                          className="font-semibold text-sm"
                           style={{
                             color: team.team_color
                               ? `#${team.team_color}`
@@ -247,14 +400,13 @@ export default function ResultsPage() {
                         >
                           {team.team_name}
                         </div>
-                        {/* Team Drivers */}
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs text-text-muted">
                           {getTeamDrivers(team.team_name).map(
                             (driver, driverIdx) => (
                               <span key={driver.driver_code}>
                                 <Link
                                   href={`/drivers/${driver.driver_code}`}
-                                  className="hover:text-white transition-colors"
+                                  className="hover:text-purple-300 transition-colors duration-150"
                                 >
                                   {driver.full_name}
                                 </Link>{" "}
@@ -269,8 +421,13 @@ export default function ResultsPage() {
                       </div>
 
                       {/* Points */}
-                      <div className="text-lg font-bold text-white">
-                        {team.total_points}
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-[9px] text-text-muted tracking-widest font-mono">
+                          PTS
+                        </span>
+                        <span className="text-lg font-bold text-text-primary font-mono">
+                          {team.total_points}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -284,13 +441,13 @@ export default function ResultsPage() {
             <button
               type="button"
               onClick={() => setExpandedStandings(!expandedStandings)}
-              className="w-48 px-4 py-2 bg-bg-tertiary border-2 border-border-primary rounded-lg text-white text-sm font-semibold hover:border-purple-500 transition-all flex items-center justify-center gap-2"
+              className="border border-border-secondary rounded-sm text-text-secondary hover:border-purple-500 hover:text-purple-300 font-mono text-xs uppercase tracking-widest px-6 py-2 transition-colors duration-150 flex items-center gap-2"
             >
               {expandedStandings ? (
                 <>
                   <span>Collapse</span>
                   <svg
-                    className="w-4 h-4"
+                    className="w-3 h-3"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -309,7 +466,7 @@ export default function ResultsPage() {
                 <>
                   <span>Expand</span>
                   <svg
-                    className="w-4 h-4"
+                    className="w-3 h-3"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -329,164 +486,164 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Points Progression Graph */}
-        <div className="mb-6">
-          <PointsByRoundGraph season={season} />
+        {/* ── Points Progression Graph ── */}
+        <div className="mb-6 bg-bg-tertiary border border-border-primary rounded-sm shadow-sm">
+          <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+            <TrianglePattern id="points-triangles" />
+            <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+              Points Progression
+            </span>
+          </div>
+          <div className="p-4">
+            <PointsByRoundGraph season={season} />
+          </div>
         </div>
 
-        {/* Races/Qualifying Section */}
+        {/* ── Race / Qualifying Results Grid ── */}
         <div>
-          {/* Header with toggle */}
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-bold text-white">
+          <div className="flex items-center mb-3">
+            <h2 className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
               {sessionType === "race" ? "Race Results" : "Qualifying Results"}
             </h2>
-            {/* Race/Qualifying Toggle */}
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider ml-1">
-                Session Type
-              </span>
-              <div className="flex items-center gap-2 bg-bg-tertiary rounded-lg p-1 border border-border-primary">
-                <button
-                  type="button"
-                  onClick={() => setSessionType("race")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                    sessionType === "race"
-                      ? "bg-purple-500 text-white"
-                      : "text-text-secondary hover:text-text-primary"
-                  }`}
-                >
-                  Race
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSessionType("qualifying")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                    sessionType === "qualifying"
-                      ? "bg-purple-500 text-white"
-                      : "text-text-secondary hover:text-text-primary"
-                  }`}
-                >
-                  Qualifying
-                </button>
-              </div>
-            </div>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {displayRounds?.rounds.map((round) => (
-              <button
-                type="button"
-                key={`${round.round}-${round.session_type}`}
-                onClick={() =>
-                  handleRoundClick(round.round, round.session_type)
-                }
-                className="bg-bg-tertiary border border-border-primary rounded-lg shadow-lg p-4 hover:border-purple-500 transition-all cursor-pointer text-left h-[140px]"
-              >
-                <div className="flex items-center gap-4">
-                  {/* Left side: Race info and podium */}
-                  <div className="flex-1 min-w-0">
-                    {/* Race/Qualifying Header - Horizontal */}
-                    <div className="mb-3 pb-2 border-b border-border-primary">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-lg font-bold text-white truncate">
-                          <span className="text-gray-400 font-normal">
-                            Round {round.round}
-                          </span>{" "}
-                          • {round.event_name.replace("Grand Prix", "GP")}
-                          {(round.session_type === "qualifying" ||
-                            round.session_type === "sprint_qualifying") &&
-                            " Qualifying"}
-                        </h3>
-                        {round.session_type === "sprint_race" && (
-                          <span className="bg-purple-500 text-white px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap">
-                            SPRINT
-                          </span>
-                        )}
-                        {round.session_type === "sprint_qualifying" && (
-                          <span className="bg-purple-500 text-white px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap">
-                            SPRINT
-                          </span>
-                        )}
+            {displayRounds?.rounds.map((round) => {
+              const isSprint =
+                round.session_type === "sprint_race" ||
+                round.session_type === "sprint_qualifying";
+
+              return (
+                <button
+                  type="button"
+                  key={`${round.round}-${round.session_type}`}
+                  onClick={() =>
+                    handleRoundClick(round.round, round.session_type)
+                  }
+                  className={`bg-bg-tertiary border border-border-primary rounded-sm shadow-sm transition-all duration-150 cursor-pointer text-left h-[140px] relative overflow-hidden ${
+                    isSprint
+                      ? "hover:border-red-500 hover:shadow-red"
+                      : "hover:border-purple-500 hover:shadow-purple"
+                  }`}
+                >
+                  <div className="flex items-center gap-4 p-4 h-full">
+                    {/* Left side: Race info and podium */}
+                    <div className="flex-1 min-w-0 flex flex-col h-full">
+                      {/* Round + Race name */}
+                      <div className="mb-1">
+                        <span className="text-[10px] text-text-muted tracking-widest uppercase font-mono font-bold">
+                          RND {String(round.round).padStart(2, "0")}
+                        </span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold text-text-primary text-sm truncate">
+                            {round.event_name.replace("Grand Prix", "GP")}
+                            {(round.session_type === "qualifying" ||
+                              round.session_type === "sprint_qualifying") &&
+                              " Qualifying"}
+                          </h3>
+                          {(round.session_type === "sprint_race" ||
+                            round.session_type === "sprint_qualifying") && (
+                            <span className="bg-red-500/20 border border-red-500 text-red-400 text-[9px] tracking-widest uppercase font-bold font-mono px-2 py-0.5 rounded-sm whitespace-nowrap">
+                              Sprint
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-xs text-gray-400 truncate">
+
+                      {/* Circuit + date */}
+                      <p className="text-text-muted text-[10px] tracking-wide truncate">
                         {round.circuit_name} •{" "}
                         {round.track_length_km
                           ? `${round.track_length_km.toFixed(3)} km • `
                           : ""}
                         {new Date(round.date).toLocaleDateString("en-US", {
-                          month: "long",
+                          month: "short",
                           day: "numeric",
                           year: "numeric",
                         })}
                       </p>
-                    </div>
 
-                    {/* Podium - Horizontal Layout with minimal spacing */}
-                    <div className="flex items-center gap-3">
-                      {round.podium.map((driver, idx) => {
-                        const medals = ["🥇", "🥈", "🥉"];
+                      {/* Divider */}
+                      <div className="border-b border-border-primary my-2" />
 
-                        return (
-                          <div
-                            key={driver.driver_code}
-                            className="flex items-center gap-0.5"
-                          >
-                            {/* Medal */}
-                            <span className="text-lg flex-shrink-0">
-                              {medals[idx]}
-                            </span>
+                      {/* Podium row */}
+                      <div className="flex items-center gap-3 mt-auto">
+                        {round.podium.map((driver, idx) => {
+                          const medals = ["🥇", "🥈", "🥉"];
+                          const labels = ["P1", "P2", "P3"];
 
-                            {/* Driver Photo */}
-                            {isValidHeadshotUrl(driver.headshot_url) && (
-                              <Image
-                                src={driver.headshot_url}
-                                alt={driver.full_name}
-                                width={40}
-                                height={40}
-                                className="rounded-full object-cover border border-gray-700 flex-shrink-0"
-                              />
-                            )}
+                          return (
+                            <div
+                              key={driver.driver_code}
+                              className="flex items-center gap-0.5"
+                            >
+                              <div className="flex flex-col items-center">
+                                <span className="text-[9px] text-text-muted tracking-widest font-mono">
+                                  {labels[idx]}
+                                </span>
+                                <span className="text-lg flex-shrink-0">
+                                  {medals[idx]}
+                                </span>
+                              </div>
 
-                            {/* Driver Name - Team colored, centered vertically */}
-                            <div className="flex items-center">
-                              <div
-                                className="font-bold text-sm truncate"
-                                style={{
-                                  color: driver.team_color
-                                    ? `#${driver.team_color}`
-                                    : "#fff",
-                                }}
-                              >
-                                {driver.driver_code}
-                                {driver.fastest_lap && (
-                                  <span
-                                    className="text-[10px] text-purple-300 ml-0.5"
-                                    title="Fastest Lap"
-                                  >
-                                    ⚡
-                                  </span>
-                                )}
+                              {isValidHeadshotUrl(driver.headshot_url) && (
+                                <Image
+                                  src={driver.headshot_url}
+                                  alt={driver.full_name}
+                                  width={32}
+                                  height={32}
+                                  className="rounded-sm object-cover border border-border-secondary flex-shrink-0"
+                                />
+                              )}
+
+                              <div className="flex items-center">
+                                <div
+                                  className="font-bold text-xs font-mono truncate"
+                                  style={{
+                                    color: driver.team_color
+                                      ? `#${driver.team_color}`
+                                      : "#fff",
+                                  }}
+                                >
+                                  {driver.driver_code}
+                                  {driver.fastest_lap && (
+                                    <span
+                                      className="text-[10px] text-purple-300 ml-0.5"
+                                      title="Fastest Lap"
+                                    >
+                                      ⚡
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Right side: Track map with concentric pattern */}
+                    <div
+                      className="flex-shrink-0 bg-bg-primary border border-border-secondary rounded-sm w-44 h-24 relative flex items-center justify-center overflow-hidden"
+                      style={{
+                        boxShadow: "inset 0 0 20px rgba(160, 32, 240, 0.1)",
+                      }}
+                    >
+                      <ConcentricPattern
+                        id={`track-${round.round}-${round.session_type}`}
+                      />
+                      <Image
+                        src={`/track-maps/${round.circuit_id}.png`}
+                        alt={`${round.circuit_name} track map`}
+                        width={160}
+                        height={88}
+                        className="object-contain w-full h-full relative z-10 opacity-80 mix-blend-lighten"
+                      />
                     </div>
                   </div>
-
-                  {/* Right side: Track map - centered vertically with consistent height */}
-                  <div className="flex-shrink-0 flex items-center justify-center w-45 h-25">
-                    <Image
-                      src={`/track-maps/${round.circuit_id}.png`}
-                      alt={`${round.circuit_name} track map`}
-                      width={180}
-                      height={100}
-                      className="object-contain w-full h-full"
-                    />
-                  </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
