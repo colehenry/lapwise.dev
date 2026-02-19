@@ -24,6 +24,36 @@ export interface StandingsResponse {
   constructors: ConstructorStanding[];
 }
 
+export interface DriverQualifyingStanding {
+  position: number;
+  driver_code: string;
+  full_name: string;
+  country_code: string | null;
+  team_name: string;
+  team_color: string | null;
+  total_qualifying_points: number;
+  headshot_url: string | null;
+  poles: number;
+  p2s: number;
+  p3s: number;
+}
+
+export interface ConstructorQualifyingStanding {
+  position: number;
+  team_name: string;
+  team_color: string | null;
+  total_qualifying_points: number;
+  poles: number;
+  p2s: number;
+  p3s: number;
+}
+
+export interface QualifyingStandingsResponse {
+  year: number;
+  drivers: DriverQualifyingStanding[];
+  constructors: ConstructorQualifyingStanding[];
+}
+
 export interface PodiumDriver {
   full_name: string;
   driver_code: string;

@@ -13,7 +13,13 @@ import {
   fetchSeasons,
   isValidHeadshotUrl,
 } from "@/lib/api";
-import type { DriverStanding, RoundSummary } from "@/lib/types";
+import type {
+  DriverStanding,
+  RoundSummary,
+  QualifyingStandingsResponse,
+  DriverQualifyingStanding,
+  ConstructorQualifyingStanding,
+} from "@/lib/types";
 
 type StandingsData = {
   year: number;
@@ -170,6 +176,16 @@ export default function ResultsPage() {
       enabled: !!season,
     });
 
+  const { data: qualifyingStandings, isLoading: qualifyingStandingsLoading } =
+    useQuery<QualifyingStandingsResponse>({
+      queryKey: ["qualifying-standings", season],
+      queryFn: () =>
+        fetch(apiUrl(`/api/results/${season}/qualifying-standings`), {
+          headers: apiHeaders(),
+        }).then((r) => r.json()),
+      enabled: !!season && sessionType === "qualifying",
+    });
+
   const { data: rounds, isLoading: roundsLoading } = useQuery<RoundsData>({
     queryKey: ["rounds", season],
     queryFn: () =>
@@ -212,6 +228,13 @@ export default function ResultsPage() {
   const getTeamDrivers = (teamName: string) => {
     if (!standings?.drivers) return [];
     return standings.drivers
+      .filter((driver) => driver.team_name === teamName)
+      .sort((a, b) => a.position - b.position);
+  };
+
+  const getTeamQualifyingDrivers = (teamName: string) => {
+    if (!qualifyingStandings?.drivers) return [];
+    return qualifyingStandings.drivers
       .filter((driver) => driver.team_name === teamName)
       .sort((a, b) => a.position - b.position);
   };
@@ -295,8 +318,8 @@ export default function ResultsPage() {
               {/* Header band with Pattern A */}
               <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
                 <GridPattern id="driver-grid" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Driver Championship
+                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-nowrap">
+                  {sessionType === "race" ? "Driver Championship" : "Best Qualifiers (Driver)"}
                 </span>
               </div>
               <div
@@ -306,7 +329,7 @@ export default function ResultsPage() {
                   minHeight: expandedStandings ? "660px" : "330px",
                 }}
               >
-                {standings?.drivers.map((driver, idx) => (
+                {(sessionType === "race" ? standings?.drivers : qualifyingStandings?.drivers)?.map((driver, idx) => (
                   <div
                     key={`${driver.driver_code}-${driver.team_name}-${idx}`}
                     className="flex items-center gap-2 py-2 px-4 border-b border-border-primary last:border-0 min-h-[60px]"
@@ -347,15 +370,32 @@ export default function ResultsPage() {
                       </div>
                     </div>
 
-                    {/* Points */}
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-[9px] text-text-muted tracking-widest font-mono">
-                        PTS
-                      </span>
-                      <span className="text-lg font-bold text-text-primary font-mono">
-                        {driver.total_points}
-                      </span>
-                    </div>
+                    {/* Results / Points */}
+                    {sessionType === "qualifying" ? (
+                      <div className="flex items-center gap-3">
+                        <div className="flex flex-col items-center">
+                          <span className="text-xs" title="P1s">🥇</span>
+                          <span className="text-xs font-bold text-text-primary">{(driver as DriverQualifyingStanding).poles}</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-xs" title="P2s">🥈</span>
+                          <span className="text-xs font-bold text-text-primary">{(driver as DriverQualifyingStanding).p2s}</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-xs" title="P3s">🥉</span>
+                          <span className="text-xs font-bold text-text-primary">{(driver as DriverQualifyingStanding).p3s}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-[9px] text-text-muted tracking-widest font-mono">
+                          PTS
+                        </span>
+                        <span className="text-lg font-bold text-text-primary font-mono">
+                          {(driver as DriverStanding).total_points}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -366,8 +406,8 @@ export default function ResultsPage() {
               {/* Header band with Pattern A */}
               <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
                 <GridPattern id="constructor-grid" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Constructor Championship
+                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-nowrap">
+                  {sessionType === "race" ? "Constructor Championship" : "Best Qualifiers (Constructor)"}
                 </span>
               </div>
               <div
@@ -377,7 +417,7 @@ export default function ResultsPage() {
                   minHeight: expandedStandings ? "660px" : "330px",
                 }}
               >
-                {standings?.constructors.map((team, idx) => (
+                {(sessionType === "race" ? standings?.constructors : qualifyingStandings?.constructors)?.map((team, idx) => (
                   <div
                     key={`${team.team_name}-${idx}`}
                     className="py-2 px-4 border-b border-border-primary last:border-0 min-h-[60px]"
@@ -401,8 +441,8 @@ export default function ResultsPage() {
                           {team.team_name}
                         </div>
                         <div className="text-xs text-text-muted">
-                          {getTeamDrivers(team.team_name).map(
-                            (driver, driverIdx) => (
+                          {(sessionType === "race" ? getTeamDrivers(team.team_name) : getTeamQualifyingDrivers(team.team_name)).map(
+                            (driver, driverIdx, arr) => (
                               <span key={driver.driver_code}>
                                 <Link
                                   href={`/drivers/${driver.driver_code}`}
@@ -410,25 +450,40 @@ export default function ResultsPage() {
                                 >
                                   {driver.full_name}
                                 </Link>{" "}
-                                ({driver.total_points})
-                                {driverIdx <
-                                  getTeamDrivers(team.team_name).length - 1 &&
-                                  ", "}
+                                ({sessionType === "race" ? (driver as DriverStanding).total_points : (driver as DriverQualifyingStanding).poles})
+                                {driverIdx < arr.length - 1 && ", "}
                               </span>
                             ),
                           )}
                         </div>
                       </div>
 
-                      {/* Points */}
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-[9px] text-text-muted tracking-widest font-mono">
-                          PTS
-                        </span>
-                        <span className="text-lg font-bold text-text-primary font-mono">
-                          {team.total_points}
-                        </span>
-                      </div>
+                      {/* Results / Points */}
+                      {sessionType === "qualifying" ? (
+                        <div className="flex items-center gap-3">
+                          <div className="flex flex-col items-center">
+                            <span className="text-xs" title="P1s">🥇</span>
+                            <span className="text-xs font-bold text-text-primary">{(team as ConstructorQualifyingStanding).poles}</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <span className="text-xs" title="P2s">🥈</span>
+                            <span className="text-xs font-bold text-text-primary">{(team as ConstructorQualifyingStanding).p2s}</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <span className="text-xs" title="P3s">🥉</span>
+                            <span className="text-xs font-bold text-text-primary">{(team as ConstructorQualifyingStanding).p3s}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-[9px] text-text-muted tracking-widest font-mono">
+                            PTS
+                          </span>
+                          <span className="text-lg font-bold text-text-primary font-mono">
+                            {(team as ConstructorStanding).total_points}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -495,7 +550,7 @@ export default function ResultsPage() {
             </span>
           </div>
           <div className="p-4">
-            <PointsByRoundGraph season={season} />
+            <PointsByRoundGraph season={season} pointsType={sessionType} />
           </div>
         </div>
 

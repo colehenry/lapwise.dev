@@ -14,6 +14,7 @@ from app.services.results_service import ResultsService
 from app.security import verify_api_key
 from app.schemas.result import (
     StandingsResponse,
+    QualifyingStandingsResponse,
     SeasonRoundsResponse,
     RoundSummary,
     SessionResultsResponse,
@@ -119,10 +120,33 @@ async def get_season_standings(
     return standings
 
 
+@router.get("/{season}/qualifying-standings", response_model=QualifyingStandingsResponse)
+async def get_season_qualifying_standings(
+    season: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Get driver and constructor qualifying championship standings for a season.
+
+    Calculates total qualifying points (P1=20, P2=19, etc.) for each driver and team.
+    Used for the /results/[season] page in qualifying view mode.
+    """
+    standings = await ResultsService.get_qualifying_standings(db, season)
+
+    if not standings:
+        raise HTTPException(
+            status_code=404, detail=f"No qualifying results found for season {season}"
+        )
+
+    return standings
+
+
 @router.get("/{season}/points-progression", response_model=PointsProgressionResponse)
 async def get_points_progression(
     season: int,
     mode: str = "drivers",
+    points_type: str = "race",
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -135,13 +159,19 @@ async def get_points_progression(
     Args:
         season: The year to get progression data for
         mode: Either 'drivers' or 'constructors' (default: 'drivers')
+        points_type: Either 'race' or 'qualifying' (default: 'race')
     """
     if mode not in ["drivers", "constructors"]:
         raise HTTPException(
             status_code=400, detail="Mode must be either 'drivers' or 'constructors'"
         )
 
-    progression = await ResultsService.get_points_progression(db, season, mode)
+    if points_type not in ["race", "qualifying"]:
+        raise HTTPException(
+            status_code=400, detail="points_type must be either 'race' or 'qualifying'"
+        )
+
+    progression = await ResultsService.get_points_progression(db, season, mode, points_type)
 
     if not progression:
         raise HTTPException(
