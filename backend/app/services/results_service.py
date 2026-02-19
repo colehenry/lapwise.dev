@@ -7,7 +7,7 @@ Extracted from season_results.py router for better separation of concerns.
 
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, case
 from sqlalchemy.orm import selectinload
 import math
 
@@ -32,6 +32,9 @@ from app.schemas.result import (
     SessionResultDetail,
     DriverInfo,
     TeamInfo,
+    QualifyingStandingsResponse,
+    DriverQualifyingStanding,
+    ConstructorQualifyingStanding,
 )
 
 
@@ -249,16 +252,583 @@ class ResultsService:
         )
 
     @staticmethod
+    async def get_qualifying_standings(
+        db: AsyncSession, season: int
+    ) -> Optional[QualifyingStandingsResponse]:
+        """
+        Get driver and constructor qualifying standings for a season.
+        Calculates qualifying points: P1=20, P2=19, ..., P20=1.
+        """
+        # Check if season exists
+        season_check = await db.execute(
+            select(Session.id).where(Session.year == season).limit(1)
+        )
+        if not season_check.first():
+            return None
+
+        # ====================================================================
+        # Driver Qualifying Standings Query
+        # ====================================================================
+        # Points: 21 - position (clamped to min 0)
+        # Session types: qualifying, sprint_qualifying
+        points_subquery = (
+            select(
+                Driver.id.label("driver_id"),
+                Driver.driver_code,
+                Driver.full_name,
+                Driver.country_code,
+                func.sum(
+                    case(
+                        (SessionResult.position <= 20, 21 - SessionResult.position),
+                        else_=0,
+                    )
+                ).label("total_points"),
+                func.sum(case((SessionResult.position == 1, 1), else_=0)).label(
+                    "poles"
+                ),
+                func.sum(case((SessionResult.position == 2, 1), else_=0)).label("p2s"),
+                func.sum(case((SessionResult.position == 3, 1), else_=0)).label("p3s"),
+            )
+            .join(SessionResult, Driver.id == SessionResult.driver_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(["qualifying", "sprint_qualifying"]))
+            .where(SessionResult.position.isnot(None))
+            .group_by(
+                Driver.id,
+                Driver.driver_code,
+                Driver.full_name,
+                Driver.country_code,
+            )
+            .subquery()
+        )
+
+        # Get latest results for team/headshot
+        latest_results = {}
+        distinct_drivers = await db.execute(
+            select(Driver.id)
+            .distinct()
+            .join(SessionResult, Driver.id == SessionResult.driver_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+        )
+
+        for driver_row in distinct_drivers:
+            driver_id = driver_row[0]
+            latest_result_query = (
+                select(SessionResult, Team)
+                .join(Session, SessionResult.session_id == Session.id)
+                .join(Team, SessionResult.team_id == Team.id)
+                .where(SessionResult.driver_id == driver_id)
+                .where(Session.year == season)
+                .order_by(Session.date.desc(), Session.round.desc())
+                .limit(1)
+            )
+            result = await db.execute(latest_result_query)
+            row = result.first()
+            if row:
+                latest_results[driver_id] = row
+
+        # Build driver standings
+        driver_standings_data = []
+        standings_result = await db.execute(
+            select(points_subquery).order_by(points_subquery.c.total_points.desc())
+        )
+
+        for driver_row in standings_result:
+            driver_id = driver_row.driver_id
+            if driver_id in latest_results:
+                session_result, team = latest_results[driver_id]
+                driver_standings_data.append(
+                    {
+                        "driver_code": driver_row.driver_code,
+                        "full_name": driver_row.full_name,
+                        "country_code": driver_row.country_code,
+                        "total_qualifying_points": float(driver_row.total_points),
+                        "team_name": team.name,
+                        "team_color": team.team_color,
+                        "headshot_url": session_result.headshot_url
+                        if session_result.headshot_url != "None"
+                        else None,
+                        "poles": int(driver_row.poles),
+                        "p2s": int(driver_row.p2s),
+                        "p3s": int(driver_row.p3s),
+                    }
+                )
+
+        drivers = [
+            DriverQualifyingStanding(position=idx + 1, **row)
+            for idx, row in enumerate(driver_standings_data)
+        ]
+
+        # ========================================================================
+        # Constructor Qualifying Standings Query
+        # ========================================================================
+        constructor_query = (
+            select(
+                Team.name.label("team_name"),
+                Team.team_color,
+                func.sum(
+                    case(
+                        (SessionResult.position <= 20, 21 - SessionResult.position),
+                        else_=0,
+                    )
+                ).label("total_points"),
+                func.sum(case((SessionResult.position == 1, 1), else_=0)).label(
+                    "poles"
+                ),
+                func.sum(case((SessionResult.position == 2, 1), else_=0)).label("p2s"),
+                func.sum(case((SessionResult.position == 3, 1), else_=0)).label("p3s"),
+            )
+            .join(SessionResult, Team.id == SessionResult.team_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(["qualifying", "sprint_qualifying"]))
+            .where(SessionResult.position.isnot(None))
+            .group_by(Team.id, Team.name, Team.team_color)
+            .order_by(func.sum(case((SessionResult.position <= 20, 21 - SessionResult.position), else_=0)).desc())
+        )
+
+        constructor_result = await db.execute(constructor_query)
+        constructor_rows = constructor_result.all()
+
+        constructors = [
+            ConstructorQualifyingStanding(
+                position=idx + 1,
+                team_name=row.team_name,
+                team_color=row.team_color,
+                total_qualifying_points=float(row.total_points),
+                poles=int(row.poles),
+                p2s=int(row.p2s),
+                p3s=int(row.p3s),
+            )
+            for idx, row in enumerate(constructor_rows)
+        ]
+
+        return QualifyingStandingsResponse(
+            year=season, drivers=drivers, constructors=constructors
+        )
+
+    @staticmethod
+    async def get_qualifying_standings(
+        db: AsyncSession, season: int
+    ) -> Optional[QualifyingStandingsResponse]:
+        """
+        Get driver and constructor qualifying standings for a season.
+        Calculates qualifying points: P1=20, P2=19, ..., P20=1.
+        """
+        # Check if season exists
+        season_check = await db.execute(
+            select(Session.id).where(Session.year == season).limit(1)
+        )
+        if not season_check.first():
+            return None
+
+        # ====================================================================
+        # Driver Qualifying Standings Query
+        # ====================================================================
+        # Points: 21 - position (clamped to min 0)
+        # Session types: qualifying, sprint_qualifying
+        points_subquery = (
+            select(
+                Driver.id.label("driver_id"),
+                Driver.driver_code,
+                Driver.full_name,
+                Driver.country_code,
+                func.sum(
+                    case(
+                        (SessionResult.position <= 20, 21 - SessionResult.position),
+                        else_=0,
+                    )
+                ).label("total_points"),
+                func.sum(case((SessionResult.position == 1, 1), else_=0)).label(
+                    "poles"
+                ),
+                func.sum(case((SessionResult.position == 2, 1), else_=0)).label("p2s"),
+                func.sum(case((SessionResult.position == 3, 1), else_=0)).label("p3s"),
+            )
+            .join(SessionResult, Driver.id == SessionResult.driver_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(["qualifying", "sprint_qualifying"]))
+            .where(SessionResult.position.isnot(None))
+            .group_by(
+                Driver.id,
+                Driver.driver_code,
+                Driver.full_name,
+                Driver.country_code,
+            )
+            .subquery()
+        )
+
+        # Get latest results for team/headshot (similar to get_season_standings)
+        latest_results = {}
+        distinct_drivers = await db.execute(
+            select(Driver.id)
+            .distinct()
+            .join(SessionResult, Driver.id == SessionResult.driver_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+        )
+
+        for driver_row in distinct_drivers:
+            driver_id = driver_row[0]
+            latest_result_query = (
+                select(SessionResult, Team)
+                .join(Session, SessionResult.session_id == Session.id)
+                .join(Team, SessionResult.team_id == Team.id)
+                .where(SessionResult.driver_id == driver_id)
+                .where(Session.year == season)
+                .order_by(Session.date.desc(), Session.round.desc())
+                .limit(1)
+            )
+            result = await db.execute(latest_result_query)
+            row = result.first()
+            if row:
+                latest_results[driver_id] = row
+
+        # Build driver standings
+        driver_standings_data = []
+        standings_result = await db.execute(
+            select(points_subquery).order_by(points_subquery.c.total_points.desc())
+        )
+
+        for driver_row in standings_result:
+            driver_id = driver_row.driver_id
+            if driver_id in latest_results:
+                session_result, team = latest_results[driver_id]
+                driver_standings_data.append(
+                    {
+                        "driver_code": driver_row.driver_code,
+                        "full_name": driver_row.full_name,
+                        "country_code": driver_row.country_code,
+                        "total_qualifying_points": float(driver_row.total_points),
+                        "team_name": team.name,
+                        "team_color": team.team_color,
+                        "headshot_url": session_result.headshot_url
+                        if session_result.headshot_url != "None"
+                        else None,
+                        "poles": int(driver_row.poles),
+                        "p2s": int(driver_row.p2s),
+                        "p3s": int(driver_row.p3s),
+                    }
+                )
+
+        drivers = [
+            DriverQualifyingStanding(position=idx + 1, **row)
+            for idx, row in enumerate(driver_standings_data)
+        ]
+
+        # ========================================================================
+        # Constructor Qualifying Standings Query
+        # ========================================================================
+        constructor_query = (
+            select(
+                Team.name.label("team_name"),
+                Team.team_color,
+                func.sum(
+                    case(
+                        (SessionResult.position <= 20, 21 - SessionResult.position),
+                        else_=0,
+                    )
+                ).label("total_points"),
+                func.sum(case((SessionResult.position == 1, 1), else_=0)).label(
+                    "poles"
+                ),
+                func.sum(case((SessionResult.position == 2, 1), else_=0)).label("p2s"),
+                func.sum(case((SessionResult.position == 3, 1), else_=0)).label("p3s"),
+            )
+            .join(SessionResult, Team.id == SessionResult.team_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(["qualifying", "sprint_qualifying"]))
+            .where(SessionResult.position.isnot(None))
+            .group_by(Team.id, Team.name, Team.team_color)
+            .order_by(func.sum(case((SessionResult.position <= 20, 21 - SessionResult.position), else_=0)).desc())
+        )
+
+        constructor_result = await db.execute(constructor_query)
+        constructor_rows = constructor_result.all()
+
+        constructors = [
+            ConstructorQualifyingStanding(
+                position=idx + 1,
+                team_name=row.team_name,
+                team_color=row.team_color,
+                total_qualifying_points=float(row.total_points),
+                poles=int(row.poles),
+                p2s=int(row.p2s),
+                p3s=int(row.p3s),
+            )
+            for idx, row in enumerate(constructor_rows)
+        ]
+
+        return QualifyingStandingsResponse(
+            year=season, drivers=drivers, constructors=constructors
+        )
+
+    @staticmethod
     async def get_points_progression(
-        db: AsyncSession, season: int, mode: str
+        db: AsyncSession, season: int, mode: str, points_type: str = "race"
     ) -> Optional[PointsProgressionResponse]:
         """
         Get cumulative points progression throughout a season.
+        points_type can be 'race' or 'qualifying'.
         """
+        if points_type == "qualifying":
+            if mode == "drivers":
+                return await ResultsService._get_driver_qualifying_progression(db, season)
+            else:
+                return await ResultsService._get_constructor_qualifying_progression(db, season)
+        
         if mode == "drivers":
             return await ResultsService._get_driver_progression(db, season)
         else:
             return await ResultsService._get_constructor_progression(db, season)
+
+    @staticmethod
+    async def _get_driver_qualifying_progression(
+        db: AsyncSession, season: int
+    ) -> Optional[PointsProgressionResponse]:
+        # Points: 21 - position (clamped to min 0) for final position sorting
+        qualifying_points = case(
+            (SessionResult.position <= 20, 21 - SessionResult.position),
+            else_=0,
+        )
+
+        query = (
+            select(
+                Driver.id.label("driver_id"),
+                Driver.driver_code,
+                Driver.full_name,
+                Team.name.label("team_name"),
+                Team.team_color,
+                Session.round,
+                Session.session_type,
+                Circuit.name.label("circuit_name"),
+                SessionResult.position,
+                func.sum(qualifying_points)
+                .over(
+                    partition_by=Driver.id,
+                    order_by=(Session.round, Session.session_type.desc()),
+                )
+                .label("cumulative_points"),
+            )
+            .join(SessionResult, Driver.id == SessionResult.driver_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .join(Team, SessionResult.team_id == Team.id)
+            .join(Circuit, Session.circuit_id == Circuit.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(["qualifying", "sprint_qualifying"]))
+            .distinct(
+                Driver.id,
+                Session.round,
+                Session.session_type,
+                Team.team_color,
+                Circuit.name,
+            )
+            .order_by(Driver.id, Session.round, Session.session_type.desc())
+        )
+
+        result = await db.execute(query)
+        rows = result.all()
+
+        if not rows:
+            return None
+
+        # Get all qualifying sessions
+        sessions_query = (
+            select(Session.round, Session.event_name, Session.session_type)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(["qualifying", "sprint_qualifying"]))
+            .order_by(Session.round, Session.session_type.desc())
+        )
+        sessions_result = await db.execute(sessions_query)
+        all_sessions = [
+            (row.round, row.event_name, row.session_type)
+            for row in sessions_result.all()
+        ]
+
+        drivers_dict = {}
+        for row in rows:
+            key = row.driver_id
+            if key not in drivers_dict:
+                drivers_dict[key] = {
+                    "driver_code": row.driver_code or row.full_name,
+                    "full_name": row.full_name,
+                    "team_name": row.team_name,
+                    "team_color": row.team_color,
+                    "sessions_data": {},
+                    "final_score": 0.0,
+                }
+            if row.round not in drivers_dict[key]["sessions_data"]:
+                drivers_dict[key]["sessions_data"][row.round] = {}
+            drivers_dict[key]["sessions_data"][row.round][row.session_type] = {
+                "cumulative_points": float(row.cumulative_points),
+                "position": int(row.position) if row.position else None,
+            }
+            drivers_dict[key]["final_score"] = max(drivers_dict[key]["final_score"], float(row.cumulative_points))
+
+        # Build progression
+        for driver_data in drivers_dict.values():
+            progression = [
+                PointsProgressionRound(
+                    round="0", cumulative_points=0.0, position=None, event_name=None
+                )
+            ]
+
+            for round_num, event_name, session_type in all_sessions:
+                round_data = driver_data["sessions_data"].get(round_num, {}).get(session_type)
+
+                round_id = (
+                    f"{round_num}-sq"
+                    if session_type == "sprint_qualifying"
+                    else str(round_num)
+                )
+
+                progression.append(
+                    PointsProgressionRound(
+                        round=round_id,
+                        cumulative_points=round_data["cumulative_points"] if round_data else 0.0,
+                        position=round_data["position"] if round_data else None,
+                        event_name=event_name,
+                    )
+                )
+
+            driver_data["progression"] = progression
+            del driver_data["sessions_data"]
+            del driver_data["final_score"]
+
+        # Sort
+        sorted_drivers = sorted(
+            drivers_dict.values(),
+            key=lambda d: d["progression"][-1].cumulative_points,
+            reverse=True,
+        )
+        for idx, driver_data in enumerate(sorted_drivers):
+            driver_data["final_position"] = idx + 1
+
+        drivers = [DriverProgressionData(**data) for data in drivers_dict.values()]
+
+        return PointsProgressionResponse(
+            year=season, type="drivers", drivers=drivers, constructors=None
+        )
+
+    @staticmethod
+    async def _get_constructor_qualifying_progression(
+        db: AsyncSession, season: int
+    ) -> Optional[PointsProgressionResponse]:
+        qualifying_points = case(
+            (SessionResult.position <= 20, 21 - SessionResult.position),
+            else_=0,
+        )
+
+        query = (
+            select(
+                Team.name.label("team_name"),
+                Team.team_color,
+                Session.round,
+                Session.session_type,
+                Circuit.name.label("circuit_name"),
+                SessionResult.position,
+                func.sum(qualifying_points)
+                .over(
+                    partition_by=Team.id,
+                    order_by=(Session.round, Session.session_type.desc()),
+                )
+                .label("cumulative_points"),
+            )
+            .join(SessionResult, Team.id == SessionResult.team_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .join(Circuit, Session.circuit_id == Circuit.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(["qualifying", "sprint_qualifying"]))
+            .order_by(Team.id, Session.round, Session.session_type.desc())
+        )
+
+        result = await db.execute(query)
+        rows = result.all()
+
+        if not rows:
+            return None
+
+        # Get all qualifying sessions
+        sessions_query = (
+            select(Session.round, Session.event_name, Session.session_type)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(["qualifying", "sprint_qualifying"]))
+            .order_by(Session.round, Session.session_type.desc())
+        )
+        sessions_result = await db.execute(sessions_query)
+        all_sessions = [
+            (row.round, row.event_name, row.session_type)
+            for row in sessions_result.all()
+        ]
+
+        teams_dict = {}
+        for row in rows:
+            key = row.team_name
+            if key not in teams_dict:
+                teams_dict[key] = {
+                    "team_name": row.team_name,
+                    "team_color": row.team_color,
+                    "sessions_data": {},
+                }
+            if row.round not in teams_dict[key]["sessions_data"]:
+                teams_dict[key]["sessions_data"][row.round] = {}
+            if row.session_type not in teams_dict[key]["sessions_data"][row.round]:
+                teams_dict[key]["sessions_data"][row.round][row.session_type] = {
+                    "cumulative_points": float(row.cumulative_points),
+                    "positions": [],
+                }
+            if row.position:
+                teams_dict[key]["sessions_data"][row.round][row.session_type]["positions"].append(int(row.position))
+
+        for team_data in teams_dict.values():
+            progression = [
+                PointsProgressionRound(
+                    round="0", cumulative_points=0.0, event_name=None
+                )
+            ]
+            all_positions = [[]] # Round 0
+
+            for round_num, event_name, session_type in all_sessions:
+                round_data = team_data["sessions_data"].get(round_num, {}).get(session_type)
+
+                round_id = (
+                    f"{round_num}-sq"
+                    if session_type == "sprint_qualifying"
+                    else str(round_num)
+                )
+
+                progression.append(
+                    PointsProgressionRound(
+                        round=round_id,
+                        cumulative_points=round_data["cumulative_points"] if round_data else 0.0,
+                        event_name=event_name,
+                    )
+                )
+                all_positions.append(round_data["positions"] if round_data else [])
+
+            team_data["progression"] = progression
+            team_data["all_positions"] = all_positions
+            del team_data["sessions_data"]
+
+        sorted_teams = sorted(
+            teams_dict.values(),
+            key=lambda t: t["progression"][-1].cumulative_points,
+            reverse=True,
+        )
+        for idx, team_data in enumerate(sorted_teams):
+            team_data["final_position"] = idx + 1
+
+        constructors = [
+            ConstructorProgressionData(**data) for data in teams_dict.values()
+        ]
+
+        return PointsProgressionResponse(
+            year=season, type="constructors", drivers=None, constructors=constructors
+        )
 
     @staticmethod
     async def _get_driver_progression(

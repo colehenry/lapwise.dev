@@ -162,6 +162,58 @@ class StandingsResponse(BaseModel):
 
 
 # ============================================================================
+# Qualifying Standings Schemas (for /api/results/{season}/qualifying-standings)
+# ============================================================================
+
+
+class DriverQualifyingStanding(BaseModel):
+    """Individual driver's qualifying championship standing for a season"""
+
+    position: int
+    driver_code: str
+    full_name: str
+    country_code: Optional[str] = None
+    team_name: str
+    team_color: Optional[str] = None
+    total_qualifying_points: float
+    headshot_url: Optional[str] = None
+    poles: int
+    p2s: int
+    p3s: int
+
+    class Config:
+        from_attributes = True
+
+
+class ConstructorQualifyingStanding(BaseModel):
+    """Individual constructor's qualifying championship standing for a season"""
+
+    position: int
+    team_name: str
+    team_color: Optional[str] = None
+    total_qualifying_points: float
+    poles: int
+    p2s: int
+    p3s: int
+
+    class Config:
+        from_attributes = True
+
+
+class QualifyingStandingsResponse(BaseModel):
+    """
+    Complete qualifying standings response for GET /api/results/{season}/qualifying-standings.
+    """
+
+    year: int
+    drivers: List[DriverQualifyingStanding]
+    constructors: List[ConstructorQualifyingStanding]
+
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
 # Season Rounds Schemas (for /api/results/{season})
 # ============================================================================
 
@@ -221,10 +273,11 @@ class SeasonRoundsResponse(BaseModel):
 
 
 class PointsProgressionRound(BaseModel):
-    """Single round's cumulative points total"""
+    """Single round's cumulative points total or session position"""
 
     round: str  # Round identifier: "21" for race, "21-sprint" for sprint
     cumulative_points: float
+    position: Optional[int] = None  # Non-cumulative position for qualifying
     event_name: Optional[str] = None  # Grand Prix name (e.g., "Chinese Grand Prix")
 
     class Config:
@@ -236,6 +289,7 @@ class DriverProgressionData(BaseModel):
 
     driver_code: str
     full_name: str
+    team_name: Optional[str] = None
     team_color: Optional[str] = None
     final_position: int  # Final championship position for sorting
     progression: List[PointsProgressionRound]
@@ -251,6 +305,8 @@ class ConstructorProgressionData(BaseModel):
     team_color: Optional[str] = None
     final_position: int  # Final championship position for sorting
     progression: List[PointsProgressionRound]
+    # For qualifying mode, we might want to return all positions for the team
+    all_positions: Optional[List[List[int]]] = None
 
     class Config:
         from_attributes = True
