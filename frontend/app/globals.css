@@ -63,10 +63,8 @@
   --overlay: rgba(0, 0, 0, 0.7);
 
   /* Typography */
-  --font-sans:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
-    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-  --font-mono: "Monaco", "Courier New", monospace;
+  --font-sans: var(--font-outfit, "Segoe UI", "Helvetica Neue", sans-serif);
+  --font-mono: var(--font-jetbrains, "Monaco", "Courier New", monospace);
 
   /* Font Sizes */
   --text-xs: 0.75rem;
@@ -330,4 +328,13 @@ body {
 
 .animate-scaleIn {
   animation: scaleIn 0.2s ease-out;
+}
+
+/* Shadow Utilities */
+.shadow-purple {
+  box-shadow: var(--shadow-purple);
+}
+
+.shadow-red {
+  box-shadow: var(--shadow-red);
 }

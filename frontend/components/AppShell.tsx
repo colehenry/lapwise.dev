@@ -1,0 +1,36 @@
+"use client";
+
+import type { ReactNode } from "react";
+import Footer from "@/components/Footer";
+import Navigation from "@/components/Navigation";
+import QueryProvider from "@/components/QueryProvider";
+import ScrollbarHandler from "@/components/ScrollbarHandler";
+import { SidebarProvider, useSidebar } from "@/components/SidebarContext";
+
+function ShellContent({ children }: { children: ReactNode }) {
+  const { isOpen } = useSidebar();
+
+  return (
+    <>
+      <ScrollbarHandler />
+      <Navigation />
+      <div
+        className="transition-[margin] duration-200 ease-out md:ml-0"
+        style={{ marginLeft: isOpen ? "18rem" : "0" }}
+      >
+        <main className="min-h-screen">{children}</main>
+        <Footer />
+      </div>
+    </>
+  );
+}
+
+export default function AppShell({ children }: { children: ReactNode }) {
+  return (
+    <QueryProvider>
+      <SidebarProvider>
+        <ShellContent>{children}</ShellContent>
+      </SidebarProvider>
+    </QueryProvider>
+  );
+}
