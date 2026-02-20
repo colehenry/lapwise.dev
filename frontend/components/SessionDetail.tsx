@@ -62,6 +62,7 @@ interface SessionDetailProps {
   sessionType?: "race" | "qualifying";
   onSessionTypeChange?: (mode: "race" | "qualifying") => void;
   onBack: () => void;
+  hideHeader?: boolean;
 }
 
 // Helper to format time in seconds to "MM:SS.mmm" or "+SS.mmm"
@@ -87,6 +88,7 @@ export default function SessionDetail({
   sessionType = "race",
   onSessionTypeChange,
   onBack,
+  hideHeader = false,
 }: SessionDetailProps) {
   const [expandedResults, setExpandedResults] = useState<boolean>(false);
   const isQualifying = sessionType === "qualifying";
@@ -96,60 +98,62 @@ export default function SessionDetail({
   const { session, results } = data;
 
   return (
-    <main className="min-h-screen bg-bg-secondary">
+    <main className={hideHeader ? "" : "min-h-screen bg-bg-secondary"}>
       {/* ── Sticky Header ── */}
-      <div className="sticky top-0 z-40 bg-bg-secondary border-b border-border-primary h-16 flex items-center px-6">
-        <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={onBack}
-              className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center gap-2"
-            >
-              <span>←</span>
-              <span className="hidden sm:inline">BACK TO {season}</span>
-            </button>
-            <div className="flex flex-col">
-              <span className="text-text-primary font-mono text-sm font-bold leading-none">
-                ROUND {String(session.round).padStart(2, "0")}
-              </span>
-              <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
-                {session.event_name.replace("Grand Prix", "GP")}
-              </span>
+      {!hideHeader && (
+        <div className="sticky top-0 z-40 bg-bg-secondary border-b border-border-primary h-16 flex items-center px-6">
+          <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={onBack}
+                className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center gap-2"
+              >
+                <span>←</span>
+                <span className="hidden sm:inline">BACK TO {season}</span>
+              </button>
+              <div className="flex flex-col">
+                <span className="text-text-primary font-mono text-sm font-bold leading-none">
+                  ROUND {String(session.round).padStart(2, "0")}
+                </span>
+                <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
+                  {session.event_name.replace("Grand Prix", "GP")}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {/* Session Type Toggle */}
+              {onSessionTypeChange && qualifyingData && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => onSessionTypeChange("race")}
+                    className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
+                      sessionType === "race"
+                        ? "bg-purple-500/20 border border-purple-500 text-purple-300"
+                        : "border border-transparent text-text-muted hover:text-text-secondary"
+                    }`}
+                  >
+                    {isSprint ? "Sprint" : "Race"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSessionTypeChange("qualifying")}
+                    className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
+                      sessionType === "qualifying"
+                        ? "bg-purple-500/20 border border-purple-500 text-purple-300"
+                        : "border border-transparent text-text-muted hover:text-text-secondary"
+                    }`}
+                  >
+                    Qualifying
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-
-          <div className="flex items-center gap-4">
-            {/* Session Type Toggle */}
-            {onSessionTypeChange && qualifyingData && (
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => onSessionTypeChange("race")}
-                  className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
-                    sessionType === "race"
-                      ? "bg-purple-500/20 border border-purple-500 text-purple-300"
-                      : "border border-transparent text-text-muted hover:text-text-secondary"
-                  }`}
-                >
-                  {isSprint ? "Sprint" : "Race"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onSessionTypeChange("qualifying")}
-                  className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
-                    sessionType === "qualifying"
-                      ? "bg-purple-500/20 border border-purple-500 text-purple-300"
-                      : "border border-transparent text-text-muted hover:text-text-secondary"
-                  }`}
-                >
-                  Qualifying
-                </button>
-              </div>
-            )}
-          </div>
         </div>
-      </div>
+      )}
 
       <div className="max-w-7xl mx-auto p-6">
         {/* ── Session Header Card ── */}
