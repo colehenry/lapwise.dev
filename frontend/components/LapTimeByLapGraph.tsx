@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { CHART_COLORS, CustomDot } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
 
 // Type definitions
@@ -18,6 +19,7 @@ type LapData = {
   lap_time_seconds: number | null;
   compound: string | null;
   tyre_life: number | null;
+  stint: number | null;
   track_status: string | null;
 };
 
@@ -62,7 +64,14 @@ const CustomYAxisTick = (props: any) => {
   const { x, y, payload } = props;
   return (
     <g transform={`translate(${x},${y})`}>
-      <text x={0} y={0} dx={-5} textAnchor="end" fill="#999" fontSize={11}>
+      <text
+        x={0}
+        y={0}
+        dx={-5}
+        textAnchor="end"
+        fill={CHART_COLORS.textTertiary}
+        fontSize={11}
+      >
         {formatLapTime(payload.value)}
       </text>
     </g>
@@ -74,25 +83,17 @@ const CustomXAxisTick = (props: any) => {
   const { x, y, payload } = props;
   return (
     <g transform={`translate(${x},${y})`}>
-      <text x={0} y={0} dy={16} textAnchor="middle" fill="#999" fontSize={12}>
+      <text
+        x={0}
+        y={0}
+        dy={16}
+        textAnchor="middle"
+        fill={CHART_COLORS.textTertiary}
+        fontSize={12}
+      >
         {payload.value}
       </text>
     </g>
-  );
-};
-
-// Custom Dot Component
-const CustomDot = (props: any) => {
-  const { cx, cy, stroke } = props;
-  return (
-    <circle
-      cx={cx}
-      cy={cy}
-      r={3}
-      fill={stroke}
-      stroke={stroke}
-      strokeWidth={1}
-    />
   );
 };
 
@@ -101,8 +102,8 @@ const CustomTooltip = ({ active, payload, label, viewMode }: any) => {
   if (!active || !payload || !payload.length) return null;
 
   return (
-    <div className="bg-[#1e1e28] border border-[#2a2a35] rounded-lg p-3 shadow-xl">
-      <p className="font-bold text-white mb-2">Lap {label}</p>
+    <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
+      <p className="font-bold text-text-primary mb-2">Lap {label}</p>
       {payload.map((entry: any) => {
         const lapData = entry.payload[`_data_${entry.dataKey}`];
 
@@ -113,14 +114,16 @@ const CustomTooltip = ({ active, payload, label, viewMode }: any) => {
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: entry.color }}
               />
-              <span className="font-bold text-white text-sm">{entry.name}</span>
+              <span className="font-bold text-text-primary text-sm">
+                {entry.name}
+              </span>
             </div>
-            <div className="ml-5 text-xs text-gray-300 space-y-0.5">
+            <div className="ml-5 text-xs text-text-secondary space-y-0.5">
               <div>
-                <span className="text-gray-400">
+                <span className="text-text-muted">
                   {viewMode === "gapToLeader" ? "Gap:" : "Time:"}
                 </span>{" "}
-                <span className="font-mono text-white">
+                <span className="font-mono text-text-primary">
                   {viewMode === "gapToLeader" && entry.value === 0
                     ? "Leader"
                     : viewMode === "gapToLeader"
@@ -130,7 +133,7 @@ const CustomTooltip = ({ active, payload, label, viewMode }: any) => {
               </div>
               {lapData?.compound && (
                 <div>
-                  <span className="text-gray-400">Tyre:</span>{" "}
+                  <span className="text-text-muted">Tyre:</span>{" "}
                   <span
                     className={`font-semibold ${
                       lapData.compound === "SOFT"
@@ -151,8 +154,8 @@ const CustomTooltip = ({ active, payload, label, viewMode }: any) => {
               {lapData?.tyre_life !== null &&
                 lapData?.tyre_life !== undefined && (
                   <div>
-                    <span className="text-gray-400">Tyre age:</span>{" "}
-                    <span className="text-white">
+                    <span className="text-text-muted">Tyre age:</span>{" "}
+                    <span className="text-text-primary">
                       {lapData.tyre_life}{" "}
                       {lapData.tyre_life === 1 ? "lap" : "laps"}
                     </span>
@@ -160,14 +163,14 @@ const CustomTooltip = ({ active, payload, label, viewMode }: any) => {
                 )}
               {lapData?.track_status && lapData.track_status !== "1" && (
                 <div>
-                  <span className="text-gray-400">Track status:</span>{" "}
+                  <span className="text-text-muted">Track status:</span>{" "}
                   <span
                     className={`font-semibold ${
                       lapData.track_status.includes("2")
                         ? "text-yellow-400"
                         : lapData.track_status.includes("4")
                           ? "text-green-400"
-                          : "text-gray-300"
+                          : "text-text-secondary"
                     }`}
                   >
                     {lapData.track_status.includes("2")
@@ -392,7 +395,7 @@ export default function LapTimeByLapGraph({
 
   // Darken color for teammates (reduce brightness by 30%)
   const darkenColor = (hex: string | null, amount = 0.3): string => {
-    if (!hex) return "#999999";
+    if (!hex) return CHART_COLORS.textTertiary;
     const color = hex.startsWith("#") ? hex : `#${hex}`;
     const num = Number.parseInt(color.slice(1), 16);
     const r = Math.floor(((num >> 16) & 0xff) * (1 - amount));
@@ -422,21 +425,22 @@ export default function LapTimeByLapGraph({
       }
     }
 
-    return driver.team_color ? `#${driver.team_color}` : "#999999";
+    return driver.team_color
+      ? `#${driver.team_color}`
+      : CHART_COLORS.textTertiary;
   };
 
   if (loading) {
     return (
-      <div
-        className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6"
-        style={{ minHeight: "540px" }}
-      >
+      <div style={{ minHeight: "540px" }}>
         <div className="h-8 mb-4 flex items-center">
-          <div className="h-6 bg-[#2a2a35] rounded w-64 animate-pulse" />
+          <div className="h-6 bg-bg-elevated rounded w-96 animate-pulse" />
         </div>
         <div className="relative" style={{ height: "400px" }}>
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-center text-gray-400">Loading lap times...</p>
+            <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
+              Loading lap times...
+            </p>
           </div>
         </div>
       </div>
@@ -447,23 +451,22 @@ export default function LapTimeByLapGraph({
     // Show specific message for pre-2018 seasons
     const isPre2018 = season < 2018;
     return (
-      <div
-        className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6"
-        style={{ minHeight: "540px" }}
-      >
+      <div style={{ minHeight: "540px" }}>
         <div className="h-8 mb-4 flex items-center">
-          <h3 className="text-lg font-bold text-white">Lap Time Analysis</h3>
+          <h3 className="text-sm font-bold text-text-secondary font-mono">
+            Lap Time Analysis
+          </h3>
         </div>
         <div className="relative" style={{ height: "400px" }}>
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center max-w-md">
-              <p className="text-gray-400 mb-2">
+              <p className="text-text-muted mb-2">
                 {isPre2018
                   ? "Lap timing data is not available for races before 2018."
                   : "Lap time data not available for this session."}
               </p>
               {isPre2018 && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-text-muted">
                   Historical telemetry data (lap times, weather, track status)
                   is only available from the 2018 season onwards.
                 </p>
@@ -513,12 +516,9 @@ export default function LapTimeByLapGraph({
   };
 
   return (
-    <div
-      className="bg-[#1e1e28] rounded-lg border border-[#2a2a35] shadow-lg p-6"
-      style={{ minHeight: "540px" }}
-    >
+    <div style={{ minHeight: "540px" }}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-white">
+        <h3 className="text-sm font-bold text-text-secondary font-mono">
           {data.event_name.replace("Grand Prix", "GP")} -{" "}
           {viewMode === "lapTime" ? "Lap Times" : "Gap to Leader"}
         </h3>
@@ -526,14 +526,14 @@ export default function LapTimeByLapGraph({
         {/* Filter Buttons */}
         <div className="flex gap-2 relative" ref={dropdownRef}>
           {/* View Mode Toggle */}
-          <div className="flex gap-1 bg-[#15151e] border border-[#2a2a35] rounded p-1">
+          <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => setViewMode("lapTime")}
-              className={`px-3 py-1 rounded text-sm font-semibold transition-all ${
+              className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                 viewMode === "lapTime"
-                  ? "bg-[#a020f0] text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-purple-500/20 border border-purple-500 text-purple-300"
+                  : "border border-transparent text-text-muted hover:text-text-secondary"
               }`}
             >
               Lap Time
@@ -541,10 +541,10 @@ export default function LapTimeByLapGraph({
             <button
               type="button"
               onClick={() => setViewMode("gapToLeader")}
-              className={`px-3 py-1 rounded text-sm font-semibold transition-all ${
+              className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                 viewMode === "gapToLeader"
-                  ? "bg-[#a020f0] text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-purple-500/20 border border-purple-500 text-purple-300"
+                  : "border border-transparent text-text-muted hover:text-text-secondary"
               }`}
             >
               Gap to Leader
@@ -555,32 +555,32 @@ export default function LapTimeByLapGraph({
           <button
             type="button"
             onClick={() => setShowDropdown(!showDropdown)}
-            className="px-3 py-1.5 bg-[#15151e] border border-[#2a2a35] rounded text-sm font-semibold text-white hover:border-[#a020f0] transition-all"
+            className="px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-border-secondary text-text-secondary hover:border-purple-500 hover:text-purple-300 transition-colors duration-150"
           >
-            Select Drivers ({selectedDrivers.length})
+            Select ({selectedDrivers.length})
           </button>
 
           {/* Dropdown Menu */}
           {showDropdown && (
-            <div className="absolute right-0 top-full mt-1 bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-xl z-10 min-w-[250px] max-h-[300px] overflow-y-auto">
+            <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-10 min-w-[250px] max-h-[300px] overflow-y-auto">
               {drivers.map((driver) => {
                 const isSelected = selectedDrivers.includes(driver.driver_code);
                 const teamColor = driver.team_color
                   ? `#${driver.team_color}`
-                  : "#999";
+                  : CHART_COLORS.textTertiary;
 
                 return (
                   <label
                     key={driver.driver_code}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-[#2a2a35] cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-bg-elevated cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleDriver(driver.driver_code)}
-                      className="w-4 h-4 accent-[#a020f0]"
+                      className="w-4 h-4 accent-purple-500"
                     />
-                    <span className="text-sm text-gray-500 w-5">
+                    <span className="text-sm text-text-muted w-5 font-mono">
                       {driver.final_position || "-"}
                     </span>
                     <span
@@ -633,10 +633,13 @@ export default function LapTimeByLapGraph({
                       );
                     })}
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a35" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={CHART_COLORS.borderPrimary}
+                />
                 <XAxis
                   dataKey="lap_number"
-                  stroke="#999"
+                  stroke={CHART_COLORS.textTertiary}
                   label={{
                     value: "Lap Number",
                     position: "insideBottom",
@@ -646,7 +649,7 @@ export default function LapTimeByLapGraph({
                   tick={<CustomXAxisTick />}
                 />
                 <YAxis
-                  stroke="#999"
+                  stroke={CHART_COLORS.textTertiary}
                   label={{
                     value:
                       viewMode === "lapTime" ? "Lap Time" : "Gap to Leader",
@@ -665,16 +668,17 @@ export default function LapTimeByLapGraph({
                     selectedDrivers.includes(driver.driver_code),
                   )
                   .map((driver) => {
+                    const color = getDriverColor(driver);
                     return (
                       <Line
                         key={driver.driver_code}
                         type="linear"
                         dataKey={driver.driver_code}
                         name={driver.full_name}
-                        stroke={getDriverColor(driver)}
+                        stroke={color}
                         strokeWidth={2}
                         dot={<CustomDot />}
-                        activeDot={{ r: 6 }}
+                        activeDot={{ r: 6, fill: color, stroke: color }}
                         filter={`url(#glow-${driver.driver_code})`}
                         isAnimationActive={true}
                         animationDuration={1500}
@@ -688,7 +692,7 @@ export default function LapTimeByLapGraph({
             </ResponsiveContainer>
 
             {/* Custom Legend */}
-            <div className="absolute bottom-16 left-35 bg-[#1e1e28]/90 border border-[#2a2a35] rounded-lg p-3 backdrop-blur-sm pointer-events-none">
+            <div className="absolute top-8 left-25 bg-bg-primary/90 border border-border-primary rounded-sm p-3 backdrop-blur-sm pointer-events-none">
               <div className="flex flex-col gap-1">
                 {drivers
                   .filter((driver) =>
@@ -705,7 +709,7 @@ export default function LapTimeByLapGraph({
                           className="w-3 h-3 rounded-full"
                           style={{ backgroundColor: color }}
                         />
-                        <span className="text-sm font-bold text-white">
+                        <span className="text-xs font-bold text-text-primary font-mono">
                           {driver.full_name}
                         </span>
                       </div>
@@ -716,7 +720,7 @@ export default function LapTimeByLapGraph({
           </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-center text-gray-400">
+            <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
               No lap time data available. Select at least one driver to view lap
               times.
             </p>

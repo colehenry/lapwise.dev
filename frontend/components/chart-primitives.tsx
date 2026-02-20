@@ -166,12 +166,18 @@ interface ChartDotProps {
   cy?: number;
   payload?: { team_color?: string };
   stroke?: string;
+  fill?: string;
 }
 
 export function CustomDot({ cx, cy, payload, stroke }: ChartDotProps) {
-  const color = payload?.team_color
-    ? `#${payload.team_color}`
-    : (stroke ?? CHART_COLORS.purple);
+  // Recharts passes fill="#fff" by default for Line dots — ignore it.
+  // Use stroke (= Line's stroke prop = team color), then payload.team_color as fallback.
+  const color =
+    stroke && stroke !== "none"
+      ? stroke
+      : payload?.team_color
+        ? `#${payload.team_color}`
+        : CHART_COLORS.purple;
   return (
     <circle cx={cx} cy={cy} r={4} fill={color} stroke={color} strokeWidth={1} />
   );

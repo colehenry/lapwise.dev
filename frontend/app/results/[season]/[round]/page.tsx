@@ -146,9 +146,11 @@ export default function RoundDetailPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#15151e] p-8">
+      <main className="min-h-screen bg-bg-secondary p-8">
         <div className="max-w-7xl mx-auto">
-          <p className="text-center text-gray-400">Loading race details...</p>
+          <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
+            Loading race details...
+          </p>
         </div>
       </main>
     );
@@ -156,9 +158,9 @@ export default function RoundDetailPage() {
 
   if (!data) {
     return (
-      <main className="min-h-screen bg-[#15151e] p-8">
+      <main className="min-h-screen bg-bg-secondary p-8">
         <div className="max-w-7xl mx-auto">
-          <p className="text-center text-red-400">
+          <p className="text-center text-red-400 font-mono tracking-widest text-xs uppercase">
             Failed to load race details.
           </p>
         </div>
