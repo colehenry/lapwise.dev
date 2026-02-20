@@ -1174,6 +1174,7 @@ class ResultsService:
                 Lap.lap_time_seconds,
                 Lap.compound,
                 Lap.tyre_life,
+                Lap.stint,
                 Lap.track_status,
                 Driver.driver_code,
                 Driver.full_name,
@@ -1220,6 +1221,7 @@ class ResultsService:
                     ),
                     compound=row.compound,
                     tyre_life=row.tyre_life,
+                    stint=row.stint,
                     track_status=row.track_status,
                 )
             )
@@ -1448,6 +1450,7 @@ class ResultsService:
                 Lap.lap_time_seconds,
                 Lap.compound,
                 Lap.tyre_life,
+                Lap.stint,
                 Lap.track_status,
                 Driver.driver_code,
                 Driver.full_name,
@@ -1495,6 +1498,7 @@ class ResultsService:
                     ),
                     compound=row.compound,
                     tyre_life=row.tyre_life,
+                    stint=row.stint,
                     track_status=row.track_status,
                 )
             )

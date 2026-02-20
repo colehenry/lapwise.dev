@@ -15,8 +15,9 @@ function ShellContent({ children }: { children: ReactNode }) {
       <ScrollbarHandler />
       <Navigation />
       <div
-        className="transition-[margin] duration-200 ease-out md:ml-0"
-        style={{ marginLeft: isOpen ? "18rem" : "0" }}
+        data-shell-content
+        className="transition-[margin] duration-200 ease-out max-md:!ml-0"
+        style={{ marginLeft: isOpen ? "18rem" : "4rem" }}
       >
         <main className="min-h-screen">{children}</main>
         <Footer />

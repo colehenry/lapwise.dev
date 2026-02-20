@@ -78,7 +78,7 @@ const CustomXAxisTick = (props: any) => {
 };
 
 // Custom Tooltip Component
-const CustomTooltip = ({ active, payload, label, mode, pointsType }: any) => {
+const CustomTooltip = ({ active, payload, label, pointsType }: any) => {
   if (!active || !payload || !payload.length) return null;
 
   // Skip tooltip for round 0
@@ -88,18 +88,18 @@ const CustomTooltip = ({ active, payload, label, mode, pointsType }: any) => {
   const eventName = (
     payload[0]?.payload?.event_name || `Round ${label}`
   ).replace("Grand Prix", "GP");
-  
+
   const isSprint = label?.endsWith("-sprint");
   const isSprintQualy = label?.endsWith("-sq");
-  
+
   let sessionLabel = "";
   if (isSprint) sessionLabel = ": Sprint";
   if (isSprintQualy) sessionLabel = ": SQ";
-  
+
   const displayName = `${eventName}${sessionLabel}`;
 
-  // Filter out any entries with value 21 (our dummy "no position" value)
-  const filteredPayload = payload.filter((entry: any) => entry.value !== 21);
+  // Filter out null entries
+  const filteredPayload = payload.filter((entry: any) => entry.value != null);
   if (filteredPayload.length === 0) return null;
 
   return (
@@ -108,7 +108,11 @@ const CustomTooltip = ({ active, payload, label, mode, pointsType }: any) => {
       {filteredPayload.map((entry: any) => {
         const value = entry.value;
         const isQualy = pointsType === "qualifying";
-        const labelStr = isQualy ? `P${value}` : `${value.toFixed(0)} pts`;
+        const labelStr = isQualy
+          ? value === 21
+            ? "DNF"
+            : `P${value}`
+          : `${value.toFixed(0)} pts`;
 
         return (
           <div key={entry.dataKey} className="flex items-center gap-2 mb-1">
@@ -156,7 +160,9 @@ export default function PointsByRoundGraph({
     queryKey: ["points-progression", season, mode, pointsType],
     queryFn: async () => {
       const response = await fetch(
-        apiUrl(`/api/results/${season}/points-progression?mode=${mode}&points_type=${pointsType}`),
+        apiUrl(
+          `/api/results/${season}/points-progression?mode=${mode}&points_type=${pointsType}`,
+        ),
         { headers: apiHeaders() },
       );
       return response.json() as Promise<ProgressionResponse>;
@@ -167,10 +173,14 @@ export default function PointsByRoundGraph({
   useEffect(() => {
     if (!data) return;
     if (mode === "drivers" && data.drivers) {
-      const sorted = [...data.drivers].sort((a, b) => a.final_position - b.final_position);
+      const sorted = [...data.drivers].sort(
+        (a, b) => a.final_position - b.final_position,
+      );
       setSelectedEntities(sorted.slice(0, 3).map((d) => d.driver_code));
     } else if (mode === "constructors" && data.constructors) {
-      const sorted = [...data.constructors].sort((a, b) => a.final_position - b.final_position);
+      const sorted = [...data.constructors].sort(
+        (a, b) => a.final_position - b.final_position,
+      );
       setSelectedEntities(sorted.slice(0, 3).map((c) => c.team_name));
     }
   }, [data, mode]);
@@ -180,9 +190,11 @@ export default function PointsByRoundGraph({
     if (!data) return [];
 
     const isQualy = pointsType === "qualifying";
-    const entities = mode === "drivers" ? data.drivers || [] : data.constructors || [];
+    const entities =
+      mode === "drivers" ? data.drivers || [] : data.constructors || [];
     const filteredEntities = entities.filter((entity) => {
-      const key = mode === "drivers"
+      const key =
+        mode === "drivers"
           ? (entity as DriverProgression).driver_code
           : (entity as ConstructorProgression).team_name;
       return selectedEntities.includes(key);
@@ -206,20 +218,30 @@ export default function PointsByRoundGraph({
       for (const entity of filteredEntities) {
         if (mode === "drivers") {
           const driver = entity as DriverProgression;
-          const matchingPoint = driver.progression.find(p => p.round === progressionPoint.round);
-          // If qualifying, use position if available, otherwise null (don't use 0 or points)
-          dataPoint[driver.driver_code] = isQualy ? (matchingPoint?.position ?? null) : matchingPoint?.cumulative_points;
+          const matchingPoint = driver.progression.find(
+            (p) => p.round === progressionPoint.round,
+          );
+          if (isQualy) {
+            const pos = matchingPoint?.position;
+            // Map null/0 positions to 21 (DNF) so they appear at the bottom of the chart
+            dataPoint[driver.driver_code] = pos && pos > 0 ? pos : 21;
+          } else {
+            dataPoint[driver.driver_code] = matchingPoint?.cumulative_points;
+          }
         } else {
           const team = entity as ConstructorProgression;
           if (isQualy && team.all_positions) {
             const roundPositions = team.all_positions[i] || [];
-            // Handle up to 3 drivers per team
+            // Handle up to 3 drivers per team, filter out 0/null positions
             for (let dIdx = 0; dIdx < 3; dIdx++) {
               const pos = roundPositions[dIdx];
-              dataPoint[`${team.team_name}-${dIdx}`] = pos ?? null;
+              dataPoint[`${team.team_name}-${dIdx}`] =
+                pos && pos > 0 ? pos : null;
             }
           } else {
-            const matchingPoint = team.progression.find(p => p.round === progressionPoint.round);
+            const matchingPoint = team.progression.find(
+              (p) => p.round === progressionPoint.round,
+            );
             dataPoint[team.team_name] = matchingPoint?.cumulative_points;
           }
         }
@@ -274,7 +296,9 @@ export default function PointsByRoundGraph({
     );
 
     if (sameTeamDrivers.length > 1) {
-      const sortedTeammates = [...sameTeamDrivers].sort((a, b) => a.final_position - b.final_position);
+      const sortedTeammates = [...sameTeamDrivers].sort(
+        (a, b) => a.final_position - b.final_position,
+      );
       const index = sortedTeammates.findIndex(
         (d) => d.driver_code === driverEntity.driver_code,
       );
@@ -290,16 +314,13 @@ export default function PointsByRoundGraph({
 
   if (loading) {
     return (
-      <div
-        className="bg-bg-tertiary rounded-lg border border-border-primary shadow-lg p-6"
-        style={{ minHeight: "540px" }}
-      >
+      <div style={{ minHeight: "540px" }}>
         <div className="h-8 mb-4 flex items-center">
           <div className="h-6 bg-bg-elevated rounded w-96 animate-pulse" />
         </div>
         <div className="relative" style={{ height: "400px" }}>
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-center text-gray-400">
+            <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
               Loading progression data...
             </p>
           </div>
@@ -319,7 +340,11 @@ export default function PointsByRoundGraph({
     let maxPoints = 0;
     for (const dataPoint of chartData) {
       for (const key in dataPoint) {
-        if (key !== "round" && key !== "event_name" && !key.startsWith("_prev_")) {
+        if (
+          key !== "round" &&
+          key !== "event_name" &&
+          !key.startsWith("_prev_")
+        ) {
           const value = dataPoint[key];
           if (typeof value === "number" && value > maxPoints) {
             maxPoints = value;
@@ -332,27 +357,24 @@ export default function PointsByRoundGraph({
   };
 
   return (
-    <div
-      className="bg-bg-tertiary rounded-lg border border-border-primary shadow-lg p-6"
-      style={{ minHeight: "540px" }}
-    >
+    <div style={{ minHeight: "540px" }}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-white">
-          {season} {mode === "drivers" ? "Drivers'" : "Constructors'"} 
+        <h3 className="text-sm font-bold text-text-secondary font-mono">
+          {season} {mode === "drivers" ? "Drivers'" : "Constructors'"}
           {isQualy ? " Qualifying Positions" : " Total Points"} by Round
         </h3>
 
         {/* Filter Buttons */}
         <div className="flex gap-2 relative" ref={dropdownRef}>
           {/* Mode Selector */}
-          <div className="flex gap-1 bg-bg-secondary border border-border-primary rounded p-1">
+          <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => setMode("drivers")}
-              className={`px-3 py-1 rounded text-sm font-semibold transition-all ${
+              className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                 mode === "drivers"
-                  ? "bg-purple-500 text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-purple-500/20 border border-purple-500 text-purple-300"
+                  : "border border-transparent text-text-muted hover:text-text-secondary"
               }`}
             >
               Drivers
@@ -360,10 +382,10 @@ export default function PointsByRoundGraph({
             <button
               type="button"
               onClick={() => setMode("constructors")}
-              className={`px-3 py-1 rounded text-sm font-semibold transition-all ${
+              className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                 mode === "constructors"
-                  ? "bg-purple-500 text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-purple-500/20 border border-purple-500 text-purple-300"
+                  : "border border-transparent text-text-muted hover:text-text-secondary"
               }`}
             >
               Constructors
@@ -374,14 +396,14 @@ export default function PointsByRoundGraph({
           <button
             type="button"
             onClick={() => setShowDropdown(!showDropdown)}
-            className="px-3 py-1.5 bg-bg-secondary border border-border-primary rounded text-sm font-semibold text-white hover:border-purple-500 transition-all"
+            className="px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-border-secondary text-text-secondary hover:border-purple-500 hover:text-purple-300 transition-colors duration-150"
           >
             Select ({selectedEntities.length})
           </button>
 
           {/* Dropdown Menu */}
           {showDropdown && (
-            <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-lg shadow-xl z-10 min-w-[250px] max-h-[300px] overflow-y-auto">
+            <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-10 min-w-[250px] max-h-[300px] overflow-y-auto">
               {entities.map((entity) => {
                 const key =
                   mode === "drivers"
@@ -407,7 +429,7 @@ export default function PointsByRoundGraph({
                       onChange={() => toggleEntity(key)}
                       className="w-4 h-4 accent-purple-500"
                     />
-                    <span className="text-sm text-gray-500 w-5">
+                    <span className="text-sm text-text-muted w-5 font-mono">
                       {entity.final_position}
                     </span>
                     <span
@@ -436,13 +458,15 @@ export default function PointsByRoundGraph({
                 <defs>
                   {entities
                     .filter((entity) => {
-                      const key = mode === "drivers"
+                      const key =
+                        mode === "drivers"
                           ? (entity as DriverProgression).driver_code
                           : (entity as ConstructorProgression).team_name;
                       return selectedEntities.includes(key);
                     })
                     .map((entity) => {
-                      const key = mode === "drivers"
+                      const key =
+                        mode === "drivers"
                           ? (entity as DriverProgression).driver_code
                           : (entity as ConstructorProgression).team_name;
                       return (
@@ -492,23 +516,35 @@ export default function PointsByRoundGraph({
                     dx: -30,
                     style: { fontWeight: "bold", fill: "white" },
                   }}
-                  domain={isQualy ? [1, 20] : [0, getYAxisMax()]}
-                  ticks={isQualy ? [1, 5, 10, 15, 20] : undefined}
+                  domain={isQualy ? [1, 21] : [0, getYAxisMax()]}
+                  ticks={isQualy ? [1, 5, 10, 15, 20, 21] : undefined}
+                  tickFormatter={
+                    isQualy
+                      ? (value: number) =>
+                          value === 21 ? "DNF" : String(value)
+                      : undefined
+                  }
                 />
-                <Tooltip content={<CustomTooltip mode={mode} pointsType={pointsType} />} />
+                <Tooltip
+                  content={
+                    <CustomTooltip mode={mode} pointsType={pointsType} />
+                  }
+                />
                 {entities
                   .filter((entity) => {
-                    const key = mode === "drivers"
+                    const key =
+                      mode === "drivers"
                         ? (entity as DriverProgression).driver_code
                         : (entity as ConstructorProgression).team_name;
                     return selectedEntities.includes(key);
                   })
                   .flatMap((entity) => {
                     const color = getEntityColor(entity);
-                    const name = mode === "drivers"
+                    const name =
+                      mode === "drivers"
                         ? (entity as DriverProgression).full_name
                         : (entity as ConstructorProgression).team_name;
-                    
+
                     if (mode === "drivers") {
                       const driver = entity as DriverProgression;
                       return [
@@ -520,25 +556,27 @@ export default function PointsByRoundGraph({
                           stroke={color}
                           strokeWidth={2}
                           dot={<CustomDot />}
-                          activeDot={{ r: 6 }}
+                          activeDot={{ r: 6, fill: color, stroke: color }}
                           filter={`url(#glow-${driver.driver_code})`}
                           isAnimationActive={true}
                           connectNulls={false}
-                        />
+                        />,
                       ];
                     } else {
                       const team = entity as ConstructorProgression;
                       if (isQualy) {
                         // Render dots for each driver, no lines
-                        return [0, 1, 2].map(dIdx => (
+                        // Use stroke={color} so CustomDot picks up the team color
+                        return [0, 1, 2].map((dIdx) => (
                           <Line
                             key={`${team.team_name}-${dIdx}`}
                             type="linear"
                             dataKey={`${team.team_name}-${dIdx}`}
                             name={name}
-                            stroke="none"
-                            dot={<CustomDot stroke={color} fill={color} />}
-                            activeDot={{ r: 6 }}
+                            stroke={color}
+                            strokeWidth={0}
+                            dot={<CustomDot />}
+                            activeDot={{ r: 6, fill: color, stroke: color }}
                             isAnimationActive={true}
                             connectNulls={false}
                           />
@@ -553,11 +591,11 @@ export default function PointsByRoundGraph({
                             stroke={color}
                             strokeWidth={2}
                             dot={<CustomDot />}
-                            activeDot={{ r: 6 }}
+                            activeDot={{ r: 6, fill: color, stroke: color }}
                             filter={`url(#glow-${team.team_name})`}
                             isAnimationActive={true}
                             connectNulls={false}
-                          />
+                          />,
                         ];
                       }
                     }
@@ -566,7 +604,7 @@ export default function PointsByRoundGraph({
             </ResponsiveContainer>
 
             {/* Custom Legend - Positioned in top-left */}
-            <div className="absolute top-8 left-25 bg-bg-tertiary/90 border border-border-primary rounded-lg p-3 backdrop-blur-sm pointer-events-none">
+            <div className="absolute top-8 left-25 bg-bg-primary/90 border border-border-primary rounded-sm p-3 backdrop-blur-sm pointer-events-none">
               <div className="flex flex-col gap-1">
                 {entities
                   .filter((entity) => {
@@ -593,7 +631,7 @@ export default function PointsByRoundGraph({
                           className="w-3 h-3 rounded-full"
                           style={{ backgroundColor: color }}
                         />
-                        <span className="text-sm font-bold text-white">
+                        <span className="text-xs font-bold text-text-primary font-mono">
                           {name}
                         </span>
                       </div>
@@ -604,7 +642,7 @@ export default function PointsByRoundGraph({
           </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-center text-gray-400">
+            <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
               No data available. Select at least one{" "}
               {mode === "drivers" ? "driver" : "constructor"} to view
               progression.

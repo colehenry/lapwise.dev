@@ -341,6 +341,7 @@ class LapData(BaseModel):
     lap_time_seconds: Optional[float] = None  # NULL for in/out laps, deleted laps
     compound: Optional[str] = None  # SOFT, MEDIUM, HARD, INTERMEDIATE, WET
     tyre_life: Optional[int] = None  # Laps on this tyre set
+    stint: Optional[int] = None  # Stint number (1, 2, 3, ...)
     track_status: Optional[str] = None  # 1=green, 2=yellow, etc.
 
     class Config:
