@@ -99,7 +99,7 @@ async def get_driver_race_history(
             db, driver_code, start_year, end_year
         )
     except ValueError as e:
-         raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
     if not history:
         raise HTTPException(

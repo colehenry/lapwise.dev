@@ -6,12 +6,13 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import JumpToRace from "@/components/JumpToRace";
-import PointsByRoundGraph from "@/components/PointsByRoundGraph";
 import {
+  ConcentricPattern,
   GridPattern,
   TrianglePattern,
-  ConcentricPattern,
 } from "@/components/Patterns";
+import PointsByRoundGraph from "@/components/PointsByRoundGraph";
+import TiltCard from "@/components/ui/TiltCard";
 import {
   apiHeaders,
   apiUrl,
@@ -19,12 +20,12 @@ import {
   isValidHeadshotUrl,
 } from "@/lib/api";
 import type {
-  DriverStanding,
-  ConstructorStanding,
-  RoundSummary,
-  QualifyingStandingsResponse,
-  DriverQualifyingStanding,
   ConstructorQualifyingStanding,
+  ConstructorStanding,
+  DriverQualifyingStanding,
+  DriverStanding,
+  QualifyingStandingsResponse,
+  RoundSummary,
 } from "@/lib/types";
 
 type StandingsData = {
@@ -216,7 +217,9 @@ export default function ResultsPage() {
               <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
                 <GridPattern id="driver-grid" />
                 <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-nowrap">
-                  {sessionType === "race" ? "Driver Championship" : "Best Qualifiers (Driver)"}
+                  {sessionType === "race"
+                    ? "Driver Championship"
+                    : "Best Qualifiers (Driver)"}
                 </span>
               </div>
               <div
@@ -226,7 +229,10 @@ export default function ResultsPage() {
                   minHeight: expandedStandings ? "660px" : "330px",
                 }}
               >
-                {(sessionType === "race" ? standings?.drivers : qualifyingStandings?.drivers)?.map((driver, idx) => (
+                {(sessionType === "race"
+                  ? standings?.drivers
+                  : qualifyingStandings?.drivers
+                )?.map((driver, idx) => (
                   <div
                     key={`${driver.driver_code}-${driver.team_name}-${idx}`}
                     className="flex items-center gap-2 py-2 px-4 border-b border-border-primary last:border-0 min-h-[60px]"
@@ -271,16 +277,28 @@ export default function ResultsPage() {
                     {sessionType === "qualifying" ? (
                       <div className="flex items-center gap-3">
                         <div className="flex flex-col items-center">
-                          <span className="text-xs" title="P1s">🥇</span>
-                          <span className="text-xs font-bold text-text-primary">{(driver as DriverQualifyingStanding).poles}</span>
+                          <span className="text-xs" title="P1s">
+                            🥇
+                          </span>
+                          <span className="text-xs font-bold text-text-primary">
+                            {(driver as DriverQualifyingStanding).poles}
+                          </span>
                         </div>
                         <div className="flex flex-col items-center">
-                          <span className="text-xs" title="P2s">🥈</span>
-                          <span className="text-xs font-bold text-text-primary">{(driver as DriverQualifyingStanding).p2s}</span>
+                          <span className="text-xs" title="P2s">
+                            🥈
+                          </span>
+                          <span className="text-xs font-bold text-text-primary">
+                            {(driver as DriverQualifyingStanding).p2s}
+                          </span>
                         </div>
                         <div className="flex flex-col items-center">
-                          <span className="text-xs" title="P3s">🥉</span>
-                          <span className="text-xs font-bold text-text-primary">{(driver as DriverQualifyingStanding).p3s}</span>
+                          <span className="text-xs" title="P3s">
+                            🥉
+                          </span>
+                          <span className="text-xs font-bold text-text-primary">
+                            {(driver as DriverQualifyingStanding).p3s}
+                          </span>
                         </div>
                       </div>
                     ) : (
@@ -304,7 +322,9 @@ export default function ResultsPage() {
               <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
                 <GridPattern id="constructor-grid" />
                 <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-nowrap">
-                  {sessionType === "race" ? "Constructor Championship" : "Best Qualifiers (Constructor)"}
+                  {sessionType === "race"
+                    ? "Constructor Championship"
+                    : "Best Qualifiers (Constructor)"}
                 </span>
               </div>
               <div
@@ -314,7 +334,10 @@ export default function ResultsPage() {
                   minHeight: expandedStandings ? "660px" : "330px",
                 }}
               >
-                {(sessionType === "race" ? standings?.constructors : qualifyingStandings?.constructors)?.map((team, idx) => (
+                {(sessionType === "race"
+                  ? standings?.constructors
+                  : qualifyingStandings?.constructors
+                )?.map((team, idx) => (
                   <div
                     key={`${team.team_name}-${idx}`}
                     className="py-2 px-4 border-b border-border-primary last:border-0 min-h-[60px]"
@@ -338,20 +361,24 @@ export default function ResultsPage() {
                           {team.team_name}
                         </div>
                         <div className="text-xs text-text-muted">
-                          {(sessionType === "race" ? getTeamDrivers(team.team_name) : getTeamQualifyingDrivers(team.team_name)).map(
-                            (driver, driverIdx, arr) => (
-                              <span key={driver.driver_code}>
-                                <Link
-                                  href={`/drivers/${driver.driver_code}`}
-                                  className="hover:text-purple-300 transition-colors duration-150"
-                                >
-                                  {driver.full_name}
-                                </Link>{" "}
-                                ({sessionType === "race" ? (driver as DriverStanding).total_points : (driver as DriverQualifyingStanding).poles})
-                                {driverIdx < arr.length - 1 && ", "}
-                              </span>
-                            ),
-                          )}
+                          {(sessionType === "race"
+                            ? getTeamDrivers(team.team_name)
+                            : getTeamQualifyingDrivers(team.team_name)
+                          ).map((driver, driverIdx, arr) => (
+                            <span key={driver.driver_code}>
+                              <Link
+                                href={`/drivers/${driver.driver_code}`}
+                                className="hover:text-purple-300 transition-colors duration-150"
+                              >
+                                {driver.full_name}
+                              </Link>{" "}
+                              (
+                              {sessionType === "race"
+                                ? (driver as DriverStanding).total_points
+                                : (driver as DriverQualifyingStanding).poles}
+                              ){driverIdx < arr.length - 1 && ", "}
+                            </span>
+                          ))}
                         </div>
                       </div>
 
@@ -359,16 +386,28 @@ export default function ResultsPage() {
                       {sessionType === "qualifying" ? (
                         <div className="flex items-center gap-3">
                           <div className="flex flex-col items-center">
-                            <span className="text-xs" title="P1s">🥇</span>
-                            <span className="text-xs font-bold text-text-primary">{(team as ConstructorQualifyingStanding).poles}</span>
+                            <span className="text-xs" title="P1s">
+                              🥇
+                            </span>
+                            <span className="text-xs font-bold text-text-primary">
+                              {(team as ConstructorQualifyingStanding).poles}
+                            </span>
                           </div>
                           <div className="flex flex-col items-center">
-                            <span className="text-xs" title="P2s">🥈</span>
-                            <span className="text-xs font-bold text-text-primary">{(team as ConstructorQualifyingStanding).p2s}</span>
+                            <span className="text-xs" title="P2s">
+                              🥈
+                            </span>
+                            <span className="text-xs font-bold text-text-primary">
+                              {(team as ConstructorQualifyingStanding).p2s}
+                            </span>
                           </div>
                           <div className="flex flex-col items-center">
-                            <span className="text-xs" title="P3s">🥉</span>
-                            <span className="text-xs font-bold text-text-primary">{(team as ConstructorQualifyingStanding).p3s}</span>
+                            <span className="text-xs" title="P3s">
+                              🥉
+                            </span>
+                            <span className="text-xs font-bold text-text-primary">
+                              {(team as ConstructorQualifyingStanding).p3s}
+                            </span>
                           </div>
                         </div>
                       ) : (
@@ -466,134 +505,135 @@ export default function ResultsPage() {
                 round.session_type === "sprint_qualifying";
 
               return (
-                <button
-                  type="button"
-                  key={`${round.round}-${round.session_type}`}
-                  onClick={() =>
-                    handleRoundClick(round.round, round.session_type)
-                  }
-                  className={`bg-bg-tertiary border border-border-primary rounded-sm shadow-sm transition-all duration-150 cursor-pointer text-left h-[140px] relative overflow-hidden ${
-                    isSprint
-                      ? "hover:border-red-500 hover:shadow-red"
-                      : "hover:border-purple-500 hover:shadow-purple"
-                  }`}
-                >
-                  <div className="flex items-center gap-4 p-4 h-full">
-                    {/* Left side: Race info and podium */}
-                    <div className="flex-1 min-w-0 flex flex-col h-full">
-                      {/* Round + Race name */}
-                      <div className="mb-1">
-                        <span className="text-[10px] text-text-muted tracking-widest uppercase font-mono font-bold">
-                          RND {String(round.round).padStart(2, "0")}
-                        </span>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-semibold text-text-primary text-sm truncate">
-                            {round.event_name.replace("Grand Prix", "GP")}
-                            {(round.session_type === "qualifying" ||
-                              round.session_type === "sprint_qualifying") &&
-                              " Qualifying"}
-                          </h3>
-                          {(round.session_type === "sprint_race" ||
-                            round.session_type === "sprint_qualifying") && (
-                            <span className="bg-red-500/20 border border-red-500 text-red-400 text-[9px] tracking-widest uppercase font-bold font-mono px-2 py-0.5 rounded-sm whitespace-nowrap">
-                              Sprint
-                            </span>
-                          )}
+                <TiltCard key={`${round.round}-${round.session_type}`}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleRoundClick(round.round, round.session_type)
+                    }
+                    className={`w-full bg-bg-tertiary border border-border-primary rounded-sm shadow-sm transition-all duration-150 cursor-pointer text-left h-[140px] relative overflow-hidden ${
+                      isSprint
+                        ? "hover:border-red-500 hover:shadow-red"
+                        : "hover:border-purple-500 hover:shadow-purple"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4 p-4 h-full">
+                      {/* Left side: Race info and podium */}
+                      <div className="flex-1 min-w-0 flex flex-col h-full">
+                        {/* Round + Race name */}
+                        <div className="mb-1">
+                          <span className="text-[10px] text-text-muted tracking-widest uppercase font-mono font-bold">
+                            RND {String(round.round).padStart(2, "0")}
+                          </span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-semibold text-text-primary text-sm truncate">
+                              {round.event_name.replace("Grand Prix", "GP")}
+                              {(round.session_type === "qualifying" ||
+                                round.session_type === "sprint_qualifying") &&
+                                " Qualifying"}
+                            </h3>
+                            {(round.session_type === "sprint_race" ||
+                              round.session_type === "sprint_qualifying") && (
+                              <span className="bg-red-500/20 border border-red-500 text-red-400 text-[9px] tracking-widest uppercase font-bold font-mono px-2 py-0.5 rounded-sm whitespace-nowrap">
+                                Sprint
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Circuit + date */}
+                        <p className="text-text-muted text-[10px] tracking-wide truncate">
+                          {round.circuit_name} •{" "}
+                          {round.track_length_km
+                            ? `${round.track_length_km.toFixed(3)} km • `
+                            : ""}
+                          {new Date(round.date).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </p>
+
+                        {/* Divider */}
+                        <div className="border-b border-border-primary my-2" />
+
+                        {/* Podium row */}
+                        <div className="flex items-center gap-3 mt-auto">
+                          {round.podium.map((driver, idx) => {
+                            const medals = ["🥇", "🥈", "🥉"];
+                            const labels = ["P1", "P2", "P3"];
+
+                            return (
+                              <div
+                                key={driver.driver_code}
+                                className="flex items-center gap-0.5"
+                              >
+                                <div className="flex flex-col items-center">
+                                  <span className="text-[9px] text-text-muted tracking-widest font-mono">
+                                    {labels[idx]}
+                                  </span>
+                                  <span className="text-lg flex-shrink-0">
+                                    {medals[idx]}
+                                  </span>
+                                </div>
+
+                                {isValidHeadshotUrl(driver.headshot_url) && (
+                                  <Image
+                                    src={driver.headshot_url}
+                                    alt={driver.full_name}
+                                    width={32}
+                                    height={32}
+                                    className="rounded-sm object-cover border border-border-secondary flex-shrink-0"
+                                  />
+                                )}
+
+                                <div className="flex items-center">
+                                  <div
+                                    className="font-bold text-xs font-mono truncate"
+                                    style={{
+                                      color: driver.team_color
+                                        ? `#${driver.team_color}`
+                                        : "#fff",
+                                    }}
+                                  >
+                                    {driver.driver_code}
+                                    {driver.fastest_lap && (
+                                      <span
+                                        className="text-[10px] text-purple-300 ml-0.5"
+                                        title="Fastest Lap"
+                                      >
+                                        ⚡
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
 
-                      {/* Circuit + date */}
-                      <p className="text-text-muted text-[10px] tracking-wide truncate">
-                        {round.circuit_name} •{" "}
-                        {round.track_length_km
-                          ? `${round.track_length_km.toFixed(3)} km • `
-                          : ""}
-                        {new Date(round.date).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </p>
-
-                      {/* Divider */}
-                      <div className="border-b border-border-primary my-2" />
-
-                      {/* Podium row */}
-                      <div className="flex items-center gap-3 mt-auto">
-                        {round.podium.map((driver, idx) => {
-                          const medals = ["🥇", "🥈", "🥉"];
-                          const labels = ["P1", "P2", "P3"];
-
-                          return (
-                            <div
-                              key={driver.driver_code}
-                              className="flex items-center gap-0.5"
-                            >
-                              <div className="flex flex-col items-center">
-                                <span className="text-[9px] text-text-muted tracking-widest font-mono">
-                                  {labels[idx]}
-                                </span>
-                                <span className="text-lg flex-shrink-0">
-                                  {medals[idx]}
-                                </span>
-                              </div>
-
-                              {isValidHeadshotUrl(driver.headshot_url) && (
-                                <Image
-                                  src={driver.headshot_url}
-                                  alt={driver.full_name}
-                                  width={32}
-                                  height={32}
-                                  className="rounded-sm object-cover border border-border-secondary flex-shrink-0"
-                                />
-                              )}
-
-                              <div className="flex items-center">
-                                <div
-                                  className="font-bold text-xs font-mono truncate"
-                                  style={{
-                                    color: driver.team_color
-                                      ? `#${driver.team_color}`
-                                      : "#fff",
-                                  }}
-                                >
-                                  {driver.driver_code}
-                                  {driver.fastest_lap && (
-                                    <span
-                                      className="text-[10px] text-purple-300 ml-0.5"
-                                      title="Fastest Lap"
-                                    >
-                                      ⚡
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
+                      {/* Right side: Track map with concentric pattern */}
+                      <div
+                        className="flex-shrink-0 bg-bg-primary border border-border-secondary rounded-sm w-44 h-24 relative flex items-center justify-center overflow-hidden"
+                        style={{
+                          boxShadow: "inset 0 0 20px rgba(160, 32, 240, 0.1)",
+                        }}
+                      >
+                        <ConcentricPattern
+                          id={`track-${round.round}-${round.session_type}`}
+                        />
+                        <Image
+                          src={`/track-maps/${round.circuit_id}.png`}
+                          alt={`${round.circuit_name} track map`}
+                          width={160}
+                          height={88}
+                          className="object-contain w-full h-full relative z-10 opacity-80 mix-blend-lighten"
+                        />
                       </div>
                     </div>
-
-                    {/* Right side: Track map with concentric pattern */}
-                    <div
-                      className="flex-shrink-0 bg-bg-primary border border-border-secondary rounded-sm w-44 h-24 relative flex items-center justify-center overflow-hidden"
-                      style={{
-                        boxShadow: "inset 0 0 20px rgba(160, 32, 240, 0.1)",
-                      }}
-                    >
-                      <ConcentricPattern
-                        id={`track-${round.round}-${round.session_type}`}
-                      />
-                      <Image
-                        src={`/track-maps/${round.circuit_id}.png`}
-                        alt={`${round.circuit_name} track map`}
-                        width={160}
-                        height={88}
-                        className="object-contain w-full h-full relative z-10 opacity-80 mix-blend-lighten"
-                      />
-                    </div>
-                  </div>
-                </button>
+                  </button>
+                </TiltCard>
               );
             })}
           </div>

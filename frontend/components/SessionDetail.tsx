@@ -47,6 +47,7 @@ type SessionInfo = {
   event_name: string;
   date: string;
   circuit: CircuitInfo;
+  highlights_video_id?: string | null;
 };
 
 type SessionResultsResponse = {
@@ -175,6 +176,25 @@ export default function SessionDetail({
                     Sprint
                   </span>
                 )}
+                {session.highlights_video_id && (
+                  <a
+                    href={`https://www.youtube.com/watch?v=${session.highlights_video_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[10px] tracking-widest uppercase font-bold font-mono text-red-400 hover:text-red-300 transition-colors duration-150 px-2 py-1 border border-red-500/30 rounded-sm hover:border-red-500/60"
+                  >
+                    <svg
+                      className="w-3 h-3"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <title>YouTube</title>
+                      <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.546 12 3.546 12 3.546s-7.505 0-9.377.504A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.504 9.376.504 9.376.504s7.505 0 9.377-.504a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                    </svg>
+                    Highlights
+                  </a>
+                )}
               </div>
 
               <div className="flex flex-col gap-1">
@@ -221,15 +241,15 @@ export default function SessionDetail({
             <TrianglePattern id="results-triangles" />
             <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
               {isQualifying
-                ? "Classification - Qualifying"
-                : "Classification - Race"}
+                ? "Qualifying Order"
+                : "Finishing Order"}
             </span>
           </div>
 
           <div
             className="overflow-x-auto overflow-y-auto"
             style={{
-              maxHeight: expandedResults ? "1260px" : "660px",
+              maxHeight: expandedResults ? "1260px" : "345px",
               transition: "max-height 0.3s ease-in-out",
             }}
           >
@@ -447,7 +467,7 @@ export default function SessionDetail({
             onClick={() => setExpandedResults(!expandedResults)}
             className="border border-border-secondary rounded-sm text-text-secondary hover:border-purple-500 hover:text-purple-300 font-mono text-xs uppercase tracking-widest px-6 py-2 transition-colors duration-150 flex items-center gap-2"
           >
-            {expandedResults ? "COLLAPSE" : "EXPAND FULL CLASSIFICATION"}
+            {expandedResults ? "COLLAPSE" : "FULL RESULTS"}
             <svg
               className={`w-3 h-3 transition-transform duration-300 ${expandedResults ? "rotate-180" : ""}`}
               fill="none"

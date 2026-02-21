@@ -1224,6 +1224,7 @@ class ResultsService:
                 track_length_km=circuit.track_length_km,
                 track_map_url=f"/track-maps/{circuit.id}.png",
             ),
+            highlights_video_id=getattr(session, "highlights_video_id", None),
         )
 
         session_results = [
@@ -1313,6 +1314,7 @@ class ResultsService:
                 track_length_km=circuit.track_length_km,
                 track_map_url=f"/track-maps/{circuit.id}.png",
             ),
+            highlights_video_id=getattr(session, "highlights_video_id", None),
         )
 
         session_results = [
@@ -1839,6 +1841,7 @@ class ResultsService:
                 track_length_km=circuit.track_length_km,
                 track_map_url=f"/track-maps/{circuit.id}.png",
             ),
+            highlights_video_id=getattr(session, "highlights_video_id", None),
         )
 
         session_results = [
@@ -1928,6 +1931,7 @@ class ResultsService:
                 track_length_km=circuit.track_length_km,
                 track_map_url=f"/track-maps/{circuit.id}.png",
             ),
+            highlights_video_id=getattr(session, "highlights_video_id", None),
         )
 
         session_results = [

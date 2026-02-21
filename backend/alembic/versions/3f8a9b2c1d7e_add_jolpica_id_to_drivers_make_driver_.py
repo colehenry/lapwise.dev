@@ -25,7 +25,9 @@ def upgrade() -> None:
     op.create_index("ix_drivers_jolpica_id", "drivers", ["jolpica_id"])
 
     # 2. Make driver_code nullable (pre-2003 drivers have no official 3-letter code)
-    op.alter_column("drivers", "driver_code", existing_type=sa.String(length=3), nullable=True)
+    op.alter_column(
+        "drivers", "driver_code", existing_type=sa.String(length=3), nullable=True
+    )
 
     # 3. Clean up "nan" driver codes left by broken historical ingestion
     #    These are ghost records where all pre-2003 drivers collapsed into one.
@@ -36,7 +38,9 @@ def upgrade() -> None:
 def downgrade() -> None:
     # Restore driver_code as NOT NULL (requires all rows to have a code first)
     op.execute("UPDATE drivers SET driver_code = 'UNK' WHERE driver_code IS NULL")
-    op.alter_column("drivers", "driver_code", existing_type=sa.String(length=3), nullable=False)
+    op.alter_column(
+        "drivers", "driver_code", existing_type=sa.String(length=3), nullable=False
+    )
 
     # Drop jolpica_id
     op.drop_index("ix_drivers_jolpica_id", table_name="drivers")

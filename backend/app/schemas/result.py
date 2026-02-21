@@ -37,6 +37,7 @@ class SessionInfo(BaseModel):
     event_name: str
     date: date
     circuit: CircuitInfo
+    highlights_video_id: Optional[str] = None
 
     class Config:
         from_attributes = True

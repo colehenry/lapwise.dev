@@ -28,7 +28,18 @@ export default function JumpToRace({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
-  // ... (handleClickOutside remains same)
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Fetch rounds when season or sessionType changes
   useEffect(() => {
@@ -37,14 +48,14 @@ export default function JumpToRace({
     const fetchRounds = async () => {
       setLoadingRounds(true);
       try {
-        const apiUrl =
+        const apiBaseUrl =
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
 
         const endpoint =
           sessionType === "qualifying"
-            ? `${apiUrl}/api/results/${selectedSeason}/qualifying`
-            : `${apiUrl}/api/results/${selectedSeason}`;
+            ? `${apiBaseUrl}/api/results/${selectedSeason}/qualifying`
+            : `${apiBaseUrl}/api/results/${selectedSeason}`;
 
         const response = await fetch(endpoint, {
           headers: { "X-API-Key": apiKey },
@@ -78,6 +89,7 @@ export default function JumpToRace({
   }, [selectedSeason, isOpen, sessionType]);
 
   // Reset round when season or sessionType changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional reset on season/sessionType change
   useEffect(() => {
     setSelectedRound("");
   }, [selectedSeason, sessionType]);
@@ -85,25 +97,26 @@ export default function JumpToRace({
   const handleJump = () => {
     if (!selectedSeason || !selectedRound) return;
 
-    const round = rounds.find((r) => {
+    const selectedRoundData = rounds.find((r) => {
       const key = `${r.round}-${r.session_type}`;
       return key === selectedRound;
     });
 
-    if (!round) return;
+    if (!selectedRoundData) return;
 
     const modeParam = sessionType === "qualifying" ? "?mode=qualifying" : "";
 
-    // Navigate to the appropriate route
     if (
-      round.session_type === "sprint_race" ||
-      round.session_type === "sprint_qualifying"
+      selectedRoundData.session_type === "sprint_race" ||
+      selectedRoundData.session_type === "sprint_qualifying"
     ) {
       router.push(
-        `/results/${selectedSeason}/${round.round}/sprint${modeParam}`,
+        `/results/${selectedSeason}/${selectedRoundData.round}/sprint${modeParam}`,
       );
     } else {
-      router.push(`/results/${selectedSeason}/${round.round}${modeParam}`);
+      router.push(
+        `/results/${selectedSeason}/${selectedRoundData.round}${modeParam}`,
+      );
     }
 
     setIsOpen(false);
@@ -114,14 +127,15 @@ export default function JumpToRace({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="px-4 py-2 bg-[#1e1e28] border border-[#2a2a35] rounded-lg text-white text-sm font-semibold hover:border-[#a020f0] transition-all flex items-center gap-2"
+        className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center gap-2 uppercase tracking-widest"
       >
-        <span>Jump to</span>
+        <span>Jump to Wknd</span>
         <svg
-          className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`w-3 h-3 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
+          aria-hidden="true"
         >
           <title>Toggle dropdown</title>
           <path
@@ -134,11 +148,11 @@ export default function JumpToRace({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-[#1e1e28] border border-[#2a2a35] rounded-lg shadow-xl z-50 p-4">
+        <div className="absolute right-0 mt-2 w-80 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-50 p-4">
           <div className="mb-4">
             <label
               htmlFor="jump-season"
-              className="block text-xs font-semibold text-gray-400 mb-2"
+              className="block text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono mb-2"
             >
               Season
             </label>
@@ -146,7 +160,7 @@ export default function JumpToRace({
               id="jump-season"
               value={selectedSeason}
               onChange={(e) => setSelectedSeason(e.target.value)}
-              className="w-full px-3 py-2 bg-[#15151e] border border-[#2a2a35] rounded-lg text-white text-sm focus:outline-none focus:border-[#a020f0] transition-all"
+              className="w-full px-3 py-2 bg-bg-primary border border-border-primary rounded-sm text-text-primary font-mono text-sm focus:outline-none focus:border-purple-500 transition-colors duration-150"
             >
               {availableSeasons.map((year) => (
                 <option key={year} value={year}>
@@ -157,17 +171,17 @@ export default function JumpToRace({
           </div>
 
           <div className="mb-4">
-            <label className="block text-xs font-semibold text-gray-400 mb-2">
+            <span className="block text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono mb-2">
               Session Type
-            </label>
-            <div className="flex items-center gap-2 bg-[#15151e] rounded-lg p-1 border border-[#2a2a35]">
+            </span>
+            <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => setSessionType("race")}
-                className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                className={`flex-1 px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                   sessionType === "race"
-                    ? "bg-purple-500 text-white shadow-md"
-                    : "text-gray-400 hover:text-white"
+                    ? "bg-purple-500/20 border border-purple-500 text-purple-300"
+                    : "border border-transparent text-text-muted hover:text-text-secondary"
                 }`}
               >
                 Race
@@ -175,10 +189,10 @@ export default function JumpToRace({
               <button
                 type="button"
                 onClick={() => setSessionType("qualifying")}
-                className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                className={`flex-1 px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                   sessionType === "qualifying"
-                    ? "bg-purple-500 text-white shadow-md"
-                    : "text-gray-400 hover:text-white"
+                    ? "bg-purple-500/20 border border-purple-500 text-purple-300"
+                    : "border border-transparent text-text-muted hover:text-text-secondary"
                 }`}
               >
                 Qualifying
@@ -189,12 +203,12 @@ export default function JumpToRace({
           <div className="mb-4">
             <label
               htmlFor="jump-round"
-              className="block text-xs font-semibold text-gray-400 mb-2"
+              className="block text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono mb-2"
             >
               Round
             </label>
             {loadingRounds ? (
-              <div className="flex items-center justify-center py-8 text-gray-400 text-sm italic">
+              <div className="flex items-center justify-center py-8 text-text-muted font-mono text-xs tracking-widest uppercase">
                 Loading rounds...
               </div>
             ) : rounds.length > 0 ? (
@@ -202,29 +216,28 @@ export default function JumpToRace({
                 id="jump-round"
                 value={selectedRound}
                 onChange={(e) => setSelectedRound(e.target.value)}
-                className="w-full px-3 py-2 bg-[#15151e] border border-[#2a2a35] rounded-lg text-white text-sm focus:outline-none focus:border-[#a020f0] transition-all max-h-64 overflow-y-auto"
+                className="w-full px-3 py-2 bg-bg-primary border border-border-primary rounded-sm text-text-primary font-mono text-sm focus:outline-none focus:border-purple-500 transition-colors duration-150"
               >
                 <option value="">Select a round...</option>
-                {rounds.map((round) => {
-                  const key = `${round.round}-${round.session_type}`;
-                  const isSprintRace = round.session_type === "sprint_race";
-                  const isSprintQuali =
-                    round.session_type === "sprint_qualifying";
-                  const isRegularQuali = round.session_type === "qualifying";
+                {rounds.map((r) => {
+                  const key = `${r.round}-${r.session_type}`;
+                  const isSprintRace = r.session_type === "sprint_race";
+                  const isSprintQuali = r.session_type === "sprint_qualifying";
+                  const isRegularQuali = r.session_type === "qualifying";
 
                   return (
                     <option key={key} value={key}>
-                      Round {round.round}
-                      {isSprintRace ? " - Sprint" : ""}
-                      {isSprintQuali ? " - Sprint Quali" : ""}
-                      {isRegularQuali ? " - Quali" : ""} •{" "}
-                      {round.event_name.replace("Grand Prix", "GP")}
+                      R{String(r.round).padStart(2, "0")}
+                      {isSprintRace ? " Sprint" : ""}
+                      {isSprintQuali ? " Sprint Quali" : ""}
+                      {isRegularQuali ? " Quali" : ""} &bull;{" "}
+                      {r.event_name.replace("Grand Prix", "GP")}
                     </option>
                   );
                 })}
               </select>
             ) : (
-              <div className="text-gray-500 text-sm py-2 italic text-center">
+              <div className="text-text-muted font-mono text-xs py-2 text-center tracking-widest uppercase">
                 No rounds available
               </div>
             )}
@@ -234,16 +247,17 @@ export default function JumpToRace({
             type="button"
             onClick={handleJump}
             disabled={!selectedRound}
-            className="w-full px-4 py-2 bg-[#a020f0] text-white font-semibold rounded-lg hover:bg-[#8c1acc] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-purple-500/15 border border-purple-500 text-purple-300 font-mono text-xs font-bold tracking-widest uppercase px-4 py-2.5 rounded-sm hover:bg-purple-500/25 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            <span>Jump to {sessionType === "race" ? "Race" : "Quali"}</span>
+            <span>Go</span>
             <svg
-              className="w-4 h-4"
+              className="w-3.5 h-3.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
-              <title>Jump to session</title>
+              <title>Go to race weekend</title>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"

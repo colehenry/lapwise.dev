@@ -1,9 +1,9 @@
-
 from sqlalchemy import select
 from app.models import SessionResult
 from .utils import timedelta_to_seconds, safe_int, safe_float
 from .participants import ingest_driver, ingest_team
 from sqlalchemy.orm import Session as SQLAlchemySession
+
 
 def ingest_race_results(db: SQLAlchemySession, fastf1_session, session_id, year):
     """
@@ -25,7 +25,9 @@ def ingest_race_results(db: SQLAlchemySession, fastf1_session, session_id, year)
             laps = fastf1_session.laps
             if laps is not None and len(laps) > 0:
                 fastest_lap = laps.pick_fastest()
-                fastest_lap_driver = fastest_lap["Driver"] if fastest_lap is not None else None
+                fastest_lap_driver = (
+                    fastest_lap["Driver"] if fastest_lap is not None else None
+                )
         except Exception as e:
             print(f"    ⚠️  Could not determine fastest lap: {e}")
     else:

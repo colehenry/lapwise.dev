@@ -59,7 +59,7 @@ from scripts.ingest import (
     ingest_qualifying_results,
     ingest_lap_data,
     ingest_weather_data,
-    ingest_track_status
+    ingest_track_status,
 )
 
 
@@ -157,7 +157,9 @@ def main():
                     # Qualifying lap times are only available from 1994 onwards via Jolpica.
                     # Pre-1994 qualifying was not timed in a way that's captured in the data.
                     if season_year < 1994:
-                        print(f"  ⏭️  Skipping qualifying for {season_year} (data not available pre-1994)")
+                        print(
+                            f"  ⏭️  Skipping qualifying for {season_year} (data not available pre-1994)"
+                        )
                         continue
                     fastf1_name = "Qualifying"
                 elif session_type == "sprint_race":
@@ -229,9 +231,7 @@ def main():
                         print(f"  ℹ️  No telemetry available for {season_year}")
 
                 except Exception as e:
-                    print(
-                        f"  ❌ Failed to ingest {session_type} for {event_name}: {e}"
-                    )
+                    print(f"  ❌ Failed to ingest {session_type} for {event_name}: {e}")
                     import traceback
 
                     traceback.print_exc()
