@@ -968,12 +968,12 @@ export default function LapTimeByLapGraph({
                 </defs>
 
                 {/* Track Status Bands (SC/VSC/Red Flag) */}
-                {statusBands.map((band) => {
+                {statusBands.map((band, bandIdx) => {
                   const bandStyle = STATUS_BAND_COLORS[band.status];
                   if (!bandStyle) return null;
                   return (
                     <ReferenceArea
-                      key={`band-${band.status}-${band.startLap}-${band.endLap}`}
+                      key={`band-${bandIdx}-${band.status}-${band.startLap}-${band.endLap}`}
                       x1={band.startLap}
                       x2={band.endLap}
                       fill={bandStyle.fill}

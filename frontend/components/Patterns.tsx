@@ -20,7 +20,11 @@ export function GridPattern({ id = "grid-pattern" }: { id?: string }) {
   );
 }
 
-export function ConcentricPattern({ id = "concentric-pattern" }: { id?: string }) {
+export function ConcentricPattern({
+  id = "concentric-pattern",
+}: {
+  id?: string;
+}) {
   return (
     <svg
       className="absolute inset-0 w-full h-full text-purple-500 opacity-10 pointer-events-none"

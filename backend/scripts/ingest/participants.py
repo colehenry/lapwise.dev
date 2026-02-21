@@ -1,4 +1,3 @@
-
 import pandas as pd
 from sqlalchemy import select
 from app.models import Driver, Team

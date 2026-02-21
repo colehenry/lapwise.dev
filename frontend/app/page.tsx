@@ -1,5 +1,7 @@
 import Link from "next/link";
+import LatestRaceWeekend from "@/components/LatestRaceWeekend";
 import NextRaceBanner from "@/components/NextRaceBanner";
+import TiltCard from "@/components/ui/TiltCard";
 
 function GridPatternHero() {
   return (
@@ -176,6 +178,9 @@ export default function Home() {
       {/* Next Race Banner */}
       <NextRaceBanner />
 
+      {/* Latest Race Weekend */}
+      <LatestRaceWeekend />
+
       {/* Feature Cards */}
       <section className="bg-bg-primary py-16 px-6">
         <div className="max-w-5xl mx-auto">
@@ -200,38 +205,39 @@ export default function Home() {
                 icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
               },
             ].map((feature) => (
-              <Link
-                key={feature.label}
-                href={feature.href}
-                className="group bg-bg-tertiary border border-border-primary rounded-sm p-5 hover:border-purple-500 hover:shadow-purple transition-all duration-150 relative overflow-hidden"
-              >
-                <CrosshairPattern />
-                <div className="relative z-10">
-                  <div className="w-10 h-10 rounded-sm bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-3">
-                    <svg
-                      className="w-5 h-5 text-purple-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <title>{feature.label}</title>
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d={feature.icon}
-                      />
-                    </svg>
+              <TiltCard key={feature.label}>
+                <Link
+                  href={feature.href}
+                  className="block group bg-bg-tertiary border border-border-primary rounded-sm p-5 hover:border-purple-500 hover:shadow-purple transition-all duration-150 relative overflow-hidden h-full"
+                >
+                  <CrosshairPattern />
+                  <div className="relative z-10">
+                    <div className="w-10 h-10 rounded-sm bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-3">
+                      <svg
+                        className="w-5 h-5 text-purple-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <title>{feature.label}</title>
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d={feature.icon}
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-sm font-semibold text-text-primary tracking-wide mb-1">
+                      {feature.label}
+                    </h3>
+                    <p className="text-xs text-text-muted leading-relaxed">
+                      {feature.desc}
+                    </p>
                   </div>
-                  <h3 className="text-sm font-semibold text-text-primary tracking-wide mb-1">
-                    {feature.label}
-                  </h3>
-                  <p className="text-xs text-text-muted leading-relaxed">
-                    {feature.desc}
-                  </p>
-                </div>
-              </Link>
+                </Link>
+              </TiltCard>
             ))}
           </div>
         </div>

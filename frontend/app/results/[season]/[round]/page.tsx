@@ -65,12 +65,19 @@ type SessionResultsResponse = {
   results: SessionResultDetail[];
 };
 
-type TabType = "race" | "qualifying" | "sprint" | "strategy" | "analysis";
+type TabType =
+  | "race"
+  | "qualifying"
+  | "sprint"
+  | "sprint-qualifying"
+  | "strategy"
+  | "analysis";
 
 const TAB_LABELS: Record<TabType, string> = {
   race: "Race",
   qualifying: "Qualifying",
   sprint: "Sprint",
+  "sprint-qualifying": "Sprint Quali",
   strategy: "Strategy",
   analysis: "Analysis",
 };
@@ -192,9 +199,12 @@ export default function RoundDetailPage() {
     router.replace(url, { scroll: false });
   };
 
-  // Available tabs (sprint only if sprint data exists)
+  // Available tabs (sprint tabs only if sprint data exists)
   const availableTabs: TabType[] = ["race", "qualifying"];
-  if (hasSprint) availableTabs.push("sprint");
+  if (hasSprint) {
+    availableTabs.push("sprint");
+    if (sprintQualData) availableTabs.push("sprint-qualifying");
+  }
   availableTabs.push("strategy", "analysis");
 
   if (loading) {
@@ -228,6 +238,8 @@ export default function RoundDetailPage() {
         return qualifyingData;
       case "sprint":
         return sprintData;
+      case "sprint-qualifying":
+        return sprintQualData;
       default:
         return raceData;
     }
@@ -239,10 +251,17 @@ export default function RoundDetailPage() {
   };
 
   // Check if the active tab is a results tab (shows SessionDetail)
-  const isResultsTab = ["race", "qualifying", "sprint"].includes(activeTab);
-  const isSprint = activeTab === "sprint";
+  const isResultsTab = [
+    "race",
+    "qualifying",
+    "sprint",
+    "sprint-qualifying",
+  ].includes(activeTab);
+  const isSprint = activeTab === "sprint" || activeTab === "sprint-qualifying";
   const sessionTypeForDetail =
-    activeTab === "qualifying" ? "qualifying" : "race";
+    activeTab === "qualifying" || activeTab === "sprint-qualifying"
+      ? "qualifying"
+      : "race";
 
   return (
     <main className="min-h-screen bg-bg-secondary">
@@ -276,7 +295,8 @@ export default function RoundDetailPage() {
               const isActive = activeTab === tab;
               const isDisabled =
                 (tab === "qualifying" && !qualifyingData) ||
-                (tab === "sprint" && !sprintData);
+                (tab === "sprint" && !sprintData) ||
+                (tab === "sprint-qualifying" && !sprintQualData);
 
               return (
                 <button

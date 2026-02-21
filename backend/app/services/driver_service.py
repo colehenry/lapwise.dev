@@ -36,7 +36,7 @@ class DriverService:
 
         # Get all race results (not qualifying or practice)
         results = await DriverService._get_all_race_results(db, driver.id)
-        
+
         if not results:
             # Driver exists but has no race results yet
             return DriverProfileResponse(
@@ -142,10 +142,10 @@ class DriverService:
         seasons = []
         for season_row in season_data:
             year = season_row.year
-            
+
             # Find driver's position in that year's standing
             standings = await DriverService._get_season_standings(db, year)
-            
+
             championship_position = None
             for idx, (d_id, points) in enumerate(standings):
                 if d_id == driver.id:
@@ -170,10 +170,10 @@ class DriverService:
 
     @staticmethod
     async def get_race_history(
-        db: AsyncSession, 
-        driver_code: str, 
-        start_year: Optional[int] = None, 
-        end_year: Optional[int] = None
+        db: AsyncSession,
+        driver_code: str,
+        start_year: Optional[int] = None,
+        end_year: Optional[int] = None,
     ) -> Optional[DriverRaceHistoryResponse]:
         """
         Get driver's race-by-race results across their career.
@@ -198,7 +198,9 @@ class DriverService:
             start_year = max(end_year - 4, available_years[-1])
 
         # Get all race results in the year range
-        race_data = await DriverService._get_races_in_range(db, driver.id, start_year, end_year)
+        race_data = await DriverService._get_races_in_range(
+            db, driver.id, start_year, end_year
+        )
 
         races = [
             RaceHistory(
@@ -226,7 +228,9 @@ class DriverService:
     # =========================================================================
 
     @staticmethod
-    async def _get_driver_by_code(db: AsyncSession, driver_code: str) -> Optional[Driver]:
+    async def _get_driver_by_code(
+        db: AsyncSession, driver_code: str
+    ) -> Optional[Driver]:
         query = select(Driver).where(Driver.driver_code == driver_code.upper())
         result = await db.execute(query)
         return result.scalar_one_or_none()
@@ -282,7 +286,9 @@ class DriverService:
         return result.all()
 
     @staticmethod
-    async def _get_season_standings(db: AsyncSession, year: int) -> List[Tuple[int, float]]:
+    async def _get_season_standings(
+        db: AsyncSession, year: int
+    ) -> List[Tuple[int, float]]:
         query = (
             select(Driver.id, func.sum(SessionResult.points).label("total_points"))
             .join(SessionResult, Driver.id == SessionResult.driver_id)
@@ -310,7 +316,9 @@ class DriverService:
         return [row[0] for row in result.all()]
 
     @staticmethod
-    async def _get_races_in_range(db: AsyncSession, driver_id: int, start_year: int, end_year: int):
+    async def _get_races_in_range(
+        db: AsyncSession, driver_id: int, start_year: int, end_year: int
+    ):
         query = (
             select(
                 Session.year,
