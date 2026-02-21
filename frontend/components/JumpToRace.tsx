@@ -1,7 +1,9 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { apiHeaders, apiUrl } from "@/lib/api";
 
 type RoundOption = {
   round: number;
@@ -23,8 +25,6 @@ export default function JumpToRace({
   const [selectedSeason, setSelectedSeason] = useState<string>(currentSeason);
   const [selectedRound, setSelectedRound] = useState<string>("");
   const [sessionType, setSessionType] = useState<"race" | "qualifying">("race");
-  const [rounds, setRounds] = useState<RoundOption[]>([]);
-  const [loadingRounds, setLoadingRounds] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -41,52 +41,32 @@ export default function JumpToRace({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch rounds when season or sessionType changes
-  useEffect(() => {
-    if (!selectedSeason || !isOpen) return;
+  const { data: rounds = [], isLoading: loadingRounds } = useQuery({
+    queryKey: ["jump-rounds", selectedSeason, sessionType],
+    queryFn: async () => {
+      const endpoint =
+        sessionType === "qualifying"
+          ? `/api/results/${selectedSeason}/qualifying`
+          : `/api/results/${selectedSeason}`;
 
-    const fetchRounds = async () => {
-      setLoadingRounds(true);
-      try {
-        const apiBaseUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
+      const response = await fetch(apiUrl(endpoint), {
+        headers: apiHeaders(),
+        cache: "no-store",
+      });
 
-        const endpoint =
-          sessionType === "qualifying"
-            ? `${apiBaseUrl}/api/results/${selectedSeason}/qualifying`
-            : `${apiBaseUrl}/api/results/${selectedSeason}`;
+      if (!response.ok) return [];
 
-        const response = await fetch(endpoint, {
-          headers: { "X-API-Key": apiKey },
-          cache: "no-store",
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const roundsData: RoundOption[] = data.rounds.map(
-            (r: {
-              round: number;
-              event_name: string;
-              session_type: string;
-            }) => ({
-              round: r.round,
-              event_name: r.event_name,
-              session_type: r.session_type,
-            }),
-          );
-          setRounds(roundsData);
-        }
-      } catch (error) {
-        console.error("Failed to fetch rounds:", error);
-        setRounds([]);
-      } finally {
-        setLoadingRounds(false);
-      }
-    };
-
-    fetchRounds();
-  }, [selectedSeason, isOpen, sessionType]);
+      const data = await response.json();
+      return data.rounds.map(
+        (r: { round: number; event_name: string; session_type: string }) => ({
+          round: r.round,
+          event_name: r.event_name,
+          session_type: r.session_type,
+        }),
+      ) as RoundOption[];
+    },
+    enabled: isOpen && !!selectedSeason,
+  });
 
   // Reset round when season or sessionType changes
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional reset on season/sessionType change

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import {
   Area,
   CartesianGrid,
@@ -82,37 +83,18 @@ const WeatherTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function WeatherChart({ season, round }: WeatherChartProps) {
-  const [data, setData] = useState<WeatherResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (season < 2018) {
-      setLoading(false);
-      setData(null);
-      return;
-    }
-
-    (async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(
-          apiUrl(`/api/results/${season}/${round}/weather`),
-          { cache: "no-store", headers: apiHeaders() },
-        );
-
-        if (!response.ok) {
-          setData(null);
-          return;
-        }
-
-        setData(await response.json());
-      } catch {
-        setData(null);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [season, round]);
+  const { data, isLoading: loading } = useQuery<WeatherResponse | null>({
+    queryKey: ["weather", season, round],
+    queryFn: async () => {
+      const response = await fetch(
+        apiUrl(`/api/results/${season}/${round}/weather`),
+        { cache: "no-store", headers: apiHeaders() },
+      );
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: season >= 2018,
+  });
 
   const chartData = useMemo((): ChartPoint[] => {
     if (!data || !data.weather.length) return [];

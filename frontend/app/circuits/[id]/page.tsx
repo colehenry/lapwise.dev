@@ -4,30 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { apiHeaders, apiUrl } from "@/lib/api";
+import type { CircuitInfo } from "@/lib/types";
 
-interface Circuit {
-  id: number;
-  name: string;
-  location: string;
-  country: string;
-  track_length_km: number | null;
-  latitude: number | null;
-  longitude: number | null;
-  total_races: number;
-  first_year: number;
-  most_recent_year: number;
-}
-
-async function fetchCircuit(id: string): Promise<Circuit> {
-  const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/circuits/${id}`,
-    {
-      headers: {
-        "X-API-Key": apiKey,
-      },
-    },
-  );
+async function fetchCircuit(id: string): Promise<CircuitInfo> {
+  const res = await fetch(apiUrl(`/api/circuits/${id}`), {
+    headers: apiHeaders(),
+  });
 
   if (!res.ok) {
     if (res.status === 404) {
@@ -56,26 +39,26 @@ export default function CircuitDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#15151e] p-4 md:p-8 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#e10600]"></div>
+      <div className="min-h-screen bg-bg-secondary p-4 md:p-8 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
       </div>
     );
   }
 
   if (error || !circuit) {
     return (
-      <div className="min-h-screen bg-[#15151e] p-4 md:p-8">
+      <div className="min-h-screen bg-bg-secondary p-4 md:p-8">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-3xl font-bold text-white mb-4">
             Circuit Not Found
           </h1>
-          <p className="text-gray-400 mb-8">
+          <p className="text-text-tertiary mb-8">
             The circuit you are looking for does not exist or could not be
             loaded.
           </p>
           <Link
             href="/circuits"
-            className="inline-block px-6 py-3 bg-[#e10600] text-white rounded-lg hover:bg-[#c40500] transition-colors"
+            className="inline-block px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
           >
             Back to Circuits
           </Link>
@@ -85,13 +68,13 @@ export default function CircuitDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#15151e] p-4 md:p-8">
+    <div className="min-h-screen bg-bg-secondary p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Navigation */}
         <div className="mb-8">
           <Link
             href="/circuits"
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-text-tertiary hover:text-white transition-colors"
           >
             <svg
               className="w-5 h-5"
@@ -117,7 +100,7 @@ export default function CircuitDetailPage() {
               <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
                 {circuit.name}
               </h1>
-              <div className="flex items-center gap-3 text-xl text-gray-400">
+              <div className="flex items-center gap-3 text-xl text-text-tertiary">
                 <span className="flex items-center gap-1">
                   🏁 {circuit.location}, {circuit.country}
                 </span>
@@ -125,7 +108,7 @@ export default function CircuitDetailPage() {
             </div>
 
             {/* Track Map */}
-            <div className="bg-[#1e1e2e] rounded-xl p-8 border border-gray-800 flex items-center justify-center min-h-[400px]">
+            <div className="bg-bg-tertiary rounded-xl p-8 border border-border-primary flex items-center justify-center min-h-[400px]">
               <div className="relative w-full h-[300px] md:h-[400px]">
                 <Image
                   src={`/track-maps/${circuit.id}.png`}
@@ -141,14 +124,14 @@ export default function CircuitDetailPage() {
 
           {/* Sidebar Stats */}
           <div className="lg:col-span-1 space-y-4">
-            <div className="bg-[#1e1e2e] rounded-xl p-6 border border-gray-800">
+            <div className="bg-bg-tertiary rounded-xl p-6 border border-border-primary">
               <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <span className="text-[#e10600]">⚡</span> Circuit Stats
+                <span className="text-red-500">⚡</span> Circuit Stats
               </h2>
 
               <div className="space-y-6">
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                  <div className="text-xs text-text-muted uppercase tracking-wider mb-1">
                     Dimensions
                   </div>
                   <div className="text-2xl font-bold text-white">
@@ -159,30 +142,30 @@ export default function CircuitDetailPage() {
                 </div>
 
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                  <div className="text-xs text-text-muted uppercase tracking-wider mb-1">
                     Activity
                   </div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl font-bold text-white">
                       {circuit.total_races}
                     </span>
-                    <span className="text-gray-400">Grand Prix held</span>
+                    <span className="text-text-tertiary">Grand Prix held</span>
                   </div>
                 </div>
 
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                  <div className="text-xs text-text-muted uppercase tracking-wider mb-1">
                     History
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">First Race</span>
+                      <span className="text-text-tertiary">First Race</span>
                       <span className="text-white font-medium">
                         {circuit.first_year}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Most Recent</span>
+                      <span className="text-text-tertiary">Most Recent</span>
                       <span className="text-white font-medium">
                         {circuit.most_recent_year}
                       </span>
@@ -192,10 +175,10 @@ export default function CircuitDetailPage() {
 
                 {(circuit.latitude || circuit.longitude) && (
                   <div>
-                    <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                    <div className="text-xs text-text-muted uppercase tracking-wider mb-1">
                       Coordinates
                     </div>
-                    <div className="text-sm font-mono text-gray-400">
+                    <div className="text-sm font-mono text-text-tertiary">
                       {circuit.latitude?.toFixed(4)},{" "}
                       {circuit.longitude?.toFixed(4)}
                     </div>
@@ -203,7 +186,7 @@ export default function CircuitDetailPage() {
                       href={`https://www.google.com/maps/search/?api=1&query=${circuit.latitude},${circuit.longitude}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-[#e10600] hover:text-[#ff4e4e] mt-2 block"
+                      className="text-xs text-red-500 hover:text-red-400 mt-2 block"
                     >
                       View on Google Maps →
                     </a>

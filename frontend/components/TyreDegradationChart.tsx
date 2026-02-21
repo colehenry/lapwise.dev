@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CartesianGrid,
@@ -12,31 +13,7 @@ import {
 } from "recharts";
 import { CHART_COLORS } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
-
-// Types
-type LapData = {
-  lap_number: number;
-  lap_time_seconds: number | null;
-  compound: string | null;
-  tyre_life: number | null;
-  stint: number | null;
-  pit_duration_seconds: number | null;
-};
-
-type DriverLapTimes = {
-  driver_code: string;
-  full_name: string;
-  team_color: string | null;
-  final_position: number | null;
-  laps: LapData[];
-};
-
-type LapTimesResponse = {
-  year: number;
-  round: number;
-  event_name: string;
-  drivers: DriverLapTimes[];
-};
+import type { LapTimesResponse } from "@/lib/types";
 
 interface TyreDegradationChartProps {
   season: number;
@@ -112,8 +89,6 @@ export default function TyreDegradationChart({
   round,
   isSprint = false,
 }: TyreDegradationChartProps) {
-  const [data, setData] = useState<LapTimesResponse | null>(null);
-  const [loading, setLoading] = useState(true);
   const [selectedCompounds, setSelectedCompounds] = useState<string[]>([]);
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
   const [showDriverDropdown, setShowDriverDropdown] = useState(false);
@@ -132,53 +107,44 @@ export default function TyreDegradationChart({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const { data, isLoading: loading } = useQuery<LapTimesResponse | null>({
+    queryKey: ["tyre-degradation", season, round, isSprint],
+    queryFn: async () => {
+      const endpoint = isSprint
+        ? `/api/results/${season}/${round}/sprint/lap-times`
+        : `/api/results/${season}/${round}/lap-times`;
+      const response = await fetch(apiUrl(endpoint), {
+        cache: "no-store",
+        headers: apiHeaders(),
+      });
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: season >= 2018,
+  });
+
+  // Auto-select top 3 drivers when data loads
   useEffect(() => {
-    if (season < 2018) {
-      setLoading(false);
-      setData(null);
-      return;
+    if (data?.drivers) {
+      const sorted = [...data.drivers].sort(
+        (a, b) => (a.final_position || 999) - (b.final_position || 999),
+      );
+      setSelectedDrivers(sorted.slice(0, 3).map((d) => d.driver_code));
     }
+  }, [data]);
 
-    (async () => {
-      try {
-        setLoading(true);
-        const endpoint = isSprint
-          ? `/api/results/${season}/${round}/sprint/lap-times`
-          : `/api/results/${season}/${round}/lap-times`;
-        const response = await fetch(apiUrl(endpoint), {
-          cache: "no-store",
-          headers: apiHeaders(),
-        });
-
-        if (!response.ok) {
-          setData(null);
-          return;
+  // Auto-select all available compounds when data loads
+  useEffect(() => {
+    if (data?.drivers) {
+      const compounds = new Set<string>();
+      for (const driver of data.drivers) {
+        for (const lap of driver.laps) {
+          if (lap.compound) compounds.add(lap.compound);
         }
-
-        const result: LapTimesResponse = await response.json();
-        setData(result);
-
-        // Auto-select top 3 drivers
-        const sorted = [...result.drivers].sort(
-          (a, b) => (a.final_position || 999) - (b.final_position || 999),
-        );
-        setSelectedDrivers(sorted.slice(0, 3).map((d) => d.driver_code));
-
-        // Auto-select all available compounds
-        const compounds = new Set<string>();
-        for (const driver of result.drivers) {
-          for (const lap of driver.laps) {
-            if (lap.compound) compounds.add(lap.compound);
-          }
-        }
-        setSelectedCompounds(Array.from(compounds));
-      } catch {
-        setData(null);
-      } finally {
-        setLoading(false);
       }
-    })();
-  }, [season, round, isSprint]);
+      setSelectedCompounds(Array.from(compounds));
+    }
+  }, [data]);
 
   // Available compounds
   const availableCompounds = useMemo(() => {

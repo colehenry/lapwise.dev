@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import LapTimeByLapGraph from "@/components/LapTimeByLapGraph";
@@ -11,59 +12,7 @@ import SpeedTrapChart from "@/components/SpeedTrapChart";
 import TyreDegradationChart from "@/components/TyreDegradationChart";
 import WeatherChart from "@/components/WeatherChart";
 import { apiHeaders, apiUrl } from "@/lib/api";
-
-// Type definitions matching API responses
-type CircuitInfo = {
-  id: number;
-  name: string;
-  location: string;
-  country: string;
-  track_length_km: number | null;
-  track_map_url: string | null;
-};
-
-type DriverInfo = {
-  driver_number: number | null;
-  driver_code: string;
-  full_name: string;
-  country_code: string | null;
-};
-
-type TeamInfo = {
-  name: string;
-  team_color: string | null;
-};
-
-type SessionResultDetail = {
-  position: number | null;
-  status: string;
-  headshot_url: string | null;
-  driver: DriverInfo;
-  team: TeamInfo;
-  grid_position: number | null;
-  points: number | null;
-  laps_completed: number | null;
-  time_seconds: number | null;
-  fastest_lap: boolean;
-  q1_time_seconds: number | null;
-  q2_time_seconds: number | null;
-  q3_time_seconds: number | null;
-};
-
-type SessionInfo = {
-  id: number;
-  year: number;
-  round: number;
-  session_type: string;
-  event_name: string;
-  date: string;
-  circuit: CircuitInfo;
-};
-
-type SessionResultsResponse = {
-  session: SessionInfo;
-  results: SessionResultDetail[];
-};
+import type { SessionResultsResponse } from "@/lib/types";
 
 type TabType =
   | "race"
@@ -82,6 +31,22 @@ const TAB_LABELS: Record<TabType, string> = {
   analysis: "Analysis",
 };
 
+async function fetchSession(
+  season: string,
+  round: string,
+  suffix?: string,
+): Promise<SessionResultsResponse | null> {
+  const path = suffix
+    ? `/api/results/${season}/${round}/${suffix}`
+    : `/api/results/${season}/${round}`;
+  const res = await fetch(apiUrl(path), {
+    cache: "no-store",
+    headers: apiHeaders(),
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
 export default function RoundDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -95,18 +60,6 @@ export default function RoundDetailPage() {
   const urlTab = searchParams.get("tab") as TabType | null;
   const [activeTab, setActiveTab] = useState<TabType>(urlTab || "race");
 
-  // Data states
-  const [raceData, setRaceData] = useState<SessionResultsResponse | null>(null);
-  const [qualifyingData, setQualifyingData] =
-    useState<SessionResultsResponse | null>(null);
-  const [sprintData, setSprintData] = useState<SessionResultsResponse | null>(
-    null,
-  );
-  const [sprintQualData, setSprintQualData] =
-    useState<SessionResultsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [hasSprint, setHasSprint] = useState(false);
-
   // Scroll to top on page load
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -119,75 +72,34 @@ export default function RoundDetailPage() {
     }
   }, [urlTab]);
 
-  // Fetch all session data
-  useEffect(() => {
-    if (!season || !round) return;
+  const enabled = !!season && !!round;
 
-    let isMounted = true;
+  const { data: raceData, isLoading: raceLoading } = useQuery({
+    queryKey: ["round-race", season, round],
+    queryFn: () => fetchSession(season, round),
+    enabled,
+  });
 
-    (async () => {
-      try {
-        setLoading(true);
+  const { data: qualifyingData } = useQuery({
+    queryKey: ["round-qualifying", season, round],
+    queryFn: () => fetchSession(season, round, "qualifying"),
+    enabled,
+  });
 
-        // Fetch race data
-        const raceRes = await fetch(apiUrl(`/api/results/${season}/${round}`), {
-          cache: "no-store",
-          headers: apiHeaders(),
-        });
-        if (raceRes.ok) {
-          const raceJson = await raceRes.json();
-          if (isMounted) setRaceData(raceJson);
-        }
+  const { data: sprintData } = useQuery({
+    queryKey: ["round-sprint", season, round],
+    queryFn: () => fetchSession(season, round, "sprint"),
+    enabled,
+  });
 
-        if (!isMounted) return;
+  const { data: sprintQualData } = useQuery({
+    queryKey: ["round-sprint-qualifying", season, round],
+    queryFn: () => fetchSession(season, round, "sprint-qualifying"),
+    enabled,
+  });
 
-        // Prefetch qualifying, sprint, sprint-qualifying in parallel
-        const [qualRes, sprintRes, sprintQualRes] = await Promise.allSettled([
-          fetch(apiUrl(`/api/results/${season}/${round}/qualifying`), {
-            cache: "no-store",
-            headers: apiHeaders(),
-          }),
-          fetch(apiUrl(`/api/results/${season}/${round}/sprint`), {
-            cache: "no-store",
-            headers: apiHeaders(),
-          }),
-          fetch(apiUrl(`/api/results/${season}/${round}/sprint-qualifying`), {
-            cache: "no-store",
-            headers: apiHeaders(),
-          }),
-        ]);
-
-        if (!isMounted) return;
-
-        // Process qualifying
-        if (qualRes.status === "fulfilled" && qualRes.value.ok) {
-          setQualifyingData(await qualRes.value.json());
-        }
-
-        // Process sprint
-        if (sprintRes.status === "fulfilled" && sprintRes.value.ok) {
-          const sprintJson = await sprintRes.value.json();
-          setSprintData(sprintJson);
-          setHasSprint(true);
-        }
-
-        // Process sprint qualifying
-        if (sprintQualRes.status === "fulfilled" && sprintQualRes.value.ok) {
-          setSprintQualData(await sprintQualRes.value.json());
-        }
-      } catch (error) {
-        if (isMounted) {
-          console.error("Failed to fetch round details:", error);
-        }
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    })();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [season, round]);
+  const loading = raceLoading;
+  const hasSprint = !!sprintData;
 
   // Update URL when tab changes
   const switchTab = (tab: TabType) => {
@@ -232,22 +144,22 @@ export default function RoundDetailPage() {
   }
 
   // Determine which data to pass to SessionDetail based on active tab
-  const getSessionDetailData = () => {
+  const getSessionDetailData = (): SessionResultsResponse | null => {
     switch (activeTab) {
       case "qualifying":
-        return qualifyingData;
+        return qualifyingData ?? null;
       case "sprint":
-        return sprintData;
+        return sprintData ?? null;
       case "sprint-qualifying":
-        return sprintQualData;
+        return sprintQualData ?? null;
       default:
-        return raceData;
+        return raceData ?? null;
     }
   };
 
-  const getQualifyingDataForTab = () => {
-    if (activeTab === "sprint") return sprintQualData;
-    return qualifyingData;
+  const getQualifyingDataForTab = (): SessionResultsResponse | null => {
+    if (activeTab === "sprint") return sprintQualData ?? null;
+    return qualifyingData ?? null;
   };
 
   // Check if the active tab is a results tab (shows SessionDetail)

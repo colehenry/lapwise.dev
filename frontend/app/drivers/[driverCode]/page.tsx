@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import DriverSeasonHistoryGraph from "@/components/DriverSeasonHistoryGraph";
+import { apiHeaders, apiUrl } from "@/lib/api";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
 
 interface DriverProfile {
@@ -25,15 +26,9 @@ interface DriverProfile {
 }
 
 async function fetchDriverProfile(driverCode: string): Promise<DriverProfile> {
-  const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/drivers/${driverCode}`,
-    {
-      headers: {
-        "X-API-Key": apiKey,
-      },
-    },
-  );
+  const res = await fetch(apiUrl(`/api/drivers/${driverCode}`), {
+    headers: apiHeaders(),
+  });
 
   if (!res.ok) {
     throw new Error("Failed to fetch driver profile");
@@ -68,13 +63,13 @@ export default function DriverProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#15151e] p-8">
+      <div className="min-h-screen bg-bg-secondary p-8">
         <div className="max-w-5xl mx-auto">
           <div className="animate-pulse space-y-8">
-            <div className="h-12 bg-[#2a2a3e] rounded w-1/3" />
+            <div className="h-12 bg-bg-elevated rounded w-1/3" />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="h-32 bg-[#2a2a3e] rounded" />
+                <div key={i} className="h-32 bg-bg-elevated rounded" />
               ))}
             </div>
           </div>
@@ -85,18 +80,18 @@ export default function DriverProfilePage() {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-[#15151e] p-8">
+      <div className="min-h-screen bg-bg-secondary p-8">
         <div className="max-w-5xl mx-auto">
-          <div className="bg-[#1e1e2e] rounded-lg p-8">
+          <div className="bg-bg-tertiary rounded-lg p-8">
             <h1 className="text-2xl font-bold text-white mb-4">
               Driver Not Found
             </h1>
-            <p className="text-gray-400 mb-6">
+            <p className="text-text-tertiary mb-6">
               Could not find driver with code: {driverCode.toUpperCase()}
             </p>
             <Link
               href="/"
-              className="text-[#e10600] hover:text-[#ff0800] transition-colors"
+              className="text-red-500 hover:text-red-400 transition-colors"
             >
               ← Back to Home
             </Link>
@@ -116,13 +111,13 @@ export default function DriverProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#15151e] p-8">
+    <div className="min-h-screen bg-bg-secondary p-8">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <Link
             href="/"
-            className="text-gray-400 hover:text-white transition-colors mb-4 inline-block"
+            className="text-text-tertiary hover:text-white transition-colors mb-4 inline-block"
           >
             ← Back
           </Link>
@@ -142,7 +137,7 @@ export default function DriverProfilePage() {
             )}
             {!data.headshot_url && (
               <div
-                className="w-32 h-32 rounded-full flex items-center justify-center text-4xl font-bold text-gray-400 border-4 bg-[#1e1e2e]"
+                className="w-32 h-32 rounded-full flex items-center justify-center text-4xl font-bold text-text-tertiary border-4 bg-bg-tertiary"
                 style={{
                   borderColor: data.current_team_color
                     ? `#${data.current_team_color}`
@@ -156,7 +151,7 @@ export default function DriverProfilePage() {
               <h1 className="text-5xl font-bold text-white mb-2">
                 {data.full_name}
               </h1>
-              <div className="flex items-center gap-4 text-gray-400 text-lg">
+              <div className="flex items-center gap-4 text-text-tertiary text-lg">
                 <span className="text-2xl font-mono">{data.driver_code}</span>
                 {data.driver_number && (
                   <>
@@ -191,22 +186,22 @@ export default function DriverProfilePage() {
           {stats.map((stat) => (
             <div
               key={stat.label}
-              className="bg-gradient-to-br from-[#1e1e2e] to-[#2a2a3e] rounded-lg p-6 border border-gray-800"
+              className="bg-gradient-to-br from-bg-tertiary to-bg-elevated rounded-lg p-6 border border-border-primary"
             >
-              <p className="text-gray-500 text-sm mb-2">{stat.label}</p>
+              <p className="text-text-muted text-sm mb-2">{stat.label}</p>
               <p className="text-white text-3xl font-bold">{stat.value}</p>
             </div>
           ))}
         </div>
 
         {/* Career Highlights */}
-        <div className="bg-gradient-to-br from-[#1e1e2e] to-[#2a2a3e] rounded-lg p-8 border border-gray-800">
+        <div className="bg-gradient-to-br from-bg-tertiary to-bg-elevated rounded-lg p-8 border border-border-primary">
           <h2 className="text-2xl font-bold text-white mb-6">
             Career Highlights
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <p className="text-gray-500 text-sm mb-2">Win Rate</p>
+              <p className="text-text-muted text-sm mb-2">Win Rate</p>
               <p className="text-white text-2xl font-bold">
                 {data.total_races > 0
                   ? `${((data.total_wins / data.total_races) * 100).toFixed(1)}%`
@@ -214,7 +209,7 @@ export default function DriverProfilePage() {
               </p>
             </div>
             <div>
-              <p className="text-gray-500 text-sm mb-2">Podium Rate</p>
+              <p className="text-text-muted text-sm mb-2">Podium Rate</p>
               <p className="text-white text-2xl font-bold">
                 {data.total_races > 0
                   ? `${((data.total_podiums / data.total_races) * 100).toFixed(1)}%`
@@ -222,7 +217,7 @@ export default function DriverProfilePage() {
               </p>
             </div>
             <div>
-              <p className="text-gray-500 text-sm mb-2">Points per Race</p>
+              <p className="text-text-muted text-sm mb-2">Points per Race</p>
               <p className="text-white text-2xl font-bold">
                 {data.total_races > 0
                   ? (data.total_points / data.total_races).toFixed(2)
