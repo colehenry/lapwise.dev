@@ -9,51 +9,10 @@ import {
   getDriverFlagEmoji,
   getTeamFlagEmoji,
 } from "@/lib/flags";
-import type { DriverInfo, TeamInfo } from "@/lib/types";
+import type { SessionResultsResponse } from "@/lib/types";
 import LapTimeByLapGraph from "./LapTimeByLapGraph";
 import { ConcentricPattern, GridPattern, TrianglePattern } from "./Patterns";
 import TyreStintChart from "./TyreStintChart";
-
-type CircuitInfo = {
-  id: number;
-  name: string;
-  location: string;
-  country: string;
-  track_length_km: number | null;
-  track_map_url: string | null;
-};
-
-type SessionResultDetail = {
-  position: number | null;
-  status: string;
-  headshot_url: string | null;
-  driver: DriverInfo;
-  team: TeamInfo;
-  grid_position: number | null;
-  points: number | null;
-  laps_completed: number | null;
-  time_seconds: number | null;
-  fastest_lap: boolean;
-  q1_time_seconds: number | null;
-  q2_time_seconds: number | null;
-  q3_time_seconds: number | null;
-};
-
-type SessionInfo = {
-  id: number;
-  year: number;
-  round: number;
-  session_type: string;
-  event_name: string;
-  date: string;
-  circuit: CircuitInfo;
-  highlights_video_id?: string | null;
-};
-
-type SessionResultsResponse = {
-  session: SessionInfo;
-  results: SessionResultDetail[];
-};
 
 interface SessionDetailProps {
   data: SessionResultsResponse | null;
@@ -240,9 +199,7 @@ export default function SessionDetail({
           <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
             <TrianglePattern id="results-triangles" />
             <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-              {isQualifying
-                ? "Qualifying Order"
-                : "Finishing Order"}
+              {isQualifying ? "Qualifying Order" : "Finishing Order"}
             </span>
           </div>
 

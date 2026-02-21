@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CartesianGrid,
@@ -13,53 +14,12 @@ import {
 } from "recharts";
 import { CHART_COLORS, CustomDot } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
-
-// Type definitions
-type LapData = {
-  lap_number: number;
-  lap_time_seconds: number | null;
-  compound: string | null;
-  tyre_life: number | null;
-  stint: number | null;
-  track_status: string | null;
-  sector1_time_seconds: number | null;
-  sector2_time_seconds: number | null;
-  sector3_time_seconds: number | null;
-  pit_in_time_seconds: number | null;
-  pit_out_time_seconds: number | null;
-  pit_duration_seconds: number | null;
-  position: number | null;
-  speed_st: number | null;
-  speed_i1: number | null;
-  speed_i2: number | null;
-  speed_fl: number | null;
-  fresh_tyre: boolean | null;
-  is_personal_best: boolean | null;
-  deleted: boolean | null;
-};
-
-type TrackStatusEvent = {
-  session_time_seconds: number;
-  status: string;
-  message: string | null;
-};
-
-type DriverLapTimes = {
-  driver_code: string;
-  full_name: string;
-  team_color: string | null;
-  final_position: number | null;
-  laps: LapData[];
-};
-
-type LapTimesResponse = {
-  year: number;
-  round: number;
-  event_name: string;
-  total_laps: number | null;
-  drivers: DriverLapTimes[];
-  track_status_events: TrackStatusEvent[];
-};
+import type {
+  DriverLapTimes,
+  LapData,
+  LapTimesResponse,
+  TrackStatusEvent,
+} from "@/lib/types";
 
 type ChartDataPoint = {
   lap_number: number;
@@ -419,8 +379,6 @@ export default function LapTimeByLapGraph({
   round,
   isSprint = false,
 }: LapTimeByLapGraphProps) {
-  const [data, setData] = useState<LapTimesResponse | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<ViewMode>("lapTime");
@@ -443,53 +401,31 @@ export default function LapTimeByLapGraph({
     };
   }, []);
 
-  // Fetch data when season or round changes
+  const { data, isLoading: loading } = useQuery<LapTimesResponse | null>({
+    queryKey: ["lap-times", season, round, isSprint],
+    queryFn: async () => {
+      const endpoint = isSprint
+        ? `/api/results/${season}/${round}/sprint/lap-times`
+        : `/api/results/${season}/${round}/lap-times`;
+      const response = await fetch(apiUrl(endpoint), {
+        cache: "no-store",
+        headers: apiHeaders(),
+      });
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: season >= 2018,
+  });
+
+  // Auto-select top 3 finishers when data loads
   useEffect(() => {
-    // Skip API call for pre-2018 seasons (no lap data available)
-    if (season < 2018) {
-      setLoading(false);
-      setData(null);
-      return;
+    if (data?.drivers) {
+      const sorted = [...data.drivers].sort(
+        (a, b) => (a.final_position || 999) - (b.final_position || 999),
+      );
+      setSelectedDrivers(sorted.slice(0, 3).map((d) => d.driver_code));
     }
-
-    (async () => {
-      try {
-        setLoading(true);
-        const endpoint = isSprint
-          ? `/api/results/${season}/${round}/sprint/lap-times`
-          : `/api/results/${season}/${round}/lap-times`;
-        const response = await fetch(apiUrl(endpoint), {
-          cache: "no-store",
-          headers: apiHeaders(),
-        });
-
-        if (!response.ok) {
-          console.error(`Failed to fetch lap times: ${response.status}`);
-          setData(null);
-          return;
-        }
-
-        const lapTimesData = await response.json();
-        setData(lapTimesData);
-
-        // Auto-select top 3 finishers
-        if (lapTimesData.drivers) {
-          const sorted = [...lapTimesData.drivers].sort(
-            (a: DriverLapTimes, b: DriverLapTimes) =>
-              (a.final_position || 999) - (b.final_position || 999),
-          );
-          setSelectedDrivers(
-            sorted.slice(0, 3).map((d: DriverLapTimes) => d.driver_code),
-          );
-        }
-      } catch (error) {
-        console.error("Failed to fetch lap times:", error);
-        setData(null);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [season, round, isSprint]);
+  }, [data]);
 
   // Compute track status bands
   const statusBands = useMemo(() => {

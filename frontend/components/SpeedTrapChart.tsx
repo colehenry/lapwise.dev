@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -13,30 +14,7 @@ import {
 } from "recharts";
 import { CHART_COLORS } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
-
-// Types
-type LapData = {
-  lap_number: number;
-  speed_st: number | null;
-  speed_i1: number | null;
-  speed_i2: number | null;
-  speed_fl: number | null;
-};
-
-type DriverLapTimes = {
-  driver_code: string;
-  full_name: string;
-  team_color: string | null;
-  final_position: number | null;
-  laps: LapData[];
-};
-
-type LapTimesResponse = {
-  year: number;
-  round: number;
-  event_name: string;
-  drivers: DriverLapTimes[];
-};
+import type { LapTimesResponse } from "@/lib/types";
 
 interface SpeedTrapChartProps {
   season: number;
@@ -84,41 +62,23 @@ export default function SpeedTrapChart({
   round,
   isSprint = false,
 }: SpeedTrapChartProps) {
-  const [data, setData] = useState<LapTimesResponse | null>(null);
-  const [loading, setLoading] = useState(true);
   const [trapType, setTrapType] = useState<SpeedTrapType>("speed_st");
 
-  useEffect(() => {
-    if (season < 2018) {
-      setLoading(false);
-      setData(null);
-      return;
-    }
-
-    (async () => {
-      try {
-        setLoading(true);
-        const endpoint = isSprint
-          ? `/api/results/${season}/${round}/sprint/lap-times`
-          : `/api/results/${season}/${round}/lap-times`;
-        const response = await fetch(apiUrl(endpoint), {
-          cache: "no-store",
-          headers: apiHeaders(),
-        });
-
-        if (!response.ok) {
-          setData(null);
-          return;
-        }
-
-        setData(await response.json());
-      } catch {
-        setData(null);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [season, round, isSprint]);
+  const { data, isLoading: loading } = useQuery<LapTimesResponse | null>({
+    queryKey: ["speed-trap", season, round, isSprint],
+    queryFn: async () => {
+      const endpoint = isSprint
+        ? `/api/results/${season}/${round}/sprint/lap-times`
+        : `/api/results/${season}/${round}/lap-times`;
+      const response = await fetch(apiUrl(endpoint), {
+        cache: "no-store",
+        headers: apiHeaders(),
+      });
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: season >= 2018,
+  });
 
   // Compute max speed per driver for the selected trap type
   const chartData = useMemo((): DriverSpeed[] => {

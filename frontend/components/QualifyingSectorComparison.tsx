@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bar,
@@ -86,8 +87,6 @@ export default function QualifyingSectorComparison({
   season,
   round,
 }: QualifyingSectorComparisonProps) {
-  const [data, setData] = useState<QualifyingSectorResponse | null>(null);
-  const [loading, setLoading] = useState(true);
   const [driver1Code, setDriver1Code] = useState<string>("");
   const [driver2Code, setDriver2Code] = useState<string>("");
   const [showDriver1Dropdown, setShowDriver1Dropdown] = useState(false);
@@ -115,42 +114,27 @@ export default function QualifyingSectorComparison({
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Fetch qualifying sector data
-  useEffect(() => {
-    if (season < 2018) {
-      setLoading(false);
-      setData(null);
-      return;
-    }
-
-    (async () => {
-      try {
-        setLoading(true);
+  const { data, isLoading: loading } =
+    useQuery<QualifyingSectorResponse | null>({
+      queryKey: ["qualifying-sectors", season, round],
+      queryFn: async () => {
         const response = await fetch(
           apiUrl(`/api/results/${season}/${round}/qualifying/sectors`),
           { cache: "no-store", headers: apiHeaders() },
         );
+        if (!response.ok) return null;
+        return response.json();
+      },
+      enabled: season >= 2018,
+    });
 
-        if (!response.ok) {
-          setData(null);
-          return;
-        }
-
-        const result: QualifyingSectorResponse = await response.json();
-        setData(result);
-
-        // Auto-select top 2 drivers (P1 vs P2)
-        if (result.sectors.length >= 2) {
-          setDriver1Code(result.sectors[0].driver_code);
-          setDriver2Code(result.sectors[1].driver_code);
-        }
-      } catch {
-        setData(null);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [season, round]);
+  // Auto-select top 2 drivers when data loads
+  useEffect(() => {
+    if (data?.sectors && data.sectors.length >= 2) {
+      setDriver1Code(data.sectors[0].driver_code);
+      setDriver2Code(data.sectors[1].driver_code);
+    }
+  }, [data]);
 
   // Selected driver data
   const driver1 = useMemo(

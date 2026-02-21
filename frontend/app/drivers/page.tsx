@@ -10,7 +10,7 @@ import type { DriverStanding } from "@/lib/types";
 
 function DriverCard({ driver }: { driver: DriverStanding }) {
   return (
-    <div className="group bg-gradient-to-br from-bg-tertiary to-bg-elevated rounded-lg p-4 border border-gray-800 hover:border-gray-600 transition-all">
+    <div className="group bg-gradient-to-br from-bg-tertiary to-bg-elevated rounded-lg p-4 border border-border-primary hover:border-border-secondary transition-all">
       <Link
         href={`/drivers/${driver.driver_code}`}
         className="flex items-center gap-4"
@@ -36,7 +36,7 @@ function DriverCard({ driver }: { driver: DriverStanding }) {
           />
         ) : (
           <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-sm font-bold text-gray-400 border-2 bg-bg-secondary"
+            className="w-16 h-16 rounded-full flex items-center justify-center text-sm font-bold text-text-tertiary border-2 bg-bg-secondary"
             style={{
               borderColor: driver.team_color ? `#${driver.team_color}` : "#888",
             }}
@@ -50,7 +50,7 @@ function DriverCard({ driver }: { driver: DriverStanding }) {
           <h3 className="text-white font-bold text-lg truncate group-hover:text-red-500 transition-colors">
             {driver.full_name}
           </h3>
-          <div className="flex items-center gap-2 text-sm text-gray-400">
+          <div className="flex items-center gap-2 text-sm text-text-tertiary">
             <span className="font-mono">{driver.driver_code}</span>
             {driver.country_code && (
               <>
@@ -71,14 +71,14 @@ function DriverCard({ driver }: { driver: DriverStanding }) {
           <div className="text-2xl font-bold text-white">
             {driver.total_points}
           </div>
-          <div className="text-xs text-gray-500">points</div>
+          <div className="text-xs text-text-muted">points</div>
         </div>
       </Link>
 
       {/* Team Link - Clickable separately */}
       <Link
         href={`/constructors/${driver.team_name.replace(/ /g, "-")}`}
-        className="block text-sm text-gray-500 hover:text-red-500 transition-colors mt-2 truncate"
+        className="block text-sm text-text-muted hover:text-red-500 transition-colors mt-2 truncate"
         onClick={(e) => e.stopPropagation()}
       >
         {driver.team_name}
@@ -143,7 +143,7 @@ export default function DriversPage() {
               <select
                 value={selectedYear || ""}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="w-full sm:w-auto px-4 py-2 bg-bg-tertiary text-white border border-gray-700 rounded-lg focus:outline-none focus:border-red-500 transition-colors"
+                className="w-full sm:w-auto px-4 py-2 bg-bg-tertiary text-white border border-border-secondary rounded-lg focus:outline-none focus:border-red-500 transition-colors"
               >
                 {seasons?.map((year) => (
                   <option key={year} value={year}>
@@ -160,7 +160,7 @@ export default function DriversPage() {
                 placeholder="Search drivers, constructors, or countries..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 bg-bg-tertiary text-white border border-gray-700 rounded-lg focus:outline-none focus:border-red-500 transition-colors placeholder-gray-500"
+                className="w-full px-4 py-2 bg-bg-tertiary text-white border border-border-secondary rounded-lg focus:outline-none focus:border-red-500 transition-colors placeholder-text-muted"
               />
             </div>
           </div>
@@ -168,7 +168,7 @@ export default function DriversPage() {
           {/* Quick Year Jump */}
           {seasons && seasons.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              <span className="text-gray-400 text-sm self-center mr-2">
+              <span className="text-text-tertiary text-sm self-center mr-2">
                 Quick jump:
               </span>
               {seasons.slice(0, 5).map((year) => (
@@ -179,7 +179,7 @@ export default function DriversPage() {
                   className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                     selectedYear === year
                       ? "bg-red-500 text-white"
-                      : "bg-bg-tertiary text-gray-400 hover:text-white hover:bg-bg-elevated"
+                      : "bg-bg-tertiary text-text-tertiary hover:text-white hover:bg-bg-elevated"
                   }`}
                 >
                   {year}
@@ -205,7 +205,7 @@ export default function DriversPage() {
         {/* Drivers Grid */}
         {!isLoading && filteredDrivers && filteredDrivers.length > 0 && (
           <div>
-            <div className="mb-4 text-gray-400">
+            <div className="mb-4 text-text-tertiary">
               {filteredDrivers.length} driver
               {filteredDrivers.length !== 1 ? "s" : ""} in {selectedYear}
             </div>
@@ -220,7 +220,7 @@ export default function DriversPage() {
         {/* No Results */}
         {!isLoading && filteredDrivers && filteredDrivers.length === 0 && (
           <div className="bg-bg-tertiary rounded-lg p-8 text-center">
-            <p className="text-gray-400 text-lg">
+            <p className="text-text-tertiary text-lg">
               No drivers found matching "{searchQuery}"
             </p>
           </div>

@@ -1,29 +1,9 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { apiHeaders, apiUrl } from "@/lib/api";
-
-type LapData = {
-  lap_number: number;
-  compound: string | null;
-  stint: number | null;
-  tyre_life: number | null;
-};
-
-type DriverLapTimes = {
-  driver_code: string;
-  full_name: string;
-  team_color: string | null;
-  final_position: number | null;
-  laps: LapData[];
-};
-
-type LapTimesResponse = {
-  year: number;
-  round: number;
-  event_name: string;
-  drivers: DriverLapTimes[];
-};
+import type { LapData, LapTimesResponse } from "@/lib/types";
 
 type Stint = {
   stintNumber: number;
@@ -50,9 +30,9 @@ const COMPOUND_COLORS: Record<
     text: "text-yellow-400",
   },
   HARD: {
-    bg: "bg-gray-300/20",
-    border: "border-gray-400",
-    text: "text-gray-300",
+    bg: "bg-bg-elevated/20",
+    border: "border-border-secondary",
+    text: "text-text-secondary",
   },
   INTERMEDIATE: {
     bg: "bg-green-500/20",
@@ -118,8 +98,6 @@ export default function TyreStintChart({
   round,
   isSprint = false,
 }: TyreStintChartProps) {
-  const [data, setData] = useState<LapTimesResponse | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -137,48 +115,31 @@ export default function TyreStintChart({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const { data, isLoading: loading } = useQuery<LapTimesResponse | null>({
+    queryKey: ["tyre-stint", season, round, isSprint],
+    queryFn: async () => {
+      const endpoint = isSprint
+        ? `/api/results/${season}/${round}/sprint/lap-times`
+        : `/api/results/${season}/${round}/lap-times`;
+      const response = await fetch(apiUrl(endpoint), {
+        cache: "no-store",
+        headers: apiHeaders(),
+      });
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: season >= 2018,
+  });
+
+  // Auto-select top 10 drivers when data loads
   useEffect(() => {
-    if (season < 2018) {
-      setLoading(false);
-      setData(null);
-      return;
+    if (data?.drivers) {
+      const sorted = [...data.drivers].sort(
+        (a, b) => (a.final_position || 999) - (b.final_position || 999),
+      );
+      setSelectedDrivers(sorted.slice(0, 10).map((d) => d.driver_code));
     }
-
-    (async () => {
-      try {
-        setLoading(true);
-        const endpoint = isSprint
-          ? `/api/results/${season}/${round}/sprint/lap-times`
-          : `/api/results/${season}/${round}/lap-times`;
-        const response = await fetch(apiUrl(endpoint), {
-          cache: "no-store",
-          headers: apiHeaders(),
-        });
-
-        if (!response.ok) {
-          setData(null);
-          return;
-        }
-
-        const lapTimesData = await response.json();
-        setData(lapTimesData);
-
-        if (lapTimesData.drivers) {
-          const sorted = [...lapTimesData.drivers].sort(
-            (a: DriverLapTimes, b: DriverLapTimes) =>
-              (a.final_position || 999) - (b.final_position || 999),
-          );
-          setSelectedDrivers(
-            sorted.slice(0, 10).map((d: DriverLapTimes) => d.driver_code),
-          );
-        }
-      } catch {
-        setData(null);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [season, round, isSprint]);
+  }, [data]);
 
   const getDrivers = () => {
     if (!data?.drivers) return [];
