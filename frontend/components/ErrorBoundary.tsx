@@ -59,7 +59,7 @@ class ErrorBoundary extends Component<Props, State> {
               <h2 className="text-xl font-bold text-white mb-4">
                 Something went wrong
               </h2>
-              <p className="text-gray-400 mb-4">
+              <p className="text-text-tertiary mb-4">
                 An error occurred while loading this page.
               </p>
               <button

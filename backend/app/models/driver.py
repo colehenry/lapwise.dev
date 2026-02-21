@@ -25,8 +25,12 @@ class Driver(Base):
 
     # Core driver information
     full_name = Column(String, nullable=False)
-    driver_code = Column(String(3), nullable=True, unique=True)  # VER, HAM, LEC, etc. (null for pre-2003 drivers without official codes)
-    jolpica_id = Column(String, nullable=True, unique=True, index=True)  # Jolpica/Ergast stable ID e.g. "fangio", "hamilton"
+    driver_code = Column(
+        String(3), nullable=True, unique=True
+    )  # VER, HAM, LEC, etc. (null for pre-2003 drivers without official codes)
+    jolpica_id = Column(
+        String, nullable=True, unique=True, index=True
+    )  # Jolpica/Ergast stable ID e.g. "fangio", "hamilton"
     driver_number = Column(Integer, nullable=True)  # Permanent number (e.g., 1, 44, 16)
     country_code = Column(String(3), nullable=True)  # NED, GBR, MON, etc.
 

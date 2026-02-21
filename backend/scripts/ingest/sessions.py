@@ -1,4 +1,3 @@
-
 from sqlalchemy import select, delete as sql_delete
 from app.models import Session, SessionResult, Lap, Weather, TrackStatus
 
@@ -25,12 +24,20 @@ def ingest_session_metadata(db, event, circuit_id, year, session_type, session_d
 
     if existing_session:
         # Wipe all child data so this run produces a clean, correct dataset
-        db.execute(sql_delete(SessionResult).where(SessionResult.session_id == existing_session.id))
+        db.execute(
+            sql_delete(SessionResult).where(
+                SessionResult.session_id == existing_session.id
+            )
+        )
         db.execute(sql_delete(Lap).where(Lap.session_id == existing_session.id))
         db.execute(sql_delete(Weather).where(Weather.session_id == existing_session.id))
-        db.execute(sql_delete(TrackStatus).where(TrackStatus.session_id == existing_session.id))
+        db.execute(
+            sql_delete(TrackStatus).where(TrackStatus.session_id == existing_session.id)
+        )
         db.commit()
-        print(f"  ↻ Cleared existing data: {year} R{round_num} {session_type} (re-ingesting)")
+        print(
+            f"  ↻ Cleared existing data: {year} R{round_num} {session_type} (re-ingesting)"
+        )
         return existing_session.id, True
 
     print(f"  + Creating session: {year} R{round_num} {session_type} - {event_name}")

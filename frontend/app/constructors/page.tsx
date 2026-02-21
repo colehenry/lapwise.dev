@@ -12,7 +12,7 @@ function ConstructorCard({ team }: { team: ConstructorStanding }) {
   return (
     <Link
       href={`/constructors/${teamNameUrl}`}
-      className="group bg-gradient-to-br from-bg-tertiary to-bg-elevated rounded-lg p-4 border border-gray-800 hover:border-gray-600 transition-all hover:scale-105"
+      className="group bg-gradient-to-br from-bg-tertiary to-bg-elevated rounded-lg p-4 border border-border-primary hover:border-border-secondary transition-all hover:scale-105"
     >
       <div className="flex items-center gap-4">
         {/* Position Badge */}
@@ -34,7 +34,7 @@ function ConstructorCard({ team }: { team: ConstructorStanding }) {
           <h3 className="text-white font-bold text-lg truncate group-hover:text-red-500 transition-colors">
             {team.team_name}
           </h3>
-          <div className="flex items-center gap-2 text-sm text-gray-400">
+          <div className="flex items-center gap-2 text-sm text-text-tertiary">
             <span className="font-mono">
               P{team.position} • {team.total_points} pts
             </span>
@@ -46,7 +46,7 @@ function ConstructorCard({ team }: { team: ConstructorStanding }) {
           <div className="text-2xl font-bold text-white">
             {team.total_points}
           </div>
-          <div className="text-xs text-gray-500">points</div>
+          <div className="text-xs text-text-muted">points</div>
         </div>
       </div>
     </Link>
@@ -103,7 +103,7 @@ export default function ConstructorsPage() {
               <select
                 value={selectedYear || ""}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="w-full sm:w-auto px-4 py-2 bg-bg-tertiary text-white border border-gray-700 rounded-lg focus:outline-none focus:border-red-500 transition-colors"
+                className="w-full sm:w-auto px-4 py-2 bg-bg-tertiary text-white border border-border-secondary rounded-lg focus:outline-none focus:border-red-500 transition-colors"
               >
                 {seasons?.map((year) => (
                   <option key={year} value={year}>
@@ -120,7 +120,7 @@ export default function ConstructorsPage() {
                 placeholder="Search constructors..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 bg-bg-tertiary text-white border border-gray-700 rounded-lg focus:outline-none focus:border-red-500 transition-colors placeholder-gray-500"
+                className="w-full px-4 py-2 bg-bg-tertiary text-white border border-border-secondary rounded-lg focus:outline-none focus:border-red-500 transition-colors placeholder-text-muted"
               />
             </div>
           </div>
@@ -128,7 +128,7 @@ export default function ConstructorsPage() {
           {/* Quick Year Jump */}
           {seasons && seasons.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              <span className="text-gray-400 text-sm self-center mr-2">
+              <span className="text-text-tertiary text-sm self-center mr-2">
                 Quick jump:
               </span>
               {seasons.slice(0, 5).map((year) => (
@@ -139,7 +139,7 @@ export default function ConstructorsPage() {
                   className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                     selectedYear === year
                       ? "bg-red-500 text-white"
-                      : "bg-bg-tertiary text-gray-400 hover:text-white hover:bg-bg-elevated"
+                      : "bg-bg-tertiary text-text-tertiary hover:text-white hover:bg-bg-elevated"
                   }`}
                 >
                   {year}
@@ -167,7 +167,7 @@ export default function ConstructorsPage() {
           filteredConstructors &&
           filteredConstructors.length > 0 && (
             <div>
-              <div className="mb-4 text-gray-400">
+              <div className="mb-4 text-text-tertiary">
                 {filteredConstructors.length} constructor
                 {filteredConstructors.length !== 1 ? "s" : ""} in {selectedYear}
               </div>
@@ -184,7 +184,7 @@ export default function ConstructorsPage() {
           filteredConstructors &&
           filteredConstructors.length === 0 && (
             <div className="bg-bg-tertiary rounded-lg p-8 text-center">
-              <p className="text-gray-400 text-lg">
+              <p className="text-text-tertiary text-lg">
                 No constructors found matching "{searchQuery}"
               </p>
             </div>

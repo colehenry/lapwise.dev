@@ -1,62 +1,51 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import LapTimeByLapGraph from "@/components/LapTimeByLapGraph";
+import { TrianglePattern } from "@/components/Patterns";
+import PitStrategyTimeline from "@/components/PitStrategyTimeline";
+import QualifyingSectorComparison from "@/components/QualifyingSectorComparison";
 import SessionDetail from "@/components/SessionDetail";
+import SpeedTrapChart from "@/components/SpeedTrapChart";
+import TyreDegradationChart from "@/components/TyreDegradationChart";
+import WeatherChart from "@/components/WeatherChart";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import type { SessionResultsResponse } from "@/lib/types";
 
-// Type definitions matching our API responses
-type CircuitInfo = {
-  id: number;
-  name: string;
-  location: string;
-  country: string;
-  track_length_km: number | null;
-  track_map_url: string | null;
+type TabType =
+  | "race"
+  | "qualifying"
+  | "sprint"
+  | "sprint-qualifying"
+  | "strategy"
+  | "analysis";
+
+const TAB_LABELS: Record<TabType, string> = {
+  race: "Race",
+  qualifying: "Qualifying",
+  sprint: "Sprint",
+  "sprint-qualifying": "Sprint Quali",
+  strategy: "Strategy",
+  analysis: "Analysis",
 };
 
-type DriverInfo = {
-  driver_number: number | null;
-  driver_code: string;
-  full_name: string;
-  country_code: string | null;
-};
-
-type TeamInfo = {
-  name: string;
-  team_color: string | null;
-};
-
-type SessionResultDetail = {
-  position: number | null;
-  status: string;
-  headshot_url: string | null;
-  driver: DriverInfo;
-  team: TeamInfo;
-  grid_position: number | null;
-  points: number | null;
-  laps_completed: number | null;
-  time_seconds: number | null;
-  fastest_lap: boolean;
-  q1_time_seconds: number | null;
-  q2_time_seconds: number | null;
-  q3_time_seconds: number | null;
-};
-
-type SessionInfo = {
-  id: number;
-  year: number;
-  round: number;
-  session_type: string;
-  event_name: string;
-  date: string;
-  circuit: CircuitInfo;
-};
-
-type SessionResultsResponse = {
-  session: SessionInfo;
-  results: SessionResultDetail[];
-};
+async function fetchSession(
+  season: string,
+  round: string,
+  suffix?: string,
+): Promise<SessionResultsResponse | null> {
+  const path = suffix
+    ? `/api/results/${season}/${round}/${suffix}`
+    : `/api/results/${season}/${round}`;
+  const res = await fetch(apiUrl(path), {
+    cache: "no-store",
+    headers: apiHeaders(),
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
 
 export default function RoundDetailPage() {
   const params = useParams();
@@ -64,101 +53,89 @@ export default function RoundDetailPage() {
   const router = useRouter();
   const season = params.season as string;
   const round = params.round as string;
-  const initialMode =
-    searchParams.get("mode") === "qualifying" ? "qualifying" : "race";
+  const seasonNum = Number.parseInt(season, 10);
+  const roundNum = Number.parseInt(round, 10);
 
-  const [data, setData] = useState<SessionResultsResponse | null>(null);
-  const [qualifyingData, setQualifyingData] =
-    useState<SessionResultsResponse | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [sessionType, setSessionType] = useState<"race" | "qualifying">(
-    initialMode,
-  );
+  // Parse initial tab from URL
+  const urlTab = searchParams.get("tab") as TabType | null;
+  const [activeTab, setActiveTab] = useState<TabType>(urlTab || "race");
 
   // Scroll to top on page load
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Update sessionType if initialMode changes (e.g. back/forward navigation)
+  // Sync tab from URL changes (back/forward nav)
   useEffect(() => {
-    if (initialMode) {
-      setSessionType(initialMode);
+    if (urlTab) {
+      setActiveTab(urlTab);
     }
-  }, [initialMode]);
+  }, [urlTab]);
 
-  useEffect(() => {
-    if (!season || !round) return;
+  const enabled = !!season && !!round;
 
-    let isMounted = true;
+  const { data: raceData, isLoading: raceLoading } = useQuery({
+    queryKey: ["round-race", season, round],
+    queryFn: () => fetchSession(season, round),
+    enabled,
+  });
 
-    (async () => {
-      try {
-        setLoading(true);
-        // Fetch race data first
-        const response = await fetch(
-          apiUrl(`/api/results/${season}/${round}`),
-          {
-            cache: "no-store",
-            headers: apiHeaders(),
-          },
-        );
-        const sessionData = await response.json();
+  const { data: qualifyingData } = useQuery({
+    queryKey: ["round-qualifying", season, round],
+    queryFn: () => fetchSession(season, round, "qualifying"),
+    enabled,
+  });
 
-        if (!isMounted) return;
-        setData(sessionData);
+  const { data: sprintData } = useQuery({
+    queryKey: ["round-sprint", season, round],
+    queryFn: () => fetchSession(season, round, "sprint"),
+    enabled,
+  });
 
-        // Prefetch qualifying data in background
-        fetch(apiUrl(`/api/results/${season}/${round}/qualifying`), {
-          cache: "no-store",
-          headers: apiHeaders(),
-        })
-          .then((res) => {
-            if (!res.ok) throw new Error("Qualifying data not found");
-            return res.json();
-          })
-          .then((qualData) => {
-            if (isMounted) {
-              setQualifyingData(qualData);
-            }
-          })
-          .catch((error) => {
-            // Silently fail - qualifying data is optional
-            if (isMounted) {
-              console.log("Qualifying data not available:", error);
-            }
-          });
-      } catch (error) {
-        if (isMounted) {
-          console.error("Failed to fetch round details:", error);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    })();
+  const { data: sprintQualData } = useQuery({
+    queryKey: ["round-sprint-qualifying", season, round],
+    queryFn: () => fetchSession(season, round, "sprint-qualifying"),
+    enabled,
+  });
 
-    return () => {
-      isMounted = false;
-    };
-  }, [season, round]);
+  const loading = raceLoading;
+  const hasSprint = !!sprintData;
+
+  // Update URL when tab changes
+  const switchTab = (tab: TabType) => {
+    setActiveTab(tab);
+    const url =
+      tab === "race"
+        ? `/results/${season}/${round}`
+        : `/results/${season}/${round}?tab=${tab}`;
+    router.replace(url, { scroll: false });
+  };
+
+  // Available tabs (sprint tabs only if sprint data exists)
+  const availableTabs: TabType[] = ["race", "qualifying"];
+  if (hasSprint) {
+    availableTabs.push("sprint");
+    if (sprintQualData) availableTabs.push("sprint-qualifying");
+  }
+  availableTabs.push("strategy", "analysis");
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#15151e] p-8">
+      <main className="min-h-screen bg-bg-secondary p-8">
         <div className="max-w-7xl mx-auto">
-          <p className="text-center text-gray-400">Loading race details...</p>
+          <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
+            Loading race weekend...
+          </p>
         </div>
       </main>
     );
   }
 
-  if (!data) {
+  if (!raceData) {
     return (
-      <main className="min-h-screen bg-[#15151e] p-8">
+      <main className="min-h-screen bg-bg-secondary p-8">
         <div className="max-w-7xl mx-auto">
-          <p className="text-center text-red-400">
+          <p className="text-center text-red-400 font-mono tracking-widest text-xs uppercase">
             Failed to load race details.
           </p>
         </div>
@@ -166,17 +143,202 @@ export default function RoundDetailPage() {
     );
   }
 
-  // Get the current data to display based on view mode
-  const displayData = sessionType === "qualifying" ? qualifyingData : data;
+  // Determine which data to pass to SessionDetail based on active tab
+  const getSessionDetailData = (): SessionResultsResponse | null => {
+    switch (activeTab) {
+      case "qualifying":
+        return qualifyingData ?? null;
+      case "sprint":
+        return sprintData ?? null;
+      case "sprint-qualifying":
+        return sprintQualData ?? null;
+      default:
+        return raceData ?? null;
+    }
+  };
+
+  const getQualifyingDataForTab = (): SessionResultsResponse | null => {
+    if (activeTab === "sprint") return sprintQualData ?? null;
+    return qualifyingData ?? null;
+  };
+
+  // Check if the active tab is a results tab (shows SessionDetail)
+  const isResultsTab = [
+    "race",
+    "qualifying",
+    "sprint",
+    "sprint-qualifying",
+  ].includes(activeTab);
+  const isSprint = activeTab === "sprint" || activeTab === "sprint-qualifying";
+  const sessionTypeForDetail =
+    activeTab === "qualifying" || activeTab === "sprint-qualifying"
+      ? "qualifying"
+      : "race";
 
   return (
-    <SessionDetail
-      data={displayData}
-      qualifyingData={qualifyingData}
-      season={season}
-      sessionType={sessionType}
-      onSessionTypeChange={setSessionType}
-      onBack={() => router.push(`/results/${season}`)}
-    />
+    <main className="min-h-screen bg-bg-secondary">
+      {/* Sticky Header with Tabs */}
+      <div className="sticky top-0 z-40 bg-bg-secondary border-b border-border-primary">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="h-16 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => router.push(`/results/${season}`)}
+                className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center gap-2"
+              >
+                <span>←</span>
+                <span className="hidden sm:inline">BACK TO {season}</span>
+              </button>
+              <div className="flex flex-col">
+                <span className="text-text-primary font-mono text-sm font-bold leading-none">
+                  ROUND {String(raceData.session.round).padStart(2, "0")}
+                </span>
+                <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
+                  {raceData.session.event_name.replace("Grand Prix", "GP")}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Tab Bar */}
+          <div className="flex items-center gap-1 -mb-px overflow-x-auto pb-0">
+            {availableTabs.map((tab) => {
+              const isActive = activeTab === tab;
+              const isDisabled =
+                (tab === "qualifying" && !qualifyingData) ||
+                (tab === "sprint" && !sprintData) ||
+                (tab === "sprint-qualifying" && !sprintQualData);
+
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => !isDisabled && switchTab(tab)}
+                  disabled={isDisabled}
+                  className={`px-4 py-2.5 text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 border-b-2 whitespace-nowrap ${
+                    isActive
+                      ? "border-purple-500 text-purple-300"
+                      : isDisabled
+                        ? "border-transparent text-text-muted/40 cursor-not-allowed"
+                        : "border-transparent text-text-muted hover:text-text-secondary hover:border-border-primary"
+                  }`}
+                >
+                  {TAB_LABELS[tab]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      <div className="max-w-7xl mx-auto">
+        {/* Race / Qualifying / Sprint tabs — show SessionDetail */}
+        {isResultsTab && (
+          <SessionDetail
+            data={getSessionDetailData()}
+            qualifyingData={getQualifyingDataForTab()}
+            season={season}
+            isSprint={isSprint}
+            sessionType={sessionTypeForDetail}
+            onSessionTypeChange={undefined}
+            onBack={() => router.push(`/results/${season}`)}
+            hideHeader={true}
+          />
+        )}
+
+        {/* Strategy Tab */}
+        {activeTab === "strategy" && (
+          <div className="p-6 space-y-6">
+            {/* Pit Strategy Timeline */}
+            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                <TrianglePattern id="pit-strategy-triangles" />
+                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                  Pit Strategy
+                </span>
+              </div>
+              <div className="p-6">
+                <PitStrategyTimeline season={seasonNum} round={roundNum} />
+              </div>
+            </div>
+
+            {/* Tyre Degradation */}
+            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                <TrianglePattern id="tyre-deg-triangles" />
+                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                  Tyre Degradation
+                </span>
+              </div>
+              <div className="p-6">
+                <TyreDegradationChart season={seasonNum} round={roundNum} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Analysis Tab */}
+        {activeTab === "analysis" && (
+          <div className="p-6 space-y-6">
+            {/* Position Battle */}
+            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                <TrianglePattern id="analysis-lap-triangles" />
+                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                  Lap Analysis
+                </span>
+              </div>
+              <div className="p-6">
+                <LapTimeByLapGraph season={seasonNum} round={roundNum} />
+              </div>
+            </div>
+
+            {/* Qualifying Sector Comparison */}
+            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                <TrianglePattern id="qualifying-sector-triangles" />
+                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                  Qualifying Sectors
+                </span>
+              </div>
+              <div className="p-6">
+                <QualifyingSectorComparison
+                  season={seasonNum}
+                  round={roundNum}
+                />
+              </div>
+            </div>
+
+            {/* Speed Traps */}
+            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                <TrianglePattern id="speed-trap-triangles" />
+                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                  Speed Traps
+                </span>
+              </div>
+              <div className="p-6">
+                <SpeedTrapChart season={seasonNum} round={roundNum} />
+              </div>
+            </div>
+
+            {/* Weather */}
+            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                <TrianglePattern id="weather-triangles" />
+                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                  Weather Conditions
+                </span>
+              </div>
+              <div className="p-6">
+                <WeatherChart season={seasonNum} round={roundNum} />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
   );
 }

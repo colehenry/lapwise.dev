@@ -1,6 +1,6 @@
-
 from sqlalchemy import select
 from app.models import Circuit
+
 
 def ingest_circuit(db, event):
     """

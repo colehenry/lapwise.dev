@@ -28,10 +28,10 @@ async function fetchCircuits(): Promise<CircuitsResponse> {
 function CircuitCard({ circuit }: { circuit: CircuitInfo }) {
   return (
     <Link href={`/circuits/${circuit.id}`} className="block h-full">
-      <div className="group bg-gradient-to-br from-bg-tertiary to-bg-elevated rounded-lg p-4 border border-gray-800 hover:border-gray-600 transition-all hover:scale-105 h-full">
+      <div className="group bg-gradient-to-br from-bg-tertiary to-bg-elevated rounded-lg p-4 border border-border-primary hover:border-border-secondary transition-all hover:scale-105 h-full">
         <div className="flex items-center gap-4">
           {/* Circuit Icon */}
-          <div className="flex-shrink-0 w-24 h-24 rounded-xl bg-bg-secondary flex items-center justify-center border-4 border-gray-700 group-hover:border-red-500 transition-colors p-2">
+          <div className="flex-shrink-0 w-24 h-24 rounded-xl bg-bg-secondary flex items-center justify-center border-4 border-border-secondary group-hover:border-red-500 transition-colors p-2">
             <Image
               src={`/track-maps/${circuit.id}.png`}
               alt={`${circuit.name} track map`}
@@ -46,7 +46,7 @@ function CircuitCard({ circuit }: { circuit: CircuitInfo }) {
             <h3 className="text-white font-bold text-lg truncate group-hover:text-red-500 transition-colors">
               {circuit.name}
             </h3>
-            <div className="flex items-center gap-2 text-sm text-gray-400">
+            <div className="flex items-center gap-2 text-sm text-text-tertiary">
               <span>{circuit.location}</span>
               <span>•</span>
               <span className="flex items-center gap-1">
@@ -60,7 +60,7 @@ function CircuitCard({ circuit }: { circuit: CircuitInfo }) {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+            <div className="flex items-center gap-2 text-xs text-text-muted mt-1">
               <span>
                 {circuit.first_year === circuit.most_recent_year
                   ? circuit.first_year
@@ -74,7 +74,7 @@ function CircuitCard({ circuit }: { circuit: CircuitInfo }) {
             <div className="text-2xl font-bold text-white">
               {circuit.total_races}
             </div>
-            <div className="text-xs text-gray-500">races</div>
+            <div className="text-xs text-text-muted">races</div>
           </div>
         </div>
       </div>
@@ -119,13 +119,13 @@ export default function TracksPage() {
               placeholder="Search circuits, locations, or countries..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 bg-bg-tertiary text-white border border-gray-700 rounded-lg focus:outline-none focus:border-red-500 transition-colors placeholder-gray-500"
+              className="w-full px-4 py-2 bg-bg-tertiary text-white border border-border-secondary rounded-lg focus:outline-none focus:border-red-500 transition-colors placeholder-text-muted"
             />
           </div>
 
           {/* Stats */}
           {circuitsData && (
-            <div className="text-gray-400 text-sm">
+            <div className="text-text-tertiary text-sm">
               {filteredCircuits.length} circuit
               {filteredCircuits.length !== 1 ? "s" : ""} across F1 history
             </div>
@@ -157,7 +157,7 @@ export default function TracksPage() {
         {/* No Results */}
         {!isLoading && filteredCircuits && filteredCircuits.length === 0 && (
           <div className="bg-bg-tertiary rounded-lg p-8 text-center">
-            <p className="text-gray-400 text-lg">
+            <p className="text-text-tertiary text-lg">
               No circuits found matching "{searchQuery}"
             </p>
           </div>

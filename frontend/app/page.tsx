@@ -1,46 +1,135 @@
 import Link from "next/link";
+import LatestRaceWeekend from "@/components/LatestRaceWeekend";
 import NextRaceBanner from "@/components/NextRaceBanner";
-import Badge from "@/components/ui/Badge";
-import Button from "@/components/ui/Button";
-import Card from "@/components/ui/Card";
-import Section from "@/components/ui/Section";
+import TiltCard from "@/components/ui/TiltCard";
+
+function GridPatternHero() {
+  return (
+    <svg
+      className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.06] pointer-events-none"
+      aria-hidden="true"
+    >
+      <title>Grid pattern</title>
+      <defs>
+        <pattern
+          id="hero-grid"
+          width="20"
+          height="20"
+          patternUnits="userSpaceOnUse"
+        >
+          <path
+            d="M 20 0 L 0 0 0 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.3"
+          />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#hero-grid)" />
+    </svg>
+  );
+}
+
+function CrosshairPattern() {
+  return (
+    <svg
+      className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.08] pointer-events-none"
+      viewBox="0 0 400 300"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
+      <title>Crosshair pattern</title>
+      <circle
+        cx="200"
+        cy="150"
+        r="40"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="0.5"
+      />
+      <circle
+        cx="200"
+        cy="150"
+        r="80"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="0.4"
+      />
+      <circle
+        cx="200"
+        cy="150"
+        r="120"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="0.3"
+      />
+      <line
+        x1="0"
+        y1="150"
+        x2="400"
+        y2="150"
+        stroke="currentColor"
+        strokeWidth="0.3"
+      />
+      <line
+        x1="200"
+        y1="0"
+        x2="200"
+        y2="300"
+        stroke="currentColor"
+        strokeWidth="0.3"
+      />
+    </svg>
+  );
+}
 
 export default function Home() {
   return (
     <div className="bg-bg-primary">
       {/* Hero Section */}
-      <Section
-        spacing="xl"
-        background="gradient"
-        className="relative overflow-hidden"
-      >
-        {/* Background decoration */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500 rounded-full blur-[128px]" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-red-500 rounded-full blur-[128px]" />
+      <section className="relative overflow-hidden bg-bg-secondary min-h-[70vh] flex items-center">
+        <GridPatternHero />
+
+        {/* Subtle glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-purple-500 rounded-full blur-[160px] opacity-15" />
+          <div className="absolute bottom-1/4 left-1/3 w-48 h-48 bg-red-500 rounded-full blur-[120px] opacity-10" />
         </div>
 
-        <div className="relative z-10 text-center max-w-4xl mx-auto">
-          <Badge variant="purple" size="lg" className="mb-6">
-            Formula 1 Analytics
-          </Badge>
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary mb-6 animate-fadeIn">
-            <span className="text-purple-400">Lap</span>
-            <span className="text-text-primary">wise</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-text-tertiary mb-8 animate-slideUp">
-            Dive deep into the story behind every race, every lap, every
-            millisecond.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slideUp">
-            <Button variant="primary" size="lg" className="group">
-              <Link href="/results" className="flex items-center">
+        <div className="relative z-10 max-w-5xl mx-auto px-6 py-24 w-full">
+          <div className="space-y-6">
+            {/* System label */}
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+              <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                Formula 1 Analytics Platform
+              </span>
+            </div>
+
+            {/* Title */}
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
+              <span className="text-purple-400">Lap</span>
+              <span className="text-text-primary">wise</span>
+            </h1>
+
+            {/* Tagline */}
+            <p className="text-lg md:text-xl text-text-tertiary max-w-xl leading-relaxed">
+              Every race, every lap, every millisecond — from 1950 to today.
+            </p>
+
+            {/* CTA */}
+            <div className="flex items-center gap-4 pt-4">
+              <Link
+                href="/results"
+                className="inline-flex items-center gap-2 bg-purple-500/15 border border-purple-500 text-purple-300 font-mono text-sm font-bold tracking-widest uppercase px-6 py-3 rounded-sm hover:bg-purple-500/25 transition-colors duration-150"
+              >
                 Explore Results
                 <svg
-                  className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-200"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <title>Arrow right</title>
                   <path
@@ -51,261 +140,108 @@ export default function Home() {
                   />
                 </svg>
               </Link>
-            </Button>
-            <Button variant="secondary" size="lg">
-              <Link href="/about">Learn More</Link>
-            </Button>
-          </div>
+            </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-8 mt-16 max-w-2xl mx-auto">
-            <div>
-              <p className="text-3xl font-bold text-purple-400">74+</p>
-              <p className="text-text-tertiary text-sm mt-1">Seasons</p>
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-purple-400">1000+</p>
-              <p className="text-text-tertiary text-sm mt-1">Races</p>
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-purple-400">Real-time</p>
-              <p className="text-text-tertiary text-sm mt-1">Telemetry</p>
+            {/* Stats row */}
+            <div className="flex items-center gap-8 pt-8 border-t border-border-primary mt-8">
+              <div>
+                <p className="text-2xl font-bold text-purple-400 font-mono">
+                  74+
+                </p>
+                <p className="text-[10px] text-text-muted tracking-widest uppercase font-mono font-bold">
+                  Seasons
+                </p>
+              </div>
+              <div className="w-px h-8 bg-border-primary" />
+              <div>
+                <p className="text-2xl font-bold text-purple-400 font-mono">
+                  1000+
+                </p>
+                <p className="text-[10px] text-text-muted tracking-widest uppercase font-mono font-bold">
+                  Races
+                </p>
+              </div>
+              <div className="w-px h-8 bg-border-primary" />
+              <div>
+                <p className="text-2xl font-bold text-purple-400 font-mono">
+                  Live
+                </p>
+                <p className="text-[10px] text-text-muted tracking-widest uppercase font-mono font-bold">
+                  Telemetry
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </Section>
+      </section>
 
       {/* Next Race Banner */}
       <NextRaceBanner />
 
-      {/* Features Section */}
-      <Section spacing="lg" background="secondary">
-        <h2 className="text-3xl font-bold text-text-primary text-center mb-12">
-          Everything You Need
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card variant="interactive" padding="lg">
-            <div className="w-12 h-12 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-4">
-              <svg
-                className="w-6 h-6 text-purple-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <title>Championship icon</title>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-text-primary mb-2">
-              Championship Standings
-            </h3>
-            <p className="text-text-tertiary">
-              Track driver and constructor standings throughout the season with
-              detailed points breakdowns.
-            </p>
-          </Card>
+      {/* Latest Race Weekend */}
+      <LatestRaceWeekend />
 
-          <Card variant="interactive" padding="lg">
-            <div className="w-12 h-12 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
-              <svg
-                className="w-6 h-6 text-red-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <title>Telemetry icon</title>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-text-primary mb-2">
-              Telemetry Data
-            </h3>
-            <p className="text-text-tertiary">
-              Explore lap times, sector performance, and detailed telemetry
-              analysis for every session.
-            </p>
-          </Card>
-
-          <Card variant="interactive" padding="lg">
-            <div className="w-12 h-12 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-4">
-              <svg
-                className="w-6 h-6 text-purple-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <title>Driver profiles icon</title>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-text-primary mb-2">
-              Driver Profiles
-            </h3>
-            <p className="text-text-tertiary">
-              Comprehensive statistics and career histories for every F1 driver
-              past and present.
-            </p>
-          </Card>
-        </div>
-      </Section>
-
-      {/* News & Updates Section */}
-      <Section spacing="lg" background="primary">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-3xl font-bold text-text-primary mb-2">
-              News & Updates
-            </h2>
-            <p className="text-text-tertiary">
-              Stay up to date with the latest from Lapwise
-            </p>
-          </div>
-          <Link href="/blog">
-            <Button variant="ghost">
-              View All
-              <svg
-                className="w-4 h-4 ml-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <title>Arrow right</title>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </Button>
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[
-            {
-              title: "2024 Season Data Now Available",
-              date: "January 15, 2026",
-              category: "Update",
-              excerpt:
-                "Complete telemetry and race results for the 2024 F1 season are now available.",
-            },
-            {
-              title: "New Driver Profile Features",
-              date: "January 10, 2026",
-              category: "Feature",
-              excerpt:
-                "Enhanced driver statistics with historical performance graphs and career highlights.",
-            },
-            {
-              title: "Improved Lap Time Analysis",
-              date: "January 5, 2026",
-              category: "Enhancement",
-              excerpt:
-                "New visualization tools for comparing lap times and tire strategies.",
-            },
-          ].map((article) => (
-            <Card key={article.title} variant="interactive" padding="none">
-              <div className="h-48 bg-gradient-to-br from-purple-500/20 to-red-500/20 flex items-center justify-center">
-                <svg
-                  className="w-16 h-16 text-purple-300"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <title>Article icon</title>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                  />
-                </svg>
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <Badge variant="purple" size="sm">
-                    {article.category}
-                  </Badge>
-                  <span className="text-text-muted text-xs">
-                    {article.date}
-                  </span>
-                </div>
-                <h3 className="text-lg font-bold text-text-primary mb-2">
-                  {article.title}
-                </h3>
-                <p className="text-text-tertiary text-sm mb-4">
-                  {article.excerpt}
-                </p>
+      {/* Feature Cards */}
+      <section className="bg-bg-primary py-16 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              {
+                label: "Standings",
+                desc: "Driver and constructor championship standings with points breakdowns.",
+                href: "/results",
+                icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
+              },
+              {
+                label: "Telemetry",
+                desc: "Lap times, sector performance, and session telemetry analysis.",
+                href: "/results",
+                icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6",
+              },
+              {
+                label: "Driver Profiles",
+                desc: "Career statistics and race histories for every F1 driver.",
+                href: "/drivers",
+                icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
+              },
+            ].map((feature) => (
+              <TiltCard key={feature.label}>
                 <Link
-                  href="/blog"
-                  className="text-purple-400 hover:text-purple-300 text-sm font-medium inline-flex items-center transition-colors duration-200"
+                  href={feature.href}
+                  className="block group bg-bg-tertiary border border-border-primary rounded-sm p-5 hover:border-purple-500 hover:shadow-purple transition-all duration-150 relative overflow-hidden h-full"
                 >
-                  Read more
-                  <svg
-                    className="w-4 h-4 ml-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <title>Arrow right</title>
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
+                  <CrosshairPattern />
+                  <div className="relative z-10">
+                    <div className="w-10 h-10 rounded-sm bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-3">
+                      <svg
+                        className="w-5 h-5 text-purple-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <title>{feature.label}</title>
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d={feature.icon}
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-sm font-semibold text-text-primary tracking-wide mb-1">
+                      {feature.label}
+                    </h3>
+                    <p className="text-xs text-text-muted leading-relaxed">
+                      {feature.desc}
+                    </p>
+                  </div>
                 </Link>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </Section>
-
-      {/* CTA Section */}
-      <Section
-        spacing="xl"
-        background="gradient"
-        className="relative overflow-hidden"
-      >
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500 rounded-full blur-[128px]" />
-        </div>
-
-        <div className="relative z-10 text-center max-w-3xl mx-auto">
-          <h2 className="text-4xl font-bold text-text-primary mb-4">
-            Ready to dive deeper?
-          </h2>
-          <p className="text-xl text-text-tertiary mb-8">
-            Explore comprehensive F1 analytics and telemetry data from over 70
-            years of racing history.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="primary" size="lg">
-              <Link href="/results">Explore Results</Link>
-            </Button>
-            <Button variant="secondary" size="lg">
-              <Link href="/contact">Get in Touch</Link>
-            </Button>
+              </TiltCard>
+            ))}
           </div>
         </div>
-      </Section>
+      </section>
     </div>
   );
 }
