@@ -1,9 +1,19 @@
 import type { Metadata } from "next";
+import { JetBrains_Mono, Outfit } from "next/font/google";
 import "./globals.css";
-import Footer from "@/components/Footer";
-import Navigation from "@/components/Navigation";
-import QueryProvider from "@/components/QueryProvider";
-import ScrollbarHandler from "@/components/ScrollbarHandler";
+import AppShell from "@/components/AppShell";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Lapwise - F1 Analytics & Telemetry",
@@ -18,13 +28,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">
-        <QueryProvider>
-          <ScrollbarHandler />
-          <Navigation />
-          <main className="pt-16 min-h-screen">{children}</main>
-          <Footer />
-        </QueryProvider>
+      <body
+        className={`antialiased ${outfit.variable} ${jetbrainsMono.variable}`}
+      >
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

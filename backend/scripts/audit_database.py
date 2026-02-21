@@ -265,10 +265,16 @@ class DatabaseAuditor:
             # Track status: 2018+ (F1 Live Timing only)
             # Messages:     2018+ (F1 Live Timing only)
             expect_results = session.session_type in [
-                "race", "qualifying", "sprint_race", "sprint_qualifying"
+                "race",
+                "qualifying",
+                "sprint_race",
+                "sprint_qualifying",
             ]
             expect_laps = year >= 1996 and session.session_type in [
-                "race", "qualifying", "sprint_race", "sprint_qualifying"
+                "race",
+                "qualifying",
+                "sprint_race",
+                "sprint_qualifying",
             ]
             expect_weather = year >= 1951
             expect_track_status = year >= 2018

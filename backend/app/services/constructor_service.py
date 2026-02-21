@@ -52,7 +52,7 @@ class ConstructorService:
 
         # Calculate statistics
         seasons = set()
-        races_set = set() # Group by race key
+        races_set = set()  # Group by race key
         total_wins = 0
         total_podiums = 0
         total_points = 0.0
@@ -113,11 +113,15 @@ class ConstructorService:
             return None
 
         # Get team mapping (year -> (id, color))
-        team_data_map = await ConstructorService._get_team_id_map(db, team_name_normalized)
+        team_data_map = await ConstructorService._get_team_id_map(
+            db, team_name_normalized
+        )
         team_ids = [tid for tid, _ in team_data_map.values()]
 
         # Get aggregated results
-        season_data = await ConstructorService._get_season_aggregated_results(db, team_ids)
+        season_data = await ConstructorService._get_season_aggregated_results(
+            db, team_ids
+        )
 
         if not season_data:
             return ConstructorSeasonHistoryResponse(
@@ -128,12 +132,12 @@ class ConstructorService:
         seasons = []
         for season_row in season_data:
             year = season_row.year
-            
+
             standings = await ConstructorService._get_season_standings(db, year)
-            
+
             championship_position = None
             team_id_for_year = team_data_map.get(year, (None, None))[0]
-            
+
             for idx, (t_id, _) in enumerate(standings):
                 if t_id == team_id_for_year:
                     championship_position = idx + 1
@@ -169,9 +173,11 @@ class ConstructorService:
             return None
 
         # Get team ID map
-        all_teams_result = await ConstructorService._get_all_teams_info(db, team_name_normalized)
+        all_teams_result = await ConstructorService._get_all_teams_info(
+            db, team_name_normalized
+        )
         team_data_map = {row.year: row.id for row in all_teams_result}
-        
+
         available_years = sorted(team_data_map.keys(), reverse=True)
         if not available_years:
             return ConstructorRaceHistoryResponse(
@@ -221,11 +227,15 @@ class ConstructorService:
         races = []
         for race_data_dict in races_dict.values():
             drivers_list = race_data_dict["drivers"]
-            
+
             driver_1_name = drivers_list[0]["name"] if len(drivers_list) > 0 else None
-            driver_1_position = drivers_list[0]["position"] if len(drivers_list) > 0 else None
+            driver_1_position = (
+                drivers_list[0]["position"] if len(drivers_list) > 0 else None
+            )
             driver_2_name = drivers_list[1]["name"] if len(drivers_list) > 1 else None
-            driver_2_position = drivers_list[1]["position"] if len(drivers_list) > 1 else None
+            driver_2_position = (
+                drivers_list[1]["position"] if len(drivers_list) > 1 else None
+            )
 
             races.append(
                 ConstructorRaceHistory(
@@ -269,13 +279,15 @@ class ConstructorService:
         return [row[0] for row in result.all()]
 
     @staticmethod
-    async def _get_team_id_map(db: AsyncSession, name: str) -> Dict[int, Tuple[int, str]]:
+    async def _get_team_id_map(
+        db: AsyncSession, name: str
+    ) -> Dict[int, Tuple[int, str]]:
         query = select(Team.id, Team.year, Team.team_color).where(
             func.lower(Team.name) == name.lower()
         )
         result = await db.execute(query)
         return {row.year: (row.id, row.team_color) for row in result.all()}
-    
+
     @staticmethod
     async def _get_all_teams_info(db: AsyncSession, name: str):
         query = select(Team.id, Team.year).where(func.lower(Team.name) == name.lower())
@@ -344,7 +356,9 @@ class ConstructorService:
         return [(row.id, row.total_points) for row in result.all()]
 
     @staticmethod
-    async def _get_races_in_range(db: AsyncSession, team_ids: List[int], start_year: int, end_year: int):
+    async def _get_races_in_range(
+        db: AsyncSession, team_ids: List[int], start_year: int, end_year: int
+    ):
         query = (
             select(
                 Session.year,

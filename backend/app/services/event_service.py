@@ -27,7 +27,7 @@ class EventService:
         today = datetime.now().date()
 
         upcoming = None
-        
+
         # Try current year first
         try:
             schedule = fastf1.get_event_schedule(current_year, include_testing=True)
@@ -43,7 +43,9 @@ class EventService:
 
             # If no upcoming events in current year, try next year
             if len(upcoming) == 0:
-                schedule = fastf1.get_event_schedule(current_year + 1, include_testing=True)
+                schedule = fastf1.get_event_schedule(
+                    current_year + 1, include_testing=True
+                )
                 all_events = schedule.sort_values("EventDate")
                 upcoming = all_events[
                     all_events["EventDate"].apply(

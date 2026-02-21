@@ -29,13 +29,15 @@ TEST_YEAR = 2017
 # Ingest full season (set to None to ingest all rounds)
 MAX_ROUNDS = None  # Changed from 2 to None for full season
 
-print(f"""
+print(
+    f"""
 ╔══════════════════════════════════════════════════════════╗
 ║  Pre-2018 Data Ingestion Test                            ║
 ║  Year: {TEST_YEAR}                                              ║
 ║  Rounds: Full season                                     ║
 ╚══════════════════════════════════════════════════════════╝
-""")
+"""
+)
 
 print("This test will:")
 print("  ✓ Ingest session metadata (circuits, sessions)")

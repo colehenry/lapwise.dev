@@ -51,6 +51,9 @@ class Session(Base):
     event_name = Column(String, nullable=False)  # "Bahrain Grand Prix"
     date = Column(Date, nullable=False)  # Session date
 
+    # YouTube race highlights video ID (e.g. "dQw4w9WgXcQ")
+    highlights_video_id = Column(String, nullable=True)
+
     # Foreign key to circuits table
     circuit_id = Column(
         Integer, ForeignKey("circuits.id", ondelete="RESTRICT"), nullable=False

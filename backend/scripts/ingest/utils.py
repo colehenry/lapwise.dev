@@ -1,4 +1,3 @@
-
 import os
 import json
 import time
@@ -8,6 +7,7 @@ from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.config import settings
+
 
 def write_failure_log(season_year, failures):
     """

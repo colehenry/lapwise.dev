@@ -14,11 +14,14 @@ from app.services.results_service import ResultsService
 from app.security import verify_api_key
 from app.schemas.result import (
     StandingsResponse,
+    QualifyingStandingsResponse,
     SeasonRoundsResponse,
     RoundSummary,
     SessionResultsResponse,
     PointsProgressionResponse,
     LapTimesResponse,
+    QualifyingSectorResponse,
+    WeatherResponse,
 )
 
 # Helper function for sanitizing floats
@@ -119,10 +122,35 @@ async def get_season_standings(
     return standings
 
 
+@router.get(
+    "/{season}/qualifying-standings", response_model=QualifyingStandingsResponse
+)
+async def get_season_qualifying_standings(
+    season: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Get driver and constructor qualifying championship standings for a season.
+
+    Calculates total qualifying points (P1=20, P2=19, etc.) for each driver and team.
+    Used for the /results/[season] page in qualifying view mode.
+    """
+    standings = await ResultsService.get_qualifying_standings(db, season)
+
+    if not standings:
+        raise HTTPException(
+            status_code=404, detail=f"No qualifying results found for season {season}"
+        )
+
+    return standings
+
+
 @router.get("/{season}/points-progression", response_model=PointsProgressionResponse)
 async def get_points_progression(
     season: int,
     mode: str = "drivers",
+    points_type: str = "race",
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -135,13 +163,21 @@ async def get_points_progression(
     Args:
         season: The year to get progression data for
         mode: Either 'drivers' or 'constructors' (default: 'drivers')
+        points_type: Either 'race' or 'qualifying' (default: 'race')
     """
     if mode not in ["drivers", "constructors"]:
         raise HTTPException(
             status_code=400, detail="Mode must be either 'drivers' or 'constructors'"
         )
 
-    progression = await ResultsService.get_points_progression(db, season, mode)
+    if points_type not in ["race", "qualifying"]:
+        raise HTTPException(
+            status_code=400, detail="points_type must be either 'race' or 'qualifying'"
+        )
+
+    progression = await ResultsService.get_points_progression(
+        db, season, mode, points_type
+    )
 
     if not progression:
         raise HTTPException(
@@ -246,6 +282,60 @@ async def get_sprint_details(
     return results
 
 
+@router.get(
+    "/{season}/{round}/qualifying/lap-times",
+    response_model=LapTimesResponse,
+)
+async def get_qualifying_lap_times(
+    season: int,
+    round: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Get lap-by-lap timing data for qualifying.
+
+    Returns all qualifying laps with sector times, speeds, and tyre data.
+    """
+    lap_times = await ResultsService.get_qualifying_lap_times(db, season, round)
+
+    if not lap_times:
+        raise HTTPException(
+            status_code=404,
+            detail=(f"No qualifying lap data for " f"season {season}, round {round}"),
+        )
+
+    return lap_times
+
+
+@router.get(
+    "/{season}/{round}/qualifying/sectors",
+    response_model=QualifyingSectorResponse,
+)
+async def get_qualifying_sectors(
+    season: int,
+    round: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Get best sector times per driver for qualifying.
+
+    Returns aggregated best S1/S2/S3 and lap time per driver.
+    """
+    sectors = await ResultsService.get_qualifying_sector_comparison(db, season, round)
+
+    if not sectors:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"No qualifying sector data for " f"season {season}, round {round}"
+            ),
+        )
+
+    return sectors
+
+
 @router.get("/{season}/{round}/qualifying", response_model=SessionResultsResponse)
 async def get_qualifying_details(
     season: int,
@@ -294,6 +384,32 @@ async def get_sprint_qualifying_details(
         )
 
     return results
+
+
+@router.get(
+    "/{season}/{round}/weather",
+    response_model=WeatherResponse,
+)
+async def get_weather_data(
+    season: int,
+    round: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Get weather data for a race session.
+
+    Returns time-series weather data (temp, humidity, rainfall).
+    """
+    weather = await ResultsService.get_weather_data(db, season, round)
+
+    if not weather:
+        raise HTTPException(
+            status_code=404,
+            detail=(f"No weather data for " f"season {season}, round {round}"),
+        )
+
+    return weather
 
 
 @router.get("/{season}/{round}", response_model=SessionResultsResponse)

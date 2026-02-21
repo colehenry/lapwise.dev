@@ -37,6 +37,7 @@ class SessionInfo(BaseModel):
     event_name: str
     date: date
     circuit: CircuitInfo
+    highlights_video_id: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -162,6 +163,58 @@ class StandingsResponse(BaseModel):
 
 
 # ============================================================================
+# Qualifying Standings Schemas (for /api/results/{season}/qualifying-standings)
+# ============================================================================
+
+
+class DriverQualifyingStanding(BaseModel):
+    """Individual driver's qualifying championship standing for a season"""
+
+    position: int
+    driver_code: str
+    full_name: str
+    country_code: Optional[str] = None
+    team_name: str
+    team_color: Optional[str] = None
+    total_qualifying_points: float
+    headshot_url: Optional[str] = None
+    poles: int
+    p2s: int
+    p3s: int
+
+    class Config:
+        from_attributes = True
+
+
+class ConstructorQualifyingStanding(BaseModel):
+    """Individual constructor's qualifying championship standing for a season"""
+
+    position: int
+    team_name: str
+    team_color: Optional[str] = None
+    total_qualifying_points: float
+    poles: int
+    p2s: int
+    p3s: int
+
+    class Config:
+        from_attributes = True
+
+
+class QualifyingStandingsResponse(BaseModel):
+    """
+    Complete qualifying standings response for GET /api/results/{season}/qualifying-standings.
+    """
+
+    year: int
+    drivers: List[DriverQualifyingStanding]
+    constructors: List[ConstructorQualifyingStanding]
+
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
 # Season Rounds Schemas (for /api/results/{season})
 # ============================================================================
 
@@ -221,10 +274,11 @@ class SeasonRoundsResponse(BaseModel):
 
 
 class PointsProgressionRound(BaseModel):
-    """Single round's cumulative points total"""
+    """Single round's cumulative points total or session position"""
 
     round: str  # Round identifier: "21" for race, "21-sprint" for sprint
     cumulative_points: float
+    position: Optional[int] = None  # Non-cumulative position for qualifying
     event_name: Optional[str] = None  # Grand Prix name (e.g., "Chinese Grand Prix")
 
     class Config:
@@ -236,6 +290,7 @@ class DriverProgressionData(BaseModel):
 
     driver_code: str
     full_name: str
+    team_name: Optional[str] = None
     team_color: Optional[str] = None
     final_position: int  # Final championship position for sorting
     progression: List[PointsProgressionRound]
@@ -251,6 +306,8 @@ class ConstructorProgressionData(BaseModel):
     team_color: Optional[str] = None
     final_position: int  # Final championship position for sorting
     progression: List[PointsProgressionRound]
+    # For qualifying mode, we might want to return all positions for the team
+    all_positions: Optional[List[List[int]]] = None
 
     class Config:
         from_attributes = True
@@ -285,7 +342,30 @@ class LapData(BaseModel):
     lap_time_seconds: Optional[float] = None  # NULL for in/out laps, deleted laps
     compound: Optional[str] = None  # SOFT, MEDIUM, HARD, INTERMEDIATE, WET
     tyre_life: Optional[int] = None  # Laps on this tyre set
+    stint: Optional[int] = None  # Stint number (1, 2, 3, ...)
     track_status: Optional[str] = None  # 1=green, 2=yellow, etc.
+
+    # Sector times (seconds)
+    sector1_time_seconds: Optional[float] = None
+    sector2_time_seconds: Optional[float] = None
+    sector3_time_seconds: Optional[float] = None
+
+    # Pit stop data
+    pit_in_time_seconds: Optional[float] = None
+    pit_out_time_seconds: Optional[float] = None
+    pit_duration_seconds: Optional[float] = None
+
+    # Position and speed traps
+    position: Optional[int] = None  # Track position after this lap
+    speed_st: Optional[float] = None  # Speed trap (km/h)
+    speed_i1: Optional[float] = None  # Intermediate 1 speed (km/h)
+    speed_i2: Optional[float] = None  # Intermediate 2 speed (km/h)
+    speed_fl: Optional[float] = None  # Finish line speed (km/h)
+
+    # Tyre and accuracy flags
+    fresh_tyre: Optional[bool] = None  # Is this a new tyre set?
+    is_personal_best: Optional[bool] = None
+    deleted: Optional[bool] = None  # Lap time deleted by FIA
 
     class Config:
         from_attributes = True
@@ -305,6 +385,17 @@ class DriverLapTimesData(BaseModel):
         from_attributes = True
 
 
+class TrackStatusEvent(BaseModel):
+    """A single track status change event during a session"""
+
+    session_time_seconds: float  # Seconds since session start
+    status: str  # "1"=green, "2"=yellow, "4"=SC, "5"=red, "6"=VSC, "7"=VSC ending
+    message: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class LapTimesResponse(BaseModel):
     """
     Complete response for GET /api/results/{season}/{round}/lap-times.
@@ -315,7 +406,75 @@ class LapTimesResponse(BaseModel):
     year: int
     round: int
     event_name: str
+    total_laps: Optional[int] = None  # Total laps in the race
     drivers: List[DriverLapTimesData]
+    track_status_events: List[TrackStatusEvent] = []
+
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
+# Qualifying Sector Comparison Schemas
+# ============================================================================
+
+
+class QualifyingSectorComparison(BaseModel):
+    """Best sector times per driver for a qualifying session"""
+
+    driver_code: str
+    full_name: str
+    team_color: Optional[str] = None
+    best_sector1: Optional[float] = None
+    best_sector2: Optional[float] = None
+    best_sector3: Optional[float] = None
+    best_lap_time: Optional[float] = None
+    q_session: str  # "Q1", "Q2", "Q3"
+
+    class Config:
+        from_attributes = True
+
+
+class QualifyingSectorResponse(BaseModel):
+    """Response for qualifying sector comparison endpoint"""
+
+    year: int
+    round: int
+    event_name: str
+    sectors: List[QualifyingSectorComparison]
+
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
+# Weather Schemas
+# ============================================================================
+
+
+class WeatherDataPoint(BaseModel):
+    """A single weather data point during a session"""
+
+    session_time_seconds: float
+    air_temp: Optional[float] = None
+    track_temp: Optional[float] = None
+    humidity: Optional[float] = None
+    pressure: Optional[float] = None
+    wind_speed: Optional[float] = None
+    wind_direction: Optional[int] = None
+    rainfall: Optional[bool] = None
+
+    class Config:
+        from_attributes = True
+
+
+class WeatherResponse(BaseModel):
+    """Weather data for a session"""
+
+    year: int
+    round: int
+    event_name: str
+    weather: List[WeatherDataPoint]
 
     class Config:
         from_attributes = True

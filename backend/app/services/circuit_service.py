@@ -57,7 +57,9 @@ class CircuitService:
         return CircuitListResponse(circuits=circuits, total=len(circuits))
 
     @staticmethod
-    async def get_circuit_by_id(db: AsyncSession, circuit_id: int) -> Optional[CircuitResponse]:
+    async def get_circuit_by_id(
+        db: AsyncSession, circuit_id: int
+    ) -> Optional[CircuitResponse]:
         """
         Get detailed information for a specific circuit.
         """
