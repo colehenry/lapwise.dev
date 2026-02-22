@@ -1,34 +1,8 @@
 import Link from "next/link";
 import LatestRaceWeekend from "@/components/LatestRaceWeekend";
 import NextRaceBanner from "@/components/NextRaceBanner";
+import { GridPattern } from "@/components/Patterns";
 import TiltCard from "@/components/ui/TiltCard";
-
-function GridPatternHero() {
-  return (
-    <svg
-      className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.06] pointer-events-none"
-      aria-hidden="true"
-    >
-      <title>Grid pattern</title>
-      <defs>
-        <pattern
-          id="hero-grid"
-          width="20"
-          height="20"
-          patternUnits="userSpaceOnUse"
-        >
-          <path
-            d="M 20 0 L 0 0 0 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="0.3"
-          />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#hero-grid)" />
-    </svg>
-  );
-}
 
 function CrosshairPattern() {
   return (
@@ -88,7 +62,10 @@ export default function Home() {
     <div className="bg-bg-primary">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-bg-secondary min-h-[70vh] flex items-center">
-        <GridPatternHero />
+        <GridPattern
+          id="hero-grid"
+          className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.06] pointer-events-none"
+        />
 
         {/* Subtle glow */}
         <div className="absolute inset-0 pointer-events-none">

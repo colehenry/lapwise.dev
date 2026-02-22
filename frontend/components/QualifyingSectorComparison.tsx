@@ -59,8 +59,18 @@ const formatDelta = (delta: number): string => {
 const FASTER_COLOR = "#22c55e";
 const SLOWER_COLOR = "#a855f7";
 
+interface SectorTooltipEntry {
+  dataKey: string;
+  value: number;
+  name: string;
+  payload: Record<string, unknown>;
+}
+interface SectorTooltipProps {
+  active?: boolean;
+  payload?: SectorTooltipEntry[];
+}
 // Custom tooltip for the bar chart
-const SectorTooltip = ({ active, payload }: any) => {
+const SectorTooltip = ({ active, payload }: SectorTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
 
   const data = payload[0]?.payload;
@@ -68,9 +78,11 @@ const SectorTooltip = ({ active, payload }: any) => {
 
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
-      <p className="font-bold text-text-primary text-sm mb-1">{data.name}</p>
+      <p className="font-bold text-text-primary text-sm mb-1">
+        {data.name as string}
+      </p>
       <div className="space-y-1 text-xs">
-        {payload.map((entry: any) => (
+        {payload.map((entry: SectorTooltipEntry) => (
           <div key={entry.dataKey} className="flex justify-between gap-4">
             <span className="text-text-muted">{entry.name}</span>
             <span className="font-mono text-text-primary">

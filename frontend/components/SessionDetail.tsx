@@ -11,7 +11,8 @@ import {
 } from "@/lib/flags";
 import type { SessionResultsResponse } from "@/lib/types";
 import LapTimeByLapGraph from "./LapTimeByLapGraph";
-import { ConcentricPattern, GridPattern, TrianglePattern } from "./Patterns";
+import { GridPattern, TrianglePattern } from "./Patterns";
+import { TrackMapFull } from "./TrackMapDisplay";
 import TyreStintChart from "./TyreStintChart";
 
 interface SessionDetailProps {
@@ -179,18 +180,12 @@ export default function SessionDetail({
           </div>
 
           {/* Track Map Side */}
-          <div className="w-full md:w-64 bg-bg-primary border-t md:border-t-0 md:border-l border-border-primary relative flex items-center justify-center p-4 overflow-hidden min-h-[160px]">
-            <ConcentricPattern id="session-track-pattern" />
-            {session.circuit.id && (
-              <Image
-                src={`/track-maps/${session.circuit.id}.png`}
-                alt={`${session.circuit.name} track map`}
-                width={200}
-                height={120}
-                className="object-contain relative z-10 opacity-80 mix-blend-lighten"
-              />
-            )}
-          </div>
+          <TrackMapFull
+            circuitId={session.circuit.id}
+            circuitName={session.circuit.name}
+            location={session.circuit.location}
+            trackLengthKm={session.circuit.track_length_km}
+          />
         </div>
 
         {/* ── Results Table ── */}

@@ -32,7 +32,17 @@ export interface EntityHistoryConfig {
   racePositionKey: string; // "position" | "best_position"
   racePointsKey: string; // "points" | "total_points"
   showTeamInSeasonTooltip: boolean;
+  // biome-ignore lint/suspicious/noExplicitAny: render prop data shape varies by entity type
   renderRaceTooltip: (data: any) => ReactNode;
+}
+
+interface SeasonEntry {
+  year: number | string;
+  team_name?: string;
+  championship_position?: number;
+  total_points: number;
+  prevPosition?: number;
+  prevPoints?: number;
 }
 
 // Shared season tooltip content
@@ -40,7 +50,7 @@ function SeasonTooltipContent({
   data,
   showTeam,
 }: {
-  data: any;
+  data: SeasonEntry;
   showTeam: boolean;
 }) {
   let positionChange = null;
@@ -133,6 +143,7 @@ export default function EntityHistoryGraph({
       );
       const historyData = await response.json();
       const enrichedSeasons = historyData.seasons.map(
+        // biome-ignore lint/suspicious/noExplicitAny: untyped API response
         (season: any, index: number) => {
           if (index === 0) return season;
           const prevSeason = historyData.seasons[index - 1];
@@ -190,14 +201,18 @@ export default function EntityHistoryGraph({
   };
 
   // Custom Tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
+  interface TooltipProps {
+    active?: boolean;
+    payload?: Array<{ payload: SeasonEntry | Record<string, unknown> }>;
+  }
+  const CustomTooltip = ({ active, payload }: TooltipProps) => {
     if (!active || !payload || !payload.length) return null;
     const data = payload[0].payload;
 
     if (graphMode === "season") {
       return (
         <SeasonTooltipContent
-          data={data}
+          data={data as SeasonEntry}
           showTeam={config.showTeamInSeasonTooltip}
         />
       );
@@ -243,10 +258,10 @@ export default function EntityHistoryGraph({
 
   const raceChartData =
     graphMode === "race" && raceData
-      ? raceData.races.map((race: any, index: number) => ({
+      ? raceData.races.map((race: Record<string, unknown>, index: number) => ({
           ...race,
           raceIndex: index,
-          yearLabel: race.year.toString(),
+          yearLabel: String(race.year),
           showYearLabel:
             index === 0 || race.year !== raceData.races[index - 1]?.year,
         }))
