@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import DriverSeasonHistoryGraph from "@/components/DriverSeasonHistoryGraph";
@@ -37,21 +38,6 @@ async function fetchDriverProfile(driverCode: string): Promise<DriverProfile> {
   return res.json();
 }
 
-function getOrdinalSuffix(position: number): string {
-  const j = position % 10;
-  const k = position % 100;
-  if (j === 1 && k !== 11) {
-    return `${position}st`;
-  }
-  if (j === 2 && k !== 12) {
-    return `${position}nd`;
-  }
-  if (j === 3 && k !== 13) {
-    return `${position}rd`;
-  }
-  return `${position}th`;
-}
-
 export default function DriverProfilePage() {
   const params = useParams();
   const driverCode = params.driverCode as string;
@@ -68,7 +54,8 @@ export default function DriverProfilePage() {
           <div className="animate-pulse space-y-8">
             <div className="h-12 bg-bg-elevated rounded w-1/3" />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[...Array(8)].map((_, i) => (
+              {Array.from({ length: 8 }, (_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton placeholders
                 <div key={i} className="h-32 bg-bg-elevated rounded" />
               ))}
             </div>
@@ -124,9 +111,11 @@ export default function DriverProfilePage() {
 
           <div className="flex items-center gap-6 mb-4">
             {data.headshot_url && (
-              <img
+              <Image
                 src={data.headshot_url}
                 alt={data.full_name}
+                width={128}
+                height={128}
                 className="w-32 h-32 rounded-full object-cover border-4"
                 style={{
                   borderColor: data.current_team_color

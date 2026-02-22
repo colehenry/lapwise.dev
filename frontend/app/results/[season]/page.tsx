@@ -6,12 +6,9 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import JumpToRace from "@/components/JumpToRace";
-import {
-  ConcentricPattern,
-  GridPattern,
-  TrianglePattern,
-} from "@/components/Patterns";
+import { GridPattern, TrianglePattern } from "@/components/Patterns";
 import PointsByRoundGraph from "@/components/PointsByRoundGraph";
+import { TrackMapCompact } from "@/components/TrackMapDisplay";
 import TiltCard from "@/components/ui/TiltCard";
 import {
   apiHeaders,
@@ -26,18 +23,8 @@ import type {
   DriverStanding,
   QualifyingStandingsResponse,
   RoundSummary,
+  StandingsResponse,
 } from "@/lib/types";
-
-type StandingsData = {
-  year: number;
-  drivers: DriverStanding[];
-  constructors: {
-    position: number;
-    team_name: string;
-    team_color: string | null;
-    total_points: number;
-  }[];
-};
 
 type RoundsData = {
   year: number;
@@ -65,7 +52,7 @@ export default function ResultsPage() {
   });
 
   const { data: standings, isLoading: standingsLoading } =
-    useQuery<StandingsData>({
+    useQuery<StandingsResponse>({
       queryKey: ["standings", season],
       queryFn: () =>
         fetch(apiUrl(`/api/results/${season}/standings`), {
@@ -74,15 +61,14 @@ export default function ResultsPage() {
       enabled: !!season,
     });
 
-  const { data: qualifyingStandings, isLoading: qualifyingStandingsLoading } =
-    useQuery<QualifyingStandingsResponse>({
-      queryKey: ["qualifying-standings", season],
-      queryFn: () =>
-        fetch(apiUrl(`/api/results/${season}/qualifying-standings`), {
-          headers: apiHeaders(),
-        }).then((r) => r.json()),
-      enabled: !!season && sessionType === "qualifying",
-    });
+  const { data: qualifyingStandings } = useQuery<QualifyingStandingsResponse>({
+    queryKey: ["qualifying-standings", season],
+    queryFn: () =>
+      fetch(apiUrl(`/api/results/${season}/qualifying-standings`), {
+        headers: apiHeaders(),
+      }).then((r) => r.json()),
+    enabled: !!season && sessionType === "qualifying",
+  });
 
   const { data: rounds, isLoading: roundsLoading } = useQuery<RoundsData>({
     queryKey: ["rounds", season],
@@ -613,24 +599,12 @@ export default function ResultsPage() {
                         </div>
                       </div>
 
-                      {/* Right side: Track map with concentric pattern */}
-                      <div
-                        className="flex-shrink-0 bg-bg-primary border border-border-secondary rounded-sm w-44 h-24 relative flex items-center justify-center overflow-hidden"
-                        style={{
-                          boxShadow: "inset 0 0 20px rgba(160, 32, 240, 0.1)",
-                        }}
-                      >
-                        <ConcentricPattern
-                          id={`track-${round.round}-${round.session_type}`}
-                        />
-                        <Image
-                          src={`/track-maps/${round.circuit_id}.png`}
-                          alt={`${round.circuit_name} track map`}
-                          width={160}
-                          height={88}
-                          className="object-contain w-full h-full relative z-10 opacity-80 mix-blend-lighten"
-                        />
-                      </div>
+                      {/* Right side: Track map */}
+                      <TrackMapCompact
+                        circuitId={round.circuit_id}
+                        circuitName={round.circuit_name}
+                        patternId={`track-dots-${round.round}-${round.session_type}`}
+                      />
                     </div>
                   </button>
                 </TiltCard>

@@ -65,8 +65,25 @@ const formatLapTime = (seconds: number | null): string => {
   return `${mins}:${secs.toFixed(3).padStart(6, "0")}`;
 };
 
+interface LapTimeAxisTickProps {
+  x?: number;
+  y?: number;
+  payload?: { value: number };
+}
+
+interface AxisTickProps {
+  x?: number;
+  y?: number;
+  payload?: { value: string | number };
+}
+
+interface DotProps {
+  cx?: number;
+  cy?: number;
+}
+
 // Custom Y-axis Tick Component - formats seconds to MM:SS.mmm
-const CustomYAxisTick = (props: any) => {
+const CustomYAxisTick = (props: LapTimeAxisTickProps) => {
   const { x, y, payload } = props;
   return (
     <g transform={`translate(${x},${y})`}>
@@ -78,14 +95,14 @@ const CustomYAxisTick = (props: any) => {
         fill={CHART_COLORS.textTertiary}
         fontSize={11}
       >
-        {formatLapTime(payload.value)}
+        {formatLapTime(payload?.value ?? null)}
       </text>
     </g>
   );
 };
 
 // Custom Y-axis tick for position mode (P1, P2, etc.)
-const PositionYAxisTick = (props: any) => {
+const PositionYAxisTick = (props: AxisTickProps) => {
   const { x, y, payload } = props;
   return (
     <g transform={`translate(${x},${y})`}>
@@ -97,15 +114,16 @@ const PositionYAxisTick = (props: any) => {
         fill={CHART_COLORS.textTertiary}
         fontSize={11}
       >
-        P{payload.value}
+        P{payload?.value}
       </text>
     </g>
   );
 };
 
 // Gap mode Y-axis tick
-const GapYAxisTick = (props: any) => {
+const GapYAxisTick = (props: AxisTickProps) => {
   const { x, y, payload } = props;
+  const val = payload?.value;
   return (
     <g transform={`translate(${x},${y})`}>
       <text
@@ -116,14 +134,18 @@ const GapYAxisTick = (props: any) => {
         fill={CHART_COLORS.textTertiary}
         fontSize={11}
       >
-        {payload.value === 0 ? "Leader" : `+${payload.value.toFixed(1)}s`}
+        {val === 0
+          ? "Leader"
+          : val != null
+            ? `+${(val as number).toFixed(1)}s`
+            : ""}
       </text>
     </g>
   );
 };
 
 // Custom X-axis Tick Component
-const CustomXAxisTick = (props: any) => {
+const CustomXAxisTick = (props: AxisTickProps) => {
   const { x, y, payload } = props;
   return (
     <g transform={`translate(${x},${y})`}>
@@ -135,14 +157,14 @@ const CustomXAxisTick = (props: any) => {
         fill={CHART_COLORS.textTertiary}
         fontSize={12}
       >
-        {payload.value}
+        {payload?.value}
       </text>
     </g>
   );
 };
 
 // Pit stop dot marker
-const PitStopDot = (props: any) => {
+const PitStopDot = (props: DotProps) => {
   const { cx, cy } = props;
   if (cx === undefined || cy === undefined) return null;
   return (
@@ -169,13 +191,33 @@ const PitStopDot = (props: any) => {
   );
 };
 
+interface TooltipEntry {
+  dataKey: string;
+  name: string;
+  value: number;
+  color: string;
+  payload: Record<string, unknown>;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipEntry[];
+  label?: string | number;
+  viewMode?: string;
+}
+
 // Custom Tooltip Component
-const CustomTooltip = ({ active, payload, label, viewMode }: any) => {
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+  viewMode,
+}: CustomTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
 
   // In position mode, deduplicate entries per driver (multiple stints share same dataKey pattern)
   const seenDrivers = new Set<string>();
-  const uniqueEntries = payload.filter((entry: any) => {
+  const uniqueEntries = payload.filter((entry: TooltipEntry) => {
     // Extract driver code from dataKey (format: "VER" or "VER_stint_1")
     const driverCode = entry.dataKey.includes("_stint_")
       ? entry.dataKey.split("_stint_")[0]
@@ -188,7 +230,7 @@ const CustomTooltip = ({ active, payload, label, viewMode }: any) => {
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl max-w-xs">
       <p className="font-bold text-text-primary mb-2">Lap {label}</p>
-      {uniqueEntries.map((entry: any) => {
+      {uniqueEntries.map((entry: TooltipEntry) => {
         const driverCode = entry.dataKey.includes("_stint_")
           ? entry.dataKey.split("_stint_")[0]
           : entry.dataKey;

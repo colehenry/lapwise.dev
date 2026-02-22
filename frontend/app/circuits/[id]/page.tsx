@@ -81,7 +81,9 @@ export default function CircuitDetailPage() {
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
+              <title>Back arrow</title>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
