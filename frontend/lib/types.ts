@@ -75,6 +75,40 @@ export interface RoundSummary {
   podium: PodiumDriver[];
 }
 
+export interface DriverListItem {
+  driver_code: string | null;
+  full_name: string;
+  country_code: string | null;
+  headshot_url: string | null;
+  total_wins: number;
+  total_races: number;
+  total_podiums: number;
+  total_points: number;
+  current_team: string | null;
+  current_team_color: string | null;
+  latest_season: number | null;
+}
+
+export interface DriverListResponse {
+  drivers: DriverListItem[];
+  total: number;
+}
+
+export interface ConstructorListItem {
+  team_name: string;
+  team_color: string | null;
+  total_wins: number;
+  total_races: number;
+  total_podiums: number;
+  total_points: number;
+  latest_season: number | null;
+}
+
+export interface ConstructorListResponse {
+  constructors: ConstructorListItem[];
+  total: number;
+}
+
 export interface CircuitInfo {
   id: number;
   name: string;
@@ -195,3 +229,135 @@ export type LapTimesResponse = {
 // Graph mode types (used by history graphs)
 export type GraphMode = "season" | "race";
 export type DataMode = "position" | "points";
+
+// Driver profile types
+export interface DriverProfile {
+  driver_code: string | null;
+  full_name: string;
+  driver_number: number | null;
+  country_code: string | null;
+  headshot_url: string | null;
+  total_seasons: number;
+  total_races: number;
+  total_championships: number;
+  total_wins: number;
+  total_podiums: number;
+  total_points: number;
+  best_finish: number | null;
+  current_team: string | null;
+  current_team_color: string | null;
+  latest_season: number | null;
+}
+
+export interface DriverRaceHistory {
+  year: number;
+  round: number;
+  race_name: string;
+  position: number | null;
+  grid_position: number | null;
+  points: number | null;
+  team_name: string;
+  team_color: string | null;
+  status: string;
+  fastest_lap: boolean;
+}
+
+export interface DriverRaceHistoryResponse {
+  driver_code: string | null;
+  full_name: string;
+  races: DriverRaceHistory[];
+  available_years: number[];
+}
+
+export interface DriverSeasonHistory {
+  year: number;
+  championship_position: number | null;
+  total_points: number;
+  team_name: string;
+  team_color: string | null;
+}
+
+export interface DriverSeasonHistoryResponse {
+  driver_code: string | null;
+  full_name: string;
+  seasons: DriverSeasonHistory[];
+}
+
+// Constructor profile types
+export interface ConstructorProfile {
+  team_name: string;
+  team_color: string | null;
+  total_seasons: number;
+  total_races: number;
+  total_championships: number;
+  total_wins: number;
+  total_podiums: number;
+  total_points: number;
+  best_finish: number | null;
+  latest_season: number | null;
+}
+
+export interface ConstructorRaceHistory {
+  year: number;
+  round: number;
+  race_name: string;
+  best_position: number | null;
+  total_points: number;
+  driver_1_name: string | null;
+  driver_1_position: number | null;
+  driver_1_status: string | null;
+  driver_2_name: string | null;
+  driver_2_position: number | null;
+  driver_2_status: string | null;
+}
+
+export interface ConstructorRaceHistoryResponse {
+  team_name: string;
+  races: ConstructorRaceHistory[];
+  available_years: number[];
+}
+
+export interface ConstructorSeasonHistory {
+  year: number;
+  championship_position: number | null;
+  total_points: number;
+  team_color: string | null;
+}
+
+export interface ConstructorSeasonHistoryResponse {
+  team_name: string;
+  seasons: ConstructorSeasonHistory[];
+}
+
+// Circuit detail types
+export interface CircuitRaceResult {
+  year: number;
+  round: number;
+  race_name: string;
+  winner_name: string;
+  winner_code: string | null;
+  team_name: string;
+  team_color: string | null;
+}
+
+export interface CircuitRaceHistoryResponse {
+  circuit_id: number;
+  circuit_name: string;
+  races: CircuitRaceResult[];
+}
+
+export interface CircuitStatDriver {
+  name: string;
+  code: string | null;
+  count: number;
+  color: string | null;
+}
+
+export interface CircuitStatisticsResponse {
+  circuit_id: number;
+  circuit_name: string;
+  most_wins: CircuitStatDriver[];
+  most_poles: CircuitStatDriver[];
+  most_fastest_laps: CircuitStatDriver[];
+  constructor_wins: CircuitStatDriver[];
+}

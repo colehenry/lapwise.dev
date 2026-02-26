@@ -14,10 +14,25 @@ from app.schemas.driver import (
     DriverProfileResponse,
     DriverSeasonHistoryResponse,
     DriverRaceHistoryResponse,
+    DriverListResponse,
 )
 from app.security import verify_api_key
 
 router = APIRouter()
+
+
+@router.get("/", response_model=DriverListResponse)
+async def get_all_drivers(
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Get all-time driver listing with career statistics.
+
+    Returns all drivers who have participated in at least one race,
+    ordered by total wins descending, then by total points descending.
+    """
+    return await DriverService.get_all_drivers(db)
 
 
 @router.get("/{driver_code}", response_model=DriverProfileResponse)
@@ -80,6 +95,7 @@ async def get_driver_race_history(
     driver_code: str,
     start_year: Optional[int] = None,
     end_year: Optional[int] = None,
+    all: bool = False,
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -87,16 +103,17 @@ async def get_driver_race_history(
     Get driver's race-by-race results across their career.
 
     Returns individual race results with position, points, and team info.
-    Can be filtered by year range (max 5 years).
+    Can be filtered by year range (max 5 years), or use all=true for full career.
 
     Args:
         driver_code: 3-letter driver code (e.g., VER, HAM, LEC)
         start_year: Starting year (optional, defaults to last 5 years)
         end_year: Ending year (optional, defaults to most recent year)
+        all: If true, return all races across entire career
     """
     try:
         history = await DriverService.get_race_history(
-            db, driver_code, start_year, end_year
+            db, driver_code, start_year, end_year, fetch_all=all
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

@@ -14,10 +14,25 @@ from app.schemas.constructor import (
     ConstructorProfileResponse,
     ConstructorSeasonHistoryResponse,
     ConstructorRaceHistoryResponse,
+    ConstructorListResponse,
 )
 from app.security import verify_api_key
 
 router = APIRouter()
+
+
+@router.get("/", response_model=ConstructorListResponse)
+async def get_all_constructors(
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Get all-time constructor listing with career statistics.
+
+    Returns all constructors who have participated in at least one race,
+    ordered by total wins descending, then by total points descending.
+    """
+    return await ConstructorService.get_all_constructors(db)
 
 
 @router.get("/{team_name}", response_model=ConstructorProfileResponse)
@@ -80,6 +95,7 @@ async def get_constructor_race_history(
     team_name: str,
     start_year: Optional[int] = None,
     end_year: Optional[int] = None,
+    all: bool = False,
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -87,16 +103,17 @@ async def get_constructor_race_history(
     Get constructor's race-by-race results across their career.
 
     Returns individual race results with best position, total points, and driver info.
-    Can be filtered by year range (max 5 years).
+    Can be filtered by year range (max 5 years), or use all=true for full history.
 
     Args:
         team_name: Team name (e.g., "Red Bull Racing", "Ferrari")
         start_year: Starting year (optional, defaults to last 5 years)
         end_year: Ending year (optional, defaults to most recent year)
+        all: If true, return all races across entire history
     """
     try:
         history = await ConstructorService.get_race_history(
-            db, team_name, start_year, end_year
+            db, team_name, start_year, end_year, fetch_all=all
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
