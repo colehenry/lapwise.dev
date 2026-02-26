@@ -19,6 +19,7 @@ import {
   CustomXAxisTickSeason,
   RangeSelector,
 } from "@/components/chart-primitives";
+import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { DataMode, GraphMode } from "@/lib/types";
 
@@ -228,10 +229,8 @@ export default function EntityHistoryGraph({
   if (loading) {
     return (
       <div className="bg-bg-tertiary border border-border-primary rounded-lg shadow-lg p-6">
-        <div className="animate-pulse">
-          <div className="h-6 bg-bg-elevated rounded w-1/3 mb-4" />
-          <div className="h-64 bg-bg-elevated rounded" />
-        </div>
+        <Skeleton variant="text" width="33%" height="24px" className="mb-4" />
+        <Skeleton variant="rectangular" height="256px" />
       </div>
     );
   }

@@ -1,6 +1,6 @@
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Optional, List, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, case
 
 from app.models import Driver, SessionResult, Session, Team
 from app.schemas.driver import (
@@ -9,11 +9,118 @@ from app.schemas.driver import (
     SeasonHistory,
     DriverRaceHistoryResponse,
     RaceHistory,
+    DriverListItem,
+    DriverListResponse,
 )
 
 
 class DriverService:
     """Service for driver-related operations"""
+
+    @staticmethod
+    async def get_all_drivers(db: AsyncSession) -> DriverListResponse:
+        """
+        Get all-time driver listing with career statistics.
+
+        Returns all drivers ordered by total wins DESC, total points DESC.
+        """
+        # Subquery: get the most recent session date per driver
+        latest_session_sq = (
+            select(
+                SessionResult.driver_id,
+                func.max(Session.date).label("max_date"),
+            )
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.session_type.in_(["race", "sprint_race"]))
+            .group_by(SessionResult.driver_id)
+            .subquery()
+        )
+
+        # Subquery: get team info from the most recent race
+        latest_team_sq = (
+            select(
+                SessionResult.driver_id,
+                Team.name.label("team_name"),
+                Team.team_color.label("team_color"),
+                SessionResult.headshot_url,
+                Session.year.label("latest_season"),
+            )
+            .join(Session, SessionResult.session_id == Session.id)
+            .join(Team, SessionResult.team_id == Team.id)
+            .join(
+                latest_session_sq,
+                (SessionResult.driver_id == latest_session_sq.c.driver_id)
+                & (Session.date == latest_session_sq.c.max_date),
+            )
+            .where(Session.session_type.in_(["race", "sprint_race"]))
+            .distinct(SessionResult.driver_id)
+            .subquery()
+        )
+
+        # Main query: aggregate stats per driver
+        query = (
+            select(
+                Driver.id,
+                Driver.driver_code,
+                Driver.full_name,
+                Driver.country_code,
+                func.count(SessionResult.id).label("total_races"),
+                func.sum(case((SessionResult.position == 1, 1), else_=0)).label(
+                    "total_wins"
+                ),
+                func.sum(
+                    case(
+                        (SessionResult.position.in_([1, 2, 3]), 1),
+                        else_=0,
+                    )
+                ).label("total_podiums"),
+                func.coalesce(func.sum(SessionResult.points), 0).label("total_points"),
+                latest_team_sq.c.team_name.label("current_team"),
+                latest_team_sq.c.team_color.label("current_team_color"),
+                latest_team_sq.c.headshot_url,
+                latest_team_sq.c.latest_season,
+            )
+            .join(SessionResult, Driver.id == SessionResult.driver_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .outerjoin(latest_team_sq, Driver.id == latest_team_sq.c.driver_id)
+            .where(Session.session_type.in_(["race", "sprint_race"]))
+            .group_by(
+                Driver.id,
+                Driver.driver_code,
+                Driver.full_name,
+                Driver.country_code,
+                latest_team_sq.c.team_name,
+                latest_team_sq.c.team_color,
+                latest_team_sq.c.headshot_url,
+                latest_team_sq.c.latest_season,
+            )
+            .order_by(
+                func.sum(case((SessionResult.position == 1, 1), else_=0)).desc(),
+                func.coalesce(func.sum(SessionResult.points), 0).desc(),
+            )
+        )
+
+        result = await db.execute(query)
+        rows = result.all()
+
+        drivers = [
+            DriverListItem(
+                driver_code=row.driver_code,
+                full_name=row.full_name,
+                country_code=row.country_code,
+                headshot_url=row.headshot_url,
+                total_wins=int(row.total_wins or 0),
+                total_races=int(row.total_races or 0),
+                total_podiums=int(row.total_podiums or 0),
+                total_points=float(row.total_points or 0),
+                current_team=row.current_team,
+                current_team_color=row.current_team_color,
+                latest_season=row.latest_season,
+            )
+            for row in rows
+        ]
+
+        return DriverListResponse(drivers=drivers, total=len(drivers))
 
     @staticmethod
     async def get_driver_profile(
@@ -174,6 +281,7 @@ class DriverService:
         driver_code: str,
         start_year: Optional[int] = None,
         end_year: Optional[int] = None,
+        fetch_all: bool = False,
     ) -> Optional[DriverRaceHistoryResponse]:
         """
         Get driver's race-by-race results across their career.
@@ -192,10 +300,14 @@ class DriverService:
             )
 
         # Determine year range
-        if end_year is None:
+        if fetch_all:
+            start_year = available_years[-1]
             end_year = available_years[0]
-        if start_year is None:
-            start_year = max(end_year - 4, available_years[-1])
+        else:
+            if end_year is None:
+                end_year = available_years[0]
+            if start_year is None:
+                start_year = max(end_year - 4, available_years[-1])
 
         # Get all race results in the year range
         race_data = await DriverService._get_races_in_range(
@@ -208,10 +320,12 @@ class DriverService:
                 round=row.round,
                 race_name=row.event_name,
                 position=row.position,
+                grid_position=row.grid_position,
                 points=float(row.points) if row.points is not None else None,
                 team_name=row.team_name,
                 team_color=row.team_color,
                 status=row.status,
+                fastest_lap=bool(row.fastest_lap) if row.fastest_lap else False,
             )
             for row in race_data
         ]
@@ -231,7 +345,18 @@ class DriverService:
     async def _get_driver_by_code(
         db: AsyncSession, driver_code: str
     ) -> Optional[Driver]:
+        # Try exact driver_code match first
         query = select(Driver).where(Driver.driver_code == driver_code.upper())
+        result = await db.execute(query)
+        driver = result.scalar_one_or_none()
+        if driver:
+            return driver
+
+        # Fallback: treat as a name slug (e.g. "juan-manuel-fangio")
+        name_from_slug = driver_code.replace("-", " ")
+        query = select(Driver).where(
+            func.lower(Driver.full_name) == name_from_slug.lower()
+        )
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
@@ -325,8 +450,10 @@ class DriverService:
                 Session.round,
                 Session.event_name,
                 SessionResult.position,
+                SessionResult.grid_position,
                 SessionResult.points,
                 SessionResult.status,
+                SessionResult.fastest_lap,
                 Team.name.label("team_name"),
                 Team.team_color,
                 Session.date,

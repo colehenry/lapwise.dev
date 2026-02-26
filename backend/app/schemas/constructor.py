@@ -8,6 +8,31 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 
+class ConstructorListItem(BaseModel):
+    """Single constructor in the all-time constructors listing."""
+
+    team_name: str
+    team_color: Optional[str] = None
+    total_wins: int
+    total_races: int
+    total_podiums: int
+    total_points: float
+    latest_season: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ConstructorListResponse(BaseModel):
+    """Response for GET /api/constructors — all-time constructor listing."""
+
+    constructors: List[ConstructorListItem]
+    total: int
+
+    class Config:
+        from_attributes = True
+
+
 class ConstructorProfileResponse(BaseModel):
     """
     Complete constructor profile with career statistics.
@@ -71,8 +96,10 @@ class ConstructorRaceHistory(BaseModel):
     total_points: float
     driver_1_name: Optional[str] = None
     driver_1_position: Optional[int] = None
+    driver_1_status: Optional[str] = None
     driver_2_name: Optional[str] = None
     driver_2_position: Optional[int] = None
+    driver_2_status: Optional[str] = None
 
     class Config:
         from_attributes = True

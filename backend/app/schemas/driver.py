@@ -8,6 +8,35 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 
+class DriverListItem(BaseModel):
+    """Single driver in the all-time drivers listing."""
+
+    driver_code: Optional[str] = None
+    full_name: str
+    country_code: Optional[str] = None
+    headshot_url: Optional[str] = None
+    total_wins: int
+    total_races: int
+    total_podiums: int
+    total_points: float
+    current_team: Optional[str] = None
+    current_team_color: Optional[str] = None
+    latest_season: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class DriverListResponse(BaseModel):
+    """Response for GET /api/drivers — all-time driver listing."""
+
+    drivers: List[DriverListItem]
+    total: int
+
+    class Config:
+        from_attributes = True
+
+
 class DriverProfileResponse(BaseModel):
     """
     Complete driver profile with career statistics.
@@ -16,7 +45,7 @@ class DriverProfileResponse(BaseModel):
     """
 
     # Basic info
-    driver_code: str
+    driver_code: Optional[str] = None
     full_name: str
     driver_number: Optional[int] = None
     country_code: Optional[str] = None
@@ -62,7 +91,7 @@ class DriverSeasonHistoryResponse(BaseModel):
     Used for GET /api/drivers/{driver_code}/season-history endpoint.
     """
 
-    driver_code: str
+    driver_code: Optional[str] = None
     full_name: str
     seasons: List[SeasonHistory]
 
@@ -77,10 +106,12 @@ class RaceHistory(BaseModel):
     round: int
     race_name: str
     position: Optional[int] = None
+    grid_position: Optional[int] = None
     points: Optional[float] = None
     team_name: str
     team_color: Optional[str] = None
     status: str
+    fastest_lap: bool = False
 
     class Config:
         from_attributes = True
@@ -93,7 +124,7 @@ class DriverRaceHistoryResponse(BaseModel):
     Used for GET /api/drivers/{driver_code}/race-history endpoint.
     """
 
-    driver_code: str
+    driver_code: Optional[str] = None
     full_name: str
     races: List[RaceHistory]
     available_years: List[int]
