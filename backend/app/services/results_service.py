@@ -56,6 +56,34 @@ class ResultsService:
     """Service class for results-related operations"""
 
     @staticmethod
+    def _latest_headshot_subquery():
+        """
+        Correlated subquery to fetch the latest valid headshot URL for a driver.
+        """
+        return (
+            select(SessionResult.headshot_url)
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(SessionResult.driver_id == Driver.id)
+            .where(SessionResult.headshot_url.isnot(None))
+            .where(SessionResult.headshot_url != "None")
+            .where(SessionResult.headshot_url != "nan")
+            .where(SessionResult.headshot_url != "")
+            .order_by(Session.date.desc(), Session.round.desc())
+            .limit(1)
+            .scalar_subquery()
+        )
+
+    @staticmethod
+    def _headshot_fallback_expr():
+        """
+        Prefer the session headshot if valid, otherwise fall back to latest.
+        """
+        cleaned = func.nullif(
+            func.nullif(func.nullif(SessionResult.headshot_url, "None"), "nan"), ""
+        )
+        return func.coalesce(cleaned, ResultsService._latest_headshot_subquery())
+
+    @staticmethod
     def sanitize_float(value: Optional[float]) -> Optional[float]:
         """Convert inf/nan float values to None for JSON serialization"""
         if value is None:
@@ -105,9 +133,10 @@ class ResultsService:
                 Driver.full_name,
                 Driver.driver_code,
                 Driver.country_code,
-                SessionResult.headshot_url,
+                ResultsService._headshot_fallback_expr().label("headshot_url"),
                 Team.name.label("team_name"),
                 Team.team_color,
+                Team.logo_url,
                 SessionResult.fastest_lap,
             )
             .join(SessionResult, Session.id == SessionResult.session_id)
@@ -175,7 +204,11 @@ class ResultsService:
             driver_id = driver_row[0]
             # Get the most recent session_result for this driver
             latest_result_query = (
-                select(SessionResult, Team)
+                select(
+                    SessionResult,
+                    Team,
+                    ResultsService._headshot_fallback_expr().label("headshot_url"),
+                )
                 .join(Session, SessionResult.session_id == Session.id)
                 .join(Team, SessionResult.team_id == Team.id)
                 .where(SessionResult.driver_id == driver_id)
@@ -197,7 +230,7 @@ class ResultsService:
         for driver_row in standings_result:
             driver_id = driver_row.driver_id
             if driver_id in latest_results:
-                session_result, team = latest_results[driver_id]
+                session_result, team, headshot_url = latest_results[driver_id]
                 driver_standings_data.append(
                     {
                         "driver_code": driver_row.driver_code,
@@ -206,9 +239,7 @@ class ResultsService:
                         "total_points": driver_row.total_points,
                         "team_name": team.name,
                         "team_color": team.team_color,
-                        "headshot_url": session_result.headshot_url
-                        if session_result.headshot_url != "None"
-                        else None,
+                        "headshot_url": headshot_url,
                     }
                 )
 
@@ -233,18 +264,19 @@ class ResultsService:
         # ========================================================================
         # Constructor Standings Query
         # ========================================================================
-        # Sum points grouped by team
+        # sum points grouped by team
         constructor_query = (
             select(
                 Team.name.label("team_name"),
                 Team.team_color,
+                Team.logo_url,
                 func.sum(SessionResult.points).label("total_points"),
             )
             .join(SessionResult, Team.id == SessionResult.team_id)
             .join(Session, SessionResult.session_id == Session.id)
             .where(Session.year == season)
             .where(SessionResult.points.isnot(None))
-            .group_by(Team.id, Team.name, Team.team_color)
+            .group_by(Team.id, Team.name, Team.team_color, Team.logo_url)
             .order_by(func.sum(SessionResult.points).desc())
         )
 
@@ -256,6 +288,7 @@ class ResultsService:
                 position=idx + 1,
                 team_name=row.team_name,
                 team_color=row.team_color,
+                logo_url=row.logo_url,
                 total_points=float(row.total_points),
             )
             for idx, row in enumerate(constructor_rows)
@@ -330,7 +363,11 @@ class ResultsService:
         for driver_row in distinct_drivers:
             driver_id = driver_row[0]
             latest_result_query = (
-                select(SessionResult, Team)
+                select(
+                    SessionResult,
+                    Team,
+                    ResultsService._headshot_fallback_expr().label("headshot_url"),
+                )
                 .join(Session, SessionResult.session_id == Session.id)
                 .join(Team, SessionResult.team_id == Team.id)
                 .where(SessionResult.driver_id == driver_id)
@@ -352,7 +389,7 @@ class ResultsService:
         for driver_row in standings_result:
             driver_id = driver_row.driver_id
             if driver_id in latest_results:
-                session_result, team = latest_results[driver_id]
+                session_result, team, headshot_url = latest_results[driver_id]
                 driver_standings_data.append(
                     {
                         "driver_code": driver_row.driver_code,
@@ -361,9 +398,7 @@ class ResultsService:
                         "total_qualifying_points": float(driver_row.total_points),
                         "team_name": team.name,
                         "team_color": team.team_color,
-                        "headshot_url": session_result.headshot_url
-                        if session_result.headshot_url != "None"
-                        else None,
+                        "headshot_url": headshot_url,
                         "poles": int(driver_row.poles),
                         "p2s": int(driver_row.p2s),
                         "p3s": int(driver_row.p3s),
@@ -382,6 +417,7 @@ class ResultsService:
             select(
                 Team.name.label("team_name"),
                 Team.team_color,
+                Team.logo_url,
                 func.sum(
                     case(
                         (SessionResult.position <= 20, 21 - SessionResult.position),
@@ -399,7 +435,7 @@ class ResultsService:
             .where(Session.year == season)
             .where(Session.session_type.in_(["qualifying", "sprint_qualifying"]))
             .where(SessionResult.position.isnot(None))
-            .group_by(Team.id, Team.name, Team.team_color)
+            .group_by(Team.id, Team.name, Team.team_color, Team.logo_url)
             .order_by(
                 func.sum(
                     case(
@@ -418,6 +454,7 @@ class ResultsService:
                 position=idx + 1,
                 team_name=row.team_name,
                 team_color=row.team_color,
+                logo_url=row.logo_url,
                 total_qualifying_points=float(row.total_points),
                 poles=int(row.poles),
                 p2s=int(row.p2s),
@@ -959,9 +996,10 @@ class ResultsService:
                 Driver.full_name,
                 Driver.driver_code,
                 Driver.country_code,
-                SessionResult.headshot_url,
+                ResultsService._headshot_fallback_expr().label("headshot_url"),
                 Team.name.label("team_name"),
                 Team.team_color,
+                Team.logo_url,
                 SessionResult.fastest_lap,
             )
             .join(SessionResult, Session.id == SessionResult.session_id)
@@ -1005,6 +1043,7 @@ class ResultsService:
                     country_code=row.country_code,
                     team_name=row.team_name,
                     team_color=row.team_color,
+                    logo_url=row.logo_url,
                     headshot_url=row.headshot_url,
                     fastest_lap=row.fastest_lap,
                 )
@@ -1197,7 +1236,12 @@ class ResultsService:
 
         # Get all results
         results_query = (
-            select(SessionResult, Driver, Team)
+            select(
+                SessionResult,
+                Driver,
+                Team,
+                ResultsService._headshot_fallback_expr().label("headshot_url"),
+            )
             .join(Driver, SessionResult.driver_id == Driver.id)
             .join(Team, SessionResult.team_id == Team.id)
             .where(SessionResult.session_id == session.id)
@@ -1231,7 +1275,7 @@ class ResultsService:
             SessionResultDetail(
                 position=result.SessionResult.position,
                 status=result.SessionResult.status,
-                headshot_url=result.SessionResult.headshot_url,
+                headshot_url=result.headshot_url,
                 driver=DriverInfo(
                     driver_number=result.Driver.driver_number,
                     driver_code=result.Driver.driver_code,
@@ -1287,7 +1331,12 @@ class ResultsService:
 
         # Get all results for this session with driver/team info
         results_query = (
-            select(SessionResult, Driver, Team)
+            select(
+                SessionResult,
+                Driver,
+                Team,
+                ResultsService._headshot_fallback_expr().label("headshot_url"),
+            )
             .join(Driver, SessionResult.driver_id == Driver.id)
             .join(Team, SessionResult.team_id == Team.id)
             .where(SessionResult.session_id == session.id)
@@ -1321,7 +1370,7 @@ class ResultsService:
             SessionResultDetail(
                 position=result.SessionResult.position,
                 status=result.SessionResult.status,
-                headshot_url=result.SessionResult.headshot_url,
+                headshot_url=result.headshot_url,
                 driver=DriverInfo(
                     driver_number=result.Driver.driver_number,
                     driver_code=result.Driver.driver_code,
@@ -1814,7 +1863,12 @@ class ResultsService:
 
         # Get all results for this qualifying session with driver/team info
         results_query = (
-            select(SessionResult, Driver, Team)
+            select(
+                SessionResult,
+                Driver,
+                Team,
+                ResultsService._headshot_fallback_expr().label("headshot_url"),
+            )
             .join(Driver, SessionResult.driver_id == Driver.id)
             .join(Team, SessionResult.team_id == Team.id)
             .where(SessionResult.session_id == session.id)
@@ -1848,7 +1902,7 @@ class ResultsService:
             SessionResultDetail(
                 position=result.SessionResult.position,
                 status=result.SessionResult.status,
-                headshot_url=result.SessionResult.headshot_url,
+                headshot_url=result.headshot_url,
                 driver=DriverInfo(
                     driver_number=result.Driver.driver_number,
                     driver_code=result.Driver.driver_code,
@@ -1904,7 +1958,12 @@ class ResultsService:
 
         # Get all results for this sprint qualifying session with driver/team info
         results_query = (
-            select(SessionResult, Driver, Team)
+            select(
+                SessionResult,
+                Driver,
+                Team,
+                ResultsService._headshot_fallback_expr().label("headshot_url"),
+            )
             .join(Driver, SessionResult.driver_id == Driver.id)
             .join(Team, SessionResult.team_id == Team.id)
             .where(SessionResult.session_id == session.id)
@@ -1938,7 +1997,7 @@ class ResultsService:
             SessionResultDetail(
                 position=result.SessionResult.position,
                 status=result.SessionResult.status,
-                headshot_url=result.SessionResult.headshot_url,
+                headshot_url=result.headshot_url,
                 driver=DriverInfo(
                     driver_number=result.Driver.driver_number,
                     driver_code=result.Driver.driver_code,
@@ -1992,7 +2051,7 @@ class ResultsService:
                 Driver.full_name,
                 Driver.driver_code,
                 Driver.country_code,
-                SessionResult.headshot_url,
+                ResultsService._headshot_fallback_expr().label("headshot_url"),
                 Team.name.label("team_name"),
                 Team.team_color,
                 SessionResult.fastest_lap,

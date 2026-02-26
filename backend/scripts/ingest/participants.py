@@ -50,9 +50,27 @@ def ingest_driver(db, driver_data):
         ).scalar_one_or_none()
 
     if not driver and driver_code:
-        driver = db.execute(
+        code_match = db.execute(
             select(Driver).where(Driver.driver_code == driver_code)
         ).scalar_one_or_none()
+        if code_match:
+            # Guard against cross-era code collisions (e.g. MSC = Michael + Mick).
+            # If jolpica_id is present and conflicts, do NOT attach this result
+            # to the code match. Keep distinct identity via jolpica_id.
+            if (
+                jolpica_id
+                and code_match.jolpica_id
+                and code_match.jolpica_id != jolpica_id
+            ):
+                print(
+                    "    ⚠ Driver code collision for "
+                    f"{driver_code}: existing={code_match.jolpica_id}, incoming={jolpica_id}. "
+                    "Keeping incoming driver separate (code set to NULL)."
+                )
+                # Avoid unique constraint violation on create.
+                driver_code = None
+            else:
+                driver = code_match
 
     if driver:
         # Backfill any missing identifiers on existing records
@@ -63,6 +81,18 @@ def ingest_driver(db, driver_data):
         if driver_code and not driver.driver_code:
             driver.driver_code = driver_code
             updated = True
+        # Keep canonical identity fields current when a stable match exists.
+        if full_name and driver.full_name != full_name:
+            driver.full_name = full_name
+            updated = True
+        if driver.driver_number is None and driver_data.get("DriverNumber") is not None:
+            driver.driver_number = safe_int(driver_data.get("DriverNumber"))
+            updated = True
+        if not driver.country_code:
+            cc = _nan_to_none(driver_data.get("CountryCode"))
+            if cc:
+                driver.country_code = cc
+                updated = True
         if updated:
             db.commit()
         return driver.id

@@ -37,7 +37,12 @@ const formatLapTime = (seconds: number | null): string => {
   return `${mins}:${secs.toFixed(3).padStart(6, "0")}`;
 };
 
-const CustomYAxisTick = (props: any) => {
+interface AxisTickProps {
+  x?: number;
+  y?: number;
+  payload?: { value: number };
+}
+const CustomYAxisTick = (props: AxisTickProps) => {
   const { x, y, payload } = props;
   return (
     <g transform={`translate(${x},${y})`}>
@@ -49,13 +54,28 @@ const CustomYAxisTick = (props: any) => {
         fill={CHART_COLORS.textTertiary}
         fontSize={11}
       >
-        {formatLapTime(payload.value)}
+        {formatLapTime(payload?.value ?? null)}
       </text>
     </g>
   );
 };
 
-const DegradationTooltip = ({ active, payload, label }: any) => {
+interface DegradationTooltipEntry {
+  dataKey: string;
+  value: number;
+  color: string;
+  name: string;
+}
+interface DegradationTooltipProps {
+  active?: boolean;
+  payload?: DegradationTooltipEntry[];
+  label?: string | number;
+}
+const DegradationTooltip = ({
+  active,
+  payload,
+  label,
+}: DegradationTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
 
   return (
@@ -63,7 +83,7 @@ const DegradationTooltip = ({ active, payload, label }: any) => {
       <p className="font-bold text-text-primary mb-1 text-sm">
         Tyre Age: {label} {label === 1 ? "lap" : "laps"}
       </p>
-      {payload.map((entry: any) => (
+      {payload.map((entry: DegradationTooltipEntry) => (
         <div key={entry.dataKey} className="flex items-center gap-2 text-xs">
           <div
             className="w-2.5 h-2.5 rounded-full"

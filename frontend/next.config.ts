@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
         hostname: "media.formula1.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "upload.wikimedia.org",
+        pathname: "/**",
+      },
     ],
   },
 };

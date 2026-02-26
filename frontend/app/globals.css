@@ -280,7 +280,7 @@ body {
 
 /* Highlight thumb when hovered directly */
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--text-muted) !important;
+  background-color: var(--text-muted);
 }
 
 /* Selection Styling */

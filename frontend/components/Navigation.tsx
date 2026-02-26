@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { GridPattern } from "@/components/Patterns";
 import { useSidebar } from "@/components/SidebarContext";
 
 const navLinks = [
@@ -33,33 +34,6 @@ const navLinks = [
   },
 ];
 
-function GridPatternNav() {
-  return (
-    <svg
-      className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.06] pointer-events-none"
-      aria-hidden="true"
-    >
-      <title>Grid pattern</title>
-      <defs>
-        <pattern
-          id="nav-grid"
-          width="10"
-          height="10"
-          patternUnits="userSpaceOnUse"
-        >
-          <path
-            d="M 10 0 L 0 0 0 10"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="0.4"
-          />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#nav-grid)" />
-    </svg>
-  );
-}
-
 export default function Navigation() {
   const pathname = usePathname();
   const { isOpen, toggle, close } = useSidebar();
@@ -89,7 +63,10 @@ export default function Navigation() {
           isOpen ? "w-72" : "w-16"
         } ${!isOpen ? "max-md:hidden" : ""}`}
       >
-        <GridPatternNav />
+        <GridPattern
+          id="nav-grid"
+          className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.06] pointer-events-none"
+        />
 
         <div className="relative z-10 flex flex-col h-full">
           {/* Header */}

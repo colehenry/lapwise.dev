@@ -62,14 +62,18 @@ export default function NextRaceBanner() {
   }
 
   return (
-    <div className="w-full bg-bg-secondary py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="w-full bg-bg-secondary py-10 px-6 border-y border-border-primary/60">
+      <div className="max-w-5xl mx-auto">
         <div>
-          <h2 className="text-3xl font-bold text-text-primary mb-6 text-center">
-            Upcoming Events
-          </h2>
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-2 h-2 rounded-full bg-purple-500" />
+            <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+              Race Calendar
+            </span>
+          </div>
+
           {/* Horizontal Scrollable Events */}
-          <div className="overflow-x-auto overflow-y-hidden -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 scrollbar-permanent">
+          <div className="overflow-x-auto overflow-y-hidden -mx-6 px-6 scrollbar-permanent">
             <div className="flex gap-4 pb-4 min-w-min">
               {events.map((event) => {
                 const daysUntil = getDaysUntilEvent(event.event_date);
@@ -92,7 +96,7 @@ export default function NextRaceBanner() {
                 const content = (
                   <div
                     key={`${event.event_date}-${event.event_name}`}
-                    className="flex-shrink-0 w-56 bg-bg-primary border border-border-primary rounded-sm p-3 hover:border-purple-500/30 transition-all duration-200"
+                    className="flex-shrink-0 w-56 bg-bg-tertiary border border-border-primary rounded-sm p-3 hover:border-purple-500/60 transition-all duration-200"
                   >
                     <div className="flex items-center gap-3">
                       {/* Countdown - Vertical on Left */}
@@ -110,17 +114,17 @@ export default function NextRaceBanner() {
 
                       {/* Event Info - Right Side */}
                       <div className="flex-1 text-center flex flex-col min-h-[140px]">
-                        <h3 className="text-xs font-bold text-text-primary mb-1 truncate">
+                        <h3 className="text-sm font-semibold text-text-primary tracking-tight mb-1 truncate">
                           {event.event_name.replace("Grand Prix", "GP")}
                         </h3>
                         <div className="text-2xl mb-1">{flag}</div>
                         <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest font-mono block mb-1">
                           {isTesting ? "Testing" : "GP"}
                         </span>
-                        <p className="text-[10px] text-text-tertiary truncate">
+                        <p className="text-xs text-text-secondary truncate">
                           {event.location}
                         </p>
-                        <p className="text-[10px] text-text-muted mt-0.5 mb-2 truncate">
+                        <p className="text-xs text-text-muted mt-0.5 mb-2 truncate font-mono">
                           {formattedDate}
                         </p>
 
@@ -153,6 +157,6 @@ export default function NextRaceBanner() {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

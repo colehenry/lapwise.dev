@@ -58,7 +58,13 @@ interface PointsByRoundGraphProps {
 }
 
 // Custom X-axis Tick Component
-const CustomXAxisTick = (props: any) => {
+interface XAxisTickProps {
+  x?: number;
+  y?: number;
+  payload?: { value: string | number };
+}
+
+const CustomXAxisTick = (props: XAxisTickProps) => {
   const { x, y, payload } = props;
 
   return (
@@ -71,26 +77,49 @@ const CustomXAxisTick = (props: any) => {
         fill={CHART_COLORS.textTertiary}
         fontSize={12}
       >
-        {payload.value}
+        {payload?.value}
       </text>
     </g>
   );
 };
 
 // Custom Tooltip Component
-const CustomTooltip = ({ active, payload, label, pointsType }: any) => {
+interface TooltipPayloadEntry {
+  dataKey: string;
+  value: number;
+  color: string;
+  name: string;
+  payload: Record<string, unknown>;
+}
+
+interface TooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadEntry[];
+  label?: string | number;
+  pointsType?: string;
+  mode?: string;
+}
+
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+  pointsType,
+}: TooltipProps) => {
   if (!active || !payload || !payload.length) return null;
 
   // Skip tooltip for round 0
   if (label === "0") return null;
 
   // Get event name from first payload entry
+  const rawEventName = payload[0]?.payload?.event_name;
   const eventName = (
-    payload[0]?.payload?.event_name || `Round ${label}`
+    typeof rawEventName === "string" ? rawEventName : `Round ${label}`
   ).replace("Grand Prix", "GP");
 
-  const isSprint = label?.endsWith("-sprint");
-  const isSprintQualy = label?.endsWith("-sq");
+  const labelStr2 = typeof label === "string" ? label : String(label ?? "");
+  const isSprint = labelStr2.endsWith("-sprint");
+  const isSprintQualy = labelStr2.endsWith("-sq");
 
   let sessionLabel = "";
   if (isSprint) sessionLabel = ": Sprint";
@@ -99,13 +128,15 @@ const CustomTooltip = ({ active, payload, label, pointsType }: any) => {
   const displayName = `${eventName}${sessionLabel}`;
 
   // Filter out null entries
-  const filteredPayload = payload.filter((entry: any) => entry.value != null);
+  const filteredPayload = payload.filter(
+    (entry: TooltipPayloadEntry) => entry.value != null,
+  );
   if (filteredPayload.length === 0) return null;
 
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
       <p className="font-bold text-white mb-2">{displayName}</p>
-      {filteredPayload.map((entry: any) => {
+      {filteredPayload.map((entry: TooltipPayloadEntry) => {
         const value = entry.value;
         const isQualy = pointsType === "qualifying";
         const labelStr = isQualy

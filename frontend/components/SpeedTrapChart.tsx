@@ -39,7 +39,11 @@ type DriverSpeed = {
   isFastest: boolean;
 };
 
-const SpeedTooltip = ({ active, payload }: any) => {
+interface SpeedTooltipProps {
+  active?: boolean;
+  payload?: Array<{ payload: DriverSpeed }>;
+}
+const SpeedTooltip = ({ active, payload }: SpeedTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
   const data = payload[0]?.payload as DriverSpeed | undefined;
   if (!data) return null;

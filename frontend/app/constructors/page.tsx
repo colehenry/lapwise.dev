@@ -1,194 +1,320 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { fetchSeasons, fetchStandings } from "@/lib/api";
-import type { ConstructorStanding } from "@/lib/types";
+import { GridPattern } from "@/components/Patterns";
+import Skeleton from "@/components/ui/Skeleton";
+import TiltCard from "@/components/ui/TiltCard";
+import { apiHeaders, apiUrl } from "@/lib/api";
+import type { ConstructorListItem, ConstructorListResponse } from "@/lib/types";
 
-function ConstructorCard({ team }: { team: ConstructorStanding }) {
+type SortKey = "wins" | "races" | "points" | "alpha";
+
+const CURRENT_YEAR = new Date().getFullYear();
+const DEFAULT_VISIBLE_COUNT = 30;
+
+async function fetchAllConstructors(): Promise<ConstructorListResponse> {
+  const res = await fetch(apiUrl("/api/constructors"), {
+    headers: apiHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to fetch constructors");
+  return res.json();
+}
+
+function ConstructorCard({ team }: { team: ConstructorListItem }) {
   const teamNameUrl = team.team_name.replace(/ /g, "-");
+  const isActive = team.latest_season === CURRENT_YEAR;
+  const teamColor = team.team_color ? `#${team.team_color}` : "#888";
+
+  // Generate initials from team name
+  const initials = team.team_name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 3)
+    .toUpperCase();
 
   return (
-    <Link
-      href={`/constructors/${teamNameUrl}`}
-      className="group bg-gradient-to-br from-bg-tertiary to-bg-elevated rounded-lg p-4 border border-border-primary hover:border-border-secondary transition-all hover:scale-105"
-    >
-      <div className="flex items-center gap-4">
-        {/* Position Badge */}
-        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-bg-secondary flex items-center justify-center">
-          <span className="text-white font-bold text-lg">{team.position}</span>
-        </div>
+    <TiltCard>
+      <Link href={`/constructors/${teamNameUrl}`} className="block h-full">
+        <div className="relative border border-border-primary rounded-sm hover:border-purple-500 transition-all duration-200 bg-bg-tertiary h-full overflow-hidden">
+          {/* Team color accent bar */}
+          <div
+            className="absolute left-0 top-0 bottom-0 w-1"
+            style={{ backgroundColor: teamColor }}
+          />
 
-        {/* Team Color Badge */}
-        <div
-          className="w-16 h-16 rounded-full border-4"
-          style={{
-            backgroundColor: team.team_color ? `#${team.team_color}` : "#888",
-            borderColor: team.team_color ? `#${team.team_color}` : "#888",
-          }}
-        />
+          <div className="flex items-center gap-3 p-4 pl-5">
+            {/* Team logo or initials circle */}
+            {team.logo_url ? (
+              <div
+                className="w-14 h-14 rounded-sm overflow-hidden border-2 bg-bg-secondary flex-shrink-0"
+                style={{ borderColor: teamColor }}
+              >
+                <Image
+                  src={team.logo_url}
+                  alt={team.team_name}
+                  width={56}
+                  height={56}
+                  className="w-full h-full object-contain p-1"
+                  unoptimized={team.logo_url.includes("wikimedia.org")}
+                />
+              </div>
+            ) : (
+              <div
+                className="w-14 h-14 rounded-sm flex items-center justify-center text-xs font-bold text-white flex-shrink-0 font-mono border-2"
+                style={{ backgroundColor: teamColor, borderColor: teamColor }}
+              >
+                {initials}
+              </div>
+            )}
 
-        {/* Constructor Info */}
-        <div className="flex-1 min-w-0">
-          <h3 className="text-white font-bold text-lg truncate group-hover:text-red-500 transition-colors">
-            {team.team_name}
-          </h3>
-          <div className="flex items-center gap-2 text-sm text-text-tertiary">
-            <span className="font-mono">
-              P{team.position} • {team.total_points} pts
-            </span>
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="text-text-primary font-bold truncate">
+                  {team.team_name}
+                </h3>
+                {isActive && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-purple-500 flex-shrink-0" />
+                )}
+              </div>
+              <div className="flex items-center gap-3 text-[10px] text-text-muted font-mono tracking-wider mt-0.5">
+                <span>{team.total_races} races</span>
+                <span className="text-border-secondary">/</span>
+                <span>{team.total_podiums} podiums</span>
+              </div>
+            </div>
+
+            {/* Wins */}
+            <div className="flex-shrink-0 text-right">
+              <div className="text-2xl font-bold text-text-primary tabular-nums">
+                {team.total_wins}
+              </div>
+              <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase">
+                wins
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom bar */}
+          <div className="flex items-center justify-between px-4 pl-5 pb-3">
+            <span />
+            <div className="flex items-center gap-3 text-[10px] text-text-muted font-mono tracking-wider">
+              <span>{team.total_points.toLocaleString()} pts</span>
+              {team.latest_season && (
+                <>
+                  <span className="text-border-secondary">/</span>
+                  <span>{team.latest_season}</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
+      </Link>
+    </TiltCard>
+  );
+}
 
-        {/* Points */}
-        <div className="flex-shrink-0 text-right">
-          <div className="text-2xl font-bold text-white">
-            {team.total_points}
-          </div>
-          <div className="text-xs text-text-muted">points</div>
-        </div>
-      </div>
-    </Link>
+function SortPills({
+  active,
+  onChange,
+}: {
+  active: SortKey;
+  onChange: (key: SortKey) => void;
+}) {
+  const options: { key: SortKey; label: string }[] = [
+    { key: "wins", label: "Wins" },
+    { key: "races", label: "Races" },
+    { key: "points", label: "Points" },
+    { key: "alpha", label: "A-Z" },
+  ];
+
+  return (
+    <div className="flex items-center gap-1">
+      {options.map((opt) => (
+        <button
+          key={opt.key}
+          type="button"
+          onClick={() => onChange(opt.key)}
+          className={`px-3 py-1 rounded-sm text-xs font-mono tracking-wider uppercase transition-colors ${
+            active === opt.key
+              ? "bg-purple-500 text-white"
+              : "bg-bg-primary text-text-muted hover:text-text-primary hover:bg-bg-elevated border border-border-primary"
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
 export default function ConstructorsPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>("wins");
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const { data: seasons } = useQuery({
-    queryKey: ["seasons"],
-    queryFn: fetchSeasons,
-  });
-
-  // Set default year to most recent when seasons load
-  useEffect(() => {
-    if (seasons && seasons.length > 0 && selectedYear === null) {
-      setSelectedYear(seasons[0]);
-    }
-  }, [seasons, selectedYear]);
-
-  const { data: standings, isLoading } = useQuery({
-    queryKey: ["standings", selectedYear],
-    queryFn: () => {
-      if (selectedYear === null) throw new Error("No year selected");
-      return fetchStandings(selectedYear);
-    },
-    enabled: selectedYear !== null,
+  const { data, isLoading } = useQuery({
+    queryKey: ["constructors-all"],
+    queryFn: fetchAllConstructors,
   });
 
   const filteredConstructors = useMemo(() => {
-    if (!standings) return [];
+    if (!data) return [];
 
-    return standings.constructors.filter((team) => {
-      const query = searchQuery.toLowerCase();
-      return team.team_name.toLowerCase().includes(query);
-    });
-  }, [standings, searchQuery]);
+    let constructors = data.constructors;
+
+    // Search filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      constructors = constructors.filter((t) =>
+        t.team_name.toLowerCase().includes(q),
+      );
+    }
+
+    // Sort
+    const sorted = [...constructors];
+    switch (sortKey) {
+      case "wins":
+        sorted.sort(
+          (a, b) =>
+            b.total_wins - a.total_wins || b.total_points - a.total_points,
+        );
+        break;
+      case "races":
+        sorted.sort(
+          (a, b) =>
+            b.total_races - a.total_races || b.total_wins - a.total_wins,
+        );
+        break;
+      case "points":
+        sorted.sort(
+          (a, b) =>
+            b.total_points - a.total_points || b.total_wins - a.total_wins,
+        );
+        break;
+      case "alpha":
+        sorted.sort((a, b) => a.team_name.localeCompare(b.team_name));
+        break;
+    }
+
+    return sorted;
+  }, [data, searchQuery, sortKey]);
+
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [searchQuery, sortKey]);
+
+  const visibleConstructors = isExpanded
+    ? filteredConstructors
+    : filteredConstructors.slice(0, DEFAULT_VISIBLE_COUNT);
 
   return (
-    <div className="min-h-screen bg-bg-secondary p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+    <div className="min-h-screen bg-bg-secondary">
+      {/* Header */}
+      <div className="relative overflow-hidden border-b border-border-primary">
+        <GridPattern
+          id="constructors-grid"
+          className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.06] pointer-events-none"
+        />
+        <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-8 py-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+            <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+              All-Time Statistics
+            </span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-text-primary tracking-tight">
             Constructors
           </h1>
+        </div>
+      </div>
 
-          {/* Year Selector and Search */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            {/* Year Dropdown */}
-            <div className="flex-shrink-0">
-              <select
-                value={selectedYear || ""}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="w-full sm:w-auto px-4 py-2 bg-bg-tertiary text-white border border-border-secondary rounded-lg focus:outline-none focus:border-red-500 transition-colors"
-              >
-                {seasons?.map((year) => (
-                  <option key={year} value={year}>
-                    {year} Season
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Search Bar */}
-            <div className="flex-1">
-              <input
-                type="text"
-                placeholder="Search constructors..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 bg-bg-tertiary text-white border border-border-secondary rounded-lg focus:outline-none focus:border-red-500 transition-colors placeholder-text-muted"
-              />
-            </div>
-          </div>
-
-          {/* Quick Year Jump */}
-          {seasons && seasons.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              <span className="text-text-tertiary text-sm self-center mr-2">
-                Quick jump:
-              </span>
-              {seasons.slice(0, 5).map((year) => (
-                <button
-                  type="button"
-                  key={year}
-                  onClick={() => setSelectedYear(year)}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                    selectedYear === year
-                      ? "bg-red-500 text-white"
-                      : "bg-bg-tertiary text-text-tertiary hover:text-white hover:bg-bg-elevated"
-                  }`}
-                >
-                  {year}
-                </button>
-              ))}
-            </div>
-          )}
+      <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
+        {/* Controls */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <input
+            type="text"
+            placeholder="Search by team name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 px-3 py-2 bg-bg-primary text-text-primary border border-border-primary rounded-sm font-mono text-xs focus:outline-none focus:border-purple-500 transition-colors placeholder-text-muted"
+          />
+          <SortPills active={sortKey} onChange={setSortKey} />
         </div>
 
-        {/* Loading State */}
+        {/* Stats bar */}
+        {data && (
+          <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-6">
+            {filteredConstructors.length} constructors across F1 history
+          </div>
+        )}
+
+        {/* Loading */}
         {isLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Array.from({ length: 10 }, (_, i) => (
-              <div
-                // biome-ignore lint/suspicious/noArrayIndexKey: Static loading skeleton items
-                key={`skeleton-${i}`}
-                className="h-24 bg-bg-elevated rounded-lg animate-pulse"
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {Array.from({ length: 12 }, (_, i) => (
+              <Skeleton
+                key={`skel-${
+                  // biome-ignore lint/suspicious/noArrayIndexKey: Static loading skeleton
+                  i
+                }`}
+                variant="rectangular"
+                height="110px"
+                className="rounded-sm"
               />
             ))}
           </div>
         )}
 
-        {/* Constructors Grid */}
-        {!isLoading &&
-          filteredConstructors &&
-          filteredConstructors.length > 0 && (
-            <div>
-              <div className="mb-4 text-text-tertiary">
-                {filteredConstructors.length} constructor
-                {filteredConstructors.length !== 1 ? "s" : ""} in {selectedYear}
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredConstructors.map((team) => (
-                  <ConstructorCard key={team.team_name} team={team} />
-                ))}
-              </div>
-            </div>
-          )}
+        {/* Grid */}
+        {!isLoading && filteredConstructors.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {visibleConstructors.map((team) => (
+              <ConstructorCard key={team.team_name} team={team} />
+            ))}
+          </div>
+        )}
 
-        {/* No Results */}
-        {!isLoading &&
-          filteredConstructors &&
-          filteredConstructors.length === 0 && (
-            <div className="bg-bg-tertiary rounded-lg p-8 text-center">
-              <p className="text-text-tertiary text-lg">
-                No constructors found matching "{searchQuery}"
-              </p>
-            </div>
-          )}
+        {!isLoading && filteredConstructors.length > DEFAULT_VISIBLE_COUNT && (
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="border border-border-secondary rounded-sm text-text-secondary hover:border-purple-500 hover:text-purple-300 font-mono text-xs uppercase tracking-widest px-6 py-2 transition-colors duration-150 flex items-center gap-2"
+            >
+              {isExpanded
+                ? "COLLAPSE"
+                : `SHOW ALL (${filteredConstructors.length - DEFAULT_VISIBLE_COUNT} more)`}
+              <svg
+                className={`w-3 h-3 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Empty */}
+        {!isLoading && filteredConstructors.length === 0 && data && (
+          <div className="border border-border-primary rounded-sm p-8 text-center">
+            <p className="text-text-muted font-mono text-sm">
+              No constructors found matching "{searchQuery}"
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

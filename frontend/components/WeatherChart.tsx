@@ -43,16 +43,30 @@ type ChartPoint = {
   rainfall: number; // 0 or 1 for area fill
 };
 
-const WeatherTooltip = ({ active, payload, label }: any) => {
+interface WeatherTooltipEntry {
+  dataKey: string;
+  value: number;
+  color: string;
+  name: string;
+  payload: ChartPoint;
+}
+interface WeatherTooltipProps {
+  active?: boolean;
+  payload?: WeatherTooltipEntry[];
+  label?: number;
+}
+const WeatherTooltip = ({ active, payload, label }: WeatherTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
 
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
       <p className="font-bold text-text-primary text-sm mb-1">
-        {Math.floor(label)}m {Math.round((label % 1) * 60)}s
+        {label != null
+          ? `${Math.floor(label)}m ${Math.round((label % 1) * 60)}s`
+          : ""}
       </p>
       <div className="space-y-1 text-xs">
-        {payload.map((entry: any) => {
+        {payload.map((entry: WeatherTooltipEntry) => {
           if (entry.dataKey === "rainfall") return null;
           return (
             <div key={entry.dataKey} className="flex justify-between gap-4">
@@ -71,7 +85,7 @@ const WeatherTooltip = ({ active, payload, label }: any) => {
             </div>
           );
         })}
-        {payload[0]?.payload?.rainfall > 0 && (
+        {payload.some((e) => e.payload.rainfall > 0) && (
           <div className="flex items-center gap-1.5 text-blue-400">
             <div className="w-2 h-2 rounded-full bg-blue-400" />
             <span>Rain</span>

@@ -1,9 +1,16 @@
-from typing import Optional, List, Dict, Any
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, and_
 
-from app.models import Circuit, Session
-from app.schemas.circuit import CircuitResponse, CircuitListResponse
+from app.models import Circuit, Session, SessionResult, Driver, Team
+from app.schemas.circuit import (
+    CircuitResponse,
+    CircuitListResponse,
+    CircuitRaceResult,
+    CircuitRaceHistoryResponse,
+    CircuitStatDriver,
+    CircuitStatisticsResponse,
+)
 
 
 class CircuitService:
@@ -99,4 +106,170 @@ class CircuitService:
             total_races=circuit_data.total_races,
             first_year=circuit_data.first_year,
             most_recent_year=circuit_data.most_recent_year,
+        )
+
+    @staticmethod
+    async def get_circuit_race_history(
+        db: AsyncSession, circuit_id: int
+    ) -> Optional[CircuitRaceHistoryResponse]:
+        """Get race winners at this circuit across all years."""
+        # Get circuit name
+        circuit = await db.execute(
+            select(Circuit.id, Circuit.name).where(Circuit.id == circuit_id)
+        )
+        circuit_row = circuit.first()
+        if not circuit_row:
+            return None
+
+        # Get all race winners at this circuit
+        query = (
+            select(
+                Session.year,
+                Session.round,
+                Session.event_name,
+                Driver.full_name.label("winner_name"),
+                Driver.driver_code.label("winner_code"),
+                Team.name.label("team_name"),
+                Team.team_color,
+            )
+            .join(SessionResult, Session.id == SessionResult.session_id)
+            .join(Driver, SessionResult.driver_id == Driver.id)
+            .join(Team, SessionResult.team_id == Team.id)
+            .where(Session.circuit_id == circuit_id)
+            .where(Session.session_type == "race")
+            .where(SessionResult.position == 1)
+            .order_by(Session.year.desc())
+        )
+        result = await db.execute(query)
+        rows = result.all()
+
+        races = [
+            CircuitRaceResult(
+                year=row.year,
+                round=row.round,
+                race_name=row.event_name,
+                winner_name=row.winner_name,
+                winner_code=row.winner_code,
+                team_name=row.team_name,
+                team_color=row.team_color,
+            )
+            for row in rows
+        ]
+
+        return CircuitRaceHistoryResponse(
+            circuit_id=circuit_row.id,
+            circuit_name=circuit_row.name,
+            races=races,
+        )
+
+    @staticmethod
+    async def get_circuit_statistics(
+        db: AsyncSession, circuit_id: int
+    ) -> Optional[CircuitStatisticsResponse]:
+        """Get aggregated statistics for a circuit."""
+        # Get circuit name
+        circuit = await db.execute(
+            select(Circuit.id, Circuit.name).where(Circuit.id == circuit_id)
+        )
+        circuit_row = circuit.first()
+        if not circuit_row:
+            return None
+
+        # Base filter for races at this circuit
+        base_filter = and_(
+            Session.circuit_id == circuit_id,
+            Session.session_type == "race",
+        )
+
+        # Most wins (P1)
+        wins_query = (
+            select(
+                Driver.full_name.label("name"),
+                Driver.driver_code.label("code"),
+                func.count().label("count"),
+            )
+            .join(SessionResult, Driver.id == SessionResult.driver_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(base_filter)
+            .where(SessionResult.position == 1)
+            .group_by(Driver.id, Driver.full_name, Driver.driver_code)
+            .order_by(func.count().desc())
+            .limit(10)
+        )
+        wins_result = await db.execute(wins_query)
+        most_wins = [
+            CircuitStatDriver(name=r.name, code=r.code, count=r.count)
+            for r in wins_result.all()
+        ]
+
+        # Most poles (grid_position = 1 from qualifying — approximate using race grid)
+        poles_query = (
+            select(
+                Driver.full_name.label("name"),
+                Driver.driver_code.label("code"),
+                func.count().label("count"),
+            )
+            .join(SessionResult, Driver.id == SessionResult.driver_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(base_filter)
+            .where(SessionResult.grid_position == 1)
+            .group_by(Driver.id, Driver.full_name, Driver.driver_code)
+            .order_by(func.count().desc())
+            .limit(10)
+        )
+        poles_result = await db.execute(poles_query)
+        most_poles = [
+            CircuitStatDriver(name=r.name, code=r.code, count=r.count)
+            for r in poles_result.all()
+        ]
+
+        # Most fastest laps
+        fl_query = (
+            select(
+                Driver.full_name.label("name"),
+                Driver.driver_code.label("code"),
+                func.count().label("count"),
+            )
+            .join(SessionResult, Driver.id == SessionResult.driver_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(base_filter)
+            .where(SessionResult.fastest_lap.is_(True))
+            .group_by(Driver.id, Driver.full_name, Driver.driver_code)
+            .order_by(func.count().desc())
+            .limit(10)
+        )
+        fl_result = await db.execute(fl_query)
+        most_fastest_laps = [
+            CircuitStatDriver(name=r.name, code=r.code, count=r.count)
+            for r in fl_result.all()
+        ]
+
+        # Constructor wins
+        constructor_wins_query = (
+            select(
+                Team.name.label("name"),
+                Team.team_color.label("color"),
+                func.count().label("count"),
+            )
+            .join(SessionResult, Team.id == SessionResult.team_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(base_filter)
+            .where(SessionResult.position == 1)
+            .group_by(Team.name, Team.team_color)
+            .order_by(func.count().desc())
+            .limit(10)
+        )
+        cw_result = await db.execute(constructor_wins_query)
+        constructor_wins = [
+            CircuitStatDriver(name=r.name, count=r.count, color=r.color)
+            for r in cw_result.all()
+        ]
+
+        return CircuitStatisticsResponse(
+            circuit_id=circuit_row.id,
+            circuit_name=circuit_row.name,
+            most_wins=most_wins,
+            most_poles=most_poles,
+            most_fastest_laps=most_fastest_laps,
+            constructor_wins=constructor_wins,
         )
