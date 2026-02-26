@@ -9,6 +9,7 @@ app = FastAPI(
     description="API for F1 telemetry, race result data, and historical statistics",
     version="0.1.0",
     debug=settings.debug,
+    redirect_slashes=False,
 )
 
 # Configure CORS (Cross-Origin Resource Sharing)
