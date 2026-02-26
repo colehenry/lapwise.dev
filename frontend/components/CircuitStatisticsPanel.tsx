@@ -14,10 +14,12 @@ function StatList({
   title,
   items,
   linkPrefix,
+  slugFromName = false,
 }: {
   title: string;
   items: CircuitStatDriver[];
   linkPrefix?: string;
+  slugFromName?: boolean;
 }) {
   if (items.length === 0) return null;
 
@@ -42,9 +44,9 @@ function StatList({
                   style={{ backgroundColor: `#${item.color}` }}
                 />
               )}
-              {linkPrefix && item.code ? (
+              {linkPrefix && (item.code || slugFromName) ? (
                 <Link
-                  href={`${linkPrefix}${item.code}`}
+                  href={`${linkPrefix}${item.code || item.name.replace(/\s+/g, "-")}`}
                   className="text-text-primary hover:text-purple-300 transition-colors"
                 >
                   {item.name}
@@ -117,7 +119,12 @@ export default function CircuitStatisticsPanel({
         items={data.most_fastest_laps}
         linkPrefix="/drivers/"
       />
-      <StatList title="Constructor Wins" items={data.constructor_wins} />
+      <StatList
+        title="Constructor Wins"
+        items={data.constructor_wins}
+        linkPrefix="/constructors/"
+        slugFromName
+      />
     </div>
   );
 }

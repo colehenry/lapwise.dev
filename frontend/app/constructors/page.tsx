@@ -1,8 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { GridPattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import TiltCard from "@/components/ui/TiltCard";
@@ -12,6 +13,7 @@ import type { ConstructorListItem, ConstructorListResponse } from "@/lib/types";
 type SortKey = "wins" | "races" | "points" | "alpha";
 
 const CURRENT_YEAR = new Date().getFullYear();
+const DEFAULT_VISIBLE_COUNT = 30;
 
 async function fetchAllConstructors(): Promise<ConstructorListResponse> {
   const res = await fetch(apiUrl("/api/constructors"), {
@@ -45,13 +47,29 @@ function ConstructorCard({ team }: { team: ConstructorListItem }) {
           />
 
           <div className="flex items-center gap-3 p-4 pl-5">
-            {/* Team circle */}
-            <div
-              className="w-12 h-12 rounded-sm flex items-center justify-center text-xs font-bold text-white flex-shrink-0 font-mono"
-              style={{ backgroundColor: teamColor }}
-            >
-              {initials}
-            </div>
+            {/* Team logo or initials circle */}
+            {team.logo_url ? (
+              <div
+                className="w-14 h-14 rounded-sm overflow-hidden border-2 bg-bg-secondary flex-shrink-0"
+                style={{ borderColor: teamColor }}
+              >
+                <Image
+                  src={team.logo_url}
+                  alt={team.team_name}
+                  width={56}
+                  height={56}
+                  className="w-full h-full object-contain p-1"
+                  unoptimized={team.logo_url.includes("wikimedia.org")}
+                />
+              </div>
+            ) : (
+              <div
+                className="w-14 h-14 rounded-sm flex items-center justify-center text-xs font-bold text-white flex-shrink-0 font-mono border-2"
+                style={{ backgroundColor: teamColor, borderColor: teamColor }}
+              >
+                {initials}
+              </div>
+            )}
 
             {/* Info */}
             <div className="flex-1 min-w-0">
@@ -137,6 +155,7 @@ function SortPills({
 export default function ConstructorsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("wins");
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["constructors-all"],
@@ -184,6 +203,14 @@ export default function ConstructorsPage() {
 
     return sorted;
   }, [data, searchQuery, sortKey]);
+
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [searchQuery, sortKey]);
+
+  const visibleConstructors = isExpanded
+    ? filteredConstructors
+    : filteredConstructors.slice(0, DEFAULT_VISIBLE_COUNT);
 
   return (
     <div className="min-h-screen bg-bg-secondary">
@@ -246,9 +273,37 @@ export default function ConstructorsPage() {
         {/* Grid */}
         {!isLoading && filteredConstructors.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {filteredConstructors.map((team) => (
+            {visibleConstructors.map((team) => (
               <ConstructorCard key={team.team_name} team={team} />
             ))}
+          </div>
+        )}
+
+        {!isLoading && filteredConstructors.length > DEFAULT_VISIBLE_COUNT && (
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="border border-border-secondary rounded-sm text-text-secondary hover:border-purple-500 hover:text-purple-300 font-mono text-xs uppercase tracking-widest px-6 py-2 transition-colors duration-150 flex items-center gap-2"
+            >
+              {isExpanded
+                ? "COLLAPSE"
+                : `SHOW ALL (${filteredConstructors.length - DEFAULT_VISIBLE_COUNT} more)`}
+              <svg
+                className={`w-3 h-3 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
           </div>
         )}
 

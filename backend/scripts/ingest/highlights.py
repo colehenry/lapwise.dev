@@ -12,6 +12,7 @@ Requirements:
 
 import subprocess
 import json
+import re
 from sqlalchemy import select, update
 from app.models.session import Session
 
@@ -20,10 +21,13 @@ F1_CHANNEL_ID = "UCB_qr75-ydFVKSz9nCqgPig"
 
 # Maps session_type to YouTube search keywords
 SESSION_SEARCH_TERMS = {
-    "race": "Race Highlights",
-    "qualifying": "Qualifying Highlights",
-    "sprint_race": "Sprint Highlights",
-    "sprint_qualifying": "Sprint Qualifying Highlights",
+    "race": ["Race Highlights"],
+    "qualifying": ["Qualifying Highlights"],
+    "sprint_race": ["Sprint Highlights", "Sprint Race Highlights"],
+    "sprint_qualifying": [
+        "Sprint Qualifying Highlights",
+        "Sprint Shootout Highlights",
+    ],
 }
 
 # Keywords to verify in the video title (lowercase)
@@ -42,63 +46,68 @@ def find_highlights_video_id(event_name, year, session_type="race"):
     Uses yt-dlp to search YouTube, filtering for the official
     FORMULA 1 channel. Returns the video ID if found, else None.
     """
-    search_term = SESSION_SEARCH_TERMS.get(session_type, "Highlights")
-    search_query = f"{search_term} {year} {event_name}"
+    search_terms = SESSION_SEARCH_TERMS.get(session_type, ["Highlights"])
+    event_name_clean = re.sub(r"\s+", " ", event_name).strip()
+    search_queries = [
+        f"{search_term} {year} {event_name_clean}" for search_term in search_terms
+    ] + [f"{year} {event_name_clean} Highlights Formula 1"]
 
     try:
-        result = subprocess.run(
-            [
-                "yt-dlp",
-                f"ytsearch10:{search_query}",
-                "--dump-json",
-                "--flat-playlist",
-                "--no-download",
-                "--no-warnings",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-
-        if result.returncode != 0:
-            print(f"    yt-dlp error: {result.stderr[:200]}")
-            return None
-
         keywords = SESSION_TITLE_KEYWORDS.get(session_type, ["highlight"])
+        for search_query in search_queries:
+            result = subprocess.run(
+                [
+                    "yt-dlp",
+                    f"ytsearch12:{search_query}",
+                    "--dump-json",
+                    "--flat-playlist",
+                    "--no-download",
+                    "--no-warnings",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
 
-        for line in result.stdout.strip().split("\n"):
-            if not line:
+            if result.returncode != 0:
+                print(f"    yt-dlp error: {result.stderr[:200]}")
                 continue
-            try:
-                entry = json.loads(line)
-            except json.JSONDecodeError:
-                continue
 
-            channel_id = entry.get("channel_id", "")
-            channel = entry.get("channel", "")
-            title = entry.get("title", "").lower()
+            for line in result.stdout.strip().split("\n"):
+                if not line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
 
-            is_f1 = channel_id == F1_CHANNEL_ID or "formula 1" in channel.lower()
+                channel_id = entry.get("channel_id", "")
+                channel = entry.get("channel", "")
+                title = entry.get("title", "").lower()
 
-            is_match = all(kw in title for kw in keywords)
+                is_f1 = channel_id == F1_CHANNEL_ID or "formula 1" in channel.lower()
+                is_match = all(kw in title for kw in keywords)
 
-            if is_f1 and is_match:
-                video_id = entry.get("id")
-                print(f"    Found: {entry.get('title')} ({video_id})")
-                return video_id
+                if is_f1 and is_match:
+                    video_id = entry.get("id")
+                    print(f"    Found: {entry.get('title')} ({video_id})")
+                    return video_id
 
-        print(f"    No highlights found for: {search_query}")
+        print(
+            "    No highlights found for:"
+            f" {year} {event_name_clean} [{session_type}]"
+        )
         return None
 
     except subprocess.TimeoutExpired:
-        print(f"    Timeout searching for: {search_query}")
+        print(f"    Timeout searching for: {year} {event_name_clean} [{session_type}]")
         return None
     except FileNotFoundError:
         print("    ERROR: yt-dlp not installed. " "Run: pip install yt-dlp")
         return None
 
 
-def ingest_highlights(db_session, season, round_num=None):
+def ingest_highlights(db_session, season, round_num=None, overwrite=False):
     """
     Ingest YouTube highlights video IDs for all session types.
 
@@ -131,7 +140,7 @@ def ingest_highlights(db_session, season, round_num=None):
 
         label = f"R{sess.round:02d} [{sess.session_type}]"
 
-        if sess.highlights_video_id:
+        if sess.highlights_video_id and not overwrite:
             print(f"  {label} {sess.event_name}" " — already has video, skipping")
             skipped += 1
             continue
@@ -154,3 +163,10 @@ def ingest_highlights(db_session, season, round_num=None):
         f"\nDone: {found} found, {skipped} skipped, "
         f"{failed} not found, {no_search} not applicable"
     )
+    return {
+        "season": season,
+        "found": found,
+        "skipped": skipped,
+        "failed": failed,
+        "no_search": no_search,
+    }

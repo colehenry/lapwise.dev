@@ -56,23 +56,26 @@ class ConstructorService:
         result = await db.execute(query)
         rows = result.all()
 
-        # For each constructor, get the team_color from their most recent year
+        # For each constructor, get the team_color and logo_url from their most recent year
         constructors = []
         for row in rows:
-            # Get team color from most recent year's Team row
-            color_query = (
-                select(Team.team_color)
+            # Get team color and logo from most recent year's Team row
+            team_query = (
+                select(Team.team_color, Team.logo_url)
                 .where(func.lower(Team.name) == row.team_name_lower)
                 .order_by(Team.year.desc())
                 .limit(1)
             )
-            color_result = await db.execute(color_query)
-            team_color = color_result.scalar_one_or_none()
+            team_result = await db.execute(team_query)
+            team_data = team_result.first()
+            team_color = team_data.team_color if team_data else None
+            logo_url = team_data.logo_url if team_data else None
 
             constructors.append(
                 ConstructorListItem(
                     team_name=row.team_name,
                     team_color=team_color,
+                    logo_url=logo_url,
                     total_wins=int(row.total_wins or 0),
                     total_races=int(row.total_races or 0),
                     total_podiums=int(row.total_podiums or 0),
@@ -160,6 +163,7 @@ class ConstructorService:
         return ConstructorProfileResponse(
             team_name=team.name,
             team_color=team.team_color,
+            logo_url=team.logo_url,
             total_seasons=len(seasons),
             total_races=total_races,
             total_championships=total_championships,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -143,22 +144,42 @@ export default function ConstructorProfilePage() {
               <span>&larr;</span>
               <span className="hidden sm:inline">CONSTRUCTORS</span>
             </Link>
-            <div
-              className="w-9 h-9 rounded-full border-2 flex items-center justify-center"
-              style={{
-                backgroundColor: data.team_color
-                  ? `#${data.team_color}`
-                  : "#888",
-                borderColor: data.team_color ? `#${data.team_color}` : "#888",
-              }}
-            >
-              <span className="text-white font-bold text-[10px]">
-                {data.team_name
-                  .split(" ")
-                  .map((w) => w[0])
-                  .join("")}
-              </span>
-            </div>
+            
+            {data.logo_url ? (
+              <div
+                className="w-9 h-9 rounded-full overflow-hidden border-2 bg-bg-secondary"
+                style={{
+                  borderColor: data.team_color ? `#${data.team_color}` : "#888",
+                }}
+              >
+                <Image
+                  src={data.logo_url}
+                  alt={data.team_name}
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-contain p-1"
+                  unoptimized={data.logo_url.includes("wikimedia.org")}
+                />
+              </div>
+            ) : (
+              <div
+                className="w-9 h-9 rounded-full border-2 flex items-center justify-center"
+                style={{
+                  backgroundColor: data.team_color
+                    ? `#${data.team_color}`
+                    : "#888",
+                  borderColor: data.team_color ? `#${data.team_color}` : "#888",
+                }}
+              >
+                <span className="text-white font-bold text-[10px]">
+                  {data.team_name
+                    .split(" ")
+                    .map((w) => w[0])
+                    .join("")}
+                </span>
+              </div>
+            )}
+
             <div className="flex flex-col">
               <span className="text-text-primary font-mono text-sm font-bold leading-none">
                 {data.team_name}
@@ -181,22 +202,42 @@ export default function ConstructorProfilePage() {
           <div className="space-y-8">
             {/* Full Header */}
             <div className="flex items-center gap-6">
-              <div
-                className="w-32 h-32 rounded-full border-4 flex items-center justify-center"
-                style={{
-                  backgroundColor: data.team_color
-                    ? `#${data.team_color}`
-                    : "#888",
-                  borderColor: data.team_color ? `#${data.team_color}` : "#888",
-                }}
-              >
-                <span className="text-white font-bold text-2xl text-center px-4">
-                  {data.team_name
-                    .split(" ")
-                    .map((word) => word[0])
-                    .join("")}
-                </span>
-              </div>
+              {data.logo_url ? (
+                <div
+                  className="w-32 h-32 rounded-full overflow-hidden border-4 bg-bg-secondary shadow-lg"
+                  style={{
+                    borderColor: data.team_color
+                      ? `#${data.team_color}`
+                      : "#888",
+                  }}
+                >
+                  <Image
+                    src={data.logo_url}
+                    alt={data.team_name}
+                    width={128}
+                    height={128}
+                    className="w-full h-full object-contain p-4"
+                    unoptimized={data.logo_url.includes("wikimedia.org")}
+                  />
+                </div>
+              ) : (
+                <div
+                  className="w-32 h-32 rounded-full border-4 flex items-center justify-center"
+                  style={{
+                    backgroundColor: data.team_color
+                      ? `#${data.team_color}`
+                      : "#888",
+                    borderColor: data.team_color ? `#${data.team_color}` : "#888",
+                  }}
+                >
+                  <span className="text-white font-bold text-2xl text-center px-4">
+                    {data.team_name
+                      .split(" ")
+                      .map((word) => word[0])
+                      .join("")}
+                  </span>
+                </div>
+              )}
               <div>
                 <h1 className="text-5xl font-bold text-white mb-2">
                   {data.team_name}
