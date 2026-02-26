@@ -60,6 +60,7 @@ class TeamInfo(BaseModel):
 
     name: str
     team_color: Optional[str] = None  # Hex without #
+    logo_url: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -141,6 +142,7 @@ class ConstructorStanding(BaseModel):
     position: int  # Championship position (1st, 2nd, 3rd, etc.)
     team_name: str
     team_color: Optional[str] = None
+    logo_url: Optional[str] = None
     total_points: float
 
     class Config:
@@ -192,6 +194,7 @@ class ConstructorQualifyingStanding(BaseModel):
     position: int
     team_name: str
     team_color: Optional[str] = None
+    logo_url: Optional[str] = None
     total_qualifying_points: float
     poles: int
     p2s: int
@@ -227,6 +230,7 @@ class RoundPodiumDriver(BaseModel):
     country_code: Optional[str] = None
     team_name: str
     team_color: Optional[str] = None
+    logo_url: Optional[str] = None
     headshot_url: Optional[str] = None
     fastest_lap: bool = False
 

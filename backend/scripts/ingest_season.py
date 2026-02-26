@@ -13,6 +13,7 @@ Usage:
     PYTHONPATH=$PWD python scripts/ingest_season.py 2023  # Specific year
     PYTHONPATH=$PWD python scripts/ingest_season.py 2024 race,qualifying  # Specific session types
     PYTHONPATH=$PWD python scripts/ingest_season.py 2024 --strict  # Fail fast on errors
+    PYTHONPATH=$PWD python scripts/ingest_season.py 2024 --skip-highlights  # Skip highlights pass
 
 Features:
     - ⚡ Database-first approach: Checks DB before making expensive FastF1 API calls
@@ -21,6 +22,7 @@ Features:
     - Absolute cache path for consistent caching
     - Session availability detection (skips non-existent sprint sessions)
     - Optional strict mode (--strict) to fail immediately on errors
+    - Optional highlights pass (skip via --skip-highlights)
 
 Schema:
     - sessions: year, round, session_type, event_name, date, circuit_id
@@ -61,6 +63,7 @@ from scripts.ingest import (
     ingest_weather_data,
     ingest_track_status,
 )
+from scripts.ingest.highlights import ingest_highlights
 
 
 # Session types to ingest (configurable)
@@ -88,11 +91,14 @@ def main():
     # Parse optional arguments
     session_types = DEFAULT_SESSION_TYPES
     strict_mode = False
+    skip_highlights = False
 
     if len(sys.argv) > 2:
         for arg in sys.argv[2:]:
             if arg == "--strict":
                 strict_mode = True
+            elif arg == "--skip-highlights":
+                skip_highlights = True
             elif "," in arg:
                 session_types = arg.split(",")
             elif arg in DEFAULT_SESSION_TYPES:
@@ -103,6 +109,8 @@ def main():
     )
     if strict_mode:
         print("⚠️  STRICT MODE: Will exit on first error")
+    if skip_highlights:
+        print("ℹ️  Skipping YouTube highlights ingestion")
 
     # Enable cache
     enable_fastf1_cache()
@@ -241,6 +249,10 @@ def main():
 
         # Write failure log
         write_failure_log(season_year, failures)
+
+        if not skip_highlights:
+            print(f"\n🎬 Ingesting highlights for {season_year}...")
+            ingest_highlights(db, season_year)
 
         print("\n✨ Ingestion complete!")
 

@@ -123,7 +123,13 @@ export function RangeSelector({
   );
 }
 
-export function CustomXAxisTickSeason(props: any) {
+interface SeasonAxisTickProps {
+  x?: number;
+  y?: number;
+  payload?: { value: string | number };
+}
+
+export function CustomXAxisTickSeason(props: SeasonAxisTickProps) {
   const { x, y, payload } = props;
   return (
     <g transform={`translate(${x},${y})`}>
@@ -135,13 +141,23 @@ export function CustomXAxisTickSeason(props: any) {
         fill={CHART_COLORS.textTertiary}
         fontSize={12}
       >
-        {payload.value}
+        {payload?.value}
       </text>
     </g>
   );
 }
 
-export function CustomXAxisTickRace(props: any) {
+interface RaceAxisTickProps {
+  x?: number;
+  y?: number;
+  payload?: {
+    value: string | number;
+    showYearLabel?: boolean;
+    year?: string | number;
+  };
+}
+
+export function CustomXAxisTickRace(props: RaceAxisTickProps) {
   const { x, y, payload } = props;
   if (!payload || !payload.value) return null;
   if (!payload.showYearLabel) return null;

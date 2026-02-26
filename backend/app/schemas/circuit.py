@@ -45,3 +45,55 @@ class CircuitListResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class CircuitRaceResult(BaseModel):
+    """Single race result at a circuit"""
+
+    year: int
+    round: int
+    race_name: str
+    winner_name: str
+    winner_code: Optional[str] = None
+    team_name: str
+    team_color: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class CircuitRaceHistoryResponse(BaseModel):
+    """Race history at a specific circuit"""
+
+    circuit_id: int
+    circuit_name: str
+    races: List[CircuitRaceResult]
+
+    class Config:
+        from_attributes = True
+
+
+class CircuitStatDriver(BaseModel):
+    """Driver or team statistic at a circuit"""
+
+    name: str
+    code: Optional[str] = None
+    count: int
+    color: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class CircuitStatisticsResponse(BaseModel):
+    """Aggregated statistics for a circuit"""
+
+    circuit_id: int
+    circuit_name: str
+    most_wins: List[CircuitStatDriver]
+    most_poles: List[CircuitStatDriver]
+    most_fastest_laps: List[CircuitStatDriver]
+    constructor_wins: List[CircuitStatDriver]
+
+    class Config:
+        from_attributes = True

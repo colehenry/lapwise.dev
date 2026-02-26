@@ -11,7 +11,8 @@ import {
 } from "@/lib/flags";
 import type { SessionResultsResponse } from "@/lib/types";
 import LapTimeByLapGraph from "./LapTimeByLapGraph";
-import { ConcentricPattern, GridPattern, TrianglePattern } from "./Patterns";
+import { GridPattern, TrianglePattern } from "./Patterns";
+import { TrackMapFull } from "./TrackMapDisplay";
 import TyreStintChart from "./TyreStintChart";
 
 interface SessionDetailProps {
@@ -40,6 +41,28 @@ const formatTime = (
   return `+${seconds.toFixed(3)}`;
 };
 
+function dedupeCommaSeparated(...parts: (string | null | undefined)[]): string {
+  const seen = new Set<string>();
+  const cleaned: string[] = [];
+
+  for (const part of parts) {
+    if (!part) continue;
+
+    for (const token of part.split(",")) {
+      const value = token.trim();
+      if (!value) continue;
+
+      const key = value.toLowerCase();
+      if (seen.has(key)) continue;
+
+      seen.add(key);
+      cleaned.push(value);
+    }
+  }
+
+  return cleaned.join(", ");
+}
+
 export default function SessionDetail({
   data,
   qualifyingData,
@@ -56,6 +79,11 @@ export default function SessionDetail({
   if (!data) return null;
 
   const { session, results } = data;
+  const circuitSummary = dedupeCommaSeparated(
+    session.circuit.name,
+    session.circuit.location,
+  );
+  const compactLocation = dedupeCommaSeparated(session.circuit.location);
 
   return (
     <main className={hideHeader ? "" : "min-h-screen bg-bg-secondary"}>
@@ -158,7 +186,7 @@ export default function SessionDetail({
 
               <div className="flex flex-col gap-1">
                 <p className="text-text-secondary font-medium">
-                  {session.circuit.name}, {session.circuit.location}
+                  {circuitSummary}
                 </p>
                 <p className="text-xs text-text-muted font-mono uppercase tracking-widest">
                   {new Date(session.date).toLocaleDateString("en-US", {
@@ -179,18 +207,12 @@ export default function SessionDetail({
           </div>
 
           {/* Track Map Side */}
-          <div className="w-full md:w-64 bg-bg-primary border-t md:border-t-0 md:border-l border-border-primary relative flex items-center justify-center p-4 overflow-hidden min-h-[160px]">
-            <ConcentricPattern id="session-track-pattern" />
-            {session.circuit.id && (
-              <Image
-                src={`/track-maps/${session.circuit.id}.png`}
-                alt={`${session.circuit.name} track map`}
-                width={200}
-                height={120}
-                className="object-contain relative z-10 opacity-80 mix-blend-lighten"
-              />
-            )}
-          </div>
+          <TrackMapFull
+            circuitId={session.circuit.id}
+            circuitName={session.circuit.name}
+            location={compactLocation}
+            trackLengthKm={session.circuit.track_length_km}
+          />
         </div>
 
         {/* ── Results Table ── */}
@@ -334,9 +356,12 @@ export default function SessionDetail({
                               </span>
                             )}
                           </Link>
-                          <span className="text-[10px] font-mono text-text-muted md:hidden">
+                          <Link
+                            href={`/constructors/${result.team.name.replace(/\s+/g, "-")}`}
+                            className="text-[10px] font-mono text-text-muted md:hidden hover:text-purple-300 transition-colors duration-150"
+                          >
                             {result.team.name}
-                          </span>
+                          </Link>
                         </div>
                       </div>
                     </td>
@@ -345,13 +370,27 @@ export default function SessionDetail({
                     <td className="px-4 py-3 hidden md:table-cell">
                       <Link
                         href={`/constructors/${result.team.name.replace(/ /g, "-")}`}
-                        className="text-xs font-medium hover:text-purple-300 transition-colors duration-150 flex items-center gap-1.5"
+                        className="text-xs font-medium hover:text-purple-300 transition-colors duration-150 flex items-center gap-2"
                         style={{
                           color: result.team.team_color
                             ? `#${result.team.team_color}`
                             : "inherit",
                         }}
                       >
+                        {isValidHeadshotUrl(result.team.logo_url) && (
+                          <div className="w-9 h-9 rounded-sm overflow-hidden border border-border-secondary bg-bg-secondary flex-shrink-0">
+                            <Image
+                              src={result.team.logo_url}
+                              alt={result.team.name}
+                              width={36}
+                              height={36}
+                              className="w-full h-full object-contain p-1"
+                              unoptimized={result.team.logo_url.includes(
+                                "wikimedia.org",
+                              )}
+                            />
+                          </div>
+                        )}
                         <span className="text-xs" aria-hidden="true">
                           {getTeamFlagEmoji(result.team.name)}
                         </span>

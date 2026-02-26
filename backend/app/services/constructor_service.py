@@ -1,6 +1,6 @@
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Optional, List, Dict, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, case
 
 from app.models import Team, SessionResult, Session, Driver
 from app.schemas.constructor import (
@@ -9,11 +9,84 @@ from app.schemas.constructor import (
     ConstructorSeasonHistory,
     ConstructorRaceHistoryResponse,
     ConstructorRaceHistory,
+    ConstructorListItem,
+    ConstructorListResponse,
 )
 
 
 class ConstructorService:
     """Service for constructor-related operations"""
+
+    @staticmethod
+    async def get_all_constructors(db: AsyncSession) -> ConstructorListResponse:
+        """
+        Get all-time constructor listing with career statistics.
+
+        Groups by normalized team name (case-insensitive).
+        Returns constructors ordered by total wins DESC, total points DESC.
+        """
+        # Aggregate stats per team name (case-insensitive)
+        query = (
+            select(
+                func.lower(Team.name).label("team_name_lower"),
+                func.max(Team.name).label("team_name"),
+                func.count(SessionResult.id).label("total_races"),
+                func.sum(case((SessionResult.position == 1, 1), else_=0)).label(
+                    "total_wins"
+                ),
+                func.sum(
+                    case(
+                        (SessionResult.position.in_([1, 2, 3]), 1),
+                        else_=0,
+                    )
+                ).label("total_podiums"),
+                func.coalesce(func.sum(SessionResult.points), 0).label("total_points"),
+                func.max(Session.year).label("latest_season"),
+            )
+            .join(SessionResult, Team.id == SessionResult.team_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.session_type.in_(["race", "sprint_race"]))
+            .group_by(func.lower(Team.name))
+            .order_by(
+                func.sum(case((SessionResult.position == 1, 1), else_=0)).desc(),
+                func.coalesce(func.sum(SessionResult.points), 0).desc(),
+            )
+        )
+
+        result = await db.execute(query)
+        rows = result.all()
+
+        # For each constructor, get the team_color and logo_url from their most recent year
+        constructors = []
+        for row in rows:
+            # Get team color and logo from most recent year's Team row
+            team_query = (
+                select(Team.team_color, Team.logo_url)
+                .where(func.lower(Team.name) == row.team_name_lower)
+                .order_by(Team.year.desc())
+                .limit(1)
+            )
+            team_result = await db.execute(team_query)
+            team_data = team_result.first()
+            team_color = team_data.team_color if team_data else None
+            logo_url = team_data.logo_url if team_data else None
+
+            constructors.append(
+                ConstructorListItem(
+                    team_name=row.team_name,
+                    team_color=team_color,
+                    logo_url=logo_url,
+                    total_wins=int(row.total_wins or 0),
+                    total_races=int(row.total_races or 0),
+                    total_podiums=int(row.total_podiums or 0),
+                    total_points=float(row.total_points or 0),
+                    latest_season=row.latest_season,
+                )
+            )
+
+        return ConstructorListResponse(
+            constructors=constructors, total=len(constructors)
+        )
 
     @staticmethod
     async def get_constructor_profile(
@@ -90,6 +163,7 @@ class ConstructorService:
         return ConstructorProfileResponse(
             team_name=team.name,
             team_color=team.team_color,
+            logo_url=team.logo_url,
             total_seasons=len(seasons),
             total_races=total_races,
             total_championships=total_championships,
@@ -163,6 +237,7 @@ class ConstructorService:
         team_name: str,
         start_year: Optional[int] = None,
         end_year: Optional[int] = None,
+        fetch_all: bool = False,
     ) -> Optional[ConstructorRaceHistoryResponse]:
         """
         Get constructor's race-by-race results across their career.
@@ -186,10 +261,14 @@ class ConstructorService:
                 available_years=[],
             )
 
-        if end_year is None:
+        if fetch_all:
+            start_year = available_years[-1]
             end_year = available_years[0]
-        if start_year is None:
-            start_year = max(end_year - 4, available_years[-1])
+        else:
+            if end_year is None:
+                end_year = available_years[0]
+            if start_year is None:
+                start_year = max(end_year - 4, available_years[-1])
 
         # Get race results
         race_data = await ConstructorService._get_races_in_range(
@@ -211,7 +290,11 @@ class ConstructorService:
                 }
 
             races_dict[race_key]["drivers"].append(
-                {"name": row.full_name, "position": row.position}
+                {
+                    "name": row.full_name,
+                    "position": row.position,
+                    "status": row.status,
+                }
             )
             if row.points is not None:
                 races_dict[race_key]["total_points"] += float(row.points)
@@ -232,9 +315,15 @@ class ConstructorService:
             driver_1_position = (
                 drivers_list[0]["position"] if len(drivers_list) > 0 else None
             )
+            driver_1_status = (
+                drivers_list[0]["status"] if len(drivers_list) > 0 else None
+            )
             driver_2_name = drivers_list[1]["name"] if len(drivers_list) > 1 else None
             driver_2_position = (
                 drivers_list[1]["position"] if len(drivers_list) > 1 else None
+            )
+            driver_2_status = (
+                drivers_list[1]["status"] if len(drivers_list) > 1 else None
             )
 
             races.append(
@@ -246,8 +335,10 @@ class ConstructorService:
                     total_points=race_data_dict["total_points"],
                     driver_1_name=driver_1_name,
                     driver_1_position=driver_1_position,
+                    driver_1_status=driver_1_status,
                     driver_2_name=driver_2_name,
                     driver_2_position=driver_2_position,
+                    driver_2_status=driver_2_status,
                 )
             )
 
@@ -367,6 +458,7 @@ class ConstructorService:
                 Session.date,
                 SessionResult.position,
                 SessionResult.points,
+                SessionResult.status,
                 Driver.full_name,
             )
             .join(SessionResult, Session.id == SessionResult.session_id)

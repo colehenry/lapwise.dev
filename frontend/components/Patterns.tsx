@@ -1,9 +1,12 @@
-export function GridPattern({ id = "grid-pattern" }: { id?: string }) {
+export function GridPattern({
+  id = "grid-pattern",
+  className = "absolute inset-0 w-full h-full text-purple-500 opacity-10 pointer-events-none",
+}: {
+  id?: string;
+  className?: string;
+}) {
   return (
-    <svg
-      className="absolute inset-0 w-full h-full text-purple-500 opacity-10 pointer-events-none"
-      aria-hidden="true"
-    >
+    <svg className={className} aria-hidden="true">
       <title>Grid pattern</title>
       <defs>
         <pattern id={id} width="10" height="10" patternUnits="userSpaceOnUse">

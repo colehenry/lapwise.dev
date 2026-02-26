@@ -9,7 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.services.circuit_service import CircuitService
-from app.schemas.circuit import CircuitResponse, CircuitListResponse
+from app.schemas.circuit import (
+    CircuitResponse,
+    CircuitListResponse,
+    CircuitRaceHistoryResponse,
+    CircuitStatisticsResponse,
+)
 from app.security import verify_api_key
 
 router = APIRouter()
@@ -54,3 +59,49 @@ async def get_circuit_by_id(
         )
 
     return circuit
+
+
+@router.get("/{circuit_id}/race-history", response_model=CircuitRaceHistoryResponse)
+async def get_circuit_race_history(
+    circuit_id: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Get race winners at this circuit across all years.
+
+    Args:
+        circuit_id: Database ID of the circuit
+    """
+    history = await CircuitService.get_circuit_race_history(db, circuit_id)
+
+    if not history:
+        raise HTTPException(
+            status_code=404, detail=f"Circuit with ID {circuit_id} not found"
+        )
+
+    return history
+
+
+@router.get("/{circuit_id}/statistics", response_model=CircuitStatisticsResponse)
+async def get_circuit_statistics(
+    circuit_id: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Get aggregated statistics for a circuit.
+
+    Returns most wins, poles, fastest laps by driver, and constructor wins.
+
+    Args:
+        circuit_id: Database ID of the circuit
+    """
+    stats = await CircuitService.get_circuit_statistics(db, circuit_id)
+
+    if not stats:
+        raise HTTPException(
+            status_code=404, detail=f"Circuit with ID {circuit_id} not found"
+        )
+
+    return stats

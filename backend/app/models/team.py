@@ -31,6 +31,7 @@ class Team(Base):
     # Team information
     name = Column(String, nullable=False)  # "Red Bull Racing"
     team_color = Column(String(6), nullable=True)  # Hex without #: "3671C6"
+    logo_url = Column(String, nullable=True)  # Wikipedia or other logo URL
 
     # Relationships
     session_results = relationship("SessionResult", back_populates="team")
