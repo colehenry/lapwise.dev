@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { GridPattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import TiltCard from "@/components/ui/TiltCard";
@@ -12,6 +12,7 @@ import { getCircuitFlagEmoji } from "@/lib/flags";
 import type { CircuitInfo } from "@/lib/types";
 
 type SortKey = "races" | "recent" | "alpha";
+const DEFAULT_VISIBLE_COUNT = 30;
 
 interface CircuitsResponse {
   circuits: CircuitInfo[];
@@ -125,6 +126,7 @@ function SortPills({
 export default function CircuitsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("races");
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const { data: circuitsData, isLoading } = useQuery({
     queryKey: ["circuits"],
@@ -163,6 +165,14 @@ export default function CircuitsPage() {
 
     return sorted;
   }, [circuitsData, searchQuery, sortKey]);
+
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [searchQuery, sortKey]);
+
+  const visibleCircuits = isExpanded
+    ? filteredCircuits
+    : filteredCircuits.slice(0, DEFAULT_VISIBLE_COUNT);
 
   return (
     <div className="min-h-screen bg-bg-secondary">
@@ -225,9 +235,37 @@ export default function CircuitsPage() {
         {/* Grid */}
         {!isLoading && filteredCircuits.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {filteredCircuits.map((circuit) => (
+            {visibleCircuits.map((circuit) => (
               <CircuitCard key={circuit.id} circuit={circuit} />
             ))}
+          </div>
+        )}
+
+        {!isLoading && filteredCircuits.length > DEFAULT_VISIBLE_COUNT && (
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="border border-border-secondary rounded-sm text-text-secondary hover:border-purple-500 hover:text-purple-300 font-mono text-xs uppercase tracking-widest px-6 py-2 transition-colors duration-150 flex items-center gap-2"
+            >
+              {isExpanded
+                ? "COLLAPSE"
+                : `SHOW ALL (${filteredCircuits.length - DEFAULT_VISIBLE_COUNT} more)`}
+              <svg
+                className={`w-3 h-3 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
           </div>
         )}
 

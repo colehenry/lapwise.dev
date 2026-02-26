@@ -217,7 +217,12 @@ export default function DriverProfilePage() {
                   {data.current_team && (
                     <>
                       <span>•</span>
-                      <span>{data.current_team}</span>
+                      <Link
+                        href={`/constructors/${data.current_team.replace(/\s+/g, "-")}`}
+                        className="hover:text-purple-300 transition-colors"
+                      >
+                        {data.current_team}
+                      </Link>
                     </>
                   )}
                   {data.country_code && (

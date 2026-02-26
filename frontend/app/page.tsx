@@ -7,7 +7,7 @@ import TiltCard from "@/components/ui/TiltCard";
 function CrosshairPattern() {
   return (
     <svg
-      className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.08] pointer-events-none"
+      className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.05] pointer-events-none"
       viewBox="0 0 400 300"
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
@@ -159,7 +159,7 @@ export default function Home() {
       <LatestRaceWeekend />
 
       {/* Feature Cards */}
-      <section className="bg-bg-primary py-16 px-6">
+      <section className="bg-bg-secondary py-16 px-6 border-y border-border-primary/60">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
@@ -185,33 +185,40 @@ export default function Home() {
               <TiltCard key={feature.label}>
                 <Link
                   href={feature.href}
-                  className="block group bg-bg-tertiary border border-border-primary rounded-sm p-5 hover:border-purple-500 hover:shadow-purple transition-all duration-150 relative overflow-hidden h-full"
+                  className="block group bg-bg-tertiary border border-border-primary rounded-sm p-0 hover:border-purple-500/70 transition-all duration-150 relative overflow-hidden h-full"
                 >
                   <CrosshairPattern />
                   <div className="relative z-10">
-                    <div className="w-10 h-10 rounded-sm bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-3">
-                      <svg
-                        className="w-5 h-5 text-purple-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <title>{feature.label}</title>
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d={feature.icon}
-                        />
-                      </svg>
+                    <div className="relative h-10 bg-bg-secondary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                      <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                        Feature
+                      </span>
                     </div>
-                    <h3 className="text-sm font-semibold text-text-primary tracking-wide mb-1">
-                      {feature.label}
-                    </h3>
-                    <p className="text-xs text-text-muted leading-relaxed">
-                      {feature.desc}
-                    </p>
+                    <div className="p-5">
+                      <div className="w-10 h-10 rounded-sm bg-purple-500/12 border border-purple-500/30 flex items-center justify-center mb-3">
+                        <svg
+                          className="w-5 h-5 text-purple-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <title>{feature.label}</title>
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d={feature.icon}
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-base font-semibold text-text-primary tracking-tight mb-1.5">
+                        {feature.label}
+                      </h3>
+                      <p className="text-sm text-text-secondary leading-relaxed">
+                        {feature.desc}
+                      </p>
+                    </div>
                   </div>
                 </Link>
               </TiltCard>

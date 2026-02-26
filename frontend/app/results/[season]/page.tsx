@@ -255,7 +255,12 @@ export default function ResultsPage() {
                             : "#999",
                         }}
                       >
-                        {driver.team_name}
+                        <Link
+                          href={`/constructors/${driver.team_name.replace(/\s+/g, "-")}`}
+                          className="hover:text-purple-300 transition-colors duration-150"
+                        >
+                          {driver.team_name}
+                        </Link>
                       </div>
                     </div>
 
@@ -334,6 +339,20 @@ export default function ResultsPage() {
                         {team.position}
                       </div>
 
+                      {/* Team Logo */}
+                      {isValidHeadshotUrl(team.logo_url) && (
+                        <div className="w-10 h-10 rounded-sm overflow-hidden border border-border-secondary bg-bg-secondary">
+                          <Image
+                            src={team.logo_url}
+                            alt={team.team_name}
+                            width={40}
+                            height={40}
+                            className="w-full h-full object-contain p-1"
+                            unoptimized={team.logo_url.includes("wikimedia.org")}
+                          />
+                        </div>
+                      )}
+
                       {/* Team Info */}
                       <div className="flex-1 flex flex-col justify-center">
                         <div
@@ -344,7 +363,12 @@ export default function ResultsPage() {
                               : "#fff",
                           }}
                         >
-                          {team.team_name}
+                          <Link
+                            href={`/constructors/${team.team_name.replace(/\s+/g, "-")}`}
+                            className="hover:text-purple-300 transition-colors duration-150"
+                          >
+                            {team.team_name}
+                          </Link>
                         </div>
                         <div className="text-xs text-text-muted">
                           {(sessionType === "race"

@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { GridPattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import TiltCard from "@/components/ui/TiltCard";
@@ -14,6 +14,7 @@ import type { DriverListItem, DriverListResponse } from "@/lib/types";
 type SortKey = "wins" | "races" | "points" | "alpha";
 
 const CURRENT_YEAR = new Date().getFullYear();
+const DEFAULT_VISIBLE_COUNT = 30;
 
 async function fetchAllDrivers(): Promise<DriverListResponse> {
   const res = await fetch(apiUrl("/api/drivers"), {
@@ -27,27 +28,32 @@ function DriverCard({ driver }: { driver: DriverListItem }) {
   const isActive = driver.latest_season === CURRENT_YEAR;
   const driverSlug =
     driver.driver_code || driver.full_name.toLowerCase().replace(/\s+/g, "-");
+  const constructorSlug = driver.current_team?.replace(/\s+/g, "-");
 
   return (
     <TiltCard>
-      <Link href={`/drivers/${driverSlug}`} className="block h-full">
-        <div className="relative border border-border-primary rounded-sm p-4 hover:border-purple-500 transition-all duration-200 bg-bg-tertiary h-full">
+      <div className="relative border border-border-primary rounded-sm p-4 hover:border-purple-500 transition-all duration-200 bg-bg-tertiary h-full">
+        <Link href={`/drivers/${driverSlug}`} className="block">
           <div className="flex items-center gap-3">
             {/* Headshot */}
             {isValidHeadshotUrl(driver.headshot_url) ? (
-              <Image
-                src={driver.headshot_url}
-                alt={driver.full_name}
-                width={56}
-                height={56}
-                unoptimized={driver.headshot_url?.includes("wikimedia.org")}
-                className="w-14 h-14 rounded-sm object-cover border-2 flex-shrink-0"
+              <div
+                className="w-14 h-14 rounded-sm overflow-hidden border-2 flex-shrink-0 bg-bg-secondary"
                 style={{
                   borderColor: driver.current_team_color
                     ? `#${driver.current_team_color}`
                     : "#888",
                 }}
-              />
+              >
+                <Image
+                  src={driver.headshot_url}
+                  alt={driver.full_name}
+                  width={56}
+                  height={56}
+                  unoptimized={driver.headshot_url?.includes("wikimedia.org")}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             ) : (
               <div
                 className="w-14 h-14 rounded-sm flex items-center justify-center text-xs font-bold text-text-tertiary border-2 bg-bg-secondary flex-shrink-0 font-mono"
@@ -97,30 +103,33 @@ function DriverCard({ driver }: { driver: DriverListItem }) {
               </div>
             </div>
           </div>
+        </Link>
 
-          {/* Bottom bar */}
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-border-primary">
-            {driver.current_team ? (
-              <span className="text-xs text-text-muted truncate">
-                {driver.current_team}
-              </span>
-            ) : (
-              <span />
+        {/* Bottom bar */}
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-border-primary">
+          {driver.current_team && constructorSlug ? (
+            <Link
+              href={`/constructors/${constructorSlug}`}
+              className="text-xs text-text-muted hover:text-purple-300 transition-colors truncate"
+            >
+              {driver.current_team}
+            </Link>
+          ) : (
+            <span />
+          )}
+          <div className="flex items-center gap-3 text-[10px] text-text-muted font-mono tracking-wider">
+            <span>{driver.total_races} races</span>
+            <span className="text-border-secondary">/</span>
+            <span>{driver.total_podiums} podiums</span>
+            {driver.latest_season && (
+              <>
+                <span className="text-border-secondary">/</span>
+                <span>{driver.latest_season}</span>
+              </>
             )}
-            <div className="flex items-center gap-3 text-[10px] text-text-muted font-mono tracking-wider">
-              <span>{driver.total_races} races</span>
-              <span className="text-border-secondary">/</span>
-              <span>{driver.total_podiums} podiums</span>
-              {driver.latest_season && (
-                <>
-                  <span className="text-border-secondary">/</span>
-                  <span>{driver.latest_season}</span>
-                </>
-              )}
-            </div>
           </div>
         </div>
-      </Link>
+      </div>
     </TiltCard>
   );
 }
@@ -162,6 +171,7 @@ function SortPills({
 export default function DriversPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("wins");
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["drivers-all"],
@@ -214,6 +224,14 @@ export default function DriversPage() {
 
     return sorted;
   }, [data, searchQuery, sortKey]);
+
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [searchQuery, sortKey]);
+
+  const visibleDrivers = isExpanded
+    ? filteredDrivers
+    : filteredDrivers.slice(0, DEFAULT_VISIBLE_COUNT);
 
   return (
     <div className="min-h-screen bg-bg-secondary">
@@ -276,12 +294,40 @@ export default function DriversPage() {
         {/* Grid */}
         {!isLoading && filteredDrivers.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {filteredDrivers.map((driver) => (
+            {visibleDrivers.map((driver) => (
               <DriverCard
                 key={driver.driver_code || driver.full_name}
                 driver={driver}
               />
             ))}
+          </div>
+        )}
+
+        {!isLoading && filteredDrivers.length > DEFAULT_VISIBLE_COUNT && (
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="border border-border-secondary rounded-sm text-text-secondary hover:border-purple-500 hover:text-purple-300 font-mono text-xs uppercase tracking-widest px-6 py-2 transition-colors duration-150 flex items-center gap-2"
+            >
+              {isExpanded
+                ? "COLLAPSE"
+                : `SHOW ALL (${filteredDrivers.length - DEFAULT_VISIBLE_COUNT} more)`}
+              <svg
+                className={`w-3 h-3 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
           </div>
         )}
 

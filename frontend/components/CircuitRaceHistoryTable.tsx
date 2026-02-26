@@ -102,9 +102,12 @@ export default function CircuitRaceHistoryTable({
                       style={{ backgroundColor: `#${race.team_color}` }}
                     />
                   )}
-                  <span className="text-text-secondary text-xs">
+                  <Link
+                    href={`/constructors/${race.team_name.replace(/\s+/g, "-")}`}
+                    className="text-text-secondary text-xs hover:text-purple-300 transition-colors"
+                  >
                     {race.team_name}
-                  </span>
+                  </Link>
                 </span>
               </td>
             </tr>

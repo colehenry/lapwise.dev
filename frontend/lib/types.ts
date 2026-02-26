@@ -15,6 +15,7 @@ export interface ConstructorStanding {
   position: number;
   team_name: string;
   team_color: string | null;
+  logo_url: string | null;
   total_points: number;
 }
 
@@ -42,6 +43,7 @@ export interface ConstructorQualifyingStanding {
   position: number;
   team_name: string;
   team_color: string | null;
+  logo_url: string | null;
   total_qualifying_points: number;
   poles: number;
   p2s: number;
@@ -97,6 +99,7 @@ export interface DriverListResponse {
 export interface ConstructorListItem {
   team_name: string;
   team_color: string | null;
+  logo_url: string | null;
   total_wins: number;
   total_races: number;
   total_podiums: number;
@@ -132,6 +135,7 @@ export type DriverInfo = {
 export type TeamInfo = {
   name: string;
   team_color: string | null;
+  logo_url: string | null;
 };
 
 // Session-level circuit (subset of CircuitInfo, used by session results)
@@ -287,6 +291,7 @@ export interface DriverSeasonHistoryResponse {
 export interface ConstructorProfile {
   team_name: string;
   team_color: string | null;
+  logo_url: string | null;
   total_seasons: number;
   total_races: number;
   total_championships: number;

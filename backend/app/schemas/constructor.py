@@ -13,6 +13,7 @@ class ConstructorListItem(BaseModel):
 
     team_name: str
     team_color: Optional[str] = None
+    logo_url: Optional[str] = None
     total_wins: int
     total_races: int
     total_podiums: int
@@ -43,6 +44,7 @@ class ConstructorProfileResponse(BaseModel):
     # Basic info
     team_name: str
     team_color: Optional[str] = None
+    logo_url: Optional[str] = None
 
     # Career statistics
     total_seasons: int

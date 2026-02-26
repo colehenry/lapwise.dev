@@ -198,9 +198,12 @@ export default function DriverResultsTable({
                           style={{ backgroundColor: `#${race.team_color}` }}
                         />
                       )}
-                      <span className="text-text-secondary text-xs">
+                      <Link
+                        href={`/constructors/${race.team_name.replace(/\s+/g, "-")}`}
+                        className="text-text-secondary text-xs hover:text-purple-300 transition-colors"
+                      >
                         {race.team_name}
-                      </span>
+                      </Link>
                     </span>
                   </td>
                   <td className="px-3 py-2 text-text-muted text-xs hidden lg:table-cell">
