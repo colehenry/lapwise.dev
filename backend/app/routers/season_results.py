@@ -74,10 +74,13 @@ async def get_latest_race(
     # Build podium list
     from app.schemas.result import RoundPodiumDriver
 
+    from app.services.results_service import _make_slug
+
     podium = [
         RoundPodiumDriver(
             full_name=row.full_name,
             driver_code=row.driver_code,
+            driver_slug=_make_slug(row.jolpica_id, row.full_name),
             country_code=row.country_code,
             team_name=row.team_name,
             team_color=row.team_color,

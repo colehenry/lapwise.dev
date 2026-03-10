@@ -144,7 +144,7 @@ export default function ConstructorProfilePage() {
               <span>&larr;</span>
               <span className="hidden sm:inline">CONSTRUCTORS</span>
             </Link>
-            
+
             {data.logo_url ? (
               <div
                 className="w-9 h-9 rounded-full overflow-hidden border-2 bg-bg-secondary"
@@ -227,7 +227,9 @@ export default function ConstructorProfilePage() {
                     backgroundColor: data.team_color
                       ? `#${data.team_color}`
                       : "#888",
-                    borderColor: data.team_color ? `#${data.team_color}` : "#888",
+                    borderColor: data.team_color
+                      ? `#${data.team_color}`
+                      : "#888",
                   }}
                 >
                   <span className="text-white font-bold text-2xl text-center px-4">

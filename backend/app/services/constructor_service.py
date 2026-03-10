@@ -41,6 +41,7 @@ class ConstructorService:
                     )
                 ).label("total_podiums"),
                 func.coalesce(func.sum(SessionResult.points), 0).label("total_points"),
+                func.min(Session.year).label("first_season"),
                 func.max(Session.year).label("latest_season"),
             )
             .join(SessionResult, Team.id == SessionResult.team_id)
@@ -80,6 +81,7 @@ class ConstructorService:
                     total_races=int(row.total_races or 0),
                     total_podiums=int(row.total_podiums or 0),
                     total_points=float(row.total_points or 0),
+                    first_season=row.first_season,
                     latest_season=row.latest_season,
                 )
             )

@@ -18,6 +18,7 @@ class ConstructorListItem(BaseModel):
     total_races: int
     total_podiums: int
     total_points: float
+    first_season: Optional[int] = None
     latest_season: Optional[int] = None
 
     class Config:

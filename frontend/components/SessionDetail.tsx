@@ -338,7 +338,7 @@ export default function SessionDetail({
                         )}
                         <div className="flex flex-col">
                           <Link
-                            href={`/drivers/${result.driver.driver_code}`}
+                            href={`/drivers/${result.driver.driver_slug || result.driver.driver_code}`}
                             className="font-semibold text-text-primary text-sm hover:text-purple-300 transition-colors duration-150 flex items-center gap-1.5"
                           >
                             {result.driver.country_code && (

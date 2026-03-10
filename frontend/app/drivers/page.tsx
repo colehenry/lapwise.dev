@@ -27,7 +27,9 @@ async function fetchAllDrivers(): Promise<DriverListResponse> {
 function DriverCard({ driver }: { driver: DriverListItem }) {
   const isActive = driver.latest_season === CURRENT_YEAR;
   const driverSlug =
-    driver.driver_code || driver.full_name.toLowerCase().replace(/\s+/g, "-");
+    driver.driver_slug ||
+    driver.driver_code ||
+    driver.full_name.toLowerCase().replace(/\s+/g, "-");
   const constructorSlug = driver.current_team?.replace(/\s+/g, "-");
 
   return (
@@ -121,10 +123,12 @@ function DriverCard({ driver }: { driver: DriverListItem }) {
             <span>{driver.total_races} races</span>
             <span className="text-border-secondary">/</span>
             <span>{driver.total_podiums} podiums</span>
-            {driver.latest_season && (
+            {driver.first_season && (
               <>
                 <span className="text-border-secondary">/</span>
-                <span>{driver.latest_season}</span>
+                <span>
+                  {driver.first_season}–{isActive ? "" : driver.latest_season}
+                </span>
               </>
             )}
           </div>

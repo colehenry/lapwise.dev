@@ -52,6 +52,13 @@ from app.schemas.result import (
 )
 
 
+def _make_slug(jolpica_id: Optional[str], full_name: str) -> str:
+    """Compute URL-safe driver slug from jolpica_id or full_name."""
+    if jolpica_id:
+        return jolpica_id.replace("_", "-")
+    return full_name.lower().replace(" ", "-")
+
+
 class ResultsService:
     """Service class for results-related operations"""
 
@@ -132,6 +139,7 @@ class ResultsService:
                 SessionResult.position,
                 Driver.full_name,
                 Driver.driver_code,
+                Driver.jolpica_id,
                 Driver.country_code,
                 ResultsService._headshot_fallback_expr().label("headshot_url"),
                 Team.name.label("team_name"),
@@ -173,6 +181,7 @@ class ResultsService:
             select(
                 Driver.id.label("driver_id"),
                 Driver.driver_code,
+                Driver.jolpica_id,
                 Driver.full_name,
                 Driver.country_code,
                 func.sum(SessionResult.points).label("total_points"),
@@ -184,6 +193,7 @@ class ResultsService:
             .group_by(
                 Driver.id,
                 Driver.driver_code,
+                Driver.jolpica_id,
                 Driver.full_name,
                 Driver.country_code,
             )
@@ -234,6 +244,9 @@ class ResultsService:
                 driver_standings_data.append(
                     {
                         "driver_code": driver_row.driver_code,
+                        "driver_slug": _make_slug(
+                            driver_row.jolpica_id, driver_row.full_name
+                        ),
                         "full_name": driver_row.full_name,
                         "country_code": driver_row.country_code,
                         "total_points": driver_row.total_points,
@@ -251,6 +264,7 @@ class ResultsService:
             DriverStanding(
                 position=idx + 1,
                 driver_code=row["driver_code"],
+                driver_slug=row["driver_slug"],
                 full_name=row["full_name"],
                 country_code=row["country_code"],
                 team_name=row["team_name"],
@@ -322,6 +336,7 @@ class ResultsService:
             select(
                 Driver.id.label("driver_id"),
                 Driver.driver_code,
+                Driver.jolpica_id,
                 Driver.full_name,
                 Driver.country_code,
                 func.sum(
@@ -344,6 +359,7 @@ class ResultsService:
             .group_by(
                 Driver.id,
                 Driver.driver_code,
+                Driver.jolpica_id,
                 Driver.full_name,
                 Driver.country_code,
             )
@@ -393,6 +409,9 @@ class ResultsService:
                 driver_standings_data.append(
                     {
                         "driver_code": driver_row.driver_code,
+                        "driver_slug": _make_slug(
+                            driver_row.jolpica_id, driver_row.full_name
+                        ),
                         "full_name": driver_row.full_name,
                         "country_code": driver_row.country_code,
                         "total_qualifying_points": float(driver_row.total_points),
@@ -504,6 +523,7 @@ class ResultsService:
             select(
                 Driver.id.label("driver_id"),
                 Driver.driver_code,
+                Driver.jolpica_id,
                 Driver.full_name,
                 Team.name.label("team_name"),
                 Team.team_color,
@@ -559,6 +579,7 @@ class ResultsService:
             if key not in drivers_dict:
                 drivers_dict[key] = {
                     "driver_code": row.driver_code or row.full_name,
+                    "driver_slug": _make_slug(row.jolpica_id, row.full_name),
                     "full_name": row.full_name,
                     "team_name": row.team_name,
                     "team_color": row.team_color,
@@ -754,6 +775,7 @@ class ResultsService:
             select(
                 Driver.id.label("driver_id"),
                 Driver.driver_code,
+                Driver.jolpica_id,
                 Driver.full_name,
                 Team.team_color,
                 Session.round,
@@ -811,6 +833,7 @@ class ResultsService:
             if key not in drivers_dict:
                 drivers_dict[key] = {
                     "driver_code": row.driver_code or row.full_name,
+                    "driver_slug": _make_slug(row.jolpica_id, row.full_name),
                     "full_name": row.full_name,
                     "team_color": row.team_color,
                     "sessions_data": {},
@@ -995,6 +1018,7 @@ class ResultsService:
                 SessionResult.position,
                 Driver.full_name,
                 Driver.driver_code,
+                Driver.jolpica_id,
                 Driver.country_code,
                 ResultsService._headshot_fallback_expr().label("headshot_url"),
                 Team.name.label("team_name"),
@@ -1040,6 +1064,7 @@ class ResultsService:
                 RoundPodiumDriver(
                     full_name=row.full_name,
                     driver_code=row.driver_code,
+                    driver_slug=_make_slug(row.jolpica_id, row.full_name),
                     country_code=row.country_code,
                     team_name=row.team_name,
                     team_color=row.team_color,
@@ -1110,6 +1135,7 @@ class ResultsService:
                 Lap.deleted,
                 Lap.lap_start_time_seconds,
                 Driver.driver_code,
+                Driver.jolpica_id,
                 Driver.full_name,
                 Driver.country_code,
                 Team.team_color,
@@ -1144,6 +1170,7 @@ class ResultsService:
             if driver_code not in drivers_dict:
                 drivers_dict[driver_code] = {
                     "driver_code": driver_code,
+                    "driver_slug": _make_slug(row.jolpica_id, row.full_name),
                     "full_name": row.full_name,
                     "country_code": row.country_code,
                     "team_color": row.team_color,
@@ -1279,6 +1306,7 @@ class ResultsService:
                 driver=DriverInfo(
                     driver_number=result.Driver.driver_number,
                     driver_code=result.Driver.driver_code,
+                    driver_slug=result.Driver.driver_slug,
                     full_name=result.Driver.full_name,
                     country_code=result.Driver.country_code,
                 ),
@@ -1374,6 +1402,7 @@ class ResultsService:
                 driver=DriverInfo(
                     driver_number=result.Driver.driver_number,
                     driver_code=result.Driver.driver_code,
+                    driver_slug=result.Driver.driver_slug,
                     full_name=result.Driver.full_name,
                     country_code=result.Driver.country_code,
                 ),
@@ -1449,6 +1478,7 @@ class ResultsService:
                 Lap.deleted,
                 Lap.lap_start_time_seconds,
                 Driver.driver_code,
+                Driver.jolpica_id,
                 Driver.full_name,
                 Driver.country_code,
                 Team.team_color,
@@ -1485,6 +1515,7 @@ class ResultsService:
             if driver_code not in drivers_dict:
                 drivers_dict[driver_code] = {
                     "driver_code": driver_code,
+                    "driver_slug": _make_slug(row.jolpica_id, row.full_name),
                     "full_name": row.full_name,
                     "country_code": row.country_code,
                     "team_color": row.team_color,
@@ -1586,6 +1617,7 @@ class ResultsService:
                 Lap.is_personal_best,
                 Lap.deleted,
                 Driver.driver_code,
+                Driver.jolpica_id,
                 Driver.full_name,
                 Driver.country_code,
                 Team.team_color,
@@ -1615,6 +1647,7 @@ class ResultsService:
             if driver_code not in drivers_dict:
                 drivers_dict[driver_code] = {
                     "driver_code": driver_code,
+                    "driver_slug": _make_slug(row.jolpica_id, row.full_name),
                     "full_name": row.full_name,
                     "country_code": row.country_code,
                     "team_color": row.team_color,
@@ -1697,6 +1730,7 @@ class ResultsService:
         query = (
             select(
                 Driver.driver_code,
+                Driver.jolpica_id,
                 Driver.full_name,
                 Team.team_color,
                 func.min(Lap.sector1_time_seconds).label("best_sector1"),
@@ -1715,6 +1749,7 @@ class ResultsService:
             .where(Lap.deleted.is_(False) | Lap.deleted.is_(None))
             .group_by(
                 Driver.driver_code,
+                Driver.jolpica_id,
                 Driver.full_name,
                 Team.team_color,
             )
@@ -1730,6 +1765,7 @@ class ResultsService:
         sectors = [
             QualifyingSectorComparison(
                 driver_code=row.driver_code,
+                driver_slug=_make_slug(row.jolpica_id, row.full_name),
                 full_name=row.full_name,
                 team_color=row.team_color,
                 best_sector1=ResultsService.sanitize_float(row.best_sector1),
@@ -1906,6 +1942,7 @@ class ResultsService:
                 driver=DriverInfo(
                     driver_number=result.Driver.driver_number,
                     driver_code=result.Driver.driver_code,
+                    driver_slug=result.Driver.driver_slug,
                     full_name=result.Driver.full_name,
                     country_code=result.Driver.country_code,
                 ),
@@ -2001,6 +2038,7 @@ class ResultsService:
                 driver=DriverInfo(
                     driver_number=result.Driver.driver_number,
                     driver_code=result.Driver.driver_code,
+                    driver_slug=result.Driver.driver_slug,
                     full_name=result.Driver.full_name,
                     country_code=result.Driver.country_code,
                 ),
@@ -2050,6 +2088,7 @@ class ResultsService:
                 SessionResult.position,
                 Driver.full_name,
                 Driver.driver_code,
+                Driver.jolpica_id,
                 Driver.country_code,
                 ResultsService._headshot_fallback_expr().label("headshot_url"),
                 Team.name.label("team_name"),
@@ -2094,6 +2133,7 @@ class ResultsService:
                 RoundPodiumDriver(
                     full_name=row.full_name,
                     driver_code=row.driver_code,
+                    driver_slug=_make_slug(row.jolpica_id, row.full_name),
                     country_code=row.country_code,
                     team_name=row.team_name,
                     team_color=row.team_color,

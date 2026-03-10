@@ -129,6 +129,7 @@ class CircuitService:
                 Session.event_name,
                 Driver.full_name.label("winner_name"),
                 Driver.driver_code.label("winner_code"),
+                Driver.jolpica_id.label("winner_jolpica_id"),
                 Team.name.label("team_name"),
                 Team.team_color,
             )
@@ -143,6 +144,8 @@ class CircuitService:
         result = await db.execute(query)
         rows = result.all()
 
+        from app.services.results_service import _make_slug
+
         races = [
             CircuitRaceResult(
                 year=row.year,
@@ -150,6 +153,7 @@ class CircuitService:
                 race_name=row.event_name,
                 winner_name=row.winner_name,
                 winner_code=row.winner_code,
+                winner_slug=_make_slug(row.winner_jolpica_id, row.winner_name),
                 team_name=row.team_name,
                 team_color=row.team_color,
             )
@@ -181,24 +185,34 @@ class CircuitService:
             Session.session_type == "race",
         )
 
+        from app.services.results_service import _make_slug
+
         # Most wins (P1)
         wins_query = (
             select(
                 Driver.full_name.label("name"),
                 Driver.driver_code.label("code"),
+                Driver.jolpica_id,
                 func.count().label("count"),
             )
             .join(SessionResult, Driver.id == SessionResult.driver_id)
             .join(Session, SessionResult.session_id == Session.id)
             .where(base_filter)
             .where(SessionResult.position == 1)
-            .group_by(Driver.id, Driver.full_name, Driver.driver_code)
+            .group_by(
+                Driver.id, Driver.full_name, Driver.driver_code, Driver.jolpica_id
+            )
             .order_by(func.count().desc())
             .limit(10)
         )
         wins_result = await db.execute(wins_query)
         most_wins = [
-            CircuitStatDriver(name=r.name, code=r.code, count=r.count)
+            CircuitStatDriver(
+                name=r.name,
+                code=r.code,
+                slug=_make_slug(r.jolpica_id, r.name),
+                count=r.count,
+            )
             for r in wins_result.all()
         ]
 
@@ -207,19 +221,27 @@ class CircuitService:
             select(
                 Driver.full_name.label("name"),
                 Driver.driver_code.label("code"),
+                Driver.jolpica_id,
                 func.count().label("count"),
             )
             .join(SessionResult, Driver.id == SessionResult.driver_id)
             .join(Session, SessionResult.session_id == Session.id)
             .where(base_filter)
             .where(SessionResult.grid_position == 1)
-            .group_by(Driver.id, Driver.full_name, Driver.driver_code)
+            .group_by(
+                Driver.id, Driver.full_name, Driver.driver_code, Driver.jolpica_id
+            )
             .order_by(func.count().desc())
             .limit(10)
         )
         poles_result = await db.execute(poles_query)
         most_poles = [
-            CircuitStatDriver(name=r.name, code=r.code, count=r.count)
+            CircuitStatDriver(
+                name=r.name,
+                code=r.code,
+                slug=_make_slug(r.jolpica_id, r.name),
+                count=r.count,
+            )
             for r in poles_result.all()
         ]
 
@@ -228,19 +250,27 @@ class CircuitService:
             select(
                 Driver.full_name.label("name"),
                 Driver.driver_code.label("code"),
+                Driver.jolpica_id,
                 func.count().label("count"),
             )
             .join(SessionResult, Driver.id == SessionResult.driver_id)
             .join(Session, SessionResult.session_id == Session.id)
             .where(base_filter)
             .where(SessionResult.fastest_lap.is_(True))
-            .group_by(Driver.id, Driver.full_name, Driver.driver_code)
+            .group_by(
+                Driver.id, Driver.full_name, Driver.driver_code, Driver.jolpica_id
+            )
             .order_by(func.count().desc())
             .limit(10)
         )
         fl_result = await db.execute(fl_query)
         most_fastest_laps = [
-            CircuitStatDriver(name=r.name, code=r.code, count=r.count)
+            CircuitStatDriver(
+                name=r.name,
+                code=r.code,
+                slug=_make_slug(r.jolpica_id, r.name),
+                count=r.count,
+            )
             for r in fl_result.all()
         ]
 

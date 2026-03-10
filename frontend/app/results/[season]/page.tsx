@@ -242,7 +242,7 @@ export default function ResultsPage() {
                     {/* Driver Info */}
                     <div className="flex-1 flex flex-col justify-center">
                       <Link
-                        href={`/drivers/${driver.driver_code}`}
+                        href={`/drivers/${driver.driver_slug || driver.driver_code}`}
                         className="font-semibold text-text-primary text-sm hover:text-purple-300 transition-colors duration-150"
                       >
                         {driver.full_name}
@@ -348,7 +348,9 @@ export default function ResultsPage() {
                             width={40}
                             height={40}
                             className="w-full h-full object-contain p-1"
-                            unoptimized={team.logo_url.includes("wikimedia.org")}
+                            unoptimized={team.logo_url.includes(
+                              "wikimedia.org",
+                            )}
                           />
                         </div>
                       )}
@@ -377,7 +379,7 @@ export default function ResultsPage() {
                           ).map((driver, driverIdx, arr) => (
                             <span key={driver.driver_code}>
                               <Link
-                                href={`/drivers/${driver.driver_code}`}
+                                href={`/drivers/${driver.driver_slug || driver.driver_code}`}
                                 className="hover:text-purple-300 transition-colors duration-150"
                               >
                                 {driver.full_name}

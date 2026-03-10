@@ -88,7 +88,7 @@ export default function CircuitRaceHistoryTable({
               </td>
               <td className="px-3 py-2">
                 <Link
-                  href={`/drivers/${race.winner_code}`}
+                  href={`/drivers/${race.winner_slug || race.winner_code}`}
                   className="text-yellow-400 hover:text-yellow-300 transition-colors font-medium"
                 >
                   {race.winner_name}

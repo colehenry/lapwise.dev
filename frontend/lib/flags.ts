@@ -54,6 +54,8 @@ const TEAM_COUNTRY_MAP: Record<string, string> = {
   "Kick Sauber": "CH", // Switzerland
   RB: "IT", // Italy (based in Faenza, Italy)
   "Racing Bulls": "IT", // Italy
+  Audi: "DE", // Germany
+  Cadillac: "US", // United States
 
   // Historical teams (2018-2023)
   AlphaTauri: "IT", // Italy (Faenza)

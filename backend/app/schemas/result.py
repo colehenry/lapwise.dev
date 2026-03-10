@@ -47,7 +47,8 @@ class DriverInfo(BaseModel):
     """Driver metadata embedded in result"""
 
     driver_number: Optional[int] = None
-    driver_code: str
+    driver_code: Optional[str] = None
+    driver_slug: Optional[str] = None
     full_name: str
     country_code: Optional[str] = None
 
@@ -124,7 +125,8 @@ class DriverStanding(BaseModel):
     """Individual driver's championship standing for a season"""
 
     position: int  # Championship position (1st, 2nd, 3rd, etc.)
-    driver_code: str
+    driver_code: Optional[str] = None
+    driver_slug: Optional[str] = None
     full_name: str
     country_code: Optional[str] = None
     team_name: str
@@ -173,7 +175,8 @@ class DriverQualifyingStanding(BaseModel):
     """Individual driver's qualifying championship standing for a season"""
 
     position: int
-    driver_code: str
+    driver_code: Optional[str] = None
+    driver_slug: Optional[str] = None
     full_name: str
     country_code: Optional[str] = None
     team_name: str
@@ -226,7 +229,8 @@ class RoundPodiumDriver(BaseModel):
     """Driver information for podium finisher"""
 
     full_name: str
-    driver_code: str
+    driver_code: Optional[str] = None
+    driver_slug: Optional[str] = None
     country_code: Optional[str] = None
     team_name: str
     team_color: Optional[str] = None
@@ -292,7 +296,8 @@ class PointsProgressionRound(BaseModel):
 class DriverProgressionData(BaseModel):
     """Driver with cumulative points progression across all rounds"""
 
-    driver_code: str
+    driver_code: Optional[str] = None
+    driver_slug: Optional[str] = None
     full_name: str
     team_name: Optional[str] = None
     team_color: Optional[str] = None
@@ -378,7 +383,8 @@ class LapData(BaseModel):
 class DriverLapTimesData(BaseModel):
     """Driver metadata with all their lap times for a session"""
 
-    driver_code: str
+    driver_code: Optional[str] = None
+    driver_slug: Optional[str] = None
     full_name: str
     country_code: Optional[str] = None
     team_color: Optional[str] = None
@@ -426,7 +432,8 @@ class LapTimesResponse(BaseModel):
 class QualifyingSectorComparison(BaseModel):
     """Best sector times per driver for a qualifying session"""
 
-    driver_code: str
+    driver_code: Optional[str] = None
+    driver_slug: Optional[str] = None
     full_name: str
     team_color: Optional[str] = None
     best_sector1: Optional[float] = None

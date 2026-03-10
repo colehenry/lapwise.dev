@@ -168,10 +168,19 @@ export default function DriverResultsTable({
                   </td>
                   <td className="px-3 py-2">
                     <Link
-                      href={`/results/${race.year}/${race.round}`}
-                      className="text-text-primary hover:text-purple-300 transition-colors"
+                      href={
+                        race.session_type === "sprint_race"
+                          ? `/results/${race.year}/${race.round}/sprint`
+                          : `/results/${race.year}/${race.round}`
+                      }
+                      className="text-text-primary hover:text-purple-300 transition-colors flex items-center gap-1.5"
                     >
                       {race.race_name.replace("Grand Prix", "GP")}
+                      {race.session_type === "sprint_race" && (
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 px-1 py-0.5 rounded-sm leading-none">
+                          Sprint
+                        </span>
+                      )}
                     </Link>
                   </td>
                   <td className="px-3 py-2 text-center text-text-secondary font-mono">

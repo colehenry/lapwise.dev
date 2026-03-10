@@ -62,6 +62,7 @@ class DriverService:
             select(
                 Driver.id,
                 Driver.driver_code,
+                Driver.jolpica_id,
                 Driver.full_name,
                 Driver.country_code,
                 func.count(SessionResult.id).label("total_races"),
@@ -79,6 +80,7 @@ class DriverService:
                 latest_team_sq.c.team_color.label("current_team_color"),
                 latest_team_sq.c.headshot_url,
                 latest_team_sq.c.latest_season,
+                func.min(Session.year).label("first_season"),
             )
             .join(SessionResult, Driver.id == SessionResult.driver_id)
             .join(Session, SessionResult.session_id == Session.id)
@@ -87,6 +89,7 @@ class DriverService:
             .group_by(
                 Driver.id,
                 Driver.driver_code,
+                Driver.jolpica_id,
                 Driver.full_name,
                 Driver.country_code,
                 latest_team_sq.c.team_name,
@@ -103,9 +106,12 @@ class DriverService:
         result = await db.execute(query)
         rows = result.all()
 
+        from app.services.results_service import _make_slug
+
         drivers = [
             DriverListItem(
                 driver_code=row.driver_code,
+                driver_slug=_make_slug(row.jolpica_id, row.full_name),
                 full_name=row.full_name,
                 country_code=row.country_code,
                 headshot_url=row.headshot_url,
@@ -115,6 +121,7 @@ class DriverService:
                 total_points=float(row.total_points or 0),
                 current_team=row.current_team,
                 current_team_color=row.current_team_color,
+                first_season=row.first_season,
                 latest_season=row.latest_season,
             )
             for row in rows
@@ -148,6 +155,7 @@ class DriverService:
             # Driver exists but has no race results yet
             return DriverProfileResponse(
                 driver_code=driver.driver_code,
+                driver_slug=driver.driver_slug,
                 full_name=driver.full_name,
                 driver_number=driver.driver_number,
                 country_code=driver.country_code,
@@ -209,6 +217,7 @@ class DriverService:
 
         return DriverProfileResponse(
             driver_code=driver.driver_code,
+            driver_slug=driver.driver_slug,
             full_name=driver.full_name,
             driver_number=driver.driver_number,
             country_code=driver.country_code,
@@ -242,6 +251,7 @@ class DriverService:
         if not season_data:
             return DriverSeasonHistoryResponse(
                 driver_code=driver.driver_code,
+                driver_slug=driver.driver_slug,
                 full_name=driver.full_name,
                 seasons=[],
             )
@@ -271,6 +281,7 @@ class DriverService:
 
         return DriverSeasonHistoryResponse(
             driver_code=driver.driver_code,
+            driver_slug=driver.driver_slug,
             full_name=driver.full_name,
             seasons=seasons,
         )
@@ -294,6 +305,7 @@ class DriverService:
         if not available_years:
             return DriverRaceHistoryResponse(
                 driver_code=driver.driver_code,
+                driver_slug=driver.driver_slug,
                 full_name=driver.full_name,
                 races=[],
                 available_years=[],
@@ -319,6 +331,7 @@ class DriverService:
                 year=row.year,
                 round=row.round,
                 race_name=row.event_name,
+                session_type=row.session_type,
                 position=row.position,
                 grid_position=row.grid_position,
                 points=float(row.points) if row.points is not None else None,
@@ -332,6 +345,7 @@ class DriverService:
 
         return DriverRaceHistoryResponse(
             driver_code=driver.driver_code,
+            driver_slug=driver.driver_slug,
             full_name=driver.full_name,
             races=races,
             available_years=available_years,
@@ -345,7 +359,15 @@ class DriverService:
     async def _get_driver_by_code(
         db: AsyncSession, driver_code: str
     ) -> Optional[Driver]:
-        # Try exact driver_code match first
+        # Try jolpica_id first (slug format: "max-verstappen" -> "max_verstappen")
+        jolpica_id = driver_code.replace("-", "_")
+        query = select(Driver).where(Driver.jolpica_id == jolpica_id)
+        result = await db.execute(query)
+        driver = result.scalar_one_or_none()
+        if driver:
+            return driver
+
+        # Try exact driver_code match (VER, HAM, etc.)
         query = select(Driver).where(Driver.driver_code == driver_code.upper())
         result = await db.execute(query)
         driver = result.scalar_one_or_none()
@@ -449,6 +471,7 @@ class DriverService:
                 Session.year,
                 Session.round,
                 Session.event_name,
+                Session.session_type,
                 SessionResult.position,
                 SessionResult.grid_position,
                 SessionResult.points,

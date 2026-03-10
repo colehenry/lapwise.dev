@@ -75,14 +75,21 @@ def ingest_driver(db, driver_data):
     if driver:
         # Backfill any missing identifiers on existing records
         updated = False
+        matched_by_jolpica = driver.jolpica_id == jolpica_id if jolpica_id else False
         if jolpica_id and not driver.jolpica_id:
             driver.jolpica_id = jolpica_id
             updated = True
         if driver_code and not driver.driver_code:
-            driver.driver_code = driver_code
-            updated = True
-        # Keep canonical identity fields current when a stable match exists.
-        if full_name and driver.full_name != full_name:
+            # Check that the code isn't already taken by another driver
+            code_taken = db.execute(
+                select(Driver).where(Driver.driver_code == driver_code)
+            ).scalar_one_or_none()
+            if not code_taken:
+                driver.driver_code = driver_code
+                updated = True
+        # Only update full_name when matched by jolpica_id (stable identity),
+        # not when matched by driver_code fallback (risk of cross-era collision).
+        if matched_by_jolpica and full_name and driver.full_name != full_name:
             driver.full_name = full_name
             updated = True
         if driver.driver_number is None and driver_data.get("DriverNumber") is not None:
