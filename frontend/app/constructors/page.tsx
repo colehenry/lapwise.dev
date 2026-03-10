@@ -16,7 +16,7 @@ const CURRENT_YEAR = new Date().getFullYear();
 const DEFAULT_VISIBLE_COUNT = 30;
 
 async function fetchAllConstructors(): Promise<ConstructorListResponse> {
-  const res = await fetch(apiUrl("/api/constructors"), {
+  const res = await fetch(apiUrl("/api/constructors/"), {
     headers: apiHeaders(),
   });
   if (!res.ok) throw new Error("Failed to fetch constructors");

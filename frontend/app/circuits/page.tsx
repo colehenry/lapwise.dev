@@ -20,7 +20,7 @@ interface CircuitsResponse {
 }
 
 async function fetchCircuits(): Promise<CircuitsResponse> {
-  const res = await fetch(apiUrl("/api/circuits"), {
+  const res = await fetch(apiUrl("/api/circuits/"), {
     headers: apiHeaders(),
   });
   if (!res.ok) throw new Error("Failed to fetch circuits");
