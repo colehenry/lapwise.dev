@@ -46,7 +46,7 @@ export function RangeSelector({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-bg-tertiary border border-border-primary rounded-lg p-6 max-w-md w-full mx-4">
+      <div className="bg-bg-tertiary border border-border-primary rounded-sm p-6 max-w-md w-full mx-4">
         <h3 className="text-xl font-bold text-white mb-4">Select Year Range</h3>
         <p className="text-sm text-text-tertiary mb-4">Maximum 5 years</p>
 
@@ -106,14 +106,14 @@ export function RangeSelector({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-2 bg-bg-elevated text-text-tertiary rounded-lg hover:border-border-primary transition-colors"
+            className="flex-1 px-4 py-2 bg-bg-elevated text-text-muted rounded-sm border border-border-primary font-mono text-xs font-bold uppercase tracking-widest transition-colors"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleApply}
-            className="flex-1 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            className="flex-1 px-4 py-2 bg-purple-500/20 border border-purple-500 text-purple-300 rounded-sm font-mono text-xs font-bold uppercase tracking-widest transition-colors"
           >
             Apply
           </button>

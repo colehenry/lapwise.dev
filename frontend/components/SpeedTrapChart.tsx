@@ -230,8 +230,8 @@ export default function SpeedTrapChart({
             axisLine={false}
             tickLine={false}
           />
-          <Tooltip content={<SpeedTooltip />} />
-          <Bar dataKey="max_speed" radius={[0, 3, 3, 0]}>
+          <Tooltip content={<SpeedTooltip />} cursor={false} />
+          <Bar dataKey="max_speed" radius={[0, 3, 3, 0]} activeBar={false}>
             {chartData.map((entry) => (
               <Cell
                 key={entry.driver_code}

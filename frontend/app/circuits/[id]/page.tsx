@@ -93,7 +93,7 @@ export default function CircuitDetailPage() {
           </p>
           <Link
             href="/circuits"
-            className="inline-block px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+            className="inline-block px-6 py-3 bg-red-500 text-white rounded-sm hover:bg-red-600 transition-colors"
           >
             Back to Circuits
           </Link>
@@ -147,7 +147,7 @@ export default function CircuitDetailPage() {
               </div>
 
               {/* Track Map */}
-              <div className="bg-bg-tertiary rounded-xl p-8 border border-border-primary flex items-center justify-center min-h-[400px]">
+              <div className="bg-bg-tertiary rounded-sm p-8 border border-border-primary flex items-center justify-center min-h-[400px]">
                 <div className="relative w-full h-[300px] md:h-[400px]">
                   <Image
                     src={`/track-maps/${circuit.id}.png`}
@@ -161,7 +161,7 @@ export default function CircuitDetailPage() {
 
             {/* Sidebar Stats */}
             <div className="lg:col-span-1 space-y-4">
-              <div className="bg-bg-tertiary rounded-xl p-6 border border-border-primary">
+              <div className="bg-bg-tertiary rounded-sm p-6 border border-border-primary">
                 <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                   Circuit Stats
                 </h2>

@@ -2,15 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { apiHeaders, apiUrl } from "@/lib/api";
 
 // Types
@@ -37,6 +28,14 @@ interface QualifyingSectorComparisonProps {
   round: number;
 }
 
+// F1 timing colors
+const SECTOR_COLORS = {
+  purple: "#a855f7", // Overall fastest in session
+  green: "#22c55e", // Faster than opponent
+  yellow: "#eab308", // Slower than opponent
+  neutral: "#666666",
+} as const;
+
 // Format seconds to readable time
 const formatSectorTime = (seconds: number | null): string => {
   if (seconds === null) return "-";
@@ -55,45 +54,31 @@ const formatDelta = (delta: number): string => {
   return `${sign}${delta.toFixed(3)}`;
 };
 
-// Delta color: green = faster (negative delta), purple = slower (positive delta)
-const FASTER_COLOR = "#22c55e";
-const SLOWER_COLOR = "#a855f7";
+// Determine sector color based on F1 timing rules
+function getSectorColor(
+  driverTime: number | null,
+  opponentTime: number | null,
+  overallBest: number | null,
+): string {
+  if (driverTime === null) return SECTOR_COLORS.neutral;
 
-interface SectorTooltipEntry {
-  dataKey: string;
-  value: number;
-  name: string;
-  payload: Record<string, unknown>;
+  // Purple: matches overall fastest in the session
+  if (overallBest !== null && Math.abs(driverTime - overallBest) < 0.0005) {
+    return SECTOR_COLORS.purple;
+  }
+
+  // Green: faster than opponent
+  if (opponentTime !== null && driverTime < opponentTime) {
+    return SECTOR_COLORS.green;
+  }
+
+  // Yellow: slower than opponent (or no opponent data)
+  if (opponentTime !== null && driverTime > opponentTime) {
+    return SECTOR_COLORS.yellow;
+  }
+
+  return SECTOR_COLORS.neutral;
 }
-interface SectorTooltipProps {
-  active?: boolean;
-  payload?: SectorTooltipEntry[];
-}
-// Custom tooltip for the bar chart
-const SectorTooltip = ({ active, payload }: SectorTooltipProps) => {
-  if (!active || !payload || !payload.length) return null;
-
-  const data = payload[0]?.payload;
-  if (!data) return null;
-
-  return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
-      <p className="font-bold text-text-primary text-sm mb-1">
-        {data.name as string}
-      </p>
-      <div className="space-y-1 text-xs">
-        {payload.map((entry: SectorTooltipEntry) => (
-          <div key={entry.dataKey} className="flex justify-between gap-4">
-            <span className="text-text-muted">{entry.name}</span>
-            <span className="font-mono text-text-primary">
-              {entry.value?.toFixed(3)}s
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 export default function QualifyingSectorComparison({
   season,
@@ -158,6 +143,41 @@ export default function QualifyingSectorComparison({
     [data, driver2Code],
   );
 
+  // Overall fastest sectors across ALL drivers in the session
+  const overallBest = useMemo(() => {
+    if (!data?.sectors) return { s1: null, s2: null, s3: null, total: null };
+
+    let bestS1: number | null = null;
+    let bestS2: number | null = null;
+    let bestS3: number | null = null;
+    let bestTotal: number | null = null;
+
+    for (const s of data.sectors) {
+      if (
+        s.best_sector1 !== null &&
+        (bestS1 === null || s.best_sector1 < bestS1)
+      )
+        bestS1 = s.best_sector1;
+      if (
+        s.best_sector2 !== null &&
+        (bestS2 === null || s.best_sector2 < bestS2)
+      )
+        bestS2 = s.best_sector2;
+      if (
+        s.best_sector3 !== null &&
+        (bestS3 === null || s.best_sector3 < bestS3)
+      )
+        bestS3 = s.best_sector3;
+      if (
+        s.best_lap_time !== null &&
+        (bestTotal === null || s.best_lap_time < bestTotal)
+      )
+        bestTotal = s.best_lap_time;
+    }
+
+    return { s1: bestS1, s2: bestS2, s3: bestS3, total: bestTotal };
+  }, [data]);
+
   // Sector deltas (driver2 - driver1, positive = driver1 faster)
   const deltas = useMemo(() => {
     if (!driver1 || !driver2) return null;
@@ -180,57 +200,6 @@ export default function QualifyingSectorComparison({
           : null,
     };
   }, [driver1, driver2]);
-
-  // Chart data for Recharts
-  const chartData = useMemo(() => {
-    if (!driver1 || !driver2) return [];
-    return [
-      {
-        name: driver1.full_name,
-        driver_code: driver1.driver_code,
-        S1: driver1.best_sector1,
-        S2: driver1.best_sector2,
-        S3: driver1.best_sector3,
-        team_color: driver1.team_color,
-      },
-      {
-        name: driver2.full_name,
-        driver_code: driver2.driver_code,
-        S1: driver2.best_sector1,
-        S2: driver2.best_sector2,
-        S3: driver2.best_sector3,
-        team_color: driver2.team_color,
-      },
-    ];
-  }, [driver1, driver2]);
-
-  // Sector bar colors based on who is faster
-  const getSectorColor = (
-    sectorKey: "S1" | "S2" | "S3",
-    driverIndex: number,
-  ): string => {
-    if (!driver1 || !driver2) return "#555";
-
-    const d1Val =
-      sectorKey === "S1"
-        ? driver1.best_sector1
-        : sectorKey === "S2"
-          ? driver1.best_sector2
-          : driver1.best_sector3;
-    const d2Val =
-      sectorKey === "S1"
-        ? driver2.best_sector1
-        : sectorKey === "S2"
-          ? driver2.best_sector2
-          : driver2.best_sector3;
-
-    if (d1Val == null || d2Val == null) return "#555";
-
-    if (driverIndex === 0) {
-      return d1Val <= d2Val ? FASTER_COLOR : SLOWER_COLOR;
-    }
-    return d2Val <= d1Val ? FASTER_COLOR : SLOWER_COLOR;
-  };
 
   // Render the driver selector
   const renderDriverSelector = (
@@ -354,13 +323,117 @@ export default function QualifyingSectorComparison({
     );
   }
 
+  // Get sector times and colors for a driver
+  const getDriverSectors = (
+    driver: SectorData | null,
+    opponent: SectorData | null,
+  ) => {
+    if (!driver) return [];
+
+    const sectors = [
+      {
+        key: "S1",
+        time: driver.best_sector1,
+        opTime: opponent?.best_sector1 ?? null,
+        best: overallBest.s1,
+      },
+      {
+        key: "S2",
+        time: driver.best_sector2,
+        opTime: opponent?.best_sector2 ?? null,
+        best: overallBest.s2,
+      },
+      {
+        key: "S3",
+        time: driver.best_sector3,
+        opTime: opponent?.best_sector3 ?? null,
+        best: overallBest.s3,
+      },
+    ];
+
+    return sectors.map((s) => ({
+      key: s.key,
+      time: s.time,
+      color: getSectorColor(s.time, s.opTime, s.best),
+    }));
+  };
+
+  const driver1Sectors = getDriverSectors(driver1, driver2);
+  const driver2Sectors = getDriverSectors(driver2, driver1);
+
+  // Calculate bar widths proportional to sector times
+  const getBarWidths = (driver: SectorData | null) => {
+    if (!driver || driver.best_lap_time === null) return [33.3, 33.3, 33.3];
+    const total =
+      (driver.best_sector1 ?? 0) +
+      (driver.best_sector2 ?? 0) +
+      (driver.best_sector3 ?? 0);
+    if (total === 0) return [33.3, 33.3, 33.3];
+    return [
+      ((driver.best_sector1 ?? 0) / total) * 100,
+      ((driver.best_sector2 ?? 0) / total) * 100,
+      ((driver.best_sector3 ?? 0) / total) * 100,
+    ];
+  };
+
+  const d1Widths = getBarWidths(driver1);
+  const d2Widths = getBarWidths(driver2);
+
+  // Get lap time color
+  const getLapColor = (
+    driverTime: number | null,
+    opponentTime: number | null,
+  ): string => {
+    if (driverTime === null) return SECTOR_COLORS.neutral;
+    if (
+      overallBest.total !== null &&
+      Math.abs(driverTime - overallBest.total) < 0.0005
+    ) {
+      return SECTOR_COLORS.purple;
+    }
+    if (opponentTime !== null && driverTime < opponentTime)
+      return SECTOR_COLORS.green;
+    if (opponentTime !== null && driverTime > opponentTime)
+      return SECTOR_COLORS.yellow;
+    return SECTOR_COLORS.neutral;
+  };
+
   return (
     <div className="space-y-5">
       {/* Header + Driver Selectors */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h3 className="text-sm font-bold text-text-secondary font-mono">
-          Qualifying Sectors
-        </h3>
+        <div className="flex items-center gap-3">
+          {/* Legend */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <div
+                className="w-2.5 h-2.5 rounded-sm"
+                style={{ backgroundColor: SECTOR_COLORS.purple }}
+              />
+              <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
+                Overall Best
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div
+                className="w-2.5 h-2.5 rounded-sm"
+                style={{ backgroundColor: SECTOR_COLORS.green }}
+              />
+              <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
+                Faster
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div
+                className="w-2.5 h-2.5 rounded-sm"
+                style={{ backgroundColor: SECTOR_COLORS.yellow }}
+              />
+              <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
+                Slower
+              </span>
+            </div>
+          </div>
+        </div>
         <div className="flex items-center gap-3">
           {renderDriverSelector(
             driver1Code,
@@ -389,75 +462,97 @@ export default function QualifyingSectorComparison({
       {/* Comparison Content */}
       {driver1 && driver2 && deltas ? (
         <div className="space-y-4">
-          {/* Stacked Bar Chart */}
-          <div className="bg-bg-secondary/50 border border-border-primary rounded-sm p-4">
-            <ResponsiveContainer width="100%" height={120}>
-              <BarChart
-                data={chartData}
-                layout="vertical"
-                margin={{ top: 0, right: 20, left: 0, bottom: 0 }}
-                barSize={28}
-                barGap={8}
+          {/* Sector Bars Visualization */}
+          <div className="bg-bg-secondary/50 border border-border-primary rounded-sm p-4 space-y-3">
+            {/* Driver 1 Bar */}
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-mono font-bold text-text-secondary w-12 text-right shrink-0">
+                {driver1.driver_code}
+              </span>
+              <div className="flex-1 flex h-8 gap-px rounded-sm overflow-hidden">
+                {driver1Sectors.map((sector, i) => (
+                  <div
+                    key={sector.key}
+                    className="relative flex items-center justify-center transition-all duration-300"
+                    style={{
+                      width: `${d1Widths[i]}%`,
+                      backgroundColor: `${sector.color}22`,
+                      borderLeft:
+                        i > 0 ? `1px solid ${sector.color}44` : "none",
+                    }}
+                  >
+                    <div
+                      className="absolute inset-0 opacity-30"
+                      style={{ backgroundColor: sector.color }}
+                    />
+                    <span
+                      className="relative z-10 text-[10px] font-mono font-bold"
+                      style={{ color: sector.color }}
+                    >
+                      {sector.time !== null
+                        ? formatSectorTime(sector.time)
+                        : "-"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <span
+                className="text-xs font-mono font-bold w-20 text-right shrink-0"
+                style={{
+                  color: getLapColor(
+                    driver1.best_lap_time,
+                    driver2.best_lap_time,
+                  ),
+                }}
               >
-                <XAxis type="number" hide domain={[0, "dataMax"]} />
-                <YAxis
-                  type="category"
-                  dataKey="driver_code"
-                  width={50}
-                  tick={{
-                    fill: "#999",
-                    fontSize: 12,
-                    fontFamily: "monospace",
-                    fontWeight: "bold",
-                  }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip content={<SectorTooltip />} />
-                <Bar
-                  dataKey="S1"
-                  stackId="sectors"
-                  name="Sector 1"
-                  radius={[0, 0, 0, 0]}
-                >
-                  {chartData.map((_, idx) => (
-                    <Cell
-                      key={`s1-${chartData[idx]?.driver_code}`}
-                      fill={getSectorColor("S1", idx)}
-                      fillOpacity={0.8}
+                {formatLapTime(driver1.best_lap_time)}
+              </span>
+            </div>
+
+            {/* Driver 2 Bar */}
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-mono font-bold text-text-secondary w-12 text-right shrink-0">
+                {driver2.driver_code}
+              </span>
+              <div className="flex-1 flex h-8 gap-px rounded-sm overflow-hidden">
+                {driver2Sectors.map((sector, i) => (
+                  <div
+                    key={sector.key}
+                    className="relative flex items-center justify-center transition-all duration-300"
+                    style={{
+                      width: `${d2Widths[i]}%`,
+                      backgroundColor: `${sector.color}22`,
+                      borderLeft:
+                        i > 0 ? `1px solid ${sector.color}44` : "none",
+                    }}
+                  >
+                    <div
+                      className="absolute inset-0 opacity-30"
+                      style={{ backgroundColor: sector.color }}
                     />
-                  ))}
-                </Bar>
-                <Bar
-                  dataKey="S2"
-                  stackId="sectors"
-                  name="Sector 2"
-                  radius={[0, 0, 0, 0]}
-                >
-                  {chartData.map((_, idx) => (
-                    <Cell
-                      key={`s2-${chartData[idx]?.driver_code}`}
-                      fill={getSectorColor("S2", idx)}
-                      fillOpacity={0.6}
-                    />
-                  ))}
-                </Bar>
-                <Bar
-                  dataKey="S3"
-                  stackId="sectors"
-                  name="Sector 3"
-                  radius={[0, 4, 4, 0]}
-                >
-                  {chartData.map((_, idx) => (
-                    <Cell
-                      key={`s3-${chartData[idx]?.driver_code}`}
-                      fill={getSectorColor("S3", idx)}
-                      fillOpacity={0.4}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                    <span
+                      className="relative z-10 text-[10px] font-mono font-bold"
+                      style={{ color: sector.color }}
+                    >
+                      {sector.time !== null
+                        ? formatSectorTime(sector.time)
+                        : "-"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <span
+                className="text-xs font-mono font-bold w-20 text-right shrink-0"
+                style={{
+                  color: getLapColor(
+                    driver2.best_lap_time,
+                    driver1.best_lap_time,
+                  ),
+                }}
+              >
+                {formatLapTime(driver2.best_lap_time)}
+              </span>
+            </div>
           </div>
 
           {/* Sector Breakdown Table */}
@@ -472,8 +567,7 @@ export default function QualifyingSectorComparison({
             </div>
 
             {/* Sector Rows */}
-            {(["s1", "s2", "s3"] as const).map((sector) => {
-              const sectorNum = sector === "s1" ? 1 : sector === "s2" ? 2 : 3;
+            {(["s1", "s2", "s3"] as const).map((sector, sIdx) => {
               const d1Time =
                 sector === "s1"
                   ? driver1.best_sector1
@@ -487,26 +581,26 @@ export default function QualifyingSectorComparison({
                     ? driver2.best_sector2
                     : driver2.best_sector3;
               const delta = deltas[sector];
+
+              const d1Color =
+                driver1Sectors[sIdx]?.color ?? SECTOR_COLORS.neutral;
+              const d2Color =
+                driver2Sectors[sIdx]?.color ?? SECTOR_COLORS.neutral;
+
               const d1Faster = delta != null && delta > 0;
               const d2Faster = delta != null && delta < 0;
 
               return (
                 <div
                   key={sector}
-                  className="grid grid-cols-5 gap-0 border-b border-border-primary/50 last:border-b-0 hover:bg-bg-elevated/30 transition-colors"
+                  className="grid grid-cols-5 gap-0 border-b border-border-primary/50 last:border-b-0"
                 >
                   <div className="px-3 py-2.5 text-xs font-mono font-bold text-text-secondary">
-                    S{sectorNum}
+                    S{sIdx + 1}
                   </div>
                   <div
                     className="px-3 py-2.5 text-right font-mono text-sm"
-                    style={{
-                      color: d1Faster
-                        ? FASTER_COLOR
-                        : d2Faster
-                          ? SLOWER_COLOR
-                          : "#ccc",
-                    }}
+                    style={{ color: d1Color }}
                   >
                     {formatSectorTime(d1Time)}
                   </div>
@@ -515,26 +609,21 @@ export default function QualifyingSectorComparison({
                       <span
                         className="font-mono text-xs font-bold px-1.5 py-0.5 rounded-sm"
                         style={{
-                          color: delta > 0 ? FASTER_COLOR : SLOWER_COLOR,
-                          backgroundColor:
-                            delta > 0
-                              ? "rgba(34, 197, 94, 0.1)"
-                              : "rgba(168, 85, 247, 0.1)",
+                          color: d1Faster
+                            ? SECTOR_COLORS.green
+                            : SECTOR_COLORS.yellow,
+                          backgroundColor: d1Faster
+                            ? "rgba(34, 197, 94, 0.1)"
+                            : "rgba(234, 179, 8, 0.1)",
                         }}
                       >
-                        {formatDelta(delta > 0 ? -delta : -delta)}
+                        {formatDelta(d1Faster ? -delta : -delta)}
                       </span>
                     )}
                   </div>
                   <div
                     className="px-3 py-2.5 text-left font-mono text-sm"
-                    style={{
-                      color: d2Faster
-                        ? FASTER_COLOR
-                        : d1Faster
-                          ? SLOWER_COLOR
-                          : "#ccc",
-                    }}
+                    style={{ color: d2Color }}
                   >
                     {formatSectorTime(d2Time)}
                   </div>
@@ -577,12 +666,10 @@ export default function QualifyingSectorComparison({
               <div
                 className="px-3 py-3 text-right font-mono text-sm font-bold"
                 style={{
-                  color:
-                    deltas.total != null && deltas.total > 0
-                      ? FASTER_COLOR
-                      : deltas.total != null && deltas.total < 0
-                        ? SLOWER_COLOR
-                        : "#ccc",
+                  color: getLapColor(
+                    driver1.best_lap_time,
+                    driver2.best_lap_time,
+                  ),
                 }}
               >
                 {formatLapTime(driver1.best_lap_time)}
@@ -592,11 +679,14 @@ export default function QualifyingSectorComparison({
                   <span
                     className="font-mono text-sm font-bold px-2 py-0.5 rounded-sm"
                     style={{
-                      color: deltas.total > 0 ? FASTER_COLOR : SLOWER_COLOR,
+                      color:
+                        deltas.total > 0
+                          ? SECTOR_COLORS.green
+                          : SECTOR_COLORS.yellow,
                       backgroundColor:
                         deltas.total > 0
                           ? "rgba(34, 197, 94, 0.15)"
-                          : "rgba(168, 85, 247, 0.15)",
+                          : "rgba(234, 179, 8, 0.15)",
                     }}
                   >
                     {formatDelta(
@@ -608,12 +698,10 @@ export default function QualifyingSectorComparison({
               <div
                 className="px-3 py-3 text-left font-mono text-sm font-bold"
                 style={{
-                  color:
-                    deltas.total != null && deltas.total < 0
-                      ? FASTER_COLOR
-                      : deltas.total != null && deltas.total > 0
-                        ? SLOWER_COLOR
-                        : "#ccc",
+                  color: getLapColor(
+                    driver2.best_lap_time,
+                    driver1.best_lap_time,
+                  ),
                 }}
               >
                 {formatLapTime(driver2.best_lap_time)}

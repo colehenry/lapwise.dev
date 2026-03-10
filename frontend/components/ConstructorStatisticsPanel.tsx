@@ -4,39 +4,43 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Bar,
   BarChart,
-  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import { CHART_COLORS } from "@/components/chart-primitives";
+import { TrianglePattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
-import type {
-  ConstructorRaceHistoryResponse,
-  ConstructorSeasonHistoryResponse,
-} from "@/lib/types";
+import type { ConstructorRaceHistoryResponse } from "@/lib/types";
 
 interface ConstructorStatisticsPanelProps {
   teamName: string;
 }
 
+const ChartTooltip = ({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ value: number; name: string }>;
+}) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-bg-tertiary border border-border-primary rounded-sm p-3 shadow-xl">
+      {payload.map((entry) => (
+        <div key={entry.name} className="text-xs font-mono text-text-primary">
+          {entry.name}: {entry.value}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export default function ConstructorStatisticsPanel({
   teamName,
 }: ConstructorStatisticsPanelProps) {
-  const { data: seasonData, isLoading: seasonLoading } =
-    useQuery<ConstructorSeasonHistoryResponse>({
-      queryKey: ["constructor-season-history", teamName],
-      queryFn: async () => {
-        const res = await fetch(
-          apiUrl(`/api/constructors/${teamName}/season-history`),
-          { headers: apiHeaders() },
-        );
-        if (!res.ok) throw new Error("Failed to fetch season history");
-        return res.json();
-      },
-    });
-
   const { data: raceData, isLoading: raceLoading } =
     useQuery<ConstructorRaceHistoryResponse>({
       queryKey: ["constructor-race-history", teamName, "all"],
@@ -50,21 +54,14 @@ export default function ConstructorStatisticsPanel({
       },
     });
 
-  if (seasonLoading || raceLoading) {
+  if (raceLoading) {
     return (
       <div className="space-y-6">
-        <Skeleton variant="rectangular" height="300px" />
+        <Skeleton variant="rectangular" height="200px" />
         <Skeleton variant="rectangular" height="200px" />
       </div>
     );
   }
-
-  // Points per season chart data
-  const seasonChartData = (seasonData?.seasons ?? []).map((s) => ({
-    year: s.year,
-    points: s.total_points,
-    color: s.team_color ? `#${s.team_color}` : "#a855f7",
-  }));
 
   // Win/podium counts per season
   const seasonStats: Record<number, { wins: number; podiums: number }> = {};
@@ -113,117 +110,84 @@ export default function ConstructorStatisticsPanel({
 
   return (
     <div className="space-y-8">
-      {/* Points per Season */}
-      <div className="bg-bg-tertiary border border-border-primary rounded-lg p-6">
-        <h3 className="text-lg font-bold text-white mb-4">Points per Season</h3>
-        {seasonChartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={seasonChartData}>
-              <XAxis
-                dataKey="year"
-                tick={{ fill: "#94a3b8", fontSize: 11 }}
-                tickLine={false}
-                axisLine={{ stroke: "#334155" }}
-              />
-              <YAxis
-                tick={{ fill: "#94a3b8", fontSize: 11 }}
-                tickLine={false}
-                axisLine={{ stroke: "#334155" }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1e293b",
-                  border: "1px solid #334155",
-                  borderRadius: 8,
-                  color: "#fff",
-                  fontSize: 12,
-                }}
-              />
-              <Bar dataKey="points" radius={[4, 4, 0, 0]}>
-                {seasonChartData.map((entry) => (
-                  <Cell key={entry.year} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <p className="text-text-muted text-sm">No season data available.</p>
-        )}
-      </div>
-
       {/* Wins & Podiums per Season */}
       {winPodiumData.length > 0 && (
-        <div className="bg-bg-tertiary border border-border-primary rounded-lg p-6">
-          <h3 className="text-lg font-bold text-white mb-4">
-            Wins & Podiums per Season
-          </h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={winPodiumData}>
-              <XAxis
-                dataKey="year"
-                tick={{ fill: "#94a3b8", fontSize: 11 }}
-                tickLine={false}
-                axisLine={{ stroke: "#334155" }}
-              />
-              <YAxis
-                tick={{ fill: "#94a3b8", fontSize: 11 }}
-                tickLine={false}
-                axisLine={{ stroke: "#334155" }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1e293b",
-                  border: "1px solid #334155",
-                  borderRadius: 8,
-                  color: "#fff",
-                  fontSize: 12,
-                }}
-              />
-              <Bar
-                dataKey="podiums"
-                fill="#a855f7"
-                radius={[4, 4, 0, 0]}
-                name="Podiums"
-              />
-              <Bar
-                dataKey="wins"
-                fill="#facc15"
-                radius={[4, 4, 0, 0]}
-                name="Wins"
-              />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+          <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+            <TrianglePattern id="constructor-wins-podiums" />
+            <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+              Wins & Podiums per Season
+            </span>
+          </div>
+          <div className="p-6">
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={winPodiumData}>
+                <XAxis
+                  dataKey="year"
+                  tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={{ stroke: CHART_COLORS.borderPrimary }}
+                  interval={Math.max(0, Math.ceil(winPodiumData.length / 15) - 1)}
+                />
+                <YAxis
+                  tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={{ stroke: CHART_COLORS.borderPrimary }}
+                />
+                <Tooltip content={<ChartTooltip />} cursor={false} />
+                <Bar
+                  dataKey="podiums"
+                  fill="#a855f7"
+                  radius={[4, 4, 0, 0]}
+                  name="Podiums"
+                  activeBar={false}
+                />
+                <Bar
+                  dataKey="wins"
+                  fill="#facc15"
+                  radius={[4, 4, 0, 0]}
+                  name="Wins"
+                  activeBar={false}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       )}
 
       {/* Best Finish Distribution */}
-      <div className="bg-bg-tertiary border border-border-primary rounded-lg p-6">
-        <h3 className="text-lg font-bold text-white mb-4">
-          Best Finish Distribution
-        </h3>
-        <div className="space-y-3">
-          {distData.map((d) => {
-            const pct = races.length > 0 ? (d.count / races.length) * 100 : 0;
-            return (
-              <div key={d.label} className="flex items-center gap-3">
-                <span className="text-xs font-mono text-text-secondary w-12 text-right">
-                  {d.label}
-                </span>
-                <div className="flex-1 h-6 bg-bg-elevated rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${Math.max(pct, 1)}%`,
-                      backgroundColor: distColors[d.label] || "#6b7280",
-                    }}
-                  />
+      <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+        <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+          <TrianglePattern id="constructor-finish-dist" />
+          <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+            Finish Distribution
+          </span>
+        </div>
+        <div className="p-6">
+          <div className="space-y-3">
+            {distData.map((d) => {
+              const pct = races.length > 0 ? (d.count / races.length) * 100 : 0;
+              return (
+                <div key={d.label} className="flex items-center gap-3">
+                  <span className="text-xs font-mono text-text-secondary w-12 text-right">
+                    {d.label}
+                  </span>
+                  <div className="flex-1 h-6 bg-bg-elevated rounded-sm overflow-hidden">
+                    <div
+                      className="h-full rounded-sm transition-all duration-500"
+                      style={{
+                        width: `${Math.max(pct, 1)}%`,
+                        backgroundColor: distColors[d.label] || "#6b7280",
+                      }}
+                    />
+                  </div>
+                  <span className="text-xs font-mono text-text-muted w-16">
+                    {d.count} ({pct.toFixed(0)}%)
+                  </span>
                 </div>
-                <span className="text-xs font-mono text-text-muted w-16">
-                  {d.count} ({pct.toFixed(0)}%)
-                </span>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

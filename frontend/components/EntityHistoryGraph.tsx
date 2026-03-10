@@ -3,9 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useState } from "react";
 import {
+  Bar,
+  BarChart,
   CartesianGrid,
-  Line,
-  LineChart,
+  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -13,12 +14,11 @@ import {
 } from "recharts";
 import {
   CHART_COLORS,
-  CustomActiveDot,
-  CustomDot,
   CustomXAxisTickRace,
   CustomXAxisTickSeason,
   RangeSelector,
 } from "@/components/chart-primitives";
+import { TrianglePattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { DataMode, GraphMode } from "@/lib/types";
@@ -26,12 +26,12 @@ import type { DataMode, GraphMode } from "@/lib/types";
 export interface EntityHistoryConfig {
   entityType: "driver" | "constructor";
   entityId: string;
-  apiBasePath: string; // "/api/drivers" | "/api/constructors"
-  queryKeyPrefix: string; // "driver" | "constructor"
-  positionLabel: string; // "Finishing Position" | "Championship Position"
-  positionDomainMax: number; // 20 | 10
-  racePositionKey: string; // "position" | "best_position"
-  racePointsKey: string; // "points" | "total_points"
+  apiBasePath: string;
+  queryKeyPrefix: string;
+  positionLabel: string;
+  positionDomainMax: number;
+  racePositionKey: string;
+  racePointsKey: string;
   showTeamInSeasonTooltip: boolean;
   // biome-ignore lint/suspicious/noExplicitAny: render prop data shape varies by entity type
   renderRaceTooltip: (data: any) => ReactNode;
@@ -40,13 +40,13 @@ export interface EntityHistoryConfig {
 interface SeasonEntry {
   year: number | string;
   team_name?: string;
+  team_color?: string;
   championship_position?: number;
   total_points: number;
   prevPosition?: number;
   prevPoints?: number;
 }
 
-// Shared season tooltip content
 function SeasonTooltipContent({
   data,
   showTeam,
@@ -66,7 +66,7 @@ function SeasonTooltipContent({
   }
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
+    <div className="bg-bg-tertiary border border-border-primary rounded-sm p-3 shadow-xl">
       <p className="font-bold text-white mb-2">{data.year}</p>
       <div className="space-y-1">
         {showTeam && (
@@ -183,7 +183,6 @@ export default function EntityHistoryGraph({
     enabled: graphMode === "race",
   });
 
-  // Set default year range when race data first loads
   useEffect(() => {
     if (raceData && !yearRange && raceData.available_years?.length > 0) {
       const endYear = raceData.available_years[0];
@@ -201,7 +200,6 @@ export default function EntityHistoryGraph({
     setYearRange({ start, end });
   };
 
-  // Custom Tooltip
   interface TooltipProps {
     active?: boolean;
     payload?: Array<{ payload: SeasonEntry | Record<string, unknown> }>;
@@ -220,7 +218,7 @@ export default function EntityHistoryGraph({
     }
 
     return (
-      <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
+      <div className="bg-bg-tertiary border border-border-primary rounded-sm p-3 shadow-xl">
         {config.renderRaceTooltip(data)}
       </div>
     );
@@ -228,7 +226,7 @@ export default function EntityHistoryGraph({
 
   if (loading) {
     return (
-      <div className="bg-bg-tertiary border border-border-primary rounded-lg shadow-lg p-6">
+      <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm p-6">
         <Skeleton variant="text" width="33%" height="24px" className="mb-4" />
         <Skeleton variant="rectangular" height="256px" />
       </div>
@@ -243,17 +241,19 @@ export default function EntityHistoryGraph({
     (graphMode === "race" && raceData?.races.length === 0)
   ) {
     return (
-      <div className="bg-bg-tertiary border border-border-primary rounded-lg shadow-lg p-6">
-        <h3 className="text-lg font-bold text-white mb-4">
-          Championship History
-        </h3>
-        <p className="text-text-tertiary">No data available</p>
+      <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+        <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+          <TrianglePattern id="championship-history-empty-triangles" />
+          <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+            Championship History
+          </span>
+        </div>
+        <div className="p-6">
+          <p className="text-text-tertiary">No data available</p>
+        </div>
       </div>
     );
   }
-
-  const chartData =
-    graphMode === "season" ? seasonData?.seasons : raceData?.races;
 
   const raceChartData =
     graphMode === "race" && raceData
@@ -266,165 +266,211 @@ export default function EntityHistoryGraph({
         }))
       : [];
 
-  const finalChartData = graphMode === "season" ? chartData : raceChartData;
-
-  const getLineColor = () => {
-    if (graphMode === "season" && seasonData) {
-      const latestSeason = seasonData.seasons[seasonData.seasons.length - 1];
-      return latestSeason.team_color
-        ? `#${latestSeason.team_color}`
-        : CHART_COLORS.purple;
-    }
-    return CHART_COLORS.purple;
-  };
-
   const seasonDataKey =
     dataMode === "position" ? "championship_position" : "total_points";
   const raceDataKey =
     dataMode === "position" ? config.racePositionKey : config.racePointsKey;
 
-  return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-lg shadow-lg p-6">
-      {/* Header with Toggles */}
-      <div className="flex flex-col gap-4 mb-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white">Championship History</h3>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setGraphMode("season")}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                graphMode === "season"
-                  ? "bg-purple-500 text-white"
-                  : "bg-bg-elevated text-text-tertiary hover:bg-bg-elevated"
-              }`}
-            >
-              By Season
-            </button>
-            <button
-              type="button"
-              onClick={() => setGraphMode("race")}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                graphMode === "race"
-                  ? "bg-purple-500 text-white"
-                  : "bg-bg-elevated text-text-tertiary hover:bg-bg-elevated"
-              }`}
-            >
-              By Race
-            </button>
-          </div>
-        </div>
+  const toggleClass = (active: boolean) =>
+    `px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
+      active
+        ? "bg-purple-500/20 border border-purple-500 text-purple-300"
+        : "border border-transparent text-text-muted hover:text-text-secondary"
+    }`;
 
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2">
+  return (
+    <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+      <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+        <TrianglePattern id="championship-history-triangles" />
+        <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+          Championship History
+        </span>
+      </div>
+      <div className="p-6">
+        {/* Single row of toggles */}
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+          <div className="flex gap-1">
             <button
               type="button"
               onClick={() => setDataMode("position")}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                dataMode === "position"
-                  ? "bg-purple-500 text-white"
-                  : "bg-bg-elevated text-text-tertiary hover:bg-bg-elevated"
-              }`}
+              className={toggleClass(dataMode === "position")}
             >
               {config.positionLabel}
             </button>
             <button
               type="button"
               onClick={() => setDataMode("points")}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                dataMode === "points"
-                  ? "bg-purple-500 text-white"
-                  : "bg-bg-elevated text-text-tertiary hover:bg-bg-elevated"
-              }`}
+              className={toggleClass(dataMode === "points")}
             >
               Total Points
             </button>
           </div>
 
-          {graphMode === "race" && yearRange && raceData && (
+          <div className="flex gap-1">
             <button
               type="button"
-              onClick={() => setShowRangeSelector(true)}
-              className="px-4 py-2 rounded-lg text-sm font-semibold bg-bg-elevated text-text-secondary hover:bg-bg-elevated transition-all"
+              onClick={() => setGraphMode("season")}
+              className={toggleClass(graphMode === "season")}
             >
-              {yearRange.start} - {yearRange.end}
+              By Season
             </button>
-          )}
+            <button
+              type="button"
+              onClick={() => setGraphMode("race")}
+              className={toggleClass(graphMode === "race")}
+            >
+              By Race
+            </button>
+            {graphMode === "race" && yearRange && raceData && (
+              <button
+                type="button"
+                onClick={() => setShowRangeSelector(true)}
+                className="px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 border border-border-secondary text-text-secondary hover:border-purple-500 hover:text-purple-300"
+              >
+                {yearRange.start} - {yearRange.end}
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Season mode: Bar Chart */}
+        {graphMode === "season" && (
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart
+              data={seasonData?.seasons}
+              margin={{ top: 10, right: 30, left: 10, bottom: 30 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={CHART_COLORS.borderPrimary}
+              />
+              <XAxis
+                dataKey="year"
+                tick={<CustomXAxisTickSeason />}
+                stroke={CHART_COLORS.textMuted}
+                tickLine={false}
+                interval={Math.max(0, Math.ceil((seasonData?.seasons?.length ?? 0) / 15) - 1)}
+              />
+              <YAxis
+                reversed={dataMode === "position"}
+                domain={
+                  dataMode === "position"
+                    ? [
+                        0,
+                        (dataMax: number) =>
+                          Math.max(dataMax, config.positionDomainMax),
+                      ]
+                    : [0, "auto"]
+                }
+                tick={{ fill: CHART_COLORS.textTertiary, fontSize: 12 }}
+                stroke={CHART_COLORS.textMuted}
+                tickLine={false}
+                label={{
+                  value:
+                    dataMode === "position"
+                      ? config.positionLabel
+                      : "Total Points",
+                  angle: -90,
+                  position: "insideLeft",
+                  fill: CHART_COLORS.textTertiary,
+                  fontSize: 12,
+                }}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={false} />
+              <Bar dataKey={seasonDataKey} radius={[3, 3, 0, 0]} activeBar={false}>
+                {(seasonData?.seasons ?? []).map(
+                  (entry: SeasonEntry, index: number) => (
+                    <Cell
+                      key={`bar-${entry.year}-${index}`}
+                      fill={
+                        entry.team_color
+                          ? `#${entry.team_color}`
+                          : CHART_COLORS.purple
+                      }
+                    />
+                  ),
+                )}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+
+        {/* Race mode: Bar Chart with team colors */}
+        {graphMode === "race" && (
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart
+              data={raceChartData}
+              margin={{ top: 10, right: 30, left: 10, bottom: 30 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={CHART_COLORS.borderPrimary}
+              />
+              <XAxis
+                dataKey="raceIndex"
+                tick={<CustomXAxisTickRace />}
+                stroke={CHART_COLORS.textMuted}
+                tickLine={false}
+                interval="preserveStart"
+              />
+              <YAxis
+                reversed={dataMode === "position"}
+                domain={
+                  dataMode === "position"
+                    ? [
+                        0,
+                        (dataMax: number) =>
+                          Math.max(dataMax, config.positionDomainMax),
+                      ]
+                    : [0, "auto"]
+                }
+                tick={{ fill: CHART_COLORS.textTertiary, fontSize: 12 }}
+                stroke={CHART_COLORS.textMuted}
+                tickLine={false}
+                label={{
+                  value:
+                    dataMode === "position"
+                      ? config.positionLabel
+                      : "Total Points",
+                  angle: -90,
+                  position: "insideLeft",
+                  fill: CHART_COLORS.textTertiary,
+                  fontSize: 12,
+                }}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={false} />
+              <Bar dataKey={raceDataKey} radius={[3, 3, 0, 0]} activeBar={false}>
+                {raceChartData.map(
+                  (entry: Record<string, unknown>, index: number) => (
+                    <Cell
+                      key={`race-bar-${index}`}
+                      fill={
+                        entry.team_color
+                          ? `#${entry.team_color}`
+                          : CHART_COLORS.purple
+                      }
+                    />
+                  ),
+                )}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+
+        {/* Range Selector Modal */}
+        {showRangeSelector && raceData && (
+          <RangeSelector
+            availableYears={raceData.available_years}
+            currentStart={
+              yearRange?.start ||
+              raceData.available_years[raceData.available_years.length - 1]
+            }
+            currentEnd={yearRange?.end || raceData.available_years[0]}
+            onRangeSelect={handleRangeSelect}
+            onClose={() => setShowRangeSelector(false)}
+          />
+        )}
       </div>
-
-      {/* Graph */}
-      <ResponsiveContainer width="100%" height={400}>
-        <LineChart
-          data={finalChartData}
-          margin={{ top: 10, right: 30, left: 10, bottom: 30 }}
-        >
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke={CHART_COLORS.borderPrimary}
-          />
-          <XAxis
-            dataKey={graphMode === "season" ? "year" : "raceIndex"}
-            tick={
-              graphMode === "season" ? (
-                <CustomXAxisTickSeason />
-              ) : (
-                <CustomXAxisTickRace />
-              )
-            }
-            stroke={CHART_COLORS.textMuted}
-            tickLine={false}
-            interval={graphMode === "season" ? 0 : "preserveStart"}
-          />
-          <YAxis
-            reversed={dataMode === "position"}
-            domain={
-              dataMode === "position"
-                ? [
-                    1,
-                    (dataMax: number) =>
-                      Math.max(dataMax, config.positionDomainMax),
-                  ]
-                : [0, "auto"]
-            }
-            tick={{ fill: CHART_COLORS.textTertiary, fontSize: 12 }}
-            stroke={CHART_COLORS.textMuted}
-            tickLine={false}
-            label={{
-              value:
-                dataMode === "position" ? config.positionLabel : "Total Points",
-              angle: -90,
-              position: "insideLeft",
-              fill: CHART_COLORS.textTertiary,
-              fontSize: 12,
-            }}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Line
-            type="monotone"
-            dataKey={graphMode === "season" ? seasonDataKey : raceDataKey}
-            stroke={getLineColor()}
-            strokeWidth={3}
-            dot={<CustomDot />}
-            activeDot={<CustomActiveDot />}
-            connectNulls
-          />
-        </LineChart>
-      </ResponsiveContainer>
-
-      {/* Range Selector Modal */}
-      {showRangeSelector && raceData && (
-        <RangeSelector
-          availableYears={raceData.available_years}
-          currentStart={
-            yearRange?.start ||
-            raceData.available_years[raceData.available_years.length - 1]
-          }
-          currentEnd={yearRange?.end || raceData.available_years[0]}
-          onRangeSelect={handleRangeSelect}
-          onClose={() => setShowRangeSelector(false)}
-        />
-      )}
     </div>
   );
 }
