@@ -465,7 +465,7 @@ export default function LapTimeByLapGraph({
       const sorted = [...data.drivers].sort(
         (a, b) => (a.final_position || 999) - (b.final_position || 999),
       );
-      setSelectedDrivers(sorted.slice(0, 3).map((d) => d.driver_code));
+      setSelectedDrivers(sorted.slice(0, 3).map((d) => d.driver_code).filter((c): c is string => c !== null));
     }
   }, [data]);
 
