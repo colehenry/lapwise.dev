@@ -104,10 +104,12 @@ function ConstructorCard({ team }: { team: ConstructorListItem }) {
             <span />
             <div className="flex items-center gap-3 text-[10px] text-text-muted font-mono tracking-wider">
               <span>{team.total_points.toLocaleString()} pts</span>
-              {team.latest_season && (
+              {team.first_season && (
                 <>
                   <span className="text-border-secondary">/</span>
-                  <span>{team.latest_season}</span>
+                  <span>
+                    {team.first_season}–{isActive ? "" : team.latest_season}
+                  </span>
                 </>
               )}
             </div>

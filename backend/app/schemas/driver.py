@@ -12,6 +12,7 @@ class DriverListItem(BaseModel):
     """Single driver in the all-time drivers listing."""
 
     driver_code: Optional[str] = None
+    driver_slug: Optional[str] = None
     full_name: str
     country_code: Optional[str] = None
     headshot_url: Optional[str] = None
@@ -21,6 +22,7 @@ class DriverListItem(BaseModel):
     total_points: float
     current_team: Optional[str] = None
     current_team_color: Optional[str] = None
+    first_season: Optional[int] = None
     latest_season: Optional[int] = None
 
     class Config:
@@ -46,6 +48,7 @@ class DriverProfileResponse(BaseModel):
 
     # Basic info
     driver_code: Optional[str] = None
+    driver_slug: Optional[str] = None
     full_name: str
     driver_number: Optional[int] = None
     country_code: Optional[str] = None
@@ -88,10 +91,11 @@ class DriverSeasonHistoryResponse(BaseModel):
     """
     Driver's championship history across all seasons.
 
-    Used for GET /api/drivers/{driver_code}/season-history endpoint.
+    Used for GET /api/drivers/{driver_slug}/season-history endpoint.
     """
 
     driver_code: Optional[str] = None
+    driver_slug: Optional[str] = None
     full_name: str
     seasons: List[SeasonHistory]
 
@@ -105,6 +109,7 @@ class RaceHistory(BaseModel):
     year: int
     round: int
     race_name: str
+    session_type: str = "race"
     position: Optional[int] = None
     grid_position: Optional[int] = None
     points: Optional[float] = None
@@ -121,10 +126,11 @@ class DriverRaceHistoryResponse(BaseModel):
     """
     Driver's race-by-race history across career.
 
-    Used for GET /api/drivers/{driver_code}/race-history endpoint.
+    Used for GET /api/drivers/{driver_slug}/race-history endpoint.
     """
 
     driver_code: Optional[str] = None
+    driver_slug: Optional[str] = None
     full_name: str
     races: List[RaceHistory]
     available_years: List[int]

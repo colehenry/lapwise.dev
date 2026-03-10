@@ -12,6 +12,7 @@ import { getCircuitFlagEmoji } from "@/lib/flags";
 import type { CircuitInfo } from "@/lib/types";
 
 type SortKey = "races" | "recent" | "alpha";
+const CURRENT_YEAR = new Date().getFullYear();
 const DEFAULT_VISIBLE_COUNT = 30;
 
 interface CircuitsResponse {
@@ -67,9 +68,11 @@ function CircuitCard({ circuit }: { circuit: CircuitInfo }) {
                   </>
                 )}
                 <span>
-                  {circuit.first_year === circuit.most_recent_year
-                    ? circuit.first_year
-                    : `${circuit.first_year}–${circuit.most_recent_year}`}
+                  {circuit.most_recent_year === CURRENT_YEAR
+                    ? `${circuit.first_year}–`
+                    : circuit.first_year === circuit.most_recent_year
+                      ? circuit.first_year
+                      : `${circuit.first_year}–${circuit.most_recent_year}`}
                 </span>
               </div>
             </div>

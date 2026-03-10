@@ -2,7 +2,8 @@
 
 export interface DriverStanding {
   position: number;
-  driver_code: string;
+  driver_code: string | null;
+  driver_slug: string | null;
   full_name: string;
   country_code: string | null;
   team_name: string;
@@ -27,7 +28,8 @@ export interface StandingsResponse {
 
 export interface DriverQualifyingStanding {
   position: number;
-  driver_code: string;
+  driver_code: string | null;
+  driver_slug: string | null;
   full_name: string;
   country_code: string | null;
   team_name: string;
@@ -58,7 +60,8 @@ export interface QualifyingStandingsResponse {
 
 export interface PodiumDriver {
   full_name: string;
-  driver_code: string;
+  driver_code: string | null;
+  driver_slug: string | null;
   country_code: string | null;
   team_name: string;
   team_color: string | null;
@@ -79,6 +82,7 @@ export interface RoundSummary {
 
 export interface DriverListItem {
   driver_code: string | null;
+  driver_slug: string | null;
   full_name: string;
   country_code: string | null;
   headshot_url: string | null;
@@ -88,6 +92,7 @@ export interface DriverListItem {
   total_points: number;
   current_team: string | null;
   current_team_color: string | null;
+  first_season: number | null;
   latest_season: number | null;
 }
 
@@ -104,6 +109,7 @@ export interface ConstructorListItem {
   total_races: number;
   total_podiums: number;
   total_points: number;
+  first_season: number | null;
   latest_season: number | null;
 }
 
@@ -127,7 +133,8 @@ export interface CircuitInfo {
 
 export type DriverInfo = {
   driver_number: number | null;
-  driver_code: string;
+  driver_code: string | null;
+  driver_slug: string | null;
   full_name: string;
   country_code: string | null;
 };
@@ -214,7 +221,8 @@ export type TrackStatusEvent = {
 };
 
 export type DriverLapTimes = {
-  driver_code: string;
+  driver_code: string | null;
+  driver_slug: string | null;
   full_name: string;
   team_color: string | null;
   final_position: number | null;
@@ -237,6 +245,7 @@ export type DataMode = "position" | "points";
 // Driver profile types
 export interface DriverProfile {
   driver_code: string | null;
+  driver_slug: string | null;
   full_name: string;
   driver_number: number | null;
   country_code: string | null;
@@ -257,6 +266,7 @@ export interface DriverRaceHistory {
   year: number;
   round: number;
   race_name: string;
+  session_type: string;
   position: number | null;
   grid_position: number | null;
   points: number | null;
@@ -268,6 +278,7 @@ export interface DriverRaceHistory {
 
 export interface DriverRaceHistoryResponse {
   driver_code: string | null;
+  driver_slug: string | null;
   full_name: string;
   races: DriverRaceHistory[];
   available_years: number[];
@@ -283,6 +294,7 @@ export interface DriverSeasonHistory {
 
 export interface DriverSeasonHistoryResponse {
   driver_code: string | null;
+  driver_slug: string | null;
   full_name: string;
   seasons: DriverSeasonHistory[];
 }
@@ -341,6 +353,7 @@ export interface CircuitRaceResult {
   race_name: string;
   winner_name: string;
   winner_code: string | null;
+  winner_slug: string | null;
   team_name: string;
   team_color: string | null;
 }
@@ -354,6 +367,7 @@ export interface CircuitRaceHistoryResponse {
 export interface CircuitStatDriver {
   name: string;
   code: string | null;
+  slug: string | null;
   count: number;
   color: string | null;
 }

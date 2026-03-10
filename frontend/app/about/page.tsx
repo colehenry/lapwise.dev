@@ -29,7 +29,8 @@ export default function AboutPage() {
           </h1>
           <p className="mt-6 text-base md:text-xl text-text-secondary leading-8 md:leading-9">
             I built Lapwise because I wanted one place to quickly understand a
-            race weekend without digging through multiple sites and watching summary videos.
+            race weekend without digging through multiple sites and watching
+            summary videos.
           </p>
         </div>
       </section>
@@ -41,28 +42,42 @@ export default function AboutPage() {
           </h2>
           <ul className="mt-6 space-y-3.5 text-text-secondary leading-7 md:leading-8 marker:text-purple-400 list-disc pl-5">
             <li>
-              Browse full race weekends, including race, qualifying, sprint,
-              and strategy views.
+              Browse full race weekends, including race, qualifying, sprint, and
+              strategy views.
             </li>
-            <li>Look up drivers and compare their season and career results.</li>
+            <li>
+              Look up drivers and compare their season and career results.
+            </li>
             <li>Check constructors and see how teams perform over time.</li>
             <li>Explore circuits and review their race history.</li>
           </ul>
           <p className="mt-6 text-text-secondary leading-7 md:leading-8">
             Main pages:{" "}
-            <Link href="/results" className="text-purple-300 hover:text-purple-200 underline underline-offset-4">
+            <Link
+              href="/results"
+              className="text-purple-300 hover:text-purple-200 underline underline-offset-4"
+            >
               Results
             </Link>
             ,{" "}
-            <Link href="/drivers" className="text-purple-300 hover:text-purple-200 underline underline-offset-4">
+            <Link
+              href="/drivers"
+              className="text-purple-300 hover:text-purple-200 underline underline-offset-4"
+            >
               Drivers
             </Link>
             ,{" "}
-            <Link href="/constructors" className="text-purple-300 hover:text-purple-200 underline underline-offset-4">
+            <Link
+              href="/constructors"
+              className="text-purple-300 hover:text-purple-200 underline underline-offset-4"
+            >
               Constructors
             </Link>
             , and{" "}
-            <Link href="/circuits" className="text-purple-300 hover:text-purple-200 underline underline-offset-4">
+            <Link
+              href="/circuits"
+              className="text-purple-300 hover:text-purple-200 underline underline-offset-4"
+            >
               Circuits
             </Link>
             .

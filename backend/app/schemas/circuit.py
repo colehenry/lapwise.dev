@@ -55,6 +55,7 @@ class CircuitRaceResult(BaseModel):
     race_name: str
     winner_name: str
     winner_code: Optional[str] = None
+    winner_slug: Optional[str] = None
     team_name: str
     team_color: Optional[str] = None
 
@@ -78,6 +79,7 @@ class CircuitStatDriver(BaseModel):
 
     name: str
     code: Optional[str] = None
+    slug: Optional[str] = None
     count: int
     color: Optional[str] = None
 

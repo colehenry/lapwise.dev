@@ -20,7 +20,7 @@ from app.security import verify_api_key
 router = APIRouter()
 
 
-@router.get("", response_model=CircuitListResponse)
+@router.get("/", response_model=CircuitListResponse)
 async def get_all_circuits(
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),

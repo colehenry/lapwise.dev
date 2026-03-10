@@ -40,6 +40,13 @@ class Driver(Base):
     session_results = relationship("SessionResult", back_populates="driver")
     laps = relationship("Lap", back_populates="driver")
 
+    @property
+    def driver_slug(self) -> str:
+        """URL-safe slug: jolpica_id if available, else slugified full_name."""
+        if self.jolpica_id:
+            return self.jolpica_id.replace("_", "-")
+        return self.full_name.lower().replace(" ", "-")
+
     def __repr__(self):
         """String representation for debugging"""
         return f"<Driver {self.driver_code} - {self.full_name}>"
