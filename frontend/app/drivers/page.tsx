@@ -17,7 +17,7 @@ const CURRENT_YEAR = new Date().getFullYear();
 const DEFAULT_VISIBLE_COUNT = 30;
 
 async function fetchAllDrivers(): Promise<DriverListResponse> {
-  const res = await fetch(apiUrl("/api/drivers"), {
+  const res = await fetch(apiUrl("/api/drivers/"), {
     headers: apiHeaders(),
   });
   if (!res.ok) throw new Error("Failed to fetch drivers");
