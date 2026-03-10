@@ -15,8 +15,8 @@ import {
 import { CHART_COLORS, CustomDot } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import {
-  driverKey,
   type DriverLapTimes,
+  driverKey,
   type LapData,
   type LapTimesResponse,
   type TrackStatusEvent,

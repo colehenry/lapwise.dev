@@ -265,7 +265,7 @@ export default function ConstructorProfilePage() {
               {stats.map((stat) => (
                 <div
                   key={stat.label}
-                  className="bg-gradient-to-br from-bg-tertiary to-bg-elevated rounded-lg p-6 border border-border-primary"
+                  className="bg-bg-tertiary rounded-sm border border-border-primary p-6"
                 >
                   <p className="text-text-muted text-sm mb-2">{stat.label}</p>
                   <p className="text-white text-3xl font-bold">{stat.value}</p>
@@ -274,8 +274,8 @@ export default function ConstructorProfilePage() {
             </div>
 
             {/* Team Highlights */}
-            <div className="bg-gradient-to-br from-bg-tertiary to-bg-elevated rounded-lg p-8 border border-border-primary">
-              <h2 className="text-2xl font-bold text-white mb-6">
+            <div className="bg-bg-tertiary rounded-sm border border-border-primary p-8">
+              <h2 className="text-sm font-bold text-text-secondary font-mono mb-6">
                 Constructor Highlights
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

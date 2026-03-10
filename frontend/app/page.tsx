@@ -123,7 +123,7 @@ export default function Home() {
             <div className="flex items-center gap-8 pt-8 border-t border-border-primary mt-8">
               <div>
                 <p className="text-2xl font-bold text-purple-400 font-mono">
-                  74+
+                  76
                 </p>
                 <p className="text-[10px] text-text-muted tracking-widest uppercase font-mono font-bold">
                   Seasons

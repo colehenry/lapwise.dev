@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { TrianglePattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { CircuitStatDriver, CircuitStatisticsResponse } from "@/lib/types";
@@ -23,41 +24,65 @@ function StatList({
 }) {
   if (items.length === 0) return null;
 
+  const maxCount = items[0]?.count ?? 1;
+
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-lg p-6">
-      <h3 className="text-lg font-bold text-white mb-4">{title}</h3>
-      <div className="space-y-2">
-        {items.map((item, idx) => (
-          <div
-            key={`${item.name}-${idx}`}
-            className="flex items-center justify-between py-1.5"
-          >
-            <div className="flex items-center gap-3">
-              <span
-                className={`font-mono text-sm w-6 text-right ${idx === 0 ? "text-yellow-400 font-bold" : "text-text-muted"}`}
-              >
-                {idx + 1}
-              </span>
-              {item.color && (
-                <span
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: `#${item.color}` }}
+    <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+      <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+        <TrianglePattern
+          id={`circuit-stat-${title.replace(/\s+/g, "-").toLowerCase()}`}
+        />
+        <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+          {title}
+        </span>
+      </div>
+      <div className="p-6">
+        <div className="space-y-2">
+          {items.map((item, idx) => {
+            const pct = (item.count / maxCount) * 100;
+            return (
+              <div key={`${item.name}-${idx}`} className="relative py-1.5">
+                {/* Background bar */}
+                <div
+                  className="absolute inset-y-0 left-0 rounded-sm opacity-10"
+                  style={{
+                    width: `${pct}%`,
+                    backgroundColor: item.color ? `#${item.color}` : "#a855f7",
+                  }}
                 />
-              )}
-              {linkPrefix && (item.code || slugFromName) ? (
-                <Link
-                  href={`${linkPrefix}${item.code || item.name.replace(/\s+/g, "-")}`}
-                  className="text-text-primary hover:text-purple-300 transition-colors"
-                >
-                  {item.name}
-                </Link>
-              ) : (
-                <span className="text-text-primary">{item.name}</span>
-              )}
-            </div>
-            <span className="font-mono font-bold text-white">{item.count}</span>
-          </div>
-        ))}
+                {/* Content */}
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`font-mono text-sm w-6 text-right ${idx === 0 ? "text-yellow-400 font-bold" : "text-text-muted"}`}
+                    >
+                      {idx + 1}
+                    </span>
+                    {item.color && (
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: `#${item.color}` }}
+                      />
+                    )}
+                    {linkPrefix && (item.code || slugFromName) ? (
+                      <Link
+                        href={`${linkPrefix}${item.code || item.name.replace(/\s+/g, "-")}`}
+                        className="text-text-primary hover:text-purple-300 transition-colors"
+                      >
+                        {item.name}
+                      </Link>
+                    ) : (
+                      <span className="text-text-primary">{item.name}</span>
+                    )}
+                  </div>
+                  <span className="font-mono font-bold text-white">
+                    {item.count}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
