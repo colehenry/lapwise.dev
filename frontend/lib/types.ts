@@ -229,6 +229,10 @@ export type DriverLapTimes = {
   laps: LapData[];
 };
 
+/** Stable identifier for a driver: driver_code if available, otherwise full_name */
+export const driverKey = (driver: DriverLapTimes): string =>
+  driver.driver_code ?? driver.full_name;
+
 export type LapTimesResponse = {
   year: number;
   round: number;

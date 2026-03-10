@@ -14,11 +14,12 @@ import {
 } from "recharts";
 import { CHART_COLORS, CustomDot } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
-import type {
-  DriverLapTimes,
-  LapData,
-  LapTimesResponse,
-  TrackStatusEvent,
+import {
+  driverKey,
+  type DriverLapTimes,
+  type LapData,
+  type LapTimesResponse,
+  type TrackStatusEvent,
 } from "@/lib/types";
 
 type ChartDataPoint = {
@@ -465,7 +466,7 @@ export default function LapTimeByLapGraph({
       const sorted = [...data.drivers].sort(
         (a, b) => (a.final_position || 999) - (b.final_position || 999),
       );
-      setSelectedDrivers(sorted.slice(0, 3).map((d) => d.driver_code).filter((c): c is string => c !== null));
+      setSelectedDrivers(sorted.slice(0, 3).map((d) => driverKey(d)));
     }
   }, [data]);
 
@@ -498,7 +499,7 @@ export default function LapTimeByLapGraph({
     if (!data || !data.drivers) return [];
 
     const filteredDrivers = data.drivers.filter((driver) =>
-      selectedDrivers.includes(driver.driver_code),
+      selectedDrivers.includes(driverKey(driver)),
     );
 
     if (filteredDrivers.length === 0) return [];
@@ -523,7 +524,7 @@ export default function LapTimeByLapGraph({
         }
       }
 
-      cumulativeTimes.set(driver.driver_code, cumulative);
+      cumulativeTimes.set(driverKey(driver), cumulative);
     }
 
     const chartData: ChartDataPoint[] = [];
@@ -532,7 +533,7 @@ export default function LapTimeByLapGraph({
       let leaderTime = Number.POSITIVE_INFINITY;
 
       for (const driver of filteredDrivers) {
-        const cumulative = cumulativeTimes.get(driver.driver_code);
+        const cumulative = cumulativeTimes.get(driverKey(driver));
         if (cumulative && cumulative[lapNum - 1] > 0) {
           leaderTime = Math.min(leaderTime, cumulative[lapNum - 1]);
         }
@@ -543,13 +544,14 @@ export default function LapTimeByLapGraph({
       const dataPoint: ChartDataPoint = { lap_number: lapNum };
 
       for (const driver of filteredDrivers) {
-        const cumulative = cumulativeTimes.get(driver.driver_code);
+        const key = driverKey(driver);
+        const cumulative = cumulativeTimes.get(key);
         const lap = driver.laps.find((l) => l.lap_number === lapNum);
 
         if (cumulative && cumulative[lapNum - 1] > 0 && lap) {
           const gap = cumulative[lapNum - 1] - leaderTime;
-          dataPoint[driver.driver_code] = gap;
-          dataPoint[`_data_${driver.driver_code}`] = lap;
+          dataPoint[key] = gap;
+          dataPoint[`_data_${key}`] = lap;
         }
       }
 
@@ -564,7 +566,7 @@ export default function LapTimeByLapGraph({
     if (!data || !data.drivers) return [];
 
     const filteredDrivers = data.drivers.filter((driver) =>
-      selectedDrivers.includes(driver.driver_code),
+      selectedDrivers.includes(driverKey(driver)),
     );
 
     if (filteredDrivers.length === 0) return [];
@@ -576,10 +578,11 @@ export default function LapTimeByLapGraph({
       const dataPoint: ChartDataPoint = { lap_number: lapNum };
 
       for (const driver of filteredDrivers) {
+        const key = driverKey(driver);
         const lap = driver.laps.find((l) => l.lap_number === lapNum);
         if (lap && lap.position != null) {
-          dataPoint[driver.driver_code] = lap.position;
-          dataPoint[`_data_${driver.driver_code}`] = lap;
+          dataPoint[key] = lap.position;
+          dataPoint[`_data_${key}`] = lap;
         }
       }
 
@@ -594,7 +597,7 @@ export default function LapTimeByLapGraph({
     if (!data || !data.drivers) return [];
 
     const filteredDrivers = data.drivers.filter((driver) =>
-      selectedDrivers.includes(driver.driver_code),
+      selectedDrivers.includes(driverKey(driver)),
     );
 
     if (filteredDrivers.length === 0) return [];
@@ -606,18 +609,19 @@ export default function LapTimeByLapGraph({
       const dataPoint: ChartDataPoint = { lap_number: lapNum };
 
       for (const driver of filteredDrivers) {
+        const key = driverKey(driver);
         const lap = driver.laps.find((l) => l.lap_number === lapNum);
         if (lap && lap.lap_time_seconds !== null) {
           // Use normalized time (pit duration subtracted) for the chart line
           const displayTime = getNormalizedLapTime(lap);
           if (displayTime !== null) {
-            dataPoint[driver.driver_code] = displayTime;
+            dataPoint[key] = displayTime;
           }
           // Store full lap data for tooltip (including raw lap time)
-          dataPoint[`_data_${driver.driver_code}`] = lap;
+          dataPoint[`_data_${key}`] = lap;
           // Mark pit laps
           if (isPitLap(lap)) {
-            dataPoint[`_pit_${driver.driver_code}`] = displayTime;
+            dataPoint[`_pit_${key}`] = displayTime;
           }
         }
       }
@@ -675,7 +679,7 @@ export default function LapTimeByLapGraph({
         (a, b) => (a.final_position || 999) - (b.final_position || 999),
       );
       const index = sortedTeammates.findIndex(
-        (d) => d.driver_code === driver.driver_code,
+        (d) => driverKey(d) === driverKey(driver),
       );
       if (index > 0) {
         return darkenColor(driver.team_color, 0.3);
@@ -810,20 +814,20 @@ export default function LapTimeByLapGraph({
   // For lap time mode, we just use the team color (pit normalization handles spikes)
   const renderLines = () => {
     return drivers
-      .filter((driver) => selectedDrivers.includes(driver.driver_code))
+      .filter((driver) => selectedDrivers.includes(driverKey(driver)))
       .map((driver) => {
         const color = getDriverColor(driver);
         return (
           <Line
-            key={driver.driver_code}
+            key={driverKey(driver)}
             type="linear"
-            dataKey={driver.driver_code}
+            dataKey={driverKey(driver)}
             name={driver.full_name}
             stroke={color}
             strokeWidth={2}
             dot={viewMode === "position" ? false : <CustomDot />}
             activeDot={{ r: 6, fill: color, stroke: color }}
-            filter={`url(#glow-${driver.driver_code})`}
+            filter={`url(#glow-${driverKey(driver)})`}
             isAnimationActive={true}
             animationDuration={1500}
             animationBegin={0}
@@ -880,20 +884,20 @@ export default function LapTimeByLapGraph({
           {showDropdown && (
             <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-10 min-w-[250px] max-h-[300px] overflow-y-auto">
               {drivers.map((driver) => {
-                const isSelected = selectedDrivers.includes(driver.driver_code);
+                const isSelected = selectedDrivers.includes(driverKey(driver));
                 const teamColor = driver.team_color
                   ? `#${driver.team_color}`
                   : CHART_COLORS.textTertiary;
 
                 return (
                   <label
-                    key={driver.driver_code}
+                    key={driverKey(driver)}
                     className="flex items-center gap-2 px-3 py-2 hover:bg-bg-elevated cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={isSelected}
-                      onChange={() => toggleDriver(driver.driver_code)}
+                      onChange={() => toggleDriver(driverKey(driver))}
                       className="w-4 h-4 accent-purple-500"
                     />
                     <span className="text-sm text-text-muted w-5 font-mono">
@@ -925,12 +929,12 @@ export default function LapTimeByLapGraph({
                 <defs>
                   {drivers
                     .filter((driver) =>
-                      selectedDrivers.includes(driver.driver_code),
+                      selectedDrivers.includes(driverKey(driver)),
                     )
                     .map((driver) => (
                       <filter
-                        key={`glow-${driver.driver_code}`}
-                        id={`glow-${driver.driver_code}`}
+                        key={`glow-${driverKey(driver)}`}
+                        id={`glow-${driverKey(driver)}`}
                         x="-50%"
                         y="-50%"
                         width="200%"
@@ -1010,13 +1014,13 @@ export default function LapTimeByLapGraph({
                 {viewMode === "lapTime" &&
                   drivers
                     .filter((driver) =>
-                      selectedDrivers.includes(driver.driver_code),
+                      selectedDrivers.includes(driverKey(driver)),
                     )
                     .map((driver) => (
                       <Line
-                        key={`pit-${driver.driver_code}`}
+                        key={`pit-${driverKey(driver)}`}
                         type="linear"
-                        dataKey={`_pit_${driver.driver_code}`}
+                        dataKey={`_pit_${driverKey(driver)}`}
                         stroke="none"
                         dot={<PitStopDot />}
                         activeDot={false}
@@ -1033,13 +1037,13 @@ export default function LapTimeByLapGraph({
               <div className="flex flex-col gap-1">
                 {drivers
                   .filter((driver) =>
-                    selectedDrivers.includes(driver.driver_code),
+                    selectedDrivers.includes(driverKey(driver)),
                   )
                   .map((driver) => {
                     const color = getDriverColor(driver);
                     return (
                       <div
-                        key={driver.driver_code}
+                        key={driverKey(driver)}
                         className="flex items-center gap-2"
                       >
                         <div

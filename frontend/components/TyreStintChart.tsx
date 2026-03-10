@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { apiHeaders, apiUrl } from "@/lib/api";
-import type { LapData, LapTimesResponse } from "@/lib/types";
+import { driverKey, type LapData, type LapTimesResponse } from "@/lib/types";
 
 type Stint = {
   stintNumber: number;
@@ -137,7 +137,7 @@ export default function TyreStintChart({
       const sorted = [...data.drivers].sort(
         (a, b) => (a.final_position || 999) - (b.final_position || 999),
       );
-      setSelectedDrivers(sorted.slice(0, 10).map((d) => d.driver_code));
+      setSelectedDrivers(sorted.slice(0, 10).map((d) => driverKey(d)));
     }
   }, [data]);
 
@@ -195,7 +195,7 @@ export default function TyreStintChart({
 
   const drivers = getDrivers();
   const filteredDrivers = drivers.filter((d) =>
-    selectedDrivers.includes(d.driver_code),
+    selectedDrivers.includes(driverKey(d)),
   );
 
   // Find max lap count across all selected drivers
@@ -246,20 +246,21 @@ export default function TyreStintChart({
           {showDropdown && (
             <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-10 min-w-[250px] max-h-[300px] overflow-y-auto">
               {drivers.map((driver) => {
-                const isSelected = selectedDrivers.includes(driver.driver_code);
+                const dk = driverKey(driver);
+                const isSelected = selectedDrivers.includes(dk);
                 const teamColor = driver.team_color
                   ? `#${driver.team_color}`
                   : "#999";
 
                 return (
                   <label
-                    key={driver.driver_code}
+                    key={dk}
                     className="flex items-center gap-2 px-3 py-2 hover:bg-bg-elevated cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={isSelected}
-                      onChange={() => toggleDriver(driver.driver_code)}
+                      onChange={() => toggleDriver(dk)}
                       className="w-4 h-4 accent-purple-500"
                     />
                     <span className="text-sm text-text-muted w-5 font-mono">
@@ -289,14 +290,14 @@ export default function TyreStintChart({
               : "#999";
 
             return (
-              <div key={driver.driver_code} className="flex items-center gap-2">
+              <div key={driverKey(driver)} className="flex items-center gap-2">
                 {/* Driver label */}
                 <div className="w-12 shrink-0 text-right">
                   <span
                     className="text-xs font-bold font-mono"
                     style={{ color: teamColor }}
                   >
-                    {driver.driver_code}
+                    {driverKey(driver)}
                   </span>
                 </div>
 
