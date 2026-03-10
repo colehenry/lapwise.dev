@@ -102,7 +102,7 @@ export default function SpeedTrapChart({
 
       if (maxSpeed > 0) {
         speeds.push({
-          driver_code: driver.driver_code,
+          driver_code: driver.driver_code ?? driver.full_name,
           full_name: driver.full_name,
           team_color: driver.team_color ? `#${driver.team_color}` : "#666",
           max_speed: maxSpeed,

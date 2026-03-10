@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { CHART_COLORS } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
-import type { LapTimesResponse } from "@/lib/types";
+import { driverKey, type LapTimesResponse } from "@/lib/types";
 
 interface TyreDegradationChartProps {
   season: number;
@@ -149,7 +149,7 @@ export default function TyreDegradationChart({
       const sorted = [...data.drivers].sort(
         (a, b) => (a.final_position || 999) - (b.final_position || 999),
       );
-      setSelectedDrivers(sorted.slice(0, 3).map((d) => d.driver_code));
+      setSelectedDrivers(sorted.slice(0, 3).map((d) => driverKey(d)));
     }
   }, [data]);
 
@@ -184,7 +184,7 @@ export default function TyreDegradationChart({
       return { data: [] as CompoundDataPoint[], lineKeys: [] as string[] };
 
     const filteredDrivers = data.drivers.filter((d) =>
-      selectedDrivers.includes(d.driver_code),
+      selectedDrivers.includes(driverKey(d)),
     );
 
     // Map: compound -> tyre_life -> driver_code -> lap_times[]
@@ -213,10 +213,11 @@ export default function TyreDegradationChart({
           tyreMap.set(lap.tyre_life, new Map());
         }
         const driverMap = tyreMap.get(lap.tyre_life) ?? new Map();
-        if (!driverMap.has(driver.driver_code)) {
-          driverMap.set(driver.driver_code, []);
+        const dk = driverKey(driver);
+        if (!driverMap.has(dk)) {
+          driverMap.set(dk, []);
         }
-        driverMap.get(driver.driver_code)?.push(normalizedTime);
+        driverMap.get(dk)?.push(normalizedTime);
       }
     }
 
@@ -359,19 +360,20 @@ export default function TyreDegradationChart({
               <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-10 min-w-[220px] max-h-[260px] overflow-y-auto">
                 {sortedDrivers.map((driver) => (
                   <label
-                    key={driver.driver_code}
+                    key={driverKey(driver)}
                     className="flex items-center gap-2 px-3 py-2 hover:bg-bg-elevated cursor-pointer"
                   >
                     <input
                       type="checkbox"
-                      checked={selectedDrivers.includes(driver.driver_code)}
-                      onChange={() =>
+                      checked={selectedDrivers.includes(driverKey(driver))}
+                      onChange={() => {
+                        const dk = driverKey(driver);
                         setSelectedDrivers((prev) =>
-                          prev.includes(driver.driver_code)
-                            ? prev.filter((d) => d !== driver.driver_code)
-                            : [...prev, driver.driver_code],
-                        )
-                      }
+                          prev.includes(dk)
+                            ? prev.filter((d) => d !== dk)
+                            : [...prev, dk],
+                        );
+                      }}
                       className="w-3.5 h-3.5 accent-purple-500"
                     />
                     <span className="text-xs text-text-muted w-4 font-mono">
