@@ -24,7 +24,7 @@ class DriverService:
 
         Returns all drivers ordered by total wins DESC, total points DESC.
         """
-        # Subquery: get the most recent session date per driver
+        # Subquery: get the most recent session date per driver (for headshot + latest_season)
         latest_session_sq = (
             select(
                 SessionResult.driver_id,
@@ -36,17 +36,14 @@ class DriverService:
             .subquery()
         )
 
-        # Subquery: get team info from the most recent race
-        latest_team_sq = (
+        # Subquery: get headshot and latest_season from most recent race
+        latest_info_sq = (
             select(
                 SessionResult.driver_id,
-                Team.name.label("team_name"),
-                Team.team_color.label("team_color"),
                 SessionResult.headshot_url,
                 Session.year.label("latest_season"),
             )
             .join(Session, SessionResult.session_id == Session.id)
-            .join(Team, SessionResult.team_id == Team.id)
             .join(
                 latest_session_sq,
                 (SessionResult.driver_id == latest_session_sq.c.driver_id)
@@ -54,6 +51,47 @@ class DriverService:
             )
             .where(Session.session_type.in_(["race", "sprint_race"]))
             .distinct(SessionResult.driver_id)
+            .subquery()
+        )
+
+        # Subquery: count distinct seasons per driver+team
+        team_seasons_sq = (
+            select(
+                SessionResult.driver_id,
+                SessionResult.team_id,
+                func.count(func.distinct(Session.year)).label("season_count"),
+            )
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.session_type.in_(["race", "sprint_race"]))
+            .group_by(SessionResult.driver_id, SessionResult.team_id)
+            .subquery()
+        )
+
+        # Subquery: max season count per driver
+        max_team_seasons_sq = (
+            select(
+                team_seasons_sq.c.driver_id,
+                func.max(team_seasons_sq.c.season_count).label("max_seasons"),
+            )
+            .group_by(team_seasons_sq.c.driver_id)
+            .subquery()
+        )
+
+        # Subquery: get the team with the most seasons (tie-break by team_id desc for most recent)
+        primary_team_sq = (
+            select(
+                team_seasons_sq.c.driver_id,
+                Team.name.label("team_name"),
+                Team.team_color.label("team_color"),
+            )
+            .join(Team, team_seasons_sq.c.team_id == Team.id)
+            .join(
+                max_team_seasons_sq,
+                (team_seasons_sq.c.driver_id == max_team_seasons_sq.c.driver_id)
+                & (team_seasons_sq.c.season_count == max_team_seasons_sq.c.max_seasons),
+            )
+            .distinct(team_seasons_sq.c.driver_id)
+            .order_by(team_seasons_sq.c.driver_id, team_seasons_sq.c.team_id.desc())
             .subquery()
         )
 
@@ -76,15 +114,16 @@ class DriverService:
                     )
                 ).label("total_podiums"),
                 func.coalesce(func.sum(SessionResult.points), 0).label("total_points"),
-                latest_team_sq.c.team_name.label("current_team"),
-                latest_team_sq.c.team_color.label("current_team_color"),
-                latest_team_sq.c.headshot_url,
-                latest_team_sq.c.latest_season,
+                primary_team_sq.c.team_name.label("current_team"),
+                primary_team_sq.c.team_color.label("current_team_color"),
+                latest_info_sq.c.headshot_url,
+                latest_info_sq.c.latest_season,
                 func.min(Session.year).label("first_season"),
             )
             .join(SessionResult, Driver.id == SessionResult.driver_id)
             .join(Session, SessionResult.session_id == Session.id)
-            .outerjoin(latest_team_sq, Driver.id == latest_team_sq.c.driver_id)
+            .outerjoin(primary_team_sq, Driver.id == primary_team_sq.c.driver_id)
+            .outerjoin(latest_info_sq, Driver.id == latest_info_sq.c.driver_id)
             .where(Session.session_type.in_(["race", "sprint_race"]))
             .group_by(
                 Driver.id,
@@ -92,10 +131,10 @@ class DriverService:
                 Driver.jolpica_id,
                 Driver.full_name,
                 Driver.country_code,
-                latest_team_sq.c.team_name,
-                latest_team_sq.c.team_color,
-                latest_team_sq.c.headshot_url,
-                latest_team_sq.c.latest_season,
+                primary_team_sq.c.team_name,
+                primary_team_sq.c.team_color,
+                latest_info_sq.c.headshot_url,
+                latest_info_sq.c.latest_season,
             )
             .order_by(
                 func.sum(case((SessionResult.position == 1, 1), else_=0)).desc(),
