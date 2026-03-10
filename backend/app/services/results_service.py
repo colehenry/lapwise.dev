@@ -20,6 +20,7 @@ from app.models import (
     Lap,
     TrackStatus,
     Weather,
+    RaceControlMessage,
 )
 from app.schemas.result import (
     StandingsResponse,
@@ -36,6 +37,7 @@ from app.schemas.result import (
     DriverLapTimesData,
     LapTimesResponse,
     TrackStatusEvent,
+    RaceControlEvent,
     SessionResultsResponse,
     SessionInfo,
     CircuitInfo,
@@ -1158,8 +1160,11 @@ class ResultsService:
         if not lap_rows:
             return None
 
-        # Get track status events for this session
+        # Get track status events and race control messages for this session
         track_status_events = await ResultsService.get_track_status(db, session.id)
+        race_control_events = await ResultsService.get_race_control_events(
+            db, session.id
+        )
 
         total_laps = max(row.lap_number for row in lap_rows) if lap_rows else None
 
@@ -1226,6 +1231,7 @@ class ResultsService:
             total_laps=total_laps,
             drivers=drivers,
             track_status_events=track_status_events,
+            race_control_events=race_control_events,
         )
 
     @staticmethod
@@ -1501,8 +1507,11 @@ class ResultsService:
         if not lap_rows:
             return None
 
-        # Get track status events for this session
+        # Get track status events and race control messages for this session
         track_status_events = await ResultsService.get_track_status(db, session.id)
+        race_control_events = await ResultsService.get_race_control_events(
+            db, session.id
+        )
 
         # Determine total laps from the max lap number of the race winner
         total_laps = max(row.lap_number for row in lap_rows) if lap_rows else None
@@ -1572,6 +1581,7 @@ class ResultsService:
             total_laps=total_laps,
             drivers=drivers,
             track_status_events=track_status_events,
+            race_control_events=race_control_events,
         )
 
     @staticmethod
@@ -1810,6 +1820,44 @@ class ResultsService:
                 session_time_seconds=row.session_time_seconds,
                 status=row.status,
                 message=row.message,
+            )
+            for row in rows
+        ]
+
+    @staticmethod
+    async def get_race_control_events(
+        db: AsyncSession, session_id: int
+    ) -> List[RaceControlEvent]:
+        """
+        Get race control messages for a session.
+        Returns key events sorted by time.
+        """
+        query = (
+            select(
+                RaceControlMessage.session_time_seconds,
+                RaceControlMessage.lap_number,
+                RaceControlMessage.category,
+                RaceControlMessage.message,
+                RaceControlMessage.flag,
+                RaceControlMessage.scope,
+                RaceControlMessage.driver_number,
+            )
+            .where(RaceControlMessage.session_id == session_id)
+            .order_by(RaceControlMessage.session_time_seconds)
+        )
+
+        result = await db.execute(query)
+        rows = result.all()
+
+        return [
+            RaceControlEvent(
+                session_time_seconds=row.session_time_seconds,
+                lap_number=row.lap_number,
+                category=row.category,
+                message=row.message,
+                flag=row.flag,
+                scope=row.scope,
+                driver_number=row.driver_number,
             )
             for row in rows
         ]

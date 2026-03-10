@@ -12,13 +12,14 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS, CustomDot } from "@/components/chart-primitives";
+import { CHART_COLORS } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import {
   type DriverLapTimes,
   driverKey,
   type LapData,
   type LapTimesResponse,
+  type RaceControlEvent,
   type TrackStatusEvent,
 } from "@/lib/types";
 
@@ -35,6 +36,15 @@ type StatusBand = {
   endLap: number;
   status: string; // "4"=SC, "5"=Red, "6"=VSC
 };
+
+// Outlier reason classification
+type OutlierReason =
+  | "pit"
+  | "safety_car"
+  | "vsc"
+  | "red_flag"
+  | "lap1"
+  | "slow";
 
 interface LapTimeByLapGraphProps {
   season: number;
@@ -58,6 +68,17 @@ const STATUS_BAND_COLORS: Record<string, { fill: string; label: string }> = {
   "6": { fill: "rgba(249, 115, 22, 0.10)", label: "VSC" },
 };
 
+// Outlier reason display config (used in tooltip badges)
+const OUTLIER_LABELS: Record<OutlierReason, { label: string; color: string }> =
+  {
+    pit: { label: "PIT", color: "#f97316" },
+    safety_car: { label: "SC", color: "#eab308" },
+    vsc: { label: "VSC", color: "#f97316" },
+    red_flag: { label: "RED", color: "#ef4444" },
+    lap1: { label: "L1", color: "#8b5cf6" },
+    slow: { label: "SLOW", color: "#6b7280" },
+  };
+
 // Helper to format seconds to MM:SS.mmm
 const formatLapTime = (seconds: number | null): string => {
   if (seconds === null) return "-";
@@ -76,11 +97,6 @@ interface AxisTickProps {
   x?: number;
   y?: number;
   payload?: { value: string | number };
-}
-
-interface DotProps {
-  cx?: number;
-  cy?: number;
 }
 
 // Custom Y-axis Tick Component - formats seconds to MM:SS.mmm
@@ -164,31 +180,41 @@ const CustomXAxisTick = (props: AxisTickProps) => {
   );
 };
 
-// Pit stop dot marker
-const PitStopDot = (props: DotProps) => {
-  const { cx, cy } = props;
-  if (cx === undefined || cy === undefined) return null;
+interface DotProps {
+  cx?: number;
+  cy?: number;
+  payload?: ChartDataPoint;
+  dataKey?: string;
+}
+
+// Per-driver outlier label (PIT, L1, SLOW)
+const OutlierDot = (props: DotProps) => {
+  const { cx, cy, payload, dataKey } = props;
+  if (cx === undefined || cy === undefined || !payload || !dataKey) return null;
+
+  const driverCode = dataKey.replace("_outlier_", "");
+  const reason = payload[`_outlier_reason_${driverCode}`] as
+    | OutlierReason
+    | undefined;
+  if (!reason) return null;
+
+  // Skip track-wide events — the reference area band already labels these
+  if (reason === "safety_car" || reason === "vsc" || reason === "red_flag")
+    return null;
+
+  const config = OUTLIER_LABELS[reason];
   return (
-    <g>
-      <circle
-        cx={cx}
-        cy={cy}
-        r={6}
-        fill="none"
-        stroke="#f97316"
-        strokeWidth={2}
-      />
-      <text
-        x={cx}
-        y={cy - 10}
-        textAnchor="middle"
-        fill="#f97316"
-        fontSize={9}
-        fontWeight="bold"
-      >
-        PIT
-      </text>
-    </g>
+    <text
+      x={cx}
+      y={(cy ?? 0) - 4}
+      textAnchor="middle"
+      fill={config.color}
+      fontSize={7}
+      fontWeight="bold"
+      opacity={0.8}
+    >
+      {config.label}
+    </text>
   );
 };
 
@@ -205,6 +231,7 @@ interface CustomTooltipProps {
   payload?: TooltipEntry[];
   label?: string | number;
   viewMode?: string;
+  raceControlEvents?: RaceControlEvent[];
 }
 
 // Custom Tooltip Component
@@ -213,30 +240,72 @@ const CustomTooltip = ({
   payload,
   label,
   viewMode,
+  raceControlEvents,
 }: CustomTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
 
-  // In position mode, deduplicate entries per driver (multiple stints share same dataKey pattern)
+  // Deduplicate entries per driver. On outlier laps the main line has no value,
+  // so we fall back to the _outlier_ entry to still show the driver in the tooltip.
   const seenDrivers = new Set<string>();
-  const uniqueEntries = payload.filter((entry: TooltipEntry) => {
-    // Extract driver code from dataKey (format: "VER" or "VER_stint_1")
+  const uniqueEntries: TooltipEntry[] = [];
+
+  // First pass: collect main line entries
+  for (const entry of payload) {
+    if (
+      entry.dataKey.startsWith("_outlier_") ||
+      entry.dataKey.startsWith("_pit_")
+    )
+      continue;
     const driverCode = entry.dataKey.includes("_stint_")
       ? entry.dataKey.split("_stint_")[0]
       : entry.dataKey;
-    if (seenDrivers.has(driverCode)) return false;
+    if (seenDrivers.has(driverCode)) continue;
+    if (entry.value == null) continue;
     seenDrivers.add(driverCode);
-    return true;
-  });
+    uniqueEntries.push(entry);
+  }
+
+  // Second pass: for drivers not yet seen, use _outlier_ entries
+  for (const entry of payload) {
+    if (!entry.dataKey.startsWith("_outlier_")) continue;
+    const driverCode = entry.dataKey.replace("_outlier_", "");
+    if (seenDrivers.has(driverCode)) continue;
+    if (entry.value == null) continue;
+    seenDrivers.add(driverCode);
+    // Create a synthetic entry that looks like the main driver entry
+    uniqueEntries.push({ ...entry, dataKey: driverCode });
+  }
+
+  // Find race control events for this lap
+  const lapNum = label as number;
+  const lapEvents = raceControlEvents?.filter(
+    (e) => e.lap_number === lapNum && e.scope === "Track",
+  );
 
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl max-w-xs">
       <p className="font-bold text-text-primary mb-2">Lap {label}</p>
+      {lapEvents && lapEvents.length > 0 && (
+        <div className="mb-2 space-y-0.5">
+          {lapEvents.map((evt) => (
+            <div
+              key={`rc-${evt.session_time_seconds}-${evt.category}`}
+              className="text-xs font-mono text-yellow-400/80 truncate"
+            >
+              {evt.message}
+            </div>
+          ))}
+        </div>
+      )}
       {uniqueEntries.map((entry: TooltipEntry) => {
         const driverCode = entry.dataKey.includes("_stint_")
           ? entry.dataKey.split("_stint_")[0]
           : entry.dataKey;
         const lapData = entry.payload[`_data_${driverCode}`] as
           | LapData
+          | undefined;
+        const outlierReason = entry.payload[`_outlier_reason_${driverCode}`] as
+          | OutlierReason
           | undefined;
 
         return (
@@ -251,6 +320,17 @@ const CustomTooltip = ({
                   ? entry.name.split(" (")[0]
                   : entry.name}
               </span>
+              {outlierReason && (
+                <span
+                  className="text-[10px] font-bold font-mono px-1 py-0.5 rounded"
+                  style={{
+                    color: OUTLIER_LABELS[outlierReason].color,
+                    backgroundColor: `${OUTLIER_LABELS[outlierReason].color}20`,
+                  }}
+                >
+                  {OUTLIER_LABELS[outlierReason].label}
+                </span>
+              )}
             </div>
             <div className="ml-5 text-xs text-text-secondary space-y-0.5">
               {viewMode === "position" && entry.value != null && (
@@ -271,7 +351,9 @@ const CustomTooltip = ({
                       ? "Leader"
                       : viewMode === "gapToLeader"
                         ? `+${entry.value.toFixed(3)}s`
-                        : formatLapTime(entry.value)}
+                        : formatLapTime(
+                            lapData?.lap_time_seconds ?? entry.value,
+                          )}
                   </span>
                 </div>
               )}
@@ -417,6 +499,117 @@ function computeStatusBands(
   return bands;
 }
 
+// Check if a lap is inside or adjacent to a status band
+function bandReasonForLap(
+  lapNumber: number,
+  statusBands: StatusBand[],
+): OutlierReason | null {
+  for (const band of statusBands) {
+    if (lapNumber >= band.startLap - 1 && lapNumber <= band.endLap + 1) {
+      if (band.status === "4") return "safety_car";
+      if (band.status === "5") return "red_flag";
+      if (band.status === "6") return "vsc";
+    }
+  }
+  return null;
+}
+
+// Detect implied pit stop from compound or tyre life change
+function isImpliedPit(lap: LapData, prevLap: LapData | null): boolean {
+  if (!prevLap) return false;
+  // Compound changed
+  if (lap.compound && prevLap.compound && lap.compound !== prevLap.compound)
+    return true;
+  // Tyre life reset (went from higher to lower = new set)
+  if (
+    lap.tyre_life != null &&
+    prevLap.tyre_life != null &&
+    lap.tyre_life < prevLap.tyre_life
+  )
+    return true;
+  return false;
+}
+
+// Build omit map for a driver — two-pass: known events + delta check
+function detectOutlierLaps(
+  laps: LapData[],
+  statusBands: StatusBand[],
+): Map<number, OutlierReason> {
+  const outliers = new Map<number, OutlierReason>();
+  const sorted = [...laps].sort((a, b) => a.lap_number - b.lap_number);
+
+  // Pass 1: flag known events (lap 1, pits, bands, track status flags)
+  for (let i = 0; i < sorted.length; i++) {
+    const lap = sorted[i];
+    if (lap.lap_time_seconds == null) continue;
+    const prevLap = i > 0 ? sorted[i - 1] : null;
+
+    // Lap 1
+    if (lap.lap_number === 1) {
+      outliers.set(lap.lap_number, "lap1");
+      continue;
+    }
+
+    // Explicit pit stop
+    if (lap.pit_duration_seconds != null && lap.pit_duration_seconds > 0) {
+      outliers.set(lap.lap_number, "pit");
+      continue;
+    }
+
+    // Implied pit stop (compound/tyre change without pit_duration)
+    if (isImpliedPit(lap, prevLap)) {
+      outliers.set(lap.lap_number, "pit");
+      continue;
+    }
+
+    // Status band (SC/VSC/Red Flag) ±1 lap
+    const bandReason = bandReasonForLap(lap.lap_number, statusBands);
+    if (bandReason) {
+      outliers.set(lap.lap_number, bandReason);
+      continue;
+    }
+
+    // Per-lap track_status flag
+    if (lap.track_status === "4") {
+      outliers.set(lap.lap_number, "safety_car");
+      continue;
+    }
+    if (lap.track_status === "6" || lap.track_status === "7") {
+      outliers.set(lap.lap_number, "vsc");
+      continue;
+    }
+    if (lap.track_status === "5") {
+      outliers.set(lap.lap_number, "red_flag");
+    }
+  }
+
+  // Pass 2: lap-over-lap delta check — any lap >3s slower than the previous
+  // clean lap gets omitted. This catches the transitional laps around events.
+  let lastCleanTime: number | null = null;
+  for (const lap of sorted) {
+    if (lap.lap_time_seconds == null) continue;
+    if (outliers.has(lap.lap_number)) {
+      // Already flagged — don't update lastCleanTime
+      continue;
+    }
+
+    let normTime = lap.lap_time_seconds;
+    if (lap.pit_duration_seconds != null && lap.pit_duration_seconds > 0) {
+      normTime -= lap.pit_duration_seconds;
+    }
+
+    if (lastCleanTime != null && normTime - lastCleanTime > 2) {
+      // This lap is >3s slower than previous clean lap — find a reason
+      const bandReason = bandReasonForLap(lap.lap_number, statusBands);
+      outliers.set(lap.lap_number, bandReason ?? "slow");
+    } else {
+      lastCleanTime = normTime;
+    }
+  }
+
+  return outliers;
+}
+
 export default function LapTimeByLapGraph({
   season,
   round,
@@ -480,6 +673,16 @@ export default function LapTimeByLapGraph({
     );
   }, [data]);
 
+  // Compute outlier maps per driver
+  const outlierMaps = useMemo(() => {
+    if (!data) return new Map<string, Map<number, OutlierReason>>();
+    const maps = new Map<string, Map<number, OutlierReason>>();
+    for (const driver of data.drivers) {
+      maps.set(driverKey(driver), detectOutlierLaps(driver.laps, statusBands));
+    }
+    return maps;
+  }, [data, statusBands]);
+
   // Normalize pit lap times: subtract pit duration from lap time
   const getNormalizedLapTime = (lap: LapData): number | null => {
     if (lap.lap_time_seconds == null) return null;
@@ -487,11 +690,6 @@ export default function LapTimeByLapGraph({
       return lap.lap_time_seconds - lap.pit_duration_seconds;
     }
     return lap.lap_time_seconds;
-  };
-
-  // Check if a lap is a pit lap
-  const isPitLap = (lap: LapData): boolean => {
-    return lap.pit_duration_seconds != null && lap.pit_duration_seconds > 0;
   };
 
   // Calculate gap to leader data
@@ -592,7 +790,8 @@ export default function LapTimeByLapGraph({
     return chartData;
   };
 
-  // Transform data for Recharts (lap time mode with pit normalization)
+  // Transform data for Recharts (lap time mode with outlier omission)
+  // Two-pass: first build data with placeholders, then fill marker Y midpoints.
   const getLapTimeData = (): ChartDataPoint[] => {
     if (!data || !data.drivers) return [];
 
@@ -603,6 +802,129 @@ export default function LapTimeByLapGraph({
     if (filteredDrivers.length === 0) return [];
 
     const maxLaps = Math.max(...filteredDrivers.map((d) => d.laps.length));
+
+    // Pre-compute per-driver nearest clean lap times before/after each outlier
+    const preClean = new Map<string, Map<number, number>>();
+    const postClean = new Map<string, Map<number, number>>();
+
+    for (const driver of filteredDrivers) {
+      const key = driverKey(driver);
+      const driverOutliers = outlierMaps.get(key);
+      const sorted = [...driver.laps].sort(
+        (a, b) => a.lap_number - b.lap_number,
+      );
+
+      const pre = new Map<number, number>();
+      let lastClean: number | null = null;
+      for (const lap of sorted) {
+        if (lap.lap_time_seconds == null) continue;
+        if (driverOutliers?.has(lap.lap_number)) {
+          if (lastClean != null) pre.set(lap.lap_number, lastClean);
+        } else {
+          const t = getNormalizedLapTime(lap);
+          if (t != null) lastClean = t;
+        }
+      }
+      preClean.set(key, pre);
+
+      const post = new Map<number, number>();
+      let nextClean: number | null = null;
+      for (let i = sorted.length - 1; i >= 0; i--) {
+        const lap = sorted[i];
+        if (lap.lap_time_seconds == null) continue;
+        if (driverOutliers?.has(lap.lap_number)) {
+          if (nextClean != null) post.set(lap.lap_number, nextClean);
+        } else {
+          const t = getNormalizedLapTime(lap);
+          if (t != null) nextClean = t;
+        }
+      }
+      postClean.set(key, post);
+    }
+
+    const getMarkerY = (key: string, lapNumber: number): number | null => {
+      const before = preClean.get(key)?.get(lapNumber);
+      const after = postClean.get(key)?.get(lapNumber);
+      if (before != null && after != null) return (before + after) / 2;
+      return before ?? after ?? null;
+    };
+
+    // Build per-driver bridge segments: for each contiguous run of outlier laps,
+    // linearly interpolate from the last clean value to the next clean value.
+    // This creates the dotted connector line data.
+    const bridgeValues = new Map<string, Map<number, number>>();
+    // Track which lap gets the label for each driver (middle of each run)
+    const labelLaps = new Map<string, Set<number>>();
+
+    for (const driver of filteredDrivers) {
+      const key = driverKey(driver);
+      const driverOutliers = outlierMaps.get(key);
+      if (!driverOutliers || driverOutliers.size === 0) continue;
+
+      const sorted = [...driver.laps]
+        .filter((l) => l.lap_time_seconds != null)
+        .sort((a, b) => a.lap_number - b.lap_number);
+
+      const bridge = new Map<number, number>();
+      const labels = new Set<number>();
+
+      // Walk through laps and find contiguous outlier runs
+      let i = 0;
+      while (i < sorted.length) {
+        if (!driverOutliers.has(sorted[i].lap_number)) {
+          i++;
+          continue;
+        }
+
+        // Start of an outlier run — find boundaries
+        const runStart = i;
+        while (i < sorted.length && driverOutliers.has(sorted[i].lap_number)) {
+          i++;
+        }
+        const runEnd = i - 1; // inclusive
+
+        // Only label the middle lap of the run
+        const midIdx = runStart + Math.floor((runEnd - runStart) / 2);
+        labels.add(sorted[midIdx].lap_number);
+
+        // Get pre and post clean values
+        const preVal =
+          runStart > 0 ? getNormalizedLapTime(sorted[runStart - 1]) : null;
+        const postVal =
+          runEnd < sorted.length - 1
+            ? getNormalizedLapTime(sorted[runEnd + 1])
+            : null;
+
+        const startVal = preVal ?? postVal;
+        const endVal = postVal ?? preVal;
+        if (startVal == null || endVal == null) continue;
+
+        // Include the anchor laps (last clean before, first clean after)
+        if (preVal != null && runStart > 0) {
+          bridge.set(sorted[runStart - 1].lap_number, preVal);
+        }
+
+        // Linearly interpolate across outlier laps
+        const runLen = runEnd - runStart + 1;
+        for (let j = 0; j <= runLen - 1; j++) {
+          const t = runLen === 1 ? 0.5 : j / (runLen - 1);
+          const interpVal = startVal + (endVal - startVal) * t;
+          bridge.set(sorted[runStart + j].lap_number, interpVal);
+        }
+
+        if (postVal != null && runEnd < sorted.length - 1) {
+          bridge.set(sorted[runEnd + 1].lap_number, postVal);
+        }
+      }
+
+      if (bridge.size > 0) {
+        bridgeValues.set(key, bridge);
+      }
+      if (labels.size > 0) {
+        labelLaps.set(key, labels);
+      }
+    }
+
     const chartData: ChartDataPoint[] = [];
 
     for (let lapNum = 1; lapNum <= maxLaps; lapNum++) {
@@ -611,18 +933,33 @@ export default function LapTimeByLapGraph({
       for (const driver of filteredDrivers) {
         const key = driverKey(driver);
         const lap = driver.laps.find((l) => l.lap_number === lapNum);
-        if (lap && lap.lap_time_seconds !== null) {
-          // Use normalized time (pit duration subtracted) for the chart line
-          const displayTime = getNormalizedLapTime(lap);
-          if (displayTime !== null) {
-            dataPoint[key] = displayTime;
+        if (!lap || lap.lap_time_seconds === null) continue;
+
+        const displayTime = getNormalizedLapTime(lap);
+        if (displayTime === null) continue;
+
+        const reason = outlierMaps.get(key)?.get(lap.lap_number);
+
+        // Always store lap data for tooltip
+        dataPoint[`_data_${key}`] = lap;
+
+        if (reason) {
+          // Omit from main line — null gap breaks it via connectNulls={false}
+          dataPoint[`_outlier_reason_${key}`] = reason as unknown as number;
+
+          // Place reason label at midpoint between surrounding clean laps
+          const markerY = getMarkerY(key, lap.lap_number);
+          if (markerY != null) {
+            dataPoint[`_outlier_${key}`] = markerY;
           }
-          // Store full lap data for tooltip (including raw lap time)
-          dataPoint[`_data_${key}`] = lap;
-          // Mark pit laps
-          if (isPitLap(lap)) {
-            dataPoint[`_pit_${key}`] = displayTime;
-          }
+        } else {
+          dataPoint[key] = displayTime;
+        }
+
+        // Bridge (dotted connector) data
+        const bridgeVal = bridgeValues.get(key)?.get(lapNum);
+        if (bridgeVal != null) {
+          dataPoint[`_bridge_${key}`] = bridgeVal;
         }
       }
 
@@ -693,7 +1030,7 @@ export default function LapTimeByLapGraph({
 
   if (loading) {
     return (
-      <div style={{ minHeight: "540px" }}>
+      <div>
         <div className="h-8 mb-4 flex items-center">
           <div className="h-6 bg-bg-elevated rounded w-96 animate-pulse" />
         </div>
@@ -711,7 +1048,7 @@ export default function LapTimeByLapGraph({
   if (!data || !data.drivers) {
     const isPre2018 = season < 2018;
     return (
-      <div style={{ minHeight: "540px" }}>
+      <div>
         <div className="h-8 mb-4 flex items-center">
           <h3 className="text-sm font-bold text-text-secondary font-mono">
             Lap Time Analysis
@@ -771,6 +1108,8 @@ export default function LapTimeByLapGraph({
       return [Math.min(maxPos + 1, 20), 1];
     }
 
+    // For lap time mode, only clean laps are on the main driver keys
+    // Outlier laps are on _outlier_ keys and excluded by the _ prefix filter
     let minTime = Number.POSITIVE_INFINITY;
     let maxTime = Number.NEGATIVE_INFINITY;
 
@@ -810,24 +1149,24 @@ export default function LapTimeByLapGraph({
     return "Lap Time";
   };
 
-  // Build Line components: one per driver (simple for gap/position modes)
-  // For lap time mode, we just use the team color (pit normalization handles spikes)
+  // Build Line components: one per driver
   const renderLines = () => {
     return drivers
       .filter((driver) => selectedDrivers.includes(driverKey(driver)))
       .map((driver) => {
+        const key = driverKey(driver);
         const color = getDriverColor(driver);
         return (
           <Line
-            key={driverKey(driver)}
+            key={key}
             type="linear"
-            dataKey={driverKey(driver)}
+            dataKey={key}
             name={driver.full_name}
             stroke={color}
             strokeWidth={2}
-            dot={viewMode === "position" ? false : <CustomDot />}
-            activeDot={{ r: 6, fill: color, stroke: color }}
-            filter={`url(#glow-${driverKey(driver)})`}
+            dot={false}
+            activeDot={{ r: 5, fill: color, stroke: color }}
+            filter={`url(#glow-${key})`}
             isAnimationActive={true}
             animationDuration={1500}
             animationBegin={0}
@@ -839,8 +1178,8 @@ export default function LapTimeByLapGraph({
   };
 
   return (
-    <div style={{ minHeight: "540px" }}>
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+    <div>
+      <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
         <h3 className="text-sm font-bold text-text-secondary font-mono">
           {data.event_name.replace("Grand Prix", "GP")} - {viewLabels[viewMode]}
         </h3>
@@ -918,13 +1257,13 @@ export default function LapTimeByLapGraph({
       </div>
 
       {/* Chart */}
-      <div className="relative" style={{ minHeight: "400px" }}>
+      <div className="relative -ml-2">
         {chartData.length > 0 ? (
           <>
-            <ResponsiveContainer width="100%" height={400}>
+            <ResponsiveContainer width="100%" height={420}>
               <LineChart
                 data={chartData}
-                margin={{ top: 20, right: 20, left: 60, bottom: 20 }}
+                margin={{ top: 10, right: 16, left: 20, bottom: 30 }}
               >
                 <defs>
                   {drivers
@@ -986,10 +1325,14 @@ export default function LapTimeByLapGraph({
                   dataKey="lap_number"
                   stroke={CHART_COLORS.textTertiary}
                   label={{
-                    value: "Lap Number",
-                    position: "insideBottom",
-                    offset: -20,
-                    style: { fontWeight: "bold", fill: "white" },
+                    value: "Lap",
+                    position: "insideBottomRight",
+                    offset: -5,
+                    style: {
+                      fontWeight: "bold",
+                      fill: CHART_COLORS.textMuted,
+                      fontSize: 11,
+                    },
                   }}
                   tick={<CustomXAxisTick />}
                 />
@@ -998,19 +1341,30 @@ export default function LapTimeByLapGraph({
                   label={{
                     value: getYAxisLabel(),
                     angle: -90,
-                    position: "center",
-                    dx: -45,
-                    style: { fontWeight: "bold", fill: "white" },
+                    position: "insideLeft",
+                    dx: -10,
+                    style: {
+                      fontWeight: "bold",
+                      fill: CHART_COLORS.textMuted,
+                      fontSize: 11,
+                    },
                   }}
                   tick={getYAxisTick()}
                   domain={getYAxisDomain()}
                   reversed={true}
                   allowDecimals={viewMode !== "position"}
                 />
-                <Tooltip content={<CustomTooltip viewMode={viewMode} />} />
+                <Tooltip
+                  content={
+                    <CustomTooltip
+                      viewMode={viewMode}
+                      raceControlEvents={data.race_control_events}
+                    />
+                  }
+                />
                 {renderLines()}
 
-                {/* Pit stop marker lines (only in lap time mode) */}
+                {/* Dotted bridge lines across outlier gaps */}
                 {viewMode === "lapTime" &&
                   drivers
                     .filter((driver) =>
@@ -1018,11 +1372,35 @@ export default function LapTimeByLapGraph({
                     )
                     .map((driver) => (
                       <Line
-                        key={`pit-${driverKey(driver)}`}
+                        key={`bridge-${driverKey(driver)}`}
                         type="linear"
-                        dataKey={`_pit_${driverKey(driver)}`}
+                        dataKey={`_bridge_${driverKey(driver)}`}
+                        stroke={CHART_COLORS.textMuted}
+                        strokeWidth={1}
+                        strokeDasharray="3 3"
+                        strokeOpacity={0.5}
+                        dot={false}
+                        activeDot={false}
+                        isAnimationActive={false}
+                        legendType="none"
+                        tooltipType="none"
+                        connectNulls={false}
+                      />
+                    ))}
+
+                {/* Per-driver outlier reason labels (PIT, L1, SLOW) on the bridge */}
+                {viewMode === "lapTime" &&
+                  drivers
+                    .filter((driver) =>
+                      selectedDrivers.includes(driverKey(driver)),
+                    )
+                    .map((driver) => (
+                      <Line
+                        key={`outlier-${driverKey(driver)}`}
+                        type="linear"
+                        dataKey={`_outlier_${driverKey(driver)}`}
                         stroke="none"
-                        dot={<PitStopDot />}
+                        dot={<OutlierDot />}
                         activeDot={false}
                         isAnimationActive={false}
                         legendType="none"
@@ -1032,9 +1410,9 @@ export default function LapTimeByLapGraph({
               </LineChart>
             </ResponsiveContainer>
 
-            {/* Custom Legend */}
-            <div className="absolute top-8 left-25 bg-bg-primary/90 border border-border-primary rounded-sm p-3 backdrop-blur-sm pointer-events-none">
-              <div className="flex flex-col gap-1">
+            {/* Driver Legend — bottom right, above axis labels */}
+            <div className="absolute bottom-12 right-5 bg-bg-primary/80 border border-border-primary rounded-sm px-2 py-1.5 backdrop-blur-sm pointer-events-none">
+              <div className="flex flex-col gap-0.5">
                 {drivers
                   .filter((driver) =>
                     selectedDrivers.includes(driverKey(driver)),
@@ -1044,51 +1422,20 @@ export default function LapTimeByLapGraph({
                     return (
                       <div
                         key={driverKey(driver)}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-1.5"
                       >
                         <div
-                          className="w-3 h-3 rounded-full"
+                          className="w-3 h-0.5"
                           style={{ backgroundColor: color }}
                         />
-                        <span className="text-xs font-bold text-text-primary font-mono">
-                          {driver.full_name}
+                        <span className="text-[9px] font-bold text-text-secondary font-mono leading-tight">
+                          {driver.driver_code || driver.full_name}
                         </span>
                       </div>
                     );
                   })}
               </div>
             </div>
-
-            {/* Status Band Legend (if bands exist) */}
-            {statusBands.length > 0 && (
-              <div className="absolute top-8 right-8 bg-bg-primary/90 border border-border-primary rounded-sm px-3 py-2 backdrop-blur-sm pointer-events-none">
-                <div className="flex flex-col gap-1">
-                  {Object.entries(STATUS_BAND_COLORS).map(([status, style]) => {
-                    if (!statusBands.some((b) => b.status === status))
-                      return null;
-                    return (
-                      <div key={status} className="flex items-center gap-2">
-                        <div
-                          className="w-4 h-3 rounded-sm"
-                          style={{
-                            backgroundColor:
-                              status === "4"
-                                ? "#eab308"
-                                : status === "5"
-                                  ? "#ef4444"
-                                  : "#f97316",
-                            opacity: 0.5,
-                          }}
-                        />
-                        <span className="text-xs text-text-secondary font-mono">
-                          {style.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">

@@ -14,6 +14,11 @@ from app.schemas.circuit import (
     CircuitListResponse,
     CircuitRaceHistoryResponse,
     CircuitStatisticsResponse,
+    CircuitLapRecordsResponse,
+    CircuitRecentRaceResponse,
+    CircuitLapTimeTrendResponse,
+    CircuitWeatherProfileResponse,
+    CircuitTyreStatsResponse,
 )
 from app.security import verify_api_key
 
@@ -105,3 +110,84 @@ async def get_circuit_statistics(
         )
 
     return stats
+
+
+@router.get("/{circuit_id}/lap-records", response_model=CircuitLapRecordsResponse)
+async def get_circuit_lap_records(
+    circuit_id: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """Get fastest race lap and qualifying lap records at a circuit."""
+    data = await CircuitService.get_lap_records(db, circuit_id)
+    if not data:
+        raise HTTPException(
+            status_code=404, detail=f"Circuit with ID {circuit_id} not found"
+        )
+    return data
+
+
+@router.get("/{circuit_id}/recent-race", response_model=CircuitRecentRaceResponse)
+async def get_circuit_recent_race(
+    circuit_id: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """Get the most recent race at a circuit with podium and conditions."""
+    data = await CircuitService.get_recent_race(db, circuit_id)
+    if not data:
+        raise HTTPException(
+            status_code=404, detail=f"Circuit with ID {circuit_id} not found"
+        )
+    return data
+
+
+@router.get(
+    "/{circuit_id}/lap-time-trend",
+    response_model=CircuitLapTimeTrendResponse,
+)
+async def get_circuit_lap_time_trend(
+    circuit_id: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """Get fastest lap per year at a circuit."""
+    data = await CircuitService.get_lap_time_trend(db, circuit_id)
+    if not data:
+        raise HTTPException(
+            status_code=404, detail=f"Circuit with ID {circuit_id} not found"
+        )
+    return data
+
+
+@router.get(
+    "/{circuit_id}/weather-profile",
+    response_model=CircuitWeatherProfileResponse,
+)
+async def get_circuit_weather_profile(
+    circuit_id: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """Get aggregated weather profile across all races at a circuit."""
+    data = await CircuitService.get_weather_profile(db, circuit_id)
+    if not data:
+        raise HTTPException(
+            status_code=404, detail=f"Circuit with ID {circuit_id} not found"
+        )
+    return data
+
+
+@router.get("/{circuit_id}/tyre-stats", response_model=CircuitTyreStatsResponse)
+async def get_circuit_tyre_stats(
+    circuit_id: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """Get tyre compound usage breakdown at a circuit."""
+    data = await CircuitService.get_tyre_stats(db, circuit_id)
+    if not data:
+        raise HTTPException(
+            status_code=404, detail=f"Circuit with ID {circuit_id} not found"
+        )
+    return data

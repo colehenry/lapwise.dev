@@ -406,6 +406,21 @@ class TrackStatusEvent(BaseModel):
         from_attributes = True
 
 
+class RaceControlEvent(BaseModel):
+    """A significant race control message (SC deployment, rain, DRS, retirements)"""
+
+    session_time_seconds: float
+    lap_number: Optional[int] = None
+    category: Optional[str] = None  # "Flag", "Drs", "CarEvent", "Other"
+    message: str
+    flag: Optional[str] = None
+    scope: Optional[str] = None  # "Track", "Driver", "Sector"
+    driver_number: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
 class LapTimesResponse(BaseModel):
     """
     Complete response for GET /api/results/{season}/{round}/lap-times.
@@ -419,6 +434,7 @@ class LapTimesResponse(BaseModel):
     total_laps: Optional[int] = None  # Total laps in the race
     drivers: List[DriverLapTimesData]
     track_status_events: List[TrackStatusEvent] = []
+    race_control_events: List[RaceControlEvent] = []
 
     class Config:
         from_attributes = True
