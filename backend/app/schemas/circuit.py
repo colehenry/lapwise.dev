@@ -99,3 +99,129 @@ class CircuitStatisticsResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class LapRecordEntry(BaseModel):
+    """A single lap record (fastest race lap or qualifying lap)"""
+
+    time_seconds: float
+    driver_name: str
+    driver_code: Optional[str] = None
+    driver_slug: Optional[str] = None
+    team_name: str
+    team_color: Optional[str] = None
+    year: int
+
+    class Config:
+        from_attributes = True
+
+
+class CircuitLapRecordsResponse(BaseModel):
+    """Lap records for a circuit"""
+
+    circuit_id: int
+    circuit_name: str
+    fastest_race_lap: Optional[LapRecordEntry] = None
+    fastest_qualifying_lap: Optional[LapRecordEntry] = None
+
+    class Config:
+        from_attributes = True
+
+
+class RecentRacePodiumEntry(BaseModel):
+    """A podium finisher in the recent race"""
+
+    position: int
+    driver_name: str
+    driver_code: Optional[str] = None
+    driver_slug: Optional[str] = None
+    team_name: str
+    team_color: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class CircuitRecentRaceResponse(BaseModel):
+    """Most recent race at a circuit"""
+
+    circuit_id: int
+    circuit_name: str
+    year: int
+    round: int
+    event_name: str
+    date: str
+    podium: List[RecentRacePodiumEntry]
+    fastest_lap_driver: Optional[str] = None
+    fastest_lap_time: Optional[float] = None
+    avg_air_temp: Optional[float] = None
+    avg_track_temp: Optional[float] = None
+    had_rainfall: Optional[bool] = None
+
+    class Config:
+        from_attributes = True
+
+
+class LapTimeTrendEntry(BaseModel):
+    """Fastest lap time for a specific year at a circuit"""
+
+    year: int
+    fastest_lap_seconds: float
+    driver_name: str
+    driver_code: Optional[str] = None
+    team_color: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class CircuitLapTimeTrendResponse(BaseModel):
+    """Lap time evolution across years at a circuit"""
+
+    circuit_id: int
+    circuit_name: str
+    trend: List[LapTimeTrendEntry]
+
+    class Config:
+        from_attributes = True
+
+
+class CircuitWeatherProfileResponse(BaseModel):
+    """Aggregated weather profile for a circuit"""
+
+    circuit_id: int
+    circuit_name: str
+    races_with_weather: int
+    avg_air_temp: Optional[float] = None
+    avg_track_temp: Optional[float] = None
+    avg_humidity: Optional[float] = None
+    avg_wind_speed: Optional[float] = None
+    wet_race_count: int = 0
+    total_races_checked: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+class CompoundUsageEntry(BaseModel):
+    """Usage stats for a single tyre compound"""
+
+    compound: str
+    total_laps: int
+    avg_stint_length: Optional[float] = None
+    percentage: float
+
+    class Config:
+        from_attributes = True
+
+
+class CircuitTyreStatsResponse(BaseModel):
+    """Tyre strategy breakdown for a circuit"""
+
+    circuit_id: int
+    circuit_name: str
+    races_with_data: int
+    compounds: List[CompoundUsageEntry]
+
+    class Config:
+        from_attributes = True

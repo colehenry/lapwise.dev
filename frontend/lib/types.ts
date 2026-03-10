@@ -233,6 +233,16 @@ export type DriverLapTimes = {
 export const driverKey = (driver: DriverLapTimes): string =>
   driver.driver_code ?? driver.full_name;
 
+export type RaceControlEvent = {
+  session_time_seconds: number;
+  lap_number: number | null;
+  category: string | null;
+  message: string;
+  flag: string | null;
+  scope: string | null;
+  driver_number: number | null;
+};
+
 export type LapTimesResponse = {
   year: number;
   round: number;
@@ -240,6 +250,7 @@ export type LapTimesResponse = {
   total_laps: number | null;
   drivers: DriverLapTimes[];
   track_status_events: TrackStatusEvent[];
+  race_control_events: RaceControlEvent[];
 };
 
 // Graph mode types (used by history graphs)
@@ -383,4 +394,85 @@ export interface CircuitStatisticsResponse {
   most_poles: CircuitStatDriver[];
   most_fastest_laps: CircuitStatDriver[];
   constructor_wins: CircuitStatDriver[];
+}
+
+export interface LapRecordEntry {
+  time_seconds: number;
+  driver_name: string;
+  driver_code: string | null;
+  driver_slug: string | null;
+  team_name: string;
+  team_color: string | null;
+  year: number;
+}
+
+export interface CircuitLapRecordsResponse {
+  circuit_id: number;
+  circuit_name: string;
+  fastest_race_lap: LapRecordEntry | null;
+  fastest_qualifying_lap: LapRecordEntry | null;
+}
+
+export interface RecentRacePodiumEntry {
+  position: number;
+  driver_name: string;
+  driver_code: string | null;
+  driver_slug: string | null;
+  team_name: string;
+  team_color: string | null;
+}
+
+export interface CircuitRecentRaceResponse {
+  circuit_id: number;
+  circuit_name: string;
+  year: number;
+  round: number;
+  event_name: string;
+  date: string;
+  podium: RecentRacePodiumEntry[];
+  fastest_lap_driver: string | null;
+  fastest_lap_time: number | null;
+  avg_air_temp: number | null;
+  avg_track_temp: number | null;
+  had_rainfall: boolean | null;
+}
+
+export interface LapTimeTrendEntry {
+  year: number;
+  fastest_lap_seconds: number;
+  driver_name: string;
+  driver_code: string | null;
+  team_color: string | null;
+}
+
+export interface CircuitLapTimeTrendResponse {
+  circuit_id: number;
+  circuit_name: string;
+  trend: LapTimeTrendEntry[];
+}
+
+export interface CircuitWeatherProfileResponse {
+  circuit_id: number;
+  circuit_name: string;
+  races_with_weather: number;
+  avg_air_temp: number | null;
+  avg_track_temp: number | null;
+  avg_humidity: number | null;
+  avg_wind_speed: number | null;
+  wet_race_count: number;
+  total_races_checked: number;
+}
+
+export interface CompoundUsageEntry {
+  compound: string;
+  total_laps: number;
+  avg_stint_length: number | null;
+  percentage: number;
+}
+
+export interface CircuitTyreStatsResponse {
+  circuit_id: number;
+  circuit_name: string;
+  races_with_data: number;
+  compounds: CompoundUsageEntry[];
 }

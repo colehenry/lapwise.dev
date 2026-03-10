@@ -1,8 +1,10 @@
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, case
 
 from app.models import Circuit, Session, SessionResult, Driver, Team
+from app.models.lap import Lap
+from app.models.weather import Weather
 from app.schemas.circuit import (
     CircuitResponse,
     CircuitListResponse,
@@ -10,6 +12,15 @@ from app.schemas.circuit import (
     CircuitRaceHistoryResponse,
     CircuitStatDriver,
     CircuitStatisticsResponse,
+    LapRecordEntry,
+    CircuitLapRecordsResponse,
+    RecentRacePodiumEntry,
+    CircuitRecentRaceResponse,
+    LapTimeTrendEntry,
+    CircuitLapTimeTrendResponse,
+    CircuitWeatherProfileResponse,
+    CompoundUsageEntry,
+    CircuitTyreStatsResponse,
 )
 
 
@@ -302,4 +313,463 @@ class CircuitService:
             most_poles=most_poles,
             most_fastest_laps=most_fastest_laps,
             constructor_wins=constructor_wins,
+        )
+
+    @staticmethod
+    async def get_lap_records(
+        db: AsyncSession, circuit_id: int
+    ) -> Optional[CircuitLapRecordsResponse]:
+        """Get fastest race lap and qualifying lap records at a circuit."""
+        circuit = await db.execute(
+            select(Circuit.id, Circuit.name).where(Circuit.id == circuit_id)
+        )
+        circuit_row = circuit.first()
+        if not circuit_row:
+            return None
+
+        from app.services.results_service import _make_slug
+
+        # Fastest race lap from laps table
+        race_lap_query = (
+            select(
+                Lap.lap_time_seconds,
+                Driver.full_name,
+                Driver.driver_code,
+                Driver.jolpica_id,
+                Team.name.label("team_name"),
+                Team.team_color,
+                Session.year,
+            )
+            .join(Session, Lap.session_id == Session.id)
+            .join(Driver, Lap.driver_id == Driver.id)
+            .join(
+                SessionResult,
+                and_(
+                    SessionResult.session_id == Session.id,
+                    SessionResult.driver_id == Driver.id,
+                ),
+            )
+            .join(Team, SessionResult.team_id == Team.id)
+            .where(Session.circuit_id == circuit_id)
+            .where(Session.session_type == "race")
+            .where(Lap.lap_time_seconds.isnot(None))
+            .where(Lap.lap_time_seconds > 0)
+            .where(Lap.is_accurate.is_(True))
+            .order_by(Lap.lap_time_seconds.asc())
+            .limit(1)
+        )
+        race_result = await db.execute(race_lap_query)
+        race_row = race_result.first()
+
+        fastest_race_lap = None
+        if race_row:
+            fastest_race_lap = LapRecordEntry(
+                time_seconds=race_row.lap_time_seconds,
+                driver_name=race_row.full_name,
+                driver_code=race_row.driver_code,
+                driver_slug=_make_slug(race_row.jolpica_id, race_row.full_name),
+                team_name=race_row.team_name,
+                team_color=race_row.team_color,
+                year=race_row.year,
+            )
+
+        # Fastest qualifying lap from session_results (best of q1/q2/q3)
+        q_best = func.least(
+            SessionResult.q1_time_seconds,
+            SessionResult.q2_time_seconds,
+            SessionResult.q3_time_seconds,
+        ).label("best_q_time")
+
+        quali_query = (
+            select(
+                q_best,
+                Driver.full_name,
+                Driver.driver_code,
+                Driver.jolpica_id,
+                Team.name.label("team_name"),
+                Team.team_color,
+                Session.year,
+            )
+            .join(Session, SessionResult.session_id == Session.id)
+            .join(Driver, SessionResult.driver_id == Driver.id)
+            .join(Team, SessionResult.team_id == Team.id)
+            .where(Session.circuit_id == circuit_id)
+            .where(Session.session_type == "qualifying")
+            .where(q_best.isnot(None))
+            .where(q_best > 0)
+            .order_by(q_best.asc())
+            .limit(1)
+        )
+        quali_result = await db.execute(quali_query)
+        quali_row = quali_result.first()
+
+        fastest_qualifying_lap = None
+        if quali_row and quali_row.best_q_time:
+            fastest_qualifying_lap = LapRecordEntry(
+                time_seconds=quali_row.best_q_time,
+                driver_name=quali_row.full_name,
+                driver_code=quali_row.driver_code,
+                driver_slug=_make_slug(quali_row.jolpica_id, quali_row.full_name),
+                team_name=quali_row.team_name,
+                team_color=quali_row.team_color,
+                year=quali_row.year,
+            )
+
+        return CircuitLapRecordsResponse(
+            circuit_id=circuit_row.id,
+            circuit_name=circuit_row.name,
+            fastest_race_lap=fastest_race_lap,
+            fastest_qualifying_lap=fastest_qualifying_lap,
+        )
+
+    @staticmethod
+    async def get_recent_race(
+        db: AsyncSession, circuit_id: int
+    ) -> Optional[CircuitRecentRaceResponse]:
+        """Get the most recent race at a circuit with podium and conditions."""
+        circuit = await db.execute(
+            select(Circuit.id, Circuit.name).where(Circuit.id == circuit_id)
+        )
+        circuit_row = circuit.first()
+        if not circuit_row:
+            return None
+
+        from app.services.results_service import _make_slug
+
+        # Find most recent race session at this circuit
+        session_query = (
+            select(Session)
+            .where(Session.circuit_id == circuit_id)
+            .where(Session.session_type == "race")
+            .order_by(Session.date.desc())
+            .limit(1)
+        )
+        session_result = await db.execute(session_query)
+        race_session = session_result.scalar_one_or_none()
+        if not race_session:
+            return None
+
+        # Get podium (top 3)
+        podium_query = (
+            select(
+                SessionResult.position,
+                Driver.full_name,
+                Driver.driver_code,
+                Driver.jolpica_id,
+                Team.name.label("team_name"),
+                Team.team_color,
+            )
+            .join(Driver, SessionResult.driver_id == Driver.id)
+            .join(Team, SessionResult.team_id == Team.id)
+            .where(SessionResult.session_id == race_session.id)
+            .where(SessionResult.position.isnot(None))
+            .where(SessionResult.position <= 3)
+            .order_by(SessionResult.position.asc())
+        )
+        podium_result = await db.execute(podium_query)
+        podium = [
+            RecentRacePodiumEntry(
+                position=r.position,
+                driver_name=r.full_name,
+                driver_code=r.driver_code,
+                driver_slug=_make_slug(r.jolpica_id, r.full_name),
+                team_name=r.team_name,
+                team_color=r.team_color,
+            )
+            for r in podium_result.all()
+        ]
+
+        # Get fastest lap driver
+        fl_query = (
+            select(Driver.full_name, Lap.lap_time_seconds)
+            .join(Session, Lap.session_id == Session.id)
+            .join(Driver, Lap.driver_id == Driver.id)
+            .where(Lap.session_id == race_session.id)
+            .where(Lap.lap_time_seconds.isnot(None))
+            .where(Lap.lap_time_seconds > 0)
+            .where(Lap.is_accurate.is_(True))
+            .order_by(Lap.lap_time_seconds.asc())
+            .limit(1)
+        )
+        fl_result = await db.execute(fl_query)
+        fl_row = fl_result.first()
+
+        # Get weather summary for this race
+        weather_query = select(
+            func.avg(Weather.air_temp).label("avg_air"),
+            func.avg(Weather.track_temp).label("avg_track"),
+            func.max(case((Weather.rainfall.is_(True), 1), else_=0)).label("had_rain"),
+        ).where(Weather.session_id == race_session.id)
+        weather_result = await db.execute(weather_query)
+        weather_row = weather_result.first()
+
+        return CircuitRecentRaceResponse(
+            circuit_id=circuit_row.id,
+            circuit_name=circuit_row.name,
+            year=race_session.year,
+            round=race_session.round,
+            event_name=race_session.event_name,
+            date=str(race_session.date),
+            podium=podium,
+            fastest_lap_driver=fl_row.full_name if fl_row else None,
+            fastest_lap_time=(fl_row.lap_time_seconds if fl_row else None),
+            avg_air_temp=(
+                round(weather_row.avg_air, 1)
+                if weather_row and weather_row.avg_air
+                else None
+            ),
+            avg_track_temp=(
+                round(weather_row.avg_track, 1)
+                if weather_row and weather_row.avg_track
+                else None
+            ),
+            had_rainfall=(
+                bool(weather_row.had_rain)
+                if weather_row and weather_row.had_rain is not None
+                else None
+            ),
+        )
+
+    @staticmethod
+    async def get_lap_time_trend(
+        db: AsyncSession, circuit_id: int
+    ) -> Optional[CircuitLapTimeTrendResponse]:
+        """Get fastest lap per year at a circuit (from laps table)."""
+        circuit = await db.execute(
+            select(Circuit.id, Circuit.name).where(Circuit.id == circuit_id)
+        )
+        circuit_row = circuit.first()
+        if not circuit_row:
+            return None
+
+        # Subquery: min lap time per session
+        min_lap_subq = (
+            select(
+                Session.id.label("session_id"),
+                Session.year,
+                func.min(Lap.lap_time_seconds).label("min_time"),
+            )
+            .join(Lap, Lap.session_id == Session.id)
+            .where(Session.circuit_id == circuit_id)
+            .where(Session.session_type == "race")
+            .where(Lap.lap_time_seconds.isnot(None))
+            .where(Lap.lap_time_seconds > 0)
+            .where(Lap.is_accurate.is_(True))
+            .group_by(Session.id, Session.year)
+            .subquery()
+        )
+
+        # Join back to get the driver who set it
+        trend_query = (
+            select(
+                min_lap_subq.c.year,
+                min_lap_subq.c.min_time.label("fastest_lap_seconds"),
+                Driver.full_name.label("driver_name"),
+                Driver.driver_code,
+                Team.team_color,
+            )
+            .join(
+                Lap,
+                and_(
+                    Lap.session_id == min_lap_subq.c.session_id,
+                    Lap.lap_time_seconds == min_lap_subq.c.min_time,
+                ),
+            )
+            .join(Driver, Lap.driver_id == Driver.id)
+            .join(Session, Lap.session_id == Session.id)
+            .join(
+                SessionResult,
+                and_(
+                    SessionResult.session_id == Session.id,
+                    SessionResult.driver_id == Driver.id,
+                ),
+            )
+            .join(Team, SessionResult.team_id == Team.id)
+            .order_by(min_lap_subq.c.year.asc())
+        )
+        result = await db.execute(trend_query)
+        rows = result.all()
+
+        # Deduplicate by year (keep first = fastest)
+        seen_years = set()
+        trend = []
+        for r in rows:
+            if r.year not in seen_years:
+                seen_years.add(r.year)
+                trend.append(
+                    LapTimeTrendEntry(
+                        year=r.year,
+                        fastest_lap_seconds=r.fastest_lap_seconds,
+                        driver_name=r.driver_name,
+                        driver_code=r.driver_code,
+                        team_color=r.team_color,
+                    )
+                )
+
+        return CircuitLapTimeTrendResponse(
+            circuit_id=circuit_row.id,
+            circuit_name=circuit_row.name,
+            trend=trend,
+        )
+
+    @staticmethod
+    async def get_weather_profile(
+        db: AsyncSession, circuit_id: int
+    ) -> Optional[CircuitWeatherProfileResponse]:
+        """Get aggregated weather profile across all races at a circuit."""
+        circuit = await db.execute(
+            select(Circuit.id, Circuit.name).where(Circuit.id == circuit_id)
+        )
+        circuit_row = circuit.first()
+        if not circuit_row:
+            return None
+
+        # Get all race session IDs at this circuit
+        race_sessions = (
+            select(Session.id)
+            .where(Session.circuit_id == circuit_id)
+            .where(Session.session_type == "race")
+            .subquery()
+        )
+
+        # Aggregate weather across all races
+        weather_query = select(
+            func.count(func.distinct(Weather.session_id)).label("races_with_weather"),
+            func.avg(Weather.air_temp).label("avg_air_temp"),
+            func.avg(Weather.track_temp).label("avg_track_temp"),
+            func.avg(Weather.humidity).label("avg_humidity"),
+            func.avg(Weather.wind_speed).label("avg_wind_speed"),
+        ).where(Weather.session_id.in_(select(race_sessions.c.id)))
+        result = await db.execute(weather_query)
+        row = result.first()
+
+        # Count wet races (sessions where rainfall was detected)
+        wet_query = (
+            select(func.count(func.distinct(Weather.session_id)))
+            .where(Weather.session_id.in_(select(race_sessions.c.id)))
+            .where(Weather.rainfall.is_(True))
+        )
+        wet_result = await db.execute(wet_query)
+        wet_count = wet_result.scalar() or 0
+
+        # Total races at this circuit
+        total_query = (
+            select(func.count(Session.id))
+            .where(Session.circuit_id == circuit_id)
+            .where(Session.session_type == "race")
+        )
+        total_result = await db.execute(total_query)
+        total_races = total_result.scalar() or 0
+
+        return CircuitWeatherProfileResponse(
+            circuit_id=circuit_row.id,
+            circuit_name=circuit_row.name,
+            races_with_weather=row.races_with_weather if row else 0,
+            avg_air_temp=(
+                round(row.avg_air_temp, 1) if row and row.avg_air_temp else None
+            ),
+            avg_track_temp=(
+                round(row.avg_track_temp, 1) if row and row.avg_track_temp else None
+            ),
+            avg_humidity=(
+                round(row.avg_humidity, 1) if row and row.avg_humidity else None
+            ),
+            avg_wind_speed=(
+                round(row.avg_wind_speed, 1) if row and row.avg_wind_speed else None
+            ),
+            wet_race_count=wet_count,
+            total_races_checked=total_races,
+        )
+
+    @staticmethod
+    async def get_tyre_stats(
+        db: AsyncSession, circuit_id: int
+    ) -> Optional[CircuitTyreStatsResponse]:
+        """Get tyre compound usage breakdown at a circuit."""
+        circuit = await db.execute(
+            select(Circuit.id, Circuit.name).where(Circuit.id == circuit_id)
+        )
+        circuit_row = circuit.first()
+        if not circuit_row:
+            return None
+
+        # Get race session IDs at this circuit
+        race_sessions = (
+            select(Session.id)
+            .where(Session.circuit_id == circuit_id)
+            .where(Session.session_type == "race")
+            .subquery()
+        )
+
+        # Count races with lap data
+        races_count_query = (
+            select(func.count(func.distinct(Lap.session_id)))
+            .where(Lap.session_id.in_(select(race_sessions.c.id)))
+            .where(Lap.compound.isnot(None))
+        )
+        races_result = await db.execute(races_count_query)
+        races_with_data = races_result.scalar() or 0
+
+        if races_with_data == 0:
+            return CircuitTyreStatsResponse(
+                circuit_id=circuit_row.id,
+                circuit_name=circuit_row.name,
+                races_with_data=0,
+                compounds=[],
+            )
+
+        # Compound usage: total laps and avg stint length
+        compound_query = (
+            select(
+                Lap.compound,
+                func.count().label("total_laps"),
+            )
+            .where(Lap.session_id.in_(select(race_sessions.c.id)))
+            .where(Lap.compound.isnot(None))
+            .where(Lap.lap_time_seconds.isnot(None))
+            .group_by(Lap.compound)
+            .order_by(func.count().desc())
+        )
+        compound_result = await db.execute(compound_query)
+        compound_rows = compound_result.all()
+
+        total_laps = sum(r.total_laps for r in compound_rows)
+
+        # Get avg stint length per compound
+        stint_query = (
+            select(
+                Lap.compound,
+                func.count().label("laps_in_stint"),
+            )
+            .where(Lap.session_id.in_(select(race_sessions.c.id)))
+            .where(Lap.compound.isnot(None))
+            .where(Lap.stint.isnot(None))
+            .group_by(Lap.session_id, Lap.driver_id, Lap.stint, Lap.compound)
+        )
+        stint_subq = stint_query.subquery()
+
+        avg_stint_query = select(
+            stint_subq.c.compound,
+            func.avg(stint_subq.c.laps_in_stint).label("avg_stint"),
+        ).group_by(stint_subq.c.compound)
+        avg_stint_result = await db.execute(avg_stint_query)
+        avg_stints = {r.compound: round(r.avg_stint, 1) for r in avg_stint_result.all()}
+
+        compounds = [
+            CompoundUsageEntry(
+                compound=r.compound,
+                total_laps=r.total_laps,
+                avg_stint_length=avg_stints.get(r.compound),
+                percentage=round(r.total_laps / total_laps * 100, 1)
+                if total_laps > 0
+                else 0,
+            )
+            for r in compound_rows
+        ]
+
+        return CircuitTyreStatsResponse(
+            circuit_id=circuit_row.id,
+            circuit_name=circuit_row.name,
+            races_with_data=races_with_data,
+            compounds=compounds,
         )
