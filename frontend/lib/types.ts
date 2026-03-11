@@ -476,3 +476,28 @@ export interface CircuitTyreStatsResponse {
   races_with_data: number;
   compounds: CompoundUsageEntry[];
 }
+
+// ─── Auth Types ────────────────────────────────────────────────────
+
+export interface UserProfile {
+  id: number;
+  email: string;
+  username: string;
+  display_name: string;
+  role: string;
+  email_verified: boolean;
+  avatar_url: string | null;
+  bio: string | null;
+  created_at: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  user: UserProfile;
+}
+
+export interface TokenRefreshResponse {
+  access_token: string;
+  token_type: string;
+}
