@@ -8,15 +8,13 @@ password reset.
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.auth import get_current_active_user
 
-limiter = Limiter(key_func=get_remote_address)
 from app.database import get_db
+from app.limiter import limiter
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.schemas.auth import (
