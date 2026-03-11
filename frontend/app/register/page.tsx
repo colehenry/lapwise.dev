@@ -12,7 +12,6 @@ export default function RegisterPage() {
 
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -29,7 +28,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register(email, username, displayName, password);
+      await register(email, username, password);
       router.push("/verify-email?registered=true");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
@@ -89,25 +88,6 @@ export default function RegisterPage() {
             <p className="text-xs text-text-muted mt-1">
               3-20 characters, lowercase letters, numbers, and underscores
             </p>
-          </div>
-
-          <div>
-            <label
-              htmlFor="displayName"
-              className="block text-sm text-text-secondary mb-1.5"
-            >
-              Display name
-            </label>
-            <input
-              id="displayName"
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              required
-              maxLength={50}
-              className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors"
-              placeholder="Your Name"
-            />
           </div>
 
           <div>

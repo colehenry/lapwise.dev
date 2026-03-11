@@ -61,7 +61,7 @@ def _cleanup():
 
 
 def _create_user(
-    email, username, display_name, password,
+    email, username, password,
     role="user", verified=True, active=True,
 ):
     """Create a user via sync connection, return dict with id."""
@@ -70,12 +70,12 @@ def _create_user(
     hashed = AuthService.hash_password(password)
     cur.execute(
         "INSERT INTO users "
-        "(email, username, display_name, hashed_password, "
+        "(email, username, hashed_password, "
         "role, email_verified, is_active) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s) "
-        "RETURNING id, email, username, display_name, role, "
+        "VALUES (%s, %s, %s, %s, %s, %s) "
+        "RETURNING id, email, username, role, "
         "email_verified, is_active, created_at",
-        (email, username, display_name, hashed,
+        (email, username, hashed,
          role, verified, active),
     )
     row = dict(cur.fetchone())
@@ -109,7 +109,6 @@ def verified_user():
     return _create_user(
         email="testuser@lapwise.dev",
         username="testuser",
-        display_name="Test User",
         password="TestPass1",
         role="user",
         verified=True,
@@ -122,7 +121,6 @@ def unverified_user():
     return _create_user(
         email="unverified@lapwise.dev",
         username="unverified",
-        display_name="Unverified User",
         password="TestPass1",
         role="user",
         verified=False,
@@ -135,7 +133,6 @@ def admin_user():
     return _create_user(
         email="admintest@lapwise.dev",
         username="admintest",
-        display_name="Admin",
         password="AdminPass1",
         role="admin",
         verified=True,

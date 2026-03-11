@@ -10,7 +10,6 @@ import { fetchWithAuth } from "@/lib/auth";
 
 interface PublicProfile {
   username: string;
-  display_name: string;
   role: string;
   avatar_url: string | null;
   bio: string | null;
@@ -51,8 +50,7 @@ export default function ProfilePage() {
     );
   }
 
-  const initial = (displayProfile.display_name ||
-    displayProfile.username)[0].toUpperCase();
+  const initial = displayProfile.username[0].toUpperCase();
   const memberSince = new Date(displayProfile.created_at).toLocaleDateString(
     "en-US",
     { month: "long", year: "numeric" },
@@ -66,9 +64,8 @@ export default function ProfilePage() {
         </div>
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold text-text-primary">
-            {displayProfile.display_name}
+            @{displayProfile.username}
           </h1>
-          <p className="text-text-muted text-sm">@{displayProfile.username}</p>
           {displayProfile.role !== "user" && (
             <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
               {displayProfile.role}

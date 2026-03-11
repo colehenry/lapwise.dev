@@ -19,7 +19,7 @@ async def test_register_success(client: AsyncClient):
         json={
             "email": "new@example.com",
             "username": "newuser",
-            "display_name": "New User",
+
             "password": "SecurePass1",
         },
     )
@@ -36,7 +36,7 @@ async def test_register_duplicate_email(
         json={
             "email": verified_user["email"],
             "username": "different",
-            "display_name": "Diff",
+
             "password": "SecurePass1",
         },
     )
@@ -52,7 +52,7 @@ async def test_register_duplicate_username(
         json={
             "email": "other@example.com",
             "username": verified_user["username"],
-            "display_name": "Other",
+
             "password": "SecurePass1",
         },
     )
@@ -66,7 +66,7 @@ async def test_register_weak_password(client: AsyncClient):
         json={
             "email": "weak@example.com",
             "username": "weakuser",
-            "display_name": "Weak",
+
             "password": "short",
         },
     )
@@ -80,7 +80,7 @@ async def test_register_reserved_username(client: AsyncClient):
         json={
             "email": "reserved@example.com",
             "username": "admin",
-            "display_name": "Admin",
+
             "password": "SecurePass1",
         },
     )
@@ -94,7 +94,7 @@ async def test_register_invalid_username(client: AsyncClient):
         json={
             "email": "bad@example.com",
             "username": "BAD USER!",
-            "display_name": "Bad",
+
             "password": "SecurePass1",
         },
     )

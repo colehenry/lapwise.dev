@@ -11,7 +11,6 @@ from app.schemas.tag import TagResponse
 class PostAuthor(BaseModel):
     id: int
     username: str
-    display_name: str
     avatar_url: str | None
     role: str
 

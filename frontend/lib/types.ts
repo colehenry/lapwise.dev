@@ -483,7 +483,6 @@ export interface UserProfile {
   id: number;
   email: string;
   username: string;
-  display_name: string;
   role: string;
   email_verified: boolean;
   avatar_url: string | null;

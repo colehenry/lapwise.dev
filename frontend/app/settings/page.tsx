@@ -11,7 +11,6 @@ export default function SettingsPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading, refreshUser, logout } = useAuth();
 
-  const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [profileMsg, setProfileMsg] = useState("");
   const [profileLoading, setProfileLoading] = useState(false);
@@ -30,7 +29,6 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (user) {
-      setDisplayName(user.display_name);
       setBio(user.bio || "");
     }
   }, [user]);
@@ -46,7 +44,7 @@ export default function SettingsPage() {
       const res = await fetchWithAuth(apiUrl("/auth/me"), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ display_name: displayName, bio }),
+        body: JSON.stringify({ bio }),
       });
       if (!res.ok) throw new Error("Failed to update profile");
       await refreshUser();
@@ -99,23 +97,6 @@ export default function SettingsPage() {
           Profile
         </h2>
         <form onSubmit={handleProfileSave} className="space-y-4">
-          <div>
-            <label
-              htmlFor="displayName"
-              className="block text-sm text-text-secondary mb-1.5"
-            >
-              Display name
-            </label>
-            <input
-              id="displayName"
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              maxLength={50}
-              required
-              className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors"
-            />
-          </div>
           <div>
             <label
               htmlFor="bio"

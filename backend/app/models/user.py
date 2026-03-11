@@ -24,7 +24,6 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     username = Column(String(20), unique=True, index=True, nullable=False)
-    display_name = Column(String(50), nullable=False)
     hashed_password = Column(String, nullable=True)
     role = Column(Enum(UserRole), default=UserRole.user, nullable=False)
     email_verified = Column(Boolean, default=False, nullable=False)

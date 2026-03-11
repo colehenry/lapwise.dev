@@ -59,7 +59,6 @@ def _user_profile(user: User) -> UserProfile:
         id=user.id,
         email=user.email,
         username=user.username,
-        display_name=user.display_name,
         role=user.role.value,
         email_verified=user.email_verified,
         avatar_url=user.avatar_url,
@@ -105,7 +104,6 @@ async def register(
         db,
         email=body.email,
         username=body.username,
-        display_name=body.display_name,
         password=body.password,
     )
 
@@ -356,7 +354,7 @@ async def update_me(
     user: User = Depends(get_current_active_user),
 ):
     # Only allow safe fields
-    allowed = {"display_name", "bio", "avatar_url"}
+    allowed = {"bio", "avatar_url"}
     filtered = {k: v for k, v in updates.items() if k in allowed}
     if not filtered:
         raise HTTPException(
