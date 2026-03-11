@@ -129,7 +129,7 @@ export default function Navigation() {
   };
 
   const handleScroll = useCallback(() => {
-    setScrolled(window.scrollY > 48);
+    setScrolled(window.scrollY >= 56);
   }, []);
 
   useEffect(() => {
@@ -184,10 +184,10 @@ export default function Navigation() {
     <>
       {/* ── Expanded state: full-width top bar ── */}
       <nav
-        className={`fixed top-0 left-0 right-0 z-[1200] backdrop-blur-xl border-b border-border-primary bg-bg-secondary/80 h-14 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+        className={`absolute top-0 left-0 right-0 z-[1200] backdrop-blur-xl border-b border-border-primary bg-bg-secondary/80 h-14 ${
           scrolled
-            ? "opacity-0 pointer-events-none -translate-y-2"
-            : "opacity-100 pointer-events-auto translate-y-0"
+            ? "pointer-events-none"
+            : "pointer-events-auto"
         }`}
       >
         <div className="h-full px-4 max-w-6xl mx-auto flex items-center">
@@ -337,10 +337,10 @@ export default function Navigation() {
         style={{
           left: "min(60px, max(12px, calc((100vw - (72rem + 40px)) / 4 - 34px)))",
         }}
-        className={`fixed top-3 z-[1200] hidden md:flex flex-col items-center gap-2.5 p-2.5 rounded-3xl bg-bg-secondary/90 backdrop-blur-xl border border-border-primary shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(160,32,240,0.06)] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+        className={`fixed top-3 z-[1200] hidden md:flex flex-col items-center gap-2.5 p-2.5 rounded-3xl bg-bg-secondary/90 backdrop-blur-xl border border-border-primary shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(160,32,240,0.06)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
           scrolled
-            ? "opacity-100 translate-x-0 scale-100"
-            : "opacity-0 -translate-x-4 scale-95 pointer-events-none"
+            ? "opacity-100 translate-x-0 scale-100 delay-300"
+            : "opacity-0 -translate-x-4 scale-95 pointer-events-none delay-0"
         }`}
       >
         {/* Logo */}
