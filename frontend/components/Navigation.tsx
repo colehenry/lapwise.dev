@@ -26,7 +26,7 @@ const navLinks: NavLink[] = [
     renderIcon: (active: boolean, scrolled: boolean) => (
       <svg
         className={`shrink-0 transition-all duration-500 ${
-          scrolled ? "w-[18px] h-[18px]" : "w-4 h-4"
+          scrolled ? "w-6 h-6" : "w-4 h-4"
         } ${active ? "text-purple-400" : "text-text-muted group-hover:text-text-primary"}`}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 512 512"
@@ -70,7 +70,7 @@ function NavIcon({
   active: boolean;
   scrolled: boolean;
 }) {
-  const sizeClass = scrolled ? "w-[18px] h-[18px]" : "w-4 h-4";
+  const sizeClass = scrolled ? "w-6 h-6" : "w-4 h-4";
   const colorClass = active
     ? "text-purple-400"
     : "text-text-muted group-hover:text-text-primary";
@@ -82,8 +82,8 @@ function NavIcon({
       <Image
         src={link.imageSrc}
         alt={link.label}
-        width={18}
-        height={18}
+        width={24}
+        height={24}
         className={`shrink-0 object-contain transition-all duration-500 ${sizeClass} ${
           active ? "opacity-90" : "opacity-40 group-hover:opacity-70"
         }`}
@@ -255,7 +255,12 @@ export default function Navigation() {
                 Log in
               </Link>
             ) : (
-              <div ref={userMenuRef} className="relative">
+              <div
+                ref={userMenuRef}
+                className="relative"
+                onMouseEnter={() => setUserMenuOpen(true)}
+                onMouseLeave={() => setUserMenuOpen(false)}
+              >
                 <button
                   type="button"
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -316,7 +321,7 @@ export default function Navigation() {
 
       {/* ── Collapsed state: vertical floating dock on the left ── */}
       <div
-        className={`fixed left-3 top-3 z-[1200] hidden md:flex flex-col items-center gap-1 p-1.5 rounded-2xl bg-bg-secondary/90 backdrop-blur-xl border border-border-primary shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(160,32,240,0.06)] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+        className={`fixed left-3 top-3 z-[1200] hidden md:flex flex-col items-center gap-2.5 p-2.5 rounded-3xl bg-bg-secondary/90 backdrop-blur-xl border border-border-primary shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(160,32,240,0.06)] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
           scrolled
             ? "opacity-100 translate-x-0 scale-100"
             : "opacity-0 -translate-x-4 scale-95 pointer-events-none"
@@ -325,15 +330,18 @@ export default function Navigation() {
         {/* Logo */}
         <Link
           href="/"
-          className="w-8 h-8 flex items-center justify-center rounded-xl hover:scale-[1.1] active:scale-95 transition-all duration-200"
+          className="group relative w-12 h-12 flex items-center justify-center rounded-2xl hover:scale-[1.1] active:scale-95 transition-all duration-200"
           title="Lapwise home"
         >
-          <div className="relative h-6 w-6 rounded-md overflow-hidden ring-1 ring-purple-500/30">
+          <div className="relative h-9 w-9 rounded-lg overflow-hidden ring-1 ring-purple-500/30">
             <Image src="/favicon.ico" alt="Lapwise home" width={24} height={24} className="object-cover" />
           </div>
+          <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
+            Home
+          </span>
         </Link>
 
-        <div className="w-5 h-px bg-border-primary my-0.5" />
+        <div className="w-8 h-px bg-border-primary my-0.5" />
 
         {/* Nav icons */}
         {navLinks.map((link) => {
@@ -343,45 +351,59 @@ export default function Navigation() {
               key={link.href}
               href={link.href}
               title={link.label}
-              className={`group w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.12] active:scale-95 ${
+              className={`group relative w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.12] active:scale-95 ${
                 active
                   ? "bg-purple-500/15 border border-purple-500/25 shadow-[inset_0_0_10px_rgba(160,32,240,0.1)]"
                   : "border border-transparent hover:bg-bg-elevated/80 hover:border-border-secondary/60"
               }`}
             >
               <NavIcon link={link} active={active} scrolled={true} />
+              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
+                {link.label}
+              </span>
             </Link>
           );
         })}
 
-        <div className="w-5 h-px bg-border-primary my-0.5" />
+        <div className="w-8 h-px bg-border-primary my-0.5" />
 
         {/* User avatar */}
         {isLoading ? (
-          <div className="w-7 h-7 rounded-full bg-bg-elevated animate-pulse" />
+          <div className="w-10 h-10 rounded-full bg-bg-elevated animate-pulse" />
         ) : !isAuthenticated || !user ? (
           <Link
             href="/login"
             title="Log in"
-            className="w-8 h-8 flex items-center justify-center rounded-xl text-text-muted hover:text-purple-300 hover:bg-purple-500/10 transition-all duration-200 hover:scale-[1.12] active:scale-95"
+            className="group relative w-12 h-12 flex items-center justify-center rounded-2xl text-text-muted hover:text-purple-300 hover:bg-purple-500/10 transition-all duration-200 hover:scale-[1.12] active:scale-95"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <title>Log in</title>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
             </svg>
+            <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
+              Log in
+            </span>
           </Link>
         ) : (
-          <div ref={scrolled ? userMenuRef : undefined} className="relative">
+          <div
+            ref={scrolled ? userMenuRef : undefined}
+            className="relative"
+            onMouseEnter={() => setUserMenuOpen(true)}
+            onMouseLeave={() => setUserMenuOpen(false)}
+          >
             <button
               type="button"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               title={`@${user.username}`}
-              className="group w-8 h-8 flex items-center justify-center"
+              className="group relative w-12 h-12 flex items-center justify-center"
               aria-label="User menu"
             >
-              <div className="w-7 h-7 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-[10px] font-bold text-purple-300 group-hover:border-purple-500/60 group-hover:scale-[1.12] active:scale-95 transition-all duration-200">
+              <div className="w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-sm font-bold text-purple-300 group-hover:border-purple-500/60 group-hover:scale-[1.12] active:scale-95 transition-all duration-200">
                 {initial}
               </div>
+              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
+                Profile
+              </span>
             </button>
 
             {userMenuOpen && scrolled && (

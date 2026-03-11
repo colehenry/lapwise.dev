@@ -126,7 +126,7 @@ export default function ResultsPage() {
   if (isLoading) {
     return (
       <main className="min-h-screen bg-bg-secondary p-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
             Loading results...
           </p>
@@ -138,62 +138,68 @@ export default function ResultsPage() {
   return (
     <main className="min-h-screen bg-bg-secondary">
       {/* ── Sticky Header ── */}
-      <div className="sticky top-0 z-40 bg-bg-secondary border-b border-border-primary h-16 flex items-center px-6">
-        <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {/* Season Selector — terminal input style */}
-            <select
-              value={season}
-              onChange={(e) => handleYearChange(e.target.value)}
-              className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xl font-bold px-3 py-1.5 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer"
-            >
-              {availableYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-            <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
-              Season Results
-            </span>
-          </div>
+      <div className="sticky top-0 z-40">
+        <div className="px-4">
+          <div className="mx-auto w-full max-w-full md:max-w-[calc(72rem+40px)]">
+            <div className="bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)]">
+              <div className="h-16 px-6 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  {/* Season Selector — terminal input style */}
+                  <select
+                    value={season}
+                    onChange={(e) => handleYearChange(e.target.value)}
+                    className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xl font-bold px-3 py-1.5 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer"
+                  >
+                    {availableYears.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
+                    Season Results
+                  </span>
+                </div>
 
-          <div className="flex items-center gap-4">
-            {/* Session Type Toggle */}
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setSessionType("race")}
-                className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
-                  sessionType === "race"
-                    ? "bg-purple-500/20 border border-purple-500 text-purple-300"
-                    : "border border-transparent text-text-muted hover:text-text-secondary"
-                }`}
-              >
-                Race
-              </button>
-              <button
-                type="button"
-                onClick={() => setSessionType("qualifying")}
-                className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
-                  sessionType === "qualifying"
-                    ? "bg-purple-500/20 border border-purple-500 text-purple-300"
-                    : "border border-transparent text-text-muted hover:text-text-secondary"
-                }`}
-              >
-                Qualifying
-              </button>
+                <div className="flex items-center gap-4">
+                  {/* Session Type Toggle */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setSessionType("race")}
+                      className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
+                        sessionType === "race"
+                          ? "bg-purple-500/20 border border-purple-500 text-purple-300"
+                          : "border border-transparent text-text-muted hover:text-text-secondary"
+                      }`}
+                    >
+                      Race
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSessionType("qualifying")}
+                      className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
+                        sessionType === "qualifying"
+                          ? "bg-purple-500/20 border border-purple-500 text-purple-300"
+                          : "border border-transparent text-text-muted hover:text-text-secondary"
+                      }`}
+                    >
+                      Qualifying
+                    </button>
+                  </div>
+
+                  <JumpToRace
+                    currentSeason={season}
+                    availableSeasons={availableYears}
+                  />
+                </div>
+              </div>
             </div>
-
-            <JumpToRace
-              currentSeason={season}
-              availableSeasons={availableYears}
-            />
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-6">
         {/* ── Championship Standings ── */}
         <div className="mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
