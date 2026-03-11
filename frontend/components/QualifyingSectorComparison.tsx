@@ -1,14 +1,16 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { apiHeaders, apiUrl } from "@/lib/api";
+import { apiHeaders, apiUrl, isValidHeadshotUrl } from "@/lib/api";
 
 // Types
 type SectorData = {
   driver_code: string;
   full_name: string;
   team_color: string | null;
+  headshot_url: string | null;
   best_sector1: number | null;
   best_sector2: number | null;
   best_sector3: number | null;
@@ -225,10 +227,25 @@ export default function QualifyingSectorComparison({
           onClick={() => setShowDropdown(!showDropdown)}
           className="flex items-center gap-2 px-3 py-2 bg-bg-tertiary border border-border-primary rounded-sm hover:border-purple-500 transition-colors min-w-[180px]"
         >
-          <div
-            className="w-2 h-6 rounded-sm shrink-0"
-            style={{ backgroundColor: teamColor }}
-          />
+          {isValidHeadshotUrl(selectedDriver?.headshot_url) ? (
+            <Image
+              src={selectedDriver.headshot_url}
+              alt={selectedDriver.full_name}
+              width={32}
+              height={32}
+              className="rounded-sm object-cover border border-border-secondary shrink-0"
+            />
+          ) : (
+            <div
+              className="w-8 h-8 rounded-sm shrink-0 flex items-center justify-center text-[10px] font-mono font-bold text-text-muted"
+              style={{
+                backgroundColor: `${teamColor}33`,
+                borderLeft: `2px solid ${teamColor}`,
+              }}
+            >
+              {selectedDriver?.driver_code?.slice(0, 3) ?? "?"}
+            </div>
+          )}
           <div className="flex flex-col items-start">
             <span className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
               {label}
@@ -275,10 +292,20 @@ export default function QualifyingSectorComparison({
                         : ""
                     }`}
                   >
-                    <div
-                      className="w-2 h-4 rounded-sm shrink-0"
-                      style={{ backgroundColor: color }}
-                    />
+                    {isValidHeadshotUrl(driver.headshot_url) ? (
+                      <Image
+                        src={driver.headshot_url}
+                        alt={driver.full_name}
+                        width={24}
+                        height={24}
+                        className="rounded-sm object-cover shrink-0"
+                      />
+                    ) : (
+                      <div
+                        className="w-6 h-6 rounded-sm shrink-0"
+                        style={{ backgroundColor: color }}
+                      />
+                    )}
                     <span className="text-sm text-text-primary">
                       {driver.full_name}
                     </span>
@@ -466,9 +493,20 @@ export default function QualifyingSectorComparison({
           <div className="bg-bg-secondary/50 border border-border-primary rounded-sm p-4 space-y-3">
             {/* Driver 1 Bar */}
             <div className="flex items-center gap-3">
-              <span className="text-xs font-mono font-bold text-text-secondary w-12 text-right shrink-0">
-                {driver1.driver_code}
-              </span>
+              <div className="flex items-center gap-2 w-20 shrink-0 justify-end">
+                {isValidHeadshotUrl(driver1.headshot_url) && (
+                  <Image
+                    src={driver1.headshot_url}
+                    alt={driver1.full_name}
+                    width={24}
+                    height={24}
+                    className="rounded-sm object-cover hidden sm:block"
+                  />
+                )}
+                <span className="text-xs font-mono font-bold text-text-secondary">
+                  {driver1.driver_code}
+                </span>
+              </div>
               <div className="flex-1 flex h-8 gap-px rounded-sm overflow-hidden">
                 {driver1Sectors.map((sector, i) => (
                   <div
@@ -511,9 +549,20 @@ export default function QualifyingSectorComparison({
 
             {/* Driver 2 Bar */}
             <div className="flex items-center gap-3">
-              <span className="text-xs font-mono font-bold text-text-secondary w-12 text-right shrink-0">
-                {driver2.driver_code}
-              </span>
+              <div className="flex items-center gap-2 w-20 shrink-0 justify-end">
+                {isValidHeadshotUrl(driver2.headshot_url) && (
+                  <Image
+                    src={driver2.headshot_url}
+                    alt={driver2.full_name}
+                    width={24}
+                    height={24}
+                    className="rounded-sm object-cover hidden sm:block"
+                  />
+                )}
+                <span className="text-xs font-mono font-bold text-text-secondary">
+                  {driver2.driver_code}
+                </span>
+              </div>
               <div className="flex-1 flex h-8 gap-px rounded-sm overflow-hidden">
                 {driver2Sectors.map((sector, i) => (
                   <div
@@ -560,9 +609,31 @@ export default function QualifyingSectorComparison({
             {/* Header */}
             <div className="grid grid-cols-5 gap-0 text-[10px] font-mono uppercase tracking-widest text-text-muted border-b border-border-primary">
               <div className="px-3 py-2">Sector</div>
-              <div className="px-3 py-2 text-right">{driver1.driver_code}</div>
+              <div className="px-3 py-2 flex items-center gap-1.5 justify-end">
+                {isValidHeadshotUrl(driver1.headshot_url) && (
+                  <Image
+                    src={driver1.headshot_url}
+                    alt={driver1.full_name}
+                    width={18}
+                    height={18}
+                    className="rounded-sm object-cover hidden sm:block"
+                  />
+                )}
+                {driver1.driver_code}
+              </div>
               <div className="px-3 py-2 text-center">Delta</div>
-              <div className="px-3 py-2 text-left">{driver2.driver_code}</div>
+              <div className="px-3 py-2 flex items-center gap-1.5">
+                {isValidHeadshotUrl(driver2.headshot_url) && (
+                  <Image
+                    src={driver2.headshot_url}
+                    alt={driver2.full_name}
+                    width={18}
+                    height={18}
+                    className="rounded-sm object-cover hidden sm:block"
+                  />
+                )}
+                {driver2.driver_code}
+              </div>
               <div className="px-3 py-2 text-right">Faster</div>
             </div>
 
