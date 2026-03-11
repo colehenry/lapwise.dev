@@ -1,19 +1,19 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { GridPattern } from "@/components/Patterns";
-import Badge from "@/components/ui/Badge";
-import Button from "@/components/ui/Button";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useLayoutEffect, useState } from "react";
+import { useAuth } from "@/components/AuthProvider";
 import CommentEditor from "@/components/discussions/CommentEditor";
 import CommentThread from "@/components/discussions/CommentThread";
 import MarkdownContent from "@/components/discussions/MarkdownContent";
 import TagPill from "@/components/discussions/TagPill";
 import UserAvatar from "@/components/discussions/UserAvatar";
 import VoteButton from "@/components/discussions/VoteButton";
-import { useAuth } from "@/components/AuthProvider";
+import { GridPattern } from "@/components/Patterns";
+import Badge from "@/components/ui/Badge";
+import Button from "@/components/ui/Button";
 import {
   createComment,
   deletePost,
@@ -67,6 +67,15 @@ export default function DiscussionDetailPage() {
     enabled: Number.isFinite(postId),
   });
 
+  const [voteCount, setVoteCount] = useState(0);
+  const [userVoted, setUserVoted] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!post) return;
+    setVoteCount(post.vote_count);
+    setUserVoted(post.user_voted);
+  }, [post]);
+
   if (postLoading || !post) {
     return (
       <div className="min-h-screen bg-bg-secondary flex items-center justify-center text-text-muted font-mono text-xs uppercase tracking-widest">
@@ -81,14 +90,6 @@ export default function DiscussionDetailPage() {
   const label = typeLabels[post.post_type] ?? "Post";
   const variant = typeVariants[post.post_type] ?? "neutral";
   const isEdited = post.updated_at !== post.created_at;
-
-  const [voteCount, setVoteCount] = useState(post.vote_count);
-  const [userVoted, setUserVoted] = useState(post.user_voted);
-
-  useEffect(() => {
-    setVoteCount(post.vote_count);
-    setUserVoted(post.user_voted);
-  }, [post.vote_count, post.user_voted]);
 
   const handleNewComment = async (body: string) => {
     await createComment({ postId, body });
@@ -238,13 +239,28 @@ export default function DiscussionDetailPage() {
               )}
               {isAdmin && (
                 <>
-                  <Button type="button" variant="secondary" size="sm" onClick={handleTogglePin}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleTogglePin}
+                  >
                     {post.is_pinned ? "Unpin" : "Pin"}
                   </Button>
-                  <Button type="button" variant="secondary" size="sm" onClick={handleToggleLock}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleToggleLock}
+                  >
                     {post.is_locked ? "Unlock" : "Lock"}
                   </Button>
-                  <Button type="button" variant="danger" size="sm" onClick={handleDelete}>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    size="sm"
+                    onClick={handleDelete}
+                  >
                     Delete
                   </Button>
                 </>

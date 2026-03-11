@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { GridPattern } from "@/components/Patterns";
-import PostEditor from "@/components/discussions/PostEditor";
+import { useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import PostEditor from "@/components/discussions/PostEditor";
+import { GridPattern } from "@/components/Patterns";
 import { createPost } from "@/lib/discussions";
 
 export default function NewDiscussionPage() {

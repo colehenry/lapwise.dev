@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { GridPattern } from "@/components/Patterns";
-import PostEditor from "@/components/discussions/PostEditor";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import PostEditor from "@/components/discussions/PostEditor";
+import { GridPattern } from "@/components/Patterns";
 import { fetchPost, updatePost } from "@/lib/discussions";
 import type { PostResponse } from "@/lib/types";
 

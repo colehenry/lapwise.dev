@@ -1,19 +1,20 @@
 "use client";
 
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { GridPattern } from "@/components/Patterns";
+import { useAuth } from "@/components/AuthProvider";
 import PostCard from "@/components/discussions/PostCard";
 import SortSelector from "@/components/discussions/SortSelector";
 import TagFilter from "@/components/discussions/TagFilter";
 import TagPill from "@/components/discussions/TagPill";
+import { GridPattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
-import { useAuth } from "@/components/AuthProvider";
 import { fetchPosts, fetchTags } from "@/lib/discussions";
 import type { PostListItem } from "@/lib/types";
 
 const PAGE_SIZE = 20;
+const SKELETON_KEYS = ["a", "b", "c", "d"];
 
 export default function DiscussionsPage() {
   const { isAuthenticated } = useAuth();
@@ -28,24 +29,19 @@ export default function DiscussionsPage() {
 
   const sortParam = sort === "hot" ? "top" : sort;
 
-  const {
-    data,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["discussion-posts", sort, activeTag],
-    queryFn: ({ pageParam }) =>
-      fetchPosts({
-        cursor: pageParam as string | null,
-        limit: PAGE_SIZE,
-        sort: sortParam,
-        tag: activeTag,
-      }),
-    initialPageParam: null,
-    getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
-  });
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery({
+      queryKey: ["discussion-posts", sort, activeTag],
+      queryFn: ({ pageParam }) =>
+        fetchPosts({
+          cursor: pageParam as string | null,
+          limit: PAGE_SIZE,
+          sort: sortParam,
+          tag: activeTag,
+        }),
+      initialPageParam: null,
+      getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
+    });
 
   const allPosts = useMemo(() => {
     if (!data?.pages) return [] as PostListItem[];
@@ -168,9 +164,9 @@ export default function DiscussionsPage() {
 
             <div className="space-y-4">
               {isLoading &&
-                Array.from({ length: 4 }, (_, index) => (
+                SKELETON_KEYS.map((key) => (
                   <Skeleton
-                    key={`post-skeleton-${index}`}
+                    key={`post-skeleton-${key}`}
                     variant="rectangular"
                     height="140px"
                     className="rounded-sm"
@@ -244,9 +240,7 @@ export default function DiscussionsPage() {
                   />
                 ))}
                 {tags.length === 0 && (
-                  <span className="text-sm text-text-muted">
-                    No tags yet.
-                  </span>
+                  <span className="text-sm text-text-muted">No tags yet.</span>
                 )}
               </div>
             </div>

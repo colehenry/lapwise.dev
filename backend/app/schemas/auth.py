@@ -151,3 +151,26 @@ class UserPublicProfile(BaseModel):
 
 class ResendVerificationRequest(BaseModel):
     email: EmailStr
+
+
+class UsernameAvailabilityResponse(BaseModel):
+    available: bool
+    reason: Optional[str] = None
+
+
+class SessionInfo(BaseModel):
+    id: int
+    device_info: Optional[str] = None
+    ip_address: Optional[str] = None
+    created_at: datetime
+    expires_at: datetime
+    revoked_at: Optional[datetime] = None
+    is_current: bool = False
+
+
+class SessionsResponse(BaseModel):
+    sessions: list[SessionInfo]
+
+
+class DeleteAccountRequest(BaseModel):
+    password: str

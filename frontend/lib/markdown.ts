@@ -5,7 +5,7 @@ function escapeHtml(value: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
+    .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
 
@@ -101,10 +101,13 @@ export function markdownToHtml(raw: string): string {
 
   let html = output.join("\n");
 
-  html = html.replace(new RegExp(`${CODE_BLOCK_TOKEN}(\\d+)@@`, "g"), (_, idx) => {
-    const code = codeBlocks[Number(idx)] ?? "";
-    return `<pre><code>${code}</code></pre>`;
-  });
+  html = html.replace(
+    new RegExp(`${CODE_BLOCK_TOKEN}(\\d+)@@`, "g"),
+    (_, idx) => {
+      const code = codeBlocks[Number(idx)] ?? "";
+      return `<pre><code>${code}</code></pre>`;
+    },
+  );
 
   return html;
 }

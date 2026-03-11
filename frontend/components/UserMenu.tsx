@@ -53,6 +53,12 @@ export default function UserMenu() {
   }
 
   const initial = user.username[0].toUpperCase();
+  const roleLabel =
+    user.role === "admin"
+      ? "Admin"
+      : user.role === "moderator"
+        ? "Moderator"
+        : null;
 
   return (
     <div ref={menuRef} className="relative">
@@ -65,6 +71,11 @@ export default function UserMenu() {
         <div className="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-sm font-bold text-purple-300 group-hover:border-purple-500/60 transition-colors">
           {initial}
         </div>
+        {roleLabel && (
+          <span className="text-[10px] uppercase tracking-widest text-purple-300 border border-purple-500/40 px-1.5 py-0.5 rounded">
+            {roleLabel}
+          </span>
+        )}
       </button>
 
       {open && (
@@ -73,6 +84,11 @@ export default function UserMenu() {
             <p className="text-sm font-medium text-text-primary truncate">
               @{user.username}
             </p>
+            {roleLabel && (
+              <p className="text-[10px] uppercase tracking-widest text-purple-300 mt-1">
+                {roleLabel}
+              </p>
+            )}
           </div>
 
           <div className="py-1">

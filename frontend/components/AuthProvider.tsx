@@ -16,6 +16,7 @@ import {
   setAccessToken,
   silentRefresh,
 } from "@/lib/auth";
+import { clearLoggedInCookie, setLoggedInCookie } from "@/lib/cookies";
 import type { UserProfile } from "@/lib/types";
 
 interface AuthContextValue {
@@ -48,13 +49,21 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     silentRefresh()
       .then(async (token) => {
-        if (token) {
-          const res = await fetchWithAuth(apiUrl("/auth/me"));
-          if (res.ok) {
-            const profile = await res.json();
-            setUser(profile);
-          }
+        if (!token) {
+          clearLoggedInCookie();
+          return;
         }
+        const res = await fetchWithAuth(apiUrl("/auth/me"));
+        if (res.ok) {
+          const profile = await res.json();
+          setUser(profile);
+          setLoggedInCookie();
+          return;
+        }
+        clearLoggedInCookie();
+      })
+      .catch(() => {
+        clearLoggedInCookie();
       })
       .finally(() => setIsLoading(false));
   }, []);
@@ -75,6 +84,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     const data = await res.json();
     setAccessToken(data.access_token);
     setUser(data.user);
+    setLoggedInCookie();
   }, []);
 
   const register = useCallback(
@@ -103,6 +113,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     }).catch(() => {});
     clearAccessToken();
     setUser(null);
+    clearLoggedInCookie();
   }, []);
 
   const refreshUser = useCallback(async () => {

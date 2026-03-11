@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { useAuth } from "@/components/AuthProvider";
 import CommentEditor from "@/components/discussions/CommentEditor";
 import MarkdownContent from "@/components/discussions/MarkdownContent";
 import UserAvatar from "@/components/discussions/UserAvatar";
 import VoteButton from "@/components/discussions/VoteButton";
-import { useAuth } from "@/components/AuthProvider";
 import { createComment } from "@/lib/discussions";
 import { formatRelativeTime } from "@/lib/time";
 import type { CommentResponse } from "@/lib/types";
@@ -118,7 +118,9 @@ function CommentNode({
                 type="button"
                 onClick={() => {
                   if (!isAuthenticated && !isLoading) {
-                    router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+                    router.push(
+                      `/login?redirect=${encodeURIComponent(pathname)}`,
+                    );
                     return;
                   }
                   setShowReply((prev) => !prev);
