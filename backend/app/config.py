@@ -22,6 +22,15 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     lapwise_api_key: str
 
+    # Auth / JWT
+    access_token_expire_minutes: int = 15
+    refresh_token_expire_days: int = 30
+
+    # Email (Resend)
+    resend_api_key: str = ""
+    email_from: str = "noreply@lapwise.dev"
+    frontend_url: str = "http://localhost:3000"
+
     # FastF1
     fastf1_cache_dir: str = "./cache"
 

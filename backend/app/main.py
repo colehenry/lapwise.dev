@@ -1,7 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
+
+limiter = Limiter(key_func=get_remote_address)
 
 # Create the FastAPI application
 app = FastAPI(
@@ -11,6 +17,17 @@ app = FastAPI(
     debug=settings.debug,
     redirect_slashes=False,
 )
+
+app.state.limiter = limiter
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Too many requests. Please try again later."},
+    )
+
 
 # Configure CORS (Cross-Origin Resource Sharing)
 app.add_middleware(
@@ -47,8 +64,9 @@ async def health_check():
     }
 
 
-from app.routers import season_results, drivers, constructors, events, circuits
+from app.routers import season_results, drivers, constructors, events, circuits, auth
 
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(season_results.router, prefix="/api/results", tags=["results"])
 app.include_router(drivers.router, prefix="/api/drivers", tags=["drivers"])
 app.include_router(
