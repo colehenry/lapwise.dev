@@ -1,5 +1,6 @@
 "use client";
 
+import type { InfiniteData } from "@tanstack/react-query";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -11,7 +12,7 @@ import TagPill from "@/components/discussions/TagPill";
 import { GridPattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import { fetchPosts, fetchTags } from "@/lib/discussions";
-import type { PostListItem } from "@/lib/types";
+import type { PostListItem, PostListResponse } from "@/lib/types";
 
 const PAGE_SIZE = 20;
 const SKELETON_KEYS = ["a", "b", "c", "d"];
@@ -30,17 +31,23 @@ export default function DiscussionsPage() {
   const sortParam = sort === "hot" ? "top" : sort;
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteQuery({
+    useInfiniteQuery<
+      PostListResponse,
+      Error,
+      InfiniteData<PostListResponse, string | null>,
+      (string | null)[],
+      string | null
+    >({
       queryKey: ["discussion-posts", sort, activeTag],
       queryFn: ({ pageParam }) =>
         fetchPosts({
-          cursor: pageParam as string | null,
+          cursor: pageParam,
           limit: PAGE_SIZE,
           sort: sortParam,
           tag: activeTag,
         }),
       initialPageParam: null,
-      getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
+      getNextPageParam: (lastPage) => lastPage.next_cursor ?? null,
     });
 
   const allPosts = useMemo(() => {
