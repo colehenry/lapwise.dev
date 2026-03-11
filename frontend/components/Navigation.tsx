@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GridPattern } from "@/components/Patterns";
 import { useSidebar } from "@/components/SidebarContext";
+import UserMenu from "@/components/UserMenu";
 
 const navLinks = [
   {
@@ -224,7 +225,9 @@ export default function Navigation() {
                 ) : (
                   <svg
                     className={`w-4 h-4 shrink-0 ${
-                      isActive(link.href) ? "text-purple-400" : "text-text-muted"
+                      isActive(link.href)
+                        ? "text-purple-400"
+                        : "text-text-muted"
                     }`}
                     fill="none"
                     stroke="currentColor"
@@ -254,10 +257,11 @@ export default function Navigation() {
             ))}
           </nav>
 
-          {/* Footer */}
+          {/* User + Footer */}
           <div
-            className={`py-4 border-t border-border-primary ${isOpen ? "px-5" : "flex justify-center"}`}
+            className={`py-4 border-t border-border-primary space-y-3 ${isOpen ? "px-5" : "flex flex-col items-center gap-3"}`}
           >
+            {isOpen && <UserMenu />}
             <a
               href="https://github.com/colehenry/lapwise.dev"
               target="_blank"
