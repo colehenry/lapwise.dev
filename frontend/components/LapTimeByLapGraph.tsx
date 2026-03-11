@@ -6,7 +6,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
-  ReferenceArea,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -61,11 +61,18 @@ const COMPOUND_COLORS: Record<string, string> = {
   WET: "#3b82f6",
 };
 
-// Track status band colors
-const STATUS_BAND_COLORS: Record<string, { fill: string; label: string }> = {
-  "4": { fill: "rgba(234, 179, 8, 0.12)", label: "SC" },
-  "5": { fill: "rgba(239, 68, 68, 0.15)", label: "Red Flag" },
-  "6": { fill: "rgba(249, 115, 22, 0.10)", label: "VSC" },
+// Track-wide event display config (keyed by OutlierReason)
+const TRACK_EVENT_COLORS: Record<string, { color: string; label: string }> = {
+  safety_car: { color: "#eab308", label: "SC" },
+  red_flag: { color: "#ef4444", label: "RED FLAG" },
+  vsc: { color: "#f97316", label: "VSC" },
+};
+
+// Visual event range derived from actual outlier data
+type VisualEventRange = {
+  startLap: number;
+  endLap: number;
+  reasons: string[]; // OutlierReason values for track-wide events
 };
 
 // Outlier reason display config (used in tooltip badges)
@@ -215,6 +222,107 @@ const OutlierDot = (props: DotProps) => {
     >
       {config.label}
     </text>
+  );
+};
+
+// Derive visual event ranges from the actual outlier maps (not session timestamps).
+// Groups contiguous laps flagged with track-wide reasons across all selected drivers.
+function computeVisualEventRanges(
+  outlierMaps: Map<string, Map<number, OutlierReason>>,
+  selectedKeys: string[],
+): VisualEventRange[] {
+  // Collect all laps with track-wide reasons across selected drivers
+  const trackEventLaps = new Map<number, Set<OutlierReason>>();
+  const trackReasons: Set<OutlierReason> = new Set([
+    "safety_car",
+    "vsc",
+    "red_flag",
+  ]);
+
+  for (const key of selectedKeys) {
+    const driverOutliers = outlierMaps.get(key);
+    if (!driverOutliers) continue;
+    for (const [lap, reason] of driverOutliers) {
+      if (trackReasons.has(reason)) {
+        if (!trackEventLaps.has(lap)) trackEventLaps.set(lap, new Set());
+        trackEventLaps.get(lap)?.add(reason);
+      }
+    }
+  }
+
+  if (trackEventLaps.size === 0) return [];
+
+  // Sort and group into contiguous runs
+  const sortedLaps = [...trackEventLaps.keys()].sort((a, b) => a - b);
+  const ranges: VisualEventRange[] = [];
+
+  let i = 0;
+  while (i < sortedLaps.length) {
+    const start = sortedLaps[i];
+    let end = start;
+    const reasons = new Set(trackEventLaps.get(start) ?? []);
+
+    while (
+      i + 1 < sortedLaps.length &&
+      sortedLaps[i + 1] - sortedLaps[i] <= 1
+    ) {
+      i++;
+      end = sortedLaps[i];
+      for (const r of trackEventLaps.get(end) ?? []) reasons.add(r);
+    }
+
+    ranges.push({ startLap: start, endLap: end, reasons: [...reasons] });
+    i++;
+  }
+
+  return ranges;
+}
+
+// Custom SVG pill label rendered at the bottom of the chart between event lines
+interface EventPillLabelProps {
+  viewBox?: { x: number; y: number; height: number };
+  reasons: { label: string; color: string }[];
+}
+
+const EventPillLabel = ({ viewBox, reasons }: EventPillLabelProps) => {
+  if (!viewBox || reasons.length === 0) return null;
+  const { x, y, height } = viewBox;
+  const bottomY = y + height - 6;
+
+  // Stack pills vertically if multiple reasons
+  return (
+    <g>
+      {reasons.map((r, i) => {
+        const pillW = r.label.length * 5.5 + 10;
+        const pillH = 13;
+        const pillY = bottomY - i * (pillH + 3);
+        return (
+          <g key={r.label}>
+            <rect
+              x={x - pillW / 2}
+              y={pillY - pillH + 2}
+              width={pillW}
+              height={pillH}
+              rx={3}
+              ry={3}
+              fill={`${r.color}25`}
+              stroke={r.color}
+              strokeWidth={0.75}
+            />
+            <text
+              x={x}
+              y={pillY - 2}
+              textAnchor="middle"
+              fill={r.color}
+              fontSize={8}
+              fontWeight="bold"
+            >
+              {r.label}
+            </text>
+          </g>
+        );
+      })}
+    </g>
   );
 };
 
@@ -683,6 +791,12 @@ export default function LapTimeByLapGraph({
     return maps;
   }, [data, statusBands]);
 
+  // Derive visual event ranges from actual outlier data (not session timestamps)
+  const visualEventRanges = useMemo(() => {
+    if (outlierMaps.size === 0) return [];
+    return computeVisualEventRanges(outlierMaps, selectedDrivers);
+  }, [outlierMaps, selectedDrivers]);
+
   // Normalize pit lap times: subtract pit duration from lap time
   const getNormalizedLapTime = (lap: LapData): number | null => {
     if (lap.lap_time_seconds == null) return null;
@@ -947,10 +1061,12 @@ export default function LapTimeByLapGraph({
           // Omit from main line — null gap breaks it via connectNulls={false}
           dataPoint[`_outlier_reason_${key}`] = reason as unknown as number;
 
-          // Place reason label at midpoint between surrounding clean laps
-          const markerY = getMarkerY(key, lap.lap_number);
-          if (markerY != null) {
-            dataPoint[`_outlier_${key}`] = markerY;
+          // Only place reason label on the middle lap of each contiguous run
+          if (labelLaps.get(key)?.has(lap.lap_number)) {
+            const markerY = getMarkerY(key, lap.lap_number);
+            if (markerY != null) {
+              dataPoint[`_outlier_${key}`] = markerY;
+            }
           }
         } else {
           dataPoint[key] = displayTime;
@@ -1288,33 +1404,49 @@ export default function LapTimeByLapGraph({
                     ))}
                 </defs>
 
-                {/* Track Status Bands (SC/VSC/Red Flag) */}
-                {statusBands.map((band, bandIdx) => {
-                  const bandStyle = STATUS_BAND_COLORS[band.status];
-                  if (!bandStyle) return null;
-                  return (
-                    <ReferenceArea
-                      key={`band-${bandIdx}-${band.status}-${band.startLap}-${band.endLap}`}
-                      x1={band.startLap}
-                      x2={band.endLap}
-                      fill={bandStyle.fill}
-                      fillOpacity={1}
+                {/* Track event boundary lines + pill labels */}
+                {visualEventRanges.flatMap((range) => {
+                  // Use the color of the first (or most severe) reason
+                  const primaryReason = range.reasons.includes("red_flag")
+                    ? "red_flag"
+                    : range.reasons.includes("safety_car")
+                      ? "safety_car"
+                      : range.reasons[0];
+                  const primaryStyle = TRACK_EVENT_COLORS[primaryReason];
+                  if (!primaryStyle) return [];
+
+                  const midLap = (range.startLap + range.endLap) / 2;
+                  const pills = range.reasons
+                    .map((r) => TRACK_EVENT_COLORS[r])
+                    .filter(Boolean);
+
+                  return [
+                    // Start boundary line
+                    <ReferenceLine
+                      key={`evt-s-${range.startLap}`}
+                      x={range.startLap}
+                      stroke={primaryStyle.color}
+                      strokeDasharray="4 3"
+                      strokeOpacity={0.5}
+                    />,
+                    // End boundary line (skip if same lap)
+                    range.startLap !== range.endLap ? (
+                      <ReferenceLine
+                        key={`evt-e-${range.endLap}`}
+                        x={range.endLap}
+                        stroke={primaryStyle.color}
+                        strokeDasharray="4 3"
+                        strokeOpacity={0.5}
+                      />
+                    ) : null,
+                    // Invisible center line that carries the pill label
+                    <ReferenceLine
+                      key={`evt-pill-${range.startLap}-${range.endLap}`}
+                      x={midLap}
                       stroke="none"
-                      label={{
-                        value: bandStyle.label,
-                        position: "insideTopLeft",
-                        fill:
-                          band.status === "4"
-                            ? "#eab308"
-                            : band.status === "5"
-                              ? "#ef4444"
-                              : "#f97316",
-                        fontSize: 10,
-                        fontWeight: "bold",
-                        opacity: 0.7,
-                      }}
-                    />
-                  );
+                      label={<EventPillLabel reasons={pills} />}
+                    />,
+                  ];
                 })}
 
                 <CartesianGrid

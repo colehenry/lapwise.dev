@@ -95,7 +95,7 @@ export default function ResultsPage() {
   };
 
   const handleRoundClick = (round: number, roundSessionType: string) => {
-    const modeParam = sessionType === "qualifying" ? "?mode=qualifying" : "";
+    const modeParam = sessionType === "qualifying" ? "?tab=qualifying" : "";
     if (
       roundSessionType === "sprint_race" ||
       roundSessionType === "sprint_qualifying"

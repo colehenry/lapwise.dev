@@ -3,15 +3,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import JumpToRace from "@/components/JumpToRace";
 import LapTimeByLapGraph from "@/components/LapTimeByLapGraph";
 import { TrianglePattern } from "@/components/Patterns";
-import PitStrategyTimeline from "@/components/PitStrategyTimeline";
 import QualifyingSectorComparison from "@/components/QualifyingSectorComparison";
 import SessionDetail from "@/components/SessionDetail";
 import SpeedTrapChart from "@/components/SpeedTrapChart";
 import TyreDegradationChart from "@/components/TyreDegradationChart";
 import WeatherChart from "@/components/WeatherChart";
-import { apiHeaders, apiUrl } from "@/lib/api";
+import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import type { SessionResultsResponse } from "@/lib/types";
 
 type TabType =
@@ -96,6 +96,12 @@ export default function RoundDetailPage() {
     queryKey: ["round-sprint-qualifying", season, round],
     queryFn: () => fetchSession(season, round, "sprint-qualifying"),
     enabled,
+  });
+
+  const { data: availableYears = [] } = useQuery<number[]>({
+    queryKey: ["seasons"],
+    queryFn: fetchSeasons,
+    staleTime: 1000 * 60 * 60,
   });
 
   const loading = raceLoading;
@@ -199,6 +205,12 @@ export default function RoundDetailPage() {
                 </span>
               </div>
             </div>
+            <JumpToRace
+              currentSeason={season}
+              availableSeasons={availableYears}
+              label="Jump to Different Wknd"
+              excludeRound={roundNum}
+            />
           </div>
 
           {/* Tab Bar */}
@@ -236,34 +248,42 @@ export default function RoundDetailPage() {
       <div className="max-w-7xl mx-auto">
         {/* Race / Qualifying / Sprint tabs — show SessionDetail */}
         {isResultsTab && (
-          <SessionDetail
-            data={getSessionDetailData()}
-            qualifyingData={getQualifyingDataForTab()}
-            season={season}
-            isSprint={isSprint}
-            sessionType={sessionTypeForDetail}
-            onSessionTypeChange={undefined}
-            onBack={() => router.push(`/results/${season}`)}
-            hideHeader={true}
-          />
+          <>
+            <SessionDetail
+              data={getSessionDetailData()}
+              qualifyingData={getQualifyingDataForTab()}
+              season={season}
+              isSprint={isSprint}
+              sessionType={sessionTypeForDetail}
+              onSessionTypeChange={undefined}
+              onBack={() => router.push(`/results/${season}`)}
+              hideHeader={true}
+            />
+            {(activeTab === "qualifying" ||
+              activeTab === "sprint-qualifying") && (
+              <div className="p-6">
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="qualifying-tab-sector-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      Sector Comparison
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <QualifyingSectorComparison
+                      season={seasonNum}
+                      round={roundNum}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Strategy Tab */}
         {activeTab === "strategy" && (
           <div className="p-6 space-y-6">
-            {/* Pit Strategy Timeline */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                <TrianglePattern id="pit-strategy-triangles" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Pit Strategy
-                </span>
-              </div>
-              <div className="p-6">
-                <PitStrategyTimeline season={seasonNum} round={roundNum} />
-              </div>
-            </div>
-
             {/* Tyre Degradation */}
             <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
               <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
