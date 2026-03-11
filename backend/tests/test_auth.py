@@ -101,6 +101,55 @@ async def test_register_invalid_username(client: AsyncClient):
     assert resp.status_code == 422
 
 
+# ─── Username Availability ──────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_username_available_valid(client: AsyncClient):
+    resp = await client.get(
+        "/auth/username-available", params={"username": "freshuser"}
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["available"] is True
+
+
+@pytest.mark.asyncio
+async def test_username_available_taken(
+    client: AsyncClient, verified_user,
+):
+    resp = await client.get(
+        "/auth/username-available",
+        params={"username": verified_user["username"]},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["available"] is False
+    assert data["reason"] == "taken"
+
+
+@pytest.mark.asyncio
+async def test_username_available_reserved(client: AsyncClient):
+    resp = await client.get(
+        "/auth/username-available", params={"username": "admin"}
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["available"] is False
+    assert data["reason"] == "reserved"
+
+
+@pytest.mark.asyncio
+async def test_username_available_invalid(client: AsyncClient):
+    resp = await client.get(
+        "/auth/username-available", params={"username": "BAD USER!"}
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["available"] is False
+    assert data["reason"] == "invalid"
+
+
 # ─── Login ──────────────────────────────────────────────────────────
 
 
@@ -223,6 +272,40 @@ async def test_logout_all(
     assert resp.status_code == 200
 
 
+@pytest.mark.asyncio
+async def test_sessions_list_and_revoke_current(
+    client: AsyncClient, verified_user,
+):
+    login = await client.post(
+        "/auth/login",
+        json={
+            "identifier": verified_user["email"],
+            "password": "TestPass1",
+        },
+    )
+    assert login.status_code == 200
+    access_token = login.json()["access_token"]
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    sessions = await client.get("/auth/sessions", headers=headers)
+    assert sessions.status_code == 200
+    data = sessions.json()
+    assert isinstance(data.get("sessions"), list)
+    assert len(data["sessions"]) >= 1
+    current = next(
+        (s for s in data["sessions"] if s.get("is_current")), None
+    )
+    assert current is not None
+
+    revoke = await client.delete(
+        f"/auth/sessions/{current['id']}", headers=headers
+    )
+    assert revoke.status_code == 200
+
+    refresh = await client.post("/auth/refresh")
+    assert refresh.status_code == 401
+
+
 # ─── Email Verification ────────────────────────────────────────────
 
 
@@ -317,3 +400,38 @@ async def test_change_password_success(
         },
     )
     assert resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_delete_account_soft_delete(
+    client: AsyncClient, verified_user,
+):
+    login = await client.post(
+        "/auth/login",
+        json={
+            "identifier": verified_user["email"],
+            "password": "TestPass1",
+        },
+    )
+    assert login.status_code == 200
+    access_token = login.json()["access_token"]
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    resp = await client.post(
+        "/auth/delete-account",
+        headers=headers,
+        json={"password": "TestPass1"},
+    )
+    assert resp.status_code == 200
+
+    me = await client.get("/auth/me", headers=headers)
+    assert me.status_code == 403
+
+    relog = await client.post(
+        "/auth/login",
+        json={
+            "identifier": verified_user["email"],
+            "password": "TestPass1",
+        },
+    )
+    assert relog.status_code == 403

@@ -1,13 +1,13 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import Button from "@/components/ui/Button";
+import { useAuth } from "@/components/AuthProvider";
 import MarkdownContent from "@/components/discussions/MarkdownContent";
 import TagPill from "@/components/discussions/TagPill";
-import { useAuth } from "@/components/AuthProvider";
+import Button from "@/components/ui/Button";
 import { fetchTags } from "@/lib/discussions";
 import type { DiscussionTag } from "@/lib/types";
-import { useQuery } from "@tanstack/react-query";
 
 interface PostEditorProps {
   initial?: {
@@ -51,9 +51,7 @@ export default function PostEditor({
 
   const [title, setTitle] = useState(initial?.title ?? "");
   const [body, setBody] = useState(initial?.body ?? "");
-  const [postType, setPostType] = useState(
-    initial?.post_type ?? "discussion",
-  );
+  const [postType, setPostType] = useState(initial?.post_type ?? "discussion");
   const [selectedTags, setSelectedTags] = useState<number[]>(
     initial?.tag_ids ?? [],
   );
@@ -182,9 +180,13 @@ export default function PostEditor({
         </div>
 
         <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-text-muted">
-          <span>{title.length}/{TITLE_LIMIT} title</span>
+          <span>
+            {title.length}/{TITLE_LIMIT} title
+          </span>
           <span>•</span>
-          <span>{body.length}/{BODY_LIMIT} body</span>
+          <span>
+            {body.length}/{BODY_LIMIT} body
+          </span>
         </div>
       </div>
 
@@ -244,9 +246,7 @@ export default function PostEditor({
             {body.trim() ? (
               <MarkdownContent content={body} />
             ) : (
-              <p className="text-sm text-text-muted">
-                Nothing to preview yet.
-              </p>
+              <p className="text-sm text-text-muted">Nothing to preview yet.</p>
             )}
           </div>
         )}
@@ -257,9 +257,7 @@ export default function PostEditor({
           Tags
         </div>
         {tags.length === 0 ? (
-          <div className="text-sm text-text-muted">
-            No tags available yet.
-          </div>
+          <div className="text-sm text-text-muted">No tags available yet.</div>
         ) : (
           <div className="space-y-4">
             {Object.entries(groupedTags).map(([category, group]) => (
@@ -294,7 +292,12 @@ export default function PostEditor({
           >
             Save draft
           </Button>
-          <Button type="submit" variant="primary" size="sm" isLoading={isSubmitting}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="sm"
+            isLoading={isSubmitting}
+          >
             {submitLabel}
           </Button>
         </div>

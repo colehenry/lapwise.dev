@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Button from "@/components/ui/Button";
 import MarkdownContent from "@/components/discussions/MarkdownContent";
+import Button from "@/components/ui/Button";
 
 interface CommentEditorProps {
   onSubmit: (body: string) => Promise<void>;
@@ -11,7 +11,6 @@ interface CommentEditorProps {
   submitLabel?: string;
   maxLength?: number;
   initialValue?: string;
-  autoFocus?: boolean;
 }
 
 export default function CommentEditor({
@@ -21,7 +20,6 @@ export default function CommentEditor({
   submitLabel = "Post comment",
   maxLength = 10000,
   initialValue = "",
-  autoFocus = false,
 }: CommentEditorProps) {
   const [body, setBody] = useState(initialValue);
   const [mode, setMode] = useState<"write" | "preview">("write");
@@ -82,7 +80,6 @@ export default function CommentEditor({
           onChange={(event) => setBody(event.target.value)}
           maxLength={maxLength}
           rows={4}
-          autoFocus={autoFocus}
           placeholder={placeholder}
           className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/40 transition-colors resize-none"
         />
@@ -107,7 +104,12 @@ export default function CommentEditor({
               Cancel
             </Button>
           )}
-          <Button type="submit" variant="primary" size="sm" isLoading={isSubmitting}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="sm"
+            isLoading={isSubmitting}
+          >
             {submitLabel}
           </Button>
         </div>

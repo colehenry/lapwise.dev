@@ -5,7 +5,7 @@
  * Refresh token is stored in an httpOnly cookie (managed by the backend).
  */
 
-import { apiUrl } from "@/lib/api";
+import { apiHeaders, apiUrl } from "@/lib/api";
 
 // In-memory token — NOT persisted to localStorage (security best practice)
 let accessToken: string | null = null;
@@ -65,7 +65,11 @@ export async function fetchWithAuth(
   url: string,
   options: RequestInit = {},
 ): Promise<Response> {
-  const headers = new Headers(options.headers);
+  const headers = new Headers(apiHeaders());
+  const providedHeaders = new Headers(options.headers);
+  for (const [key, value] of providedHeaders.entries()) {
+    headers.set(key, value);
+  }
 
   if (accessToken) {
     headers.set("Authorization", `Bearer ${accessToken}`);

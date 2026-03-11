@@ -63,6 +63,10 @@ class AuthService:
         return hashlib.sha256(token.encode()).hexdigest()
 
     @staticmethod
+    def hash_refresh_token(token: str) -> str:
+        return AuthService._hash_token(token)
+
+    @staticmethod
     async def store_refresh_token(
         db: AsyncSession,
         user_id: int,

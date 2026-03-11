@@ -11,24 +11,33 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.auth import get_current_active_user
 
 limiter = Limiter(key_func=get_remote_address)
 from app.database import get_db
+from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.schemas.auth import (
     ChangePasswordRequest,
+    DeleteAccountRequest,
     ForgotPasswordRequest,
     LoginRequest,
     LoginResponse,
     RegisterRequest,
     ResendVerificationRequest,
     ResetPasswordRequest,
+    SessionInfo,
+    SessionsResponse,
     TokenRefreshResponse,
     UserProfile,
+    UsernameAvailabilityResponse,
+    RESERVED_USERNAMES,
+    USERNAME_REGEX,
 )
 from app.services.auth_service import AuthService
+from app.config import settings
 from app.services.email_service import EmailService
 from app.services.user_service import UserService
 
@@ -39,11 +48,12 @@ REFRESH_COOKIE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days in seconds
 
 
 def _set_refresh_cookie(response: Response, token: str) -> None:
+    secure_cookie = settings.frontend_url.startswith("https://")
     response.set_cookie(
         key=REFRESH_COOKIE,
         value=token,
         httponly=True,
-        secure=True,
+        secure=secure_cookie,
         samesite="lax",
         max_age=REFRESH_COOKIE_MAX_AGE,
         path="/auth",
@@ -75,6 +85,23 @@ def _client_ip(request: Request) -> str:
 
 
 # ─── Register ───────────────────────────────────────────────────────
+
+@router.get("/username-available", response_model=UsernameAvailabilityResponse)
+@limiter.limit("30/minute")
+async def username_available(
+    username: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    normalized = username.lower().strip()
+    if not normalized or not USERNAME_REGEX.match(normalized):
+        return UsernameAvailabilityResponse(available=False, reason="invalid")
+    if normalized in RESERVED_USERNAMES:
+        return UsernameAvailabilityResponse(available=False, reason="reserved")
+    existing = await UserService.get_user_by_username(db, normalized)
+    if existing:
+        return UsernameAvailabilityResponse(available=False, reason="taken")
+    return UsernameAvailabilityResponse(available=True)
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
@@ -269,6 +296,75 @@ async def logout_all(
     _clear_refresh_cookie(response)
     return {"message": "Logged out from all devices"}
 
+@router.get("/sessions", response_model=SessionsResponse)
+async def list_sessions(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_active_user),
+):
+    now = datetime.now(timezone.utc)
+    result = await db.execute(
+        select(RefreshToken)
+        .where(
+            RefreshToken.user_id == user.id,
+            RefreshToken.revoked_at.is_(None),
+            RefreshToken.expires_at > now,
+        )
+        .order_by(RefreshToken.created_at.desc())
+    )
+    sessions = result.scalars().all()
+    current_cookie = request.cookies.get(REFRESH_COOKIE)
+    current_hash = (
+        AuthService.hash_refresh_token(current_cookie) if current_cookie else None
+    )
+    return SessionsResponse(
+        sessions=[
+            SessionInfo(
+                id=session.id,
+                device_info=session.device_info,
+                ip_address=session.ip_address,
+                created_at=session.created_at,
+                expires_at=session.expires_at,
+                revoked_at=session.revoked_at,
+                is_current=current_hash == session.token_hash
+                if current_hash
+                else False,
+            )
+            for session in sessions
+        ]
+    )
+
+
+@router.delete("/sessions/{session_id}")
+async def revoke_session(
+    session_id: int,
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_active_user),
+):
+    result = await db.execute(
+        select(RefreshToken).where(
+            RefreshToken.id == session_id,
+            RefreshToken.user_id == user.id,
+            RefreshToken.revoked_at.is_(None),
+        )
+    )
+    session = result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found",
+        )
+    session.revoked_at = datetime.now(timezone.utc)
+    await db.commit()
+
+    current_cookie = request.cookies.get(REFRESH_COOKIE)
+    if current_cookie and AuthService.hash_refresh_token(current_cookie) == session.token_hash:
+        _clear_refresh_cookie(response)
+
+    return {"message": "Session revoked"}
+
 
 # ─── Email Verification ────────────────────────────────────────────
 
@@ -381,3 +477,27 @@ async def change_password(
         )
     EmailService.send_password_changed_notification(user.email, user.username)
     return {"message": "Password changed successfully"}
+
+
+@router.post("/delete-account")
+async def delete_account(
+    body: DeleteAccountRequest,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_active_user),
+):
+    if not user.hashed_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password required",
+        )
+    if not AuthService.verify_password(body.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password is incorrect",
+        )
+    user.is_active = False
+    await AuthService.revoke_all_user_tokens(db, user.id)
+    await db.commit()
+    _clear_refresh_cookie(response)
+    return {"message": "Account deleted"}

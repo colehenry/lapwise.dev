@@ -27,9 +27,10 @@ export default function UserAvatar({
   return (
     <div
       className={`rounded-sm border border-border-primary bg-bg-secondary overflow-hidden flex items-center justify-center font-mono text-text-muted ${sizeStyles[size]} ${className}`}
-      aria-label={username}
+      title={username}
     >
       {avatarUrl ? (
+        // biome-ignore lint/performance/noImgElement: avatar_url can be any host; next/image would require whitelisting.
         <img
           src={avatarUrl}
           alt={username}
@@ -38,7 +39,10 @@ export default function UserAvatar({
           referrerPolicy="no-referrer"
         />
       ) : (
-        <span>{getInitials(username)}</span>
+        <>
+          <span aria-hidden="true">{getInitials(username)}</span>
+          <span className="sr-only">{username}</span>
+        </>
       )}
     </div>
   );

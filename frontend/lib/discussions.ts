@@ -1,4 +1,4 @@
-import { apiUrl } from "@/lib/api";
+import { apiHeaders, apiUrl } from "@/lib/api";
 import { fetchWithAuth } from "@/lib/auth";
 import type {
   CommentListResponse,
@@ -8,7 +8,9 @@ import type {
   PostResponse,
 } from "@/lib/types";
 
-function buildQuery(params: Record<string, string | number | null | undefined>) {
+function buildQuery(
+  params: Record<string, string | number | null | undefined>,
+) {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value === null || value === undefined || value === "") continue;
@@ -29,7 +31,7 @@ async function parseJson<T>(res: Response): Promise<T> {
 }
 
 export async function fetchTags(): Promise<DiscussionTag[]> {
-  const res = await fetch(apiUrl("/api/tags"));
+  const res = await fetch(apiUrl("/api/tags"), { headers: apiHeaders() });
   const data = await parseJson<{ tags: DiscussionTag[] }>(res);
   return data.tags;
 }
@@ -100,7 +102,9 @@ export async function deletePost(postId: number): Promise<void> {
   }
 }
 
-export async function togglePin(postId: number): Promise<{ is_pinned: boolean }> {
+export async function togglePin(
+  postId: number,
+): Promise<{ is_pinned: boolean }> {
   const res = await fetchWithAuth(apiUrl(`/api/posts/${postId}/pin`), {
     method: "POST",
   });
@@ -136,14 +140,17 @@ export async function createComment(data: {
   body: string;
   parent_comment_id?: number | null;
 }): Promise<CommentResponse> {
-  const res = await fetchWithAuth(apiUrl(`/api/posts/${data.postId}/comments`), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      body: data.body,
-      parent_comment_id: data.parent_comment_id ?? null,
-    }),
-  });
+  const res = await fetchWithAuth(
+    apiUrl(`/api/posts/${data.postId}/comments`),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        body: data.body,
+        parent_comment_id: data.parent_comment_id ?? null,
+      }),
+    },
+  );
   return parseJson<CommentResponse>(res);
 }
 
@@ -159,8 +166,11 @@ export async function votePost(
 export async function voteComment(
   commentId: number,
 ): Promise<{ voted: boolean; new_count: number }> {
-  const res = await fetchWithAuth(apiUrl(`/api/posts/comments/${commentId}/vote`), {
-    method: "POST",
-  });
+  const res = await fetchWithAuth(
+    apiUrl(`/api/posts/comments/${commentId}/vote`),
+    {
+      method: "POST",
+    },
+  );
   return parseJson<{ voted: boolean; new_count: number }>(res);
 }

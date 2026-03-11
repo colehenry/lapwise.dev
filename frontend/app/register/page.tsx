@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import Button from "@/components/ui/Button";
+import { apiUrl } from "@/lib/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -16,6 +17,61 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [usernameStatus, setUsernameStatus] = useState<
+    "idle" | "checking" | "available" | "taken" | "invalid"
+  >("idle");
+  const [usernameMessage, setUsernameMessage] = useState("");
+
+  useEffect(() => {
+    const normalized = username.toLowerCase().trim();
+    if (!normalized) {
+      setUsernameStatus("idle");
+      setUsernameMessage("");
+      return;
+    }
+    if (!/^[a-z0-9_]{3,20}$/.test(normalized)) {
+      setUsernameStatus("invalid");
+      setUsernameMessage(
+        "3-20 characters, lowercase letters, numbers, and underscores",
+      );
+      return;
+    }
+    const timeout = setTimeout(() => {
+      setUsernameStatus("checking");
+      fetch(
+        apiUrl(
+          `/auth/username-available?username=${encodeURIComponent(normalized)}`,
+        ),
+      )
+        .then((res) => res.json())
+        .then((data: { available: boolean; reason?: string }) => {
+          if (data.available) {
+            setUsernameStatus("available");
+            setUsernameMessage("Username is available");
+            return;
+          }
+          if (data.reason === "reserved") {
+            setUsernameStatus("invalid");
+            setUsernameMessage("That username is reserved");
+            return;
+          }
+          if (data.reason === "invalid") {
+            setUsernameStatus("invalid");
+            setUsernameMessage(
+              "3-20 characters, lowercase letters, numbers, and underscores",
+            );
+            return;
+          }
+          setUsernameStatus("taken");
+          setUsernameMessage("That username is already taken");
+        })
+        .catch(() => {
+          setUsernameStatus("idle");
+          setUsernameMessage("");
+        });
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [username]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,6 +79,10 @@ export default function RegisterPage() {
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
+      return;
+    }
+    if (usernameStatus === "taken" || usernameStatus === "invalid") {
+      setError("Please choose an available username");
       return;
     }
 
@@ -85,9 +145,27 @@ export default function RegisterPage() {
               className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors font-mono text-sm"
               placeholder="cool_racer"
             />
-            <p className="text-xs text-text-muted mt-1">
-              3-20 characters, lowercase letters, numbers, and underscores
-            </p>
+            {usernameStatus === "idle" && (
+              <p className="text-xs text-text-muted mt-1">
+                3-20 characters, lowercase letters, numbers, and underscores
+              </p>
+            )}
+            {usernameStatus === "checking" && (
+              <p className="text-xs text-text-muted mt-1">
+                Checking availability...
+              </p>
+            )}
+            {usernameStatus !== "checking" && usernameMessage && (
+              <p
+                className={`text-xs mt-1 ${
+                  usernameStatus === "available"
+                    ? "text-green-400"
+                    : "text-red-400"
+                }`}
+              >
+                {usernameMessage}
+              </p>
+            )}
           </div>
 
           <div>

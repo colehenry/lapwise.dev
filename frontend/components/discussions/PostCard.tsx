@@ -1,8 +1,8 @@
 import Link from "next/link";
-import Badge from "@/components/ui/Badge";
 import TagPill from "@/components/discussions/TagPill";
 import UserAvatar from "@/components/discussions/UserAvatar";
 import VoteButton from "@/components/discussions/VoteButton";
+import Badge from "@/components/ui/Badge";
 import { formatRelativeTime } from "@/lib/time";
 import type { PostListItem } from "@/lib/types";
 
