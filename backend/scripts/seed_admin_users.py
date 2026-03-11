@@ -19,12 +19,10 @@ ADMIN_USERS = [
     {
         "email": "admin@lapwise.dev",
         "username": "admin",
-        "display_name": "Admin",
     },
     {
         "email": "cole@lapwise.dev",
         "username": "colehenry",
-        "display_name": "Cole Henry",
     },
 ]
 
@@ -52,7 +50,6 @@ async def seed():
             user = User(
                 email=user_data["email"],
                 username=user_data["username"],
-                display_name=user_data["display_name"],
                 hashed_password=AuthService.hash_password(password),
                 role=UserRole.admin,
                 email_verified=True,

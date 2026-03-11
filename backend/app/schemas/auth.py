@@ -33,7 +33,6 @@ USERNAME_REGEX = re.compile(r"^[a-z0-9_]{3,20}$")
 class RegisterRequest(BaseModel):
     email: EmailStr
     username: str
-    display_name: str
     password: str
 
     @field_validator("username")
@@ -47,14 +46,6 @@ class RegisterRequest(BaseModel):
             )
         if v in RESERVED_USERNAMES:
             raise ValueError("This username is reserved")
-        return v
-
-    @field_validator("display_name")
-    @classmethod
-    def validate_display_name(cls, v: str) -> str:
-        v = v.strip()
-        if not 1 <= len(v) <= 50:
-            raise ValueError("Display name must be 1-50 characters")
         return v
 
     @field_validator("password")
@@ -82,7 +73,6 @@ class UserProfile(BaseModel):
     id: int
     email: str
     username: str
-    display_name: str
     role: str
     email_verified: bool
     avatar_url: Optional[str] = None
@@ -150,7 +140,6 @@ class ChangePasswordRequest(BaseModel):
 
 class UserPublicProfile(BaseModel):
     username: str
-    display_name: str
     role: str
     avatar_url: Optional[str] = None
     bio: Optional[str] = None

@@ -26,7 +26,6 @@ interface AuthContextValue {
   register: (
     email: string,
     username: string,
-    displayName: string,
     password: string,
   ) => Promise<void>;
   logout: () => Promise<void>;
@@ -79,19 +78,13 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(
-    async (
-      email: string,
-      username: string,
-      displayName: string,
-      password: string,
-    ) => {
+    async (email: string, username: string, password: string) => {
       const res = await fetch(apiUrl("/auth/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
           username,
-          display_name: displayName,
           password,
         }),
       });

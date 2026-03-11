@@ -23,14 +23,12 @@ class UserService:
         db: AsyncSession,
         email: str,
         username: str,
-        display_name: str,
         password: str,
     ) -> User:
         hashed = AuthService.hash_password(password)
         user = User(
             email=email.lower().strip(),
             username=username.lower().strip(),
-            display_name=display_name.strip(),
             hashed_password=hashed,
         )
         db.add(user)

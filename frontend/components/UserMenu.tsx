@@ -52,7 +52,7 @@ export default function UserMenu() {
     );
   }
 
-  const initial = (user.display_name || user.username)[0].toUpperCase();
+  const initial = user.username[0].toUpperCase();
 
   return (
     <div ref={menuRef} className="relative">
@@ -71,9 +71,8 @@ export default function UserMenu() {
         <div className="absolute bottom-full left-0 mb-2 w-48 bg-bg-secondary border border-border-primary rounded-lg shadow-xl overflow-hidden z-50">
           <div className="px-3 py-2.5 border-b border-border-primary">
             <p className="text-sm font-medium text-text-primary truncate">
-              {user.display_name}
+              @{user.username}
             </p>
-            <p className="text-xs text-text-muted truncate">@{user.username}</p>
           </div>
 
           <div className="py-1">
