@@ -141,7 +141,7 @@ export default function ResultsPage() {
       <div className="sticky top-0 z-40">
         <div className="px-4">
           <div className="mx-auto w-full max-w-full md:max-w-[calc(72rem+40px)]">
-            <div className="bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)]">
+            <div className="bg-bg-secondary/95 backdrop-blur-xl border-x border-b border-border-primary rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)]">
               <div className="h-16 px-6 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   {/* Season Selector — terminal input style */}
