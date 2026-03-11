@@ -5,7 +5,6 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import LapTimeByLapGraph from "@/components/LapTimeByLapGraph";
 import { TrianglePattern } from "@/components/Patterns";
-import PitStrategyTimeline from "@/components/PitStrategyTimeline";
 import QualifyingSectorComparison from "@/components/QualifyingSectorComparison";
 import SessionDetail from "@/components/SessionDetail";
 import SpeedTrapChart from "@/components/SpeedTrapChart";
@@ -272,19 +271,6 @@ export default function RoundDetailPage() {
         {/* Strategy Tab */}
         {activeTab === "strategy" && (
           <div className="p-6 space-y-6">
-            {/* Pit Strategy Timeline */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                <TrianglePattern id="pit-strategy-triangles" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Pit Strategy
-                </span>
-              </div>
-              <div className="p-6">
-                <PitStrategyTimeline season={seasonNum} round={roundNum} />
-              </div>
-            </div>
-
             {/* Tyre Degradation */}
             <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
               <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
