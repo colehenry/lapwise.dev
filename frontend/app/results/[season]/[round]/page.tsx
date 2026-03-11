@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import JumpToRace from "@/components/JumpToRace";
 import LapTimeByLapGraph from "@/components/LapTimeByLapGraph";
 import { TrianglePattern } from "@/components/Patterns";
 import QualifyingSectorComparison from "@/components/QualifyingSectorComparison";
@@ -10,7 +11,7 @@ import SessionDetail from "@/components/SessionDetail";
 import SpeedTrapChart from "@/components/SpeedTrapChart";
 import TyreDegradationChart from "@/components/TyreDegradationChart";
 import WeatherChart from "@/components/WeatherChart";
-import { apiHeaders, apiUrl } from "@/lib/api";
+import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import type { SessionResultsResponse } from "@/lib/types";
 
 type TabType =
@@ -95,6 +96,12 @@ export default function RoundDetailPage() {
     queryKey: ["round-sprint-qualifying", season, round],
     queryFn: () => fetchSession(season, round, "sprint-qualifying"),
     enabled,
+  });
+
+  const { data: availableYears = [] } = useQuery<number[]>({
+    queryKey: ["seasons"],
+    queryFn: fetchSeasons,
+    staleTime: 1000 * 60 * 60,
   });
 
   const loading = raceLoading;
@@ -198,6 +205,12 @@ export default function RoundDetailPage() {
                 </span>
               </div>
             </div>
+            <JumpToRace
+              currentSeason={season}
+              availableSeasons={availableYears}
+              label="Jump to Different Wknd"
+              excludeRound={roundNum}
+            />
           </div>
 
           {/* Tab Bar */}

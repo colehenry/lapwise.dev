@@ -14,11 +14,15 @@ type RoundOption = {
 type JumpToRaceProps = {
   currentSeason: string;
   availableSeasons: number[];
+  label?: string;
+  excludeRound?: number;
 };
 
 export default function JumpToRace({
   currentSeason,
   availableSeasons,
+  label = "Jump to Wknd",
+  excludeRound,
 }: JumpToRaceProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -109,7 +113,7 @@ export default function JumpToRace({
         onClick={() => setIsOpen(!isOpen)}
         className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center gap-2 uppercase tracking-widest"
       >
-        <span>Jump to Wknd</span>
+        <span>{label}</span>
         <svg
           className={`w-3 h-3 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
           fill="none"
@@ -199,7 +203,7 @@ export default function JumpToRace({
                 className="w-full px-3 py-2 bg-bg-primary border border-border-primary rounded-sm text-text-primary font-mono text-sm focus:outline-none focus:border-purple-500 transition-colors duration-150"
               >
                 <option value="">Select a round...</option>
-                {rounds.map((r) => {
+                {rounds.filter((r) => excludeRound == null || r.round !== excludeRound).map((r) => {
                   const key = `${r.round}-${r.session_type}`;
                   const isSprintRace = r.session_type === "sprint_race";
                   const isSprintQuali = r.session_type === "sprint_qualifying";

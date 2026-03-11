@@ -10,22 +10,39 @@ const navLinks = [
   {
     href: "/results",
     label: "Race Weekend Hub",
-    icon: "M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+    icon: "M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
   },
   {
     href: "/drivers",
     label: "Drivers",
-    icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
+    renderIcon: (active: boolean) => (
+      <svg
+        className={`w-4 h-4 shrink-0 ${active ? "text-purple-400" : "text-text-muted"}`}
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 512 512"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={28}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <title>Drivers</title>
+        <path d="M40 280 A200 200 0 0 1 440 280 L440 360 A60 60 0 0 1 360 420 L100 360 A60 60 0 0 1 40 300 Z" />
+        <path d="M260 230 L440 250 L440 400 L260 300 Z" />
+        <circle cx="130" cy="270" r="45" />
+      </svg>
+    ),
   },
   {
     href: "/constructors",
     label: "Constructors",
-    icon: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4",
+    icon: "M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z",
   },
   {
     href: "/circuits",
     label: "Circuits",
-    icon: "M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7",
+    imageSrc: "/track-maps/4.png",
   },
   {
     href: "/about",
@@ -186,23 +203,43 @@ export default function Navigation() {
                     : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated border border-transparent"
                 }`}
               >
-                <svg
-                  className={`w-4 h-4 shrink-0 ${
-                    isActive(link.href) ? "text-purple-400" : "text-text-muted"
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <title>{link.label}</title>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d={link.icon}
+                {"renderIcon" in link ? (
+                  // biome-ignore lint/style/noNonNullAssertion: guarded by "renderIcon" in link
+                  link.renderIcon!(isActive(link.href))
+                ) : "imageSrc" in link ? (
+                  <Image
+                    src={link.imageSrc as string}
+                    alt={link.label}
+                    width={16}
+                    height={16}
+                    className={`w-4 h-4 shrink-0 object-contain ${
+                      isActive(link.href) ? "opacity-90" : "opacity-40"
+                    }`}
+                    style={{
+                      filter: isActive(link.href)
+                        ? "drop-shadow(0 0 4px rgba(160, 32, 240, 0.6)) brightness(1.8) saturate(0.3) hue-rotate(220deg)"
+                        : "brightness(1.4) saturate(0) invert(0.7)",
+                    }}
                   />
-                </svg>
+                ) : (
+                  <svg
+                    className={`w-4 h-4 shrink-0 ${
+                      isActive(link.href) ? "text-purple-400" : "text-text-muted"
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <title>{link.label}</title>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d={link.icon}
+                    />
+                  </svg>
+                )}
                 {isOpen && (
                   <>
                     <span className="tracking-wide whitespace-nowrap">
