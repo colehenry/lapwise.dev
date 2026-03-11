@@ -12,6 +12,7 @@
   # Data Validation
   pydantic==2.5.0
   pydantic-settings==2.1.0
+  email-validator==2.1.0
 
   # F1 Data
   fastf1==3.6.1
@@ -25,6 +26,14 @@
   # Code Quality
   black==23.11.0
   flake8==6.1.0
+
+  # Auth
+  passlib[bcrypt]==1.7.4
+  bcrypt==4.0.1
+  python-jose[cryptography]==3.3.0
+  slowapi==0.1.9
+  resend==2.23.0
+  python-multipart==0.0.6
 
   # Environment Variables
   python-dotenv==1.0.0

@@ -7,6 +7,8 @@ It also ensures all models are loaded before Alembic tries to detect them.
 Usage:
     from app.models import Driver, Team, Circuit, Session, SessionResult
     from app.models import Lap, Weather, TrackStatus, RaceControlMessage
+    from app.models import User, RefreshToken, EmailVerificationToken
+    from app.models import PasswordResetToken, LoginHistory
 """
 
 from app.models.driver import Driver
@@ -18,6 +20,11 @@ from app.models.lap import Lap
 from app.models.weather import Weather
 from app.models.track_status import TrackStatus
 from app.models.race_control_message import RaceControlMessage
+from app.models.user import User, UserRole
+from app.models.refresh_token import RefreshToken
+from app.models.email_verification_token import EmailVerificationToken
+from app.models.password_reset_token import PasswordResetToken
+from app.models.login_history import LoginHistory
 
 # Export all models
 __all__ = [
@@ -30,4 +37,10 @@ __all__ = [
     "Weather",
     "TrackStatus",
     "RaceControlMessage",
+    "User",
+    "UserRole",
+    "RefreshToken",
+    "EmailVerificationToken",
+    "PasswordResetToken",
+    "LoginHistory",
 ]
