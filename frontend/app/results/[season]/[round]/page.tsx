@@ -236,16 +236,37 @@ export default function RoundDetailPage() {
       <div className="max-w-7xl mx-auto">
         {/* Race / Qualifying / Sprint tabs — show SessionDetail */}
         {isResultsTab && (
-          <SessionDetail
-            data={getSessionDetailData()}
-            qualifyingData={getQualifyingDataForTab()}
-            season={season}
-            isSprint={isSprint}
-            sessionType={sessionTypeForDetail}
-            onSessionTypeChange={undefined}
-            onBack={() => router.push(`/results/${season}`)}
-            hideHeader={true}
-          />
+          <>
+            <SessionDetail
+              data={getSessionDetailData()}
+              qualifyingData={getQualifyingDataForTab()}
+              season={season}
+              isSprint={isSprint}
+              sessionType={sessionTypeForDetail}
+              onSessionTypeChange={undefined}
+              onBack={() => router.push(`/results/${season}`)}
+              hideHeader={true}
+            />
+            {(activeTab === "qualifying" ||
+              activeTab === "sprint-qualifying") && (
+              <div className="p-6">
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="qualifying-tab-sector-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      Sector Comparison
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <QualifyingSectorComparison
+                      season={seasonNum}
+                      round={roundNum}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Strategy Tab */}

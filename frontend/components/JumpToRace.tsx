@@ -84,7 +84,7 @@ export default function JumpToRace({
 
     if (!selectedRoundData) return;
 
-    const modeParam = sessionType === "qualifying" ? "?mode=qualifying" : "";
+    const modeParam = sessionType === "qualifying" ? "?tab=qualifying" : "";
 
     if (
       selectedRoundData.session_type === "sprint_race" ||
