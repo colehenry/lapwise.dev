@@ -476,3 +476,87 @@ export interface CircuitTyreStatsResponse {
   races_with_data: number;
   compounds: CompoundUsageEntry[];
 }
+
+// ─── Auth Types ────────────────────────────────────────────────────
+
+export interface UserProfile {
+  id: number;
+  email: string;
+  username: string;
+  role: string;
+  email_verified: boolean;
+  avatar_url: string | null;
+  bio: string | null;
+  created_at: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  user: UserProfile;
+}
+
+export interface TokenRefreshResponse {
+  access_token: string;
+  token_type: string;
+}
+
+// ─── Discussion Types ──────────────────────────────────────────────
+
+export interface DiscussionTag {
+  id: number;
+  name: string;
+  slug: string;
+  color: string;
+  category: string | null;
+}
+
+export interface DiscussionAuthor {
+  id: number;
+  username: string;
+  avatar_url: string | null;
+  role: string;
+}
+
+export interface PostListItem {
+  id: number;
+  title: string;
+  body: string;
+  post_type: string;
+  is_pinned: boolean;
+  is_locked: boolean;
+  vote_count: number;
+  comment_count: number;
+  author: DiscussionAuthor;
+  tags: DiscussionTag[];
+  user_voted: boolean;
+  created_at: string;
+}
+
+export interface PostListResponse {
+  posts: PostListItem[];
+  next_cursor: string | null;
+}
+
+export interface PostResponse extends PostListItem {
+  body: string;
+  updated_at: string;
+}
+
+export interface CommentResponse {
+  id: number;
+  post_id: number;
+  parent_comment_id: number | null;
+  body: string;
+  vote_count: number;
+  author: DiscussionAuthor;
+  user_voted: boolean;
+  replies: CommentResponse[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommentListResponse {
+  comments: CommentResponse[];
+  next_cursor: string | null;
+}

@@ -1743,6 +1743,7 @@ class ResultsService:
                 Driver.jolpica_id,
                 Driver.full_name,
                 Team.team_color,
+                SessionResult.headshot_url,
                 func.min(Lap.sector1_time_seconds).label("best_sector1"),
                 func.min(Lap.sector2_time_seconds).label("best_sector2"),
                 func.min(Lap.sector3_time_seconds).label("best_sector3"),
@@ -1762,6 +1763,7 @@ class ResultsService:
                 Driver.jolpica_id,
                 Driver.full_name,
                 Team.team_color,
+                SessionResult.headshot_url,
             )
             .order_by(func.min(Lap.lap_time_seconds))
         )
@@ -1778,6 +1780,7 @@ class ResultsService:
                 driver_slug=_make_slug(row.jolpica_id, row.full_name),
                 full_name=row.full_name,
                 team_color=row.team_color,
+                headshot_url=row.headshot_url,
                 best_sector1=ResultsService.sanitize_float(row.best_sector1),
                 best_sector2=ResultsService.sanitize_float(row.best_sector2),
                 best_sector3=ResultsService.sanitize_float(row.best_sector3),

@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import AuthProvider from "@/components/AuthProvider";
 import Footer from "@/components/Footer";
 import Navigation from "@/components/Navigation";
 import QueryProvider from "@/components/QueryProvider";
@@ -29,9 +30,11 @@ function ShellContent({ children }: { children: ReactNode }) {
 export default function AppShell({ children }: { children: ReactNode }) {
   return (
     <QueryProvider>
-      <SidebarProvider>
-        <ShellContent>{children}</ShellContent>
-      </SidebarProvider>
+      <AuthProvider>
+        <SidebarProvider>
+          <ShellContent>{children}</ShellContent>
+        </SidebarProvider>
+      </AuthProvider>
     </QueryProvider>
   );
 }

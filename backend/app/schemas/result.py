@@ -452,6 +452,7 @@ class QualifyingSectorComparison(BaseModel):
     driver_slug: Optional[str] = None
     full_name: str
     team_color: Optional[str] = None
+    headshot_url: Optional[str] = None
     best_sector1: Optional[float] = None
     best_sector2: Optional[float] = None
     best_sector3: Optional[float] = None
