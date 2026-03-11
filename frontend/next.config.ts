@@ -12,7 +12,7 @@ const contentSecurityPolicy = [
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline'",
   `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"}`,
-  "connect-src 'self' https://api.lapwise.dev https://lapwise.dev http://localhost:3000 http://127.0.0.1:8000 ws://localhost:3000 ws://127.0.0.1:3000",
+  "connect-src 'self' https://api.lapwise.dev https://lapwise.dev http://localhost:3000 http://localhost:8000 http://127.0.0.1:8000 ws://localhost:3000 ws://127.0.0.1:3000",
 ].join("; ");
 
 const securityHeaders = [
