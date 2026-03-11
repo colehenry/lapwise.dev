@@ -85,12 +85,12 @@ function NavIcon({
         width={24}
         height={24}
         className={`shrink-0 object-contain transition-all duration-500 ${sizeClass} ${
-          active ? "opacity-90" : "opacity-40 group-hover:opacity-70"
-        }`}
+          active ? "opacity-95" : "opacity-70 group-hover:opacity-90"
+        } ${scrolled ? "scale-[1.15]" : "scale-[1.1]"}`}
         style={{
           filter: active
-            ? "drop-shadow(0 0 4px rgba(160, 32, 240, 0.6)) brightness(1.8) saturate(0.3) hue-rotate(220deg)"
-            : "brightness(1.4) saturate(0) invert(0.7)",
+            ? "drop-shadow(0 0 1.4px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 4px rgba(160, 32, 240, 0.6)) brightness(1.85) saturate(0.25) hue-rotate(220deg)"
+            : "drop-shadow(0 0 1.2px rgba(255, 255, 255, 0.6)) brightness(1.6) saturate(0) invert(0.8)",
         }}
       />
     );
@@ -333,8 +333,14 @@ export default function Navigation() {
           className="group relative w-12 h-12 flex items-center justify-center rounded-2xl hover:scale-[1.1] active:scale-95 transition-all duration-200"
           title="Lapwise home"
         >
-          <div className="relative h-9 w-9 rounded-lg overflow-hidden ring-1 ring-purple-500/30">
-            <Image src="/favicon.ico" alt="Lapwise home" width={24} height={24} className="object-cover" />
+          <div className="relative h-10 w-10 rounded-lg overflow-hidden ring-1 ring-purple-500/30">
+            <Image
+              src="/favicon.ico"
+              alt="Lapwise home"
+              width={40}
+              height={40}
+              className="object-cover w-full h-full"
+            />
           </div>
           <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
             Home
