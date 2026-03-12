@@ -67,6 +67,7 @@ export interface PodiumDriver {
   team_color: string | null;
   headshot_url: string | null;
   fastest_lap: boolean;
+  time_seconds: number | null;
 }
 
 export interface RoundSummary {
@@ -75,6 +76,8 @@ export interface RoundSummary {
   date: string;
   circuit_name: string;
   circuit_id: number;
+  circuit_location?: string | null;
+  circuit_country?: string | null;
   track_length_km: number | null;
   session_type: string;
   podium: PodiumDriver[];

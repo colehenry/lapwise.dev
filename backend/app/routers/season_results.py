@@ -86,6 +86,7 @@ async def get_latest_race(
             team_color=row.team_color,
             headshot_url=row.headshot_url,
             fastest_lap=row.fastest_lap,
+            time_seconds=row.time_seconds,
         )
         for row in rows
     ]
@@ -98,6 +99,8 @@ async def get_latest_race(
         date=first_row.date,
         circuit_name=first_row.circuit_name,
         circuit_id=first_row.circuit_id,
+        circuit_location=first_row.circuit_location,
+        circuit_country=first_row.circuit_country,
         session_type=first_row.session_type,
         podium=podium,
     )
