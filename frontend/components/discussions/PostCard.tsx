@@ -37,7 +37,7 @@ export default function PostCard({ post }: { post: PostListItem }) {
           {post.is_locked && <MonoLabel>Locked</MonoLabel>}
         </div>
 
-        <div className="flex-1 min-w-0">
+        <Link href={`/discussions/${post.id}`} className="flex-1 min-w-0 block">
           <div className="flex flex-wrap items-center gap-2 text-xs text-text-muted font-mono uppercase tracking-wider">
             {post.is_pinned && (
               <span className="inline-flex items-center gap-1 text-purple-300">
@@ -66,14 +66,12 @@ export default function PostCard({ post }: { post: PostListItem }) {
             <span>{formatRelativeTime(post.created_at)}</span>
           </div>
 
-          <Link href={`/discussions/${post.id}`} className="block mt-2">
-            <h3 className="text-lg font-semibold text-text-primary leading-snug">
-              {post.title}
-            </h3>
-            <p className="text-sm text-text-tertiary mt-2 leading-relaxed line-clamp-3">
-              {post.body}
-            </p>
-          </Link>
+          <h3 className="text-lg font-semibold text-text-primary leading-snug mt-2">
+            {post.title}
+          </h3>
+          <p className="text-sm text-text-tertiary mt-2 leading-relaxed line-clamp-3">
+            {post.body}
+          </p>
 
           {post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
@@ -104,7 +102,7 @@ export default function PostCard({ post }: { post: PostListItem }) {
               <span>{post.comment_count} comments</span>
             </div>
           </div>
-        </div>
+        </Link>
       </div>
     </div>
   );

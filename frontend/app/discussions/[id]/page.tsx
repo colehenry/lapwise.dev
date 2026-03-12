@@ -14,6 +14,7 @@ import VoteButton from "@/components/discussions/VoteButton";
 import { GridPattern } from "@/components/Patterns";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
   createComment,
   deletePost,
@@ -69,6 +70,7 @@ export default function DiscussionDetailPage() {
 
   const [voteCount, setVoteCount] = useState(0);
   const [userVoted, setUserVoted] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   useLayoutEffect(() => {
     if (!post) return;
@@ -113,8 +115,7 @@ export default function DiscussionDetailPage() {
   };
 
   const handleDelete = async () => {
-    const confirmed = window.confirm("Delete this post permanently?");
-    if (!confirmed) return;
+    setDeleteOpen(false);
     await deletePost(postId);
     router.push("/discussions");
   };
@@ -259,7 +260,7 @@ export default function DiscussionDetailPage() {
                     type="button"
                     variant="danger"
                     size="sm"
-                    onClick={handleDelete}
+                    onClick={() => setDeleteOpen(true)}
                   >
                     Delete
                   </Button>
@@ -328,6 +329,15 @@ export default function DiscussionDetailPage() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title="Delete post"
+        message="This will permanently delete the post and all its comments. This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteOpen(false)}
+      />
     </div>
   );
 }

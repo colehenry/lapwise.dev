@@ -3,7 +3,8 @@
 import type { InfiniteData } from "@tanstack/react-query";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import PostCard from "@/components/discussions/PostCard";
 import SortSelector from "@/components/discussions/SortSelector";
@@ -18,9 +19,52 @@ const PAGE_SIZE = 20;
 const SKELETON_KEYS = ["a", "b", "c", "d"];
 
 export default function DiscussionsPage() {
+  return (
+    <Suspense>
+      <DiscussionsFeed />
+    </Suspense>
+  );
+}
+
+function DiscussionsFeed() {
   const { isAuthenticated } = useAuth();
-  const [sort, setSort] = useState<"new" | "top">("new");
-  const [activeTag, setActiveTag] = useState<string | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const sort = (searchParams.get("sort") === "top" ? "top" : "new") as
+    | "new"
+    | "top";
+  const activeTag = searchParams.get("tag") || null;
+
+  const updateParams = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      for (const [key, value] of Object.entries(updates)) {
+        if (value === null) {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
+      }
+      const qs = params.toString();
+      router.replace(qs ? `?${qs}` : "/discussions", { scroll: false });
+    },
+    [router, searchParams],
+  );
+
+  const setSort = useCallback(
+    (value: "new" | "top") => {
+      updateParams({ sort: value === "new" ? null : value });
+    },
+    [updateParams],
+  );
+
+  const setActiveTag = useCallback(
+    (tag: string | null) => {
+      updateParams({ tag });
+    },
+    [updateParams],
+  );
 
   const { data: tags = [] } = useQuery({
     queryKey: ["discussion-tags"],
