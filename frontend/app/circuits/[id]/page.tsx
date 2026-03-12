@@ -15,6 +15,7 @@ import InteractiveTrackMap from "@/components/InteractiveTrackMap";
 import { TrianglePattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import TabBar from "@/components/ui/TabBar";
+import PageHeader from "@/components/PageHeader";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { CircuitInfo } from "@/lib/types";
 
@@ -111,46 +112,22 @@ export default function CircuitDetailPage() {
   return (
     <div className="min-h-screen bg-bg-secondary">
       {/* Sticky Header */}
-      <div className="sticky top-0 z-40 bg-bg-secondary border-b border-border-primary">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="h-16 flex items-center gap-4">
-            <Link
-              href="/circuits"
-              className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 flex items-center gap-2"
-            >
-              <span>&larr;</span>
-              <span className="hidden sm:inline">CIRCUITS</span>
-            </Link>
-            <div className="flex flex-col">
-              <span className="text-text-primary font-mono text-sm font-bold leading-none">
-                {circuit.name}
-              </span>
-              <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
-                {circuit.location}, {circuit.country}
-              </span>
-            </div>
+      <PageHeader
+        title={circuit.name}
+        subtitle={`${circuit.location}, ${circuit.country}`}
+        onBack={() => router.push("/circuits")}
+        backLabel="CIRCUITS"
+        bottomContent={
+          <div className="flex justify-center">
+            <TabBar tabs={TABS} activeTab={activeTab} onTabChange={switchTab} />
           </div>
-
-          <TabBar tabs={TABS} activeTab={activeTab} onTabChange={switchTab} />
-        </div>
-      </div>
+        }
+      />
 
       {/* Tab Content */}
       <div className="max-w-6xl mx-auto px-6 py-8">
         {activeTab === "overview" && (
           <div className="space-y-8">
-            {/* Heading */}
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
-                {circuit.name}
-              </h1>
-              <div className="flex items-center gap-3 text-xl text-text-tertiary">
-                <span className="flex items-center gap-1">
-                  {circuit.location}, {circuit.country}
-                </span>
-              </div>
-            </div>
-
             {/* Main grid: left column (map + recent race) / right column (stats + records + weather) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left column */}

@@ -10,7 +10,9 @@ import DriverSeasonHistoryGraph from "@/components/DriverSeasonHistoryGraph";
 import DriverStatisticsPanel from "@/components/DriverStatisticsPanel";
 import Skeleton from "@/components/ui/Skeleton";
 import TabBar from "@/components/ui/TabBar";
-import { apiHeaders, apiUrl } from "@/lib/api";
+import PageHeader from "@/components/PageHeader";
+import JumpToRace from "@/components/JumpToRace";
+import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
 import type { DriverProfile } from "@/lib/types";
 
@@ -122,138 +124,95 @@ export default function DriverProfilePage() {
   return (
     <div className="min-h-screen bg-bg-secondary">
       {/* Sticky Header */}
-      <div className="sticky top-0 z-40 bg-bg-secondary border-b border-border-primary">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="h-16 flex items-center gap-4">
-            <Link
-              href="/drivers"
-              className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 flex items-center gap-2"
-            >
-              <span>&larr;</span>
-              <span className="hidden sm:inline">DRIVERS</span>
-            </Link>
-            {data.headshot_url ? (
-              <Image
-                src={data.headshot_url}
-                alt={data.full_name}
-                width={36}
-                height={36}
-                className="w-9 h-9 rounded-full object-cover border-2"
-                style={{
-                  borderColor: data.current_team_color
-                    ? `#${data.current_team_color}`
-                    : "#888",
-                }}
-              />
-            ) : (
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-text-tertiary border-2 bg-bg-tertiary"
-                style={{
-                  borderColor: data.current_team_color
-                    ? `#${data.current_team_color}`
-                    : "#888",
-                }}
-              >
-                {data.driver_code}
-              </div>
-            )}
-            <div className="flex flex-col">
-              <span className="text-text-primary font-mono text-sm font-bold leading-none">
-                {data.driver_code}
-              </span>
-              <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
-                {data.full_name}
-              </span>
-            </div>
+      <PageHeader
+        title={data.full_name}
+        subtitle={`${data.country_code ? getCountryName(data.country_code) : ""}${data.driver_number ? ` • #${data.driver_number}` : ""}${data.current_team ? ` • ${data.current_team}` : ""}`}
+        onBack={() => router.push("/drivers")}
+        backLabel="DRIVERS"
+        bottomContent={
+          <div className="flex justify-center">
+            <TabBar tabs={TABS} activeTab={activeTab} onTabChange={switchTab} />
           </div>
-
-          <TabBar tabs={TABS} activeTab={activeTab} onTabChange={switchTab} />
-        </div>
-      </div>
+        }
+      />
 
       {/* Tab Content */}
       <div className="max-w-5xl mx-auto px-6 py-8">
         {activeTab === "overview" && (
           <div className="space-y-8">
-            {/* Full Header (only on overview) */}
-            <div className="flex items-center gap-6">
-              {data.headshot_url ? (
-                <Image
-                  src={data.headshot_url}
-                  alt={data.full_name}
-                  width={128}
-                  height={128}
-                  className="w-32 h-32 rounded-full object-cover border-4"
-                  style={{
-                    borderColor: data.current_team_color
-                      ? `#${data.current_team_color}`
-                      : "#888",
-                  }}
-                />
-              ) : (
-                <div
-                  className="w-32 h-32 rounded-full flex items-center justify-center text-4xl font-bold text-text-tertiary border-4 bg-bg-tertiary"
-                  style={{
-                    borderColor: data.current_team_color
-                      ? `#${data.current_team_color}`
-                      : "#888",
-                  }}
-                >
-                  {data.driver_code}
-                </div>
-              )}
-              <div>
-                <h1 className="text-5xl font-bold text-white mb-2">
-                  {data.full_name}
-                </h1>
-                <div className="flex items-center gap-4 text-text-tertiary text-lg">
-                  <span className="text-2xl font-mono">{data.driver_code}</span>
-                  {data.driver_number && (
-                    <>
-                      <span>•</span>
-                      <span>#{data.driver_number}</span>
-                    </>
-                  )}
-                  {data.current_team && (
-                    <>
-                      <span>•</span>
-                      <Link
-                        href={`/constructors/${data.current_team.replace(/\s+/g, "-")}`}
-                        className="hover:text-purple-300 transition-colors"
-                      >
-                        {data.current_team}
-                      </Link>
-                    </>
-                  )}
-                  {data.country_code && (
-                    <>
-                      <span>•</span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="text-xl">
-                          {getDriverFlagEmoji(data.country_code)}
+            {/* Header section - Centered */}
+            <div className="flex flex-col items-center gap-8">
+              {/* Driver Photo & Nationality */}
+              <div className="flex flex-col items-center gap-6 w-full">
+                {data.headshot_url ? (
+                  <div className="relative group flex-shrink-0">
+                    <div 
+                      className="absolute -inset-1 bg-gradient-to-b from-purple-500/20 to-transparent rounded-sm blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"
+                    />
+                    <div className="relative">
+                      <Image
+                        src={data.headshot_url}
+                        alt={data.full_name}
+                        width={240}
+                        height={240}
+                        className="w-56 h-56 rounded-sm object-cover border border-border-primary bg-bg-tertiary"
+                        style={{
+                          borderBottomColor: data.current_team_color
+                            ? `#${data.current_team_color}`
+                            : "transparent",
+                          borderBottomWidth: data.current_team_color ? "4px" : "1px",
+                        }}
+                      />
+                      <div className="absolute top-2 right-2 bg-bg-primary/80 backdrop-blur-sm border border-border-primary px-2 py-1 rounded-sm">
+                        <span className="text-xl font-mono font-bold text-white leading-none">
+                          {data.driver_code}
                         </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-56 h-56 rounded-sm flex items-center justify-center text-5xl font-bold text-text-tertiary border border-border-primary bg-bg-tertiary">
+                    {data.driver_code}
+                  </div>
+                )}
+
+                {/* Country Info */}
+                {data.country_code && (
+                  <div className="flex items-center gap-3 bg-bg-tertiary border border-border-primary px-6 py-3 rounded-sm w-fit">
+                    <span className="text-3xl">
+                      {getDriverFlagEmoji(data.country_code)}
+                    </span>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-text-muted uppercase font-bold tracking-widest leading-none mb-1">
+                        Nationality
+                      </span>
+                      <span className="text-lg font-bold text-white leading-none">
                         {getCountryName(data.country_code)}
                       </span>
-                    </>
-                  )}
-                </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 w-full">
+                {stats.map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="bg-bg-tertiary rounded-sm border border-border-primary p-4 flex flex-col items-center text-center"
+                  >
+                    <p className="text-text-muted text-[10px] uppercase font-bold tracking-wider mb-1">
+                      {stat.label}
+                    </p>
+                    <p className="text-white text-2xl font-bold font-mono">
+                      {stat.value}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {stats.map((stat) => (
-                <div
-                  key={stat.label}
-                  className="bg-bg-tertiary rounded-sm border border-border-primary p-6"
-                >
-                  <p className="text-text-muted text-sm mb-2">{stat.label}</p>
-                  <p className="text-white text-3xl font-bold">{stat.value}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Career Highlights */}
+            {/* Career Highlights - Restored to left-aligned */}
             <div className="bg-bg-tertiary rounded-sm p-8 border border-border-primary">
               <h2 className="text-sm font-bold text-text-secondary font-mono mb-6">
                 Career Highlights
@@ -288,7 +247,7 @@ export default function DriverProfilePage() {
               </div>
             </div>
 
-            {/* Championship History Graph */}
+            {/* Championship History Graph - Restored */}
             <DriverSeasonHistoryGraph driverCode={driverCode} />
           </div>
         )}

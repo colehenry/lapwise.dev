@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import JumpToRace from "@/components/JumpToRace";
+import PageHeader from "@/components/PageHeader";
 import { GridPattern, TrianglePattern } from "@/components/Patterns";
 import PointsByRoundGraph from "@/components/PointsByRoundGraph";
 import { TrackMapCompact } from "@/components/TrackMapDisplay";
@@ -137,67 +138,55 @@ export default function ResultsPage() {
 
   return (
     <main className="min-h-screen bg-bg-secondary">
-      {/* ── Sticky Header ── */}
-      <div className="sticky top-0 z-40">
-        <div className="px-4">
-          <div className="mx-auto w-full max-w-full md:max-w-[calc(72rem+40px)]">
-            <div className="bg-bg-secondary/95 backdrop-blur-xl border-x border-b border-border-primary rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)]">
-              <div className="h-16 px-6 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  {/* Season Selector — terminal input style */}
-                  <select
-                    value={season}
-                    onChange={(e) => handleYearChange(e.target.value)}
-                    className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xl font-bold px-3 py-1.5 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer"
-                  >
-                    {availableYears.map((year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
-                    Season Results
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  {/* Session Type Toggle */}
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setSessionType("race")}
-                      className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
-                        sessionType === "race"
-                          ? "bg-purple-500/20 border border-purple-500 text-purple-300"
-                          : "border border-transparent text-text-muted hover:text-text-secondary"
-                      }`}
-                    >
-                      Race
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSessionType("qualifying")}
-                      className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
-                        sessionType === "qualifying"
-                          ? "bg-purple-500/20 border border-purple-500 text-purple-300"
-                          : "border border-transparent text-text-muted hover:text-text-secondary"
-                      }`}
-                    >
-                      Qualifying
-                    </button>
-                  </div>
-
-                  <JumpToRace
-                    currentSeason={season}
-                    availableSeasons={availableYears}
-                  />
-                </div>
-              </div>
-            </div>
+      <PageHeader
+        title={season}
+        subtitle="Season Results"
+        leftContent={
+          <select
+            value={season}
+            onChange={(e) => handleYearChange(e.target.value)}
+            className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
+          >
+            {availableYears.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        }
+      >
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setSessionType("race")}
+              className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
+                sessionType === "race"
+                  ? "bg-purple-500/20 border border-purple-500 text-purple-300"
+                  : "border border-transparent text-text-muted hover:text-text-secondary"
+              }`}
+            >
+              Race
+            </button>
+            <button
+              type="button"
+              onClick={() => setSessionType("qualifying")}
+              className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
+                sessionType === "qualifying"
+                  ? "bg-purple-500/20 border border-purple-500 text-purple-300"
+                  : "border border-transparent text-text-muted hover:text-text-secondary"
+              }`}
+            >
+              Qualifying
+            </button>
           </div>
+
+          <JumpToRace
+            currentSeason={season}
+            availableSeasons={availableYears}
+          />
         </div>
-      </div>
+      </PageHeader>
 
       <div className="max-w-6xl mx-auto p-6">
         {/* ── Championship Standings ── */}

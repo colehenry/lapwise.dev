@@ -11,6 +11,7 @@ import TagFilter from "@/components/discussions/TagFilter";
 import TagPill from "@/components/discussions/TagPill";
 import { GridPattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
+import PageHeader from "@/components/PageHeader";
 import { fetchPosts, fetchTags } from "@/lib/discussions";
 import type { PostListItem, PostListResponse } from "@/lib/types";
 
@@ -83,71 +84,48 @@ export default function DiscussionsPage() {
 
   return (
     <div className="min-h-screen bg-bg-secondary">
-      <div className="relative overflow-hidden border-b border-border-primary">
-        <GridPattern
-          id="discussions-grid"
-          className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.06] pointer-events-none"
-        />
-        <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-8 py-10">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-                <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Community Discussions
-                </span>
-              </div>
-              <h1 className="text-4xl md:text-5xl font-bold text-text-primary tracking-tight">
-                Race Debriefs & Analysis
-              </h1>
-              <p className="text-text-tertiary mt-3 max-w-2xl">
-                Share insights, ask questions, and break down every lap with the
-                Lapwise community.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href={newPostHref}
-                className="inline-flex items-center gap-2 border border-purple-500/60 bg-purple-500/15 text-purple-200 font-mono text-xs uppercase tracking-widest px-4 py-2 rounded-sm hover:bg-purple-500/25 transition-colors"
-              >
-                New Post
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <title>Create post</title>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 5v14m7-7H5"
-                  />
-                </svg>
-              </Link>
-              {!isAuthenticated && (
-                <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
-                  Log in to publish
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-6 flex flex-wrap items-center gap-6">
-            <SortSelector value={sort} onChange={setSort} />
-            {sort === "hot" && (
-              <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
-                Hot ranking uses top votes for now
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Discussions"
+        subtitle="Community Analysis & Race Debriefs"
+      >
+        <Link
+          href={newPostHref}
+          className="inline-flex items-center gap-2 border border-purple-500/60 bg-purple-500/15 text-purple-200 font-mono text-xs uppercase tracking-widest px-4 py-2 rounded-sm hover:bg-purple-500/25 transition-colors"
+        >
+          New Post
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <title>Create post</title>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 5v14m7-7H5"
+            />
+          </svg>
+        </Link>
+      </PageHeader>
 
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
+        <div className="flex flex-wrap items-center gap-6 mb-6">
+          <SortSelector value={sort} onChange={setSort} />
+          {sort === "hot" && (
+            <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+              Hot ranking uses top votes for now
+            </span>
+          )}
+          {!isAuthenticated && (
+            <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+              Log in to publish
+            </span>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8 space-y-5">
             <div className="border border-border-primary rounded-sm bg-bg-tertiary/40 p-3">
