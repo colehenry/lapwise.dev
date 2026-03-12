@@ -8,10 +8,10 @@ import { useEffect, useState } from "react";
 import DriverResultsTable from "@/components/DriverResultsTable";
 import DriverSeasonHistoryGraph from "@/components/DriverSeasonHistoryGraph";
 import DriverStatisticsPanel from "@/components/DriverStatisticsPanel";
+import JumpToRace from "@/components/JumpToRace";
+import PageHeader from "@/components/PageHeader";
 import Skeleton from "@/components/ui/Skeleton";
 import TabBar from "@/components/ui/TabBar";
-import PageHeader from "@/components/PageHeader";
-import JumpToRace from "@/components/JumpToRace";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
 import type { DriverProfile } from "@/lib/types";
@@ -146,9 +146,7 @@ export default function DriverProfilePage() {
               <div className="flex flex-col items-center gap-6 w-full">
                 {data.headshot_url ? (
                   <div className="relative group flex-shrink-0">
-                    <div 
-                      className="absolute -inset-1 bg-gradient-to-b from-purple-500/20 to-transparent rounded-sm blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"
-                    />
+                    <div className="absolute -inset-1 bg-gradient-to-b from-purple-500/20 to-transparent rounded-sm blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
                     <div className="relative">
                       <Image
                         src={data.headshot_url}
@@ -160,7 +158,9 @@ export default function DriverProfilePage() {
                           borderBottomColor: data.current_team_color
                             ? `#${data.current_team_color}`
                             : "transparent",
-                          borderBottomWidth: data.current_team_color ? "4px" : "1px",
+                          borderBottomWidth: data.current_team_color
+                            ? "4px"
+                            : "1px",
                         }}
                       />
                       <div className="absolute top-2 right-2 bg-bg-primary/80 backdrop-blur-sm border border-border-primary px-2 py-1 rounded-sm">

@@ -4,11 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import JumpToRace from "@/components/JumpToRace";
+import PageHeader from "@/components/PageHeader";
 import { GridPattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import TiltCard from "@/components/ui/TiltCard";
-import PageHeader from "@/components/PageHeader";
-import JumpToRace from "@/components/JumpToRace";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import { getCircuitFlagEmoji } from "@/lib/flags";
 import type { CircuitInfo } from "@/lib/types";
@@ -206,7 +206,11 @@ export default function CircuitsPage() {
     <div className="min-h-screen bg-bg-secondary">
       <PageHeader
         title="Circuits"
-        subtitle={selectedYear === "all" ? "All-Time Track Statistics" : `${selectedYear} Season Calendar`}
+        subtitle={
+          selectedYear === "all"
+            ? "All-Time Track Statistics"
+            : `${selectedYear} Season Calendar`
+        }
       >
         <select
           value={selectedYear}

@@ -12,10 +12,10 @@ import CircuitStatisticsPanel from "@/components/CircuitStatisticsPanel";
 import CircuitTyreStats from "@/components/CircuitTyreStats";
 import CircuitWeatherProfile from "@/components/CircuitWeatherProfile";
 import InteractiveTrackMap from "@/components/InteractiveTrackMap";
+import PageHeader from "@/components/PageHeader";
 import { TrianglePattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import TabBar from "@/components/ui/TabBar";
-import PageHeader from "@/components/PageHeader";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { CircuitInfo } from "@/lib/types";
 
