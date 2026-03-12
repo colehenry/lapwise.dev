@@ -6,6 +6,8 @@ import { useAuth } from "@/components/AuthProvider";
 import MarkdownContent from "@/components/discussions/MarkdownContent";
 import TagPill from "@/components/discussions/TagPill";
 import Button from "@/components/ui/Button";
+import { Input, Textarea } from "@/components/ui/Input";
+import MonoLabel from "@/components/ui/MonoLabel";
 import { fetchTags } from "@/lib/discussions";
 import type { DiscussionTag } from "@/lib/types";
 
@@ -156,9 +158,7 @@ export default function PostEditor({
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
-            Post type
-          </span>
+          <MonoLabel>Post type</MonoLabel>
           <select
             value={postType}
             onChange={(e) => setPostType(e.target.value)}
@@ -179,7 +179,7 @@ export default function PostEditor({
           </select>
         </div>
 
-        <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-text-muted">
+        <MonoLabel as="div" className="flex items-center gap-2">
           <span>
             {title.length}/{TITLE_LIMIT} title
           </span>
@@ -187,23 +187,19 @@ export default function PostEditor({
           <span>
             {body.length}/{BODY_LIMIT} body
           </span>
-        </div>
+        </MonoLabel>
       </div>
 
       <div>
-        <label
-          htmlFor="post-title"
-          className="block text-xs font-mono uppercase tracking-widest text-text-muted mb-2"
-        >
+        <MonoLabel as="label" htmlFor="post-title" className="block mb-2">
           Title
-        </label>
-        <input
+        </MonoLabel>
+        <Input
           id="post-title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           maxLength={TITLE_LIMIT}
           placeholder="Give your post a clear, searchable headline"
-          className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/40 transition-colors"
         />
       </div>
 
@@ -233,13 +229,13 @@ export default function PostEditor({
           </button>
         </div>
         {mode === "write" ? (
-          <textarea
+          <Textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             maxLength={BODY_LIMIT}
             rows={12}
             placeholder="Share your analysis, questions, or insights..."
-            className="w-full px-3 py-3 bg-bg-tertiary border border-border-primary rounded-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/40 transition-colors resize-none"
+            className="py-3"
           />
         ) : (
           <div className="min-h-[260px] rounded-sm border border-border-primary bg-bg-tertiary p-4">
@@ -253,18 +249,18 @@ export default function PostEditor({
       </div>
 
       <div>
-        <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-text-muted mb-2">
+        <MonoLabel as="div" className="mb-2">
           Tags
-        </div>
+        </MonoLabel>
         {tags.length === 0 ? (
           <div className="text-sm text-text-muted">No tags available yet.</div>
         ) : (
           <div className="space-y-4">
             {Object.entries(groupedTags).map(([category, group]) => (
               <div key={category}>
-                <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-2">
+                <MonoLabel as="div" className="mb-2">
                   {category}
-                </div>
+                </MonoLabel>
                 <div className="flex flex-wrap gap-2">
                   {group.map((tag) => (
                     <TagPill

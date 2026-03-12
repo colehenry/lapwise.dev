@@ -8,9 +8,9 @@ import { useEffect, useState } from "react";
 import ConstructorResultsTable from "@/components/ConstructorResultsTable";
 import ConstructorSeasonHistoryGraph from "@/components/ConstructorSeasonHistoryGraph";
 import ConstructorStatisticsPanel from "@/components/ConstructorStatisticsPanel";
+import PageHeader from "@/components/PageHeader";
 import Skeleton from "@/components/ui/Skeleton";
 import TabBar from "@/components/ui/TabBar";
-import PageHeader from "@/components/PageHeader";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { ConstructorProfile } from "@/lib/types";
 
@@ -156,14 +156,16 @@ export default function ConstructorProfilePage() {
               {/* Constructor Logo */}
               {data.logo_url ? (
                 <div className="relative group flex-shrink-0">
-                  <div 
-                    className="absolute -inset-1 bg-gradient-to-b from-purple-500/20 to-transparent rounded-sm blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"
-                  />
-                  <div className="relative w-56 h-56 rounded-sm overflow-hidden border border-border-primary bg-bg-tertiary flex items-center justify-center p-8"
-                       style={{
-                         borderBottomColor: data.team_color ? `#${data.team_color}` : "transparent",
-                         borderBottomWidth: data.team_color ? "4px" : "1px",
-                       }}>
+                  <div className="absolute -inset-1 bg-gradient-to-b from-purple-500/20 to-transparent rounded-sm blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
+                  <div
+                    className="relative w-56 h-56 rounded-sm overflow-hidden border border-border-primary bg-bg-tertiary flex items-center justify-center p-8"
+                    style={{
+                      borderBottomColor: data.team_color
+                        ? `#${data.team_color}`
+                        : "transparent",
+                      borderBottomWidth: data.team_color ? "4px" : "1px",
+                    }}
+                  >
                     <Image
                       src={data.logo_url}
                       alt={data.team_name}
@@ -175,11 +177,15 @@ export default function ConstructorProfilePage() {
                   </div>
                 </div>
               ) : (
-                <div className="w-56 h-56 rounded-sm flex items-center justify-center border border-border-primary bg-bg-tertiary"
-                     style={{
-                       borderBottomColor: data.team_color ? `#${data.team_color}` : "transparent",
-                       borderBottomWidth: data.team_color ? "4px" : "1px",
-                     }}>
+                <div
+                  className="w-56 h-56 rounded-sm flex items-center justify-center border border-border-primary bg-bg-tertiary"
+                  style={{
+                    borderBottomColor: data.team_color
+                      ? `#${data.team_color}`
+                      : "transparent",
+                    borderBottomWidth: data.team_color ? "4px" : "1px",
+                  }}
+                >
                   <span className="text-white font-bold text-5xl text-center px-4">
                     {data.team_name
                       .split(" ")

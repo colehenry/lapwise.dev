@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import Button from "@/components/ui/Button";
+import { Input, Textarea } from "@/components/ui/Input";
 import { apiUrl } from "@/lib/api";
 import { fetchWithAuth } from "@/lib/auth";
 
@@ -191,13 +192,12 @@ export default function SettingsPage() {
             >
               Bio
             </label>
-            <textarea
+            <Textarea
               id="bio"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               maxLength={200}
               rows={3}
-              className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors resize-none"
             />
             <p className="text-xs text-text-muted mt-1">
               {bio.length}/200 characters
@@ -210,13 +210,12 @@ export default function SettingsPage() {
             >
               Avatar URL
             </label>
-            <input
+            <Input
               id="avatarUrl"
               type="url"
               value={avatarUrl}
               onChange={(e) => setAvatarUrl(e.target.value)}
               placeholder="https://example.com/avatar.png"
-              className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors"
             />
             <p className="text-xs text-text-muted mt-1">
               Recommended: square image, at least 256x256
@@ -247,14 +246,13 @@ export default function SettingsPage() {
             >
               Current password
             </label>
-            <input
+            <Input
               id="oldPassword"
               type="password"
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
               required
               autoComplete="current-password"
-              className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors"
             />
           </div>
           <div>
@@ -264,7 +262,7 @@ export default function SettingsPage() {
             >
               New password
             </label>
-            <input
+            <Input
               id="newPassword"
               type="password"
               value={newPassword}
@@ -272,7 +270,6 @@ export default function SettingsPage() {
               required
               minLength={8}
               autoComplete="new-password"
-              className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors"
             />
           </div>
           {passwordMsg && (
@@ -308,7 +305,7 @@ export default function SettingsPage() {
             {sessions.map((session) => (
               <div
                 key={session.id}
-                className="border border-border-primary rounded-lg p-3 flex items-start justify-between gap-4"
+                className="border border-border-primary rounded-sm p-3 flex items-start justify-between gap-4"
               >
                 <div className="min-w-0">
                   <p className="text-sm text-text-primary truncate">
@@ -351,7 +348,7 @@ export default function SettingsPage() {
       {/* Danger Zone */}
       <section>
         <h2 className="text-lg font-semibold text-red-400 mb-4">Danger zone</h2>
-        <div className="border border-red-500/20 rounded-lg p-4">
+        <div className="border border-red-500/20 rounded-sm p-4">
           <p className="text-sm text-text-muted mb-3">
             Log out from all devices. This will revoke all active sessions.
           </p>
@@ -369,20 +366,20 @@ export default function SettingsPage() {
             Log out everywhere
           </Button>
         </div>
-        <div className="border border-red-500/20 rounded-lg p-4 mt-4">
+        <div className="border border-red-500/20 rounded-sm p-4 mt-4">
           <p className="text-sm text-text-muted mb-3">
             Delete your account. This is a soft delete and will immediately
             revoke all active sessions.
           </p>
           <form onSubmit={handleDeleteAccount} className="space-y-3">
-            <input
+            <Input
               type="password"
               value={deletePassword}
               onChange={(e) => setDeletePassword(e.target.value)}
               required
               placeholder="Confirm password"
               autoComplete="current-password"
-              className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/50 transition-colors"
+              variant="danger"
             />
             {deleteError && (
               <p className="text-sm text-red-400">{deleteError}</p>

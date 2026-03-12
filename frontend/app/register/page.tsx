@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import Button from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { apiUrl } from "@/lib/api";
 
 export default function RegisterPage() {
@@ -115,14 +116,13 @@ export default function RegisterPage() {
             >
               Email
             </label>
-            <input
+            <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors"
               placeholder="you@example.com"
             />
           </div>
@@ -134,7 +134,7 @@ export default function RegisterPage() {
             >
               Username
             </label>
-            <input
+            <Input
               id="username"
               type="text"
               value={username}
@@ -142,7 +142,7 @@ export default function RegisterPage() {
               required
               autoComplete="username"
               pattern="^[a-z0-9_]{3,20}$"
-              className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors font-mono text-sm"
+              className="font-mono text-sm"
               placeholder="cool_racer"
             />
             {usernameStatus === "idle" && (
@@ -175,7 +175,7 @@ export default function RegisterPage() {
             >
               Password
             </label>
-            <input
+            <Input
               id="password"
               type="password"
               value={password}
@@ -183,7 +183,6 @@ export default function RegisterPage() {
               required
               minLength={8}
               autoComplete="new-password"
-              className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors"
             />
             <p className="text-xs text-text-muted mt-1">
               Min 8 characters with uppercase, lowercase, and a number
@@ -197,19 +196,18 @@ export default function RegisterPage() {
             >
               Confirm password
             </label>
-            <input
+            <Input
               id="confirmPassword"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               autoComplete="new-password"
-              className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors"
             />
           </div>
 
           {error && (
-            <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+            <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-sm px-3 py-2">
               {error}
             </p>
           )}

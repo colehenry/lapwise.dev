@@ -3,6 +3,7 @@ import TagPill from "@/components/discussions/TagPill";
 import UserAvatar from "@/components/discussions/UserAvatar";
 import VoteButton from "@/components/discussions/VoteButton";
 import Badge from "@/components/ui/Badge";
+import MonoLabel from "@/components/ui/MonoLabel";
 import { formatRelativeTime } from "@/lib/time";
 import type { PostListItem } from "@/lib/types";
 
@@ -33,11 +34,7 @@ export default function PostCard({ post }: { post: PostListItem }) {
             initialCount={post.vote_count}
             initialVoted={post.user_voted}
           />
-          {post.is_locked && (
-            <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
-              Locked
-            </span>
-          )}
+          {post.is_locked && <MonoLabel>Locked</MonoLabel>}
         </div>
 
         <div className="flex-1 min-w-0">
