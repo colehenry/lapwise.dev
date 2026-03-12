@@ -187,9 +187,9 @@ export default function RoundDetailPage() {
       <div className="sticky top-0 z-40">
         <div className="px-4">
           <div className="mx-auto w-full max-w-full md:max-w-[calc(72rem+40px)]">
-            <div className="bg-bg-secondary/95 backdrop-blur-xl border-x border-b border-border-primary rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)] overflow-hidden">
+            <div className="bg-bg-secondary/95 backdrop-blur-xl border-x border-b border-border-primary rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)]">
               <div className="h-16 px-6 flex items-center justify-between border-b border-border-primary/60">
-                <div className="flex items-center gap-4">
+                <div className="flex-1 flex items-center">
                   <button
                     type="button"
                     onClick={() => router.push(`/results/${season}`)}
@@ -198,21 +198,25 @@ export default function RoundDetailPage() {
                     <span>←</span>
                     <span className="hidden sm:inline">BACK TO {season}</span>
                   </button>
-                  <div className="flex flex-col">
-                    <span className="text-text-primary font-mono text-sm font-bold leading-none">
-                      ROUND {String(raceData.session.round).padStart(2, "0")}
-                    </span>
-                    <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
-                      {raceData.session.event_name.replace("Grand Prix", "GP")}
-                    </span>
-                  </div>
                 </div>
-                <JumpToRace
-                  currentSeason={season}
-                  availableSeasons={availableYears}
-                  label="Jump to Different Wknd"
-                  excludeRound={roundNum}
-                />
+
+                <div className="flex flex-col items-center">
+                  <span className="text-text-primary font-mono text-sm font-bold leading-none">
+                    ROUND {String(raceData.session.round).padStart(2, "0")}
+                  </span>
+                  <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
+                    {raceData.session.event_name.replace("Grand Prix", "GP")}
+                  </span>
+                </div>
+
+                <div className="flex-1 flex justify-end">
+                  <JumpToRace
+                    currentSeason={season}
+                    availableSeasons={availableYears}
+                    label="Jump to Different Wknd"
+                    excludeRound={roundNum}
+                  />
+                </div>
               </div>
 
               {/* Tab Bar */}

@@ -7,7 +7,9 @@ import { useEffect, useMemo, useState } from "react";
 import { GridPattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import TiltCard from "@/components/ui/TiltCard";
-import { apiHeaders, apiUrl } from "@/lib/api";
+import PageHeader from "@/components/PageHeader";
+import JumpToRace from "@/components/JumpToRace";
+import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import { getCircuitFlagEmoji } from "@/lib/flags";
 import type { CircuitInfo } from "@/lib/types";
 
@@ -135,16 +137,34 @@ export default function CircuitsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("races");
   const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<string>("all");
 
   const { data: circuitsData, isLoading } = useQuery({
     queryKey: ["circuits"],
     queryFn: fetchCircuits,
   });
 
+  const { data: availableYears = [] } = useQuery<number[]>({
+    queryKey: ["seasons"],
+    queryFn: fetchSeasons,
+    staleTime: 1000 * 60 * 60,
+  });
+
   const filteredCircuits = useMemo(() => {
     if (!circuitsData) return [];
 
     let circuits = circuitsData.circuits;
+
+    // Season filter
+    if (selectedYear !== "all") {
+      const yearNum = Number.parseInt(selectedYear, 10);
+      circuits = circuits.filter(
+        (c) =>
+          c.first_year <= yearNum &&
+          (c.most_recent_year >= yearNum ||
+            (c.most_recent_year === CURRENT_YEAR && yearNum === CURRENT_YEAR)),
+      );
+    }
 
     // Search filter
     if (searchQuery) {
@@ -172,11 +192,11 @@ export default function CircuitsPage() {
     }
 
     return sorted;
-  }, [circuitsData, searchQuery, sortKey]);
+  }, [circuitsData, searchQuery, sortKey, selectedYear]);
 
   useEffect(() => {
     setIsExpanded(false);
-  }, [searchQuery, sortKey]);
+  }, [searchQuery, sortKey, selectedYear]);
 
   const visibleCircuits = isExpanded
     ? filteredCircuits
@@ -184,24 +204,23 @@ export default function CircuitsPage() {
 
   return (
     <div className="min-h-screen bg-bg-secondary">
-      {/* Header */}
-      <div className="relative overflow-hidden border-b border-border-primary">
-        <GridPattern
-          id="circuits-grid"
-          className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.06] pointer-events-none"
-        />
-        <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-8 py-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-            <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-              All-Time Statistics
-            </span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-text-primary tracking-tight">
-            Circuits
-          </h1>
-        </div>
-      </div>
+      <PageHeader
+        title="Circuits"
+        subtitle={selectedYear === "all" ? "All-Time Track Statistics" : `${selectedYear} Season Calendar`}
+      >
+        <select
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(e.target.value)}
+          className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-3 py-1.5 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
+        >
+          <option value="all">ALL TIME</option>
+          {availableYears.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+      </PageHeader>
 
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
         {/* Controls */}
@@ -219,7 +238,7 @@ export default function CircuitsPage() {
         {/* Stats bar */}
         {circuitsData && (
           <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-6">
-            {filteredCircuits.length} circuits across F1 history
+            {filteredCircuits.length} total circuits
           </div>
         )}
 

@@ -10,6 +10,7 @@ import ConstructorSeasonHistoryGraph from "@/components/ConstructorSeasonHistory
 import ConstructorStatisticsPanel from "@/components/ConstructorStatisticsPanel";
 import Skeleton from "@/components/ui/Skeleton";
 import TabBar from "@/components/ui/TabBar";
+import PageHeader from "@/components/PageHeader";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { ConstructorProfile } from "@/lib/types";
 
@@ -134,105 +135,52 @@ export default function ConstructorProfilePage() {
   return (
     <div className="min-h-screen bg-bg-secondary">
       {/* Sticky Header */}
-      <div className="sticky top-0 z-40 bg-bg-secondary border-b border-border-primary">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="h-16 flex items-center gap-4">
-            <Link
-              href="/constructors"
-              className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 flex items-center gap-2"
-            >
-              <span>&larr;</span>
-              <span className="hidden sm:inline">CONSTRUCTORS</span>
-            </Link>
-
-            {data.logo_url ? (
-              <div
-                className="w-9 h-9 rounded-full overflow-hidden border-2 bg-bg-secondary"
-                style={{
-                  borderColor: data.team_color ? `#${data.team_color}` : "#888",
-                }}
-              >
-                <Image
-                  src={data.logo_url}
-                  alt={data.team_name}
-                  width={36}
-                  height={36}
-                  className="w-full h-full object-contain p-1"
-                  unoptimized={data.logo_url.includes("wikimedia.org")}
-                />
-              </div>
-            ) : (
-              <div
-                className="w-9 h-9 rounded-full border-2 flex items-center justify-center"
-                style={{
-                  backgroundColor: data.team_color
-                    ? `#${data.team_color}`
-                    : "#888",
-                  borderColor: data.team_color ? `#${data.team_color}` : "#888",
-                }}
-              >
-                <span className="text-white font-bold text-[10px]">
-                  {data.team_name
-                    .split(" ")
-                    .map((w) => w[0])
-                    .join("")}
-                </span>
-              </div>
-            )}
-
-            <div className="flex flex-col">
-              <span className="text-text-primary font-mono text-sm font-bold leading-none">
-                {data.team_name}
-              </span>
-              {data.latest_season && (
-                <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
-                  Active in {data.latest_season}
-                </span>
-              )}
-            </div>
+      <PageHeader
+        title={data.team_name}
+        subtitle={`${data.latest_season ? `Active in ${data.latest_season}` : ""}${data.best_finish ? ` • Best Finish: ${getOrdinalSuffix(data.best_finish)}` : ""}`}
+        onBack={() => router.push("/constructors")}
+        backLabel="CONSTRUCTORS"
+        bottomContent={
+          <div className="flex justify-center">
+            <TabBar tabs={TABS} activeTab={activeTab} onTabChange={switchTab} />
           </div>
-
-          <TabBar tabs={TABS} activeTab={activeTab} onTabChange={switchTab} />
-        </div>
-      </div>
+        }
+      />
 
       {/* Tab Content */}
       <div className="max-w-5xl mx-auto px-6 py-8">
         {activeTab === "overview" && (
           <div className="space-y-8">
-            {/* Full Header */}
-            <div className="flex items-center gap-6">
+            {/* Header section - Centered */}
+            <div className="flex flex-col items-center gap-8">
+              {/* Constructor Logo */}
               {data.logo_url ? (
-                <div
-                  className="w-32 h-32 rounded-full overflow-hidden border-4 bg-bg-secondary shadow-lg"
-                  style={{
-                    borderColor: data.team_color
-                      ? `#${data.team_color}`
-                      : "#888",
-                  }}
-                >
-                  <Image
-                    src={data.logo_url}
-                    alt={data.team_name}
-                    width={128}
-                    height={128}
-                    className="w-full h-full object-contain p-4"
-                    unoptimized={data.logo_url.includes("wikimedia.org")}
+                <div className="relative group flex-shrink-0">
+                  <div 
+                    className="absolute -inset-1 bg-gradient-to-b from-purple-500/20 to-transparent rounded-sm blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"
                   />
+                  <div className="relative w-56 h-56 rounded-sm overflow-hidden border border-border-primary bg-bg-tertiary flex items-center justify-center p-8"
+                       style={{
+                         borderBottomColor: data.team_color ? `#${data.team_color}` : "transparent",
+                         borderBottomWidth: data.team_color ? "4px" : "1px",
+                       }}>
+                    <Image
+                      src={data.logo_url}
+                      alt={data.team_name}
+                      width={180}
+                      height={180}
+                      className="w-full h-full object-contain"
+                      unoptimized={data.logo_url.includes("wikimedia.org")}
+                    />
+                  </div>
                 </div>
               ) : (
-                <div
-                  className="w-32 h-32 rounded-full border-4 flex items-center justify-center"
-                  style={{
-                    backgroundColor: data.team_color
-                      ? `#${data.team_color}`
-                      : "#888",
-                    borderColor: data.team_color
-                      ? `#${data.team_color}`
-                      : "#888",
-                  }}
-                >
-                  <span className="text-white font-bold text-2xl text-center px-4">
+                <div className="w-56 h-56 rounded-sm flex items-center justify-center border border-border-primary bg-bg-tertiary"
+                     style={{
+                       borderBottomColor: data.team_color ? `#${data.team_color}` : "transparent",
+                       borderBottomWidth: data.team_color ? "4px" : "1px",
+                     }}>
+                  <span className="text-white font-bold text-5xl text-center px-4">
                     {data.team_name
                       .split(" ")
                       .map((word) => word[0])
@@ -240,40 +188,26 @@ export default function ConstructorProfilePage() {
                   </span>
                 </div>
               )}
-              <div>
-                <h1 className="text-5xl font-bold text-white mb-2">
-                  {data.team_name}
-                </h1>
-                <div className="flex items-center gap-4 text-text-tertiary text-lg">
-                  {data.latest_season && (
-                    <span>Active in {data.latest_season}</span>
-                  )}
-                  {data.best_finish && (
-                    <>
-                      <span>•</span>
-                      <span>
-                        Best Finish: {getOrdinalSuffix(data.best_finish)}
-                      </span>
-                    </>
-                  )}
-                </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 w-full">
+                {stats.map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="bg-bg-tertiary rounded-sm border border-border-primary p-4 flex flex-col items-center text-center"
+                  >
+                    <p className="text-text-muted text-[10px] uppercase font-bold tracking-wider mb-1">
+                      {stat.label}
+                    </p>
+                    <p className="text-white text-2xl font-bold font-mono tabular-nums">
+                      {stat.value}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {stats.map((stat) => (
-                <div
-                  key={stat.label}
-                  className="bg-bg-tertiary rounded-sm border border-border-primary p-6"
-                >
-                  <p className="text-text-muted text-sm mb-2">{stat.label}</p>
-                  <p className="text-white text-3xl font-bold">{stat.value}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Team Highlights */}
+            {/* Team Highlights - Restored to left-aligned */}
             <div className="bg-bg-tertiary rounded-sm border border-border-primary p-8">
               <h2 className="text-sm font-bold text-text-secondary font-mono mb-6">
                 Constructor Highlights
@@ -308,7 +242,7 @@ export default function ConstructorProfilePage() {
               </div>
             </div>
 
-            {/* Championship History Graph */}
+            {/* Championship History Graph - Restored */}
             <ConstructorSeasonHistoryGraph teamName={teamName} />
           </div>
         )}
