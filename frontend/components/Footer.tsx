@@ -10,12 +10,12 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Brand */}
           <div className="flex items-center gap-3">
-            <div className="relative h-7 w-7 rounded-sm overflow-hidden ring-1 ring-purple-500/20">
+            <div className="relative h-8 w-8 rounded-sm overflow-hidden">
               <Image
                 src="/favicon.ico"
                 alt="Lapwise"
-                width={28}
-                height={28}
+                width={32}
+                height={32}
                 className="object-cover"
               />
             </div>

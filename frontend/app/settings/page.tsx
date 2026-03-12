@@ -1,21 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import Button from "@/components/ui/Button";
+import { Input, Textarea } from "@/components/ui/Input";
 import { apiUrl } from "@/lib/api";
 import { fetchWithAuth } from "@/lib/auth";
-
-type SessionInfo = {
-  id: number;
-  device_info: string | null;
-  ip_address: string | null;
-  created_at: string;
-  expires_at: string;
-  revoked_at: string | null;
-  is_current: boolean;
-};
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -32,28 +23,9 @@ export default function SettingsPage() {
   const [passwordError, setPasswordError] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
 
-  const [sessions, setSessions] = useState<SessionInfo[]>([]);
-  const [sessionsLoading, setSessionsLoading] = useState(false);
-  const [sessionsError, setSessionsError] = useState("");
-
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
-
-  const loadSessions = useCallback(async () => {
-    setSessionsLoading(true);
-    setSessionsError("");
-    try {
-      const res = await fetchWithAuth(apiUrl("/auth/sessions"));
-      if (!res.ok) throw new Error("Failed to load sessions");
-      const data = await res.json();
-      setSessions(Array.isArray(data.sessions) ? data.sessions : []);
-    } catch {
-      setSessionsError("Failed to load sessions");
-    } finally {
-      setSessionsLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -67,12 +39,6 @@ export default function SettingsPage() {
       setAvatarUrl(user.avatar_url || "");
     }
   }, [user]);
-
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      void loadSessions();
-    }
-  }, [isLoading, isAuthenticated, loadSessions]);
 
   if (isLoading || !user) return null;
 
@@ -131,24 +97,6 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleRevokeSession(sessionId: number, isCurrent: boolean) {
-    setSessionsError("");
-    try {
-      const res = await fetchWithAuth(apiUrl(`/auth/sessions/${sessionId}`), {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to revoke session");
-      if (isCurrent) {
-        await logout();
-        router.push("/");
-        return;
-      }
-      await loadSessions();
-    } catch {
-      setSessionsError("Failed to revoke session");
-    }
-  }
-
   async function handleDeleteAccount(e: React.FormEvent) {
     e.preventDefault();
     setDeleteError("");
@@ -191,13 +139,12 @@ export default function SettingsPage() {
             >
               Bio
             </label>
-            <textarea
+            <Textarea
               id="bio"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               maxLength={200}
               rows={3}
-              className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors resize-none"
             />
             <p className="text-xs text-text-muted mt-1">
               {bio.length}/200 characters
@@ -210,13 +157,12 @@ export default function SettingsPage() {
             >
               Avatar URL
             </label>
-            <input
+            <Input
               id="avatarUrl"
               type="url"
               value={avatarUrl}
               onChange={(e) => setAvatarUrl(e.target.value)}
               placeholder="https://example.com/avatar.png"
-              className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors"
             />
             <p className="text-xs text-text-muted mt-1">
               Recommended: square image, at least 256x256
@@ -247,14 +193,13 @@ export default function SettingsPage() {
             >
               Current password
             </label>
-            <input
+            <Input
               id="oldPassword"
               type="password"
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
               required
               autoComplete="current-password"
-              className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors"
             />
           </div>
           <div>
@@ -264,7 +209,7 @@ export default function SettingsPage() {
             >
               New password
             </label>
-            <input
+            <Input
               id="newPassword"
               type="password"
               value={newPassword}
@@ -272,7 +217,6 @@ export default function SettingsPage() {
               required
               minLength={8}
               autoComplete="new-password"
-              className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors"
             />
           </div>
           {passwordMsg && (
@@ -292,66 +236,10 @@ export default function SettingsPage() {
         </form>
       </section>
 
-      {/* Active Sessions */}
-      <section className="mb-10">
-        <h2 className="text-lg font-semibold text-text-primary mb-4">
-          Active sessions
-        </h2>
-        {sessionsLoading ? (
-          <p className="text-sm text-text-muted">Loading sessions...</p>
-        ) : sessionsError ? (
-          <p className="text-sm text-red-400">{sessionsError}</p>
-        ) : sessions.length === 0 ? (
-          <p className="text-sm text-text-muted">No active sessions.</p>
-        ) : (
-          <div className="space-y-3">
-            {sessions.map((session) => (
-              <div
-                key={session.id}
-                className="border border-border-primary rounded-lg p-3 flex items-start justify-between gap-4"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm text-text-primary truncate">
-                    {session.device_info || "Unknown device"}
-                  </p>
-                  <p className="text-xs text-text-muted mt-1">
-                    {session.ip_address
-                      ? `IP ${session.ip_address}`
-                      : "IP unknown"}
-                  </p>
-                  <p className="text-xs text-text-muted">
-                    Created{" "}
-                    {new Date(session.created_at).toLocaleString("en-US")}
-                  </p>
-                  <p className="text-xs text-text-muted">
-                    Expires{" "}
-                    {new Date(session.expires_at).toLocaleString("en-US")}
-                  </p>
-                  {session.is_current && (
-                    <span className="inline-block mt-1 text-[10px] uppercase tracking-widest text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded">
-                      Current session
-                    </span>
-                  )}
-                </div>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() =>
-                    handleRevokeSession(session.id, session.is_current)
-                  }
-                >
-                  Revoke
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
       {/* Danger Zone */}
       <section>
         <h2 className="text-lg font-semibold text-red-400 mb-4">Danger zone</h2>
-        <div className="border border-red-500/20 rounded-lg p-4">
+        <div className="border border-red-500/20 rounded-sm p-4">
           <p className="text-sm text-text-muted mb-3">
             Log out from all devices. This will revoke all active sessions.
           </p>
@@ -369,20 +257,20 @@ export default function SettingsPage() {
             Log out everywhere
           </Button>
         </div>
-        <div className="border border-red-500/20 rounded-lg p-4 mt-4">
+        <div className="border border-red-500/20 rounded-sm p-4 mt-4">
           <p className="text-sm text-text-muted mb-3">
             Delete your account. This is a soft delete and will immediately
             revoke all active sessions.
           </p>
           <form onSubmit={handleDeleteAccount} className="space-y-3">
-            <input
+            <Input
               type="password"
               value={deletePassword}
               onChange={(e) => setDeletePassword(e.target.value)}
               required
               placeholder="Confirm password"
               autoComplete="current-password"
-              className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/50 transition-colors"
+              variant="danger"
             />
             {deleteError && (
               <p className="text-sm text-red-400">{deleteError}</p>

@@ -32,7 +32,7 @@ app.add_middleware(
     allow_origins=settings.get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["Content-Type", "Authorization", "X-API-Key"],
 )
 
 
@@ -70,9 +70,13 @@ from app.routers import (
     auth,
     posts,
     tags,
+    users,
+    admin,
 )
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(season_results.router, prefix="/api/results", tags=["results"])
 app.include_router(drivers.router, prefix="/api/drivers", tags=["drivers"])
 app.include_router(

@@ -15,7 +15,7 @@ export default function Card({
   className = "",
   onClick,
 }: CardProps) {
-  const baseStyles = "rounded-xl overflow-hidden";
+  const baseStyles = "rounded-sm overflow-hidden";
 
   const variantStyles = {
     default: "bg-bg-tertiary border border-border-primary",

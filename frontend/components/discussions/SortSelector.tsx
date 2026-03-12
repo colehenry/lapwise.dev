@@ -1,20 +1,19 @@
+import MonoLabel from "@/components/ui/MonoLabel";
+
 interface SortSelectorProps {
-  value: "new" | "top" | "hot";
-  onChange: (value: "new" | "top" | "hot") => void;
+  value: "new" | "top";
+  onChange: (value: "new" | "top") => void;
 }
 
-const options: Array<{ value: "new" | "top" | "hot"; label: string }> = [
+const options: Array<{ value: "new" | "top"; label: string }> = [
   { value: "new", label: "New" },
   { value: "top", label: "Top" },
-  { value: "hot", label: "Hot" },
 ];
 
 export default function SortSelector({ value, onChange }: SortSelectorProps) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-        Sort
-      </span>
+      <MonoLabel className="font-bold">Sort</MonoLabel>
       <div className="flex items-center gap-1">
         {options.map((option) => (
           <button

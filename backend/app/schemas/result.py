@@ -237,6 +237,7 @@ class RoundPodiumDriver(BaseModel):
     logo_url: Optional[str] = None
     headshot_url: Optional[str] = None
     fastest_lap: bool = False
+    time_seconds: Optional[float] = None
 
     class Config:
         from_attributes = True
@@ -254,6 +255,8 @@ class RoundSummary(BaseModel):
     date: date
     circuit_name: str
     circuit_id: int  # For track map URL
+    circuit_location: Optional[str] = None
+    circuit_country: Optional[str] = None
     track_length_km: Optional[float] = None
     session_type: str  # 'race', 'sprint_race', 'qualifying', 'sprint_qualifying'
     podium: List[RoundPodiumDriver]  # Top 3 drivers

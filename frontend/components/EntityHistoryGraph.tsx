@@ -349,7 +349,10 @@ export default function EntityHistoryGraph({
                 tick={<CustomXAxisTickSeason />}
                 stroke={CHART_COLORS.textMuted}
                 tickLine={false}
-                interval={Math.max(0, Math.ceil((seasonData?.seasons?.length ?? 0) / 15) - 1)}
+                interval={Math.max(
+                  0,
+                  Math.ceil((seasonData?.seasons?.length ?? 0) / 15) - 1,
+                )}
               />
               <YAxis
                 reversed={dataMode === "position"}
@@ -377,7 +380,11 @@ export default function EntityHistoryGraph({
                 }}
               />
               <Tooltip content={<CustomTooltip />} cursor={false} />
-              <Bar dataKey={seasonDataKey} radius={[3, 3, 0, 0]} activeBar={false}>
+              <Bar
+                dataKey={seasonDataKey}
+                radius={[3, 3, 0, 0]}
+                activeBar={false}
+              >
                 {(seasonData?.seasons ?? []).map(
                   (entry: SeasonEntry, index: number) => (
                     <Cell
@@ -439,7 +446,11 @@ export default function EntityHistoryGraph({
                 }}
               />
               <Tooltip content={<CustomTooltip />} cursor={false} />
-              <Bar dataKey={raceDataKey} radius={[3, 3, 0, 0]} activeBar={false}>
+              <Bar
+                dataKey={raceDataKey}
+                radius={[3, 3, 0, 0]}
+                activeBar={false}
+              >
                 {raceChartData.map(
                   (entry: Record<string, unknown>, index: number) => (
                     <Cell

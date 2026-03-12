@@ -128,7 +128,7 @@ export default function RoundDetailPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-bg-secondary p-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
             Loading race weekend...
           </p>
@@ -140,7 +140,7 @@ export default function RoundDetailPage() {
   if (!raceData) {
     return (
       <main className="min-h-screen bg-bg-secondary p-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <p className="text-center text-red-400 font-mono tracking-widest text-xs uppercase">
             Failed to load race details.
           </p>
@@ -184,68 +184,78 @@ export default function RoundDetailPage() {
   return (
     <main className="min-h-screen bg-bg-secondary">
       {/* Sticky Header with Tabs */}
-      <div className="sticky top-0 z-40 bg-bg-secondary border-b border-border-primary">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="h-16 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                type="button"
-                onClick={() => router.push(`/results/${season}`)}
-                className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center gap-2"
-              >
-                <span>←</span>
-                <span className="hidden sm:inline">BACK TO {season}</span>
-              </button>
-              <div className="flex flex-col">
-                <span className="text-text-primary font-mono text-sm font-bold leading-none">
-                  ROUND {String(raceData.session.round).padStart(2, "0")}
-                </span>
-                <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
-                  {raceData.session.event_name.replace("Grand Prix", "GP")}
-                </span>
+      <div className="sticky top-0 z-40">
+        <div className="px-4">
+          <div className="mx-auto w-full max-w-full md:max-w-[calc(72rem+40px)]">
+            <div className="bg-bg-secondary/95 backdrop-blur-xl border-x border-b border-border-primary rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)]">
+              <div className="h-16 px-6 flex items-center justify-between border-b border-border-primary/60">
+                <div className="flex-1 flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/results/${season}`)}
+                    className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center gap-2"
+                  >
+                    <span>←</span>
+                    <span className="hidden sm:inline">BACK TO {season}</span>
+                  </button>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <span className="text-text-primary font-mono text-sm font-bold leading-none">
+                    ROUND {String(raceData.session.round).padStart(2, "0")}
+                  </span>
+                  <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
+                    {raceData.session.event_name.replace("Grand Prix", "GP")}
+                  </span>
+                </div>
+
+                <div className="flex-1 flex justify-end">
+                  <JumpToRace
+                    currentSeason={season}
+                    availableSeasons={availableYears}
+                    label="Jump to Different Wknd"
+                    excludeRound={roundNum}
+                  />
+                </div>
+              </div>
+
+              {/* Tab Bar */}
+              <div className="px-4">
+                <div className="flex items-center justify-center gap-1 overflow-x-auto pb-2">
+                  {availableTabs.map((tab) => {
+                    const isActive = activeTab === tab;
+                    const isDisabled =
+                      (tab === "qualifying" && !qualifyingData) ||
+                      (tab === "sprint" && !sprintData) ||
+                      (tab === "sprint-qualifying" && !sprintQualData);
+
+                    return (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => !isDisabled && switchTab(tab)}
+                        disabled={isDisabled}
+                        className={`px-4 py-2.5 text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 border-b-2 whitespace-nowrap ${
+                          isActive
+                            ? "border-purple-500 text-purple-300"
+                            : isDisabled
+                              ? "border-transparent text-text-muted/40 cursor-not-allowed"
+                              : "border-transparent text-text-muted hover:text-text-secondary hover:border-border-primary"
+                        }`}
+                      >
+                        {TAB_LABELS[tab]}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-            <JumpToRace
-              currentSeason={season}
-              availableSeasons={availableYears}
-              label="Jump to Different Wknd"
-              excludeRound={roundNum}
-            />
-          </div>
-
-          {/* Tab Bar */}
-          <div className="flex items-center gap-1 -mb-px overflow-x-auto pb-0">
-            {availableTabs.map((tab) => {
-              const isActive = activeTab === tab;
-              const isDisabled =
-                (tab === "qualifying" && !qualifyingData) ||
-                (tab === "sprint" && !sprintData) ||
-                (tab === "sprint-qualifying" && !sprintQualData);
-
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => !isDisabled && switchTab(tab)}
-                  disabled={isDisabled}
-                  className={`px-4 py-2.5 text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 border-b-2 whitespace-nowrap ${
-                    isActive
-                      ? "border-purple-500 text-purple-300"
-                      : isDisabled
-                        ? "border-transparent text-text-muted/40 cursor-not-allowed"
-                        : "border-transparent text-text-muted hover:text-text-secondary hover:border-border-primary"
-                  }`}
-                >
-                  {TAB_LABELS[tab]}
-                </button>
-              );
-            })}
           </div>
         </div>
       </div>
 
       {/* Tab Content */}
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Race / Qualifying / Sprint tabs — show SessionDetail */}
         {isResultsTab && (
           <>

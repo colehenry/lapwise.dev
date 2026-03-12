@@ -25,12 +25,14 @@ export function GridPattern({
 
 export function ConcentricPattern({
   id = "concentric-pattern",
+  className = "absolute inset-0 w-full h-full text-purple-500 opacity-10 pointer-events-none",
 }: {
   id?: string;
+  className?: string;
 }) {
   return (
     <svg
-      className="absolute inset-0 w-full h-full text-purple-500 opacity-10 pointer-events-none"
+      className={className}
       viewBox="0 0 180 100"
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
@@ -85,12 +87,15 @@ export function ConcentricPattern({
   );
 }
 
-export function TrianglePattern({ id = "triangle-pattern" }: { id?: string }) {
+export function TrianglePattern({
+  id = "triangle-pattern",
+  className = "absolute inset-0 w-full h-full text-purple-500 opacity-8 pointer-events-none",
+}: {
+  id?: string;
+  className?: string;
+}) {
   return (
-    <svg
-      className="absolute inset-0 w-full h-full text-purple-500 opacity-8 pointer-events-none"
-      aria-hidden="true"
-    >
+    <svg className={className} aria-hidden="true">
       <title>Triangle pattern</title>
       <defs>
         <pattern
