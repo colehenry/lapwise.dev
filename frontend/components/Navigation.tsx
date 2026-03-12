@@ -73,7 +73,7 @@ const navLinks: NavLink[] = [
   },
   {
     href: "/discussions",
-    label: "Discussions",
+    label: "Discuss",
     icon: "M7 8h10M7 12h6m-6 8l-4-4H3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9l-4 4z",
   },
 ];
@@ -201,23 +201,25 @@ export default function Navigation() {
         }`}
       >
         <div className="h-full px-4 max-w-6xl mx-auto flex items-center">
-          {/* Logo */}
-          <Link
-            href="/"
-            className={`group flex items-center gap-2.5 px-3.5 py-2 rounded-full transition-all duration-300 hover:scale-[1.04] active:scale-[0.97] ${
-              isActive("/")
-                ? "bg-purple-500/15 text-purple-300 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
-                : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/80 border border-transparent hover:border-border-secondary/60"
-            }`}
-          >
-            <span className="font-bold text-lg">
-              <span className="text-purple-500">Lap</span>
-              <span className="text-text-primary">wise</span>
-            </span>
-          </Link>
+          {/* Left side — Logo */}
+          <div className="flex-1 flex items-center">
+            <Link
+              href="/"
+              className={`group flex items-center gap-2.5 px-3.5 py-2 rounded-full transition-all duration-300 hover:scale-[1.04] active:scale-[0.97] ${
+                isActive("/")
+                  ? "bg-purple-500/15 text-purple-300 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
+                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/80 border border-transparent hover:border-border-secondary/60"
+              }`}
+            >
+              <span className="font-bold text-lg">
+                <span className="text-purple-500">Lap</span>
+                <span className="text-text-primary">wise</span>
+              </span>
+            </Link>
+          </div>
 
           {/* Center nav links — desktop */}
-          <div className="hidden md:flex items-center justify-center gap-1 flex-1">
+          <div className="hidden md:flex items-center justify-center gap-1 shrink-0">
             {navLinks.map((link) => {
               const active = isActive(link.href);
               return (
@@ -231,7 +233,7 @@ export default function Navigation() {
                   }`}
                 >
                   <NavIcon link={link} active={active} scrolled={false} />
-                  <span className="text-sm whitespace-nowrap">
+                  <span className="text-xs font-bold font-mono uppercase tracking-widest whitespace-nowrap">
                     {link.label}
                   </span>
                 </Link>
@@ -240,7 +242,7 @@ export default function Navigation() {
           </div>
 
           {/* Right side — desktop */}
-          <div className="hidden md:flex items-center gap-2 ml-auto shrink-0">
+          <div className="flex-1 hidden md:flex items-center justify-end gap-2 shrink-0">
             {isLoading ? (
               <div className="w-8 h-8 rounded-full bg-bg-elevated animate-pulse" />
             ) : !isAuthenticated || !user ? (
@@ -270,7 +272,9 @@ export default function Navigation() {
                     d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
                   />
                 </svg>
-                <span className="text-sm whitespace-nowrap">Log in</span>
+                <span className="text-xs font-bold font-mono uppercase tracking-widest whitespace-nowrap">
+                  Log in
+                </span>
               </Link>
             ) : (
               <div
