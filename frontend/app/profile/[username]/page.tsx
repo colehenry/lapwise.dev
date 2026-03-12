@@ -25,11 +25,10 @@ export default function ProfilePage() {
   const { data: profile, isLoading } = useQuery<PublicProfile>({
     queryKey: ["profile", username],
     queryFn: async () => {
-      const res = await fetchWithAuth(apiUrl(`/auth/me`));
+      const res = await fetchWithAuth(apiUrl(`/api/users/${username}`));
       if (!res.ok) throw new Error("Profile not found");
       return res.json();
     },
-    enabled: isOwnProfile,
   });
 
   if (isLoading) {
@@ -40,12 +39,12 @@ export default function ProfilePage() {
     );
   }
 
-  const displayProfile = isOwnProfile && profile ? profile : null;
+  const displayProfile = profile;
 
   if (!displayProfile) {
     return (
       <div className="max-w-lg mx-auto px-4 py-12 text-center">
-        <p className="text-text-muted">Profile pages are coming soon.</p>
+        <p className="text-text-muted">User not found.</p>
       </div>
     );
   }

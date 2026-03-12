@@ -70,9 +70,11 @@ from app.routers import (
     auth,
     posts,
     tags,
+    users,
 )
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(season_results.router, prefix="/api/results", tags=["results"])
 app.include_router(drivers.router, prefix="/api/drivers", tags=["drivers"])
 app.include_router(
