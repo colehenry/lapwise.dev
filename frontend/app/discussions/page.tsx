@@ -9,6 +9,7 @@ import PostCard from "@/components/discussions/PostCard";
 import SortSelector from "@/components/discussions/SortSelector";
 import TagFilter from "@/components/discussions/TagFilter";
 import PageHeader from "@/components/PageHeader";
+import MonoLabel from "@/components/ui/MonoLabel";
 import Skeleton from "@/components/ui/Skeleton";
 import { fetchPosts, fetchTags } from "@/lib/discussions";
 import type { PostListItem, PostListResponse } from "@/lib/types";
@@ -110,11 +111,7 @@ export default function DiscussionsPage() {
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
         <div className="flex flex-wrap items-center gap-6 mb-6">
           <SortSelector value={sort} onChange={setSort} />
-          {!isAuthenticated && (
-            <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
-              Log in to publish
-            </span>
-          )}
+          {!isAuthenticated && <MonoLabel>Log in to publish</MonoLabel>}
         </div>
 
         <div className="space-y-5">
@@ -128,9 +125,7 @@ export default function DiscussionsPage() {
 
           {pinnedPosts.length > 0 && (
             <div className="space-y-3">
-              <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
-                Pinned
-              </div>
+              <MonoLabel as="div">Pinned</MonoLabel>
               {pinnedPosts.map((post) => (
                 <PostCard key={`pinned-${post.id}`} post={post} />
               ))}
