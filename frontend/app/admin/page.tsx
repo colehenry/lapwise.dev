@@ -81,10 +81,16 @@ export default function AdminDashboard() {
       <div className="space-y-8">
         <div className="h-8 w-48 bg-bg-tertiary rounded-sm animate-pulse" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="h-36 animate-pulse bg-bg-tertiary/50" />
-          <Card className="h-36 animate-pulse bg-bg-tertiary/50" />
+          <Card className="h-36 animate-pulse bg-bg-tertiary/50" padding="none">
+            <div className="h-full w-full" />
+          </Card>
+          <Card className="h-36 animate-pulse bg-bg-tertiary/50" padding="none">
+            <div className="h-full w-full" />
+          </Card>
         </div>
-        <Card className="h-96 animate-pulse bg-bg-tertiary/50" />
+        <Card className="h-96 animate-pulse bg-bg-tertiary/50" padding="none">
+          <div className="h-full w-full" />
+        </Card>
       </div>
     );
   }
