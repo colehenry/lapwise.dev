@@ -52,7 +52,24 @@ const navLinks: NavLink[] = [
   {
     href: "/circuits",
     label: "Circuits",
-    icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z",
+    renderIcon: (active: boolean, scrolled: boolean) => (
+      <svg
+        className={`shrink-0 transition-all duration-500 ${
+          scrolled ? "w-6 h-6" : "w-4 h-4"
+        } ${active ? "text-purple-400" : "text-text-muted group-hover:text-text-primary"}`}
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 431.76266 282.2795"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={18}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <title>Circuits</title>
+        <path d="m4.0167 271.88c0.64631 8.2948 35.488 7.0412 175.53 4.453 12.377-0.22874 23.86-0.27059 25.52-0.0932 13.322 1.4247 100.54 2.2285 145.19 1.3382l52.003-1.0371 10.787-5.1931c5.9327-2.8564 11.75-6.3558 12.928-7.7758 3.9507-4.7641 3.2062-6.3707-21.921-47.254-13.094-21.305-31.084-50.583-39.976-65.064-78.47-127.81-76.73-125.33-87.73-124.85-10.071 0.43333-18.612 11.049-30.86 38.362-6.0647 12.461-9.3595 17.392-9.4458 30.499-0.16791 25.024 10.566 36.802 43.884 48.15 27.605 9.4028 44.83 34.219 37.75 54.389-2.9794 8.4869-5.7122 8.9248-56.109 8.9963-116.27 0.16506-159.78-0.95414-191.07-4.9201-0.01764-0.002-0.0317-0.005-0.04921-0.008-1.3307-0.66808-2.43-1.5305-2.9028-2.6746 0.52921-1.7786 2.7076-4.7102 6.8088-9.6375 12.941-15.548 12.809-15.542 95.728-5.2995 57.897 7.1518 61.142 0.92171 16.441-31.574-40.6-29.52-40.53-29.42-36.96-49.77 3.4-19.413-0.73-26.128-20.45-33.214-14.94-5.372-30.31-18.671-50.912-44.055-23.312-28.723-35.64-28.862-40.096-0.451-16.672 106.31-23.197 153.18-23.266 178.19-0.10452 1.6859-0.07039 3.3487 0.08572 4.9912 0.31161 8.3078 1.4916 13.926 3.3599 18.797 7.4095 19.318 7.6168 17.58-3.5718 30.076-5.9649 6.6621-10.949 11.37-10.696 14.616z" />
+      </svg>
+    ),
   },
   {
     href: "/discussions",
@@ -84,14 +101,9 @@ function NavIcon({
         alt={link.label}
         width={24}
         height={24}
-        className={`shrink-0 object-contain transition-all duration-500 ${sizeClass} ${
-          active ? "opacity-95" : "opacity-70 group-hover:opacity-90"
-        } ${scrolled ? "scale-[1.15]" : "scale-[1.1]"}`}
-        style={{
-          filter: active
-            ? "drop-shadow(0 0 1.4px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 4px rgba(160, 32, 240, 0.6)) brightness(1.85) saturate(0.25) hue-rotate(220deg)"
-            : "drop-shadow(0 0 1.2px rgba(255, 255, 255, 0.6)) brightness(1.6) saturate(0) invert(0.8)",
-        }}
+        className={`shrink-0 object-contain transition-all duration-500 ${sizeClass} ${colorClass} ${
+          scrolled ? "scale-[1.15]" : "scale-[1.1]"
+        }`}
       />
     );
   }
@@ -198,12 +210,12 @@ export default function Navigation() {
                 : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/80 border border-transparent hover:border-border-secondary/60"
             }`}
           >
-            <div className="relative h-7 w-7 rounded-lg overflow-hidden ring-1 ring-purple-500/20 group-hover:ring-purple-500/40 transition-all duration-300">
+            <div className="relative h-8 w-8 rounded-lg overflow-hidden transition-all duration-300">
               <Image
                 src="/favicon.ico"
                 alt="Lapwise home"
-                width={28}
-                height={28}
+                width={32}
+                height={32}
                 className="object-cover"
               />
             </div>
@@ -279,62 +291,74 @@ export default function Navigation() {
                 <button
                   type="button"
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="group"
+                  className="group flex items-center"
                   aria-label="User menu"
                 >
-                  <div className="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-xs font-bold text-purple-300 group-hover:border-purple-500/60 group-hover:scale-[1.08] active:scale-95 transition-all duration-300">
-                    {initial}
+                  <div className="w-8 h-8 rounded-full bg-bg-elevated flex items-center justify-center text-xs font-bold text-text-muted group-hover:scale-[1.08] active:scale-95 transition-all duration-300 overflow-hidden">
+                    {user.avatar_url ? (
+                      // biome-ignore lint/performance/noImgElement: arbitrary avatar hosts
+                      <img
+                        src={user.avatar_url}
+                        alt={user.username}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      initial
+                    )}
                   </div>
                 </button>
 
-                {userMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden animate-scaleIn">
-                    <div className="px-3 py-2.5 border-b border-border-primary">
-                      <p className="text-sm font-medium text-text-primary truncate">
-                        @{user.username}
-                      </p>
-                      {user.role !== "user" && (
-                        <p className="text-[10px] uppercase tracking-widest text-purple-300 mt-0.5 font-mono">
-                          {user.role}
+                {userMenuOpen && !scrolled && (
+                  <div className="absolute right-0 top-full pt-2 w-48">
+                    <div className="bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden animate-scaleIn">
+                      <div className="px-3 py-2.5 border-b border-border-primary">
+                        <p className="text-sm font-medium text-text-primary truncate">
+                          @{user.username}
                         </p>
-                      )}
-                    </div>
-                    <div className="py-1">
-                      <Link
-                        href={`/profile/${user.username}`}
-                        onClick={() => setUserMenuOpen(false)}
-                        className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
-                      >
-                        Profile
-                      </Link>
-                      <Link
-                        href="/settings"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
-                      >
-                        Settings
-                      </Link>
-                      {isAdmin && (
+                        {user.role !== "user" && (
+                          <p className="text-[10px] uppercase tracking-widest text-purple-300 mt-0.5 font-mono">
+                            {user.role}
+                          </p>
+                        )}
+                      </div>
+                      <div className="py-1">
                         <Link
-                          href="/admin"
+                          href={`/profile/${user.username}`}
                           onClick={() => setUserMenuOpen(false)}
-                          className="block px-3 py-2 text-sm text-purple-300 hover:text-purple-200 hover:bg-bg-elevated/60 transition-colors"
+                          className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
                         >
-                          Admin
+                          Profile
                         </Link>
-                      )}
-                    </div>
-                    <div className="border-t border-border-primary py-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setUserMenuOpen(false);
-                          logout();
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
-                      >
-                        Log out
-                      </button>
+                        <Link
+                          href="/settings"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
+                        >
+                          Settings
+                        </Link>
+                        {isAdmin && (
+                          <Link
+                            href="/admin"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="block px-3 py-2 text-sm text-purple-300 hover:text-purple-200 hover:bg-bg-elevated/60 transition-colors"
+                          >
+                            Admin
+                          </Link>
+                        )}
+                      </div>
+                      <div className="border-t border-border-primary py-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            logout();
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                        >
+                          Log out
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -394,12 +418,12 @@ export default function Navigation() {
           className="group relative w-12 h-12 flex items-center justify-center rounded-2xl hover:scale-[1.1] active:scale-95 transition-all duration-200"
           title="Lapwise home"
         >
-          <div className="relative h-10 w-10 rounded-lg overflow-hidden ring-1 ring-purple-500/30">
+          <div className="relative h-12 w-12 rounded-lg overflow-hidden">
             <Image
               src="/favicon.ico"
               alt="Lapwise home"
-              width={40}
-              height={40}
+              width={48}
+              height={48}
               className="object-cover w-full h-full"
             />
           </div>
@@ -476,8 +500,18 @@ export default function Navigation() {
               className="group relative w-12 h-12 flex items-center justify-center"
               aria-label="User menu"
             >
-              <div className="w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-sm font-bold text-purple-300 group-hover:border-purple-500/60 group-hover:scale-[1.12] active:scale-95 transition-all duration-200">
-                {initial}
+              <div className="w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-sm font-bold text-purple-300 group-hover:border-purple-500/60 group-hover:scale-[1.12] active:scale-95 transition-all duration-200 overflow-hidden">
+                {user.avatar_url ? (
+                  // biome-ignore lint/performance/noImgElement: arbitrary avatar hosts
+                  <img
+                    src={user.avatar_url}
+                    alt={user.username}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  initial
+                )}
               </div>
               <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
                 Profile
@@ -485,53 +519,55 @@ export default function Navigation() {
             </button>
 
             {userMenuOpen && scrolled && (
-              <div className="absolute left-full top-0 ml-2 w-48 bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden animate-scaleIn">
-                <div className="px-3 py-2.5 border-b border-border-primary">
-                  <p className="text-sm font-medium text-text-primary truncate">
-                    @{user.username}
-                  </p>
-                  {user.role !== "user" && (
-                    <p className="text-[10px] uppercase tracking-widest text-purple-300 mt-0.5 font-mono">
-                      {user.role}
+              <div className="absolute left-full top-0 pl-2 w-48">
+                <div className="bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden animate-scaleIn">
+                  <div className="px-3 py-2.5 border-b border-border-primary">
+                    <p className="text-sm font-medium text-text-primary truncate">
+                      @{user.username}
                     </p>
-                  )}
-                </div>
-                <div className="py-1">
-                  <Link
-                    href={`/profile/${user.username}`}
-                    onClick={() => setUserMenuOpen(false)}
-                    className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
-                  >
-                    Profile
-                  </Link>
-                  <Link
-                    href="/settings"
-                    onClick={() => setUserMenuOpen(false)}
-                    className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
-                  >
-                    Settings
-                  </Link>
-                  {isAdmin && (
+                    {user.role !== "user" && (
+                      <p className="text-[10px] uppercase tracking-widest text-purple-300 mt-0.5 font-mono">
+                        {user.role}
+                      </p>
+                    )}
+                  </div>
+                  <div className="py-1">
                     <Link
-                      href="/admin"
+                      href={`/profile/${user.username}`}
                       onClick={() => setUserMenuOpen(false)}
-                      className="block px-3 py-2 text-sm text-purple-300 hover:text-purple-200 hover:bg-bg-elevated/60 transition-colors"
+                      className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
                     >
-                      Admin
+                      Profile
                     </Link>
-                  )}
-                </div>
-                <div className="border-t border-border-primary py-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setUserMenuOpen(false);
-                      logout();
-                    }}
-                    className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
-                  >
-                    Log out
-                  </button>
+                    <Link
+                      href="/settings"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
+                    >
+                      Settings
+                    </Link>
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="block px-3 py-2 text-sm text-purple-300 hover:text-purple-200 hover:bg-bg-elevated/60 transition-colors"
+                      >
+                        Admin
+                      </Link>
+                    )}
+                  </div>
+                  <div className="border-t border-border-primary py-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        logout();
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      Log out
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -583,8 +619,18 @@ export default function Navigation() {
               ) : (
                 <div className="space-y-1">
                   <div className="px-4 py-2 flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-xs font-bold text-purple-300">
-                      {initial}
+                    <div className="w-7 h-7 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-xs font-bold text-purple-300 overflow-hidden">
+                      {user.avatar_url ? (
+                        // biome-ignore lint/performance/noImgElement: arbitrary avatar hosts
+                        <img
+                          src={user.avatar_url}
+                          alt={user.username}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        initial
+                      )}
                     </div>
                     <span className="text-sm text-text-primary font-medium">
                       @{user.username}
