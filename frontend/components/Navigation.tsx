@@ -210,16 +210,7 @@ export default function Navigation() {
                 : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/80 border border-transparent hover:border-border-secondary/60"
             }`}
           >
-            <div className="relative h-8 w-8 rounded-lg overflow-hidden transition-all duration-300">
-              <Image
-                src="/favicon.ico"
-                alt="Lapwise home"
-                width={32}
-                height={32}
-                className="object-cover"
-              />
-            </div>
-            <span className="font-bold">
+            <span className="font-bold text-lg">
               <span className="text-purple-500">Lap</span>
               <span className="text-text-primary">wise</span>
             </span>
@@ -500,7 +491,7 @@ export default function Navigation() {
               className="group relative w-12 h-12 flex items-center justify-center"
               aria-label="User menu"
             >
-              <div className="w-10 h-10 rounded-full bg-bg-elevated flex items-center justify-center text-sm font-bold text-text-muted group-hover:scale-[1.12] active:scale-95 transition-all duration-200 overflow-hidden">
+              <div className="w-8 h-8 rounded-full bg-bg-elevated flex items-center justify-center text-sm font-bold text-text-muted group-hover:scale-[1.12] active:scale-95 transition-all duration-200 overflow-hidden">
                 {user.avatar_url ? (
                   // biome-ignore lint/performance/noImgElement: arbitrary avatar hosts
                   <img
