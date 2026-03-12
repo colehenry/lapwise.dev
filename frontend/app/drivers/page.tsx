@@ -4,10 +4,17 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import JumpToRace from "@/components/JumpToRace";
+import PageHeader from "@/components/PageHeader";
 import { GridPattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import TiltCard from "@/components/ui/TiltCard";
-import { apiHeaders, apiUrl, isValidHeadshotUrl } from "@/lib/api";
+import {
+  apiHeaders,
+  apiUrl,
+  fetchSeasons,
+  isValidHeadshotUrl,
+} from "@/lib/api";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
 import type { DriverListItem, DriverListResponse } from "@/lib/types";
 
@@ -181,16 +188,36 @@ export default function DriversPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("wins");
   const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<string>("all");
 
   const { data, isLoading } = useQuery({
     queryKey: ["drivers-all"],
     queryFn: fetchAllDrivers,
   });
 
+  const { data: availableYears = [] } = useQuery<number[]>({
+    queryKey: ["seasons"],
+    queryFn: fetchSeasons,
+    staleTime: 1000 * 60 * 60,
+  });
+
   const filteredDrivers = useMemo(() => {
     if (!data) return [];
 
     let drivers = data.drivers;
+
+    // Season filter
+    if (selectedYear !== "all") {
+      const yearNum = Number.parseInt(selectedYear, 10);
+      drivers = drivers.filter((d) => {
+        if (d.first_season === null || d.latest_season === null) return false;
+        return (
+          d.first_season <= yearNum &&
+          (d.latest_season >= yearNum ||
+            (d.latest_season === CURRENT_YEAR && yearNum === CURRENT_YEAR))
+        );
+      });
+    }
 
     // Search filter
     if (searchQuery) {
@@ -232,11 +259,11 @@ export default function DriversPage() {
     }
 
     return sorted;
-  }, [data, searchQuery, sortKey]);
+  }, [data, searchQuery, sortKey, selectedYear]);
 
   useEffect(() => {
     setIsExpanded(false);
-  }, [searchQuery, sortKey]);
+  }, [searchQuery, sortKey, selectedYear]);
 
   const visibleDrivers = isExpanded
     ? filteredDrivers
@@ -244,24 +271,27 @@ export default function DriversPage() {
 
   return (
     <div className="min-h-screen bg-bg-secondary">
-      {/* Header */}
-      <div className="relative overflow-hidden border-b border-border-primary">
-        <GridPattern
-          id="drivers-grid"
-          className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.06] pointer-events-none"
-        />
-        <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-8 py-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-            <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-              All-Time Statistics
-            </span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-text-primary tracking-tight">
-            Drivers
-          </h1>
-        </div>
-      </div>
+      <PageHeader
+        title="Drivers"
+        subtitle={
+          selectedYear === "all"
+            ? "All-Time Career Statistics"
+            : `${selectedYear} Season Entries`
+        }
+      >
+        <select
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(e.target.value)}
+          className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-3 py-1.5 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
+        >
+          <option value="all">ALL TIME</option>
+          {availableYears.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+      </PageHeader>
 
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
         {/* Controls */}
@@ -279,7 +309,7 @@ export default function DriversPage() {
         {/* Stats bar */}
         {data && (
           <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-6">
-            {filteredDrivers.length} drivers across F1 history
+            {filteredDrivers.length} total drivers
           </div>
         )}
 

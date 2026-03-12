@@ -3,11 +3,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GridPattern } from "@/components/Patterns";
-import { useSidebar } from "@/components/SidebarContext";
-import UserMenu from "@/components/UserMenu";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useAuth } from "@/components/AuthProvider";
 
-const navLinks = [
+interface NavLink {
+  href: string;
+  label: string;
+  icon?: string;
+  renderIcon?: (active: boolean, scrolled: boolean) => React.ReactNode;
+  imageSrc?: string;
+}
+
+const navLinks: NavLink[] = [
   {
     href: "/results",
     label: "Race Weekend Hub",
@@ -16,9 +23,11 @@ const navLinks = [
   {
     href: "/drivers",
     label: "Drivers",
-    renderIcon: (active: boolean) => (
+    renderIcon: (active: boolean, scrolled: boolean) => (
       <svg
-        className={`w-4 h-4 shrink-0 ${active ? "text-purple-400" : "text-text-muted"}`}
+        className={`shrink-0 transition-all duration-500 ${
+          scrolled ? "w-6 h-6" : "w-4 h-4"
+        } ${active ? "text-purple-400" : "text-text-muted group-hover:text-text-primary"}`}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 512 512"
         fill="none"
@@ -41,280 +50,642 @@ const navLinks = [
     icon: "M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z",
   },
   {
-    href: "/discussions",
-    label: "Discussions",
-    icon: "M7 8h10M7 12h6m-6 8l-4-4H3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9l-4 4z",
-  },
-  {
     href: "/circuits",
     label: "Circuits",
-    imageSrc: "/track-maps/4.png",
+    renderIcon: (active: boolean, scrolled: boolean) => (
+      <svg
+        className={`shrink-0 transition-all duration-500 ${
+          scrolled ? "w-6 h-6" : "w-4 h-4"
+        } ${active ? "text-purple-400" : "text-text-muted group-hover:text-text-primary"}`}
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 431.76266 282.2795"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={18}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <title>Circuits</title>
+        <path d="m4.0167 271.88c0.64631 8.2948 35.488 7.0412 175.53 4.453 12.377-0.22874 23.86-0.27059 25.52-0.0932 13.322 1.4247 100.54 2.2285 145.19 1.3382l52.003-1.0371 10.787-5.1931c5.9327-2.8564 11.75-6.3558 12.928-7.7758 3.9507-4.7641 3.2062-6.3707-21.921-47.254-13.094-21.305-31.084-50.583-39.976-65.064-78.47-127.81-76.73-125.33-87.73-124.85-10.071 0.43333-18.612 11.049-30.86 38.362-6.0647 12.461-9.3595 17.392-9.4458 30.499-0.16791 25.024 10.566 36.802 43.884 48.15 27.605 9.4028 44.83 34.219 37.75 54.389-2.9794 8.4869-5.7122 8.9248-56.109 8.9963-116.27 0.16506-159.78-0.95414-191.07-4.9201-0.01764-0.002-0.0317-0.005-0.04921-0.008-1.3307-0.66808-2.43-1.5305-2.9028-2.6746 0.52921-1.7786 2.7076-4.7102 6.8088-9.6375 12.941-15.548 12.809-15.542 95.728-5.2995 57.897 7.1518 61.142 0.92171 16.441-31.574-40.6-29.52-40.53-29.42-36.96-49.77 3.4-19.413-0.73-26.128-20.45-33.214-14.94-5.372-30.31-18.671-50.912-44.055-23.312-28.723-35.64-28.862-40.096-0.451-16.672 106.31-23.197 153.18-23.266 178.19-0.10452 1.6859-0.07039 3.3487 0.08572 4.9912 0.31161 8.3078 1.4916 13.926 3.3599 18.797 7.4095 19.318 7.6168 17.58-3.5718 30.076-5.9649 6.6621-10.949 11.37-10.696 14.616z" />
+      </svg>
+    ),
   },
   {
-    href: "/about",
-    label: "About",
-    icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+    href: "/discussions",
+    label: "Discuss",
+    icon: "M7 8h10M7 12h6m-6 8l-4-4H3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9l-4 4z",
   },
 ];
 
+function NavIcon({
+  link,
+  active,
+  scrolled,
+}: {
+  link: NavLink;
+  active: boolean;
+  scrolled: boolean;
+}) {
+  const sizeClass = scrolled ? "w-6 h-6" : "w-4 h-4";
+  const colorClass = active
+    ? "text-purple-400"
+    : "text-text-muted group-hover:text-text-primary";
+
+  if (link.renderIcon) return <>{link.renderIcon(active, scrolled)}</>;
+
+  if (link.imageSrc) {
+    return (
+      <Image
+        src={link.imageSrc}
+        alt={link.label}
+        width={24}
+        height={24}
+        className={`shrink-0 object-contain transition-all duration-500 ${sizeClass} ${colorClass} ${
+          scrolled ? "scale-[1.15]" : "scale-[1.1]"
+        }`}
+      />
+    );
+  }
+
+  return (
+    <svg
+      className={`shrink-0 transition-all duration-500 ${sizeClass} ${colorClass}`}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <title>{link.label}</title>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d={link.icon}
+      />
+    </svg>
+  );
+}
+
 export default function Navigation() {
   const pathname = usePathname();
-  const { isOpen, toggle, close } = useSidebar();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
   };
 
+  const handleScroll = useCallback(() => {
+    setScrolled(window.scrollY >= 56);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional — close menus when route changes
+  useEffect(() => {
+    setMobileOpen(false);
+    setUserMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(e.target as Node)
+      ) {
+        setUserMenuOpen(false);
+      }
+    }
+    if (userMenuOpen) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [userMenuOpen]);
+
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+  }, [mobileOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const initial = user?.username?.[0]?.toUpperCase() ?? "?";
+  const isAdmin = user?.role === "admin";
+
   return (
     <>
-      {/* Mobile backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1200] md:hidden"
-          onClick={close}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") close();
-          }}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Sidebar — always present, transitions between rail (64px) and full width (18rem) */}
-      <aside
-        className={`fixed top-0 left-0 h-full bg-bg-secondary border-r border-border-primary z-[1250] transition-all duration-200 ease-out overflow-hidden ${
-          isOpen ? "w-72" : "w-16"
-        } ${!isOpen ? "max-md:hidden" : ""}`}
+      {/* ── Expanded state: full-width top bar ── */}
+      <nav
+        className={`absolute top-0 left-0 right-0 z-[1200] backdrop-blur-xl border-b border-border-primary bg-bg-secondary/80 h-14 ${
+          scrolled ? "pointer-events-none" : "pointer-events-auto"
+        }`}
       >
-        <GridPattern
-          id="nav-grid"
-          className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.06] pointer-events-none"
-        />
-
-        <div className="relative z-10 flex flex-col h-full">
-          {/* Header */}
-          <div className="h-16 flex items-center border-b border-border-primary shrink-0">
-            {isOpen ? (
-              <div className="flex items-center justify-between w-full px-5">
-                <Link href="/" className="flex items-center gap-2.5">
-                  <div className="relative h-8 w-8 rounded-sm overflow-hidden ring-2 ring-purple-500/20 shrink-0">
-                    <Image
-                      src="/favicon.ico"
-                      alt="Lapwise home"
-                      width={32}
-                      height={32}
-                      className="object-cover"
-                    />
-                  </div>
-                  <span className="text-lg font-bold whitespace-nowrap">
-                    <span className="text-purple-500">Lap</span>
-                    <span className="text-text-primary">wise</span>
-                  </span>
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={toggle}
-                  className="w-8 h-8 flex items-center justify-center rounded-sm text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-colors duration-150"
-                  aria-label="Collapse navigation"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <title>Collapse sidebar</title>
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
-                    />
-                  </svg>
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center w-full">
-                <button
-                  type="button"
-                  onClick={toggle}
-                  className="relative h-8 w-8 rounded-sm overflow-hidden ring-2 ring-purple-500/20 hover:ring-purple-500/50 transition-all duration-150 cursor-pointer"
-                  aria-label="Expand navigation"
-                >
-                  <Image
-                    src="/favicon.ico"
-                    alt="Lapwise"
-                    width={32}
-                    height={32}
-                    className="object-cover"
-                  />
-                </button>
-              </div>
-            )}
+        <div className="h-full px-4 max-w-6xl mx-auto flex items-center">
+          {/* Left side — Logo */}
+          <div className="flex-1 flex items-center">
+            <Link
+              href="/"
+              className={`group flex items-center gap-2.5 px-3.5 py-2 rounded-full transition-all duration-300 hover:scale-[1.04] active:scale-[0.97] ${
+                isActive("/")
+                  ? "bg-purple-500/15 text-purple-300 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
+                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/80 border border-transparent hover:border-border-secondary/60"
+              }`}
+            >
+              <span className="font-bold text-lg">
+                <span className="text-purple-500">Lap</span>
+                <span className="text-text-primary">wise</span>
+              </span>
+            </Link>
           </div>
 
-          {/* Section label — only when expanded */}
-          {isOpen && (
-            <div className="px-5 pt-6 pb-2">
-              <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                Navigate
-              </span>
-            </div>
-          )}
+          {/* Center nav links — desktop */}
+          <div className="hidden md:flex items-center justify-center gap-1 shrink-0">
+            {navLinks.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`group flex items-center gap-2 px-3.5 py-2 rounded-full transition-all duration-300 hover:scale-[1.04] active:scale-[0.97] ${
+                    active
+                      ? "bg-purple-500/15 text-purple-300 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
+                      : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/80 border border-transparent hover:border-border-secondary/60"
+                  }`}
+                >
+                  <NavIcon link={link} active={active} scrolled={false} />
+                  <span className="text-xs font-bold font-mono uppercase tracking-widest whitespace-nowrap">
+                    {link.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
 
-          {/* Expand chevron — only when collapsed */}
-          {!isOpen && (
-            <div className="flex justify-center pt-4 pb-2">
-              <button
-                type="button"
-                onClick={toggle}
-                className="w-8 h-8 flex items-center justify-center rounded-sm text-text-muted hover:text-purple-400 hover:bg-purple-500/10 transition-colors duration-150"
-                aria-label="Expand navigation"
+          {/* Right side — desktop */}
+          <div className="flex-1 hidden md:flex items-center justify-end gap-2 shrink-0">
+            {isLoading ? (
+              <div className="w-8 h-8 rounded-full bg-bg-elevated animate-pulse" />
+            ) : !isAuthenticated || !user ? (
+              <Link
+                href="/login"
+                className={`group flex items-center gap-2 px-3.5 py-2 rounded-full transition-all duration-300 hover:scale-[1.04] active:scale-[0.97] ${
+                  isActive("/login")
+                    ? "bg-purple-500/15 text-purple-300 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
+                    : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/80 border border-transparent hover:border-border-secondary/60"
+                }`}
               >
                 <svg
-                  className="w-3.5 h-3.5"
+                  className={`w-4 h-4 transition-all duration-500 ${
+                    isActive("/login")
+                      ? "text-purple-400"
+                      : "text-text-muted group-hover:text-text-primary"
+                  }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                   aria-hidden="true"
                 >
-                  <title>Expand sidebar</title>
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 5l7 7-7 7M5 5l7 7-7 7"
+                    strokeWidth={1.5}
+                    d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
                   />
                 </svg>
-              </button>
-            </div>
-          )}
-
-          {/* Navigation Links */}
-          <nav
-            className={`flex-1 space-y-1 ${isOpen ? "px-3" : "px-2"} ${!isOpen ? "pt-1" : ""}`}
-          >
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                title={!isOpen ? link.label : undefined}
-                className={`flex items-center rounded-sm text-sm transition-colors duration-150 ${
-                  isOpen ? "gap-3 px-3 py-2.5" : "justify-center px-0 py-2.5"
-                } ${
-                  isActive(link.href)
-                    ? "bg-purple-500/15 border border-purple-500/40 text-purple-300"
-                    : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated border border-transparent"
-                }`}
-              >
-                {"renderIcon" in link ? (
-                  // biome-ignore lint/style/noNonNullAssertion: guarded by "renderIcon" in link
-                  link.renderIcon!(isActive(link.href))
-                ) : "imageSrc" in link ? (
-                  <Image
-                    src={link.imageSrc as string}
-                    alt={link.label}
-                    width={16}
-                    height={16}
-                    className={`w-4 h-4 shrink-0 object-contain ${
-                      isActive(link.href) ? "opacity-90" : "opacity-40"
-                    }`}
-                    style={{
-                      filter: isActive(link.href)
-                        ? "drop-shadow(0 0 4px rgba(160, 32, 240, 0.6)) brightness(1.8) saturate(0.3) hue-rotate(220deg)"
-                        : "brightness(1.4) saturate(0) invert(0.7)",
-                    }}
-                  />
-                ) : (
-                  <svg
-                    className={`w-4 h-4 shrink-0 ${
-                      isActive(link.href)
-                        ? "text-purple-400"
-                        : "text-text-muted"
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <title>{link.label}</title>
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d={link.icon}
-                    />
-                  </svg>
-                )}
-                {isOpen && (
-                  <>
-                    <span className="tracking-wide whitespace-nowrap">
-                      {link.label}
-                    </span>
-                    {isActive(link.href) && (
-                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-purple-500" />
-                    )}
-                  </>
-                )}
+                <span className="text-xs font-bold font-mono uppercase tracking-widest whitespace-nowrap">
+                  Log in
+                </span>
               </Link>
-            ))}
-          </nav>
+            ) : (
+              <div
+                ref={userMenuRef}
+                className="relative"
+                onMouseEnter={() => setUserMenuOpen(true)}
+                onMouseLeave={() => setUserMenuOpen(false)}
+              >
+                <button
+                  type="button"
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="group flex items-center"
+                  aria-label="User menu"
+                >
+                  <div className="w-8 h-8 rounded-full bg-bg-elevated flex items-center justify-center text-xs font-bold text-text-muted group-hover:scale-[1.08] active:scale-95 transition-all duration-300 overflow-hidden">
+                    {user.avatar_url ? (
+                      // biome-ignore lint/performance/noImgElement: arbitrary avatar hosts
+                      <img
+                        src={user.avatar_url}
+                        alt={user.username}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      initial
+                    )}
+                  </div>
+                </button>
 
-          {/* User + Footer */}
-          <div
-            className={`py-4 border-t border-border-primary space-y-3 ${isOpen ? "px-5" : "flex flex-col items-center gap-3"}`}
+                {userMenuOpen && !scrolled && (
+                  <div className="absolute right-0 top-full pt-2 w-48">
+                    <div className="bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden animate-scaleIn">
+                      <div className="px-3 py-2.5 border-b border-border-primary">
+                        <p className="text-sm font-medium text-text-primary truncate">
+                          @{user.username}
+                        </p>
+                        {user.role !== "user" && (
+                          <p className="text-[10px] uppercase tracking-widest text-purple-300 mt-0.5 font-mono">
+                            {user.role}
+                          </p>
+                        )}
+                      </div>
+                      <div className="py-1">
+                        <Link
+                          href={`/profile/${user.username}`}
+                          onClick={() => setUserMenuOpen(false)}
+                          className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
+                        >
+                          Profile
+                        </Link>
+                        <Link
+                          href="/settings"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
+                        >
+                          Settings
+                        </Link>
+                        {isAdmin && (
+                          <Link
+                            href="/admin"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="block px-3 py-2 text-sm text-purple-300 hover:text-purple-200 hover:bg-bg-elevated/60 transition-colors"
+                          >
+                            Admin
+                          </Link>
+                        )}
+                      </div>
+                      <div className="border-t border-border-primary py-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            logout();
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                        >
+                          Log out
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Mobile hamburger */}
+          <button
+            type="button"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden ml-auto w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:text-text-primary hover:bg-bg-elevated/80 transition-all duration-200 hover:scale-[1.08] active:scale-95"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
           >
-            {isOpen && <UserMenu />}
-            <a
-              href="https://github.com/colehenry/lapwise.dev"
-              target="_blank"
-              rel="noopener noreferrer"
-              title={!isOpen ? "Source on GitHub" : undefined}
-              className={`flex items-center text-text-muted hover:text-purple-300 text-xs tracking-wide transition-colors duration-150 ${
-                isOpen ? "gap-2" : "justify-center"
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <title>{mobileOpen ? "Close menu" : "Open menu"}</title>
+              {mobileOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
+          </button>
+        </div>
+      </nav>
+
+      {/* ── Collapsed state: vertical floating dock on the left ── */}
+      <div
+        style={{
+          left: "min(60px, max(12px, calc((100vw - (72rem + 40px)) / 4 - 34px)))",
+        }}
+        className={`fixed top-3 z-[1200] hidden md:flex flex-col items-center gap-2.5 p-2.5 rounded-3xl bg-bg-secondary/90 backdrop-blur-xl border border-border-primary shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(160,32,240,0.06)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+          scrolled
+            ? "opacity-100 translate-x-0 scale-100 delay-300"
+            : "opacity-0 -translate-x-4 scale-95 pointer-events-none delay-0"
+        }`}
+      >
+        {/* Logo */}
+        <Link
+          href="/"
+          className="group relative w-12 h-12 flex items-center justify-center rounded-2xl hover:scale-[1.1] active:scale-95 transition-all duration-200"
+          title="Lapwise home"
+        >
+          <div className="relative h-12 w-12 rounded-lg overflow-hidden">
+            <Image
+              src="/favicon.ico"
+              alt="Lapwise home"
+              width={48}
+              height={48}
+              className="object-cover w-full h-full"
+            />
+          </div>
+          <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
+            Home
+          </span>
+        </Link>
+
+        <div className="w-8 h-px bg-border-primary my-0.5" />
+
+        {/* Nav icons */}
+        {navLinks.map((link) => {
+          const active = isActive(link.href);
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              title={link.label}
+              className={`group relative w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.12] active:scale-95 ${
+                active
+                  ? "bg-purple-500/15 border border-purple-500/25 shadow-[inset_0_0_10px_rgba(160,32,240,0.1)]"
+                  : "border border-transparent hover:bg-bg-elevated/80 hover:border-border-secondary/60"
               }`}
             >
-              <svg
-                className="w-4 h-4 shrink-0"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <title>GitHub</title>
-                <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-              </svg>
-              {isOpen && <span>Source</span>}
-            </a>
-          </div>
-        </div>
-      </aside>
+              <NavIcon link={link} active={active} scrolled={true} />
+              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
+                {link.label}
+              </span>
+            </Link>
+          );
+        })}
 
-      {/* Mobile open button — only visible on small screens when sidebar is closed */}
-      {!isOpen && (
-        <button
-          type="button"
-          onClick={toggle}
-          className="fixed top-4 left-4 z-[1300] md:hidden flex items-center justify-center w-10 h-10 rounded-sm bg-bg-secondary border border-border-primary text-text-muted hover:text-purple-400 hover:border-purple-500/40 transition-colors duration-150"
-          aria-label="Open navigation"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
+        <div className="w-8 h-px bg-border-primary my-0.5" />
+
+        {/* User avatar */}
+        {isLoading ? (
+          <div className="w-10 h-10 rounded-full bg-bg-elevated animate-pulse" />
+        ) : !isAuthenticated || !user ? (
+          <Link
+            href="/login"
+            title="Log in"
+            className="group relative w-12 h-12 flex items-center justify-center rounded-2xl text-text-muted hover:text-purple-300 hover:bg-purple-500/10 transition-all duration-200 hover:scale-[1.12] active:scale-95"
           >
-            <title>Open menu</title>
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          </svg>
-        </button>
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <title>Log in</title>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
+              />
+            </svg>
+            <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
+              Log in
+            </span>
+          </Link>
+        ) : (
+          <div
+            ref={scrolled ? userMenuRef : undefined}
+            className="relative"
+            onMouseEnter={() => setUserMenuOpen(true)}
+            onMouseLeave={() => setUserMenuOpen(false)}
+          >
+            <button
+              type="button"
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              title={`@${user.username}`}
+              className="group relative w-12 h-12 flex items-center justify-center"
+              aria-label="User menu"
+            >
+              <div className="w-8 h-8 rounded-full bg-bg-elevated flex items-center justify-center text-sm font-bold text-text-muted group-hover:scale-[1.12] active:scale-95 transition-all duration-200 overflow-hidden">
+                {user.avatar_url ? (
+                  // biome-ignore lint/performance/noImgElement: arbitrary avatar hosts
+                  <img
+                    src={user.avatar_url}
+                    alt={user.username}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  initial
+                )}
+              </div>
+              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
+                Profile
+              </span>
+            </button>
+
+            {userMenuOpen && scrolled && (
+              <div className="absolute left-full top-0 pl-2 w-48">
+                <div className="bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden animate-scaleIn">
+                  <div className="px-3 py-2.5 border-b border-border-primary">
+                    <p className="text-sm font-medium text-text-primary truncate">
+                      @{user.username}
+                    </p>
+                    {user.role !== "user" && (
+                      <p className="text-[10px] uppercase tracking-widest text-purple-300 mt-0.5 font-mono">
+                        {user.role}
+                      </p>
+                    )}
+                  </div>
+                  <div className="py-1">
+                    <Link
+                      href={`/profile/${user.username}`}
+                      onClick={() => setUserMenuOpen(false)}
+                      className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
+                    >
+                      Profile
+                    </Link>
+                    <Link
+                      href="/settings"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
+                    >
+                      Settings
+                    </Link>
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="block px-3 py-2 text-sm text-purple-300 hover:text-purple-200 hover:bg-bg-elevated/60 transition-colors"
+                      >
+                        Admin
+                      </Link>
+                    )}
+                  </div>
+                  <div className="border-t border-border-primary py-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        logout();
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      Log out
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1100] md:hidden"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="fixed top-14 left-0 right-0 z-[1150] md:hidden bg-bg-secondary/95 backdrop-blur-xl border-b border-border-primary shadow-[0_16px_48px_rgba(0,0,0,0.5)] animate-slideDown">
+            <div className="px-4 py-3 space-y-1">
+              {navLinks.map((link) => {
+                const active = isActive(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`group flex items-center gap-3 px-4 py-3 text-sm rounded-2xl transition-all duration-200 active:scale-[0.98] ${
+                      active
+                        ? "text-purple-300 bg-purple-500/12 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.06)]"
+                        : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 border border-transparent"
+                    }`}
+                  >
+                    <NavIcon link={link} active={active} scrolled={false} />
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="border-t border-border-primary px-4 py-3">
+              {isLoading ? (
+                <div className="w-full h-11 bg-bg-elevated animate-pulse rounded-2xl" />
+              ) : !isAuthenticated || !user ? (
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="block px-4 py-3 text-sm text-text-secondary hover:text-purple-300 rounded-2xl transition-colors"
+                >
+                  Log in
+                </Link>
+              ) : (
+                <div className="space-y-1">
+                  <div className="px-4 py-2 flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-xs font-bold text-purple-300 overflow-hidden">
+                      {user.avatar_url ? (
+                        // biome-ignore lint/performance/noImgElement: arbitrary avatar hosts
+                        <img
+                          src={user.avatar_url}
+                          alt={user.username}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        initial
+                      )}
+                    </div>
+                    <span className="text-sm text-text-primary font-medium">
+                      @{user.username}
+                    </span>
+                    {user.role !== "user" && (
+                      <span className="text-[10px] uppercase tracking-widest text-purple-300 font-mono">
+                        {user.role}
+                      </span>
+                    )}
+                  </div>
+                  <Link
+                    href={`/profile/${user.username}`}
+                    onClick={() => setMobileOpen(false)}
+                    className="block px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 rounded-2xl transition-colors"
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    href="/settings"
+                    onClick={() => setMobileOpen(false)}
+                    className="block px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 rounded-2xl transition-colors"
+                  >
+                    Settings
+                  </Link>
+                  {isAdmin && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setMobileOpen(false)}
+                      className="block px-4 py-2.5 text-sm text-purple-300 hover:text-purple-200 hover:bg-bg-elevated/60 rounded-2xl transition-colors"
+                    >
+                      Admin
+                    </Link>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileOpen(false);
+                      logout();
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 rounded-2xl transition-colors"
+                  >
+                    Log out
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-border-primary px-4 py-3">
+              <div className="flex items-center gap-4">
+                <Link
+                  href="/about"
+                  onClick={() => setMobileOpen(false)}
+                  className="text-text-muted hover:text-text-primary text-xs transition-colors"
+                >
+                  About
+                </Link>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </>
   );

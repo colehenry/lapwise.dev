@@ -3,6 +3,8 @@
 import { useState } from "react";
 import MarkdownContent from "@/components/discussions/MarkdownContent";
 import Button from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Input";
+import MonoLabel from "@/components/ui/MonoLabel";
 
 interface CommentEditorProps {
   onSubmit: (body: string) => Promise<void>;
@@ -75,13 +77,12 @@ export default function CommentEditor({
       </div>
 
       {mode === "write" ? (
-        <textarea
+        <Textarea
           value={body}
           onChange={(event) => setBody(event.target.value)}
           maxLength={maxLength}
           rows={4}
           placeholder={placeholder}
-          className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/40 transition-colors resize-none"
         />
       ) : (
         <div className="min-h-[120px] rounded-sm border border-border-primary bg-bg-tertiary p-3">
@@ -94,9 +95,9 @@ export default function CommentEditor({
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+        <MonoLabel>
           {body.length}/{maxLength}
-        </span>
+        </MonoLabel>
 
         <div className="flex items-center gap-2">
           {onCancel && (

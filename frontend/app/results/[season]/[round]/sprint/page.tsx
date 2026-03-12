@@ -15,7 +15,7 @@ export default function SprintRedirectPage() {
 
   return (
     <main className="min-h-screen bg-bg-secondary p-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
           Redirecting to race weekend...
         </p>

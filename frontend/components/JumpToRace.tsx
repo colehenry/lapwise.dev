@@ -203,22 +203,27 @@ export default function JumpToRace({
                 className="w-full px-3 py-2 bg-bg-primary border border-border-primary rounded-sm text-text-primary font-mono text-sm focus:outline-none focus:border-purple-500 transition-colors duration-150"
               >
                 <option value="">Select a round...</option>
-                {rounds.filter((r) => excludeRound == null || r.round !== excludeRound).map((r) => {
-                  const key = `${r.round}-${r.session_type}`;
-                  const isSprintRace = r.session_type === "sprint_race";
-                  const isSprintQuali = r.session_type === "sprint_qualifying";
-                  const isRegularQuali = r.session_type === "qualifying";
+                {rounds
+                  .filter(
+                    (r) => excludeRound == null || r.round !== excludeRound,
+                  )
+                  .map((r) => {
+                    const key = `${r.round}-${r.session_type}`;
+                    const isSprintRace = r.session_type === "sprint_race";
+                    const isSprintQuali =
+                      r.session_type === "sprint_qualifying";
+                    const isRegularQuali = r.session_type === "qualifying";
 
-                  return (
-                    <option key={key} value={key}>
-                      R{String(r.round).padStart(2, "0")}
-                      {isSprintRace ? " Sprint" : ""}
-                      {isSprintQuali ? " Sprint Quali" : ""}
-                      {isRegularQuali ? " Quali" : ""} &bull;{" "}
-                      {r.event_name.replace("Grand Prix", "GP")}
-                    </option>
-                  );
-                })}
+                    return (
+                      <option key={key} value={key}>
+                        R{String(r.round).padStart(2, "0")}
+                        {isSprintRace ? " Sprint" : ""}
+                        {isSprintQuali ? " Sprint Quali" : ""}
+                        {isRegularQuali ? " Quali" : ""} &bull;{" "}
+                        {r.event_name.replace("Grand Prix", "GP")}
+                      </option>
+                    );
+                  })}
               </select>
             ) : (
               <div className="text-text-muted font-mono text-xs py-2 text-center tracking-widest uppercase">

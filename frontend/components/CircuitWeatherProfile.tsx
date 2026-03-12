@@ -107,7 +107,8 @@ export default function CircuitWeatherProfile({
           />
         </div>
         <div className="text-[10px] text-text-muted mt-1">
-          {data.wet_race_count} wet out of {data.total_races_checked} total races
+          {data.wet_race_count} wet out of {data.total_races_checked} total
+          races
         </div>
       </div>
     </div>

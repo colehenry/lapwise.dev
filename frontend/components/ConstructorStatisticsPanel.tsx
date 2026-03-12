@@ -127,7 +127,10 @@ export default function ConstructorStatisticsPanel({
                   tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
                   tickLine={false}
                   axisLine={{ stroke: CHART_COLORS.borderPrimary }}
-                  interval={Math.max(0, Math.ceil(winPodiumData.length / 15) - 1)}
+                  interval={Math.max(
+                    0,
+                    Math.ceil(winPodiumData.length / 15) - 1,
+                  )}
                 />
                 <YAxis
                   tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}

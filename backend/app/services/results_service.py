@@ -138,6 +138,8 @@ class ResultsService:
                 Session.session_type,
                 Circuit.name.label("circuit_name"),
                 Circuit.id.label("circuit_id"),
+                Circuit.location.label("circuit_location"),
+                Circuit.country.label("circuit_country"),
                 SessionResult.position,
                 Driver.full_name,
                 Driver.driver_code,
@@ -148,6 +150,7 @@ class ResultsService:
                 Team.team_color,
                 Team.logo_url,
                 SessionResult.fastest_lap,
+                SessionResult.time_seconds,
             )
             .join(SessionResult, Session.id == SessionResult.session_id)
             .join(Driver, SessionResult.driver_id == Driver.id)
