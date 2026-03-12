@@ -29,7 +29,9 @@ export default function PageHeader({
       <div className="px-4">
         <div className="mx-auto w-full max-w-full md:max-w-[calc(72rem+40px)]">
           <div className="bg-bg-secondary/95 backdrop-blur-xl border-x border-b border-border-primary rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)]">
-            <div className={`h-16 px-6 flex items-center relative ${bottomContent ? "border-b border-border-primary/60" : ""}`}>
+            <div
+              className={`h-16 px-6 flex items-center relative ${bottomContent ? "border-b border-border-primary/60" : ""}`}
+            >
               {/* Left: Back Button or Custom Content */}
               <div className="flex-1 flex items-center gap-4">
                 {onBack ? (
@@ -39,7 +41,9 @@ export default function PageHeader({
                     className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center gap-2"
                   >
                     <span>←</span>
-                    <span className="hidden sm:inline uppercase">{backLabel}</span>
+                    <span className="hidden sm:inline uppercase">
+                      {backLabel}
+                    </span>
                   </button>
                 ) : (
                   leftContent
@@ -65,11 +69,7 @@ export default function PageHeader({
             </div>
 
             {/* Bottom Content (e.g., Tabs) */}
-            {bottomContent && (
-              <div className="px-4 pb-2">
-                {bottomContent}
-              </div>
-            )}
+            {bottomContent && <div className="px-4 pb-2">{bottomContent}</div>}
           </div>
         </div>
       </div>

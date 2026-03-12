@@ -185,9 +185,7 @@ export default function Navigation() {
       {/* ── Expanded state: full-width top bar ── */}
       <nav
         className={`absolute top-0 left-0 right-0 z-[1200] backdrop-blur-xl border-b border-border-primary bg-bg-secondary/80 h-14 ${
-          scrolled
-            ? "pointer-events-none"
-            : "pointer-events-auto"
+          scrolled ? "pointer-events-none" : "pointer-events-auto"
         }`}
       >
         <div className="h-full px-4 max-w-6xl mx-auto flex items-center">
@@ -230,7 +228,9 @@ export default function Navigation() {
                   }`}
                 >
                   <NavIcon link={link} active={active} scrolled={false} />
-                  <span className="text-sm whitespace-nowrap">{link.label}</span>
+                  <span className="text-sm whitespace-nowrap">
+                    {link.label}
+                  </span>
                 </Link>
               );
             })}
@@ -251,7 +251,9 @@ export default function Navigation() {
               >
                 <svg
                   className={`w-4 h-4 transition-all duration-500 ${
-                    isActive("/login") ? "text-purple-400" : "text-text-muted group-hover:text-text-primary"
+                    isActive("/login")
+                      ? "text-purple-400"
+                      : "text-text-muted group-hover:text-text-primary"
                   }`}
                   fill="none"
                   stroke="currentColor"
@@ -298,14 +300,41 @@ export default function Navigation() {
                       )}
                     </div>
                     <div className="py-1">
-                      <Link href={`/profile/${user.username}`} onClick={() => setUserMenuOpen(false)} className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors">Profile</Link>
-                      <Link href="/settings" onClick={() => setUserMenuOpen(false)} className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors">Settings</Link>
+                      <Link
+                        href={`/profile/${user.username}`}
+                        onClick={() => setUserMenuOpen(false)}
+                        className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
+                      >
+                        Profile
+                      </Link>
+                      <Link
+                        href="/settings"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
+                      >
+                        Settings
+                      </Link>
                       {isAdmin && (
-                        <Link href="/admin" onClick={() => setUserMenuOpen(false)} className="block px-3 py-2 text-sm text-purple-300 hover:text-purple-200 hover:bg-bg-elevated/60 transition-colors">Admin</Link>
+                        <Link
+                          href="/admin"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="block px-3 py-2 text-sm text-purple-300 hover:text-purple-200 hover:bg-bg-elevated/60 transition-colors"
+                        >
+                          Admin
+                        </Link>
                       )}
                     </div>
                     <div className="border-t border-border-primary py-1">
-                      <button type="button" onClick={() => { setUserMenuOpen(false); logout(); }} className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors">Log out</button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          logout();
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                      >
+                        Log out
+                      </button>
                     </div>
                   </div>
                 )}
@@ -320,12 +349,28 @@ export default function Navigation() {
             className="md:hidden ml-auto w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:text-text-primary hover:bg-bg-elevated/80 transition-all duration-200 hover:scale-[1.08] active:scale-95"
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
               <title>{mobileOpen ? "Close menu" : "Open menu"}</title>
               {mobileOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               )}
             </svg>
           </button>
@@ -398,9 +443,20 @@ export default function Navigation() {
             title="Log in"
             className="group relative w-12 h-12 flex items-center justify-center rounded-2xl text-text-muted hover:text-purple-300 hover:bg-purple-500/10 transition-all duration-200 hover:scale-[1.12] active:scale-95"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
               <title>Log in</title>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
+              />
             </svg>
             <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
               Log in
@@ -431,20 +487,51 @@ export default function Navigation() {
             {userMenuOpen && scrolled && (
               <div className="absolute left-full top-0 ml-2 w-48 bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden animate-scaleIn">
                 <div className="px-3 py-2.5 border-b border-border-primary">
-                  <p className="text-sm font-medium text-text-primary truncate">@{user.username}</p>
+                  <p className="text-sm font-medium text-text-primary truncate">
+                    @{user.username}
+                  </p>
                   {user.role !== "user" && (
-                    <p className="text-[10px] uppercase tracking-widest text-purple-300 mt-0.5 font-mono">{user.role}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-purple-300 mt-0.5 font-mono">
+                      {user.role}
+                    </p>
                   )}
                 </div>
                 <div className="py-1">
-                  <Link href={`/profile/${user.username}`} onClick={() => setUserMenuOpen(false)} className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors">Profile</Link>
-                  <Link href="/settings" onClick={() => setUserMenuOpen(false)} className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors">Settings</Link>
+                  <Link
+                    href={`/profile/${user.username}`}
+                    onClick={() => setUserMenuOpen(false)}
+                    className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    href="/settings"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
+                  >
+                    Settings
+                  </Link>
                   {isAdmin && (
-                    <Link href="/admin" onClick={() => setUserMenuOpen(false)} className="block px-3 py-2 text-sm text-purple-300 hover:text-purple-200 hover:bg-bg-elevated/60 transition-colors">Admin</Link>
+                    <Link
+                      href="/admin"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="block px-3 py-2 text-sm text-purple-300 hover:text-purple-200 hover:bg-bg-elevated/60 transition-colors"
+                    >
+                      Admin
+                    </Link>
                   )}
                 </div>
                 <div className="border-t border-border-primary py-1">
-                  <button type="button" onClick={() => { setUserMenuOpen(false); logout(); }} className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors">Log out</button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      logout();
+                    }}
+                    className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    Log out
+                  </button>
                 </div>
               </div>
             )}

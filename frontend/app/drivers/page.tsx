@@ -4,12 +4,17 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import JumpToRace from "@/components/JumpToRace";
+import PageHeader from "@/components/PageHeader";
 import { GridPattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import TiltCard from "@/components/ui/TiltCard";
-import PageHeader from "@/components/PageHeader";
-import JumpToRace from "@/components/JumpToRace";
-import { apiHeaders, apiUrl, isValidHeadshotUrl, fetchSeasons } from "@/lib/api";
+import {
+  apiHeaders,
+  apiUrl,
+  fetchSeasons,
+  isValidHeadshotUrl,
+} from "@/lib/api";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
 import type { DriverListItem, DriverListResponse } from "@/lib/types";
 
@@ -266,7 +271,11 @@ export default function DriversPage() {
     <div className="min-h-screen bg-bg-secondary">
       <PageHeader
         title="Drivers"
-        subtitle={selectedYear === "all" ? "All-Time Career Statistics" : `${selectedYear} Season Entries`}
+        subtitle={
+          selectedYear === "all"
+            ? "All-Time Career Statistics"
+            : `${selectedYear} Season Entries`
+        }
       >
         <select
           value={selectedYear}
