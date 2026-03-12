@@ -1,12 +1,11 @@
 interface SortSelectorProps {
-  value: "new" | "top" | "hot";
-  onChange: (value: "new" | "top" | "hot") => void;
+  value: "new" | "top";
+  onChange: (value: "new" | "top") => void;
 }
 
-const options: Array<{ value: "new" | "top" | "hot"; label: string }> = [
+const options: Array<{ value: "new" | "top"; label: string }> = [
   { value: "new", label: "New" },
   { value: "top", label: "Top" },
-  { value: "hot", label: "Hot" },
 ];
 
 export default function SortSelector({ value, onChange }: SortSelectorProps) {
