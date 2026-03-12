@@ -8,8 +8,9 @@ import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.user import User
 from app.models.email_verification_token import EmailVerificationToken
@@ -66,6 +67,81 @@ class UserService:
     async def get_user_by_id(db: AsyncSession, user_id: int) -> User | None:
         result = await db.execute(select(User).where(User.id == user_id))
         return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_all_users(
+        db: AsyncSession,
+        skip: int = 0,
+        limit: int = 20,
+        query: str | None = None,
+    ) -> list[User]:
+        stmt = select(User)
+        if query:
+            stmt = stmt.where(
+                or_(
+                    User.username.ilike(f"%{query}%"),
+                    User.email.ilike(f"%{query}%"),
+                )
+            )
+        stmt = stmt.offset(skip).limit(limit)
+        result = await db.execute(stmt)
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def count_users(db: AsyncSession, query: str | None = None) -> int:
+        stmt = select(func.count()).select_from(User)
+        if query:
+            stmt = stmt.where(
+                or_(
+                    User.username.ilike(f"%{query}%"),
+                    User.email.ilike(f"%{query}%"),
+                )
+            )
+        result = await db.execute(stmt)
+        return result.scalar() or 0
+
+    @staticmethod
+    async def get_recent_login_activity(
+        db: AsyncSession, limit: int = 5
+    ) -> list[dict]:
+        from app.models.login_history import LoginHistory
+        stmt = (
+            select(LoginHistory)
+            .options(selectinload(LoginHistory.user))
+            .order_by(LoginHistory.created_at.desc())
+            .limit(limit)
+        )
+        result = await db.execute(stmt)
+        history = result.scalars().all()
+        return history
+
+    @staticmethod
+    async def update_user_role(
+        db: AsyncSession, user_id: int, new_role: str
+    ) -> User | None:
+        user = await UserService.get_user_by_id(db, user_id)
+        if not user:
+            return None
+        from app.models.user import UserRole
+        try:
+            user.role = UserRole(new_role)
+        except ValueError:
+            return None
+        await db.commit()
+        await db.refresh(user)
+        return user
+
+    @staticmethod
+    async def update_user_status(
+        db: AsyncSession, user_id: int, is_active: bool
+    ) -> User | None:
+        user = await UserService.get_user_by_id(db, user_id)
+        if not user:
+            return None
+        user.is_active = is_active
+        await db.commit()
+        await db.refresh(user)
+        return user
 
     @staticmethod
     async def update_user_profile(

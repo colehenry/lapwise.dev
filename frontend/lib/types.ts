@@ -485,6 +485,7 @@ export interface UserProfile {
   username: string;
   role: string;
   email_verified: boolean;
+  is_active: boolean;
   avatar_url: string | null;
   bio: string | null;
   created_at: string;
@@ -501,7 +502,31 @@ export interface TokenRefreshResponse {
   token_type: string;
 }
 
-// ─── Discussion Types ──────────────────────────────────────────────
+// ─── Admin Types ────────────────────────────────────────────────────
+
+export interface AdminActivity {
+  id: number;
+  user_id: number | null;
+  username: string | null;
+  ip_address: string;
+  user_agent: string | null;
+  success: boolean;
+  created_at: string;
+}
+
+export interface AdminDashboardStats {
+  user_count: number;
+  post_count: number;
+  recent_activity: AdminActivity[];
+}
+
+export interface AdminUserListResponse {
+  users: UserProfile[];
+  total: number;
+  page: number;
+  size: number;
+}
+
 
 export interface DiscussionTag {
   id: number;

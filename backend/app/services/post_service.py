@@ -179,6 +179,13 @@ class PostService:
         return {"posts": items, "next_cursor": next_cursor}
 
     @staticmethod
+    async def count_posts(db: AsyncSession) -> int:
+        from sqlalchemy import func
+        stmt = select(func.count()).select_from(Post).where(Post.deleted_at.is_(None))
+        result = await db.execute(stmt)
+        return result.scalar() or 0
+
+    @staticmethod
     async def update_post(
         db: AsyncSession, post_id: int, user_id: int, is_admin: bool, **updates
     ) -> Post | None:
