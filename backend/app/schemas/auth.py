@@ -75,6 +75,7 @@ class UserProfile(BaseModel):
     username: str
     role: str
     email_verified: bool
+    is_active: bool
     avatar_url: Optional[str] = None
     bio: Optional[str] = None
     created_at: datetime

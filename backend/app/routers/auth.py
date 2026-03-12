@@ -63,16 +63,7 @@ def _clear_refresh_cookie(response: Response) -> None:
 
 
 def _user_profile(user: User) -> UserProfile:
-    return UserProfile(
-        id=user.id,
-        email=user.email,
-        username=user.username,
-        role=user.role.value,
-        email_verified=user.email_verified,
-        avatar_url=user.avatar_url,
-        bio=user.bio,
-        created_at=user.created_at,
-    )
+    return UserProfile.model_validate(user)
 
 
 def _client_ip(request: Request) -> str:
