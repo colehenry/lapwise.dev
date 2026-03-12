@@ -500,7 +500,7 @@ export default function Navigation() {
               className="group relative w-12 h-12 flex items-center justify-center"
               aria-label="User menu"
             >
-              <div className="w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-sm font-bold text-purple-300 group-hover:border-purple-500/60 group-hover:scale-[1.12] active:scale-95 transition-all duration-200 overflow-hidden">
+              <div className="w-10 h-10 rounded-full bg-bg-elevated flex items-center justify-center text-sm font-bold text-text-muted group-hover:scale-[1.12] active:scale-95 transition-all duration-200 overflow-hidden">
                 {user.avatar_url ? (
                   // biome-ignore lint/performance/noImgElement: arbitrary avatar hosts
                   <img
