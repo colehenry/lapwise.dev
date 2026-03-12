@@ -186,12 +186,14 @@ export default function ConstructorsPage() {
     // Season filter
     if (selectedYear !== "all") {
       const yearNum = Number.parseInt(selectedYear, 10);
-      constructors = constructors.filter(
-        (t) =>
+      constructors = constructors.filter((t) => {
+        if (t.first_season === null || t.latest_season === null) return false;
+        return (
           t.first_season <= yearNum &&
           (t.latest_season >= yearNum ||
-            (t.latest_season === CURRENT_YEAR && yearNum === CURRENT_YEAR)),
-      );
+            (t.latest_season === CURRENT_YEAR && yearNum === CURRENT_YEAR))
+        );
+      });
     }
 
     // Search filter

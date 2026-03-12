@@ -209,12 +209,14 @@ export default function DriversPage() {
     // Season filter
     if (selectedYear !== "all") {
       const yearNum = Number.parseInt(selectedYear, 10);
-      drivers = drivers.filter(
-        (d) =>
+      drivers = drivers.filter((d) => {
+        if (d.first_season === null || d.latest_season === null) return false;
+        return (
           d.first_season <= yearNum &&
           (d.latest_season >= yearNum ||
-            (d.latest_season === CURRENT_YEAR && yearNum === CURRENT_YEAR)),
-      );
+            (d.latest_season === CURRENT_YEAR && yearNum === CURRENT_YEAR))
+        );
+      });
     }
 
     // Search filter

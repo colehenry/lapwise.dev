@@ -11,17 +11,17 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== "admin")) {
+    if (!isLoading && (!user || user.role !== "admin")) {
       router.push("/");
     }
-  }, [user, loading, router]);
+  }, [user, isLoading, router]);
 
-  if (loading || !user || user.role !== "admin") {
+  if (isLoading || !user || user.role !== "admin") {
     return (
       <div className="flex items-center justify-center min-h-[60vh] bg-bg-primary">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500"></div>
@@ -49,7 +49,7 @@ export default function AdminLayout({
 
   return (
     <div className="bg-bg-primary min-h-screen">
-      <Section background="primary" spacing="none">
+      <Section background="primary" spacing="sm">
         <div className="py-8 border-b border-border-primary mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
