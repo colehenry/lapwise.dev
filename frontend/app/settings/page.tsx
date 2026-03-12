@@ -1,22 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import Button from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { apiUrl } from "@/lib/api";
 import { fetchWithAuth } from "@/lib/auth";
-
-type SessionInfo = {
-  id: number;
-  device_info: string | null;
-  ip_address: string | null;
-  created_at: string;
-  expires_at: string;
-  revoked_at: string | null;
-  is_current: boolean;
-};
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -33,28 +23,9 @@ export default function SettingsPage() {
   const [passwordError, setPasswordError] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
 
-  const [sessions, setSessions] = useState<SessionInfo[]>([]);
-  const [sessionsLoading, setSessionsLoading] = useState(false);
-  const [sessionsError, setSessionsError] = useState("");
-
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
-
-  const loadSessions = useCallback(async () => {
-    setSessionsLoading(true);
-    setSessionsError("");
-    try {
-      const res = await fetchWithAuth(apiUrl("/auth/sessions"));
-      if (!res.ok) throw new Error("Failed to load sessions");
-      const data = await res.json();
-      setSessions(Array.isArray(data.sessions) ? data.sessions : []);
-    } catch {
-      setSessionsError("Failed to load sessions");
-    } finally {
-      setSessionsLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -68,12 +39,6 @@ export default function SettingsPage() {
       setAvatarUrl(user.avatar_url || "");
     }
   }, [user]);
-
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      void loadSessions();
-    }
-  }, [isLoading, isAuthenticated, loadSessions]);
 
   if (isLoading || !user) return null;
 
@@ -129,24 +94,6 @@ export default function SettingsPage() {
       );
     } finally {
       setPasswordLoading(false);
-    }
-  }
-
-  async function handleRevokeSession(sessionId: number, isCurrent: boolean) {
-    setSessionsError("");
-    try {
-      const res = await fetchWithAuth(apiUrl(`/auth/sessions/${sessionId}`), {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to revoke session");
-      if (isCurrent) {
-        await logout();
-        router.push("/");
-        return;
-      }
-      await loadSessions();
-    } catch {
-      setSessionsError("Failed to revoke session");
     }
   }
 
@@ -287,62 +234,6 @@ export default function SettingsPage() {
             Change password
           </Button>
         </form>
-      </section>
-
-      {/* Active Sessions */}
-      <section className="mb-10">
-        <h2 className="text-lg font-semibold text-text-primary mb-4">
-          Active sessions
-        </h2>
-        {sessionsLoading ? (
-          <p className="text-sm text-text-muted">Loading sessions...</p>
-        ) : sessionsError ? (
-          <p className="text-sm text-red-400">{sessionsError}</p>
-        ) : sessions.length === 0 ? (
-          <p className="text-sm text-text-muted">No active sessions.</p>
-        ) : (
-          <div className="space-y-3">
-            {sessions.map((session) => (
-              <div
-                key={session.id}
-                className="border border-border-primary rounded-sm p-3 flex items-start justify-between gap-4"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm text-text-primary truncate">
-                    {session.device_info || "Unknown device"}
-                  </p>
-                  <p className="text-xs text-text-muted mt-1">
-                    {session.ip_address
-                      ? `IP ${session.ip_address}`
-                      : "IP unknown"}
-                  </p>
-                  <p className="text-xs text-text-muted">
-                    Created{" "}
-                    {new Date(session.created_at).toLocaleString("en-US")}
-                  </p>
-                  <p className="text-xs text-text-muted">
-                    Expires{" "}
-                    {new Date(session.expires_at).toLocaleString("en-US")}
-                  </p>
-                  {session.is_current && (
-                    <span className="inline-block mt-1 text-[10px] uppercase tracking-widest text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded">
-                      Current session
-                    </span>
-                  )}
-                </div>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() =>
-                    handleRevokeSession(session.id, session.is_current)
-                  }
-                >
-                  Revoke
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
       </section>
 
       {/* Danger Zone */}
