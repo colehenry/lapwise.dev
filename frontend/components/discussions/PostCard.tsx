@@ -73,7 +73,7 @@ export default function PostCard({ post }: { post: PostListItem }) {
             <h3 className="text-lg font-semibold text-text-primary leading-snug">
               {post.title}
             </h3>
-            <p className="text-sm text-text-tertiary mt-2 leading-relaxed">
+            <p className="text-sm text-text-tertiary mt-2 leading-relaxed line-clamp-3">
               {post.body}
             </p>
           </Link>

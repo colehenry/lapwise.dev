@@ -8,10 +8,8 @@ import { useAuth } from "@/components/AuthProvider";
 import PostCard from "@/components/discussions/PostCard";
 import SortSelector from "@/components/discussions/SortSelector";
 import TagFilter from "@/components/discussions/TagFilter";
-import TagPill from "@/components/discussions/TagPill";
-import { GridPattern } from "@/components/Patterns";
-import Skeleton from "@/components/ui/Skeleton";
 import PageHeader from "@/components/PageHeader";
+import Skeleton from "@/components/ui/Skeleton";
 import { fetchPosts, fetchTags } from "@/lib/discussions";
 import type { PostListItem, PostListResponse } from "@/lib/types";
 
@@ -20,7 +18,7 @@ const SKELETON_KEYS = ["a", "b", "c", "d"];
 
 export default function DiscussionsPage() {
   const { isAuthenticated } = useAuth();
-  const [sort, setSort] = useState<"new" | "top" | "hot">("new");
+  const [sort, setSort] = useState<"new" | "top">("new");
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
   const { data: tags = [] } = useQuery({
@@ -28,8 +26,6 @@ export default function DiscussionsPage() {
     queryFn: fetchTags,
     staleTime: 1000 * 60 * 5,
   });
-
-  const sortParam = sort === "hot" ? "top" : sort;
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery<
@@ -44,7 +40,7 @@ export default function DiscussionsPage() {
         fetchPosts({
           cursor: pageParam,
           limit: PAGE_SIZE,
-          sort: sortParam,
+          sort,
           tag: activeTag,
         }),
       initialPageParam: null,
@@ -114,11 +110,6 @@ export default function DiscussionsPage() {
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
         <div className="flex flex-wrap items-center gap-6 mb-6">
           <SortSelector value={sort} onChange={setSort} />
-          {sort === "hot" && (
-            <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
-              Hot ranking uses top votes for now
-            </span>
-          )}
           {!isAuthenticated && (
             <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
               Log in to publish
@@ -126,121 +117,55 @@ export default function DiscussionsPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-8 space-y-5">
-            <div className="border border-border-primary rounded-sm bg-bg-tertiary/40 p-3">
-              <TagFilter
-                tags={tags}
-                activeTag={activeTag}
-                onChange={setActiveTag}
-              />
-            </div>
+        <div className="space-y-5">
+          <div className="border border-border-primary rounded-sm bg-bg-tertiary/40 p-3">
+            <TagFilter
+              tags={tags}
+              activeTag={activeTag}
+              onChange={setActiveTag}
+            />
+          </div>
 
-            {pinnedPosts.length > 0 && (
-              <div className="space-y-3">
-                <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
-                  Pinned
-                </div>
-                {pinnedPosts.map((post) => (
-                  <PostCard key={`pinned-${post.id}`} post={post} />
-                ))}
+          {pinnedPosts.length > 0 && (
+            <div className="space-y-3">
+              <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+                Pinned
+              </div>
+              {pinnedPosts.map((post) => (
+                <PostCard key={`pinned-${post.id}`} post={post} />
+              ))}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {isLoading &&
+              SKELETON_KEYS.map((key) => (
+                <Skeleton
+                  key={`post-skeleton-${key}`}
+                  variant="rectangular"
+                  height="140px"
+                  className="rounded-sm"
+                />
+              ))}
+
+            {!isLoading && regularPosts.length === 0 && (
+              <div className="border border-dashed border-border-primary rounded-sm p-6 text-sm text-text-muted">
+                No discussions found for this filter yet.
               </div>
             )}
 
-            <div className="space-y-4">
-              {isLoading &&
-                SKELETON_KEYS.map((key) => (
-                  <Skeleton
-                    key={`post-skeleton-${key}`}
-                    variant="rectangular"
-                    height="140px"
-                    className="rounded-sm"
-                  />
-                ))}
+            {regularPosts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
 
-              {!isLoading && regularPosts.length === 0 && (
-                <div className="border border-dashed border-border-primary rounded-sm p-6 text-sm text-text-muted">
-                  No discussions found for this filter yet.
-                </div>
-              )}
+            <div ref={sentinelRef} />
 
-              {regularPosts.map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))}
-
-              <div ref={sentinelRef} />
-
-              {isFetchingNextPage && (
-                <div className="text-xs font-mono uppercase tracking-widest text-text-muted">
-                  Loading more discussions...
-                </div>
-              )}
-            </div>
+            {isFetchingNextPage && (
+              <div className="text-xs font-mono uppercase tracking-widest text-text-muted">
+                Loading more discussions...
+              </div>
+            )}
           </div>
-
-          <aside className="lg:col-span-4 space-y-5">
-            <div className="border border-border-primary rounded-sm bg-bg-tertiary p-4">
-              <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-4">
-                Community Stats
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <div className="text-2xl font-bold text-purple-300 font-mono">
-                    {allPosts.length}
-                  </div>
-                  <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
-                    Loaded Posts
-                  </div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-purple-300 font-mono">
-                    {tags.length}
-                  </div>
-                  <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
-                    Active Tags
-                  </div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-purple-300 font-mono">
-                    {pinnedPosts.length}
-                  </div>
-                  <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
-                    Pinned Threads
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="border border-border-primary rounded-sm bg-bg-tertiary p-4">
-              <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-4">
-                Trending Tags
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {tags.slice(0, 10).map((tag) => (
-                  <TagPill
-                    key={tag.id}
-                    label={tag.name}
-                    color={tag.color}
-                    onClick={() => setActiveTag(tag.slug)}
-                  />
-                ))}
-                {tags.length === 0 && (
-                  <span className="text-sm text-text-muted">No tags yet.</span>
-                )}
-              </div>
-            </div>
-
-            <div className="border border-border-primary rounded-sm bg-bg-tertiary p-4">
-              <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-3">
-                Posting Tips
-              </div>
-              <ul className="text-sm text-text-tertiary space-y-2">
-                <li>Include lap numbers, telemetry, or race context.</li>
-                <li>Use tags to help others discover your post.</li>
-                <li>Be specific with questions or insights.</li>
-              </ul>
-            </div>
-          </aside>
         </div>
       </div>
     </div>
