@@ -21,6 +21,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# FastF1 cache
+.fastf1_cache/
+
 # Python cache files (auto-generated when Python runs)
 __pycache__/
 *.py[cod]
