@@ -58,7 +58,10 @@ export default function ResultsPage() {
       queryFn: () =>
         fetch(apiUrl(`/api/results/${season}/standings`), {
           headers: apiHeaders(),
-        }).then((r) => r.json()),
+        }).then((r) => {
+          if (!r.ok) throw new Error(`API error: ${r.status}`);
+          return r.json();
+        }),
       enabled: !!season,
     });
 
@@ -67,7 +70,10 @@ export default function ResultsPage() {
     queryFn: () =>
       fetch(apiUrl(`/api/results/${season}/qualifying-standings`), {
         headers: apiHeaders(),
-      }).then((r) => r.json()),
+      }).then((r) => {
+        if (!r.ok) throw new Error(`API error: ${r.status}`);
+        return r.json();
+      }),
     enabled: !!season && sessionType === "qualifying",
   });
 
@@ -76,7 +82,10 @@ export default function ResultsPage() {
     queryFn: () =>
       fetch(apiUrl(`/api/results/${season}`), {
         headers: apiHeaders(),
-      }).then((r) => r.json()),
+      }).then((r) => {
+        if (!r.ok) throw new Error(`API error: ${r.status}`);
+        return r.json();
+      }),
     enabled: !!season,
   });
 
@@ -85,7 +94,10 @@ export default function ResultsPage() {
     queryFn: () =>
       fetch(apiUrl(`/api/results/${season}/qualifying`), {
         headers: apiHeaders(),
-      }).then((r) => r.json()),
+      }).then((r) => {
+        if (!r.ok) throw new Error(`API error: ${r.status}`);
+        return r.json();
+      }),
     enabled: !!season,
   });
 

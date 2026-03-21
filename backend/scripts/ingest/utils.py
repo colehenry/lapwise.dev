@@ -189,13 +189,12 @@ def session_exists(event, session_type_name):
     """
     # Sprint sessions only exist at certain events
     if session_type_name in ["sprint_race", "sprint_qualifying"]:
-        # Check if event has sprint (look for 'Sprint' in session names)
-        # FastF1 event objects have session info in their attributes
+        # Check if the event format indicates a sprint weekend
+        # FastF1 uses 'sprint_qualifying' (or 'sprint_shootout' for 2023)
+        # as the EventFormat for sprint weekends
         try:
-            # The event object should have a Session5Name or similar indicating a sprint
-            return (
-                hasattr(event, "Session5Name") and event.get("Session5Name") is not None
-            )
+            event_format = event.get("EventFormat", "")
+            return event_format in ("sprint_qualifying", "sprint_shootout", "sprint")
         except Exception:
             # If we can't determine, assume it might exist and let FastF1 tell us
             return True
