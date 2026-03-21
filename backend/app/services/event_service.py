@@ -1,7 +1,7 @@
 from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 import fastf1
 
 from app.models import Circuit
@@ -116,8 +116,19 @@ class EventService:
         db: AsyncSession, location: str, country: str
     ) -> Optional[Circuit]:
         """Helper to find circuit by location/country"""
+        # Exact match first
         circuit_query = select(Circuit).where(
             Circuit.location == location, Circuit.country == country
         )
         circuit_result = await db.execute(circuit_query)
-        return circuit_result.scalar_one_or_none()
+        circuit = circuit_result.scalar_one_or_none()
+        if circuit:
+            return circuit
+
+        # Fallback: case-insensitive match on location or country name
+        circuit_query = select(Circuit).where(
+            func.lower(Circuit.country) == country.lower()
+        )
+        circuit_result = await db.execute(circuit_query)
+        circuit = circuit_result.scalar_one_or_none()
+        return circuit

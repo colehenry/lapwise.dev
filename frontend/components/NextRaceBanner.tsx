@@ -95,7 +95,12 @@ export default function NextRaceBanner() {
               const year = new Date(event.event_date).getFullYear();
               const lastYear = year - 1;
 
-              const isNewCircuit = event.event_name.includes("Madrid") || event.circuit_id === null;
+              // Fallback circuit IDs for events where the API doesn't return one
+              const CIRCUIT_ID_OVERRIDES: Record<string, number> = {
+                "Monaco": 8,
+              };
+              const trackMapId = event.circuit_id ?? CIRCUIT_ID_OVERRIDES[event.country] ?? null;
+              const isNewCircuit = event.event_name.includes("Madrid") || trackMapId === null;
               const showLastYearLink = !isTesting && event.round_number && !isNewCircuit;
 
               return (
@@ -105,10 +110,10 @@ export default function NextRaceBanner() {
                       
                       {/* Top: Track Map Area (Flag removed from here) */}
                       <div className="relative w-full h-24 mb-4 bg-bg-secondary/50 rounded-sm overflow-hidden border border-border-primary/30 flex items-center justify-center">
-                        <ConcentricPattern id={`event-pattern-${event.event_date}`} className="opacity-10" />
-                        {event.circuit_id ? (
+                        <ConcentricPattern id={`event-pattern-${event.event_date}`} className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" />
+                        {trackMapId ? (
                           <Image
-                            src={`/track-maps/${event.circuit_id}.png`}
+                            src={`/track-maps/${trackMapId}.png`}
                             alt={event.circuit_name || ""}
                             width={120}
                             height={120}
