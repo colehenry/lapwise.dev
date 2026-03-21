@@ -7,15 +7,14 @@ These endpoints power the new /results/[season] page.
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
-
 from app.database import get_db
-from app.services.results_service import ResultsService
+from app.services.results_service import ResultsService, _make_slug
 from app.security import verify_api_key
 from app.schemas.result import (
     StandingsResponse,
     QualifyingStandingsResponse,
     SeasonRoundsResponse,
+    RoundPodiumDriver,
     RoundSummary,
     SessionResultsResponse,
     PointsProgressionResponse,
@@ -24,13 +23,10 @@ from app.schemas.result import (
     WeatherResponse,
 )
 
-# Helper function for sanitizing floats
-sanitize_float = ResultsService.sanitize_float
-
 router = APIRouter()
 
 
-@router.get("/seasons", response_model=List[int])
+@router.get("/seasons", response_model=list[int])
 async def get_available_seasons(
     db: AsyncSession = Depends(get_db), api_key: str = Depends(verify_api_key)
 ):
@@ -72,10 +68,6 @@ async def get_latest_race(
         )
 
     # Build podium list
-    from app.schemas.result import RoundPodiumDriver
-
-    from app.services.results_service import _make_slug
-
     podium = [
         RoundPodiumDriver(
             full_name=row.full_name,

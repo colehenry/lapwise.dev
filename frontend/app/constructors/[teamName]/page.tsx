@@ -3,14 +3,14 @@
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import ConstructorResultsTable from "@/components/ConstructorResultsTable";
 import ConstructorSeasonHistoryGraph from "@/components/ConstructorSeasonHistoryGraph";
 import ConstructorStatisticsPanel from "@/components/ConstructorStatisticsPanel";
 import PageHeader from "@/components/PageHeader";
-import Skeleton from "@/components/ui/Skeleton";
+import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
 import TabBar from "@/components/ui/TabBar";
+import { useTabSync } from "@/hooks/useTabSync";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { ConstructorProfile } from "@/lib/types";
 
@@ -43,27 +43,12 @@ async function fetchConstructorProfile(
 
 export default function ConstructorProfilePage() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const teamName = params.teamName as string;
-
-  const urlTab = searchParams.get("tab") as ConstructorTab | null;
-  const [activeTab, setActiveTab] = useState<ConstructorTab>(
-    urlTab || "overview",
+  const { activeTab, switchTab } = useTabSync<ConstructorTab>(
+    `/constructors/${teamName}`,
+    "overview",
   );
-
-  useEffect(() => {
-    if (urlTab) setActiveTab(urlTab);
-  }, [urlTab]);
-
-  const switchTab = (tab: ConstructorTab) => {
-    setActiveTab(tab);
-    const url =
-      tab === "overview"
-        ? `/constructors/${teamName}`
-        : `/constructors/${teamName}?tab=${tab}`;
-    router.replace(url, { scroll: false });
-  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["constructor-profile", teamName],
@@ -71,40 +56,14 @@ export default function ConstructorProfilePage() {
   });
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-bg-secondary p-8">
-        <div className="max-w-5xl mx-auto space-y-6">
-          <Skeleton variant="text" width="120px" />
-          <div className="flex items-center gap-6">
-            <Skeleton variant="circular" width="128px" height="128px" />
-            <div className="space-y-3 flex-1">
-              <Skeleton variant="text" width="300px" height="40px" />
-              <Skeleton variant="text" width="200px" />
-            </div>
-          </div>
-          <Skeleton variant="rectangular" height="40px" />
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }, (_, i) => (
-              <Skeleton
-                key={`skel-${
-                  // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
-                  i
-                }`}
-                variant="rectangular"
-                height="100px"
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
   if (error || !data) {
     return (
       <div className="min-h-screen bg-bg-secondary p-8">
         <div className="max-w-5xl mx-auto">
-          <div className="bg-bg-tertiary rounded-lg p-8">
+          <div className="bg-bg-tertiary rounded-sm p-8">
             <h1 className="text-2xl font-bold text-text-primary mb-4">
               Constructor Not Found
             </h1>
