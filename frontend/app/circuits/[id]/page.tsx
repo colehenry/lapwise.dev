@@ -91,7 +91,7 @@ export default function CircuitDetailPage() {
     return (
       <div className="min-h-screen bg-bg-secondary p-4 md:p-8">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl font-bold text-white mb-4">
+          <h1 className="text-3xl font-bold text-text-primary mb-4">
             Circuit Not Found
           </h1>
           <p className="text-text-tertiary mb-8">
@@ -150,13 +150,13 @@ export default function CircuitDetailPage() {
               <div className="lg:col-span-1 flex flex-col gap-4">
                 {/* Circuit Info Card */}
                 <div className="bg-bg-tertiary rounded-sm p-6 border border-border-primary">
-                  <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-text-primary mb-6 flex items-center gap-2">
                     Circuit Stats
                   </h2>
 
                   <div className="space-y-6">
                     <div>
-                      <div className="text-2xl font-bold text-white">
+                      <div className="text-2xl font-bold text-text-primary">
                         {circuit.track_length_km
                           ? `${circuit.track_length_km.toFixed(3)} km`
                           : "N/A"}
@@ -165,7 +165,7 @@ export default function CircuitDetailPage() {
 
                     <div>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-white">
+                        <span className="text-2xl font-bold text-text-primary">
                           {circuit.total_races}
                         </span>
                         <span className="text-text-tertiary">
@@ -181,7 +181,7 @@ export default function CircuitDetailPage() {
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="text-text-tertiary">First Race</span>
-                          <span className="text-white font-medium">
+                          <span className="text-text-primary font-medium">
                             {circuit.first_year}
                           </span>
                         </div>
@@ -189,7 +189,7 @@ export default function CircuitDetailPage() {
                           <span className="text-text-tertiary">
                             Most Recent
                           </span>
-                          <span className="text-white font-medium">
+                          <span className="text-text-primary font-medium">
                             {circuit.most_recent_year}
                           </span>
                         </div>

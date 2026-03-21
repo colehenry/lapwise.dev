@@ -173,5 +173,24 @@ class SessionsResponse(BaseModel):
     sessions: list[SessionInfo]
 
 
+class UpdateProfileRequest(BaseModel):
+    bio: str | None = None
+    avatar_url: str | None = None
+
+    @field_validator("bio")
+    @classmethod
+    def validate_bio(cls, v: str | None) -> str | None:
+        if v is not None and len(v) > 500:
+            raise ValueError("Bio must be at most 500 characters")
+        return v
+
+    @field_validator("avatar_url")
+    @classmethod
+    def validate_avatar_url(cls, v: str | None) -> str | None:
+        if v is not None and len(v) > 2048:
+            raise ValueError("Avatar URL must be at most 2048 characters")
+        return v
+
+
 class DeleteAccountRequest(BaseModel):
     password: str

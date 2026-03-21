@@ -94,8 +94,12 @@ export default function DiscussionDetailPage() {
   const isEdited = post.updated_at !== post.created_at;
 
   const handleNewComment = async (body: string) => {
-    await createComment({ postId, body });
-    await refreshAll();
+    try {
+      await createComment({ postId, body });
+      await refreshAll();
+    } catch (err) {
+      console.error("Failed to create comment:", err);
+    }
   };
 
   const refreshAll = async () => {
@@ -104,20 +108,32 @@ export default function DiscussionDetailPage() {
   };
 
   const handleTogglePin = async () => {
-    await togglePin(postId);
-    await refetchPost();
-    queryClient.invalidateQueries({ queryKey: ["discussion-posts"] });
+    try {
+      await togglePin(postId);
+      await refetchPost();
+      queryClient.invalidateQueries({ queryKey: ["discussion-posts"] });
+    } catch (err) {
+      console.error("Failed to toggle pin:", err);
+    }
   };
 
   const handleToggleLock = async () => {
-    await toggleLock(postId);
-    await refetchPost();
+    try {
+      await toggleLock(postId);
+      await refetchPost();
+    } catch (err) {
+      console.error("Failed to toggle lock:", err);
+    }
   };
 
   const handleDelete = async () => {
     setDeleteOpen(false);
-    await deletePost(postId);
-    router.push("/discussions");
+    try {
+      await deletePost(postId);
+      router.push("/discussions");
+    } catch (err) {
+      console.error("Failed to delete post:", err);
+    }
   };
 
   return (

@@ -128,6 +128,39 @@ class AuthService:
         await db.commit()
 
     @staticmethod
+    async def get_user_sessions(db: AsyncSession, user_id: int) -> list[RefreshToken]:
+        """Get all valid (non-revoked, non-expired) sessions for a user."""
+        now = datetime.now(timezone.utc)
+        result = await db.execute(
+            select(RefreshToken)
+            .where(
+                RefreshToken.user_id == user_id,
+                RefreshToken.revoked_at.is_(None),
+                RefreshToken.expires_at > now,
+            )
+            .order_by(RefreshToken.created_at.desc())
+        )
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def revoke_user_session(
+        db: AsyncSession, session_id: int, user_id: int
+    ) -> RefreshToken | None:
+        """Revoke a specific session. Returns the token if found, None otherwise."""
+        result = await db.execute(
+            select(RefreshToken).where(
+                RefreshToken.id == session_id,
+                RefreshToken.user_id == user_id,
+                RefreshToken.revoked_at.is_(None),
+            )
+        )
+        session = result.scalar_one_or_none()
+        if session:
+            session.revoked_at = datetime.now(timezone.utc)
+            await db.commit()
+        return session
+
+    @staticmethod
     async def check_login_rate_limit(
         db: AsyncSession,
         ip_address: str,
