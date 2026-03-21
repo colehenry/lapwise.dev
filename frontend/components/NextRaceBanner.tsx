@@ -95,11 +95,13 @@ export default function NextRaceBanner() {
               const year = new Date(event.event_date).getFullYear();
               const lastYear = year - 1;
 
-              // Fallback circuit IDs for events where the API doesn't return one
-              const CIRCUIT_ID_OVERRIDES: Record<string, number> = {
-                "Monaco": 8,
+              // Map circuit IDs to correct track map files
+              const TRACK_MAP_OVERRIDES: Record<number, number> = {
+                83: 8, // Monaco duplicate circuit ID → correct track map
               };
-              const trackMapId = event.circuit_id ?? CIRCUIT_ID_OVERRIDES[event.country] ?? null;
+              const trackMapId = event.circuit_id
+                ? (TRACK_MAP_OVERRIDES[event.circuit_id] ?? event.circuit_id)
+                : null;
               const isNewCircuit = event.event_name.includes("Madrid") || trackMapId === null;
               const showLastYearLink = !isTesting && event.round_number && !isNewCircuit;
 
@@ -117,7 +119,7 @@ export default function NextRaceBanner() {
                             alt={event.circuit_name || ""}
                             width={120}
                             height={120}
-                            className="object-contain relative z-10 opacity-60 mix-blend-lighten"
+                            className="object-contain relative z-10 opacity-60 mix-blend-lighten max-h-[80px]"
                           />
                         ) : (
 
@@ -174,10 +176,10 @@ export default function NextRaceBanner() {
                           </span>
                         ) : showLastYearLink ? (
                           <Link
-                            href={`/results/${lastYear}/${event.round_number}`}
+                            href={`/results/${lastYear}`}
                             className="text-[9px] font-bold font-mono tracking-widest uppercase text-text-muted hover:text-purple-400 transition-colors flex items-center gap-1.5 group/btn"
                           >
-                            View {lastYear} Results
+                            View {lastYear} Season
                             <svg className="w-2.5 h-2.5 group-hover/btn:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
