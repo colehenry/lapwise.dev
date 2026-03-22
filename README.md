@@ -1,10 +1,8 @@
 <div align="center">
 
-# Lapwise
+# [**lapwise.dev**](https://lapwise.dev)
 
-### Formula 1 analytics for every race since 1950.
-
-[**lapwise.dev**](https://lapwise.dev)
+### Formula 1 analytics and community for every race since 1950.
 
 ![Next.js](https://img.shields.io/badge/Next.js-000?style=flat&logo=nextdotjs&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white)
@@ -12,8 +10,6 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
 
 </div>
-
----
 
 <p align="center">
   <img src="docs/images/homepage.png" alt="Lapwise homepage" width="100%" />
@@ -29,6 +25,10 @@ Lapwise is a full-stack Formula 1 analytics platform that lets fans explore 76 y
 
 **Driver and Constructor Profiles** -- Career statistics, season-by-season points progression, and complete race history for every driver and team in F1 history.
 
+<p align="center">
+  <img src="docs/images/points_progression.png" alt="Points progression chart" width="100%" />
+</p>
+
 **Telemetry Visualizations** -- Lap time distributions, race pace analysis, and position change charts built from real session data via FastF1.
 
 **Circuit Database** -- Track information, statistics, and historical results for every circuit on the calendar.
@@ -36,9 +36,7 @@ Lapwise is a full-stack Formula 1 analytics platform that lets fans explore 76 y
 **Community Discussions** -- Threaded forum with voting, tagging, and markdown support for race weekend conversations.
 
 <p align="center">
-  <img src="docs/images/lewis.png" alt="Driver profile page" width="48%" />
-  &nbsp;&nbsp;
-  <img src="docs/images/points_progression.png" alt="Points progression chart" width="48%" />
+  <img src="docs/images/lewis.png" alt="Driver profile page" width="100%" />
 </p>
 
 ---
