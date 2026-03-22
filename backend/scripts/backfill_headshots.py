@@ -72,7 +72,9 @@ def build_f1_cdn_urls(full_name: str):
         id_lower = driver_id.lower()
         first_enc = urllib.parse.quote(first, safe="")
         last_enc = urllib.parse.quote(last, safe="")
-        url = f"{F1_CDN_BASE}/{letter}/{driver_id}_{first_enc}_{last_enc}/{id_lower}.png"
+        url = (
+            f"{F1_CDN_BASE}/{letter}/{driver_id}_{first_enc}_{last_enc}/{id_lower}.png"
+        )
         urls.append(url)
 
     return urls
@@ -176,7 +178,8 @@ async def main():
     async with AsyncSessionLocal() as db:
         # Get all drivers without headshots that have session results
         r = await db.execute(
-            text("""
+            text(
+                """
             SELECT d.id, d.driver_code, d.full_name, d.jolpica_id
             FROM drivers d
             JOIN session_results sr ON sr.driver_id = d.id
@@ -189,7 +192,8 @@ async def main():
             )
             GROUP BY d.id, d.driver_code, d.full_name, d.jolpica_id
             ORDER BY d.full_name
-        """)
+        """
+            )
         )
         drivers = r.fetchall()
         print(f"Found {len(drivers)} drivers without headshots\n")
@@ -214,7 +218,8 @@ async def main():
                         found += 1
                         sources[source] += 1
                         await db.execute(
-                            text("""
+                            text(
+                                """
                                 UPDATE session_results
                                 SET headshot_url = :url
                                 WHERE driver_id = :did
@@ -222,12 +227,11 @@ async def main():
                                        OR headshot_url = 'None'
                                        OR headshot_url = 'nan'
                                        OR headshot_url NOT LIKE 'http%')
-                            """),
+                            """
+                            ),
                             {"url": url, "did": did},
                         )
-                        print(
-                            f"  OK  [{source:13s}] {code or '---':6s} {name:30s}"
-                        )
+                        print(f"  OK  [{source:13s}] {code or '---':6s} {name:30s}")
                     else:
                         not_found.append((code, name))
 

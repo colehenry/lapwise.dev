@@ -19,9 +19,7 @@ from app.services.auth_service import AuthService
 
 def _sync_db_url():
     """Convert async DB URL to sync psycopg2 URL."""
-    url = settings.database_url.replace(
-        "postgresql+asyncpg://", "postgresql://"
-    )
+    url = settings.database_url.replace("postgresql+asyncpg://", "postgresql://")
     return url.replace("?ssl=require", "?sslmode=require")
 
 
@@ -41,16 +39,11 @@ def _cleanup():
         "OR email LIKE '%%@example.com')"
     )
     cur.execute(
-        f"DELETE FROM login_history "
-        f"WHERE ip_address = 'testclient' OR {fk_where}"
+        f"DELETE FROM login_history " f"WHERE ip_address = 'testclient' OR {fk_where}"
     )
     cur.execute(f"DELETE FROM refresh_tokens WHERE {fk_where}")
-    cur.execute(
-        f"DELETE FROM email_verification_tokens WHERE {fk_where}"
-    )
-    cur.execute(
-        f"DELETE FROM password_reset_tokens WHERE {fk_where}"
-    )
+    cur.execute(f"DELETE FROM email_verification_tokens WHERE {fk_where}")
+    cur.execute(f"DELETE FROM password_reset_tokens WHERE {fk_where}")
     cur.execute(
         "DELETE FROM users "
         "WHERE email LIKE '%%@lapwise.dev' "
@@ -61,8 +54,12 @@ def _cleanup():
 
 
 def _create_user(
-    email, username, password,
-    role="user", verified=True, active=True,
+    email,
+    username,
+    password,
+    role="user",
+    verified=True,
+    active=True,
 ):
     """Create a user via sync connection, return dict with id."""
     conn = _get_sync_conn()
@@ -75,8 +72,7 @@ def _create_user(
         "VALUES (%s, %s, %s, %s, %s, %s) "
         "RETURNING id, email, username, role, "
         "email_verified, is_active, created_at",
-        (email, username, hashed,
-         role, verified, active),
+        (email, username, hashed, role, verified, active),
     )
     row = dict(cur.fetchone())
     cur.close()
@@ -97,9 +93,7 @@ async def cleanup_test_data():
 async def client():
     """Async HTTP test client."""
     transport = ASGITransport(app=app)
-    async with AsyncClient(
-        transport=transport, base_url="http://test"
-    ) as c:
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
         yield c
 
 
@@ -142,16 +136,12 @@ def admin_user():
 @pytest.fixture
 def auth_headers(verified_user):
     """Return Bearer auth headers for the verified user."""
-    token = AuthService.create_access_token(
-        verified_user["id"], verified_user["role"]
-    )
+    token = AuthService.create_access_token(verified_user["id"], verified_user["role"])
     return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
 def admin_headers(admin_user):
     """Return Bearer auth headers for the admin user."""
-    token = AuthService.create_access_token(
-        admin_user["id"], admin_user["role"]
-    )
+    token = AuthService.create_access_token(admin_user["id"], admin_user["role"])
     return {"Authorization": f"Bearer {token}"}

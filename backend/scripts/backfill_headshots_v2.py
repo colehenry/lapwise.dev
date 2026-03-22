@@ -103,9 +103,7 @@ async def find_headshot(
 ) -> tuple:
     # Check manual overrides first
     if name in WIKI_OVERRIDES:
-        summary = await fetch_json(
-            session, f"{WIKI_SUMMARY}/{WIKI_OVERRIDES[name]}"
-        )
+        summary = await fetch_json(session, f"{WIKI_SUMMARY}/{WIKI_OVERRIDES[name]}")
         if summary and "thumbnail" in summary:
             return (driver_id, code, name, summary["thumbnail"]["source"], "override")
 
@@ -126,7 +124,8 @@ async def find_headshot(
 async def main():
     async with AsyncSessionLocal() as db:
         r = await db.execute(
-            text("""
+            text(
+                """
             SELECT d.id, d.driver_code, d.full_name, d.jolpica_id
             FROM drivers d
             JOIN session_results sr ON sr.driver_id = d.id
@@ -139,7 +138,8 @@ async def main():
             )
             GROUP BY d.id, d.driver_code, d.full_name, d.jolpica_id
             ORDER BY d.full_name
-        """)
+        """
+            )
         )
         drivers = r.fetchall()
         print(f"Found {len(drivers)} drivers still without headshots\n")
@@ -163,7 +163,8 @@ async def main():
                         found += 1
                         sources[source] = sources.get(source, 0) + 1
                         await db.execute(
-                            text("""
+                            text(
+                                """
                                 UPDATE session_results
                                 SET headshot_url = :url
                                 WHERE driver_id = :did
@@ -171,7 +172,8 @@ async def main():
                                        OR headshot_url = 'None'
                                        OR headshot_url = 'nan'
                                        OR headshot_url NOT LIKE 'http%')
-                            """),
+                            """
+                            ),
                             {"url": url, "did": did},
                         )
                         print(f"  OK  [{source:14s}] {code or '---':6s} {name}")

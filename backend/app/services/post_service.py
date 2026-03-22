@@ -87,6 +87,7 @@ class PostService:
         post_type: str | None = None,
         search: str | None = None,
         current_user_id: int | None = None,
+        author_id: int | None = None,
     ) -> dict:
         query = (
             select(Post)
@@ -107,6 +108,9 @@ class PostService:
 
         if post_type:
             query = query.where(Post.post_type == PostType(post_type))
+
+        if author_id:
+            query = query.where(Post.author_id == author_id)
 
         # Sort: pinned first, then by sort criteria
         if sort == "top":
