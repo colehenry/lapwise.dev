@@ -42,14 +42,11 @@ def get_affected_years(db, code: str) -> list[int]:
 
 
 def get_driver_rows(db, code: str):
-    return (
-        db.execute(
-            select(Driver.id, Driver.full_name, Driver.driver_code, Driver.jolpica_id)
-            .where(Driver.driver_code == code)
-            .order_by(Driver.id)
-        )
-        .all()
-    )
+    return db.execute(
+        select(Driver.id, Driver.full_name, Driver.driver_code, Driver.jolpica_id)
+        .where(Driver.driver_code == code)
+        .order_by(Driver.id)
+    ).all()
 
 
 def run_reingest(years: list[int], backend_root: Path) -> None:

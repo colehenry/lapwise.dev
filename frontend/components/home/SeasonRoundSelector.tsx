@@ -31,7 +31,13 @@ export default function SeasonRoundSelector() {
       });
       if (!res.ok) return [];
       const data = await res.json();
-      return data.rounds || [];
+      const allRounds: RoundSummary[] = data.rounds || [];
+      const seen = new Set<number>();
+      return allRounds.filter((r) => {
+        if (seen.has(r.round)) return false;
+        seen.add(r.round);
+        return true;
+      });
     },
     enabled: !!selectedSeason,
     staleTime: 1000 * 60 * 60,

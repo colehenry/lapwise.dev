@@ -25,8 +25,30 @@ class ConstructorService:
         Groups by normalized team name (case-insensitive).
         Returns constructors ordered by total wins DESC, total points DESC.
         """
+        # Subquery: latest team_color and logo_url per team name
+        latest_team = select(
+            func.lower(Team.name).label("team_name_lower"),
+            Team.team_color,
+            Team.logo_url,
+            func.row_number()
+            .over(
+                partition_by=func.lower(Team.name),
+                order_by=Team.year.desc(),
+            )
+            .label("rn"),
+        ).subquery("latest_team")
+        branding = (
+            select(
+                latest_team.c.team_name_lower,
+                latest_team.c.team_color,
+                latest_team.c.logo_url,
+            )
+            .where(latest_team.c.rn == 1)
+            .subquery("branding")
+        )
+
         # Aggregate stats per team name (case-insensitive)
-        query = (
+        stats = (
             select(
                 func.lower(Team.name).label("team_name_lower"),
                 func.max(Team.name).label("team_name"),
@@ -48,43 +70,45 @@ class ConstructorService:
             .join(Session, SessionResult.session_id == Session.id)
             .where(Session.session_type.in_(["race", "sprint_race"]))
             .group_by(func.lower(Team.name))
-            .order_by(
-                func.sum(case((SessionResult.position == 1, 1), else_=0)).desc(),
-                func.coalesce(func.sum(SessionResult.points), 0).desc(),
+        ).subquery("stats")
+
+        # Join stats with branding in a single query
+        query = (
+            select(
+                stats.c.team_name,
+                stats.c.total_races,
+                stats.c.total_wins,
+                stats.c.total_podiums,
+                stats.c.total_points,
+                stats.c.first_season,
+                stats.c.latest_season,
+                branding.c.team_color,
+                branding.c.logo_url,
             )
+            .outerjoin(
+                branding,
+                stats.c.team_name_lower == branding.c.team_name_lower,
+            )
+            .order_by(stats.c.total_wins.desc(), stats.c.total_points.desc())
         )
 
         result = await db.execute(query)
         rows = result.all()
 
-        # For each constructor, get the team_color and logo_url from their most recent year
-        constructors = []
-        for row in rows:
-            # Get team color and logo from most recent year's Team row
-            team_query = (
-                select(Team.team_color, Team.logo_url)
-                .where(func.lower(Team.name) == row.team_name_lower)
-                .order_by(Team.year.desc())
-                .limit(1)
+        constructors = [
+            ConstructorListItem(
+                team_name=row.team_name,
+                team_color=row.team_color,
+                logo_url=row.logo_url,
+                total_wins=int(row.total_wins or 0),
+                total_races=int(row.total_races or 0),
+                total_podiums=int(row.total_podiums or 0),
+                total_points=float(row.total_points or 0),
+                first_season=row.first_season,
+                latest_season=row.latest_season,
             )
-            team_result = await db.execute(team_query)
-            team_data = team_result.first()
-            team_color = team_data.team_color if team_data else None
-            logo_url = team_data.logo_url if team_data else None
-
-            constructors.append(
-                ConstructorListItem(
-                    team_name=row.team_name,
-                    team_color=team_color,
-                    logo_url=logo_url,
-                    total_wins=int(row.total_wins or 0),
-                    total_races=int(row.total_races or 0),
-                    total_podiums=int(row.total_podiums or 0),
-                    total_points=float(row.total_points or 0),
-                    first_season=row.first_season,
-                    latest_season=row.latest_season,
-                )
-            )
+            for row in rows
+        ]
 
         return ConstructorListResponse(
             constructors=constructors, total=len(constructors)

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
 interface PageHeaderProps {
@@ -22,8 +21,6 @@ export default function PageHeader({
   children,
   bottomContent,
 }: PageHeaderProps) {
-  const router = useRouter();
-
   return (
     <div className="sticky top-0 z-40">
       <div className="px-4">

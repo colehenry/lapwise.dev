@@ -19,7 +19,7 @@ export default function ResultsError({
 
   return (
     <div className="min-h-screen bg-bg-secondary flex items-center justify-center p-8">
-      <div className="bg-bg-tertiary rounded-lg border border-border-primary p-8 max-w-md text-center">
+      <div className="bg-bg-tertiary rounded-sm border border-border-primary p-8 max-w-md text-center">
         <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
           <svg
             className="w-8 h-8 text-red-400"

@@ -85,13 +85,21 @@ class PostService:
         sort: str = "new",
         tag_slug: str | None = None,
         post_type: str | None = None,
+        search: str | None = None,
         current_user_id: int | None = None,
+        author_id: int | None = None,
     ) -> dict:
         query = (
             select(Post)
             .options(selectinload(Post.author), selectinload(Post.tags))
             .where(Post.deleted_at.is_(None))
         )
+
+        if search:
+            search_term = f"%{search}%"
+            query = query.where(
+                Post.title.ilike(search_term) | Post.body.ilike(search_term)
+            )
 
         if tag_slug:
             from app.models.tag import Tag
@@ -100,6 +108,9 @@ class PostService:
 
         if post_type:
             query = query.where(Post.post_type == PostType(post_type))
+
+        if author_id:
+            query = query.where(Post.author_id == author_id)
 
         # Sort: pinned first, then by sort criteria
         if sort == "top":
@@ -181,6 +192,7 @@ class PostService:
     @staticmethod
     async def count_posts(db: AsyncSession) -> int:
         from sqlalchemy import func
+
         stmt = select(func.count()).select_from(Post).where(Post.deleted_at.is_(None))
         result = await db.execute(stmt)
         return result.scalar() or 0

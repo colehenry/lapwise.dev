@@ -47,7 +47,7 @@ export default function ConfirmDialog({
   return (
     <dialog
       ref={dialogRef}
-      className="backdrop:bg-black/60 bg-bg-tertiary border border-border-primary rounded-sm p-0 max-w-sm w-full shadow-xl"
+      className="fixed inset-0 m-auto backdrop:bg-black/60 bg-bg-tertiary border border-border-primary rounded-sm p-0 max-w-sm w-full h-fit shadow-xl"
     >
       <div className="p-6 space-y-4">
         <h3 className="text-lg font-semibold text-text-primary">{title}</h3>

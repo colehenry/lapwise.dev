@@ -58,50 +58,95 @@ function CommentNode({
     onRefresh();
   };
 
-  return (
-    <div
-      className={`border border-border-primary rounded-sm bg-bg-tertiary p-3 ${
-        depth > 0 ? "ml-3" : ""
-      }`}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
+  if (isCollapsed) {
+    return (
+      <div className={depth > 0 ? "ml-3" : ""}>
+        <div className="flex items-center gap-2 border border-border-primary rounded-sm bg-bg-tertiary/60 px-3 py-2">
+          <button
+            type="button"
+            onClick={() => setIsCollapsed(false)}
+            className="w-5 h-5 flex items-center justify-center rounded-sm border border-border-primary text-text-muted hover:text-text-primary hover:border-purple-500/50 transition-colors"
+            aria-label="Expand comment"
+          >
+            <svg
+              className="w-3 h-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <title>Expand</title>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 5v14m-7-7h14"
+              />
+            </svg>
+          </button>
           <UserAvatar
             username={comment.author.username}
             avatarUrl={comment.author.avatar_url}
             size="sm"
           />
-          <div>
+          <span className="text-xs font-mono uppercase tracking-wider text-text-muted">
+            {comment.author.username}
+          </span>
+          <span className="text-[10px] font-mono text-text-muted">
+            • {formatRelativeTime(comment.created_at)}
+          </span>
+          {hasReplies && (
+            <span className="text-[10px] font-mono text-text-muted">
+              • {comment.replies.length}{" "}
+              {comment.replies.length === 1 ? "reply" : "replies"}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={depth > 0 ? "ml-3" : ""}>
+      <div className="flex">
+        {/* Clickable collapse rail */}
+        <button
+          type="button"
+          onClick={() => setIsCollapsed(true)}
+          className="group flex-shrink-0 w-5 flex flex-col items-center pt-1 cursor-pointer bg-transparent border-none p-0"
+          aria-label="Collapse comment"
+        >
+          <div className="w-px flex-1 bg-border-primary group-hover:bg-purple-500 transition-colors" />
+        </button>
+
+        {/* Comment content */}
+        <div className="flex-1 min-w-0 border border-border-primary rounded-sm bg-bg-tertiary p-3">
+          <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono uppercase tracking-wider text-text-secondary">
-                {comment.author.username}
-              </span>
-              {comment.author.role !== "user" && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full border border-border-secondary text-text-tertiary uppercase tracking-widest font-mono">
-                  {comment.author.role}
-                </span>
-              )}
-            </div>
-            <div className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
-              {formatRelativeTime(comment.created_at)}
-              {isEdited && " • edited"}
+              <UserAvatar
+                username={comment.author.username}
+                avatarUrl={comment.author.avatar_url}
+                size="sm"
+              />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono uppercase tracking-wider text-text-secondary">
+                    {comment.author.username}
+                  </span>
+                  {comment.author.role !== "user" && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full border border-border-secondary text-text-tertiary uppercase tracking-widest font-mono">
+                      {comment.author.role}
+                    </span>
+                  )}
+                </div>
+                <div className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+                  {formatRelativeTime(comment.created_at)}
+                  {isEdited && " • edited"}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {hasReplies && (
-          <button
-            type="button"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="text-[10px] font-mono uppercase tracking-widest text-text-muted hover:text-text-primary"
-          >
-            {isCollapsed ? "Expand" : "Collapse"}
-          </button>
-        )}
-      </div>
-
-      {!isCollapsed && (
-        <>
           <div className="mt-3 text-sm">
             <MarkdownContent content={comment.body} />
           </div>
@@ -142,22 +187,23 @@ function CommentNode({
               />
             </div>
           )}
+        </div>
+      </div>
 
-          {hasReplies && (
-            <div className="mt-4 space-y-3 border-l border-border-primary pl-4">
-              {comment.replies.map((reply) => (
-                <CommentNode
-                  key={reply.id}
-                  comment={reply}
-                  depth={depth + 1}
-                  postId={postId}
-                  onRefresh={onRefresh}
-                  isLocked={isLocked}
-                />
-              ))}
-            </div>
-          )}
-        </>
+      {/* Replies nested under the rail */}
+      {hasReplies && (
+        <div className="mt-3 space-y-3 ml-5">
+          {comment.replies.map((reply) => (
+            <CommentNode
+              key={reply.id}
+              comment={reply}
+              depth={depth + 1}
+              postId={postId}
+              onRefresh={onRefresh}
+              isLocked={isLocked}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

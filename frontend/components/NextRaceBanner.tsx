@@ -1,11 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+import { ConcentricPattern, GridPattern } from "@/components/Patterns";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import { getCircuitFlagEmoji } from "@/lib/flags";
-import { GridPattern, ConcentricPattern } from "@/components/Patterns";
 
 interface UpcomingEvent {
   event_name: string;
@@ -67,7 +67,7 @@ export default function NextRaceBanner() {
         id="calendar-grid"
         className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.03] pointer-events-none"
       />
-      
+
       <div className="max-w-6xl mx-auto relative z-10">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
@@ -78,8 +78,18 @@ export default function NextRaceBanner() {
           </div>
           <div className="hidden sm:flex items-center gap-2 text-[10px] text-text-tertiary font-mono font-bold uppercase tracking-widest">
             <span>Scroll to explore</span>
-            <svg className="w-3 h-3 animate-bounce-x" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            <svg
+              className="w-3 h-3 animate-bounce-x"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 8l4 4m0 0l-4 4m4-4H3"
+              />
             </svg>
           </div>
         </div>
@@ -95,27 +105,40 @@ export default function NextRaceBanner() {
               const year = new Date(event.event_date).getFullYear();
               const lastYear = year - 1;
 
-              const isNewCircuit = event.event_name.includes("Madrid") || event.circuit_id === null;
-              const showLastYearLink = !isTesting && event.round_number && !isNewCircuit;
+              // Map circuit IDs to correct track map files
+              const TRACK_MAP_OVERRIDES: Record<number, number> = {
+                83: 8, // Monaco duplicate circuit ID → correct track map
+              };
+              const trackMapId = event.circuit_id
+                ? (TRACK_MAP_OVERRIDES[event.circuit_id] ?? event.circuit_id)
+                : null;
+              const isNewCircuit =
+                event.event_name.includes("Madrid") || trackMapId === null;
+              const showLastYearLink =
+                !isTesting && event.round_number && !isNewCircuit;
 
               return (
-                <div key={`${event.event_date}-${event.event_name}`} className="flex-shrink-0 w-[240px]">
+                <div
+                  key={`${event.event_date}-${event.event_name}`}
+                  className="flex-shrink-0 w-[240px]"
+                >
                   <div className="bg-bg-tertiary border border-border-primary rounded-sm overflow-hidden group hover:border-purple-500/50 transition-all duration-300 shadow-lg shadow-black/20">
                     <div className="p-5 flex flex-col items-center text-center">
-                      
                       {/* Top: Track Map Area (Flag removed from here) */}
                       <div className="relative w-full h-24 mb-4 bg-bg-secondary/50 rounded-sm overflow-hidden border border-border-primary/30 flex items-center justify-center">
-                        <ConcentricPattern id={`event-pattern-${event.event_date}`} className="opacity-10" />
-                        {event.circuit_id ? (
+                        <ConcentricPattern
+                          id={`event-pattern-${event.event_date}`}
+                          className="absolute inset-0 w-full h-full opacity-10 pointer-events-none"
+                        />
+                        {trackMapId ? (
                           <Image
-                            src={`/track-maps/${event.circuit_id}.png`}
+                            src={`/track-maps/${trackMapId}.png`}
                             alt={event.circuit_name || ""}
                             width={120}
                             height={120}
-                            className="object-contain relative z-10 opacity-60 mix-blend-lighten"
+                            className="object-contain relative z-10 opacity-60 mix-blend-lighten max-h-[80px]"
                           />
                         ) : (
-
                           <div className="text-[10px] text-text-muted font-mono uppercase tracking-widest relative z-10">
                             No map available
                           </div>
@@ -124,9 +147,11 @@ export default function NextRaceBanner() {
 
                       {/* Event Identification */}
                       <span className="text-[10px] font-mono font-bold text-purple-400 uppercase tracking-widest mb-1">
-                        {isTesting ? "Testing Session" : `Round ${String(event.round_number).padStart(2, '0')}`}
+                        {isTesting
+                          ? "Testing Session"
+                          : `Round ${String(event.round_number).padStart(2, "0")}`}
                       </span>
-                      
+
                       {/* GP Name with Flag inline before it */}
                       <div className="flex items-center gap-2 mb-4 max-w-full">
                         <span className="text-lg flex-shrink-0 transform group-hover:scale-110 transition-transform duration-300">
@@ -150,13 +175,27 @@ export default function NextRaceBanner() {
                       {/* Location & Date */}
                       <div className="flex flex-col items-center gap-1 mb-6">
                         <div className="flex items-center gap-1.5 text-text-secondary">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                            />
                           </svg>
-                          <span className="text-[10px] font-bold uppercase tracking-wide">{event.location}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-wide">
+                            {event.location}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1.5 text-text-muted">
-                          <span className="text-[10px] font-mono font-bold">{formattedDate}, {year}</span>
+                          <span className="text-[10px] font-mono font-bold">
+                            {formattedDate}, {year}
+                          </span>
                         </div>
                       </div>
 
@@ -169,12 +208,22 @@ export default function NextRaceBanner() {
                           </span>
                         ) : showLastYearLink ? (
                           <Link
-                            href={`/results/${lastYear}/${event.round_number}`}
+                            href={`/results/${lastYear}`}
                             className="text-[9px] font-bold font-mono tracking-widest uppercase text-text-muted hover:text-purple-400 transition-colors flex items-center gap-1.5 group/btn"
                           >
-                            View {lastYear} Results
-                            <svg className="w-2.5 h-2.5 group-hover/btn:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            View {lastYear} Season
+                            <svg
+                              className="w-2.5 h-2.5 group-hover/btn:translate-x-0.5 transition-transform"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5l7 7-7 7"
+                              />
                             </svg>
                           </Link>
                         ) : (

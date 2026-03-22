@@ -5,7 +5,7 @@ Business logic for post comments.
 """
 
 from datetime import datetime, timezone
-from sqlalchemy import select
+from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -66,6 +66,7 @@ class CommentService:
         post_id: int,
         cursor: str | None = None,
         limit: int = 50,
+        sort: str = "new",
         current_user_id: int | None = None,
     ) -> dict:
         # Get top-level comments with their replies
@@ -80,8 +81,12 @@ class CommentService:
                 Comment.parent_comment_id.is_(None),
                 Comment.deleted_at.is_(None),
             )
-            .order_by(Comment.created_at)
         )
+
+        if sort == "top":
+            query = query.order_by(desc(Comment.vote_count), Comment.created_at)
+        else:  # "new" default
+            query = query.order_by(Comment.created_at)
 
         if cursor:
             try:

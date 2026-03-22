@@ -7,7 +7,9 @@ import { useEffect, useMemo, useState } from "react";
 import JumpToRace from "@/components/JumpToRace";
 import PageHeader from "@/components/PageHeader";
 import { GridPattern } from "@/components/Patterns";
+import ExpandButton from "@/components/ui/ExpandButton";
 import Skeleton from "@/components/ui/Skeleton";
+import SortPills from "@/components/ui/SortPills";
 import TiltCard from "@/components/ui/TiltCard";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import type { ConstructorListItem, ConstructorListResponse } from "@/lib/types";
@@ -122,44 +124,12 @@ function ConstructorCard({ team }: { team: ConstructorListItem }) {
   );
 }
 
-function SortPills({
-  active,
-  onChange,
-}: {
-  active: SortKey;
-  onChange: (key: SortKey) => void;
-}) {
-  const options: { key: SortKey; label: string }[] = [
-    { key: "wins", label: "Wins" },
-    { key: "races", label: "Races" },
-    { key: "points", label: "Points" },
-    { key: "alpha", label: "A-Z" },
-  ];
-
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-        Sort by
-      </span>
-      <div className="flex items-center gap-1">
-        {options.map((opt) => (
-          <button
-            key={opt.key}
-            type="button"
-            onClick={() => onChange(opt.key)}
-            className={`px-3 py-1 rounded-sm text-xs font-mono tracking-wider uppercase transition-colors ${
-              active === opt.key
-                ? "bg-purple-500 text-white"
-                : "bg-bg-primary text-text-muted hover:text-text-primary hover:bg-bg-elevated border border-border-primary"
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
+const CONSTRUCTOR_SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: "wins", label: "Wins" },
+  { key: "races", label: "Races" },
+  { key: "points", label: "Points" },
+  { key: "alpha", label: "A-Z" },
+];
 
 export default function ConstructorsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -275,7 +245,11 @@ export default function ConstructorsPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 px-3 py-2 bg-bg-primary text-text-primary border border-border-primary rounded-sm font-mono text-xs focus:outline-none focus:border-purple-500 transition-colors placeholder-text-muted"
           />
-          <SortPills active={sortKey} onChange={setSortKey} />
+          <SortPills
+            active={sortKey}
+            onChange={setSortKey}
+            options={CONSTRUCTOR_SORT_OPTIONS}
+          />
         </div>
 
         {/* Stats bar */}
@@ -312,31 +286,11 @@ export default function ConstructorsPage() {
         )}
 
         {!isLoading && filteredConstructors.length > DEFAULT_VISIBLE_COUNT && (
-          <div className="mt-6 flex justify-center">
-            <button
-              type="button"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="border border-border-secondary rounded-sm text-text-secondary hover:border-purple-500 hover:text-purple-300 font-mono text-xs uppercase tracking-widest px-6 py-2 transition-colors duration-150 flex items-center gap-2"
-            >
-              {isExpanded
-                ? "COLLAPSE"
-                : `SHOW ALL (${filteredConstructors.length - DEFAULT_VISIBLE_COUNT} more)`}
-              <svg
-                className={`w-3 h-3 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
-          </div>
+          <ExpandButton
+            isExpanded={isExpanded}
+            onToggle={() => setIsExpanded(!isExpanded)}
+            remainingCount={filteredConstructors.length - DEFAULT_VISIBLE_COUNT}
+          />
         )}
 
         {/* Empty */}

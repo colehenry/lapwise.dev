@@ -65,6 +65,15 @@ export default function Footer() {
               </svg>
               GitHub
             </a>
+            <a
+              href="https://buymeacoffee.com/colehenry"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium tracking-wide text-text-muted border border-border-secondary rounded-full hover:text-purple-300 hover:border-purple-500/40 transition-colors duration-150"
+            >
+              <span aria-hidden="true">&#9749;</span>
+              Support
+            </a>
           </div>
         </div>
 

@@ -90,10 +90,8 @@ async def update_user_role(
     """
     Update a user's role.
     """
-    # Prevent self-demotion if desired, but for now just update
     if user_id == current_admin.id:
-        # Optional: block changing own role to prevent lockout
-        pass
+        raise HTTPException(status_code=400, detail="Cannot change your own role")
 
     user = await UserService.update_user_role(db, user_id, data.role)
     if not user:

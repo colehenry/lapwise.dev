@@ -2,8 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import CircuitLapRecords from "@/components/CircuitLapRecords";
 import CircuitLapTimeTrend from "@/components/CircuitLapTimeTrend";
 import CircuitRaceHistoryTable from "@/components/CircuitRaceHistoryTable";
@@ -16,6 +15,7 @@ import PageHeader from "@/components/PageHeader";
 import { TrianglePattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import TabBar from "@/components/ui/TabBar";
+import { useTabSync } from "@/hooks/useTabSync";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { CircuitInfo } from "@/lib/types";
 
@@ -40,23 +40,12 @@ async function fetchCircuit(id: string): Promise<CircuitInfo> {
 
 export default function CircuitDetailPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const id = params.id as string;
-
-  const urlTab = searchParams.get("tab") as CircuitTab | null;
-  const [activeTab, setActiveTab] = useState<CircuitTab>(urlTab || "overview");
-
-  useEffect(() => {
-    if (urlTab) setActiveTab(urlTab);
-  }, [urlTab]);
-
-  const switchTab = (tab: CircuitTab) => {
-    setActiveTab(tab);
-    const url =
-      tab === "overview" ? `/circuits/${id}` : `/circuits/${id}?tab=${tab}`;
-    router.replace(url, { scroll: false });
-  };
+  const { activeTab, switchTab } = useTabSync<CircuitTab>(
+    `/circuits/${id}`,
+    "overview",
+  );
 
   const {
     data: circuit,
@@ -91,7 +80,7 @@ export default function CircuitDetailPage() {
     return (
       <div className="min-h-screen bg-bg-secondary p-4 md:p-8">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl font-bold text-white mb-4">
+          <h1 className="text-3xl font-bold text-text-primary mb-4">
             Circuit Not Found
           </h1>
           <p className="text-text-tertiary mb-8">
@@ -150,13 +139,13 @@ export default function CircuitDetailPage() {
               <div className="lg:col-span-1 flex flex-col gap-4">
                 {/* Circuit Info Card */}
                 <div className="bg-bg-tertiary rounded-sm p-6 border border-border-primary">
-                  <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-text-primary mb-6 flex items-center gap-2">
                     Circuit Stats
                   </h2>
 
                   <div className="space-y-6">
                     <div>
-                      <div className="text-2xl font-bold text-white">
+                      <div className="text-2xl font-bold text-text-primary">
                         {circuit.track_length_km
                           ? `${circuit.track_length_km.toFixed(3)} km`
                           : "N/A"}
@@ -165,7 +154,7 @@ export default function CircuitDetailPage() {
 
                     <div>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-white">
+                        <span className="text-2xl font-bold text-text-primary">
                           {circuit.total_races}
                         </span>
                         <span className="text-text-tertiary">
@@ -181,7 +170,7 @@ export default function CircuitDetailPage() {
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="text-text-tertiary">First Race</span>
-                          <span className="text-white font-medium">
+                          <span className="text-text-primary font-medium">
                             {circuit.first_year}
                           </span>
                         </div>
@@ -189,7 +178,7 @@ export default function CircuitDetailPage() {
                           <span className="text-text-tertiary">
                             Most Recent
                           </span>
-                          <span className="text-white font-medium">
+                          <span className="text-text-primary font-medium">
                             {circuit.most_recent_year}
                           </span>
                         </div>

@@ -3,15 +3,15 @@
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import DriverResultsTable from "@/components/DriverResultsTable";
 import DriverSeasonHistoryGraph from "@/components/DriverSeasonHistoryGraph";
 import DriverStatisticsPanel from "@/components/DriverStatisticsPanel";
 import JumpToRace from "@/components/JumpToRace";
 import PageHeader from "@/components/PageHeader";
-import Skeleton from "@/components/ui/Skeleton";
+import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
 import TabBar from "@/components/ui/TabBar";
+import { useTabSync } from "@/hooks/useTabSync";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
 import type { DriverProfile } from "@/lib/types";
@@ -34,25 +34,12 @@ async function fetchDriverProfile(driverCode: string): Promise<DriverProfile> {
 
 export default function DriverProfilePage() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const driverCode = params.driverCode as string;
-
-  const urlTab = searchParams.get("tab") as DriverTab | null;
-  const [activeTab, setActiveTab] = useState<DriverTab>(urlTab || "overview");
-
-  useEffect(() => {
-    if (urlTab) setActiveTab(urlTab);
-  }, [urlTab]);
-
-  const switchTab = (tab: DriverTab) => {
-    setActiveTab(tab);
-    const url =
-      tab === "overview"
-        ? `/drivers/${driverCode}`
-        : `/drivers/${driverCode}?tab=${tab}`;
-    router.replace(url, { scroll: false });
-  };
+  const { activeTab, switchTab } = useTabSync<DriverTab>(
+    `/drivers/${driverCode}`,
+    "overview",
+  );
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["driver-profile", driverCode],
@@ -60,41 +47,15 @@ export default function DriverProfilePage() {
   });
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-bg-secondary p-8">
-        <div className="max-w-5xl mx-auto space-y-6">
-          <Skeleton variant="text" width="120px" />
-          <div className="flex items-center gap-6">
-            <Skeleton variant="circular" width="128px" height="128px" />
-            <div className="space-y-3 flex-1">
-              <Skeleton variant="text" width="300px" height="40px" />
-              <Skeleton variant="text" width="200px" />
-            </div>
-          </div>
-          <Skeleton variant="rectangular" height="40px" />
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }, (_, i) => (
-              <Skeleton
-                key={`skel-${
-                  // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
-                  i
-                }`}
-                variant="rectangular"
-                height="100px"
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
   if (error || !data) {
     return (
       <div className="min-h-screen bg-bg-secondary p-8">
         <div className="max-w-5xl mx-auto">
-          <div className="bg-bg-tertiary rounded-lg p-8">
-            <h1 className="text-2xl font-bold text-white mb-4">
+          <div className="bg-bg-tertiary rounded-sm p-8">
+            <h1 className="text-2xl font-bold text-text-primary mb-4">
               Driver Not Found
             </h1>
             <p className="text-text-tertiary mb-6">
@@ -164,7 +125,7 @@ export default function DriverProfilePage() {
                         }}
                       />
                       <div className="absolute top-2 right-2 bg-bg-primary/80 backdrop-blur-sm border border-border-primary px-2 py-1 rounded-sm">
-                        <span className="text-xl font-mono font-bold text-white leading-none">
+                        <span className="text-xl font-mono font-bold text-text-primary leading-none">
                           {data.driver_code}
                         </span>
                       </div>
@@ -186,7 +147,7 @@ export default function DriverProfilePage() {
                       <span className="text-[10px] text-text-muted uppercase font-bold tracking-widest leading-none mb-1">
                         Nationality
                       </span>
-                      <span className="text-lg font-bold text-white leading-none">
+                      <span className="text-lg font-bold text-text-primary leading-none">
                         {getCountryName(data.country_code)}
                       </span>
                     </div>
@@ -204,7 +165,7 @@ export default function DriverProfilePage() {
                     <p className="text-text-muted text-[10px] uppercase font-bold tracking-wider mb-1">
                       {stat.label}
                     </p>
-                    <p className="text-white text-2xl font-bold font-mono">
+                    <p className="text-text-primary text-2xl font-bold font-mono">
                       {stat.value}
                     </p>
                   </div>
@@ -220,7 +181,7 @@ export default function DriverProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <p className="text-text-muted text-sm mb-2">Win Rate</p>
-                  <p className="text-white text-2xl font-bold">
+                  <p className="text-text-primary text-2xl font-bold">
                     {data.total_races > 0
                       ? `${((data.total_wins / data.total_races) * 100).toFixed(1)}%`
                       : "0%"}
@@ -228,7 +189,7 @@ export default function DriverProfilePage() {
                 </div>
                 <div>
                   <p className="text-text-muted text-sm mb-2">Podium Rate</p>
-                  <p className="text-white text-2xl font-bold">
+                  <p className="text-text-primary text-2xl font-bold">
                     {data.total_races > 0
                       ? `${((data.total_podiums / data.total_races) * 100).toFixed(1)}%`
                       : "0%"}
@@ -238,7 +199,7 @@ export default function DriverProfilePage() {
                   <p className="text-text-muted text-sm mb-2">
                     Points per Race
                   </p>
-                  <p className="text-white text-2xl font-bold">
+                  <p className="text-text-primary text-2xl font-bold">
                     {data.total_races > 0
                       ? (data.total_points / data.total_races).toFixed(2)
                       : "0"}
