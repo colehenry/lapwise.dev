@@ -48,6 +48,11 @@ export default function DiscussionDetailPage() {
 
   const postId = Number(params.id);
 
+  const [voteCount, setVoteCount] = useState(0);
+  const [userVoted, setUserVoted] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [commentSort, setCommentSort] = useState<"new" | "top">("new");
+
   const {
     data: post,
     isLoading: postLoading,
@@ -63,14 +68,10 @@ export default function DiscussionDetailPage() {
     isLoading: commentsLoading,
     refetch: refetchComments,
   } = useQuery<CommentListResponse>({
-    queryKey: ["discussion-comments", postId],
-    queryFn: () => fetchComments({ postId, limit: 50 }),
+    queryKey: ["discussion-comments", postId, commentSort],
+    queryFn: () => fetchComments({ postId, limit: 50, sort: commentSort }),
     enabled: Number.isFinite(postId),
   });
-
-  const [voteCount, setVoteCount] = useState(0);
-  const [userVoted, setUserVoted] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
 
   useLayoutEffect(() => {
     if (!post) return;
@@ -301,6 +302,24 @@ export default function DiscussionDetailPage() {
             <h2 className="text-lg font-semibold text-text-primary">
               Discussion ({post.comment_count})
             </h2>
+            {post.comment_count > 1 && (
+              <div className="flex items-center gap-1">
+                {(["new", "top"] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setCommentSort(s)}
+                    className={`px-3 py-1 rounded-sm text-xs font-mono tracking-wider uppercase transition-colors duration-150 border ${
+                      commentSort === s
+                        ? "bg-purple-500/20 border-purple-500 text-purple-200"
+                        : "border-border-primary text-text-muted hover:text-text-primary hover:bg-bg-elevated"
+                    }`}
+                  >
+                    {s === "new" ? "New" : "Top"}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {post.is_locked && (

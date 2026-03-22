@@ -3,14 +3,22 @@
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { ConcentricPattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl, isValidHeadshotUrl } from "@/lib/api";
 import type { RoundSummary } from "@/lib/types";
-import { useState } from "react";
 
-const formatGap = (time: number | null | undefined, winnerTime: number | null | undefined) => {
-  if (typeof time !== 'number' || typeof winnerTime !== 'number' || winnerTime === 0) return "—";
+const formatGap = (
+  time: number | null | undefined,
+  winnerTime: number | null | undefined,
+) => {
+  if (
+    typeof time !== "number" ||
+    typeof winnerTime !== "number" ||
+    winnerTime === 0
+  )
+    return "—";
   let gapValue: number;
   if (time < winnerTime / 2) {
     gapValue = time;
@@ -24,7 +32,7 @@ const formatGap = (time: number | null | undefined, winnerTime: number | null | 
 export default function TopRightLatestRace() {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showDiscussionTooltip, setShowDiscussionTooltip] = useState(false);
-  
+
   const { data, isLoading, isError } = useQuery<RoundSummary>({
     queryKey: ["latest-race"],
     queryFn: async () => {
@@ -55,7 +63,7 @@ export default function TopRightLatestRace() {
   return (
     <div className="w-full max-w-2xl group relative">
       <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/20 to-red-500/20 rounded-sm blur opacity-20 group-hover:opacity-30 transition duration-500" />
-      
+
       <div className="relative overflow-visible bg-bg-tertiary border border-border-primary rounded-sm flex flex-col md:flex-row min-h-[300px]">
         {/* Left: Results & Discussion CTA */}
         <div className="flex-1 p-6 md:pr-10 relative z-10 flex flex-col justify-between">
@@ -69,7 +77,7 @@ export default function TopRightLatestRace() {
                 RND {data.round}
               </span>
             </div>
-            
+
             <h3 className="text-2xl font-bold text-text-primary leading-tight mb-0.5 whitespace-nowrap">
               {data.event_name}
             </h3>
@@ -79,9 +87,14 @@ export default function TopRightLatestRace() {
 
             <div className="space-y-3 mb-8">
               {data.podium.map((driver, idx) => (
-                <div key={driver.driver_code} className="flex items-center gap-3">
-                  <span className="w-4 text-[10px] font-bold text-text-muted font-mono shrink-0">P{idx + 1}</span>
-                  
+                <div
+                  key={driver.driver_code}
+                  className="flex items-center gap-3"
+                >
+                  <span className="w-4 text-[10px] font-bold text-text-muted font-mono shrink-0">
+                    P{idx + 1}
+                  </span>
+
                   <div className="relative w-8 h-8 bg-bg-secondary border border-border-primary rounded-sm overflow-hidden shrink-0">
                     {isValidHeadshotUrl(driver.headshot_url) ? (
                       <Image
@@ -101,15 +114,21 @@ export default function TopRightLatestRace() {
                     <span className="text-sm font-bold text-text-primary whitespace-nowrap mr-4">
                       {driver.full_name}
                     </span>
-                    <span 
+                    <span
                       className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-sm bg-bg-secondary whitespace-nowrap shrink-0"
-                      style={{ 
-                        color: driver.team_color ? `#${driver.team_color}` : "#fff",
-                        borderColor: driver.team_color ? `#${driver.team_color}40` : "transparent",
-                        borderWidth: "1px"
+                      style={{
+                        color: driver.team_color
+                          ? `#${driver.team_color}`
+                          : "#fff",
+                        borderColor: driver.team_color
+                          ? `#${driver.team_color}40`
+                          : "transparent",
+                        borderWidth: "1px",
                       }}
                     >
-                      {idx === 0 ? "WINNER" : formatGap(driver.time_seconds, winner.time_seconds)}
+                      {idx === 0
+                        ? "WINNER"
+                        : formatGap(driver.time_seconds, winner.time_seconds)}
                     </span>
                   </div>
                 </div>
@@ -124,7 +143,7 @@ export default function TopRightLatestRace() {
             >
               Full Results
             </Link>
-            
+
             <div className="relative">
               <Link
                 href="/discussions"
@@ -133,8 +152,18 @@ export default function TopRightLatestRace() {
                 onMouseLeave={() => setShowDiscussionTooltip(false)}
               >
                 Join Discussion
-                <svg className="w-3.5 h-3.5 transform group-hover/link:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                <svg
+                  className="w-3.5 h-3.5 transform group-hover/link:translate-x-1 transition-transform duration-200"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 8l4 4m0 0l-4 4m4-4H3"
+                  />
                 </svg>
               </Link>
 
@@ -142,7 +171,8 @@ export default function TopRightLatestRace() {
                 <div className="absolute left-0 top-full mt-3 z-50 animate-in fade-in slide-in-from-top-1 duration-200 min-w-[220px]">
                   <div className="bg-bg-tertiary border border-border-primary px-3 py-2 rounded-sm shadow-2xl backdrop-blur-xl ring-1 ring-white/10">
                     <p className="text-[10px] text-text-primary font-bold leading-relaxed whitespace-nowrap">
-                      What&apos;d you think about the <span className="text-purple-400">{gpName}</span>?
+                      What&apos;d you think about the{" "}
+                      <span className="text-purple-400">{gpName}</span>?
                     </p>
                     <div className="absolute -top-1 left-4 w-2 h-2 bg-bg-tertiary border-t border-l border-border-primary rotate-45" />
                   </div>
