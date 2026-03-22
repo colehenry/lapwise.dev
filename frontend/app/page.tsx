@@ -1,10 +1,76 @@
 import Link from "next/link";
-import HomeDiscussionSection from "@/components/home/HomeDiscussionSection";
 import SeasonRoundSelector from "@/components/home/SeasonRoundSelector";
 import TopRightLatestRace from "@/components/home/TopRightLatestRace";
 import NextRaceBanner from "@/components/NextRaceBanner";
 import { GridPattern } from "@/components/Patterns";
 import TiltCard from "@/components/ui/TiltCard";
+
+function FeatureIcon({ label }: { label: string }) {
+  const className = "w-7 h-7 text-purple-400";
+
+  if (label === "Drivers") {
+    return (
+      <svg
+        className={className}
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 512 512"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={28}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <title>Drivers</title>
+        <path d="M40 280 A200 200 0 0 1 440 280 L440 360 A60 60 0 0 1 360 420 L100 360 A60 60 0 0 1 40 300 Z" />
+        <path d="M260 230 L440 250 L440 400 L260 300 Z" />
+        <circle cx="130" cy="270" r="45" />
+      </svg>
+    );
+  }
+
+  if (label === "Constructors") {
+    return (
+      <svg
+        className={className}
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+        stroke="currentColor"
+        aria-hidden="true"
+      >
+        <title>Constructors</title>
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z"
+        />
+      </svg>
+    );
+  }
+
+  if (label === "Circuits") {
+    return (
+      <svg
+        className={className}
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 431.76266 282.2795"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={18}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <title>Circuits</title>
+        <path d="m4.0167 271.88c0.64631 8.2948 35.488 7.0412 175.53 4.453 12.377-0.22874 23.86-0.27059 25.52-0.0932 13.322 1.4247 100.54 2.2285 145.19 1.3382l52.003-1.0371 10.787-5.1931c5.9327-2.8564 11.75-6.3558 12.928-7.7758 3.9507-4.7641 3.2062-6.3707-21.921-47.254-13.094-21.305-31.084-50.583-39.976-65.064-78.47-127.81-76.73-125.33-87.73-124.85-10.071 0.43333-18.612 11.049-30.86 38.362-6.0647 12.461-9.3595 17.392-9.4458 30.499-0.16791 25.024 10.566 36.802 43.884 48.15 27.605 9.4028 44.83 34.219 37.75 54.389-2.9794 8.4869-5.7122 8.9248-56.109 8.9963-116.27 0.16506-159.78-0.95414-191.07-4.9201-0.01764-0.002-0.0317-0.005-0.04921-0.008-1.3307-0.66808-2.43-1.5305-2.9028-2.6746 0.52921-1.7786 2.7076-4.7102 6.8088-9.6375 12.941-15.548 12.809-15.542 95.728-5.2995 57.897 7.1518 61.142 0.92171 16.441-31.574-40.6-29.52-40.53-29.42-36.96-49.77 3.4-19.413-0.73-26.128-20.45-33.214-14.94-5.372-30.31-18.671-50.912-44.055-23.312-28.723-35.64-28.862-40.096-0.451-16.672 106.31-23.197 153.18-23.266 178.19-0.10452 1.6859-0.07039 3.3487 0.08572 4.9912 0.31161 8.3078 1.4916 13.926 3.3599 18.797 7.4095 19.318 7.6168 17.58-3.5718 30.076-5.9649 6.6621-10.949 11.37-10.696 14.616z" />
+      </svg>
+    );
+  }
+
+  return null;
+}
 
 function CrosshairPattern() {
   return (
@@ -138,65 +204,53 @@ export default function Home() {
             {[
               {
                 label: "Drivers",
-                desc: "Career statistics, race histories, and head-to-head comparisons for every driver.",
+                desc: "Career statistics, race histories, and head-to-head comparisons.",
                 href: "/drivers",
-                icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
               },
               {
                 label: "Constructors",
-                desc: "Technical history and performance data for every team to ever compete.",
+                desc: "Technical history and performance data for every team.",
                 href: "/constructors",
-                icon: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4",
               },
               {
                 label: "Circuits",
-                desc: "Track maps, layout changes, and historical records for every F1 venue.",
+                desc: "Track maps, layout changes, and historical records.",
                 href: "/circuits",
-                icon: "M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7",
               },
             ].map((feature) => (
               <TiltCard key={feature.label}>
                 <Link
                   href={feature.href}
-                  className="block group bg-bg-tertiary border border-border-primary rounded-sm p-0 hover:border-purple-500/70 transition-all duration-150 relative overflow-hidden h-full"
+                  className="block group bg-bg-tertiary border border-border-primary rounded-sm hover:border-purple-500/70 transition-all duration-150 relative overflow-hidden h-full"
                 >
                   <CrosshairPattern />
-                  <div className="relative z-10">
-                    <div className="relative h-10 bg-bg-secondary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                      <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                        Explore
-                      </span>
+                  <div className="relative z-10 flex flex-col items-center text-center p-8">
+                    <div className="w-14 h-14 rounded-sm bg-purple-500/10 border border-purple-500/25 flex items-center justify-center mb-5 group-hover:bg-purple-500/15 group-hover:border-purple-500/40 transition-all duration-300">
+                      <FeatureIcon label={feature.label} />
                     </div>
-                    <div className="p-6">
-                      <div className="w-10 h-10 rounded-sm bg-purple-500/12 border border-purple-500/30 flex items-center justify-center mb-4">
-                        <svg
-                          className="w-5 h-5 text-purple-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          aria-hidden="true"
-                        >
-                          <title>{feature.label}</title>
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d={feature.icon}
-                          />
-                        </svg>
-                      </div>
-                      <h3 className="text-lg font-bold text-text-primary tracking-tight mb-2">
-                        {feature.label}
-                      </h3>
-                      <p className="text-sm text-text-secondary leading-relaxed mb-6">
-                        {feature.desc}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-purple-400 group-hover:text-purple-300 transition-colors">
-                        Explore {feature.label}
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                        </svg>
-                      </div>
+                    <h3 className="text-lg font-bold text-text-primary tracking-tight mb-2">
+                      {feature.label}
+                    </h3>
+                    <p className="text-sm text-text-secondary leading-relaxed mb-6">
+                      {feature.desc}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-purple-400 group-hover:text-purple-300 transition-colors">
+                      Explore
+                      <svg
+                        className="w-3 h-3 group-hover:translate-x-0.5 transition-transform"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <title>Explore</title>
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 7l5 5m0 0l-5 5m5-5H6"
+                        />
+                      </svg>
                     </div>
                   </div>
                 </Link>

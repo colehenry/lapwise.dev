@@ -480,6 +480,29 @@ export interface CircuitTyreStatsResponse {
   compounds: CompoundUsageEntry[];
 }
 
+// ─── Favorites Types ──────────────────────────────────────────────
+
+export interface FavoriteDriver {
+  driver_code: string | null;
+  driver_slug: string | null;
+  full_name: string;
+  headshot_url: string | null;
+  country_code: string | null;
+}
+
+export interface FavoriteTeam {
+  team_name: string;
+  team_color: string | null;
+  logo_url: string | null;
+}
+
+export interface FavoriteCircuit {
+  circuit_id: number;
+  name: string;
+  location: string;
+  country: string;
+}
+
 // ─── Auth Types ────────────────────────────────────────────────────
 
 export interface UserProfile {
@@ -492,6 +515,21 @@ export interface UserProfile {
   avatar_url: string | null;
   bio: string | null;
   created_at: string;
+  favorite_driver: FavoriteDriver | null;
+  favorite_team: FavoriteTeam | null;
+  favorite_circuit: FavoriteCircuit | null;
+}
+
+export interface UserPublicProfile {
+  id: number;
+  username: string;
+  role: string;
+  avatar_url: string | null;
+  bio: string | null;
+  created_at: string;
+  favorite_driver: FavoriteDriver | null;
+  favorite_team: FavoriteTeam | null;
+  favorite_circuit: FavoriteCircuit | null;
 }
 
 export interface LoginResponse {
@@ -529,7 +567,6 @@ export interface AdminUserListResponse {
   page: number;
   size: number;
 }
-
 
 export interface DiscussionTag {
   id: number;

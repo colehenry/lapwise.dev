@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import FavoritesPicker from "@/components/favorites/FavoritesPicker";
 import Button from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { apiUrl } from "@/lib/api";
@@ -27,6 +28,10 @@ export default function SettingsPage() {
   const [deleteError, setDeleteError] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  const [showFavoritesPicker, setShowFavoritesPicker] = useState(false);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
+  const [favoritesMsg, setFavoritesMsg] = useState("");
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push("/login?redirect=/settings");
@@ -39,6 +44,33 @@ export default function SettingsPage() {
       setAvatarUrl(user.avatar_url || "");
     }
   }, [user]);
+
+  const handleSaveFavorites = useCallback(
+    async (favorites: {
+      favorite_driver_slug: string | null;
+      favorite_team_name: string | null;
+      favorite_circuit_id: number | null;
+    }) => {
+      setFavoritesLoading(true);
+      setFavoritesMsg("");
+      try {
+        const res = await fetchWithAuth(apiUrl("/auth/me"), {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(favorites),
+        });
+        if (!res.ok) throw new Error("Failed to save favorites");
+        await refreshUser();
+        setShowFavoritesPicker(false);
+        setFavoritesMsg("Favorites updated");
+      } catch {
+        setFavoritesMsg("Failed to update favorites");
+      } finally {
+        setFavoritesLoading(false);
+      }
+    },
+    [refreshUser],
+  );
 
   if (isLoading || !user) return null;
 
@@ -178,6 +210,58 @@ export default function SettingsPage() {
             Save changes
           </Button>
         </form>
+      </section>
+
+      {/* Favorites Section */}
+      <section className="mb-10">
+        <h2 className="text-lg font-semibold text-text-primary mb-4">
+          Favorites
+        </h2>
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center justify-between p-3 rounded-sm bg-bg-tertiary border border-border-primary">
+            <div>
+              <p className="text-xs text-text-muted">Favorite Team</p>
+              <p className="text-sm text-text-primary">
+                {user.favorite_team?.team_name ?? "Not set"}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center justify-between p-3 rounded-sm bg-bg-tertiary border border-border-primary">
+            <div>
+              <p className="text-xs text-text-muted">Favorite Driver</p>
+              <p className="text-sm text-text-primary">
+                {user.favorite_driver?.full_name ?? "Not set"}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center justify-between p-3 rounded-sm bg-bg-tertiary border border-border-primary">
+            <div>
+              <p className="text-xs text-text-muted">Favorite Circuit</p>
+              <p className="text-sm text-text-primary">
+                {user.favorite_circuit?.name ?? "Not set"}
+              </p>
+            </div>
+          </div>
+        </div>
+        {favoritesMsg && (
+          <p className="text-sm text-green-400 mb-3">{favoritesMsg}</p>
+        )}
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => setShowFavoritesPicker(true)}
+        >
+          Edit favorites
+        </Button>
+        <FavoritesPicker
+          open={showFavoritesPicker}
+          onClose={() => setShowFavoritesPicker(false)}
+          onSave={handleSaveFavorites}
+          initialDriverSlug={user.favorite_driver?.driver_slug}
+          initialTeamName={user.favorite_team?.team_name}
+          initialCircuitId={user.favorite_circuit?.circuit_id}
+          isSaving={favoritesLoading}
+        />
       </section>
 
       {/* Password Section */}

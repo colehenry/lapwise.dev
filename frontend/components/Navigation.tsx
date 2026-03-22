@@ -127,6 +127,79 @@ function NavIcon({
   );
 }
 
+function UserMenuDropdown({
+  user,
+  isAdmin,
+  position,
+  onClose,
+  onLogout,
+}: {
+  user: { username: string; role: string };
+  isAdmin: boolean;
+  position: "top-bar" | "floating-dock";
+  onClose: () => void;
+  onLogout: () => void;
+}) {
+  const positionClass =
+    position === "top-bar"
+      ? "absolute right-0 top-full pt-2 w-48"
+      : "absolute left-full top-0 pl-2 w-48";
+
+  return (
+    <div className={positionClass}>
+      <div className="bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden animate-scaleIn">
+        <div className="px-3 py-2.5 border-b border-border-primary">
+          <p className="text-sm font-medium text-text-primary truncate">
+            @{user.username}
+          </p>
+          {user.role !== "user" && (
+            <p className="text-[10px] uppercase tracking-widest text-purple-300 mt-0.5 font-mono">
+              {user.role}
+            </p>
+          )}
+        </div>
+        <div className="py-1">
+          <Link
+            href={`/profile/${user.username}`}
+            onClick={onClose}
+            className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
+          >
+            Profile
+          </Link>
+          <Link
+            href="/settings"
+            onClick={onClose}
+            className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
+          >
+            Settings
+          </Link>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              onClick={onClose}
+              className="block px-3 py-2 text-sm text-purple-300 hover:text-purple-200 hover:bg-bg-elevated/60 transition-colors"
+            >
+              Admin
+            </Link>
+          )}
+        </div>
+        <div className="border-t border-border-primary py-1">
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onLogout();
+            }}
+            className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+          >
+            Log out
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Navigation() {
   const pathname = usePathname();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
@@ -305,57 +378,13 @@ export default function Navigation() {
                 </button>
 
                 {userMenuOpen && !scrolled && (
-                  <div className="absolute right-0 top-full pt-2 w-48">
-                    <div className="bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden animate-scaleIn">
-                      <div className="px-3 py-2.5 border-b border-border-primary">
-                        <p className="text-sm font-medium text-text-primary truncate">
-                          @{user.username}
-                        </p>
-                        {user.role !== "user" && (
-                          <p className="text-[10px] uppercase tracking-widest text-purple-300 mt-0.5 font-mono">
-                            {user.role}
-                          </p>
-                        )}
-                      </div>
-                      <div className="py-1">
-                        <Link
-                          href={`/profile/${user.username}`}
-                          onClick={() => setUserMenuOpen(false)}
-                          className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
-                        >
-                          Profile
-                        </Link>
-                        <Link
-                          href="/settings"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
-                        >
-                          Settings
-                        </Link>
-                        {isAdmin && (
-                          <Link
-                            href="/admin"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="block px-3 py-2 text-sm text-purple-300 hover:text-purple-200 hover:bg-bg-elevated/60 transition-colors"
-                          >
-                            Admin
-                          </Link>
-                        )}
-                      </div>
-                      <div className="border-t border-border-primary py-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setUserMenuOpen(false);
-                            logout();
-                          }}
-                          className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
-                        >
-                          Log out
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <UserMenuDropdown
+                    user={user}
+                    isAdmin={isAdmin}
+                    position="top-bar"
+                    onClose={() => setUserMenuOpen(false)}
+                    onLogout={logout}
+                  />
                 )}
               </div>
             )}
@@ -514,57 +543,13 @@ export default function Navigation() {
             </button>
 
             {userMenuOpen && scrolled && (
-              <div className="absolute left-full top-0 pl-2 w-48">
-                <div className="bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden animate-scaleIn">
-                  <div className="px-3 py-2.5 border-b border-border-primary">
-                    <p className="text-sm font-medium text-text-primary truncate">
-                      @{user.username}
-                    </p>
-                    {user.role !== "user" && (
-                      <p className="text-[10px] uppercase tracking-widest text-purple-300 mt-0.5 font-mono">
-                        {user.role}
-                      </p>
-                    )}
-                  </div>
-                  <div className="py-1">
-                    <Link
-                      href={`/profile/${user.username}`}
-                      onClick={() => setUserMenuOpen(false)}
-                      className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
-                    >
-                      Profile
-                    </Link>
-                    <Link
-                      href="/settings"
-                      onClick={() => setUserMenuOpen(false)}
-                      className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
-                    >
-                      Settings
-                    </Link>
-                    {isAdmin && (
-                      <Link
-                        href="/admin"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="block px-3 py-2 text-sm text-purple-300 hover:text-purple-200 hover:bg-bg-elevated/60 transition-colors"
-                      >
-                        Admin
-                      </Link>
-                    )}
-                  </div>
-                  <div className="border-t border-border-primary py-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        logout();
-                      }}
-                      className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
-                    >
-                      Log out
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <UserMenuDropdown
+                user={user}
+                isAdmin={isAdmin}
+                position="floating-dock"
+                onClose={() => setUserMenuOpen(false)}
+                onLogout={logout}
+              />
             )}
           </div>
         )}

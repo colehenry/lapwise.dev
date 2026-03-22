@@ -24,11 +24,12 @@ export default function HomeDiscussionSection() {
     staleTime: 1000 * 60 * 10,
   });
 
-  const { data: postsData, isLoading: postsLoading } = useQuery<PostListResponse>({
-    queryKey: ["home-discussions"],
-    queryFn: () => fetchPosts({ limit: 4, sort: "new" }),
-    staleTime: 1000 * 60 * 5,
-  });
+  const { data: postsData, isLoading: postsLoading } =
+    useQuery<PostListResponse>({
+      queryKey: ["home-discussions"],
+      queryFn: () => fetchPosts({ limit: 4, sort: "new" }),
+      staleTime: 1000 * 60 * 5,
+    });
 
   if (raceLoading) {
     return (
@@ -42,7 +43,9 @@ export default function HomeDiscussionSection() {
 
   const posts = postsData?.posts || [];
   const podium = latestRace?.podium || [];
-  const currentYear = latestRace ? new Date(latestRace.date).getFullYear() : null;
+  const currentYear = latestRace
+    ? new Date(latestRace.date).getFullYear()
+    : null;
 
   return (
     <section className="py-20 px-6 bg-bg-primary relative overflow-hidden">
@@ -76,7 +79,12 @@ export default function HomeDiscussionSection() {
               viewBox="0 0 24 24"
             >
               <title>Discussions</title>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 8l4 4m0 0l-4 4m4-4H3"
+              />
             </svg>
           </Link>
         </div>
@@ -85,15 +93,15 @@ export default function HomeDiscussionSection() {
           {/* Results "Little Cards" */}
           <div className="lg:col-span-5 space-y-4">
             <div className="flex items-center justify-between mb-2">
-               <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest font-mono">
-                 Top Finishers
-               </span>
-               <Link 
-                 href={`/results/${currentYear}/${latestRace?.round}`}
-                 className="text-[10px] font-bold text-purple-400 uppercase tracking-widest font-mono hover:underline"
-               >
-                 Full Results
-               </Link>
+              <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest font-mono">
+                Top Finishers
+              </span>
+              <Link
+                href={`/results/${currentYear}/${latestRace?.round}`}
+                className="text-[10px] font-bold text-purple-400 uppercase tracking-widest font-mono hover:underline"
+              >
+                Full Results
+              </Link>
             </div>
             <div className="grid grid-cols-1 gap-2">
               {podium.map((driver, idx) => (
@@ -121,9 +129,13 @@ export default function HomeDiscussionSection() {
                         <h4 className="text-sm font-bold text-text-primary truncate">
                           {driver.full_name}
                         </h4>
-                        <span 
+                        <span
                           className="text-[10px] font-mono font-bold"
-                          style={{ color: driver.team_color ? `#${driver.team_color}` : "#fff" }}
+                          style={{
+                            color: driver.team_color
+                              ? `#${driver.team_color}`
+                              : "#fff",
+                          }}
                         >
                           {driver.driver_code}
                         </span>
@@ -134,8 +146,12 @@ export default function HomeDiscussionSection() {
                     </div>
                     {driver.fastest_lap && (
                       <div title="Fastest Lap" className="text-purple-400">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z" />
                         </svg>
                       </div>
                     )}
@@ -147,37 +163,45 @@ export default function HomeDiscussionSection() {
 
           {/* Discussion Feed */}
           <div className="lg:col-span-7 space-y-4">
-             <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest font-mono">
-               Latest Debriefs
-             </span>
-             <div className="space-y-3">
-               {postsLoading ? (
-                 [1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-sm" />)
-               ) : posts.length > 0 ? (
-                 posts.map((post) => (
-                   <Link key={post.id} href={`/discussions/${post.id}`} className="block group">
-                     <div className="bg-bg-tertiary/60 border border-border-primary rounded-sm p-4 hover:border-purple-500/50 hover:bg-bg-tertiary transition-all">
-                       <div className="flex items-center gap-2 mb-2">
-                         <span className="text-[9px] px-1.5 py-0.5 rounded-full border border-purple-500/30 text-purple-400 uppercase tracking-widest font-mono font-bold">
-                           {post.post_type}
-                         </span>
-                         <span className="text-[10px] text-text-muted font-mono">
-                           by {post.author.username}
-                         </span>
-                       </div>
-                       <h4 className="text-sm font-bold text-text-primary group-hover:text-purple-300 transition-colors">
-                         {post.title}
-                       </h4>
-                       <p className="text-[11px] text-text-tertiary line-clamp-1 mt-1">
-                         {post.body}
-                       </p>
-                     </div>
-                   </Link>
-                 ))
-               ) : (
-                 <p className="text-xs text-text-muted font-mono italic">No recent discussions found.</p>
-               )}
-             </div>
+            <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest font-mono">
+              Latest Debriefs
+            </span>
+            <div className="space-y-3">
+              {postsLoading ? (
+                [1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-24 w-full rounded-sm" />
+                ))
+              ) : posts.length > 0 ? (
+                posts.map((post) => (
+                  <Link
+                    key={post.id}
+                    href={`/discussions/${post.id}`}
+                    className="block group"
+                  >
+                    <div className="bg-bg-tertiary/60 border border-border-primary rounded-sm p-4 hover:border-purple-500/50 hover:bg-bg-tertiary transition-all">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full border border-purple-500/30 text-purple-400 uppercase tracking-widest font-mono font-bold">
+                          {post.post_type}
+                        </span>
+                        <span className="text-[10px] text-text-muted font-mono">
+                          by {post.author.username}
+                        </span>
+                      </div>
+                      <h4 className="text-sm font-bold text-text-primary group-hover:text-purple-300 transition-colors">
+                        {post.title}
+                      </h4>
+                      <p className="text-[11px] text-text-tertiary line-clamp-1 mt-1">
+                        {post.body}
+                      </p>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <p className="text-xs text-text-muted font-mono italic">
+                  No recent discussions found.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

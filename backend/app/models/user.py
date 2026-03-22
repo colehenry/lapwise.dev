@@ -5,7 +5,7 @@ Represents an authenticated user of the lapwise.dev platform.
 """
 
 import enum
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
@@ -36,6 +36,15 @@ class User(Base):
     )
     last_login_at = Column(DateTime(timezone=True), nullable=True)
 
+    # Favorites (all optional)
+    favorite_driver_id = Column(
+        Integer, ForeignKey("drivers.id", ondelete="SET NULL"), nullable=True
+    )
+    favorite_team_name = Column(String, nullable=True)
+    favorite_circuit_id = Column(
+        Integer, ForeignKey("circuits.id", ondelete="SET NULL"), nullable=True
+    )
+
     # Relationships
     refresh_tokens = relationship("RefreshToken", back_populates="user")
     email_verification_tokens = relationship(
@@ -43,6 +52,8 @@ class User(Base):
     )
     password_reset_tokens = relationship("PasswordResetToken", back_populates="user")
     login_history = relationship("LoginHistory", back_populates="user")
+    _favorite_driver_rel = relationship("Driver", foreign_keys=[favorite_driver_id])
+    _favorite_circuit_rel = relationship("Circuit", foreign_keys=[favorite_circuit_id])
 
     def __repr__(self):
         return f"<User {self.username} ({self.email})>"

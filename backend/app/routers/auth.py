@@ -9,13 +9,11 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.auth import get_current_active_user
 
 from app.database import get_db
 from app.limiter import limiter
-from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.schemas.auth import (
     ChangePasswordRequest,
@@ -29,6 +27,7 @@ from app.schemas.auth import (
     SessionInfo,
     SessionsResponse,
     TokenRefreshResponse,
+    UpdateProfileRequest,
     UserProfile,
     UsernameAvailabilityResponse,
     RESERVED_USERNAMES,
@@ -62,8 +61,16 @@ def _clear_refresh_cookie(response: Response) -> None:
     response.delete_cookie(key=REFRESH_COOKIE, path="/auth")
 
 
-def _user_profile(user: User) -> UserProfile:
-    return UserProfile.model_validate(user)
+async def _user_profile(user: User, db: AsyncSession) -> UserProfile:
+    profile = UserProfile.model_validate(user)
+    favorites = await UserService.resolve_user_favorites(db, user)
+    if "favorite_driver" in favorites:
+        profile.favorite_driver = favorites["favorite_driver"]
+    if "favorite_team" in favorites:
+        profile.favorite_team = favorites["favorite_team"]
+    if "favorite_circuit" in favorites:
+        profile.favorite_circuit = favorites["favorite_circuit"]
+    return profile
 
 
 def _client_ip(request: Request) -> str:
@@ -74,6 +81,7 @@ def _client_ip(request: Request) -> str:
 
 
 # ─── Register ───────────────────────────────────────────────────────
+
 
 @router.get("/username-available", response_model=UsernameAvailabilityResponse)
 @limiter.limit("30/minute")
@@ -208,7 +216,7 @@ async def login(
 
     return LoginResponse(
         access_token=access_token,
-        user=_user_profile(user),
+        user=await _user_profile(user, db),
     )
 
 
@@ -285,23 +293,14 @@ async def logout_all(
     _clear_refresh_cookie(response)
     return {"message": "Logged out from all devices"}
 
+
 @router.get("/sessions", response_model=SessionsResponse)
 async def list_sessions(
     request: Request,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_active_user),
 ):
-    now = datetime.now(timezone.utc)
-    result = await db.execute(
-        select(RefreshToken)
-        .where(
-            RefreshToken.user_id == user.id,
-            RefreshToken.revoked_at.is_(None),
-            RefreshToken.expires_at > now,
-        )
-        .order_by(RefreshToken.created_at.desc())
-    )
-    sessions = result.scalars().all()
+    sessions = await AuthService.get_user_sessions(db, user.id)
     current_cookie = request.cookies.get(REFRESH_COOKIE)
     current_hash = (
         AuthService.hash_refresh_token(current_cookie) if current_cookie else None
@@ -332,24 +331,18 @@ async def revoke_session(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_active_user),
 ):
-    result = await db.execute(
-        select(RefreshToken).where(
-            RefreshToken.id == session_id,
-            RefreshToken.user_id == user.id,
-            RefreshToken.revoked_at.is_(None),
-        )
-    )
-    session = result.scalar_one_or_none()
+    session = await AuthService.revoke_user_session(db, session_id, user.id)
     if not session:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Session not found",
         )
-    session.revoked_at = datetime.now(timezone.utc)
-    await db.commit()
 
     current_cookie = request.cookies.get(REFRESH_COOKIE)
-    if current_cookie and AuthService.hash_refresh_token(current_cookie) == session.token_hash:
+    if (
+        current_cookie
+        and AuthService.hash_refresh_token(current_cookie) == session.token_hash
+    ):
         _clear_refresh_cookie(response)
 
     return {"message": "Session revoked"}
@@ -428,26 +421,54 @@ async def reset_password(
 
 
 @router.get("/me", response_model=UserProfile)
-async def get_me(user: User = Depends(get_current_active_user)):
-    return _user_profile(user)
+async def get_me(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_active_user),
+):
+    return await _user_profile(user, db)
 
 
 @router.put("/me", response_model=UserProfile)
 async def update_me(
-    updates: dict,
+    updates: UpdateProfileRequest,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_active_user),
 ):
-    # Only allow safe fields
-    allowed = {"bio", "avatar_url"}
-    filtered = {k: v for k, v in updates.items() if k in allowed}
+    filtered = updates.model_dump(exclude_unset=True)
     if not filtered:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No valid fields to update",
         )
+
+    # Resolve driver slug to driver ID
+    if "favorite_driver_slug" in filtered:
+        slug = filtered.pop("favorite_driver_slug")
+        if slug:
+            from app.models.driver import Driver
+            from sqlalchemy import select, or_
+
+            result = await db.execute(
+                select(Driver).where(
+                    or_(
+                        Driver.jolpica_id == slug.replace("-", "_"),
+                        Driver.jolpica_id == slug,
+                    )
+                )
+            )
+            driver = result.scalar_one_or_none()
+            if driver:
+                filtered["favorite_driver_id"] = driver.id
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Driver not found",
+                )
+        else:
+            filtered["favorite_driver_id"] = None
+
     updated = await UserService.update_user_profile(db, user.id, filtered)
-    return _user_profile(updated)
+    return await _user_profile(updated, db)
 
 
 @router.post("/change-password")

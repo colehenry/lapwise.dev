@@ -42,6 +42,7 @@ export async function fetchPosts(params: {
   sort?: "new" | "top";
   tag?: string | null;
   postType?: string | null;
+  search?: string | null;
 }): Promise<PostListResponse> {
   const query = buildQuery({
     cursor: params.cursor,
@@ -49,6 +50,7 @@ export async function fetchPosts(params: {
     sort: params.sort,
     tag: params.tag,
     post_type: params.postType,
+    search: params.search,
   });
 
   const res = await fetchWithAuth(apiUrl(`/api/posts${query}`));
@@ -124,10 +126,12 @@ export async function fetchComments(params: {
   postId: number;
   cursor?: string | null;
   limit?: number;
+  sort?: "new" | "top";
 }): Promise<CommentListResponse> {
   const query = buildQuery({
     cursor: params.cursor,
     limit: params.limit,
+    sort: params.sort,
   });
   const res = await fetchWithAuth(
     apiUrl(`/api/posts/${params.postId}/comments${query}`),

@@ -6,7 +6,8 @@
 CLAUDE.md
 
 # Personal learning docs (not for public repo)
-docs/
+docs/*
+!docs/images/
 
 # ============================================================================
 # Python (Backend)
@@ -20,6 +21,9 @@ env/
 ENV/
 env.bak/
 venv.bak/
+
+# FastF1 cache
+.fastf1_cache/
 
 # Python cache files (auto-generated when Python runs)
 __pycache__/

@@ -31,18 +31,14 @@ async def seed():
     async with AsyncSessionLocal() as db:
         for user_data in ADMIN_USERS:
             result = await db.execute(
-                select(User).where(
-                    User.username == user_data["username"]
-                )
+                select(User).where(User.username == user_data["username"])
             )
             existing = result.scalar_one_or_none()
             if existing:
                 print(f"  User '{user_data['username']}' already exists, skipping")
                 continue
 
-            password = input(
-                f"  Password for '{user_data['username']}': "
-            )
+            password = input(f"  Password for '{user_data['username']}': ")
             if not password:
                 print(f"  Skipping '{user_data['username']}' (empty password)")
                 continue
