@@ -19,9 +19,7 @@
   <img src="docs/images/homepage.png" alt="Lapwise homepage" width="100%" />
 </p>
 
-Lapwise is a full-stack F1 analytics platform that lets fans explore 76 years of race history, dive into driver and constructor career stats, and view real telemetry data from Grand Prix weekends. It pulls from official F1 timing data and the [FastF1](https://github.com/theOehrly/Fast-F1) Python package to surface information that would otherwise require digging through spreadsheets or fragmented wikis.
-
-The app is live at [lapwise.dev](https://lapwise.dev).
+Lapwise is a full-stack Formula 1 analytics platform that lets fans explore 76 years of race history, dive into driver and constructor career stats, and view real telemetry data from Grand Prix weekends. It pulls from official F1 timing data and the [FastF1](https://github.com/theOehrly/Fast-F1) Python package to surface information that would otherwise require digging through spreadsheets or fragmented wikis.
 
 ---
 
@@ -58,11 +56,3 @@ If you enjoy the project and want to support development:
 <a href="https://buymeacoffee.com/colehenry">
   <img src="https://img.shields.io/badge/Buy_Me_a_Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee" />
 </a>
-
----
-
-<div align="center">
-
-Built by [Cole Henry](https://github.com/colehenry)
-
-</div>
