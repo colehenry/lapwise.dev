@@ -15,17 +15,11 @@
 
 ---
 
-<!--
-  HERO IMAGE
-  Take a wide (1280x720 or similar) screenshot of the main race results page.
-  Save it to a /docs/images/ directory and uncomment the line below.
+<p align="center">
+  <img src="docs/images/homepage.png" alt="Lapwise homepage" width="100%" />
+</p>
 
-  <p align="center">
-    <img src="docs/images/hero.png" alt="Lapwise race results view" width="100%" />
-  </p>
--->
-
-Lapwise is a full-stack F1 analytics platform that lets fans explore 75 years of race history, dive into driver and constructor career stats, and view real telemetry data from modern Grand Prix weekends. It pulls from official F1 timing data and the FastF1 telemetry library to surface information that would otherwise require digging through spreadsheets or fragmented wikis.
+Lapwise is a full-stack F1 analytics platform that lets fans explore 76 years of race history, dive into driver and constructor career stats, and view real telemetry data from Grand Prix weekends. It pulls from official F1 timing data and the [FastF1](https://github.com/theOehrly/Fast-F1) Python package to surface information that would otherwise require digging through spreadsheets or fragmented wikis.
 
 The app is live at [lapwise.dev](https://lapwise.dev).
 
@@ -43,35 +37,17 @@ The app is live at [lapwise.dev](https://lapwise.dev).
 
 **Community Discussions** -- Threaded forum with voting, tagging, and markdown support for race weekend conversations.
 
-<!--
-  FEATURE SCREENSHOTS
-  Take 2-3 screenshots showing different views (driver profile, telemetry chart, etc).
-  Save them to /docs/images/ and replace the placeholder below.
-
-  <p align="center">
-    <img src="docs/images/driver-profile.png" alt="Driver profile page" width="48%" />
-    &nbsp;&nbsp;
-    <img src="docs/images/telemetry.png" alt="Telemetry visualization" width="48%" />
-  </p>
-
-  For a third image, add another row:
-
-  <p align="center">
-    <img src="docs/images/circuit.png" alt="Circuit details" width="48%" />
-    &nbsp;&nbsp;
-    <img src="docs/images/discussions.png" alt="Community discussions" width="48%" />
-  </p>
--->
+<p align="center">
+  <img src="docs/images/lewis.png" alt="Driver profile page" width="48%" />
+  &nbsp;&nbsp;
+  <img src="docs/images/points_progression.png" alt="Points progression chart" width="48%" />
+</p>
 
 ---
 
-## Roadmap
+## Feedback
 
-- [ ] Live race timing dashboard with near-real-time data during sessions
-- [ ] Telemetry comparison tool -- overlay speed, throttle, and brake traces between drivers
-- [ ] Tire strategy timeline visualizations
-- [ ] Prediction game ("Grid Call") for race weekend picks
-- [ ] Auto-generated race discussion threads with embedded stats
+Lapwise is actively being developed and I'm always open to suggestions, feature ideas, and feedback. Feel free to [open an issue](https://github.com/colehenry/lapwise.dev/issues) or reach out directly.
 
 ---
 
