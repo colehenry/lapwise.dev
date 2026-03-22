@@ -26,9 +26,17 @@ export default function PostCard({ post }: { post: PostListItem }) {
   const variant = typeVariants[post.post_type] ?? "neutral";
 
   return (
-    <div className="border border-border-primary rounded-sm bg-bg-tertiary p-4 hover:border-purple-500/70 transition-all duration-150">
+    <Link
+      href={`/discussions/${post.id}`}
+      className="block border border-border-primary rounded-sm bg-bg-tertiary p-4 hover:border-purple-500/70 transition-all duration-150"
+    >
       <div className="flex gap-4">
-        <div className="flex flex-col items-center gap-2">
+        {/* biome-ignore lint/a11y/useKeyWithClickEvents: preventDefault stops link navigation when clicking vote */}
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: interactive children need event isolation */}
+        <div
+          className="flex flex-col items-center gap-2"
+          onClick={(e) => e.preventDefault()}
+        >
           <VoteButton
             postId={post.id}
             initialCount={post.vote_count}
@@ -37,7 +45,7 @@ export default function PostCard({ post }: { post: PostListItem }) {
           {post.is_locked && <MonoLabel>Locked</MonoLabel>}
         </div>
 
-        <Link href={`/discussions/${post.id}`} className="flex-1 min-w-0 block">
+        <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-xs text-text-muted font-mono uppercase tracking-wider">
             {post.is_pinned && (
               <span className="inline-flex items-center gap-1 text-purple-300">
@@ -102,8 +110,8 @@ export default function PostCard({ post }: { post: PostListItem }) {
               <span>{post.comment_count} comments</span>
             </div>
           </div>
-        </Link>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }

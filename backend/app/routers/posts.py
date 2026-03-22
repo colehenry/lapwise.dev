@@ -39,6 +39,7 @@ async def list_posts(
     sort: str = Query("new", pattern="^(new|top)$"),
     tag: str | None = Query(None, description="Filter by tag slug"),
     post_type: str | None = Query(None),
+    search: str | None = Query(None, max_length=200),
     db: AsyncSession = Depends(get_db),
     current_user: User | None = Depends(get_optional_user),
 ):
@@ -49,6 +50,7 @@ async def list_posts(
         sort=sort,
         tag_slug=tag,
         post_type=post_type,
+        search=search,
         current_user_id=current_user.id if current_user else None,
     )
     return result
@@ -169,6 +171,7 @@ async def list_comments(
     post_id: int,
     cursor: str | None = Query(None),
     limit: int = Query(50, ge=1, le=100),
+    sort: str = Query("new", pattern="^(new|top)$"),
     db: AsyncSession = Depends(get_db),
     current_user: User | None = Depends(get_optional_user),
 ):
@@ -177,6 +180,7 @@ async def list_comments(
         post_id,
         cursor=cursor,
         limit=limit,
+        sort=sort,
         current_user_id=current_user.id if current_user else None,
     )
     return result

@@ -530,7 +530,6 @@ export interface AdminUserListResponse {
   size: number;
 }
 
-
 export interface DiscussionTag {
   id: number;
   name: string;
