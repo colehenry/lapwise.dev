@@ -6,7 +6,8 @@
 CLAUDE.md
 
 # Personal learning docs (not for public repo)
-docs/
+docs/*
+!docs/images/
 
 # ============================================================================
 # Python (Backend)
