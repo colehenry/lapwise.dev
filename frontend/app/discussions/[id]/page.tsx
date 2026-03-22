@@ -52,6 +52,7 @@ export default function DiscussionDetailPage() {
   const [userVoted, setUserVoted] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [commentSort, setCommentSort] = useState<"new" | "top">("new");
+  const [showCommentEditor, setShowCommentEditor] = useState(false);
 
   const {
     data: post,
@@ -97,6 +98,7 @@ export default function DiscussionDetailPage() {
   const handleNewComment = async (body: string) => {
     try {
       await createComment({ postId, body });
+      setShowCommentEditor(false);
       await refreshAll();
     } catch (err) {
       console.error("Failed to create comment:", err);
@@ -288,65 +290,90 @@ export default function DiscussionDetailPage() {
 
           <MarkdownContent content={post.body} />
 
-          {post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
-                <TagPill key={tag.id} label={tag.name} color={tag.color} />
-              ))}
-            </div>
-          )}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {post.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {post.tags.map((tag) => (
+                  <TagPill key={tag.id} label={tag.name} color={tag.color} />
+                ))}
+              </div>
+            )}
+
+            {!post.is_locked && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isAuthenticated && !authLoading) {
+                    router.push(`/login?redirect=/discussions/${post.id}`);
+                    return;
+                  }
+                  setShowCommentEditor(true);
+                }}
+                className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono uppercase tracking-widest border border-border-primary rounded-sm text-text-muted hover:text-text-primary hover:border-purple-500/50 hover:bg-bg-elevated transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <title>Reply</title>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a5 5 0 015 5v2M3 10l5-5M3 10l5 5" />
+                </svg>
+                Reply to post
+              </button>
+            )}
+          </div>
         </div>
+
+        {!post.is_locked && showCommentEditor && (
+          <div className="border border-border-primary rounded-sm bg-bg-tertiary p-4">
+            {authLoading ? null : isAuthenticated ? (
+              <CommentEditor
+                onSubmit={handleNewComment}
+                onCancel={() => setShowCommentEditor(false)}
+                submitLabel="Post comment"
+                placeholder="Add to the discussion..."
+              />
+            ) : (
+              <div className="text-sm text-text-muted">
+                <Link
+                  href={`/login?redirect=/discussions/${post.id}`}
+                  className="text-purple-300 hover:text-purple-200"
+                >
+                  Log in
+                </Link>{" "}
+                to join the discussion.
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-text-primary">
               Discussion ({post.comment_count})
             </h2>
-            {post.comment_count > 1 && (
-              <div className="flex items-center gap-1">
-                {(["new", "top"] as const).map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setCommentSort(s)}
-                    className={`px-3 py-1 rounded-sm text-xs font-mono tracking-wider uppercase transition-colors duration-150 border ${
-                      commentSort === s
-                        ? "bg-purple-500/20 border-purple-500 text-purple-200"
-                        : "border-border-primary text-text-muted hover:text-text-primary hover:bg-bg-elevated"
-                    }`}
-                  >
-                    {s === "new" ? "New" : "Top"}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              {post.comment_count > 1 && (
+                <div className="flex items-center gap-1">
+                  {(["new", "top"] as const).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setCommentSort(s)}
+                      className={`px-3 py-1 rounded-sm text-xs font-mono tracking-wider uppercase transition-colors duration-150 border ${
+                        commentSort === s
+                          ? "bg-purple-500/20 border-purple-500 text-purple-200"
+                          : "border-border-primary text-text-muted hover:text-text-primary hover:bg-bg-elevated"
+                      }`}
+                    >
+                      {s === "new" ? "New" : "Top"}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {post.is_locked && (
             <div className="border border-border-primary rounded-sm bg-bg-tertiary/60 p-4 text-sm text-text-muted">
               This thread is locked. New comments are disabled.
-            </div>
-          )}
-
-          {!post.is_locked && (
-            <div className="border border-border-primary rounded-sm bg-bg-tertiary p-4">
-              {authLoading ? null : isAuthenticated ? (
-                <CommentEditor
-                  onSubmit={handleNewComment}
-                  submitLabel="Post comment"
-                  placeholder="Add to the discussion..."
-                />
-              ) : (
-                <div className="text-sm text-text-muted">
-                  <Link
-                    href={`/login?redirect=/discussions/${post.id}`}
-                    className="text-purple-300 hover:text-purple-200"
-                  >
-                    Log in
-                  </Link>{" "}
-                  to join the discussion.
-                </div>
-              )}
             </div>
           )}
 
@@ -362,6 +389,7 @@ export default function DiscussionDetailPage() {
               isLocked={post.is_locked}
             />
           )}
+
         </div>
       </div>
 

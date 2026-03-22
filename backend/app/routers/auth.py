@@ -61,8 +61,16 @@ def _clear_refresh_cookie(response: Response) -> None:
     response.delete_cookie(key=REFRESH_COOKIE, path="/auth")
 
 
-def _user_profile(user: User) -> UserProfile:
-    return UserProfile.model_validate(user)
+async def _user_profile(user: User, db: AsyncSession) -> UserProfile:
+    profile = UserProfile.model_validate(user)
+    favorites = await UserService.resolve_user_favorites(db, user)
+    if "favorite_driver" in favorites:
+        profile.favorite_driver = favorites["favorite_driver"]
+    if "favorite_team" in favorites:
+        profile.favorite_team = favorites["favorite_team"]
+    if "favorite_circuit" in favorites:
+        profile.favorite_circuit = favorites["favorite_circuit"]
+    return profile
 
 
 def _client_ip(request: Request) -> str:
@@ -208,7 +216,7 @@ async def login(
 
     return LoginResponse(
         access_token=access_token,
-        user=_user_profile(user),
+        user=await _user_profile(user, db),
     )
 
 
@@ -413,8 +421,11 @@ async def reset_password(
 
 
 @router.get("/me", response_model=UserProfile)
-async def get_me(user: User = Depends(get_current_active_user)):
-    return _user_profile(user)
+async def get_me(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_active_user),
+):
+    return await _user_profile(user, db)
 
 
 @router.put("/me", response_model=UserProfile)
@@ -429,8 +440,35 @@ async def update_me(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No valid fields to update",
         )
+
+    # Resolve driver slug to driver ID
+    if "favorite_driver_slug" in filtered:
+        slug = filtered.pop("favorite_driver_slug")
+        if slug:
+            from app.models.driver import Driver
+            from sqlalchemy import select, or_
+
+            result = await db.execute(
+                select(Driver).where(
+                    or_(
+                        Driver.jolpica_id == slug.replace("-", "_"),
+                        Driver.jolpica_id == slug,
+                    )
+                )
+            )
+            driver = result.scalar_one_or_none()
+            if driver:
+                filtered["favorite_driver_id"] = driver.id
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Driver not found",
+                )
+        else:
+            filtered["favorite_driver_id"] = None
+
     updated = await UserService.update_user_profile(db, user.id, filtered)
-    return _user_profile(updated)
+    return await _user_profile(updated, db)
 
 
 @router.post("/change-password")

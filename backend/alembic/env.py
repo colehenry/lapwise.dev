@@ -12,10 +12,20 @@ from app.config import settings
 # Import all models so Alembic can detect them
 # This is CRITICAL - if you don't import models, Alembic won't see them!
 from app.models import (  # noqa: F401
-    Driver, Team, Circuit, Session, SessionResult,
-    Lap, Weather, TrackStatus, RaceControlMessage,
-    User, RefreshToken, EmailVerificationToken,
-    PasswordResetToken, LoginHistory,
+    Driver,
+    Team,
+    Circuit,
+    Session,
+    SessionResult,
+    Lap,
+    Weather,
+    TrackStatus,
+    RaceControlMessage,
+    User,
+    RefreshToken,
+    EmailVerificationToken,
+    PasswordResetToken,
+    LoginHistory,
 )
 
 # this is the Alembic Config object, which provides

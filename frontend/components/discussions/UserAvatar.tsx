@@ -1,7 +1,7 @@
 interface UserAvatarProps {
   username: string;
   avatarUrl?: string | null;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   className?: string;
 }
 
@@ -22,6 +22,7 @@ export default function UserAvatar({
     sm: "w-7 h-7 text-[10px]",
     md: "w-9 h-9 text-xs",
     lg: "w-12 h-12 text-sm",
+    xl: "w-16 h-16 text-2xl",
   };
 
   return (

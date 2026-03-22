@@ -7,6 +7,7 @@ from app.services.user_service import UserService
 
 router = APIRouter()
 
+
 @router.get("/{username}", response_model=UserPublicProfile)
 async def get_user_profile(
     username: str,
@@ -21,5 +22,13 @@ async def get_user_profile(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
-    
-    return UserPublicProfile.model_validate(user)
+
+    profile = UserPublicProfile.model_validate(user)
+    favorites = await UserService.resolve_user_favorites(db, user)
+    if "favorite_driver" in favorites:
+        profile.favorite_driver = favorites["favorite_driver"]
+    if "favorite_team" in favorites:
+        profile.favorite_team = favorites["favorite_team"]
+    if "favorite_circuit" in favorites:
+        profile.favorite_circuit = favorites["favorite_circuit"]
+    return profile

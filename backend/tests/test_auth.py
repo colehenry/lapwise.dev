@@ -19,7 +19,6 @@ async def test_register_success(client: AsyncClient):
         json={
             "email": "new@example.com",
             "username": "newuser",
-
             "password": "SecurePass1",
         },
     )
@@ -29,14 +28,14 @@ async def test_register_success(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_register_duplicate_email(
-    client: AsyncClient, verified_user,
+    client: AsyncClient,
+    verified_user,
 ):
     resp = await client.post(
         "/auth/register",
         json={
             "email": verified_user["email"],
             "username": "different",
-
             "password": "SecurePass1",
         },
     )
@@ -45,14 +44,14 @@ async def test_register_duplicate_email(
 
 @pytest.mark.asyncio
 async def test_register_duplicate_username(
-    client: AsyncClient, verified_user,
+    client: AsyncClient,
+    verified_user,
 ):
     resp = await client.post(
         "/auth/register",
         json={
             "email": "other@example.com",
             "username": verified_user["username"],
-
             "password": "SecurePass1",
         },
     )
@@ -66,7 +65,6 @@ async def test_register_weak_password(client: AsyncClient):
         json={
             "email": "weak@example.com",
             "username": "weakuser",
-
             "password": "short",
         },
     )
@@ -80,7 +78,6 @@ async def test_register_reserved_username(client: AsyncClient):
         json={
             "email": "reserved@example.com",
             "username": "admin",
-
             "password": "SecurePass1",
         },
     )
@@ -94,7 +91,6 @@ async def test_register_invalid_username(client: AsyncClient):
         json={
             "email": "bad@example.com",
             "username": "BAD USER!",
-
             "password": "SecurePass1",
         },
     )
@@ -116,7 +112,8 @@ async def test_username_available_valid(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_username_available_taken(
-    client: AsyncClient, verified_user,
+    client: AsyncClient,
+    verified_user,
 ):
     resp = await client.get(
         "/auth/username-available",
@@ -130,9 +127,7 @@ async def test_username_available_taken(
 
 @pytest.mark.asyncio
 async def test_username_available_reserved(client: AsyncClient):
-    resp = await client.get(
-        "/auth/username-available", params={"username": "admin"}
-    )
+    resp = await client.get("/auth/username-available", params={"username": "admin"})
     assert resp.status_code == 200
     data = resp.json()
     assert data["available"] is False
@@ -155,7 +150,8 @@ async def test_username_available_invalid(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_login_with_email(
-    client: AsyncClient, verified_user,
+    client: AsyncClient,
+    verified_user,
 ):
     resp = await client.post(
         "/auth/login",
@@ -172,7 +168,8 @@ async def test_login_with_email(
 
 @pytest.mark.asyncio
 async def test_login_with_username(
-    client: AsyncClient, verified_user,
+    client: AsyncClient,
+    verified_user,
 ):
     resp = await client.post(
         "/auth/login",
@@ -186,7 +183,8 @@ async def test_login_with_username(
 
 @pytest.mark.asyncio
 async def test_login_wrong_password(
-    client: AsyncClient, verified_user,
+    client: AsyncClient,
+    verified_user,
 ):
     resp = await client.post(
         "/auth/login",
@@ -212,7 +210,8 @@ async def test_login_nonexistent_user(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_login_unverified_email(
-    client: AsyncClient, unverified_user,
+    client: AsyncClient,
+    unverified_user,
 ):
     resp = await client.post(
         "/auth/login",
@@ -236,9 +235,7 @@ async def test_refresh_no_cookie(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_refresh_invalid_cookie(client: AsyncClient):
-    client.cookies.set(
-        "refresh_token", "invalid_token", domain="test"
-    )
+    client.cookies.set("refresh_token", "invalid_token", domain="test")
     resp = await client.post("/auth/refresh")
     assert resp.status_code == 401
 
@@ -254,27 +251,26 @@ async def test_logout_requires_auth(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_logout_success(
-    client: AsyncClient, auth_headers,
+    client: AsyncClient,
+    auth_headers,
 ):
-    resp = await client.post(
-        "/auth/logout", headers=auth_headers
-    )
+    resp = await client.post("/auth/logout", headers=auth_headers)
     assert resp.status_code == 200
 
 
 @pytest.mark.asyncio
 async def test_logout_all(
-    client: AsyncClient, auth_headers,
+    client: AsyncClient,
+    auth_headers,
 ):
-    resp = await client.post(
-        "/auth/logout-all", headers=auth_headers
-    )
+    resp = await client.post("/auth/logout-all", headers=auth_headers)
     assert resp.status_code == 200
 
 
 @pytest.mark.asyncio
 async def test_sessions_list_and_revoke_current(
-    client: AsyncClient, verified_user,
+    client: AsyncClient,
+    verified_user,
 ):
     login = await client.post(
         "/auth/login",
@@ -292,14 +288,10 @@ async def test_sessions_list_and_revoke_current(
     data = sessions.json()
     assert isinstance(data.get("sessions"), list)
     assert len(data["sessions"]) >= 1
-    current = next(
-        (s for s in data["sessions"] if s.get("is_current")), None
-    )
+    current = next((s for s in data["sessions"] if s.get("is_current")), None)
     assert current is not None
 
-    revoke = await client.delete(
-        f"/auth/sessions/{current['id']}", headers=headers
-    )
+    revoke = await client.delete(f"/auth/sessions/{current['id']}", headers=headers)
     assert revoke.status_code == 200
 
     refresh = await client.post("/auth/refresh")
@@ -311,9 +303,7 @@ async def test_sessions_list_and_revoke_current(
 
 @pytest.mark.asyncio
 async def test_verify_email_bad_token(client: AsyncClient):
-    resp = await client.get(
-        "/auth/verify-email", params={"token": "badtoken"}
-    )
+    resp = await client.get("/auth/verify-email", params={"token": "badtoken"})
     assert resp.status_code == 400
 
 
@@ -363,7 +353,9 @@ async def test_me_requires_auth(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_me_returns_profile(
-    client: AsyncClient, auth_headers, verified_user,
+    client: AsyncClient,
+    auth_headers,
+    verified_user,
 ):
     resp = await client.get("/auth/me", headers=auth_headers)
     assert resp.status_code == 200
@@ -374,7 +366,8 @@ async def test_me_returns_profile(
 
 @pytest.mark.asyncio
 async def test_change_password_wrong_current(
-    client: AsyncClient, auth_headers,
+    client: AsyncClient,
+    auth_headers,
 ):
     resp = await client.post(
         "/auth/change-password",
@@ -389,7 +382,8 @@ async def test_change_password_wrong_current(
 
 @pytest.mark.asyncio
 async def test_change_password_success(
-    client: AsyncClient, auth_headers,
+    client: AsyncClient,
+    auth_headers,
 ):
     resp = await client.post(
         "/auth/change-password",
@@ -404,7 +398,8 @@ async def test_change_password_success(
 
 @pytest.mark.asyncio
 async def test_delete_account_soft_delete(
-    client: AsyncClient, verified_user,
+    client: AsyncClient,
+    verified_user,
 ):
     login = await client.post(
         "/auth/login",

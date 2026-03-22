@@ -69,6 +69,27 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class FavoriteDriverResponse(BaseModel):
+    driver_code: str | None = None
+    driver_slug: str | None = None
+    full_name: str
+    headshot_url: str | None = None
+    country_code: str | None = None
+
+
+class FavoriteTeamResponse(BaseModel):
+    team_name: str
+    team_color: str | None = None
+    logo_url: str | None = None
+
+
+class FavoriteCircuitResponse(BaseModel):
+    circuit_id: int
+    name: str
+    location: str
+    country: str
+
+
 class UserProfile(BaseModel):
     id: int
     email: str
@@ -79,6 +100,9 @@ class UserProfile(BaseModel):
     avatar_url: Optional[str] = None
     bio: Optional[str] = None
     created_at: datetime
+    favorite_driver: FavoriteDriverResponse | None = None
+    favorite_team: FavoriteTeamResponse | None = None
+    favorite_circuit: FavoriteCircuitResponse | None = None
 
     class Config:
         from_attributes = True
@@ -140,11 +164,15 @@ class ChangePasswordRequest(BaseModel):
 
 
 class UserPublicProfile(BaseModel):
+    id: int
     username: str
     role: str
     avatar_url: Optional[str] = None
     bio: Optional[str] = None
     created_at: datetime
+    favorite_driver: FavoriteDriverResponse | None = None
+    favorite_team: FavoriteTeamResponse | None = None
+    favorite_circuit: FavoriteCircuitResponse | None = None
 
     class Config:
         from_attributes = True
@@ -176,6 +204,9 @@ class SessionsResponse(BaseModel):
 class UpdateProfileRequest(BaseModel):
     bio: str | None = None
     avatar_url: str | None = None
+    favorite_driver_slug: str | None = None
+    favorite_team_name: str | None = None
+    favorite_circuit_id: int | None = None
 
     @field_validator("bio")
     @classmethod
@@ -189,6 +220,13 @@ class UpdateProfileRequest(BaseModel):
     def validate_avatar_url(cls, v: str | None) -> str | None:
         if v is not None and len(v) > 2048:
             raise ValueError("Avatar URL must be at most 2048 characters")
+        return v
+
+    @field_validator("favorite_team_name")
+    @classmethod
+    def validate_team_name(cls, v: str | None) -> str | None:
+        if v is not None and len(v) > 200:
+            raise ValueError("Team name must be at most 200 characters")
         return v
 
 

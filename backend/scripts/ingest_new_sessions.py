@@ -104,7 +104,9 @@ def main():
                 # For very distant future events, keep it quiet
                 if (event_date - datetime.now()).days > 14:
                     continue
-                print(f"⏭️  Skipping future round {round_num}: {event_name} (starts in {(event_date - datetime.now()).days} days)")
+                print(
+                    f"⏭️  Skipping future round {round_num}: {event_name} (starts in {(event_date - datetime.now()).days} days)"
+                )
                 continue
 
             print(f"\n📍 Round {round_num}: {event_name}")
@@ -125,7 +127,8 @@ def main():
                 if session_type == "race":
                     fastf1_name = "Race"
                 elif session_type == "qualifying":
-                    if season_year < 1994: continue
+                    if season_year < 1994:
+                        continue
                     fastf1_name = "Qualifying"
                 elif session_type == "sprint_race":
                     fastf1_name = "Sprint"
@@ -145,21 +148,30 @@ def main():
                         select(Session).where(
                             Session.year == season_year,
                             Session.round == round_num,
-                            Session.session_type == session_type
+                            Session.session_type == session_type,
                         )
                     ).scalar_one_or_none()
 
                     if existing_session:
                         # Check for results
-                        has_results = db.execute(
-                            select(SessionResult.id).where(SessionResult.session_id == existing_session.id).limit(1)
-                        ).scalar() is not None
-                        
+                        has_results = (
+                            db.execute(
+                                select(SessionResult.id)
+                                .where(SessionResult.session_id == existing_session.id)
+                                .limit(1)
+                            ).scalar()
+                            is not None
+                        )
+
                         if has_results:
-                            print(f"  ⏭️  Skipping {session_type} (already has results)")
+                            print(
+                                f"  ⏭️  Skipping {session_type} (already has results)"
+                            )
                             continue
                         else:
-                            print(f"  ↻ Found incomplete {session_type} (no results), attempting ingestion...")
+                            print(
+                                f"  ↻ Found incomplete {session_type} (no results), attempting ingestion..."
+                            )
                 # -------------------------
 
                 try:
@@ -185,7 +197,9 @@ def main():
                     if session_type in ["race", "sprint_race"]:
                         ingest_race_results(db, fastf1_session, session_id, season_year)
                     elif session_type in ["qualifying", "sprint_qualifying"]:
-                        ingest_qualifying_results(db, fastf1_session, session_id, season_year)
+                        ingest_qualifying_results(
+                            db, fastf1_session, session_id, season_year
+                        )
 
                     # Ingest Telemetry
                     if season_year >= 2018:
@@ -214,6 +228,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Fatal error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
     finally:

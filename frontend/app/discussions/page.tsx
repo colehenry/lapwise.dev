@@ -256,7 +256,7 @@ function DiscussionsFeed() {
                 />
               ))}
 
-            {!isLoading && regularPosts.length === 0 && (
+            {!isLoading && allPosts.length === 0 && (
               <div className="border border-dashed border-border-primary rounded-sm p-6 text-sm text-text-muted">
                 No discussions found for this filter yet.
               </div>

@@ -10,13 +10,13 @@ from httpx import AsyncClient
 async def test_get_public_profile_success(client: AsyncClient, verified_user):
     username = verified_user["username"]
     resp = await client.get(f"/api/users/{username}")
-    
+
     assert resp.status_code == 200
     data = resp.json()
     assert data["username"] == username
     assert data["role"] == verified_user["role"]
     assert "email" not in data  # Sensitive data should be hidden
-    assert "id" not in data     # Internal IDs should be hidden
+    assert "id" not in data  # Internal IDs should be hidden
     assert "created_at" in data
 
 
@@ -38,13 +38,13 @@ async def test_get_public_profile_deactivated(client: AsyncClient, verified_user
     )
     access_token = login.json()["access_token"]
     headers = {"Authorization": f"Bearer {access_token}"}
-    
+
     await client.post(
         "/auth/delete-account",
         headers=headers,
         json={"password": "TestPass1"},
     )
-    
+
     # Now try to get public profile
     resp = await client.get(f"/api/users/{verified_user['username']}")
     assert resp.status_code == 404

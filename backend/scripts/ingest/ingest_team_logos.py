@@ -142,7 +142,7 @@ async def wiki_search_logo(name: str) -> str | None:
     """Search Wikipedia for a team and get their thumbnail/logo."""
     # Try the name directly or with "F1 team" suffix
     search_queries = [f"{name} Formula One team", f"{name} racing team", name]
-    
+
     for query in search_queries:
         params = {
             "action": "query",

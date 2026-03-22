@@ -40,6 +40,7 @@ async def list_posts(
     tag: str | None = Query(None, description="Filter by tag slug"),
     post_type: str | None = Query(None),
     search: str | None = Query(None, max_length=200),
+    author_id: int | None = Query(None, description="Filter by author user ID"),
     db: AsyncSession = Depends(get_db),
     current_user: User | None = Depends(get_optional_user),
 ):
@@ -52,6 +53,7 @@ async def list_posts(
         post_type=post_type,
         search=search,
         current_user_id=current_user.id if current_user else None,
+        author_id=author_id,
     )
     return result
 
