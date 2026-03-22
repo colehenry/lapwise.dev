@@ -15,6 +15,11 @@ from sqlalchemy.orm import selectinload
 from app.models.user import User
 from app.models.driver import Driver
 from app.models.team import Team
+from app.schemas.auth import (
+    FavoriteDriverResponse,
+    FavoriteTeamResponse,
+    FavoriteCircuitResponse,
+)
 from app.models.circuit import Circuit
 from app.models.email_verification_token import EmailVerificationToken
 from app.models.password_reset_token import PasswordResetToken
@@ -201,13 +206,13 @@ class UserService:
                     .limit(1)
                 )
                 headshot = sr.scalar_one_or_none()
-                result["favorite_driver"] = {
-                    "driver_code": d.driver_code,
-                    "driver_slug": d.driver_slug,
-                    "full_name": d.full_name,
-                    "headshot_url": headshot,
-                    "country_code": d.country_code,
-                }
+                result["favorite_driver"] = FavoriteDriverResponse(
+                    driver_code=d.driver_code,
+                    driver_slug=d.driver_slug,
+                    full_name=d.full_name,
+                    headshot_url=headshot,
+                    country_code=d.country_code,
+                )
 
         if user.favorite_team_name:
             team = await db.execute(
@@ -218,11 +223,11 @@ class UserService:
             )
             t = team.scalar_one_or_none()
             if t:
-                result["favorite_team"] = {
-                    "team_name": t.name,
-                    "team_color": t.team_color,
-                    "logo_url": t.logo_url,
-                }
+                result["favorite_team"] = FavoriteTeamResponse(
+                    team_name=t.name,
+                    team_color=t.team_color,
+                    logo_url=t.logo_url,
+                )
 
         if user.favorite_circuit_id:
             circuit = await db.execute(
@@ -230,12 +235,12 @@ class UserService:
             )
             c = circuit.scalar_one_or_none()
             if c:
-                result["favorite_circuit"] = {
-                    "circuit_id": c.id,
-                    "name": c.name,
-                    "location": c.location,
-                    "country": c.country,
-                }
+                result["favorite_circuit"] = FavoriteCircuitResponse(
+                    circuit_id=c.id,
+                    name=c.name,
+                    location=c.location,
+                    country=c.country,
+                )
 
         return result
 
