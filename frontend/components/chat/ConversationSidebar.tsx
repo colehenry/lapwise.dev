@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
 import type { ChatConversation } from "@/lib/chat";
 
 interface ConversationSidebarProps {
@@ -36,29 +36,32 @@ export default function ConversationSidebar({
   }
 
   const sidebarContent = (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="p-4 border-b border-border-primary flex items-center justify-between">
-        <h3 className="text-text-primary font-mono text-sm font-bold uppercase tracking-wide">
-          Conversations
-        </h3>
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between border-b border-border-primary px-4 py-4">
+        <div>
+          <h3 className="text-sm font-bold uppercase tracking-wide text-text-primary">
+            Chat History
+          </h3>
+          <p className="mt-1 text-[11px] text-text-muted">
+            Jump between past analyses
+          </p>
+        </div>
         <button
           type="button"
           onClick={onNew}
-          className="text-purple-400 hover:text-purple-300 text-xs font-medium transition-colors"
+          className="rounded-full border border-purple-500/20 bg-purple-500/10 px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest text-purple-300 transition-colors hover:border-purple-500/40 hover:text-purple-200"
         >
-          + New
+          New
         </button>
       </div>
 
-      {/* Conversation list */}
       <div className="flex-1 overflow-y-auto">
         {conversations.length === 0 ? (
-          <div className="p-4 text-text-muted text-xs text-center">
+          <div className="p-6 text-center text-xs text-text-muted">
             No conversations yet
           </div>
         ) : (
-          <div className="p-2 space-y-1">
+          <div className="space-y-2 p-3">
             {conversations.map((conv) => (
               <button
                 key={conv.id}
@@ -67,33 +70,36 @@ export default function ConversationSidebar({
                   onSelect(conv.id);
                   onClose();
                 }}
-                className={`w-full text-left px-3 py-2.5 rounded-sm text-sm transition-colors group relative ${
+                className={`group relative w-full rounded-2xl border px-3 py-3 text-left text-sm transition-colors ${
                   activeId === conv.id
-                    ? "bg-purple-500/15 text-purple-300 border border-purple-500/20"
-                    : "text-text-secondary hover:bg-bg-elevated"
+                    ? "border-purple-500/30 bg-purple-500/12 text-purple-200 shadow-[inset_0_0_16px_rgba(160,32,240,0.08)]"
+                    : "border-transparent text-text-secondary hover:border-border-primary hover:bg-bg-elevated"
                 }`}
               >
-                <div className="truncate pr-6 font-medium text-xs">
+                <div className="truncate pr-8 text-sm font-medium">
                   {conv.title || "Untitled"}
                 </div>
-                <div className="text-text-muted text-[10px] mt-0.5">
+                <div className="mt-1 text-[10px] uppercase tracking-widest text-text-muted">
                   {formatDistanceToNow(new Date(conv.updated_at), {
                     addSuffix: true,
                   })}
                 </div>
 
-                {/* Delete button */}
                 <button
                   type="button"
                   onClick={(e) => handleDelete(e, conv.id)}
                   onBlur={() => setConfirmDelete(null)}
-                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded transition-colors ${
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 transition-colors ${
                     confirmDelete === conv.id
                       ? "text-red-400 hover:text-red-300"
-                      : "text-text-muted hover:text-text-tertiary opacity-0 group-hover:opacity-100"
+                      : "text-text-muted opacity-0 hover:text-text-tertiary group-hover:opacity-100"
                   }`}
                 >
-                  <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                  <svg
+                    className="h-3.5 w-3.5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
                     <title>Delete</title>
                     <path
                       fillRule="evenodd"
@@ -112,31 +118,36 @@ export default function ConversationSidebar({
 
   return (
     <>
-      {/* Desktop sidebar */}
-      <div className="hidden md:block w-64 border-r border-border-primary bg-bg-tertiary shrink-0">
-        {sidebarContent}
+      <div className="hidden w-80 shrink-0 lg:block">
+        <div className="sticky top-24 h-[calc(100vh-7rem)] overflow-hidden rounded-[28px] border border-border-primary bg-bg-primary/78 shadow-[0_16px_48px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+          {sidebarContent}
+        </div>
       </div>
 
-      {/* Mobile drawer */}
+      <div className="hidden md:block lg:hidden" />
+
       {isOpen && (
         <>
           <div
-            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
             onClick={onClose}
-            onKeyDown={() => {}}
-            role="presentation"
+            aria-hidden="true"
           />
-          <div className="fixed inset-y-0 left-0 w-72 bg-bg-tertiary z-50 md:hidden shadow-xl">
-            <div className="flex items-center justify-between p-4 border-b border-border-primary">
-              <h3 className="text-text-primary font-mono text-sm font-bold uppercase">
-                Conversations
+          <div className="fixed inset-y-0 right-0 z-50 w-80 max-w-[90vw] border-l border-border-primary bg-bg-tertiary shadow-xl lg:hidden">
+            <div className="flex items-center justify-between border-b border-border-primary p-4">
+              <h3 className="text-sm font-bold uppercase tracking-wide text-text-primary">
+                Chat History
               </h3>
               <button
                 type="button"
                 onClick={onClose}
-                className="text-text-muted hover:text-text-primary p-1"
+                className="p-1 text-text-muted hover:text-text-primary"
               >
-                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <svg
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
                   <title>Close</title>
                   <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
                 </svg>
