@@ -48,10 +48,10 @@ export default function ChatInput({
   }
 
   return (
-    <div className="border-t border-border-primary bg-bg-secondary/95 backdrop-blur-sm">
+    <div className="border-t border-border-primary bg-bg-primary/85 backdrop-blur-xl">
       <form
         onSubmit={handleSubmit}
-        className="max-w-4xl mx-auto px-4 py-3 flex gap-3 items-end"
+        className="mx-auto flex max-w-4xl items-end gap-3 px-4 py-4 md:px-6"
       >
         <div className="flex-1 relative">
           <textarea
@@ -63,13 +63,17 @@ export default function ChatInput({
             rows={1}
             maxLength={2000}
             disabled={isLoading}
-            className="w-full bg-bg-tertiary border border-border-primary rounded-lg px-4 py-3 text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 disabled:opacity-50 text-sm"
+            className="w-full resize-none rounded-3xl border border-border-primary bg-bg-elevated px-4 py-3.5 text-sm text-text-primary placeholder:text-text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500/30 disabled:opacity-50"
           />
+          <div className="mt-2 flex items-center justify-between px-1 text-[11px] text-text-muted">
+            <span>Shift + Enter for a new line</span>
+            <span>{input.length}/2000</span>
+          </div>
         </div>
         <button
           type="submit"
           disabled={!input.trim() || isLoading}
-          className="bg-purple-500 text-text-primary px-4 py-3 rounded-lg font-medium text-sm hover:bg-purple-600 active:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
+          className="shrink-0 rounded-2xl bg-purple-500 px-4 py-3 text-sm font-medium text-text-primary transition-colors hover:bg-purple-600 active:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? (
             <svg
@@ -101,9 +105,9 @@ export default function ChatInput({
         </button>
       </form>
       {remaining !== null && (
-        <div className="max-w-4xl mx-auto px-4 pb-2">
-          <span className="text-text-muted text-xs">
-            {remaining}/{dailyLimit} questions remaining today
+        <div className="mx-auto max-w-4xl px-4 pb-4 md:px-6">
+          <span className="rounded-full border border-border-primary bg-bg-elevated px-3 py-1 text-[11px] uppercase tracking-widest text-text-muted">
+            {remaining}/{dailyLimit} remaining today
           </span>
         </div>
       )}
