@@ -23,6 +23,8 @@ const ALLOWED_TABLES = [
   "weather_data",
   "track_status",
   "race_control_messages",
+  "v_driver_standings",
+  "v_constructor_standings",
 ];
 
 /**
@@ -189,7 +191,7 @@ export const getSampleData = tool({
 
 export const generateChart = tool({
   description:
-    "Generate a chart configuration for visualizing F1 data. Returns a JSON object that the frontend renders as a Recharts component. Use this when a visual representation would enhance the answer (trends, comparisons, distributions).",
+    "Generate a chart configuration for visualizing F1 data. Returns a JSON object that the frontend renders as a Recharts component. Use this when a visual representation would enhance the answer (trends, comparisons, distributions). IMPORTANT: y_keys must be the exact keys present in the data objects. Use series_labels to provide human-readable display names shown in the legend (e.g. y_keys: ['norris_pts', 'piastri_pts'], series_labels: ['Norris', 'Piastri']).",
   inputSchema: z.object({
     chart_type: z
       .enum(["bar", "line", "scatter", "pie", "stacked_bar"])
@@ -204,7 +206,13 @@ export const generateChart = tool({
     y_keys: z
       .array(z.string())
       .describe(
-        "Key(s) in data objects for the y-axis (supports multiple series)",
+        "Key(s) in data objects for the y-axis — must match exact keys in the data objects",
+      ),
+    series_labels: z
+      .array(z.string())
+      .optional()
+      .describe(
+        "Human-readable display names for each y_key series shown in the legend (e.g. ['Norris', 'Piastri'] instead of ['norris_pts', 'piastri_pts']). Must be same length as y_keys.",
       ),
     colors: z
       .array(z.string())
@@ -221,6 +229,7 @@ export const generateChart = tool({
     data,
     x_key,
     y_keys,
+    series_labels,
     colors,
   }) => {
     return {
@@ -233,6 +242,7 @@ export const generateChart = tool({
         data,
         xKey: x_key,
         yKeys: y_keys,
+        seriesLabels: series_labels,
         colors: colors || [],
       },
     };

@@ -1,86 +1,143 @@
 "use client";
 
-const SUGGESTIONS = [
+export const SUGGESTIONS = [
   {
-    category: "Circuits",
-    label: "Most wins at Monza",
-    question: "Who has the most wins at Monza?",
+    category: "Historical",
+    question: "Which driver has the most wins at Monza?",
+    color: "text-blue-400",
+    borderHover: "hover:border-blue-500/25",
   },
   {
     category: "Qualifying",
-    label: "Qualifying head-to-head",
-    question: "Compare Norris vs Piastri head-to-head in 2024 qualifying",
+    question: "Compare Norris vs Piastri in 2025 qualifying",
+    color: "text-orange-400",
+    borderHover: "hover:border-orange-500/25",
   },
   {
     category: "Strategy",
-    label: "Tire degradation",
-    question: "Analyze tire degradation at Silverstone 2024",
+    question: "Analyze the different tyre strategies at Silverstone 2025",
+    color: "text-purple-400",
+    borderHover: "hover:border-purple-500/25",
   },
   {
     category: "Weather",
-    label: "Rain races in 2023",
-    question: "Which races had rain in 2023?",
+    question: "Which tracks are mostly likely to have a wet race?",
+    color: "text-teal-400",
+    borderHover: "hover:border-teal-500/25",
   },
   {
-    category: "Championship",
-    label: "Championship progression",
-    question: "Show me Verstappen's championship progression",
+    category: "New to F1?",
+    question:
+      "I'm new to F1 — explain how a race weekend works and how points are scored",
+    color: "text-amber-400",
+    borderHover: "hover:border-amber-500/25",
+  },
+  {
+    category: "Head-to-Head",
+    question: "Compare Hamilton vs Russell race results in 2024",
+    color: "text-red-400",
+    borderHover: "hover:border-red-500/25",
   },
 ];
 
 interface SuggestedQuestionsProps {
   onSelect: (question: string) => void;
+  compact?: boolean;
 }
 
 export default function SuggestedQuestions({
   onSelect,
+  compact,
 }: SuggestedQuestionsProps) {
-  return (
-    <div className="flex h-full flex-col items-center justify-center px-4 py-10">
-      <div className="w-full max-w-3xl text-center">
-        <div className="mb-2">
-          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-3xl border border-purple-500/30 bg-purple-500/15 text-purple-300">
+  if (compact) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center px-3 py-6">
+        <div className="w-full text-center">
+          <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-purple-500/30 bg-purple-500/15 text-purple-300">
             <svg
-              className="h-8 w-8"
+              className="h-5 w-5"
               viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              fill="currentColor"
               aria-hidden="true"
             >
-              <path d="M4 15.5 6.2 10A2 2 0 0 1 8 8.75h8a2 2 0 0 1 1.8 1.25L20 15.5" />
-              <path d="M5 15.5h14v2a1.75 1.75 0 0 1-1.75 1.75h-1.5A1.75 1.75 0 0 1 14 17.5v-.25h-4V17.5a1.75 1.75 0 0 1-1.75 1.75h-1.5A1.75 1.75 0 0 1 5 17.5Z" />
-              <circle cx="8" cy="15.25" r="1.1" />
-              <circle cx="16" cy="15.25" r="1.1" />
-              <path d="M8.5 8.75 10 6.5h4l1.5 2.25" />
+              <path
+                fillRule="evenodd"
+                d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"
+                clipRule="evenodd"
+              />
             </svg>
           </div>
+          <h3 className="mb-1 text-sm font-bold text-text-primary">
+            AI Analyst
+          </h3>
+          <p className="mb-4 text-xs text-text-muted">Ask anything about F1</p>
+          <div className="space-y-1.5 text-left">
+            {SUGGESTIONS.slice(0, 4).map((s) => (
+              <button
+                key={s.category}
+                type="button"
+                onClick={() => onSelect(s.question)}
+                className="w-full rounded-xl border border-white/[0.05] bg-white/[0.03] px-3 py-2.5 text-left transition-all hover:border-purple-500/30 hover:bg-purple-500/[0.06] hover:-translate-y-0.5"
+              >
+                <div
+                  className={`text-[9px] font-mono uppercase tracking-[0.1em] ${s.color} mb-0.5`}
+                >
+                  {s.category}
+                </div>
+                <div className="text-xs text-text-secondary truncate">
+                  {s.question}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
-        <h2 className="mb-2 text-2xl font-bold text-text-primary">
-          Lapwise AI Analyst
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center px-6 py-10">
+      <div className="w-full max-w-3xl text-center">
+        {/* Hero icon */}
+        <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-purple-500/20 bg-purple-500/10 text-purple-300 shadow-[0_0_40px_-10px_rgba(160,32,240,0.25)]">
+          <svg
+            className="h-6 w-6"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              fillRule="evenodd"
+              d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
+
+        {/* Hero text */}
+        <h2 className="mb-1.5 text-xl font-bold tracking-tight text-text-primary">
+          Got a question?
         </h2>
-        <p className="mx-auto mb-8 max-w-xl text-sm text-text-muted">
-          Ask any question about Formula 1 - from sprint weekends and driver
-          comparisons to weather, strategy, and championship trends.
+        <p className="mx-auto mb-6 max-w-lg text-sm text-text-muted leading-relaxed">
+          Dive deeper into race results, driver comparisons, weather, strategy,
+          and championship trends — all backed by real data.
         </p>
 
-        <div className="grid gap-3 text-left md:grid-cols-2 xl:grid-cols-3">
+        {/* Suggestion cards grid */}
+        <div className="grid gap-2.5 text-left md:grid-cols-2 xl:grid-cols-3">
           {SUGGESTIONS.map((s) => (
             <button
-              key={s.label}
+              key={s.category}
               type="button"
               onClick={() => onSelect(s.question)}
-              className="rounded-3xl border border-border-primary bg-bg-elevated/70 p-4 transition-colors hover:border-purple-500/40 hover:bg-bg-elevated"
+              className={`group rounded-2xl border border-white/[0.05] bg-white/[0.02] px-4 py-3 transition-all duration-200 hover:bg-purple-500/[0.04] ${s.borderHover} hover:-translate-y-0.5 hover:shadow-[0_8px_32px_-8px_rgba(160,32,240,0.12)]`}
             >
-              <div className="mb-2 text-[10px] font-mono uppercase tracking-widest text-purple-300">
+              <div className={`text-sm font-semibold ${s.color} leading-snug`}>
                 {s.category}
               </div>
-              <div className="mb-2 text-sm font-medium text-text-primary">
-                {s.label}
+              <div className="mt-1 text-xs leading-relaxed text-text-muted">
+                {s.question}
               </div>
-              <div className="text-xs text-text-muted">{s.question}</div>
             </button>
           ))}
         </div>

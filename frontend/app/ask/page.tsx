@@ -2,19 +2,27 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import ChatInput from "@/components/chat/ChatInput";
 import ChatMessage from "@/components/chat/ChatMessage";
 import ConversationSidebar from "@/components/chat/ConversationSidebar";
-import SuggestedQuestions from "@/components/chat/SuggestedQuestions";
+import SuggestedQuestions, {
+  SUGGESTIONS,
+} from "@/components/chat/SuggestedQuestions";
+import PageHeader from "@/components/PageHeader";
 import {
   type AskStreamEvent,
+  type CachedResponse,
   type ChartConfig,
   deleteConversation,
+  fetchCachedResponse,
   getConversation,
   listConversations,
+  renameConversation,
   streamQuestion,
+  type ThinkingStep,
 } from "@/lib/chat";
 
 interface DisplayMessage {
@@ -23,50 +31,29 @@ interface DisplayMessage {
   content: string;
   charts?: ChartConfig[];
   queries?: string[];
+  steps?: ThinkingStep[];
+  followUps?: string[];
 }
 
-const DAILY_LIMIT = 20;
+const TOTAL_LIMIT = 3;
+const SUGGESTION_QUESTIONS = new Set(SUGGESTIONS.map((s) => s.question));
 
 function parseStringArray(value: unknown): string[] | undefined {
   if (Array.isArray(value)) {
     return value.filter((item): item is string => typeof item === "string");
   }
-
   return undefined;
 }
 
 function parseChartArray(value: unknown): ChartConfig[] | undefined {
-  if (!Array.isArray(value)) {
-    return undefined;
-  }
-
+  if (!Array.isArray(value)) return undefined;
   return value as ChartConfig[];
-}
-
-function AIAnalystIcon({ className = "h-5 w-5" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M4 15.5 6.2 10A2 2 0 0 1 8 8.75h8a2 2 0 0 1 1.8 1.25L20 15.5" />
-      <path d="M5 15.5h14v2a1.75 1.75 0 0 1-1.75 1.75h-1.5A1.75 1.75 0 0 1 14 17.5v-.25h-4V17.5a1.75 1.75 0 0 1-1.75 1.75h-1.5A1.75 1.75 0 0 1 5 17.5Z" />
-      <circle cx="8" cy="15.25" r="1.1" />
-      <circle cx="16" cy="15.25" r="1.1" />
-      <path d="M8.5 8.75 10 6.5h4l1.5 2.25" />
-    </svg>
-  );
 }
 
 export default function AskPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
 
   const [activeConversationId, setActiveConversationId] = useState<
     string | null
@@ -82,8 +69,8 @@ export default function AskPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  // Fetch conversations list
   const { data: conversations = [] } = useQuery({
     queryKey: ["ai-conversations"],
     queryFn: listConversations,
@@ -96,7 +83,6 @@ export default function AskPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, isAsking]);
 
-  // Load a conversation's messages
   const loadConversation = useCallback(async (convId: string) => {
     try {
       const data = await getConversation(convId);
@@ -120,7 +106,14 @@ export default function AskPage() {
     }
   }, []);
 
-  // Start a new conversation
+  // Load conversation from ?c= query param (e.g. from widget expand)
+  useEffect(() => {
+    const convParam = searchParams.get("c");
+    if (convParam && isAuthenticated && !activeConversationId) {
+      loadConversation(convParam);
+    }
+  }, [searchParams, isAuthenticated, activeConversationId, loadConversation]);
+
   function handleNewConversation() {
     setActiveConversationId(null);
     setMessages([]);
@@ -129,14 +122,72 @@ export default function AskPage() {
     setError(null);
   }
 
-  // Delete a conversation
+  function handleAbort() {
+    abortRef.current?.abort();
+  }
+
+  async function handleRenameConversation(id: string, title: string) {
+    try {
+      await renameConversation(id, title);
+      queryClient.invalidateQueries({ queryKey: ["ai-conversations"] });
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to rename conversation",
+      );
+    }
+  }
+
+  async function simulateStreaming(cached: CachedResponse, question: string) {
+    const userMsg: DisplayMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: question,
+    };
+    const assistantMsgId = `assistant-${Date.now()}`;
+    setMessages((prev) => [...prev, userMsg]);
+    setStreamingAssistantId(assistantMsgId);
+    setIsAsking(true);
+    setMessages((prev) => [
+      ...prev,
+      { id: assistantMsgId, role: "assistant", content: "", steps: [] },
+    ]);
+
+    try {
+      const text = cached.text;
+      const chunkSize = 4;
+      for (let i = 0; i < text.length; i += chunkSize) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 12));
+        const chunk = text.slice(i, i + chunkSize);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMsgId ? { ...m, content: m.content + chunk } : m,
+          ),
+        );
+      }
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantMsgId
+            ? {
+                ...m,
+                charts: cached.charts,
+                queries: cached.queries,
+                followUps: cached.followUps,
+              }
+            : m,
+        ),
+      );
+    } finally {
+      setStreamingAssistantId(null);
+      setIsAsking(false);
+    }
+  }
+
   async function handleDeleteConversation(id: string) {
     try {
       await deleteConversation(id);
       queryClient.invalidateQueries({ queryKey: ["ai-conversations"] });
-      if (activeConversationId === id) {
-        handleNewConversation();
-      }
+      if (activeConversationId === id) handleNewConversation();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to delete conversation",
@@ -144,13 +195,25 @@ export default function AskPage() {
     }
   }
 
-  // Send a message
   async function handleSend(question: string) {
+    if (isAsking) return;
     setError(null);
+
+    // Check cache for suggestion questions
+    if (SUGGESTION_QUESTIONS.has(question) && !activeConversationId) {
+      const cached = await fetchCachedResponse(question);
+      if (cached) {
+        await simulateStreaming(cached, question);
+        return;
+      }
+    }
+
     setIsAsking(true);
     setStreamStatus("Starting analysis...");
 
-    // Add user message immediately
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     const userMsg: DisplayMessage = {
       id: `user-${Date.now()}`,
       role: "user",
@@ -164,11 +227,7 @@ export default function AskPage() {
     try {
       setMessages((prev) => [
         ...prev,
-        {
-          id: assistantMsgId,
-          role: "assistant",
-          content: "",
-        },
+        { id: assistantMsgId, role: "assistant", content: "", steps: [] },
       ]);
 
       await streamQuestion(
@@ -176,15 +235,14 @@ export default function AskPage() {
         activeConversationId ?? undefined,
         (event: AskStreamEvent) => {
           if (event.type === "init") {
-            if (!activeConversationId) {
+            if (!activeConversationId)
               setActiveConversationId(event.conversationId);
-            }
             setRemaining(event.remaining);
             return;
           }
 
           if (event.type === "text-delta") {
-            setStreamStatus("Writing report...");
+            setStreamStatus(null);
             setMessages((prev) =>
               prev.map((message) =>
                 message.id === assistantMsgId
@@ -197,6 +255,23 @@ export default function AskPage() {
 
           if (event.type === "status") {
             setStreamStatus(event.message);
+            if (event.stepType) {
+              const step: ThinkingStep = {
+                message: event.message,
+                stepType: event.stepType,
+                timestamp: Date.now(),
+              };
+              setMessages((prev) =>
+                prev.map((message) =>
+                  message.id === assistantMsgId
+                    ? {
+                        ...message,
+                        steps: [...(message.steps || []), step],
+                      }
+                    : message,
+                ),
+              );
+            }
             return;
           }
 
@@ -211,6 +286,7 @@ export default function AskPage() {
                       ...message,
                       charts: event.charts,
                       queries: event.queries,
+                      followUps: event.followUps,
                     }
                   : message,
               ),
@@ -222,11 +298,15 @@ export default function AskPage() {
             throw new Error(event.error);
           }
         },
+        controller.signal,
       );
 
-      // Refresh conversations list
       queryClient.invalidateQueries({ queryKey: ["ai-conversations"] });
     } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        // User aborted — keep partial content if any
+        return;
+      }
       const errorMessage =
         err instanceof Error ? err.message : "Something went wrong";
       setError(errorMessage);
@@ -240,180 +320,169 @@ export default function AskPage() {
       setStreamingAssistantId(null);
       setStreamStatus(null);
       setIsAsking(false);
+      abortRef.current = null;
     }
   }
 
-  // Auth loading state
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-bg-secondary flex items-center justify-center">
-        <div className="text-text-muted text-sm">Loading...</div>
+      <div className="min-h-screen bg-bg-secondary">
+        <div className="flex items-center justify-center py-32">
+          <div className="text-text-muted text-sm">Loading...</div>
+        </div>
       </div>
     );
   }
 
-  // Not authenticated
   if (!isAuthenticated || !user) {
     return (
-      <div className="min-h-screen bg-bg-secondary md:pl-24">
-        <div className="px-4 pt-20 md:pt-24">
-          <div className="mx-auto max-w-7xl">
-            <div className="flex items-center justify-between rounded-3xl border border-border-primary bg-bg-primary/80 px-5 py-4 shadow-[0_16px_48px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-purple-500/30 bg-purple-500/15 text-purple-300">
-                  <AIAnalystIcon className="h-6 w-6" />
-                </div>
-                <div>
-                  <div className="text-sm font-bold uppercase tracking-[0.2em] text-text-primary">
-                    Lapwise AI Analyst
-                  </div>
-                  <div className="text-xs text-text-muted">
-                    Live race analysis, historical comparisons, and data-backed
-                    reports
-                  </div>
-                </div>
-              </div>
-              <div className="hidden rounded-full border border-border-primary bg-bg-elevated px-3 py-1 text-[11px] font-mono uppercase tracking-widest text-text-muted md:block">
-                Sign in required
-              </div>
+      <div className="min-h-screen bg-bg-secondary">
+        <PageHeader title="AI Analyst" subtitle="F1 Intelligence" />
+        <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
+          <div className="flex flex-col items-center justify-center py-24">
+            <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-3xl border border-purple-500/20 bg-purple-500/10 text-purple-300 shadow-[0_0_40px_-10px_rgba(160,32,240,0.25)]">
+              <svg
+                className="h-8 w-8"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"
+                  clipRule="evenodd"
+                />
+              </svg>
             </div>
+            <h2 className="text-text-primary text-lg font-bold tracking-tight mb-2">
+              Sign in to use the AI Analyst
+            </h2>
+            <p className="text-text-muted text-sm mb-6 text-center max-w-md">
+              Ask any question about Formula 1 and get expert analysis powered
+              by AI.
+            </p>
+            <Link
+              href="/login?redirect=/ask"
+              className="bg-purple-500 text-text-primary px-6 py-2.5 rounded-2xl font-mono text-xs font-bold uppercase tracking-widest hover:bg-purple-600 transition-colors"
+            >
+              Sign In
+            </Link>
           </div>
-        </div>
-        <div className="flex flex-col items-center justify-center px-4 py-24">
-          <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-3xl border border-purple-500/30 bg-purple-500/15 text-purple-300">
-            <AIAnalystIcon className="h-8 w-8" />
-          </div>
-          <h2 className="text-text-primary text-lg font-bold mb-2">
-            Sign in to use the AI Analyst
-          </h2>
-          <p className="text-text-muted text-sm mb-6 text-center max-w-md">
-            Ask any question about Formula 1 and get expert analysis powered by
-            AI.
-          </p>
-          <Link
-            href="/login?redirect=/ask"
-            className="bg-purple-500 text-text-primary px-6 py-2.5 rounded-lg font-medium text-sm hover:bg-purple-600 transition-colors"
-          >
-            Sign In
-          </Link>
         </div>
       </div>
     );
   }
 
   const hasMessages = messages.length > 0;
-  const activeConversation = conversations.find(
-    (conversation) => conversation.id === activeConversationId,
-  );
 
   return (
-    <div className="min-h-screen bg-bg-secondary md:pl-24">
-      <div className="px-4 pb-4 pt-20 md:pt-24">
-        <div className="mx-auto flex max-w-7xl gap-4 xl:gap-6">
-          <div className="min-w-0 flex-1">
-            <div className="mb-4 rounded-3xl border border-border-primary bg-bg-primary/85 p-4 shadow-[0_16px_48px_rgba(0,0,0,0.35)] backdrop-blur-xl md:p-5">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-purple-500/30 bg-purple-500/15 text-purple-300">
-                    <AIAnalystIcon className="h-6 w-6" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h1 className="text-lg font-bold text-text-primary">
-                        Lapwise AI Analyst
-                      </h1>
-                      <span className="rounded-full border border-purple-500/20 bg-purple-500/10 px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-purple-300">
-                        Beta
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-text-muted">
-                      Ask about race weekends, strategy, weather, telemetry, or
-                      historical comparisons.
-                    </p>
-                    <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-text-muted">
-                      <span className="rounded-full border border-border-primary bg-bg-elevated px-3 py-1">
-                        {isAsking
-                          ? streamStatus || "Analyzing"
-                          : activeConversation?.title || "New conversation"}
-                      </span>
-                      {remaining !== null && (
-                        <span className="rounded-full border border-border-primary bg-bg-elevated px-3 py-1">
-                          {remaining} left today
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+    <div className="min-h-screen bg-bg-secondary">
+      <PageHeader title="AI Analyst">
+        {remaining !== null && (
+          <span className="hidden sm:block rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-text-muted">
+            {remaining}/{TOTAL_LIMIT}
+          </span>
+        )}
+        {remaining === null && user.role === "admin" && (
+          <span className="hidden sm:block rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-text-muted">
+            Unlimited
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={handleNewConversation}
+          className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-4 py-2 font-mono text-xs font-bold text-text-secondary transition-all hover:border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-300"
+        >
+          + New Chat
+        </button>
+        <button
+          type="button"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className={`rounded-lg border p-2 font-mono text-xs font-bold transition-all ${
+            sidebarOpen
+              ? "border-purple-500/30 bg-purple-500/10 text-purple-300"
+              : "border-white/[0.06] bg-white/[0.03] text-text-muted hover:border-purple-500/30 hover:text-purple-300"
+          }`}
+          title="Chat history"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <title>History</title>
+            <path
+              fillRule="evenodd"
+              d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </button>
+      </PageHeader>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleNewConversation}
-                    className="rounded-full border border-border-primary bg-bg-elevated px-4 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-secondary transition-colors hover:border-purple-500/40 hover:text-text-primary"
-                  >
-                    New chat
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSidebarOpen(true)}
-                    className="rounded-full border border-border-primary bg-bg-elevated px-4 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-secondary transition-colors hover:border-purple-500/40 hover:text-text-primary lg:hidden"
-                  >
-                    History
-                  </button>
+      {/* Background glow */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-[radial-gradient(circle,rgba(160,32,240,0.06)_0%,transparent_70%)]" />
+      </div>
+
+      <div className="relative max-w-6xl mx-auto px-4 md:px-8 py-6">
+        <div className="flex items-stretch overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] shadow-[0_16px_64px_-16px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+          {/* Main chat area */}
+          <div className="grid min-h-0 min-w-0 flex-1 grid-rows-[minmax(0,1fr)_auto]">
+            <div className="min-h-0">
+              {!hasMessages ? (
+                <SuggestedQuestions onSelect={handleSend} />
+              ) : (
+                <div className="px-3 py-6 md:px-4">
+                  {messages.map((msg) => (
+                    <ChatMessage
+                      key={msg.id}
+                      messageRole={msg.role}
+                      content={msg.content}
+                      charts={msg.charts}
+                      queries={msg.queries}
+                      steps={msg.steps}
+                      followUps={msg.followUps}
+                      onFollowUp={handleSend}
+                      isLoading={
+                        msg.id === streamingAssistantId &&
+                        !msg.content &&
+                        !(msg.charts && msg.charts.length > 0)
+                      }
+                      isStreaming={msg.id === streamingAssistantId && isAsking}
+                      statusText={
+                        msg.id === streamingAssistantId ? streamStatus : null
+                      }
+                      userName={user.username}
+                      userAvatarUrl={user.avatar_url}
+                    />
+                  ))}
+                  {error && (
+                    <div className="rounded-xl border border-red-500/20 bg-red-500/[0.08] px-4 py-3 text-sm text-red-400">
+                      {error}
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
                 </div>
-              </div>
+              )}
             </div>
 
-            <div className="flex min-h-[calc(100vh-12rem)] flex-col overflow-hidden rounded-[28px] border border-border-primary bg-bg-primary/75 shadow-[0_16px_48px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-              <div className="flex-1 overflow-y-auto">
-                {!hasMessages ? (
-                  <SuggestedQuestions onSelect={handleSend} />
-                ) : (
-                  <div className="mx-auto max-w-4xl px-4 py-5 md:px-6">
-                    {messages.map((msg) => (
-                      <ChatMessage
-                        key={msg.id}
-                        messageRole={msg.role}
-                        content={msg.content}
-                        charts={msg.charts}
-                        queries={msg.queries}
-                        isLoading={
-                          msg.id === streamingAssistantId &&
-                          !msg.content &&
-                          !(msg.charts && msg.charts.length > 0)
-                        }
-                        statusText={
-                          msg.id === streamingAssistantId ? streamStatus : null
-                        }
-                        userName={user.username}
-                        userAvatarUrl={user.avatar_url}
-                      />
-                    ))}
-                    {error && (
-                      <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                        {error}
-                      </div>
-                    )}
-                    <div ref={messagesEndRef} />
-                  </div>
-                )}
-              </div>
-
+            <div className="shrink-0 border-t border-white/[0.06] bg-bg-secondary px-4 py-4 md:px-6">
               <ChatInput
                 onSend={handleSend}
+                onAbort={handleAbort}
                 isLoading={isAsking}
                 remaining={remaining}
-                dailyLimit={DAILY_LIMIT}
+                dailyLimit={TOTAL_LIMIT}
+                shellless
               />
             </div>
           </div>
 
+          {/* Inline collapsible sidebar */}
           <ConversationSidebar
             conversations={conversations}
             activeId={activeConversationId}
             onSelect={loadConversation}
             onNew={handleNewConversation}
             onDelete={handleDeleteConversation}
+            onRename={handleRenameConversation}
             isOpen={sidebarOpen}
             onClose={() => setSidebarOpen(false)}
           />

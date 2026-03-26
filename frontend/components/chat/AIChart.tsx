@@ -36,8 +36,17 @@ interface AIChartProps {
 }
 
 export default function AIChart({ config }: AIChartProps) {
-  const { chartType, title, xLabel, yLabel, data, xKey, yKeys, colors } =
-    config;
+  const {
+    chartType,
+    title,
+    xLabel,
+    yLabel,
+    data,
+    xKey,
+    yKeys,
+    colors,
+    seriesLabels,
+  } = config;
 
   const chartColors =
     colors.length > 0 ? colors : DEFAULT_COLORS.slice(0, yKeys.length);
@@ -86,6 +95,7 @@ export default function AIChart({ config }: AIChartProps) {
                 key={key}
                 type="monotone"
                 dataKey={key}
+                name={seriesLabels?.[i] ?? key}
                 stroke={chartColors[i % chartColors.length]}
                 strokeWidth={2}
                 dot={{ r: 3 }}
@@ -195,6 +205,7 @@ export default function AIChart({ config }: AIChartProps) {
               <Bar
                 key={key}
                 dataKey={key}
+                name={seriesLabels?.[i] ?? key}
                 fill={chartColors[i % chartColors.length]}
                 stackId={chartType === "stacked_bar" ? "stack" : undefined}
                 radius={chartType === "stacked_bar" ? undefined : [4, 4, 0, 0]}

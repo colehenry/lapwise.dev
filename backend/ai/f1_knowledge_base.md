@@ -183,6 +183,47 @@ The physical compounds are C1 (hardest) through C5 (softest). At each race, Pire
 
 ## 6. Common Analysis Patterns
 
+### Event / Circuit Name Resolution
+
+Users often mix Grand Prix names and circuit names in the same question:
+- "Silverstone" usually maps to the **British Grand Prix** event.
+- "Monza" usually maps to the **Italian Grand Prix** event.
+- The database stores these in different places:
+  - `sessions.event_name` = race weekend name, e.g. `"British Grand Prix"`
+  - `circuits.name` = venue name, e.g. `"Silverstone Circuit"`
+  - `circuits.location` = city/area, e.g. `"Silverstone"`
+
+When resolving a race/event from free-form user text, do **not** rely on only one field. Search broadly across event and circuit fields using `ILIKE`.
+
+Recommended pattern:
+```sql
+SELECT s.id, s.year, s.round, s.session_type, s.event_name, s.date,
+       c.name AS circuit_name, c.location, c.country
+FROM sessions s
+JOIN circuits c ON s.circuit_id = c.id
+WHERE s.year = 2025
+  AND s.session_type = 'race'
+  AND (
+    s.event_name ILIKE '%british%'
+    OR c.name ILIKE '%silverstone%'
+    OR c.location ILIKE '%silverstone%'
+    OR c.country ILIKE '%united kingdom%'
+  )
+ORDER BY s.date;
+```
+
+If that still returns 0 rows, run a discovery query first:
+```sql
+SELECT s.year, s.round, s.session_type, s.event_name, s.date, c.name AS circuit_name, c.location
+FROM sessions s
+JOIN circuits c ON s.circuit_id = c.id
+WHERE s.year = 2025
+ORDER BY s.round, s.session_type
+LIMIT 100;
+```
+
+Treat 0 rows as a naming mismatch or missing data problem first, not proof that the race did not happen.
+
 ### Championship Standings Calculation
 ```sql
 -- Driver championship standings for a given year (modern era 2010+)

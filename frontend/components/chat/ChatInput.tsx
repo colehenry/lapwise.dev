@@ -4,16 +4,22 @@ import { useEffect, useRef, useState } from "react";
 
 interface ChatInputProps {
   onSend: (message: string) => Promise<void>;
+  onAbort?: () => void;
   isLoading: boolean;
   remaining: number | null;
   dailyLimit: number;
+  compact?: boolean;
+  shellless?: boolean;
 }
 
 export default function ChatInput({
   onSend,
+  onAbort,
   isLoading,
-  remaining,
-  dailyLimit,
+  remaining: _remaining,
+  dailyLimit: _dailyLimit,
+  compact,
+  shellless,
 }: ChatInputProps) {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -23,14 +29,13 @@ export default function ChatInput({
     const el = textareaRef.current;
     if (el) {
       el.style.height = "auto";
-      el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+      el.style.height = `${compact ? Math.min(el.scrollHeight, 80) : el.scrollHeight}px`;
     }
-  }, [input]);
+  }, [input, compact]);
 
   async function submitMessage() {
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
-
     setInput("");
     await onSend(trimmed);
   }
@@ -47,70 +52,92 @@ export default function ChatInput({
     }
   }
 
-  return (
-    <div className="border-t border-border-primary bg-bg-primary/85 backdrop-blur-xl">
-      <form
-        onSubmit={handleSubmit}
-        className="mx-auto flex max-w-4xl items-end gap-3 px-4 py-4 md:px-6"
-      >
-        <div className="flex-1 relative">
+  if (compact) {
+    return (
+      <div className="border-t border-white/[0.06] bg-bg-primary/90 px-3 py-2.5">
+        <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <textarea
             ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask anything about F1..."
+            placeholder="Ask about F1..."
             rows={1}
             maxLength={2000}
             disabled={isLoading}
-            className="w-full resize-none rounded-3xl border border-border-primary bg-bg-elevated px-4 py-3.5 text-sm text-text-primary placeholder:text-text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500/30 disabled:opacity-50"
+            className="flex-1 resize-none rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-purple-500/40 focus:outline-none focus:ring-1 focus:ring-purple-500/20 disabled:opacity-50"
           />
-          <div className="mt-2 flex items-center justify-between px-1 text-[11px] text-text-muted">
-            <span>Shift + Enter for a new line</span>
-            <span>{input.length}/2000</span>
-          </div>
-        </div>
-        <button
-          type="submit"
-          disabled={!input.trim() || isLoading}
-          className="shrink-0 rounded-2xl bg-purple-500 px-4 py-3 text-sm font-medium text-text-primary transition-colors hover:bg-purple-600 active:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isLoading ? (
-            <svg
-              className="animate-spin h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
+          {isLoading && onAbort ? (
+            <button
+              type="button"
+              onClick={onAbort}
+              className="shrink-0 rounded-xl bg-red-500/10 border border-red-500/20 p-2 text-red-400 transition-colors hover:bg-red-500/20"
+              title="Stop"
             >
-              <title>Sending</title>
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
+              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <title>Stop</title>
+                <rect x="4" y="4" width="12" height="12" rx="1" />
+              </svg>
+            </button>
           ) : (
-            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <button
+              type="submit"
+              disabled={!input.trim() || isLoading}
+              className="shrink-0 rounded-xl bg-purple-500 p-2 text-text-primary transition-colors hover:bg-purple-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <title>Send</title>
+                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+              </svg>
+            </button>
+          )}
+        </form>
+      </div>
+    );
+  }
+
+  return (
+    <div className={shellless ? "" : "border-t border-white/[0.06] px-4 py-4 md:px-6"}>
+      <form
+        onSubmit={handleSubmit}
+        className="chat-input-glass mx-auto flex max-w-4xl items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-2 backdrop-blur-xl transition-all duration-200 focus-within:border-purple-500/30 focus-within:shadow-[0_0_40px_-10px_rgba(160,32,240,0.15)]"
+      >
+        <textarea
+          ref={textareaRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask anything about F1..."
+          rows={1}
+          maxLength={2000}
+          disabled={isLoading}
+          className="flex-1 resize-none overflow-hidden bg-transparent py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none disabled:opacity-50"
+        />
+        {isLoading && onAbort ? (
+          <button
+            type="button"
+            onClick={onAbort}
+            className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 transition-all hover:bg-red-500/20 active:scale-95"
+            title="Stop generating"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <title>Stop</title>
+              <rect x="4" y="4" width="12" height="12" rx="1" />
+            </svg>
+          </button>
+        ) : (
+          <button
+            type="submit"
+            disabled={!input.trim() || isLoading}
+            className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500 text-text-primary transition-all hover:bg-purple-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <title>Send</title>
               <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
             </svg>
-          )}
-        </button>
+          </button>
+        )}
       </form>
-      {remaining !== null && (
-        <div className="mx-auto max-w-4xl px-4 pb-4 md:px-6">
-          <span className="rounded-full border border-border-primary bg-bg-elevated px-3 py-1 text-[11px] uppercase tracking-widest text-text-muted">
-            {remaining}/{dailyLimit} remaining today
-          </span>
-        </div>
-      )}
     </div>
   );
 }

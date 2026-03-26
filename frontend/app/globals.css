@@ -330,6 +330,38 @@ body {
   animation: scaleIn 0.2s ease-out;
 }
 
+/* Chat widget animations */
+.chat-widget-bubble {
+  animation: chatBubbleIn 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.chat-widget-panel {
+  animation: chatPanelIn 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: bottom right;
+}
+
+@keyframes chatBubbleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes chatPanelIn {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 /* Shadow Utilities */
 .shadow-purple {
   box-shadow: var(--shadow-purple);
@@ -434,21 +466,47 @@ body {
 }
 
 /* AI Chat prose styles */
-.prose-chat p { margin: 0.5rem 0; }
-.prose-chat p:first-child { margin-top: 0; }
-.prose-chat p:last-child { margin-bottom: 0; }
-.prose-chat h1, .prose-chat h2, .prose-chat h3, .prose-chat h4 {
+.prose-chat p {
+  margin: 0.5rem 0;
+}
+.prose-chat p:first-child {
+  margin-top: 0;
+}
+.prose-chat p:last-child {
+  margin-bottom: 0;
+}
+.prose-chat h1,
+.prose-chat h2,
+.prose-chat h3,
+.prose-chat h4 {
   color: var(--text-primary);
   font-weight: 600;
   margin: 1rem 0 0.5rem;
 }
-.prose-chat h1 { font-size: 1.25rem; }
-.prose-chat h2 { font-size: 1.125rem; }
-.prose-chat h3 { font-size: 1rem; }
-.prose-chat strong { color: var(--text-primary); font-weight: 600; }
-.prose-chat em { color: var(--text-tertiary); }
-.prose-chat a { color: var(--purple-300); text-decoration: underline; text-underline-offset: 3px; }
-.prose-chat a:hover { color: var(--purple-200); }
+.prose-chat h1 {
+  font-size: 1.25rem;
+}
+.prose-chat h2 {
+  font-size: 1.125rem;
+}
+.prose-chat h3 {
+  font-size: 1rem;
+}
+.prose-chat strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.prose-chat em {
+  color: var(--text-tertiary);
+}
+.prose-chat a {
+  color: var(--purple-300);
+  text-decoration: none;
+}
+.prose-chat a:hover {
+  color: var(--purple-200);
+  text-decoration: none;
+}
 .prose-chat code {
   background: var(--background-primary);
   border: 1px solid var(--border-primary);
@@ -466,11 +524,25 @@ body {
   overflow-x: auto;
   margin: 0.5rem 0;
 }
-.prose-chat pre code { background: none; border: none; padding: 0; font-size: 0.8rem; }
-.prose-chat ul, .prose-chat ol { margin: 0.5rem 0 0.5rem 1.25rem; }
-.prose-chat ul { list-style: disc; }
-.prose-chat ol { list-style: decimal; }
-.prose-chat li { margin: 0.2rem 0; }
+.prose-chat pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8rem;
+}
+.prose-chat ul,
+.prose-chat ol {
+  margin: 0.5rem 0 0.5rem 1.25rem;
+}
+.prose-chat ul {
+  list-style: disc;
+}
+.prose-chat ol {
+  list-style: decimal;
+}
+.prose-chat li {
+  margin: 0.2rem 0;
+}
 .prose-chat blockquote {
   border-left: 2px solid var(--purple-500);
   padding: 0.35rem 0.75rem;
@@ -478,7 +550,34 @@ body {
   background: var(--background-secondary);
   color: var(--text-tertiary);
 }
-.prose-chat table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.8rem; }
-.prose-chat th { text-align: left; color: var(--text-primary); font-weight: 600; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border-secondary); }
-.prose-chat td { padding: 0.35rem 0.6rem; border-bottom: 1px solid var(--border-primary); color: var(--text-secondary); }
-.prose-chat tr:hover td { background: var(--background-tertiary); }
+.prose-chat table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+  font-size: 0.8rem;
+}
+.prose-chat th {
+  text-align: left;
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border-secondary);
+}
+.prose-chat td {
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--border-primary);
+  color: var(--text-secondary);
+}
+.prose-chat tr:hover td {
+  background: var(--background-tertiary);
+}
+
+/* AI delta colors (positive = gain/improvement = green, negative = deficit/loss = red) */
+.delta-positive {
+  color: #22c55e;
+  font-weight: 600;
+}
+.delta-negative {
+  color: #ef4444;
+  font-weight: 600;
+}

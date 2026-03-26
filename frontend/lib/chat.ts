@@ -37,6 +37,7 @@ export interface ChartConfig {
   xKey: string;
   yKeys: string[];
   colors: string[];
+  seriesLabels?: string[];
 }
 
 export interface AskResponse {
@@ -44,7 +45,7 @@ export interface AskResponse {
   charts: ChartConfig[];
   queries: string[];
   conversationId: string;
-  remaining: number;
+  remaining: number | null;
   usage: {
     inputTokens: number;
     outputTokens: number;
@@ -54,13 +55,13 @@ export interface AskResponse {
 
 export interface AskError {
   error: string;
-  remaining?: number;
+  remaining?: number | null;
 }
 
 export interface StreamInitEvent {
   type: "init";
   conversationId: string;
-  remaining: number;
+  remaining: number | null;
 }
 
 export interface StreamTextDeltaEvent {
@@ -71,15 +72,31 @@ export interface StreamTextDeltaEvent {
 export interface StreamMetadataEvent {
   type: "metadata";
   conversationId: string;
-  remaining: number;
+  remaining: number | null;
   charts: ChartConfig[];
   queries: string[];
+  followUps: string[];
   usage: AskResponse["usage"];
 }
+
+export type StepType =
+  | "sql"
+  | "schema"
+  | "sample"
+  | "chart"
+  | "thinking"
+  | "synthesizing";
 
 export interface StreamStatusEvent {
   type: "status";
   message: string;
+  stepType?: StepType;
+}
+
+export interface ThinkingStep {
+  message: string;
+  stepType: StepType;
+  timestamp: number;
 }
 
 export interface StreamErrorEvent {
@@ -123,11 +140,13 @@ export async function streamQuestion(
   question: string,
   conversationId: string | undefined,
   onEvent: (event: AskStreamEvent) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   const res = await fetchWithAuth(`${BASE}/ask`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question, conversationId }),
+    signal,
   });
 
   if (!res.ok) {
@@ -144,6 +163,11 @@ export async function streamQuestion(
   let buffer = "";
 
   while (true) {
+    if (signal?.aborted) {
+      reader.cancel().catch(() => {});
+      throw new DOMException("The operation was aborted.", "AbortError");
+    }
+
     const { done, value } = await reader.read();
     buffer += decoder.decode(value, { stream: !done });
 
@@ -206,6 +230,31 @@ export async function deleteConversation(id: string): Promise<void> {
   if (!res.ok) {
     const data = await res.json();
     throw new Error(data.error || "Failed to delete conversation");
+  }
+}
+
+export interface CachedResponse {
+  text: string;
+  charts: ChartConfig[];
+  queries: string[];
+  followUps: string[];
+}
+
+/**
+ * Fetch a cached AI response for a suggestion question.
+ * Returns null on cache miss or any error.
+ */
+export async function fetchCachedResponse(
+  question: string,
+): Promise<CachedResponse | null> {
+  try {
+    const res = await fetchWithAuth(
+      `${BASE}/cached-response?q=${encodeURIComponent(question)}`,
+    );
+    if (!res.ok) return null;
+    return (await res.json()) as CachedResponse;
+  } catch {
+    return null;
   }
 }
 
