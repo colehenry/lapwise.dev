@@ -3,7 +3,7 @@
  *
  * GET /api/ai/cached-response?q=<question>
  *
- * Returns a cached AI response for a given question (if available and < 12h old).
+ * Returns a cached AI response for a given question (if available).
  * Used by the frontend to serve suggestion question responses instantly.
  */
 
@@ -55,7 +55,6 @@ export async function GET(request: NextRequest) {
       SELECT response_text, charts_json, queries_json, follow_ups_json
       FROM ai_response_cache
       WHERE question_hash = ${hash}
-        AND cached_at > NOW() - INTERVAL '12 hours'
       LIMIT 1
     `;
 

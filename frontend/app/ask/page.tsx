@@ -8,10 +8,9 @@ import { useAuth } from "@/components/AuthProvider";
 import ChatInput from "@/components/chat/ChatInput";
 import ChatMessage from "@/components/chat/ChatMessage";
 import ConversationSidebar from "@/components/chat/ConversationSidebar";
-import SuggestedQuestions, {
-  SUGGESTIONS,
-} from "@/components/chat/SuggestedQuestions";
+import SuggestedQuestions from "@/components/chat/SuggestedQuestions";
 import PageHeader from "@/components/PageHeader";
+import { SUGGESTION_QUESTIONS } from "@/lib/ai/suggestions";
 import {
   type AskStreamEvent,
   type CachedResponse,
@@ -36,7 +35,6 @@ interface DisplayMessage {
 }
 
 const TOTAL_LIMIT = 3;
-const SUGGESTION_QUESTIONS = new Set(SUGGESTIONS.map((s) => s.question));
 
 function parseStringArray(value: unknown): string[] | undefined {
   if (Array.isArray(value)) {
@@ -422,9 +420,13 @@ export default function AskPage() {
       </div>
 
       <div className="relative max-w-6xl mx-auto px-4 md:px-8 py-6">
-        <div className="flex items-stretch overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] shadow-[0_16px_64px_-16px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+        <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] shadow-[0_16px_64px_-16px_rgba(0,0,0,0.5)] backdrop-blur-xl">
           {/* Main chat area */}
-          <div className="grid min-h-0 min-w-0 flex-1 grid-rows-[minmax(0,1fr)_auto]">
+          <div
+            className={`grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] ${
+              sidebarOpen ? "pr-72" : ""
+            }`}
+          >
             <div className="min-h-0">
               {!hasMessages ? (
                 <SuggestedQuestions onSelect={handleSend} />

@@ -1,44 +1,6 @@
 "use client";
 
-export const SUGGESTIONS = [
-  {
-    category: "Historical",
-    question: "Which driver has the most wins at Monza?",
-    color: "text-blue-400",
-    borderHover: "hover:border-blue-500/25",
-  },
-  {
-    category: "Qualifying",
-    question: "Compare Norris vs Piastri in 2025 qualifying",
-    color: "text-orange-400",
-    borderHover: "hover:border-orange-500/25",
-  },
-  {
-    category: "Strategy",
-    question: "Analyze the different tyre strategies at Silverstone 2025",
-    color: "text-purple-400",
-    borderHover: "hover:border-purple-500/25",
-  },
-  {
-    category: "Weather",
-    question: "Which tracks are mostly likely to have a wet race?",
-    color: "text-teal-400",
-    borderHover: "hover:border-teal-500/25",
-  },
-  {
-    category: "New to F1?",
-    question:
-      "I'm new to F1 — explain how a race weekend works and how points are scored",
-    color: "text-amber-400",
-    borderHover: "hover:border-amber-500/25",
-  },
-  {
-    category: "Head-to-Head",
-    question: "Compare Hamilton vs Russell race results in 2024",
-    color: "text-red-400",
-    borderHover: "hover:border-red-500/25",
-  },
-];
+import { SUGGESTIONS } from "@/lib/ai/suggestions";
 
 interface SuggestedQuestionsProps {
   onSelect: (question: string) => void;

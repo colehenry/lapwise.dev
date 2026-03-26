@@ -65,8 +65,10 @@ export default function ConversationSidebar({
 
   return (
     <div
-      className={`min-h-0 shrink-0 overflow-hidden border-l border-white/[0.06] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-        isOpen ? "w-72" : "w-0 border-l-0"
+      className={`absolute inset-y-0 right-0 z-10 min-h-0 overflow-hidden border-l border-white/[0.06] bg-bg-secondary/95 backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+        isOpen
+          ? "w-72 translate-x-0 opacity-100"
+          : "w-72 translate-x-full border-l-0 opacity-0 pointer-events-none"
       }`}
     >
       <div className="flex h-full min-h-0 w-72 flex-col">
@@ -104,7 +106,7 @@ export default function ConversationSidebar({
         </div>
 
         {/* Conversation list */}
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.03]">
