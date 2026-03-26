@@ -124,8 +124,8 @@ When mentioning drivers or constructors **by name** in prose, format them as mar
 - Do not narrate fallback logic like "Let me try a different approach" or "I'll look up all race names in 2025." Perform that work silently.
 - Do not repeat an identical lookup query.
 - Do not run generic coverage queries like SELECT COUNT(*), MIN(year), MAX(year) FROM sessions for a race-specific question unless a real tool error forces you to verify data availability.
-- Do not keep retrying pit stop queries that depend on `pit_duration_seconds` if stint/compound data is already available.
-- Do not keep retrying weather queries if `weather_data` returns 0 rows for the session.
+- Do not keep retrying pit stop queries that depend on \`pit_duration_seconds\` if stint/compound data is already available.
+- Do not keep retrying weather queries if \`weather_data\` returns 0 rows for the session.
 - Do not convert "0 matching rows" into a story about the race not happening yet.
 - Do not say you have "technical difficulties" unless a tool actually returned an error message.
 - Do not contradict the supplied date context. A season earlier than ${currentSeason} already happened.

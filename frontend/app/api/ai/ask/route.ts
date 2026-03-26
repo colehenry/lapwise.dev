@@ -15,6 +15,7 @@ import { generateText, stepCountIs, streamText } from "ai";
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAIUser } from "@/lib/ai/auth";
 import { getConversationClient } from "@/lib/ai/db";
+import { isSuggestedQuestion } from "@/lib/ai/suggestions";
 import { buildSystemPrompt } from "@/lib/ai/system-prompt";
 import {
   generateChart,
@@ -50,8 +51,24 @@ interface ToolSummary {
   summary: string;
 }
 
+interface RequestUser {
+  id: number;
+  username: string;
+  role: string;
+}
+
+const SEED_MODE_HEADER = "x-ai-seed-mode";
+const DUMMY_SEED_CONVERSATION_ID = "seed-suggested-question-cache";
+
 function encodeLine(payload: Record<string, unknown>): Uint8Array {
   return new TextEncoder().encode(`${JSON.stringify(payload)}\n`);
+}
+
+function isSeedModeRequest(request: NextRequest): boolean {
+  return (
+    process.env.NODE_ENV !== "production" &&
+    request.headers.get(SEED_MODE_HEADER) === "true"
+  );
 }
 
 function summarizeToolOutput(
@@ -124,6 +141,10 @@ async function writeCachedResponse(
   queries: string[],
   followUps: string[],
 ): Promise<void> {
+  if (!isSuggestedQuestion(question)) {
+    return;
+  }
+
   try {
     const hash = crypto
       .createHash("md5")
@@ -352,9 +373,21 @@ async function verifyConversationOwnership(
 }
 
 export async function POST(request: NextRequest) {
+  const seedMode = isSeedModeRequest(request);
+
   // 1. Authenticate user
-  const authHeader = request.headers.get("authorization");
-  const user = await verifyAIUser(authHeader);
+  let user: RequestUser | null = null;
+
+  if (seedMode) {
+    user = {
+      id: 0,
+      username: "seed",
+      role: "admin",
+    };
+  } else {
+    const authHeader = request.headers.get("authorization");
+    user = await verifyAIUser(authHeader);
+  }
 
   if (!user) {
     return NextResponse.json(
@@ -393,7 +426,9 @@ export async function POST(request: NextRequest) {
   }
 
   // 3. Check rate limit
-  const rateLimit = await checkRateLimit(user.id, user.role);
+  const rateLimit = seedMode
+    ? { allowed: true, remaining: null }
+    : await checkRateLimit(user.id, user.role);
   if (!rateLimit.allowed) {
     return NextResponse.json(
       {
@@ -407,7 +442,9 @@ export async function POST(request: NextRequest) {
   // 4. Get or create conversation
   let conversationId = existingConversationId;
 
-  if (conversationId) {
+  if (seedMode) {
+    conversationId = DUMMY_SEED_CONVERSATION_ID;
+  } else if (conversationId) {
     const isOwner = await verifyConversationOwnership(conversationId, user.id);
     if (!isOwner) {
       return NextResponse.json(
@@ -424,7 +461,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 5. Load conversation history
-  const history = await loadConversationHistory(conversationId);
+  const history = seedMode ? [] : await loadConversationHistory(conversationId);
 
   // 6. Build messages array
   const messages = [
@@ -436,7 +473,9 @@ export async function POST(request: NextRequest) {
   ];
 
   // 7. Save user message
-  await saveMessage(conversationId, "user", question);
+  if (!seedMode) {
+    await saveMessage(conversationId, "user", question);
+  }
 
   // 8. Run the AI agent loop
   try {
@@ -612,15 +651,16 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          const [, followUps] = await Promise.all([
-            saveMessage(conversationId, "assistant", answer, {
+          const followUps = await generateFollowUps(question, answer);
+
+          if (!seedMode) {
+            await saveMessage(conversationId, "assistant", answer, {
               toolCalls: sqlQueries.length > 0 ? sqlQueries : undefined,
               toolResults: charts.length > 0 ? charts : undefined,
               tokensUsed: usage.totalTokens,
               model: AI_MODEL,
-            }),
-            generateFollowUps(question, answer),
-          ]);
+            });
+          }
 
           // Cache the response for future use (fire-and-forget)
           writeCachedResponse(question, answer, charts, sqlQueries, followUps);
