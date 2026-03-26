@@ -10,6 +10,7 @@ interface ConversationSidebarProps {
   onSelect: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
+  onRename?: (id: string, title: string) => void;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -20,10 +21,13 @@ export default function ConversationSidebar({
   onSelect,
   onNew,
   onDelete,
+  onRename,
   isOpen,
   onClose,
 }: ConversationSidebarProps) {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
 
   function handleDelete(e: React.MouseEvent, id: string) {
     e.stopPropagation();
@@ -35,128 +39,185 @@ export default function ConversationSidebar({
     }
   }
 
-  const sidebarContent = (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-border-primary px-4 py-4">
-        <div>
-          <h3 className="text-sm font-bold uppercase tracking-wide text-text-primary">
-            Chat History
-          </h3>
-          <p className="mt-1 text-[11px] text-text-muted">
-            Jump between past analyses
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onNew}
-          className="rounded-full border border-purple-500/20 bg-purple-500/10 px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest text-purple-300 transition-colors hover:border-purple-500/40 hover:text-purple-200"
-        >
-          New
-        </button>
-      </div>
+  function startEdit(e: React.MouseEvent, conv: ChatConversation) {
+    e.stopPropagation();
+    setEditingId(conv.id);
+    setEditTitle(conv.title || "");
+    setConfirmDelete(null);
+  }
 
-      <div className="flex-1 overflow-y-auto">
-        {conversations.length === 0 ? (
-          <div className="p-6 text-center text-xs text-text-muted">
-            No conversations yet
-          </div>
-        ) : (
-          <div className="space-y-2 p-3">
-            {conversations.map((conv) => (
-              <button
-                key={conv.id}
-                type="button"
-                onClick={() => {
-                  onSelect(conv.id);
-                  onClose();
-                }}
-                className={`group relative w-full rounded-2xl border px-3 py-3 text-left text-sm transition-colors ${
-                  activeId === conv.id
-                    ? "border-purple-500/30 bg-purple-500/12 text-purple-200 shadow-[inset_0_0_16px_rgba(160,32,240,0.08)]"
-                    : "border-transparent text-text-secondary hover:border-border-primary hover:bg-bg-elevated"
-                }`}
-              >
-                <div className="truncate pr-8 text-sm font-medium">
-                  {conv.title || "Untitled"}
-                </div>
-                <div className="mt-1 text-[10px] uppercase tracking-widest text-text-muted">
-                  {formatDistanceToNow(new Date(conv.updated_at), {
-                    addSuffix: true,
-                  })}
-                </div>
+  function commitEdit(id: string) {
+    const trimmed = editTitle.trim();
+    if (trimmed && onRename) {
+      onRename(id, trimmed);
+    }
+    setEditingId(null);
+  }
 
-                <button
-                  type="button"
-                  onClick={(e) => handleDelete(e, conv.id)}
-                  onBlur={() => setConfirmDelete(null)}
-                  className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 transition-colors ${
-                    confirmDelete === conv.id
-                      ? "text-red-400 hover:text-red-300"
-                      : "text-text-muted opacity-0 hover:text-text-tertiary group-hover:opacity-100"
-                  }`}
-                >
-                  <svg
-                    className="h-3.5 w-3.5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <title>Delete</title>
-                    <path
-                      fillRule="evenodd"
-                      d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  function handleEditKeyDown(e: React.KeyboardEvent, id: string) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      commitEdit(id);
+    } else if (e.key === "Escape") {
+      setEditingId(null);
+    }
+  }
 
   return (
-    <>
-      <div className="hidden w-80 shrink-0 lg:block">
-        <div className="sticky top-24 h-[calc(100vh-7rem)] overflow-hidden rounded-[28px] border border-border-primary bg-bg-primary/78 shadow-[0_16px_48px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-          {sidebarContent}
+    <div
+      className={`min-h-0 shrink-0 overflow-hidden border-l border-white/[0.06] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+        isOpen ? "w-72" : "w-0 border-l-0"
+      }`}
+    >
+      <div className="flex h-full min-h-0 w-72 flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3.5">
+          <h3 className="text-[11px] font-mono font-bold uppercase tracking-[0.1em] text-text-secondary">
+            History
+          </h3>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                onNew();
+                onClose();
+              }}
+              className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.1em] text-text-muted transition-all hover:border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-300"
+            >
+              + New Chat
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg p-1.5 text-text-muted transition-colors hover:text-text-secondary"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <title>Close sidebar</title>
+                <path
+                  fillRule="evenodd"
+                  d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="hidden md:block lg:hidden" />
-
-      {isOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-            onClick={onClose}
-            aria-hidden="true"
-          />
-          <div className="fixed inset-y-0 right-0 z-50 w-80 max-w-[90vw] border-l border-border-primary bg-bg-tertiary shadow-xl lg:hidden">
-            <div className="flex items-center justify-between border-b border-border-primary p-4">
-              <h3 className="text-sm font-bold uppercase tracking-wide text-text-primary">
-                Chat History
-              </h3>
-              <button
-                type="button"
-                onClick={onClose}
-                className="p-1 text-text-muted hover:text-text-primary"
-              >
+        {/* Conversation list */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {conversations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.03]">
                 <svg
-                  className="h-5 w-5"
+                  className="h-5 w-5 text-text-muted"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
-                  <title>Close</title>
-                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                  <title>No conversations</title>
+                  <path
+                    fillRule="evenodd"
+                    d="M10 2c-2.236 0-4.43.18-6.57.524C1.993 2.755 1 4.014 1 5.426v5.148c0 1.413.993 2.670 2.43 2.902 1.168.188 2.352.327 3.55.414.28.02.521.18.642.422l1.617 3.236a.75.75 0 001.348-.024l1.52-3.283a.727.727 0 01.613-.38 49.69 49.69 0 003.85-.462c1.428-.261 2.43-1.51 2.43-2.924V5.426c0-1.412-.993-2.67-2.43-2.902A49.21 49.21 0 0010 2zm0 6.75a.75.75 0 000 1.5h.007a.75.75 0 000-1.5H10zm-3 .75a.75.75 0 01.75-.75h.007a.75.75 0 010 1.5H7.75a.75.75 0 01-.75-.75zm6.75-.75a.75.75 0 000 1.5h.007a.75.75 0 000-1.5h-.007z"
+                    clipRule="evenodd"
+                  />
                 </svg>
-              </button>
+              </div>
+              <p className="text-xs text-text-muted">No conversations yet</p>
+              <p className="mt-0.5 text-[10px] text-text-muted/60">
+                Start asking to build history
+              </p>
             </div>
-            <div className="h-[calc(100%-57px)]">{sidebarContent}</div>
-          </div>
-        </>
-      )}
-    </>
+          ) : (
+            <div className="space-y-0.5 p-2">
+              {conversations.map((conv) => (
+                <div key={conv.id} className="group relative">
+                  {editingId === conv.id ? (
+                    <div className="rounded-xl border border-purple-500/20 bg-purple-500/[0.08] px-3 py-2.5">
+                      <input
+                        type="text"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        onKeyDown={(e) => handleEditKeyDown(e, conv.id)}
+                        onBlur={() => commitEdit(conv.id)}
+                        ref={(el) => el?.focus()}
+                        className="w-full rounded bg-bg-primary/80 px-1.5 py-0.5 text-xs text-text-primary outline-none focus:ring-1 focus:ring-purple-500/40"
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onSelect(conv.id);
+                          onClose();
+                        }}
+                        className={`w-full rounded-xl px-3 py-2.5 text-left transition-all duration-200 ${
+                          activeId === conv.id
+                            ? "border border-purple-500/20 bg-purple-500/[0.08] text-purple-200"
+                            : "border border-transparent text-text-secondary hover:bg-white/[0.03] hover:text-text-primary"
+                        }`}
+                      >
+                        <div className="truncate pr-14 text-xs font-medium leading-snug">
+                          {conv.title || "Untitled"}
+                        </div>
+                        <div className="mt-0.5 text-[10px] font-mono uppercase tracking-[0.08em] text-text-muted">
+                          {formatDistanceToNow(new Date(conv.updated_at), {
+                            addSuffix: true,
+                          })}
+                        </div>
+                      </button>
+
+                      <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {onRename && (
+                          <button
+                            type="button"
+                            onClick={(e) => startEdit(e, conv)}
+                            className="rounded-lg p-1.5 text-text-muted transition-all hover:text-text-secondary"
+                            title="Rename"
+                          >
+                            <svg
+                              className="h-3 w-3"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <title>Rename</title>
+                              <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
+                              <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
+                            </svg>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => handleDelete(e, conv.id)}
+                          onBlur={() => setConfirmDelete(null)}
+                          className={`rounded-lg p-1.5 transition-all ${
+                            confirmDelete === conv.id
+                              ? "text-red-400 hover:text-red-300"
+                              : "text-text-muted hover:text-text-tertiary"
+                          }`}
+                          title="Delete"
+                        >
+                          <svg
+                            className="h-3 w-3"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <title>Delete</title>
+                            <path
+                              fillRule="evenodd"
+                              d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

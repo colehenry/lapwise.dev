@@ -311,9 +311,20 @@ export default function DiscussionDetailPage() {
                 }}
                 className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono uppercase tracking-widest border border-border-primary rounded-sm text-text-muted hover:text-text-primary hover:border-purple-500/50 hover:bg-bg-elevated transition-colors"
               >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                <svg
+                  className="w-3.5 h-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
                   <title>Reply</title>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a5 5 0 015 5v2M3 10l5-5M3 10l5 5" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 10h10a5 5 0 015 5v2M3 10l5-5M3 10l5 5"
+                  />
                 </svg>
                 Reply to post
               </button>
@@ -389,7 +400,6 @@ export default function DiscussionDetailPage() {
               isLocked={post.is_locked}
             />
           )}
-
         </div>
       </div>
 

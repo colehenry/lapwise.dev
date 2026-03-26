@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AIAnalystPreview from "@/components/home/AIAnalystPreview";
 import SeasonRoundSelector from "@/components/home/SeasonRoundSelector";
 import TopRightLatestRace from "@/components/home/TopRightLatestRace";
 import NextRaceBanner from "@/components/NextRaceBanner";
@@ -174,6 +175,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* AI Analyst Preview */}
+      <AIAnalystPreview />
 
       {/* Next Race Banner */}
       <NextRaceBanner />

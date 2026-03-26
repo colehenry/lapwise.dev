@@ -5,13 +5,20 @@
  * Next.js API routes (serverless compatible).
  */
 
-import { neon, Pool } from "@neondatabase/serverless";
+import { neon } from "@neondatabase/serverless";
 
 const AI_DB_URL = process.env.AI_DB_URL;
 const NEON_DATABASE_URL = process.env.NEON_DATABASE_URL;
 
 if (!AI_DB_URL) {
   console.warn("AI_DB_URL is not set — AI queries will fail at runtime");
+}
+
+function getAISql() {
+  if (!AI_DB_URL) {
+    throw new Error("AI_DB_URL environment variable is not configured");
+  }
+  return neon(AI_DB_URL);
 }
 
 /**
@@ -22,16 +29,9 @@ if (!AI_DB_URL) {
 export async function executeAIQuery(
   query: string,
 ): Promise<Record<string, unknown>[]> {
-  if (!AI_DB_URL) {
-    throw new Error("AI_DB_URL environment variable is not configured");
-  }
-  const pool = new Pool({ connectionString: AI_DB_URL });
-  try {
-    const result = await pool.query(query);
-    return result.rows;
-  } finally {
-    await pool.end();
-  }
+  const sql = getAISql();
+  const rows = await sql.query(query);
+  return rows as Record<string, unknown>[];
 }
 
 /**
@@ -42,16 +42,9 @@ export async function executeAIParamQuery(
   query: string,
   params: unknown[],
 ): Promise<Record<string, unknown>[]> {
-  if (!AI_DB_URL) {
-    throw new Error("AI_DB_URL environment variable is not configured");
-  }
-  const pool = new Pool({ connectionString: AI_DB_URL });
-  try {
-    const result = await pool.query(query, params);
-    return result.rows;
-  } finally {
-    await pool.end();
-  }
+  const sql = getAISql();
+  const rows = await sql.query(query, params);
+  return rows as Record<string, unknown>[];
 }
 
 /**

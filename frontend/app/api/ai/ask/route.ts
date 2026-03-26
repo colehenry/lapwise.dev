@@ -9,6 +9,7 @@
  * Requires authentication. Rate-limited per user.
  */
 
+import crypto from "node:crypto";
 import { anthropic } from "@ai-sdk/anthropic";
 import { generateText, stepCountIs, streamText } from "ai";
 import { type NextRequest, NextResponse } from "next/server";
@@ -22,8 +23,8 @@ import {
   runSQLQuery,
 } from "@/lib/ai/tools";
 
-const AI_DAILY_QUERY_LIMIT = Number.parseInt(
-  process.env.AI_DAILY_QUERY_LIMIT || "20",
+const AI_TOTAL_QUERY_LIMIT = Number.parseInt(
+  process.env.AI_TOTAL_QUERY_LIMIT || "3",
   10,
 );
 const AI_MODEL = process.env.AI_MODEL || "claude-sonnet-4-20250514";
@@ -86,6 +87,71 @@ function summarizeToolOutput(
   return JSON.stringify(output);
 }
 
+async function generateFollowUps(
+  question: string,
+  answer: string,
+): Promise<string[]> {
+  try {
+    const timeoutController = new AbortController();
+    const timeoutId = setTimeout(() => timeoutController.abort(), 10000);
+    const result = await generateText({
+      model: anthropic("claude-haiku-4-5-20251001"),
+      system:
+        "You generate follow-up question suggestions for an F1 analytics chatbot. Return exactly 3 short, specific, actionable questions as a JSON array of strings. No explanation, just the array.",
+      prompt: `User asked: "${question}"\n\nAnswer summary: "${answer.slice(0, 800)}"\n\nGenerate 3 follow-up questions as a JSON array.`,
+      maxTokens: 200,
+      abortSignal: timeoutController.signal,
+    });
+    clearTimeout(timeoutId);
+    const trimmed = result.text.trim();
+    const match = trimmed.match(/\[[\s\S]*\]/);
+    if (match) {
+      const parsed = JSON.parse(match[0]);
+      if (Array.isArray(parsed) && parsed.every((s) => typeof s === "string")) {
+        return parsed.slice(0, 3);
+      }
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+async function writeCachedResponse(
+  question: string,
+  text: string,
+  charts: unknown[],
+  queries: string[],
+  followUps: string[],
+): Promise<void> {
+  try {
+    const hash = crypto
+      .createHash("md5")
+      .update(question.toLowerCase().trim())
+      .digest("hex");
+    const sql = getConversationClient();
+    await sql`
+      INSERT INTO ai_response_cache (question_hash, response_text, charts_json, queries_json, follow_ups_json, cached_at)
+      VALUES (
+        ${hash},
+        ${text},
+        ${JSON.stringify(charts)}::jsonb,
+        ${JSON.stringify(queries)}::jsonb,
+        ${JSON.stringify(followUps)}::jsonb,
+        NOW()
+      )
+      ON CONFLICT (question_hash) DO UPDATE SET
+        response_text  = EXCLUDED.response_text,
+        charts_json    = EXCLUDED.charts_json,
+        queries_json   = EXCLUDED.queries_json,
+        follow_ups_json = EXCLUDED.follow_ups_json,
+        cached_at      = NOW()
+    `;
+  } catch (error) {
+    console.error("Failed to write AI response cache:", error);
+  }
+}
+
 async function buildFallbackAnswer(params: {
   question: string;
   queries: string[];
@@ -106,11 +172,15 @@ ${params.toolSummaries
 
 Write the final answer to the user now. Use only the retrieved data, mention if any query failed, and do not mention internal tool usage unless it helps explain a limitation.`;
 
+  const fallbackController = new AbortController();
+  const fallbackTimeoutId = setTimeout(() => fallbackController.abort(), 30000);
   const fallback = await generateText({
     model: anthropic(AI_MODEL),
     system: buildSystemPrompt(),
     prompt: synthesisPrompt,
+    abortSignal: fallbackController.signal,
   });
+  clearTimeout(fallbackTimeoutId);
 
   return fallback.text;
 }
@@ -240,16 +310,13 @@ async function createConversation(
  */
 async function checkRateLimit(
   userId: number,
-): Promise<{ allowed: boolean; remaining: number }> {
-  const sql = getConversationClient();
+  userRole: string,
+): Promise<{ allowed: boolean; remaining: number | null }> {
+  if (userRole === "admin") {
+    return { allowed: true, remaining: null };
+  }
 
-  // Reset counter if it's a new day
-  await sql`
-		UPDATE users
-		SET ai_queries_today = 0, ai_queries_reset_at = NOW()
-		WHERE id = ${userId}
-		AND (ai_queries_reset_at IS NULL OR ai_queries_reset_at < CURRENT_DATE)
-	`;
+  const sql = getConversationClient();
 
   // Check current count
   const result = await sql`
@@ -258,7 +325,7 @@ async function checkRateLimit(
 
   const current = (result[0]?.ai_queries_today as number) ?? 0;
 
-  if (current >= AI_DAILY_QUERY_LIMIT) {
+  if (current >= AI_TOTAL_QUERY_LIMIT) {
     return { allowed: false, remaining: 0 };
   }
 
@@ -267,7 +334,7 @@ async function checkRateLimit(
 		UPDATE users SET ai_queries_today = ai_queries_today + 1 WHERE id = ${userId}
 	`;
 
-  return { allowed: true, remaining: AI_DAILY_QUERY_LIMIT - current - 1 };
+  return { allowed: true, remaining: AI_TOTAL_QUERY_LIMIT - current - 1 };
 }
 
 /**
@@ -326,11 +393,11 @@ export async function POST(request: NextRequest) {
   }
 
   // 3. Check rate limit
-  const rateLimit = await checkRateLimit(user.id);
+  const rateLimit = await checkRateLimit(user.id, user.role);
   if (!rateLimit.allowed) {
     return NextResponse.json(
       {
-        error: `Daily query limit reached (${AI_DAILY_QUERY_LIMIT}/day). Try again tomorrow.`,
+        error: `Total query limit reached (${AI_TOTAL_QUERY_LIMIT} total).`,
         remaining: 0,
       },
       { status: 429 },
@@ -398,24 +465,7 @@ export async function POST(request: NextRequest) {
           outputTokens: 0,
           totalTokens: 0,
         };
-        let heartbeatMessageIndex = 0;
-        const heartbeatMessages = [
-          "Planning the analysis...",
-          "Querying the F1 database...",
-          "Comparing results across sessions...",
-          "Assembling the final report...",
-        ];
-        const heartbeat = setInterval(() => {
-          controller.enqueue(
-            encodeLine({
-              type: "status",
-              message:
-                heartbeatMessages[
-                  heartbeatMessageIndex++ % heartbeatMessages.length
-                ],
-            }),
-          );
-        }, 2000);
+        let lastEventWasToolResult = false;
 
         controller.enqueue(
           encodeLine({
@@ -428,12 +478,22 @@ export async function POST(request: NextRequest) {
           encodeLine({
             type: "status",
             message: "Planning the analysis...",
+            stepType: "thinking",
           }),
         );
 
         try {
           for await (const part of result.fullStream) {
             if (part.type === "text-delta") {
+              // Insert a separator when text resumes after a tool result
+              if (lastEventWasToolResult && part.text.trim()) {
+                const separator = "\n\n";
+                answer += separator;
+                controller.enqueue(
+                  encodeLine({ type: "text-delta", text: separator }),
+                );
+                lastEventWasToolResult = false;
+              }
               answer += part.text;
               controller.enqueue(
                 encodeLine({ type: "text-delta", text: part.text }),
@@ -441,19 +501,43 @@ export async function POST(request: NextRequest) {
               continue;
             }
 
-            if (
-              part.type === "tool-call" &&
-              part.toolName === "run_sql_query"
-            ) {
-              controller.enqueue(
-                encodeLine({
-                  type: "status",
-                  message: `Running SQL query ${sqlQueries.length + 1}...`,
-                }),
-              );
-              const input = part.input as { sql?: string };
-              if (input.sql) {
-                sqlQueries.push(input.sql);
+            if (part.type === "tool-call") {
+              const input = part.input as Record<string, unknown>;
+              if (part.toolName === "run_sql_query") {
+                if (typeof input.sql === "string") {
+                  sqlQueries.push(input.sql);
+                }
+                controller.enqueue(
+                  encodeLine({
+                    type: "status",
+                    message: `Running SQL query ${sqlQueries.length}...`,
+                    stepType: "sql",
+                  }),
+                );
+              } else if (part.toolName === "get_table_schema") {
+                controller.enqueue(
+                  encodeLine({
+                    type: "status",
+                    message: `Inspecting ${input.table_name || "table"} schema...`,
+                    stepType: "schema",
+                  }),
+                );
+              } else if (part.toolName === "get_sample_data") {
+                controller.enqueue(
+                  encodeLine({
+                    type: "status",
+                    message: `Sampling data from ${input.table_name || "table"}...`,
+                    stepType: "sample",
+                  }),
+                );
+              } else if (part.toolName === "generate_chart") {
+                controller.enqueue(
+                  encodeLine({
+                    type: "status",
+                    message: "Generating visualization...",
+                    stepType: "chart",
+                  }),
+                );
               }
               continue;
             }
@@ -467,20 +551,18 @@ export async function POST(request: NextRequest) {
 
               if (output?.type === "chart") {
                 charts.push(output.config);
-                controller.enqueue(
-                  encodeLine({
-                    type: "status",
-                    message: "Chart generated, continuing analysis...",
-                  }),
-                );
               } else if (part.toolName === "run_sql_query") {
+                const count =
+                  typeof output.count === "number" ? output.count : 0;
                 controller.enqueue(
                   encodeLine({
                     type: "status",
-                    message: "SQL results received, analyzing...",
+                    message: `Query returned ${count} rows`,
+                    stepType: "thinking",
                   }),
                 );
               }
+              lastEventWasToolResult = true;
               continue;
             }
 
@@ -504,6 +586,7 @@ export async function POST(request: NextRequest) {
               encodeLine({
                 type: "status",
                 message: "Synthesizing the final report...",
+                stepType: "synthesizing",
               }),
             );
 
@@ -529,12 +612,18 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          await saveMessage(conversationId, "assistant", answer, {
-            toolCalls: sqlQueries.length > 0 ? sqlQueries : undefined,
-            toolResults: charts.length > 0 ? charts : undefined,
-            tokensUsed: usage.totalTokens,
-            model: AI_MODEL,
-          });
+          const [, followUps] = await Promise.all([
+            saveMessage(conversationId, "assistant", answer, {
+              toolCalls: sqlQueries.length > 0 ? sqlQueries : undefined,
+              toolResults: charts.length > 0 ? charts : undefined,
+              tokensUsed: usage.totalTokens,
+              model: AI_MODEL,
+            }),
+            generateFollowUps(question, answer),
+          ]);
+
+          // Cache the response for future use (fire-and-forget)
+          writeCachedResponse(question, answer, charts, sqlQueries, followUps);
 
           controller.enqueue(
             encodeLine({
@@ -543,6 +632,7 @@ export async function POST(request: NextRequest) {
               remaining: rateLimit.remaining,
               charts,
               queries: sqlQueries,
+              followUps,
               usage,
             }),
           );
@@ -559,7 +649,6 @@ export async function POST(request: NextRequest) {
             }),
           );
         } finally {
-          clearInterval(heartbeat);
           controller.close();
         }
       },

@@ -1,41 +1,221 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import UserAvatar from "@/components/discussions/UserAvatar";
-import type { ChartConfig } from "@/lib/chat";
+import { useEntityLinkColors } from "@/hooks/useEntityLinkColors";
+import type { ChartConfig, StepType, ThinkingStep } from "@/lib/chat";
 import AIChart from "./AIChart";
+import AIDataTable from "./AIDataTable";
 
 interface ChatMessageProps {
   messageRole: "user" | "assistant";
   content: string;
   charts?: ChartConfig[];
   queries?: string[];
+  steps?: ThinkingStep[];
+  followUps?: string[];
+  onFollowUp?: (question: string) => void;
   isLoading?: boolean;
+  isStreaming?: boolean;
   statusText?: string | null;
   userName?: string;
   userAvatarUrl?: string | null;
+  compact?: boolean;
 }
 
-function AIAnalystAvatar() {
+/**
+ * Replace delta syntax with colored spans.
+ *
+ * {g:X}  — explicitly green (good/advantage), use for timing leads (-0.256s faster) and points leads
+ * {r:X}  — explicitly red (bad/deficit), use for timing deficits (+0.256s slower) and points deficits
+ * {+X}   — green (legacy: positive = gain/improvement)
+ * {-X}   — red (legacy: negative = deficit/loss)
+ */
+function processDeltas(text: string): string {
+  return text
+    .replace(/\{g:([^}]+)\}/g, '<span class="delta-positive">$1</span>')
+    .replace(/\{r:([^}]+)\}/g, '<span class="delta-negative">$1</span>')
+    .replace(/\{(\+[^}:]+)\}/g, '<span class="delta-positive">$1</span>')
+    .replace(/\{(-[^}:]+)\}/g, '<span class="delta-negative">$1</span>');
+}
+
+function StepIcon({ stepType }: { stepType: StepType }) {
+  const cls = "h-3 w-3 shrink-0";
+  switch (stepType) {
+    case "sql":
+      return (
+        <svg
+          className={cls}
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path d="M8 1C4.7 1 2 2.3 2 4v8c0 1.7 2.7 3 6 3s6-1.3 6-3V4c0-1.7-2.7-3-6-3zM8 3c2.8 0 4 .9 4 1s-1.2 1-4 1-4-.9-4-1 1.2-1 4-1zm4 9c0 .1-1.2 1-4 1s-4-.9-4-1V9.7c1 .5 2.4.8 4 .8s3-.3 4-.8V12zm0-4c0 .1-1.2 1-4 1s-4-.9-4-1V5.7c1 .5 2.4.8 4 .8s3-.3 4-.8V8z" />
+        </svg>
+      );
+    case "schema":
+    case "sample":
+      return (
+        <svg
+          className={cls}
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v9a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 012 12.5v-9zM3.5 3a.5.5 0 00-.5.5V6h10V3.5a.5.5 0 00-.5-.5h-9zM13 7H3v2h10V7zm0 3H3v2.5a.5.5 0 00.5.5h9a.5.5 0 00.5-.5V10z" />
+        </svg>
+      );
+    case "chart":
+      return (
+        <svg
+          className={cls}
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path d="M1 14h14V2h-1v11H4V2H3v11H1v1zm3-7h2v6H4V7zm3-2h2v8H7V5zm3 4h2v4h-2V9z" />
+        </svg>
+      );
+    case "synthesizing":
+      return (
+        <svg
+          className={cls}
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path d="M4.5 2A2.5 2.5 0 002 4.5v2.879a2.5 2.5 0 00.732 1.767l4.5 4.5a2.5 2.5 0 003.536 0l2.879-2.879a2.5 2.5 0 000-3.536l-4.5-4.5A2.5 2.5 0 007.38 2H4.5zM5 6a1 1 0 110-2 1 1 0 010 2z" />
+        </svg>
+      );
+    default:
+      return (
+        <svg
+          className={cls}
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path d="M8 2a6 6 0 100 12A6 6 0 008 2zm0 1a5 5 0 11-.001 10.001A5 5 0 018 3zm-.5 2.5a.5.5 0 011 0v3a.5.5 0 01-.5.5H6a.5.5 0 010-1h1.5v-2.5z" />
+        </svg>
+      );
+  }
+}
+
+function ThinkingSteps({
+  steps,
+  isStreaming,
+}: {
+  steps: ThinkingStep[];
+  isStreaming?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(isStreaming ?? false);
+
+  useEffect(() => {
+    if (isStreaming) {
+      setExpanded(true);
+    } else if (steps.length > 0) {
+      const timer = setTimeout(() => setExpanded(false), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [isStreaming, steps.length]);
+
+  if (steps.length === 0) return null;
+
+  const duration =
+    steps.length >= 2
+      ? (
+          (steps[steps.length - 1].timestamp - steps[0].timestamp) /
+          1000
+        ).toFixed(1)
+      : null;
+
   return (
-    <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-purple-500/30 bg-purple-500/15 text-purple-300 shadow-[inset_0_0_18px_rgba(160,32,240,0.12)]">
+    <div className="mb-2">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-text-tertiary transition-colors"
+      >
+        {isStreaming ? (
+          <svg
+            className="h-3 w-3 animate-spin text-purple-400"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <title>Working</title>
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+            />
+          </svg>
+        ) : (
+          <svg
+            className={`h-3 w-3 transition-transform ${expanded ? "rotate-90" : ""}`}
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <title>Toggle</title>
+            <path
+              fillRule="evenodd"
+              d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+              clipRule="evenodd"
+            />
+          </svg>
+        )}
+        <span>
+          {isStreaming
+            ? steps[steps.length - 1].message
+            : `${steps.length} step${steps.length === 1 ? "" : "s"}${duration ? ` · ${duration}s` : ""}`}
+        </span>
+      </button>
+      {expanded && !isStreaming && (
+        <div className="mt-1.5 ml-1 space-y-1 border-l border-white/[0.06] pl-3">
+          {steps.map((step, i) => (
+            <div
+              key={`${step.stepType}-${i}`}
+              className="flex items-center gap-2 text-[11px] text-text-muted"
+            >
+              <StepIcon stepType={step.stepType} />
+              <span>{step.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AIAnalystAvatar({ size = "md" }: { size?: "sm" | "md" }) {
+  const dim = size === "sm" ? "h-7 w-7" : "h-9 w-9";
+  const icon = size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
+  return (
+    <div
+      className={`flex ${dim} items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10 text-purple-300`}
+    >
       <svg
-        className="h-5 w-5"
+        className={icon}
         viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        fill="currentColor"
         aria-hidden="true"
       >
-        <path d="M4 15.5 6.2 10A2 2 0 0 1 8 8.75h8a2 2 0 0 1 1.8 1.25L20 15.5" />
-        <path d="M5 15.5h14v2a1.75 1.75 0 0 1-1.75 1.75h-1.5A1.75 1.75 0 0 1 14 17.5v-.25h-4V17.5a1.75 1.75 0 0 1-1.75 1.75h-1.5A1.75 1.75 0 0 1 5 17.5Z" />
-        <circle cx="8" cy="15.25" r="1.1" />
-        <circle cx="16" cy="15.25" r="1.1" />
-        <path d="M8.5 8.75 10 6.5h4l1.5 2.25" />
+        <path
+          fillRule="evenodd"
+          d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"
+          clipRule="evenodd"
+        />
       </svg>
     </div>
   );
@@ -46,23 +226,42 @@ export default function ChatMessage({
   content,
   charts,
   queries,
+  steps,
+  followUps,
+  onFollowUp,
   isLoading,
+  isStreaming,
   statusText,
   userName,
   userAvatarUrl,
+  compact,
 }: ChatMessageProps) {
+  const { driverColors, teamColors } = useEntityLinkColors();
   const [showSQL, setShowSQL] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard not available
+    }
+  }
   const isUser = messageRole === "user";
+  const avatarSize = compact ? "sm" : "md";
+  const processedContent = content ? processDeltas(content) : "";
 
   if (isLoading) {
     return (
-      <div className="flex gap-3 py-4">
-        <AIAnalystAvatar />
-        <div className="flex-1 pt-1">
-          <div className="rounded-3xl border border-border-primary bg-bg-elevated/70 px-4 py-3">
-            <div className="flex items-center gap-2 text-sm text-text-muted">
+      <div className="flex gap-3 py-3">
+        <AIAnalystAvatar size={avatarSize} />
+        <div className="flex-1 pt-0.5">
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+            <div className="flex items-center gap-2 text-xs text-text-muted">
               <svg
-                className="animate-spin h-4 w-4"
+                className="animate-spin h-3.5 w-3.5"
                 viewBox="0 0 24 24"
                 fill="none"
               >
@@ -81,7 +280,7 @@ export default function ChatMessage({
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
-              Analyzing your question...
+              {statusText || "Analyzing..."}
             </div>
           </div>
         </div>
@@ -90,31 +289,35 @@ export default function ChatMessage({
   }
 
   return (
-    <div className={`flex gap-3 py-4 ${isUser ? "flex-row-reverse" : ""}`}>
-      <div className="shrink-0 pt-1">
+    <div className={`flex gap-3 py-3 ${isUser ? "flex-row-reverse" : ""}`}>
+      <div className="shrink-0 pt-0.5">
         {isUser ? (
           <UserAvatar
             username={userName || "You"}
             avatarUrl={userAvatarUrl}
-            size="md"
-            className="rounded-2xl"
+            size={compact ? "sm" : "md"}
+            className="rounded-xl"
           />
         ) : (
-          <AIAnalystAvatar />
+          <AIAnalystAvatar size={avatarSize} />
         )}
       </div>
 
       <div className={`flex-1 min-w-0 ${isUser ? "text-right" : ""}`}>
         {isUser ? (
-          <div className="inline-block max-w-[85%] rounded-3xl border border-border-primary bg-bg-elevated px-4 py-3 text-left text-sm text-text-primary shadow-[0_10px_26px_rgba(0,0,0,0.16)]">
+          <div className="inline-block max-w-[85%] rounded-2xl border border-white/[0.06] bg-white/[0.04] px-4 py-2.5 text-left text-sm text-text-primary">
             {content}
           </div>
         ) : (
-          <div className="space-y-3 rounded-[28px] border border-border-primary bg-bg-elevated/55 px-4 py-4 shadow-[0_12px_30px_rgba(0,0,0,0.18)] md:px-5">
-            {statusText && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-purple-500/20 bg-purple-500/10 px-3 py-1 text-xs text-purple-300">
+          <div className="space-y-2 rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 md:px-5">
+            {steps && steps.length > 0 && (
+              <ThinkingSteps steps={steps} isStreaming={isStreaming} />
+            )}
+
+            {statusText && (!steps || steps.length === 0) && (
+              <div className="inline-flex items-center gap-2 rounded-full border border-purple-500/15 bg-purple-500/[0.06] px-3 py-1 text-[11px] text-purple-300">
                 <svg
-                  className="h-3.5 w-3.5 animate-spin"
+                  className="h-3 w-3 animate-spin"
                   viewBox="0 0 24 24"
                   fill="none"
                 >
@@ -137,9 +340,98 @@ export default function ChatMessage({
               </div>
             )}
 
-            <div className="prose-chat text-sm text-text-secondary leading-relaxed">
-              <Markdown remarkPlugins={[remarkGfm]}>{content}</Markdown>
-            </div>
+            {processedContent && (
+              <div className="prose-chat text-sm text-text-secondary leading-relaxed">
+                <Markdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]}
+                  components={{
+                    a({ href, children }) {
+                      if (!href) return <span>{children}</span>;
+                      const isInternal = href.startsWith("/");
+                      const driverCode = href.startsWith("/drivers/")
+                        ? decodeURIComponent(href.replace("/drivers/", ""))
+                        : null;
+                      const teamName = href.startsWith("/constructors/")
+                        ? decodeURIComponent(href.replace("/constructors/", ""))
+                        : null;
+                      const linkColor =
+                        (driverCode ? driverColors.get(driverCode) : null) ??
+                        (teamName ? teamColors.get(teamName) : null) ??
+                        null;
+
+                      if (!isInternal) {
+                        return (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="font-semibold transition-colors hover:text-purple-200"
+                          >
+                            {children}
+                          </a>
+                        );
+                      }
+
+                      return (
+                        <Link
+                          href={href}
+                          className="font-semibold no-underline transition-opacity hover:opacity-80"
+                          style={{ color: linkColor ?? "var(--text-primary)" }}
+                        >
+                          {children}
+                        </Link>
+                      );
+                    },
+                    table({ children }) {
+                      const thead = (children as React.ReactElement[])?.find?.(
+                        (c: React.ReactElement) => c?.type === "thead",
+                      );
+                      const tbody = (children as React.ReactElement[])?.find?.(
+                        (c: React.ReactElement) => c?.type === "tbody",
+                      );
+
+                      const headers: React.ReactNode[] = [];
+                      const rows: React.ReactNode[][] = [];
+
+                      try {
+                        const theadRows = (thead as React.ReactElement)?.props
+                          ?.children;
+                        const headerRow = Array.isArray(theadRows)
+                          ? theadRows[0]
+                          : theadRows;
+                        const ths = headerRow?.props?.children;
+                        for (const th of Array.isArray(ths) ? ths : [ths]) {
+                          headers.push(th?.props?.children ?? "");
+                        }
+
+                        const tbodyRows = (tbody as React.ReactElement)?.props
+                          ?.children;
+                        for (const tr of Array.isArray(tbodyRows)
+                          ? tbodyRows
+                          : [tbodyRows]) {
+                          const tds = tr?.props?.children;
+                          const row: React.ReactNode[] = [];
+                          for (const td of Array.isArray(tds) ? tds : [tds]) {
+                            row.push(td?.props?.children ?? "");
+                          }
+                          rows.push(row);
+                        }
+
+                        if (headers.length > 0 && rows.length > 0) {
+                          return <AIDataTable headers={headers} rows={rows} />;
+                        }
+                      } catch {
+                        // fall through to default
+                      }
+                      return <table>{children}</table>;
+                    },
+                  }}
+                >
+                  {processedContent}
+                </Markdown>
+              </div>
+            )}
 
             {charts && charts.length > 0 && (
               <div className="space-y-3">
@@ -154,7 +446,7 @@ export default function ChatMessage({
                 <button
                   type="button"
                   onClick={() => setShowSQL(!showSQL)}
-                  className="text-xs text-text-muted hover:text-text-tertiary transition-colors flex items-center gap-1"
+                  className="text-[11px] text-text-muted hover:text-text-tertiary transition-colors flex items-center gap-1"
                 >
                   <svg
                     className={`h-3 w-3 transition-transform ${showSQL ? "rotate-90" : ""}`}
@@ -176,13 +468,64 @@ export default function ChatMessage({
                     {queries.map((sql) => (
                       <pre
                         key={sql}
-                        className="bg-bg-primary border border-border-primary rounded-sm p-3 text-xs text-text-tertiary overflow-x-auto font-mono"
+                        className="bg-bg-primary border border-white/[0.06] rounded-lg p-3 text-xs text-text-tertiary overflow-x-auto font-mono"
                       >
                         {sql}
                       </pre>
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {!isStreaming && content && (
+              <div className="flex items-center justify-between pt-1">
+                <div className="flex flex-wrap gap-1.5">
+                  {followUps &&
+                    followUps.length > 0 &&
+                    onFollowUp &&
+                    followUps.map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        onClick={() => onFollowUp(q)}
+                        className="rounded-full border border-purple-500/20 bg-purple-500/[0.06] px-2.5 py-1 text-[11px] text-purple-300 transition-all hover:border-purple-500/30 hover:bg-purple-500/10"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="ml-2 shrink-0 rounded-lg p-1.5 text-text-muted transition-colors hover:text-text-secondary"
+                  title="Copy response"
+                >
+                  {copied ? (
+                    <svg
+                      className="h-3.5 w-3.5 text-green-400"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <title>Copied</title>
+                      <path
+                        fillRule="evenodd"
+                        d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      className="h-3.5 w-3.5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <title>Copy</title>
+                      <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.379a3 3 0 00-.879-2.121L10.5 5.379A3 3 0 008.379 4.5H7v-1z" />
+                      <path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-5.879a1.5 1.5 0 00-.44-1.06L9.44 6.439A1.5 1.5 0 008.378 6H4.5z" />
+                    </svg>
+                  )}
+                </button>
               </div>
             )}
           </div>

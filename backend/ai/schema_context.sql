@@ -20,6 +20,16 @@
 --   5. NULL position means DNF/DNS/DSQ — use status column for details.
 --   6. Teams are year-partitioned: JOIN on team_id, not team name across years.
 --   7. driver_code can be NULL for pre-2003 drivers; use jolpica_id as stable key.
+--   8. Grand Prix names live in sessions.event_name; circuit names live in circuits.name.
+--      A user may ask for either one ("Silverstone 2025", "British GP 2025"), so event lookup
+--      queries should usually search across sessions.event_name PLUS circuits.name/location/country.
+--   9. For case-insensitive text matching, prefer ILIKE over LIKE.
+--  10. If an event lookup returns 0 rows, first run a broader discovery query for that year/session_type
+--      to inspect actual event_name and circuit values before concluding the event is missing.
+--  11. For race strategy analysis, prefer laps.stint + laps.compound + lap_number as the primary source.
+--      pit_duration_seconds and weather_data are useful supporting fields but may be sparse or missing.
+--  12. If a supporting table/field returns 0 rows, pivot to another data source instead of repeating
+--      near-identical queries with formatting-only changes.
 -- =============================================================================
 
 -- DRIVERS: One row per driver across their entire career.
@@ -207,6 +217,23 @@ CREATE TABLE race_control_messages (
 );
 
 -- =============================================================================
+-- PRE-COMPUTED STANDINGS VIEWS (fast — no joins needed)
+-- =============================================================================
+
+-- V_DRIVER_STANDINGS: Championship standings per year per driver.
+-- Fastest way to answer "who leads the championship in year X".
+-- Use: SELECT * FROM v_driver_standings WHERE year = 2024 ORDER BY championship_position
+CREATE VIEW v_driver_standings AS
+    -- year, championship_position, driver_name, driver_code, country_code,
+    -- team_name (most recent team that year), points, wins, podiums, finishes, races_entered
+
+-- V_CONSTRUCTOR_STANDINGS: Team championship standings per year.
+-- Use: SELECT * FROM v_constructor_standings WHERE year = 2024 ORDER BY championship_position
+CREATE VIEW v_constructor_standings AS
+    -- year, championship_position, team_name, team_color,
+    -- points, wins, podiums, finishes
+
+-- =============================================================================
 -- KEY RELATIONSHIPS (for JOINs)
 -- =============================================================================
 --
@@ -237,4 +264,18 @@ CREATE TABLE race_control_messages (
 --   session_results r1 JOIN session_results r2
 --     ON r1.session_id = r2.session_id AND r1.team_id = r2.team_id
 --     AND r1.driver_id != r2.driver_id
+--
+-- Event resolution pattern (recommended when user names a race/circuit informally):
+--   SELECT s.id, s.year, s.round, s.session_type, s.event_name, s.date,
+--          c.name AS circuit_name, c.location, c.country
+--   FROM sessions s
+--   JOIN circuits c ON s.circuit_id = c.id
+--   WHERE s.year = 2025
+--     AND s.session_type = 'race'
+--     AND (
+--       s.event_name ILIKE '%british%'
+--       OR c.name ILIKE '%silverstone%'
+--       OR c.location ILIKE '%silverstone%'
+--       OR c.country ILIKE '%united kingdom%'
+--     );
 -- =============================================================================
