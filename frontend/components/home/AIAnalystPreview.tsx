@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -13,6 +14,9 @@ import {
   YAxis,
 } from "recharts";
 import { CHART_COLORS, CustomDot } from "@/components/chart-primitives";
+import { useEntityLinkColors } from "@/hooks/useEntityLinkColors";
+import { apiHeaders, apiUrl } from "@/lib/api";
+import type { CircuitInfo } from "@/lib/types";
 
 const QUESTION =
   "How did Lando and Max overtake Oscar in the 2025 championship?";
@@ -21,11 +25,41 @@ const INTRO_TEXT =
   "**Piastri started P10 in Melbourne** — earning just 2 points while Norris won. He immediately fired back with victories at **Bahrain**, **Saudi Arabia**, and **Miami** to take the championship lead. A **Norris win at Monaco** (R8) briefly closed the gap to just **3 points**, before Piastri's Spain win and a Norris DNF in **Canada** pushed his lead back out to **22 points**.";
 
 const TABLE_ROWS = [
-  { pos: "1", driver: "Lando Norris", team: "McLaren", pts: "423" },
-  { pos: "2", driver: "Max Verstappen", team: "Red Bull Racing", pts: "421" },
-  { pos: "3", driver: "Oscar Piastri", team: "McLaren", pts: "410" },
-  { pos: "4", driver: "George Russell", team: "Mercedes", pts: "319" },
-  { pos: "5", driver: "Charles Leclerc", team: "Ferrari", pts: "242" },
+  {
+    pos: "1",
+    driver: "Lando Norris",
+    driverCode: "NOR",
+    team: "McLaren",
+    pts: "423",
+  },
+  {
+    pos: "2",
+    driver: "Max Verstappen",
+    driverCode: "VER",
+    team: "Red Bull Racing",
+    pts: "421",
+  },
+  {
+    pos: "3",
+    driver: "Oscar Piastri",
+    driverCode: "PIA",
+    team: "McLaren",
+    pts: "410",
+  },
+  {
+    pos: "4",
+    driver: "George Russell",
+    driverCode: "RUS",
+    team: "Mercedes",
+    pts: "319",
+  },
+  {
+    pos: "5",
+    driver: "Charles Leclerc",
+    driverCode: "LEC",
+    team: "Ferrari",
+    pts: "242",
+  },
 ];
 
 const OUTRO_TEXT =
@@ -66,6 +100,18 @@ const DRIVERS = [
   { key: "PIA", name: "Piastri", color: "#B25A00" },
 ];
 
+function getDriverColor(
+  code: string | undefined,
+  driverColors: Map<string, string>,
+) {
+  if (!code) return null;
+  return (
+    driverColors.get(code) ??
+    DRIVERS.find((driver) => driver.key === code)?.color ??
+    null
+  );
+}
+
 type Phase =
   | "idle"
   | "thinking"
@@ -75,7 +121,119 @@ type Phase =
   | "outro"
   | "done";
 
-function renderBold(text: string) {
+type EntityToken = {
+  text: string;
+  href: string;
+  color?: string | null;
+};
+
+const DRIVER_ALIASES = [
+  { text: "Lando Norris", href: "/drivers/NOR", colorKey: "NOR" },
+  { text: "Lando", href: "/drivers/NOR", colorKey: "NOR" },
+  { text: "Norris", href: "/drivers/NOR", colorKey: "NOR" },
+  { text: "Max Verstappen", href: "/drivers/VER", colorKey: "VER" },
+  { text: "Max", href: "/drivers/VER", colorKey: "VER" },
+  { text: "Verstappen", href: "/drivers/VER", colorKey: "VER" },
+  { text: "Oscar Piastri", href: "/drivers/PIA", colorKey: "PIA" },
+  { text: "Oscar", href: "/drivers/PIA", colorKey: "PIA" },
+  { text: "Piastri", href: "/drivers/PIA", colorKey: "PIA" },
+  { text: "George Russell", href: "/drivers/RUS", colorKey: "RUS" },
+  { text: "Russell", href: "/drivers/RUS", colorKey: "RUS" },
+  { text: "Charles Leclerc", href: "/drivers/LEC", colorKey: "LEC" },
+  { text: "Leclerc", href: "/drivers/LEC", colorKey: "LEC" },
+];
+
+const TEAM_ALIASES = [
+  { text: "McLaren", href: "/constructors/McLaren" },
+  {
+    text: "Red Bull Racing",
+    href: "/constructors/Red%20Bull%20Racing",
+  },
+  { text: "Mercedes", href: "/constructors/Mercedes" },
+  { text: "Ferrari", href: "/constructors/Ferrari" },
+];
+
+const CIRCUIT_ALIASES = [
+  { text: "Melbourne", aliases: ["melbourne", "albert park"] },
+  { text: "Bahrain", aliases: ["bahrain"] },
+  { text: "Saudi Arabia", aliases: ["saudi arabia", "jeddah"] },
+  { text: "Miami", aliases: ["miami"] },
+  { text: "Monaco", aliases: ["monaco", "monte carlo"] },
+  { text: "Spain", aliases: ["spain", "barcelona", "catalunya"] },
+  { text: "Canada", aliases: ["canada", "montreal", "gilles villeneuve"] },
+  { text: "Zandvoort", aliases: ["zandvoort"] },
+  { text: "Italy", aliases: ["italy", "monza"] },
+  { text: "Baku", aliases: ["baku", "azerbaijan"] },
+  { text: "Azerbaijan", aliases: ["azerbaijan", "baku"] },
+  { text: "Mexico City", aliases: ["mexico city", "mexico", "autodromo"] },
+];
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+async function fetchCircuits(): Promise<CircuitInfo[]> {
+  const res = await fetch(apiUrl("/api/circuits/"), {
+    headers: apiHeaders(),
+  });
+  if (!res.ok) return [];
+  const data = (await res.json()) as { circuits?: CircuitInfo[] };
+  return data.circuits ?? [];
+}
+
+function findCircuitHref(
+  circuits: CircuitInfo[],
+  aliases: string[],
+): string | null {
+  const match = circuits.find((circuit) => {
+    const haystack =
+      `${circuit.name} ${circuit.location} ${circuit.country}`.toLowerCase();
+    return aliases.some((alias) => haystack.includes(alias));
+  });
+  return match ? `/circuits/${match.id}` : null;
+}
+
+function renderEntityText(
+  text: string,
+  entities: EntityToken[],
+  options?: { useColor?: boolean; linkClassName?: string },
+) {
+  if (!text || entities.length === 0) return text;
+
+  const pattern = new RegExp(
+    `(${entities.map((entity) => escapeRegExp(entity.text)).join("|")})`,
+    "g",
+  );
+  const parts = text.split(pattern);
+  const defaultClass =
+    "font-semibold no-underline transition-opacity hover:opacity-80";
+  const linkClassName = options?.linkClassName ?? defaultClass;
+  const useColor = options?.useColor ?? true;
+
+  return parts.map((part, i) => {
+    const entity = entities.find((candidate) => candidate.text === part);
+    if (!entity) {
+      return (
+        // biome-ignore lint/suspicious/noArrayIndexKey: deterministic split fragments
+        <span key={i}>{part}</span>
+      );
+    }
+
+    return (
+      <Link
+        // biome-ignore lint/suspicious/noArrayIndexKey: deterministic split fragments
+        key={i}
+        href={entity.href}
+        className={linkClassName}
+        style={useColor && entity.color ? { color: entity.color } : undefined}
+      >
+        {part}
+      </Link>
+    );
+  });
+}
+
+function renderRichText(text: string, entities: EntityToken[]) {
   const parts = text.split(/(\*\*[^*]+\*\*)/);
   return (
     <>
@@ -83,11 +241,11 @@ function renderBold(text: string) {
         part.startsWith("**") && part.endsWith("**") ? (
           // biome-ignore lint/suspicious/noArrayIndexKey: static text segments from a fixed split
           <strong key={i} className="text-text-primary font-semibold">
-            {part.slice(2, -2)}
+            {renderEntityText(part.slice(2, -2), entities)}
           </strong>
         ) : (
           // biome-ignore lint/suspicious/noArrayIndexKey: static text segments from a fixed split
-          <span key={i}>{part}</span>
+          <span key={i}>{renderEntityText(part, entities)}</span>
         ),
       )}
     </>
@@ -262,6 +420,12 @@ function ChampionshipChart({ onReady }: { onReady?: () => void }) {
 
 export default function AIAnalystPreview() {
   const router = useRouter();
+  const { driverColors } = useEntityLinkColors();
+  const { data: circuits = [] } = useQuery({
+    queryKey: ["preview-circuits"],
+    queryFn: fetchCircuits,
+    staleTime: 1000 * 60 * 60,
+  });
   const [phase, setPhase] = useState<Phase>("idle");
   const [introText, setIntroText] = useState("");
   const [outroText, setOutroText] = useState("");
@@ -319,6 +483,24 @@ export default function AIAnalystPreview() {
     router.push("/ask");
   }
 
+  const entities: EntityToken[] = [
+    ...DRIVER_ALIASES.map((entity) => ({
+      text: entity.text,
+      href: entity.href,
+      color: getDriverColor(entity.colorKey, driverColors),
+    })),
+    ...TEAM_ALIASES.map((entity) => ({
+      text: entity.text,
+      href: entity.href,
+      color: null,
+    })),
+    ...CIRCUIT_ALIASES.map((entity) => ({
+      text: entity.text,
+      href: findCircuitHref(circuits, entity.aliases) ?? "/circuits",
+      color: null,
+    })),
+  ].sort((a, b) => b.text.length - a.text.length);
+
   return (
     <section className="border-b border-border-primary/40 bg-bg-primary px-6 py-10">
       <div className="mx-auto max-w-4xl">
@@ -368,7 +550,11 @@ export default function AIAnalystPreview() {
             {/* User message */}
             <div className="flex justify-end">
               <div className="max-w-[85%] rounded-2xl border border-white/[0.06] bg-white/[0.04] px-4 py-2.5 text-sm text-text-primary">
-                {QUESTION}
+                {renderEntityText(QUESTION, entities, {
+                  useColor: false,
+                  linkClassName:
+                    "no-underline transition-opacity hover:opacity-80 text-text-primary font-normal",
+                })}
               </div>
             </div>
 
@@ -408,7 +594,7 @@ export default function AIAnalystPreview() {
                     <div className="space-y-3">
                       {introText && (
                         <p className="text-sm leading-relaxed text-text-secondary">
-                          {renderBold(introText)}
+                          {renderRichText(introText, entities)}
                           {phase === "intro" && (
                             <span className="ml-0.5 inline-block h-[1em] w-0.5 animate-pulse bg-purple-400 align-middle" />
                           )}
@@ -440,10 +626,29 @@ export default function AIAnalystPreview() {
                                     {row.pos}
                                   </td>
                                   <td className="px-3 py-2 font-medium text-text-secondary">
-                                    {row.driver}
+                                    <Link
+                                      href={`/drivers/${row.driverCode}`}
+                                      className="font-semibold no-underline transition-opacity hover:opacity-80"
+                                      style={{
+                                        color:
+                                          getDriverColor(
+                                            row.driverCode,
+                                            driverColors,
+                                          ) ?? "var(--text-primary)",
+                                      }}
+                                    >
+                                      {row.driver}
+                                    </Link>
                                   </td>
                                   <td className="px-3 py-2 text-text-muted">
-                                    {row.team}
+                                    <Link
+                                      href={`/constructors/${encodeURIComponent(
+                                        row.team,
+                                      )}`}
+                                      className="font-semibold no-underline transition-opacity hover:opacity-80 text-text-primary"
+                                    >
+                                      {row.team}
+                                    </Link>
                                   </td>
                                   <td className="px-3 py-2 font-mono font-bold text-text-secondary">
                                     {row.pts}
@@ -457,7 +662,7 @@ export default function AIAnalystPreview() {
 
                       {outroText && (
                         <p className="text-sm leading-relaxed text-text-secondary">
-                          {renderBold(outroText)}
+                          {renderRichText(outroText, entities)}
                           {phase === "outro" && (
                             <span className="ml-0.5 inline-block h-[1em] w-0.5 animate-pulse bg-purple-400 align-middle" />
                           )}
