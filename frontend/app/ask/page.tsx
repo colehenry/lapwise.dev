@@ -66,7 +66,6 @@ export default function AskPage() {
   const [error, setError] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const { data: conversations = [] } = useQuery({
@@ -75,11 +74,6 @@ export default function AskPage() {
     enabled: isAuthenticated,
     refetchOnWindowFocus: false,
   });
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll after chat updates
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, isAsking]);
 
   const loadConversation = useCallback(async (convId: string) => {
     try {
@@ -460,7 +454,6 @@ export default function AskPage() {
                       {error}
                     </div>
                   )}
-                  <div ref={messagesEndRef} />
                 </div>
               )}
             </div>
