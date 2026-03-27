@@ -468,7 +468,7 @@ export default function ChatMessage({
                     {queries.map((sql) => (
                       <pre
                         key={sql}
-                        className="bg-bg-primary border border-white/[0.06] rounded-lg p-3 text-xs text-text-tertiary overflow-x-auto font-mono"
+                        className="bg-bg-primary border border-white/[0.06] rounded-lg p-3 text-xs text-text-tertiary font-mono whitespace-pre-wrap break-words"
                       >
                         {sql}
                       </pre>
