@@ -3,10 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
+import { useRef } from "react";
 import { ConcentricPattern, GridPattern } from "@/components/Patterns";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import { getCircuitFlagEmoji } from "@/lib/flags";
-import { useRef } from "react";
 
 interface UpcomingEvent {
   event_name: string;

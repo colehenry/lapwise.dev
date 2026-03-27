@@ -5,11 +5,13 @@ import { SUGGESTIONS } from "@/lib/ai/suggestions";
 interface SuggestedQuestionsProps {
   onSelect: (question: string) => void;
   compact?: boolean;
+  disabled?: boolean;
 }
 
 export default function SuggestedQuestions({
   onSelect,
   compact,
+  disabled,
 }: SuggestedQuestionsProps) {
   if (compact) {
     return (
@@ -38,8 +40,9 @@ export default function SuggestedQuestions({
               <button
                 key={s.category}
                 type="button"
-                onClick={() => onSelect(s.question)}
-                className="w-full rounded-xl border border-white/[0.05] bg-white/[0.03] px-3 py-2.5 text-left transition-all hover:border-purple-500/30 hover:bg-purple-500/[0.06] hover:-translate-y-0.5"
+                onClick={() => !disabled && onSelect(s.question)}
+                disabled={disabled}
+                className={`w-full rounded-xl border border-white/[0.05] bg-white/[0.03] px-3 py-2.5 text-left transition-all ${disabled ? "cursor-not-allowed opacity-50" : "hover:border-purple-500/30 hover:bg-purple-500/[0.06] hover:-translate-y-0.5"}`}
               >
                 <div
                   className={`text-[9px] font-mono uppercase tracking-[0.1em] ${s.color} mb-0.5`}
@@ -91,8 +94,9 @@ export default function SuggestedQuestions({
             <button
               key={s.category}
               type="button"
-              onClick={() => onSelect(s.question)}
-              className={`group rounded-2xl border border-white/[0.05] bg-white/[0.02] px-4 py-3 transition-all duration-200 hover:bg-purple-500/[0.04] ${s.borderHover} hover:-translate-y-0.5 hover:shadow-[0_8px_32px_-8px_rgba(160,32,240,0.12)]`}
+              onClick={() => !disabled && onSelect(s.question)}
+              disabled={disabled}
+              className={`group rounded-2xl border border-white/[0.05] bg-white/[0.02] px-4 py-3 transition-all duration-200 ${disabled ? "cursor-not-allowed opacity-50" : `hover:bg-purple-500/[0.04] ${s.borderHover} hover:-translate-y-0.5 hover:shadow-[0_8px_32px_-8px_rgba(160,32,240,0.12)]`}`}
             >
               <div className={`text-sm font-semibold ${s.color} leading-snug`}>
                 {s.category}

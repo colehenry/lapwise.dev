@@ -65,6 +65,10 @@ export default function AskPage() {
   const [remaining, setRemaining] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingConversationId, setPendingConversationId] = useState<
+    string | null
+  >(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -76,6 +80,7 @@ export default function AskPage() {
   });
 
   const loadConversation = useCallback(async (convId: string) => {
+    setPendingConversationId(convId);
     try {
       const data = await getConversation(convId);
       setActiveConversationId(convId);
@@ -95,6 +100,8 @@ export default function AskPage() {
       setError(
         err instanceof Error ? err.message : "Failed to load conversation",
       );
+    } finally {
+      setPendingConversationId(null);
     }
   }, []);
 
@@ -129,94 +136,92 @@ export default function AskPage() {
     }
   }
 
-  async function simulateStreaming(cached: CachedResponse, question: string) {
-    const userMsg: DisplayMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: question,
-    };
-    const assistantMsgId = `assistant-${Date.now()}`;
-    setMessages((prev) => [...prev, userMsg]);
+  async function simulateStreaming(
+    cached: CachedResponse,
+    assistantMsgId: string,
+  ) {
     setStreamingAssistantId(assistantMsgId);
-    setIsAsking(true);
     setMessages((prev) => [
       ...prev,
       { id: assistantMsgId, role: "assistant", content: "", steps: [] },
     ]);
 
-    try {
-      const text = cached.text;
-      const chunkSize = 4;
-      for (let i = 0; i < text.length; i += chunkSize) {
-        await new Promise<void>((resolve) => setTimeout(resolve, 12));
-        const chunk = text.slice(i, i + chunkSize);
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantMsgId ? { ...m, content: m.content + chunk } : m,
-          ),
-        );
-      }
-
+    const text = cached.text;
+    const chunkSize = 4;
+    for (let i = 0; i < text.length; i += chunkSize) {
+      await new Promise<void>((resolve) => setTimeout(resolve, 12));
+      const chunk = text.slice(i, i + chunkSize);
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === assistantMsgId
-            ? {
-                ...m,
-                charts: cached.charts,
-                queries: cached.queries,
-                followUps: cached.followUps,
-              }
-            : m,
+          m.id === assistantMsgId ? { ...m, content: m.content + chunk } : m,
         ),
       );
-    } finally {
-      setStreamingAssistantId(null);
-      setIsAsking(false);
     }
+
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === assistantMsgId
+          ? {
+              ...m,
+              charts: cached.charts,
+              queries: cached.queries,
+              followUps: cached.followUps,
+            }
+          : m,
+      ),
+    );
   }
 
   async function handleDeleteConversation(id: string) {
+    setDeletingId(id);
+    // Optimistic update — remove immediately from cache
+    queryClient.setQueryData<import("@/lib/chat").ChatConversation[]>(
+      ["ai-conversations"],
+      (prev) => prev?.filter((c) => c.id !== id) ?? [],
+    );
+    if (activeConversationId === id) handleNewConversation();
     try {
       await deleteConversation(id);
-      queryClient.invalidateQueries({ queryKey: ["ai-conversations"] });
-      if (activeConversationId === id) handleNewConversation();
     } catch (err) {
+      // Revert on failure
+      queryClient.invalidateQueries({ queryKey: ["ai-conversations"] });
       setError(
         err instanceof Error ? err.message : "Failed to delete conversation",
       );
+    } finally {
+      setDeletingId(null);
     }
   }
 
   async function handleSend(question: string) {
     if (isAsking) return;
+    // Lock immediately — before any async work — so rapid clicks can't queue a second call
+    setIsAsking(true);
     setError(null);
 
-    // Check cache for suggestion questions
-    if (SUGGESTION_QUESTIONS.has(question) && !activeConversationId) {
-      const cached = await fetchCachedResponse(question);
-      if (cached) {
-        await simulateStreaming(cached, question);
-        return;
-      }
-    }
-
-    setIsAsking(true);
-    setStreamStatus("Starting analysis...");
+    // Show user message right away so the view transitions to chat instantly
+    const userMsgId = `user-${Date.now()}`;
+    const assistantMsgId = `assistant-${Date.now() + 1}`;
+    setMessages((prev) => [
+      ...prev,
+      { id: userMsgId, role: "user", content: question },
+    ]);
 
     const controller = new AbortController();
     abortRef.current = controller;
 
-    const userMsg: DisplayMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: question,
-    };
-    const assistantMsgId = `assistant-${Date.now()}`;
-
-    setMessages((prev) => [...prev, userMsg]);
-    setStreamingAssistantId(assistantMsgId);
-
     try {
+      // Check cache for suggestion questions
+      if (SUGGESTION_QUESTIONS.has(question) && !activeConversationId) {
+        const cached = await fetchCachedResponse(question);
+        if (cached) {
+          await simulateStreaming(cached, assistantMsgId);
+          return;
+        }
+      }
+
+      setStreamStatus("Starting analysis...");
+      setStreamingAssistantId(assistantMsgId);
       setMessages((prev) => [
         ...prev,
         { id: assistantMsgId, role: "assistant", content: "", steps: [] },
@@ -423,7 +428,7 @@ export default function AskPage() {
           >
             <div className="min-h-0">
               {!hasMessages ? (
-                <SuggestedQuestions onSelect={handleSend} />
+                <SuggestedQuestions onSelect={handleSend} disabled={isAsking} />
               ) : (
                 <div className="px-3 py-6 md:px-4">
                   {messages.map((msg) => (
@@ -474,6 +479,8 @@ export default function AskPage() {
           <ConversationSidebar
             conversations={conversations}
             activeId={activeConversationId}
+            pendingId={pendingConversationId}
+            deletingId={deletingId}
             onSelect={loadConversation}
             onNew={handleNewConversation}
             onDelete={handleDeleteConversation}
