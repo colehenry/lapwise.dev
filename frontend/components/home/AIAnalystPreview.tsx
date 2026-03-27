@@ -112,6 +112,14 @@ function getDriverColor(
   );
 }
 
+function getTeamColor(
+  team: string | undefined,
+  teamColors: Map<string, string>,
+) {
+  if (!team) return null;
+  return teamColors.get(team) ?? null;
+}
+
 type Phase =
   | "idle"
   | "thinking"
@@ -420,7 +428,7 @@ function ChampionshipChart({ onReady }: { onReady?: () => void }) {
 
 export default function AIAnalystPreview() {
   const router = useRouter();
-  const { driverColors } = useEntityLinkColors();
+  const { driverColors, teamColors } = useEntityLinkColors();
   const { data: circuits = [] } = useQuery({
     queryKey: ["preview-circuits"],
     queryFn: fetchCircuits,
@@ -628,14 +636,7 @@ export default function AIAnalystPreview() {
                                   <td className="px-3 py-2 font-medium text-text-secondary">
                                     <Link
                                       href={`/drivers/${row.driverCode}`}
-                                      className="font-semibold no-underline transition-opacity hover:opacity-80"
-                                      style={{
-                                        color:
-                                          getDriverColor(
-                                            row.driverCode,
-                                            driverColors,
-                                          ) ?? "var(--text-primary)",
-                                      }}
+                                      className="font-semibold no-underline transition-opacity hover:opacity-80 text-text-primary"
                                     >
                                       {row.driver}
                                     </Link>
@@ -645,7 +646,14 @@ export default function AIAnalystPreview() {
                                       href={`/constructors/${encodeURIComponent(
                                         row.team,
                                       )}`}
-                                      className="font-semibold no-underline transition-opacity hover:opacity-80 text-text-primary"
+                                      className="font-semibold no-underline transition-opacity hover:opacity-80"
+                                      style={{
+                                        color:
+                                          getTeamColor(
+                                            row.team,
+                                            teamColors,
+                                          ) ?? "var(--text-primary)",
+                                      }}
                                     >
                                       {row.team}
                                     </Link>
