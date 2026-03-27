@@ -256,6 +256,32 @@ export type LapTimesResponse = {
   race_control_events: RaceControlEvent[];
 };
 
+// Lap Time Distribution types (for ridge plot chart)
+export type DistributionLap = {
+  lap_number: number | null;
+  lap_time_seconds: number;
+  compound: string | null;
+};
+
+export type DriverLapDistribution = {
+  driver_code: string | null;
+  driver_slug: string | null;
+  full_name: string;
+  team_color: string | null;
+  final_position: number | null;
+  laps: DistributionLap[];
+};
+
+export type LapDistributionResponse = {
+  year: number;
+  round: number;
+  event_name: string;
+  drivers: DriverLapDistribution[];
+};
+
+export const distDriverKey = (driver: DriverLapDistribution): string =>
+  driver.driver_code ?? driver.full_name;
+
 // Graph mode types (used by history graphs)
 export type GraphMode = "season" | "race";
 export type DataMode = "position" | "points";

@@ -472,11 +472,11 @@ export default function AIAnalystPreview() {
                     setChartVisible(true);
                     setPhase("chart");
                   }
-                }, 18);
+                }, 14);
               }, 600);
             }, 500);
           }
-        }, 18);
+        }, 14);
       }, 800);
     }, 400);
 
@@ -649,10 +649,8 @@ export default function AIAnalystPreview() {
                                       className="font-semibold no-underline transition-opacity hover:opacity-80"
                                       style={{
                                         color:
-                                          getTeamColor(
-                                            row.team,
-                                            teamColors,
-                                          ) ?? "var(--text-primary)",
+                                          getTeamColor(row.team, teamColors) ??
+                                          "var(--text-primary)",
                                       }}
                                     >
                                       {row.team}

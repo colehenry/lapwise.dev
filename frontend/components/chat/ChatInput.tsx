@@ -97,7 +97,11 @@ export default function ChatInput({
   }
 
   return (
-    <div className={shellless ? "" : "border-t border-white/[0.06] px-4 py-4 md:px-6"}>
+    <div
+      className={
+        shellless ? "" : "border-t border-white/[0.06] px-4 py-4 md:px-6"
+      }
+    >
       <form
         onSubmit={handleSubmit}
         className="chat-input-glass mx-auto flex max-w-4xl items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-2 backdrop-blur-xl transition-all duration-200 focus-within:border-purple-500/30 focus-within:shadow-[0_0_40px_-10px_rgba(160,32,240,0.15)]"
