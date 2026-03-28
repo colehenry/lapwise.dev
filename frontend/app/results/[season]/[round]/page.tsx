@@ -289,6 +289,24 @@ export default function RoundDetailPage() {
                 </div>
               </div>
             )}
+            {activeTab === "race" && (
+              <div className="p-6">
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="lap-dist-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      Lap Time Distribution
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <LapTimeDistributionChart
+                      season={seasonNum}
+                      round={roundNum}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -305,19 +323,6 @@ export default function RoundDetailPage() {
               </div>
               <div className="p-6">
                 <TyreDegradationChart season={seasonNum} round={roundNum} />
-              </div>
-            </div>
-
-            {/* Lap Time Distribution */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                <TrianglePattern id="lap-dist-triangles" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Lap Time Distribution
-                </span>
-              </div>
-              <div className="p-6">
-                <LapTimeDistributionChart season={seasonNum} round={roundNum} />
               </div>
             </div>
           </div>

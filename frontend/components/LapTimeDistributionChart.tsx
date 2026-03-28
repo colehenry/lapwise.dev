@@ -50,17 +50,28 @@ const formatAxisTick = (s: number): string => {
   return `${m}:${rem.toString().padStart(2, "0")}`;
 };
 
-function silverman(data: number[]): number {
+/**
+ * Robust bandwidth using the normalised IQR as the scale estimator.
+ * Using `min(std, IQR/1.34)` means a handful of slow outliers (pit laps,
+ * safety-car laps) can't inflate the bandwidth and over-smooth the main
+ * cluster of clean laps.
+ */
+function robustBandwidth(data: number[]): number {
   const n = data.length;
   if (n < 2) return 0.5;
   const mean = data.reduce((a, b) => a + b, 0) / n;
   const std = Math.sqrt(data.reduce((a, b) => a + (b - mean) ** 2, 0) / n);
-  return Math.max(0.05, 1.06 * std * n ** -0.2);
+  const sorted = [...data].sort((a, b) => a - b);
+  const q1 = sorted[Math.floor(n * 0.25)];
+  const q3 = sorted[Math.floor(n * 0.75)];
+  const iqrScale = (q3 - q1) / 1.34;
+  const scale = Math.min(std, iqrScale > 0 ? iqrScale : std);
+  return Math.max(0.05, 0.3 * scale * n ** -0.2);
 }
 
 function computeKDE(data: number[], xGrid: number[]): number[] {
   if (data.length === 0) return xGrid.map(() => 0);
-  const bw = silverman(data);
+  const bw = robustBandwidth(data);
   const inv = 1 / (bw * Math.sqrt(2 * Math.PI) * data.length);
   const densities = xGrid.map(
     (x) =>
@@ -108,6 +119,7 @@ export default function LapTimeDistributionChart({
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedCompound, setSelectedCompound] = useState<string | null>(null);
+  const [removeOutliers, setRemoveOutliers] = useState(true);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -177,9 +189,24 @@ export default function LapTimeDistributionChart({
   const perDriverData = useMemo(
     () =>
       visibleDrivers.map((driver) => {
-        const lapDetails = driver.laps.filter(
+        let lapDetails = driver.laps.filter(
           (l) => selectedCompound === null || l.compound === selectedCompound,
         );
+
+        // Outlier removal: keep laps within median ± 1 std
+        if (removeOutliers && lapDetails.length >= 4) {
+          const allTimes = lapDetails.map((l) => l.lap_time_seconds);
+          const sorted = [...allTimes].sort((a, b) => a - b);
+          const median = sorted[Math.floor(sorted.length / 2)];
+          const mean = allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
+          const std = Math.sqrt(
+            allTimes.reduce((a, b) => a + (b - mean) ** 2, 0) / allTimes.length,
+          );
+          lapDetails = lapDetails.filter(
+            (l) => Math.abs(l.lap_time_seconds - median) <= std,
+          );
+        }
+
         const times = lapDetails.map((l) => l.lap_time_seconds);
         const avg =
           times.length > 0
@@ -187,8 +214,21 @@ export default function LapTimeDistributionChart({
             : null;
         return { driver, lapDetails, times, avg };
       }),
-    [visibleDrivers, selectedCompound],
+    [visibleDrivers, selectedCompound, removeOutliers],
   );
+
+  // Fastest lap across all visible, filtered drivers
+  const fastestLap = useMemo(() => {
+    let best: { time: number; driver: DriverLapDistribution } | null = null;
+    for (const { driver, lapDetails } of perDriverData) {
+      for (const lap of lapDetails) {
+        if (best === null || lap.lap_time_seconds < best.time) {
+          best = { time: lap.lap_time_seconds, driver };
+        }
+      }
+    }
+    return best;
+  }, [perDriverData]);
 
   const [xMin, xMax] = useMemo(() => {
     const all = perDriverData.flatMap((d) => d.times);
@@ -202,7 +242,7 @@ export default function LapTimeDistributionChart({
     const hi = Math.max(...filtered);
     const maxBw = Math.max(
       ...perDriverData.map(({ times }) =>
-        times.length >= 2 ? silverman(times) : 0,
+        times.length >= 2 ? robustBandwidth(times) : 0,
       ),
       0,
     );
@@ -343,6 +383,19 @@ export default function LapTimeDistributionChart({
 
         <div className="flex-1" />
 
+        {/* Outlier toggle */}
+        <label className="flex items-center gap-1.5 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={removeOutliers}
+            onChange={(e) => setRemoveOutliers(e.target.checked)}
+            className="accent-purple-500"
+          />
+          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-muted">
+            Exclude outliers
+          </span>
+        </label>
+
         <div className="relative" ref={dropdownRef}>
           <button
             type="button"
@@ -437,8 +490,7 @@ export default function LapTimeDistributionChart({
                         paddingBottom: BASELINE_OFFSET,
                       }}
                     >
-                      {driver.driver_code ??
-                        driver.full_name.split(" ").at(-1)}
+                      {driver.driver_code ?? driver.full_name.split(" ").at(-1)}
                     </span>
                   </div>
                 ))}
@@ -447,6 +499,43 @@ export default function LapTimeDistributionChart({
 
               {/* Middle: SVG curves + HTML x-axis */}
               <div className="flex-1 overflow-hidden min-w-0">
+                {/* Fastest lap pill row — sits above the first driver row */}
+                <div className="relative" style={{ height: 22 }}>
+                  {fastestLap &&
+                    (() => {
+                      const pct =
+                        ((fastestLap.time - xMin) / (xMax - xMin)) * 100;
+                      const color = teamColor(fastestLap.driver);
+                      const code =
+                        fastestLap.driver.driver_code ??
+                        fastestLap.driver.full_name.split(" ").at(-1);
+                      return (
+                        <div
+                          className="absolute bottom-1 flex items-center pointer-events-none"
+                          style={{
+                            left: `${pct}%`,
+                            transform: "translateX(-50%)",
+                          }}
+                        >
+                          <div
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded-sm whitespace-nowrap"
+                            style={{
+                              border: `0.75px solid ${color}`,
+                              backgroundColor: `${color}22`,
+                            }}
+                          >
+                            <span
+                              className="text-[8px] font-mono font-bold uppercase tracking-widest leading-none"
+                              style={{ color }}
+                            >
+                              {code}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                </div>
+
                 <svg
                   ref={svgRef}
                   width="100%"
@@ -462,8 +551,7 @@ export default function LapTimeDistributionChart({
 
                   {/* Grid lines */}
                   {xTicks.map((tick) => {
-                    const x =
-                      ((tick - xMin) / (xMax - xMin)) * SVG_VIEWBOX_W;
+                    const x = ((tick - xMin) / (xMax - xMin)) * SVG_VIEWBOX_W;
                     return (
                       <line
                         key={tick}
@@ -478,6 +566,26 @@ export default function LapTimeDistributionChart({
                     );
                   })}
 
+                  {/* Fastest lap vertical line */}
+                  {fastestLap &&
+                    (() => {
+                      const x =
+                        ((fastestLap.time - xMin) / (xMax - xMin)) *
+                        SVG_VIEWBOX_W;
+                      return (
+                        <line
+                          x1={x}
+                          y1={0}
+                          x2={x}
+                          y2={chartH}
+                          stroke="rgba(168,85,247,0.6)"
+                          strokeWidth={1.5}
+                          strokeDasharray="4 3"
+                          vectorEffect="non-scaling-stroke"
+                        />
+                      );
+                    })()}
+
                   {/* Per-driver KDE curves */}
                   {curves.map(({ driver, points }, rowIdx) => {
                     const baselineY =
@@ -490,7 +598,8 @@ export default function LapTimeDistributionChart({
                       baselineY,
                     );
                     const isHovered = tooltip?.rowIdx === rowIdx;
-                    const driverLapDetails = perDriverData[rowIdx]?.lapDetails ?? [];
+                    const driverLapDetails =
+                      perDriverData[rowIdx]?.lapDetails ?? [];
 
                     return (
                       <g key={distDriverKey(driver)}>
@@ -528,11 +637,9 @@ export default function LapTimeDistributionChart({
                         {isHovered &&
                           driverLapDetails.map((lap) => {
                             const cx =
-                              ((lap.lap_time_seconds - xMin) /
-                                (xMax - xMin)) *
+                              ((lap.lap_time_seconds - xMin) / (xMax - xMin)) *
                               SVG_VIEWBOX_W;
-                            const isSnapped =
-                              lap === tooltip?.snap;
+                            const isSnapped = lap === tooltip?.snap;
                             return (
                               <circle
                                 key={`${lap.lap_number}-${lap.lap_time_seconds}`}
