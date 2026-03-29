@@ -24,23 +24,33 @@ export default function RaceInfo({
   const sc = SC_LABELS[scState] ?? SC_LABELS[0];
 
   return (
-    <div className="flex items-center gap-4 text-xs font-mono">
+    <div className="flex items-center gap-3 text-xs font-mono">
       {/* Lap counter */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-text-muted">LAP</span>
+      <div className="bg-bg-primary border border-border-primary rounded-sm px-2.5 py-1 flex items-center gap-1.5">
+        <span className="text-text-muted text-[10px] tracking-widest font-bold">
+          LAP
+        </span>
         <span className="text-text-primary font-semibold">
           {currentLap}/{totalLaps}
         </span>
       </div>
 
       {/* Track status */}
-      <span className={`font-bold ${sc.color}`}>{sc.text}</span>
+      <div
+        className={`px-2.5 py-1 rounded-sm border font-bold text-[10px] tracking-widest ${
+          scState === 0
+            ? "border-green-500/30 text-green-400"
+            : "border-yellow-500/30 text-yellow-400"
+        }`}
+      >
+        {sc.text}
+      </div>
 
       {/* Weather */}
       {weather && (
-        <div className="flex items-center gap-2 text-text-muted">
+        <div className="hidden sm:flex items-center gap-1.5 text-text-muted">
           <span>{weather.rainfall ? "🌧" : "☀️"}</span>
-          <span>{weather.track_temp}°C</span>
+          <span className="text-[10px]">{weather.track_temp}°C</span>
         </div>
       )}
     </div>

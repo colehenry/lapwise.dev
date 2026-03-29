@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { TrianglePattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import { fetchReplayData } from "@/lib/api";
 import type { ReplayData, ReplayWeather } from "@/lib/types";
@@ -199,7 +200,7 @@ export default function ReplayPlayer({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg-primary p-6">
+      <div className="min-h-screen bg-bg-secondary p-6">
         <div className="max-w-7xl mx-auto space-y-4">
           <Skeleton variant="text" width="300px" height="32px" />
           <Skeleton variant="rectangular" height="500px" />
@@ -211,17 +212,18 @@ export default function ReplayPlayer({
 
   if (error || !replayData) {
     return (
-      <div className="min-h-screen bg-bg-primary p-6">
+      <div className="min-h-screen bg-bg-secondary p-6">
         <div className="max-w-7xl mx-auto">
           <button
             type="button"
             onClick={onBack}
-            className="text-text-muted hover:text-text-primary text-sm mb-4"
+            className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center gap-2 mb-4"
           >
-            &larr; Back to replays
+            <span>&larr;</span>
+            <span>Back to replays</span>
           </button>
           <div className="bg-bg-tertiary border border-border-primary rounded-sm p-8 text-center">
-            <p className="text-red-400">
+            <p className="text-red-400 font-mono text-sm">
               Failed to load replay data. This race may not have telemetry
               available.
             </p>
@@ -233,47 +235,61 @@ export default function ReplayPlayer({
 
   const currentFrame = replayData.frames[frameIndex];
   const totalFrames = replayData.metadata.total_frames;
-  const _fps = replayData.metadata.fps;
   const currentTime = currentFrame?.t ?? 0;
   const totalTime = replayData.metadata.total_duration_seconds;
 
   return (
-    <div className="min-h-screen bg-bg-primary">
-      {/* Header */}
-      <div className="border-b border-border-primary bg-bg-secondary px-6 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={onBack}
-              className="text-text-muted hover:text-text-primary text-sm transition-colors"
-            >
-              &larr; Back
-            </button>
-            <div>
-              <h2 className="text-sm font-semibold text-text-primary">
-                {eventName}
-              </h2>
-              <p className="text-xs text-text-muted">
-                {season} &middot; Round {round}
-              </p>
+    <div className="min-h-screen bg-bg-secondary">
+      {/* Sticky Header - matches race weekend hub style */}
+      <div className="sticky top-0 z-40">
+        <div className="px-4">
+          <div className="mx-auto w-full max-w-full md:max-w-[calc(72rem+40px)]">
+            <div className="bg-bg-secondary/95 backdrop-blur-xl border-x border-b border-border-primary rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)]">
+              <div className="h-14 px-6 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={onBack}
+                    className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center gap-2"
+                  >
+                    <span>&larr;</span>
+                    <span className="hidden sm:inline">BACK</span>
+                  </button>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <span className="text-text-primary font-mono text-sm font-bold leading-none">
+                    {eventName}
+                  </span>
+                  <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold">
+                    {season} &middot; Round {String(round).padStart(2, "0")}
+                  </span>
+                </div>
+
+                <RaceInfo
+                  currentLap={currentFrame?.lap ?? 0}
+                  totalLaps={replayData.metadata.total_laps}
+                  scState={currentFrame?.sc ?? 0}
+                  weather={currentWeather}
+                />
+              </div>
             </div>
           </div>
-          <RaceInfo
-            currentLap={currentFrame?.lap ?? 0}
-            totalLaps={replayData.metadata.total_laps}
-            scState={currentFrame?.sc ?? 0}
-            weather={currentWeather}
-          />
         </div>
       </div>
 
       {/* Main content */}
-      <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Track canvas */}
-          <div className="flex-1 min-w-0">
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm overflow-hidden">
+          <div className="flex-1 min-w-0 space-y-3">
+            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                <TrianglePattern id="replay-track-triangles" />
+                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                  Track Map
+                </span>
+              </div>
               <TrackCanvas
                 track={replayData.track}
                 drivers={replayData.drivers}
@@ -284,20 +300,18 @@ export default function ReplayPlayer({
             </div>
 
             {/* Playback controls */}
-            <div className="mt-3">
-              <PlaybackControls
-                isPlaying={isPlaying}
-                playbackSpeed={playbackSpeed}
-                currentFrame={frameIndex}
-                totalFrames={totalFrames}
-                currentTime={currentTime}
-                totalTime={totalTime}
-                onTogglePlay={handleTogglePlay}
-                onSpeedChange={setPlaybackSpeed}
-                onSeek={handleSeek}
-                speedOptions={SPEED_OPTIONS}
-              />
-            </div>
+            <PlaybackControls
+              isPlaying={isPlaying}
+              playbackSpeed={playbackSpeed}
+              currentFrame={frameIndex}
+              totalFrames={totalFrames}
+              currentTime={currentTime}
+              totalTime={totalTime}
+              onTogglePlay={handleTogglePlay}
+              onSpeedChange={setPlaybackSpeed}
+              onSeek={handleSeek}
+              speedOptions={SPEED_OPTIONS}
+            />
           </div>
 
           {/* Sidebar */}
@@ -305,6 +319,7 @@ export default function ReplayPlayer({
             <Leaderboard
               drivers={replayData.drivers}
               frame={currentFrame}
+              track={replayData.track}
               selectedDriver={selectedDriver}
               onSelectDriver={setSelectedDriver}
             />

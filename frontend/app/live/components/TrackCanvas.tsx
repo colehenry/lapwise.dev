@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { isValidHeadshotUrl } from "@/lib/api";
 import type {
   ReplayDriverFrame,
   ReplayDriverInfo,
@@ -36,7 +38,7 @@ export default function TrackCanvas({
   const trackPathRef = useRef<Path2D | null>(null);
   const hoveredDriverRef = useRef<string | null>(null);
   const [_hoveredDriver, setHoveredDriver] = useState<string | null>(null);
-  const [tooltip, setTooltip] = useState<{
+  const [hoveredTooltip, setHoveredTooltip] = useState<{
     x: number;
     y: number;
     code: string;
@@ -222,9 +224,9 @@ export default function TrackCanvas({
         const driverData = frame.d[closest];
         const screenX = driverData[0] * scale + offsetX;
         const screenY = driverData[1] * scale + offsetY;
-        setTooltip({ x: screenX, y: screenY, code: closest });
+        setHoveredTooltip({ x: screenX, y: screenY, code: closest });
       } else {
-        setTooltip(null);
+        setHoveredTooltip(null);
       }
 
       canvasRef.current.style.cursor = closest ? "pointer" : "default";
@@ -247,7 +249,7 @@ export default function TrackCanvas({
   const handleMouseLeave = useCallback(() => {
     hoveredDriverRef.current = null;
     setHoveredDriver(null);
-    setTooltip(null);
+    setHoveredTooltip(null);
   }, []);
 
   return (
@@ -260,17 +262,37 @@ export default function TrackCanvas({
         onClick={handleClick}
         onMouseLeave={handleMouseLeave}
       />
-      {/* Tooltip */}
-      {tooltip && drivers[tooltip.code] && frame?.d[tooltip.code] && (
-        <DriverTooltip
-          x={tooltip.x}
-          y={tooltip.y}
-          code={tooltip.code}
-          driver={drivers[tooltip.code]}
-          data={frame.d[tooltip.code]}
-          containerWidth={dimensions.width}
-        />
-      )}
+      {/* Tooltip - show for hovered driver, or selected driver following their position */}
+      {(() => {
+        const { scale, offsetX, offsetY } = getTransform(
+          dimensions.width,
+          dimensions.height,
+        );
+        // Prefer hovered tooltip, fall back to selected driver
+        const tooltipCode = hoveredTooltip?.code ?? selectedDriver;
+        if (tooltipCode && drivers[tooltipCode] && frame?.d[tooltipCode]) {
+          const driverData = frame.d[tooltipCode];
+          const screenX =
+            hoveredTooltip?.code === tooltipCode
+              ? hoveredTooltip.x
+              : driverData[0] * scale + offsetX;
+          const screenY =
+            hoveredTooltip?.code === tooltipCode
+              ? hoveredTooltip.y
+              : driverData[1] * scale + offsetY;
+          return (
+            <DriverTooltip
+              x={screenX}
+              y={screenY}
+              code={tooltipCode}
+              driver={drivers[tooltipCode]}
+              data={driverData}
+              containerWidth={dimensions.width}
+            />
+          );
+        }
+        return null;
+      })()}
     </div>
   );
 }
@@ -398,10 +420,21 @@ function DriverTooltip({
       }}
     >
       <div className="flex items-center gap-2 mb-1.5">
-        <div
-          className="w-2.5 h-2.5 rounded-full"
-          style={{ backgroundColor: `#${driver.color}` }}
-        />
+        {isValidHeadshotUrl(driver.headshot_url) ? (
+          <Image
+            src={driver.headshot_url}
+            alt={driver.full_name}
+            width={24}
+            height={24}
+            className="w-6 h-6 rounded-full object-cover"
+            unoptimized
+          />
+        ) : (
+          <div
+            className="w-2.5 h-2.5 rounded-full"
+            style={{ backgroundColor: `#${driver.color}` }}
+          />
+        )}
         <span className="font-semibold text-text-primary font-mono">
           {code}
         </span>
