@@ -33,6 +33,7 @@ from app.models.comment import Comment
 from app.models.vote import Vote
 from app.models.ai_conversation import AIConversation
 from app.models.ai_message import AIMessage
+from app.models.replay_data import ReplayData
 
 # Export all models
 __all__ = [
@@ -58,4 +59,5 @@ __all__ = [
     "Vote",
     "AIConversation",
     "AIMessage",
+    "ReplayData",
 ]
