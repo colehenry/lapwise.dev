@@ -527,10 +527,17 @@ def get_driver_metadata(fastf1_session, year):
         except (ValueError, TypeError):
             number = 0
 
+        headshot_url = row.get("HeadshotUrl")
+        if headshot_url and str(headshot_url) not in ("nan", "None", ""):
+            headshot_url = str(headshot_url)
+        else:
+            headshot_url = None
+
         drivers[code] = {
             "color": color,
             "full_name": full_name,
             "number": number,
+            "headshot_url": headshot_url,
         }
 
     return drivers
@@ -598,7 +605,13 @@ def generate_replay_data(fastf1_session, session_id, season, round_num, event_na
     weather_samples = build_weather_samples(fastf1_session, timeline)
 
     # Step 8: Build race control messages
-    race_control = build_race_control_messages(fastf1_session)
+    # Offset times by t_min to match frame timeline
+    race_control_raw = build_race_control_messages(fastf1_session)
+    race_control = [
+        {**msg, "t": round(msg["t"] - t_min, 2)}
+        for msg in race_control_raw
+        if msg["t"] >= t_min
+    ]
 
     # Step 9: Get driver metadata
     driver_meta = get_driver_metadata(fastf1_session, season)

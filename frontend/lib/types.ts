@@ -708,6 +708,7 @@ export interface ReplayDriverInfo {
   color: string;
   full_name: string;
   number: number;
+  headshot_url: string | null;
 }
 
 export interface ReplayRaceControlMessage {

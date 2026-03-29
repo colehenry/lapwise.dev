@@ -1,15 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import PageHeader from "@/components/PageHeader";
+import { fetchAvailableReplays, fetchReplaySeasons } from "@/lib/api";
 import ReplayBrowser from "./components/ReplayBrowser";
 import ReplayPlayer from "./components/ReplayPlayer";
 
 export default function LivePage() {
+  const searchParams = useSearchParams();
+  const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [selectedReplay, setSelectedReplay] = useState<{
     season: number;
     round: number;
     eventName: string;
   } | null>(null);
+  const [autoLoaded, setAutoLoaded] = useState(false);
+
+  const { data: seasons = [] } = useQuery({
+    queryKey: ["replaySeasons"],
+    queryFn: fetchReplaySeasons,
+  });
+
+  const activeSeason = selectedSeason ?? seasons[0] ?? null;
+
+  // Auto-select replay from URL params (e.g., /live?season=2024&round=5)
+  useEffect(() => {
+    if (autoLoaded || selectedReplay) return;
+
+    const seasonParam = searchParams.get("season");
+    const roundParam = searchParams.get("round");
+
+    if (seasonParam && roundParam) {
+      const season = Number.parseInt(seasonParam, 10);
+      const round = Number.parseInt(roundParam, 10);
+
+      if (!Number.isNaN(season) && !Number.isNaN(round)) {
+        setAutoLoaded(true);
+        fetchAvailableReplays(season)
+          .then((data) => {
+            const replay = data.replays.find((r) => r.round === round);
+            if (replay) {
+              setSelectedReplay({
+                season,
+                round,
+                eventName: replay.event_name,
+              });
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  }, [searchParams, autoLoaded, selectedReplay]);
 
   if (selectedReplay) {
     return (
@@ -23,31 +66,35 @@ export default function LivePage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary">
-      <section className="bg-bg-secondary border-b border-border-primary relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-20 right-1/4 w-64 h-64 rounded-full bg-purple-500/10 blur-3xl" />
-          <div className="absolute bottom-0 left-1/4 w-56 h-56 rounded-full bg-red-500/10 blur-3xl" />
-        </div>
-        <div className="relative max-w-6xl mx-auto px-6 py-12 md:py-16">
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-text-primary">
-            Race Replay
-          </h1>
-          <p className="mt-4 text-base md:text-lg text-text-secondary max-w-2xl">
-            Watch animated race replays with real telemetry data. See driver
-            positions, tire strategies, and safety car deployments unfold on the
-            track map.
-          </p>
-        </div>
-      </section>
+    <main className="min-h-screen bg-bg-secondary">
+      <PageHeader
+        title="Race Replay"
+        subtitle="Telemetry Replay"
+        leftContent={
+          seasons.length > 0 ? (
+            <select
+              value={activeSeason ?? ""}
+              onChange={(e) => setSelectedSeason(Number(e.target.value))}
+              className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
+            >
+              {seasons.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          ) : undefined
+        }
+      />
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto p-6">
         <ReplayBrowser
+          season={activeSeason}
           onSelect={(season, round, eventName) =>
             setSelectedReplay({ season, round, eventName })
           }
         />
       </div>
-    </div>
+    </main>
   );
 }

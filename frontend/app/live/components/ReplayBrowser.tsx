@@ -1,24 +1,16 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import Image from "next/image";
-import { useState } from "react";
-import Card from "@/components/ui/Card";
+import { TrackMapCompact } from "@/components/TrackMapDisplay";
 import Skeleton from "@/components/ui/Skeleton";
-import { fetchAvailableReplays, fetchReplaySeasons } from "@/lib/api";
+import TiltCard from "@/components/ui/TiltCard";
+import { fetchAvailableReplays } from "@/lib/api";
 import type { ReplayListItem } from "@/lib/types";
 
 interface ReplayBrowserProps {
+  season: number | null;
   onSelect: (season: number, round: number, eventName: string) => void;
 }
-
-const _COMPOUND_LABELS: Record<number, string> = {
-  0: "SOFT",
-  1: "MEDIUM",
-  2: "HARD",
-  3: "INTER",
-  4: "WET",
-};
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -27,116 +19,53 @@ function formatDuration(seconds: number): string {
   return `${m}m`;
 }
 
-function _formatSize(bytes: number): string {
-  const mb = bytes / (1024 * 1024);
-  if (mb >= 1) return `${mb.toFixed(1)} MB`;
-  return `${(bytes / 1024).toFixed(0)} KB`;
-}
-
-export default function ReplayBrowser({ onSelect }: ReplayBrowserProps) {
-  const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
-
-  const {
-    data: seasons,
-    isLoading: seasonsLoading,
-    error: seasonsError,
-  } = useQuery({
-    queryKey: ["replaySeasons"],
-    queryFn: fetchReplaySeasons,
-  });
-
-  // Auto-select latest season when data loads
-  const activeSeason = selectedSeason ?? seasons?.[0] ?? null;
-
+export default function ReplayBrowser({
+  season,
+  onSelect,
+}: ReplayBrowserProps) {
   const {
     data: replaysData,
-    isLoading: replaysLoading,
-    error: replaysError,
+    isLoading,
+    error,
   } = useQuery({
-    queryKey: ["availableReplays", activeSeason],
-    queryFn: () => fetchAvailableReplays(activeSeason as number),
-    enabled: activeSeason !== null,
+    queryKey: ["availableReplays", season],
+    queryFn: () => fetchAvailableReplays(season as number),
+    enabled: season !== null,
   });
 
-  if (seasonsLoading) {
+  if (season === null || isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton variant="text" width="200px" height="32px" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {["a", "b", "c", "d", "e", "f"].map((key) => (
-            <Skeleton key={key} variant="rectangular" height="180px" />
-          ))}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {["a", "b", "c", "d", "e", "f"].map((key) => (
+          <Skeleton key={key} variant="rectangular" height="140px" />
+        ))}
       </div>
     );
   }
 
-  if (seasonsError || !seasons?.length) {
+  if (error) {
     return (
-      <div className="text-center py-16">
-        <p className="text-text-muted text-lg">
-          No replay data available yet. Replay data is generated from FastF1
-          telemetry for 2018+ seasons.
-        </p>
-      </div>
+      <p className="text-red-400 font-mono text-xs">Failed to load replays.</p>
+    );
+  }
+
+  if (!replaysData?.replays.length) {
+    return (
+      <p className="text-text-muted font-mono text-xs tracking-widest uppercase text-center py-16">
+        No replays available for {season}.
+      </p>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Season selector */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-          Season
-        </span>
-        <div className="flex items-center gap-1 flex-wrap">
-          {seasons.map((season) => (
-            <button
-              key={season}
-              type="button"
-              onClick={() => setSelectedSeason(season)}
-              className={`px-3 py-1 rounded-sm text-xs font-mono tracking-wider transition-colors ${
-                activeSeason === season
-                  ? "bg-purple-500 text-white"
-                  : "bg-bg-primary text-text-muted hover:text-text-primary hover:bg-bg-elevated border border-border-primary"
-              }`}
-            >
-              {season}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Race grid */}
-      {replaysLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {["g", "h", "i", "j", "k", "l"].map((key) => (
-            <Skeleton key={key} variant="rectangular" height="180px" />
-          ))}
-        </div>
-      ) : replaysError ? (
-        <p className="text-red-400 text-sm">Failed to load replays.</p>
-      ) : !replaysData?.replays.length ? (
-        <p className="text-text-muted">
-          No replays available for {activeSeason}.
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {replaysData.replays.map((replay) => (
-            <ReplayCard
-              key={replay.round}
-              replay={replay}
-              onSelect={() =>
-                onSelect(
-                  activeSeason as number,
-                  replay.round,
-                  replay.event_name,
-                )
-              }
-            />
-          ))}
-        </div>
-      )}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {replaysData.replays.map((replay) => (
+        <ReplayCard
+          key={replay.round}
+          replay={replay}
+          onSelect={() => onSelect(season, replay.round, replay.event_name)}
+        />
+      ))}
     </div>
   );
 }
@@ -149,41 +78,111 @@ function ReplayCard({
   onSelect: () => void;
 }) {
   return (
-    <Card variant="interactive" padding="none" onClick={onSelect}>
-      <div className="p-4 space-y-3">
-        {/* Track thumbnail */}
-        <div className="relative w-full h-20 bg-bg-primary rounded-sm overflow-hidden flex items-center justify-center">
-          <Image
-            src={`/track-maps/${replay.circuit_id}.png`}
-            alt={replay.circuit_name}
-            width={160}
-            height={80}
-            className="object-contain opacity-40"
-          />
-          <div className="absolute top-2 left-2 bg-bg-primary/80 backdrop-blur-sm px-2 py-0.5 rounded-sm">
-            <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider">
-              R{replay.round}
-            </span>
+    <TiltCard>
+      <button
+        type="button"
+        onClick={onSelect}
+        className="w-full bg-bg-tertiary border border-border-primary rounded-sm shadow-sm transition-all duration-150 cursor-pointer text-left h-[140px] relative overflow-hidden hover:border-purple-500 hover:shadow-purple"
+      >
+        <div className="flex items-center gap-4 p-4 h-full">
+          {/* Left side: Race info */}
+          <div className="flex-1 min-w-0 flex flex-col h-full">
+            {/* Round + Race name */}
+            <div className="mb-1">
+              <span className="text-[10px] text-text-muted tracking-widest uppercase font-mono font-bold">
+                RND {String(replay.round).padStart(2, "0")}
+              </span>
+              <h3 className="font-semibold text-text-primary text-sm truncate">
+                {replay.event_name.replace("Grand Prix", "GP")}
+              </h3>
+            </div>
+
+            {/* Circuit + date */}
+            <p className="text-text-muted text-[10px] tracking-wide truncate">
+              {replay.circuit_name} &middot;{" "}
+              {new Date(replay.date).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </p>
+
+            {/* Divider */}
+            <div className="border-b border-border-primary my-2" />
+
+            {/* Stats row */}
+            <div className="flex items-center gap-3 mt-auto">
+              <div className="flex items-center gap-1.5">
+                <svg
+                  className="w-3 h-3 text-text-muted"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <title>Laps</title>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                <span className="text-[10px] font-mono text-text-muted tracking-wider">
+                  {replay.total_laps} LAPS
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <svg
+                  className="w-3 h-3 text-text-muted"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <title>Drivers</title>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                <span className="text-[10px] font-mono text-text-muted tracking-wider">
+                  {replay.driver_count}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <svg
+                  className="w-3 h-3 text-text-muted"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <title>Duration</title>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span className="text-[10px] font-mono text-text-muted tracking-wider">
+                  {formatDuration(replay.total_duration_seconds)}
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Race info */}
-        <div>
-          <h3 className="text-sm font-semibold text-text-primary truncate">
-            {replay.event_name}
-          </h3>
-          <p className="text-xs text-text-muted mt-0.5">
-            {replay.circuit_name} &middot; {replay.date}
-          </p>
+          {/* Right side: Track map */}
+          <TrackMapCompact
+            circuitId={replay.circuit_id}
+            circuitName={replay.circuit_name}
+            patternId={`replay-track-dots-${replay.round}`}
+          />
         </div>
-
-        {/* Stats */}
-        <div className="flex items-center gap-3 text-[10px] font-mono text-text-muted uppercase tracking-wider">
-          <span>{replay.total_laps} laps</span>
-          <span>{replay.driver_count} drivers</span>
-          <span>{formatDuration(replay.total_duration_seconds)}</span>
-        </div>
-      </div>
-    </Card>
+      </button>
+    </TiltCard>
   );
 }

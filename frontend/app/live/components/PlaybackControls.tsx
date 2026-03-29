@@ -35,7 +35,7 @@ export default function PlaybackControls({
   speedOptions,
 }: PlaybackControlsProps) {
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm p-3 space-y-2">
+    <div className="bg-bg-tertiary border border-border-primary rounded-sm p-3 shadow-sm space-y-2">
       {/* Scrub bar */}
       <div className="flex items-center gap-3">
         {/* Play/Pause */}

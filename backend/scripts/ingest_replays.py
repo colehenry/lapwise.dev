@@ -90,11 +90,16 @@ def main():
     total_size = 0
 
     for session in sessions:
-        print(f"[R{session.round}] {session.event_name} " f"({session.date})")
+        # Capture scalar values before any DB reconnects
+        sess_id = session.id
+        sess_round = session.round
+        sess_event = session.event_name
+        sess_date = session.date
+        print(f"[R{sess_round}] {sess_event} ({sess_date})")
 
         # Check if replay data already exists
         existing = db.execute(
-            select(ReplayData).where(ReplayData.session_id == session.id)
+            select(ReplayData).where(ReplayData.session_id == sess_id)
         ).scalar_one_or_none()
 
         if existing and not args.force:
@@ -118,7 +123,7 @@ def main():
         start_time = time.time()
         try:
             print("  📡 Loading FastF1 session (this may take a while)...")
-            ff1_session = fastf1.get_session(args.season, session.round, "R")
+            ff1_session = fastf1.get_session(args.season, sess_round, "R")
             ff1_session.load(
                 laps=True,
                 weather=True,
@@ -140,8 +145,8 @@ def main():
                 ff1_session,
                 session.id,
                 args.season,
-                session.round,
-                session.event_name,
+                sess_round,
+                sess_event,
             )
 
             if compressed is None:
@@ -150,18 +155,54 @@ def main():
                 print()
                 continue
 
-            # Store in database
-            replay = ReplayData(
-                session_id=session.id,
-                total_frames=metadata["total_frames"],
-                total_duration_seconds=metadata["total_duration_seconds"],
-                total_laps=metadata["total_laps"],
-                driver_count=metadata["driver_count"],
-                compressed_size_bytes=metadata["compressed_size_bytes"],
-                data=compressed,
-            )
-            db.add(replay)
-            db.commit()
+            # Store in database with retry on connection errors
+            stored = False
+            for attempt in range(1, 4):
+                try:
+                    replay = ReplayData(
+                        session_id=sess_id,
+                        total_frames=metadata["total_frames"],
+                        total_duration_seconds=metadata["total_duration_seconds"],
+                        total_laps=metadata["total_laps"],
+                        driver_count=metadata["driver_count"],
+                        compressed_size_bytes=metadata["compressed_size_bytes"],
+                        data=compressed,
+                    )
+                    db.add(replay)
+                    db.commit()
+                    stored = True
+                    break
+                except Exception as db_err:
+                    print(f"  ⚠️  DB insert failed " f"(attempt {attempt}/3): {db_err}")
+                    try:
+                        db.rollback()
+                    except Exception:
+                        pass
+                    # Reconnect with fresh session
+                    try:
+                        db.close()
+                    except Exception:
+                        pass
+                    wait = attempt * 5
+                    print(f"  ⏳ Reconnecting in {wait}s...")
+                    time.sleep(wait)
+                    db = get_db_session()
+                    # Clean up partial record
+                    try:
+                        stale = db.execute(
+                            select(ReplayData).where(ReplayData.session_id == sess_id)
+                        ).scalar_one_or_none()
+                        if stale:
+                            db.delete(stale)
+                            db.commit()
+                    except Exception:
+                        db.rollback()
+
+            if not stored:
+                print("  ❌ All DB insert attempts failed")
+                fail_count += 1
+                print()
+                continue
 
             gen_time = time.time() - start_time - load_time
             print(
