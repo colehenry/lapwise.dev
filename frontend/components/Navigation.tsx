@@ -79,6 +79,11 @@ const navLinksBefore: NavLink[] = [
 
 const navLinksAfter: NavLink[] = [
   {
+    href: "/live",
+    label: "Replay",
+    icon: "M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z",
+  },
+  {
     href: "/discussions",
     label: "Discuss",
     icon: "M7 8h10M7 12h6m-6 8l-4-4H3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9l-4 4z",

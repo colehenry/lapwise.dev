@@ -74,6 +74,12 @@ class Session(Base):
     race_control_messages = relationship(
         "RaceControlMessage", back_populates="session", cascade="all, delete-orphan"
     )
+    replay_data = relationship(
+        "ReplayData",
+        back_populates="session",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
     # Constraints
     __table_args__ = (

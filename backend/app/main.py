@@ -72,6 +72,7 @@ from app.routers import (
     tags,
     users,
     admin,
+    replay,
 )
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
@@ -86,3 +87,4 @@ app.include_router(events.router, prefix="/api/events", tags=["events"])
 app.include_router(circuits.router, prefix="/api/circuits", tags=["circuits"])
 app.include_router(posts.router, prefix="/api/posts", tags=["posts"])
 app.include_router(tags.router, prefix="/api/tags", tags=["tags"])
+app.include_router(replay.router, prefix="/api/replay", tags=["replay"])
