@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isValidHeadshotUrl } from "@/lib/api";
 import type {
   ReplayCorner,
@@ -10,6 +10,14 @@ import type {
   ReplayFrame,
   ReplayTrack,
 } from "@/lib/types";
+
+export interface TrackTooltipData {
+  screenX: number;
+  screenY: number;
+  code: string;
+  driver: ReplayDriverInfo;
+  data: ReplayDriverFrame;
+}
 
 interface TrackCanvasProps {
   track: ReplayTrack;
@@ -20,9 +28,10 @@ interface TrackCanvasProps {
   scState?: number;
   drsEnabled?: boolean;
   onSelectDriver: (code: string | null) => void;
+  onTooltipChange?: (tooltip: TrackTooltipData | null) => void;
 }
 
-const PADDING = 8;
+const PADDING = 20;
 const DRIVER_RADIUS = 6;
 const SELECTED_RADIUS = 9;
 const TRACK_WIDTH = 8;
@@ -42,6 +51,7 @@ export default function TrackCanvas({
   scState = 0,
   drsEnabled = false,
   onSelectDriver,
+  onTooltipChange,
 }: TrackCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -50,27 +60,66 @@ export default function TrackCanvas({
   const [showCorners, setShowCorners] = useState(true);
   const hoveredDriverRef = useRef<string | null>(null);
   const [_hoveredDriver, setHoveredDriver] = useState<string | null>(null);
-  const [hoveredTooltip, setHoveredTooltip] = useState<{
-    x: number;
-    y: number;
-    code: string;
-  } | null>(null);
 
-  // Compute scale/offset to map [0, 1000] track coords to canvas
+  // Compute bounding box of all track elements
+  const bounds = useMemo(() => {
+    const polyline = track.polyline;
+    if (!polyline.length) return { minX: 0, minY: 0, maxX: 1000, maxY: 1000 };
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (const [x, y] of polyline) {
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    }
+
+    // Include DRS zones and corners in bounds
+    if (track.drs_zones) {
+      for (const zone of track.drs_zones) {
+        for (const [x, y] of zone) {
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (track.corners) {
+      for (const c of track.corners) {
+        if (c.x < minX) minX = c.x;
+        if (c.y < minY) minY = c.y;
+        if (c.x > maxX) maxX = c.x;
+        if (c.y > maxY) maxY = c.y;
+      }
+    }
+
+    return { minX, minY, maxX, maxY };
+  }, [track.polyline, track.drs_zones, track.corners]);
+
+  // Compute scale/offset to fit the track's actual bounds into the canvas
   const getTransform = useCallback(
     (width: number, height: number) => {
       const polyline = track.polyline;
       if (!polyline.length) return { scale: 1, offsetX: 0, offsetY: 0 };
 
+      const { minX, minY, maxX, maxY } = bounds;
+      const trackW = maxX - minX || 1;
+      const trackH = maxY - minY || 1;
+
       const usableW = width - PADDING * 2;
       const usableH = height - PADDING * 2;
-      const scale = Math.min(usableW / 1000, usableH / 1000);
-      const offsetX = (width - 1000 * scale) / 2;
-      const offsetY = (height - 1000 * scale) / 2;
+      const scale = Math.min(usableW / trackW, usableH / trackH);
+      const offsetX = (width - trackW * scale) / 2 - minX * scale;
+      const offsetY = (height - trackH * scale) / 2 - minY * scale;
 
       return { scale, offsetX, offsetY };
     },
-    [track.polyline],
+    [track.polyline, bounds],
   );
 
   // Build Path2D for track polyline (cached)
@@ -315,18 +364,24 @@ export default function TrackCanvas({
       hoveredDriverRef.current = closest;
       setHoveredDriver(closest);
 
-      if (closest && frame.d[closest]) {
+      if (closest && frame.d[closest] && drivers[closest]) {
         const driverData = frame.d[closest];
         const screenX = driverData[0] * scale + offsetX;
         const screenY = driverData[1] * scale + offsetY;
-        setHoveredTooltip({ x: screenX, y: screenY, code: closest });
+        onTooltipChange?.({
+          screenX,
+          screenY,
+          code: closest,
+          driver: drivers[closest],
+          data: driverData,
+        });
       } else {
-        setHoveredTooltip(null);
+        onTooltipChange?.(null);
       }
 
       canvasRef.current.style.cursor = closest ? "pointer" : "default";
     },
-    [frame, dimensions, getTransform],
+    [frame, dimensions, getTransform, drivers, onTooltipChange],
   );
 
   const handleClick = useCallback(() => {
@@ -344,8 +399,39 @@ export default function TrackCanvas({
   const handleMouseLeave = useCallback(() => {
     hoveredDriverRef.current = null;
     setHoveredDriver(null);
-    setHoveredTooltip(null);
-  }, []);
+    onTooltipChange?.(null);
+  }, [onTooltipChange]);
+
+  // Emit selected driver tooltip when no hover (follows driver position each frame)
+  useEffect(() => {
+    if (hoveredDriverRef.current) return; // hover takes priority
+    if (
+      !selectedDriver ||
+      !frame?.d[selectedDriver] ||
+      !drivers[selectedDriver]
+    )
+      return;
+
+    const { scale, offsetX, offsetY } = getTransform(
+      dimensions.width,
+      dimensions.height,
+    );
+    const driverData = frame.d[selectedDriver];
+    onTooltipChange?.({
+      screenX: driverData[0] * scale + offsetX,
+      screenY: driverData[1] * scale + offsetY,
+      code: selectedDriver,
+      driver: drivers[selectedDriver],
+      data: driverData,
+    });
+  }, [
+    selectedDriver,
+    frame,
+    drivers,
+    dimensions,
+    getTransform,
+    onTooltipChange,
+  ]);
 
   return (
     <div ref={containerRef} className="relative w-full h-full">
@@ -373,37 +459,6 @@ export default function TrackCanvas({
           </button>
         </div>
       )}
-      {/* Tooltip - show for hovered driver, or selected driver following their position */}
-      {(() => {
-        const { scale, offsetX, offsetY } = getTransform(
-          dimensions.width,
-          dimensions.height,
-        );
-        // Prefer hovered tooltip, fall back to selected driver
-        const tooltipCode = hoveredTooltip?.code ?? selectedDriver;
-        if (tooltipCode && drivers[tooltipCode] && frame?.d[tooltipCode]) {
-          const driverData = frame.d[tooltipCode];
-          const screenX =
-            hoveredTooltip?.code === tooltipCode
-              ? hoveredTooltip.x
-              : driverData[0] * scale + offsetX;
-          const screenY =
-            hoveredTooltip?.code === tooltipCode
-              ? hoveredTooltip.y
-              : driverData[1] * scale + offsetY;
-          return (
-            <DriverTooltip
-              x={screenX}
-              y={screenY}
-              code={tooltipCode}
-              driver={drivers[tooltipCode]}
-              data={driverData}
-              containerWidth={dimensions.width}
-            />
-          );
-        }
-        return null;
-      })()}
     </div>
   );
 }
@@ -531,7 +586,7 @@ const COMPOUND_LABELS: Record<number, string> = {
   4: "W",
 };
 
-function DriverTooltip({
+export function DriverTooltip({
   x,
   y,
   code,
