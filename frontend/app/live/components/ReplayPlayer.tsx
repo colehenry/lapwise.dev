@@ -1,15 +1,16 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TrianglePattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import { fetchReplayData } from "@/lib/api";
-import type { ReplayData, ReplayWeather } from "@/lib/types";
+import type { BattleEvent, ReplayData, ReplayWeather } from "@/lib/types";
+import BattleFeed from "./BattleFeed";
 import Leaderboard from "./Leaderboard";
 import PlaybackControls from "./PlaybackControls";
-import RaceControlFeed from "./RaceControlFeed";
 import RaceInfo from "./RaceInfo";
+import TelemetryPanel from "./TelemetryPanel";
 import TrackCanvas from "./TrackCanvas";
 
 interface ReplayPlayerProps {
@@ -46,12 +47,30 @@ export default function ReplayPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [selectedDriver, setSelectedDriver] = useState<string | null>(null);
+  const [compareDriver, setCompareDriver] = useState<string | null>(null);
+  const [feedCollapsed, setFeedCollapsed] = useState(false);
 
   // Current weather (tracked as weather only appears on change frames)
   const currentWeatherRef = useRef<ReplayWeather | null>(null);
   const [currentWeather, setCurrentWeather] = useState<ReplayWeather | null>(
     null,
   );
+
+  // Flash highlight for drivers referenced in battle events
+  const [highlightedDriver, setHighlightedDriver] = useState<string | null>(
+    null,
+  );
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleBattleEvent = useCallback((event: BattleEvent) => {
+    if (event.driver) {
+      setHighlightedDriver(event.driver);
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+      highlightTimerRef.current = setTimeout(() => {
+        setHighlightedDriver(null);
+      }, 3000);
+    }
+  }, []);
 
   // Animation refs
   const animFrameRef = useRef<number>(0);
@@ -150,6 +169,57 @@ export default function ReplayPlayer({
     setIsPlaying((p) => !p);
   }, []);
 
+  // Derived state (must be above early returns for hooks rules)
+  const currentFrame = replayData?.frames[frameIndex];
+  const totalFrames = replayData?.metadata.total_frames ?? 0;
+  const currentTime = currentFrame?.t ?? 0;
+
+  // Precompute lap boundaries (frame index where each lap starts)
+  const lapBoundaries = useMemo(() => {
+    if (!replayData) return [];
+    const boundaries: { lap: number; frameIndex: number }[] = [];
+    let lastLap = -1;
+    for (let i = 0; i < replayData.frames.length; i++) {
+      const lap = replayData.frames[i].lap;
+      if (lap > lastLap) {
+        boundaries.push({ lap, frameIndex: i });
+        lastLap = lap;
+      }
+    }
+    return boundaries;
+  }, [replayData]);
+
+  // Precompute event markers on timeline (SC, flags, weather)
+  const timelineEvents = useMemo(() => {
+    if (!replayData) return [];
+    const events: {
+      frameIndex: number;
+      type: "sc" | "vsc" | "red_flag" | "weather" | "drs";
+      label: string;
+    }[] = [];
+    // SC/VSC/Red flag from frames
+    let lastSc = 0;
+    for (let i = 0; i < replayData.frames.length; i++) {
+      const sc = replayData.frames[i].sc;
+      if (sc !== lastSc) {
+        if (sc === 1) events.push({ frameIndex: i, type: "sc", label: "SC" });
+        else if (sc === 2)
+          events.push({ frameIndex: i, type: "vsc", label: "VSC" });
+        else if (sc === 3)
+          events.push({ frameIndex: i, type: "red_flag", label: "RED" });
+        lastSc = sc;
+      }
+      // Weather changes
+      if (replayData.frames[i].w?.rainfall) {
+        const prev = i > 0 ? replayData.frames[i - 1].w : null;
+        if (!prev?.rainfall) {
+          events.push({ frameIndex: i, type: "weather", label: "RAIN" });
+        }
+      }
+    }
+    return events;
+  }, [replayData]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -162,19 +232,24 @@ export default function ReplayPlayer({
           e.preventDefault();
           setIsPlaying((p) => !p);
           break;
-        case "ArrowRight":
+        case "ArrowRight": {
           e.preventDefault();
-          handleSeek(
-            Math.min(
-              frameIndex + data.metadata.fps * 10,
-              data.metadata.total_frames - 1,
-            ),
+          // Skip to next lap
+          const nextLap = lapBoundaries.find((b) => b.frameIndex > frameIndex);
+          if (nextLap) handleSeek(nextLap.frameIndex);
+          else handleSeek(data.metadata.total_frames - 1);
+          break;
+        }
+        case "ArrowLeft": {
+          e.preventDefault();
+          // Skip to previous lap
+          const prevLap = lapBoundaries.findLast(
+            (b) => b.frameIndex < frameIndex - 10,
           );
+          if (prevLap) handleSeek(prevLap.frameIndex);
+          else handleSeek(0);
           break;
-        case "ArrowLeft":
-          e.preventDefault();
-          handleSeek(Math.max(frameIndex - data.metadata.fps * 10, 0));
-          break;
+        }
         case "Equal":
         case "NumpadAdd": {
           const idx = SPEED_OPTIONS.indexOf(playbackSpeed);
@@ -196,7 +271,26 @@ export default function ReplayPlayer({
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [frameIndex, playbackSpeed, handleSeek]);
+  }, [frameIndex, playbackSpeed, handleSeek, lapBoundaries]);
+
+  // Derive DRS enabled state from race control messages
+  const raceControl = replayData?.race_control;
+  const drsEnabled = useMemo(() => {
+    if (!raceControl?.length) return false;
+    let enabled = false;
+    for (const msg of raceControl) {
+      if (msg.t > currentTime) break;
+      if (msg.category === "Drs" || msg.message.toUpperCase().includes("DRS")) {
+        const upper = msg.message.toUpperCase();
+        if (upper.includes("ENABLED") || upper.includes("DETECTION")) {
+          enabled = true;
+        } else if (upper.includes("DISABLED")) {
+          enabled = false;
+        }
+      }
+    }
+    return enabled;
+  }, [raceControl, currentTime]);
 
   if (isLoading) {
     return (
@@ -232,11 +326,6 @@ export default function ReplayPlayer({
       </div>
     );
   }
-
-  const currentFrame = replayData.frames[frameIndex];
-  const totalFrames = replayData.metadata.total_frames;
-  const currentTime = currentFrame?.t ?? 0;
-  const totalTime = replayData.metadata.total_duration_seconds;
 
   return (
     <div className="min-h-screen bg-bg-secondary">
@@ -279,56 +368,128 @@ export default function ReplayPlayer({
       </div>
 
       {/* Main content */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 space-y-3">
+        {/* Top row: Track + Feed | Leaderboard — shared fixed height */}
         <div className="flex flex-col lg:flex-row gap-4">
-          {/* Track canvas */}
-          <div className="flex-1 min-w-0 space-y-3">
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+          {/* Track card with race feed */}
+          <div className="flex-1 min-w-0 lg:h-[462px]">
+            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden h-full flex flex-col">
+              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden shrink-0">
                 <TrianglePattern id="replay-track-triangles" />
                 <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
                   Track Map
                 </span>
               </div>
-              <TrackCanvas
-                track={replayData.track}
-                drivers={replayData.drivers}
-                frame={currentFrame}
-                selectedDriver={selectedDriver}
-                onSelectDriver={setSelectedDriver}
-              />
+              <div className="flex flex-1 min-h-0">
+                {/* Track canvas */}
+                <div className="flex-1 min-w-0 h-full">
+                  <TrackCanvas
+                    track={replayData.track}
+                    drivers={replayData.drivers}
+                    frame={currentFrame}
+                    selectedDriver={selectedDriver}
+                    highlightedDriver={highlightedDriver}
+                    scState={currentFrame?.sc ?? 0}
+                    drsEnabled={drsEnabled}
+                    onSelectDriver={setSelectedDriver}
+                  />
+                </div>
+                {/* Race feed panel — collapsible */}
+                {!feedCollapsed && (
+                  <div className="w-52 lg:w-60 border-l border-border-primary flex flex-col shrink-0 h-full">
+                    <div className="px-3 py-2 border-b border-border-primary flex items-center justify-between shrink-0">
+                      <h3 className="text-[10px] font-mono tracking-widest text-text-muted uppercase font-bold">
+                        Race Feed
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setFeedCollapsed(true)}
+                        className="text-[10px] font-mono text-text-muted hover:text-text-primary transition-colors"
+                        title="Collapse feed"
+                      >
+                        ▸
+                      </button>
+                    </div>
+                    <div className="overflow-y-auto flex-1 min-h-0">
+                      <BattleFeed
+                        replayData={replayData}
+                        currentTime={currentTime}
+                        currentLap={currentFrame?.lap ?? 0}
+                        onSelectDriver={setSelectedDriver}
+                        onBattleEvent={handleBattleEvent}
+                      />
+                    </div>
+                  </div>
+                )}
+                {/* Collapsed feed toggle */}
+                {feedCollapsed && (
+                  <div className="border-l border-border-primary flex flex-col items-center shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setFeedCollapsed(false)}
+                      className="px-1.5 py-2 text-[10px] font-mono text-text-muted hover:text-text-primary transition-colors"
+                      title="Show feed"
+                    >
+                      ◂
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-
-            {/* Playback controls */}
-            <PlaybackControls
-              isPlaying={isPlaying}
-              playbackSpeed={playbackSpeed}
-              currentFrame={frameIndex}
-              totalFrames={totalFrames}
-              currentTime={currentTime}
-              totalTime={totalTime}
-              onTogglePlay={handleTogglePlay}
-              onSpeedChange={setPlaybackSpeed}
-              onSeek={handleSeek}
-              speedOptions={SPEED_OPTIONS}
-            />
           </div>
 
-          {/* Sidebar */}
-          <div className="lg:w-72 space-y-4">
+          {/* Sidebar — leaderboard: same fixed height as track card */}
+          <div className="lg:w-72 shrink-0 flex flex-col lg:h-[462px]">
             <Leaderboard
               drivers={replayData.drivers}
               frame={currentFrame}
               track={replayData.track}
+              metadata={replayData.metadata}
               selectedDriver={selectedDriver}
-              onSelectDriver={setSelectedDriver}
-            />
-            <RaceControlFeed
-              messages={replayData.race_control}
-              currentTime={currentTime}
+              compareDriver={compareDriver}
+              onSelectDriver={(code) => {
+                if (code === selectedDriver) {
+                  setSelectedDriver(null);
+                  setCompareDriver(null);
+                } else if (code === compareDriver) {
+                  setCompareDriver(null);
+                } else if (selectedDriver && code) {
+                  setCompareDriver(code);
+                } else {
+                  setSelectedDriver(code);
+                  setCompareDriver(null);
+                }
+              }}
             />
           </div>
         </div>
+
+        {/* Full-width controls below the row */}
+        <PlaybackControls
+          isPlaying={isPlaying}
+          playbackSpeed={playbackSpeed}
+          currentFrame={frameIndex}
+          totalFrames={totalFrames}
+          currentLap={currentFrame?.lap ?? 0}
+          totalLaps={replayData.metadata.total_laps}
+          onTogglePlay={handleTogglePlay}
+          onSpeedChange={setPlaybackSpeed}
+          onSeek={handleSeek}
+          speedOptions={SPEED_OPTIONS}
+          lapBoundaries={lapBoundaries}
+          timelineEvents={timelineEvents}
+        />
+
+        {/* Full-width telemetry panel */}
+        {selectedDriver && (
+          <TelemetryPanel
+            replayData={replayData}
+            selectedDriver={selectedDriver}
+            compareDriver={compareDriver}
+            frameIndex={frameIndex}
+            onClearCompare={() => setCompareDriver(null)}
+          />
+        )}
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isValidHeadshotUrl } from "@/lib/api";
 import type {
+  ReplayCorner,
   ReplayDriverFrame,
   ReplayDriverInfo,
   ReplayFrame,
@@ -15,27 +16,38 @@ interface TrackCanvasProps {
   drivers: Record<string, ReplayDriverInfo>;
   frame: ReplayFrame | undefined;
   selectedDriver: string | null;
+  highlightedDriver?: string | null;
+  scState?: number;
+  drsEnabled?: boolean;
   onSelectDriver: (code: string | null) => void;
 }
 
-const PADDING = 40;
+const PADDING = 8;
 const DRIVER_RADIUS = 6;
 const SELECTED_RADIUS = 9;
 const TRACK_WIDTH = 8;
 const TRACK_COLOR = "rgba(255, 255, 255, 0.12)";
-const SF_LINE_COLOR = "rgba(255, 255, 255, 0.4)";
+const SF_LINE_COLOR = "rgba(255, 255, 255, 0.5)";
+const DRS_ZONE_COLOR_ACTIVE = "rgba(0, 220, 80, 0.35)";
+const DRS_ZONE_COLOR_INACTIVE = "rgba(0, 220, 80, 0.10)";
+const CORNER_LABEL_COLOR = "rgba(255, 255, 255, 0.35)";
+const CORNER_LABEL_FONT_SIZE = 9;
 
 export default function TrackCanvas({
   track,
   drivers,
   frame,
   selectedDriver,
+  highlightedDriver,
+  scState = 0,
+  drsEnabled = false,
   onSelectDriver,
 }: TrackCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
   const trackPathRef = useRef<Path2D | null>(null);
+  const [showCorners, setShowCorners] = useState(true);
   const hoveredDriverRef = useRef<string | null>(null);
   const [_hoveredDriver, setHoveredDriver] = useState<string | null>(null);
   const [hoveredTooltip, setHoveredTooltip] = useState<{
@@ -82,10 +94,10 @@ export default function TrackCanvas({
 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const { width } = entry.contentRect;
-        // Maintain aspect ratio based on track bounds
-        const height = Math.min(width * 0.65, 600);
-        setDimensions({ width, height });
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setDimensions({ width, height });
+        }
       }
     });
 
@@ -127,13 +139,56 @@ export default function TrackCanvas({
       ctx.stroke(trackPathRef.current);
     }
 
-    // Draw start/finish marker
-    if (track.polyline.length > 1) {
+    // Draw DRS zones
+    if (track.drs_zones?.length > 0) {
+      const zoneColor = drsEnabled
+        ? DRS_ZONE_COLOR_ACTIVE
+        : DRS_ZONE_COLOR_INACTIVE;
+      ctx.strokeStyle = zoneColor;
+      ctx.lineWidth = (TRACK_WIDTH + 4) / scale;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      for (const zone of track.drs_zones) {
+        if (zone.length < 2) continue;
+        ctx.beginPath();
+        ctx.moveTo(zone[0][0], zone[0][1]);
+        for (let i = 1; i < zone.length; i++) {
+          ctx.lineTo(zone[i][0], zone[i][1]);
+        }
+        ctx.stroke();
+      }
+    }
+
+    // Draw start/finish line (perpendicular to track direction)
+    if (track.polyline.length > 2) {
       const sf = track.polyline[0];
-      ctx.fillStyle = SF_LINE_COLOR;
-      ctx.beginPath();
-      ctx.arc(sf[0], sf[1], 4 / scale, 0, Math.PI * 2);
-      ctx.fill();
+      const next = track.polyline[1];
+      // Direction vector from S/F to next point
+      const dx = next[0] - sf[0];
+      const dy = next[1] - sf[1];
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len > 0) {
+        // Perpendicular unit vector
+        const px = -dy / len;
+        const py = dx / len;
+        const halfWidth = 12 / scale;
+
+        // Draw checkered-style S/F line
+        ctx.strokeStyle = SF_LINE_COLOR;
+        ctx.lineWidth = 3 / scale;
+        ctx.setLineDash([3 / scale, 3 / scale]);
+        ctx.beginPath();
+        ctx.moveTo(sf[0] - px * halfWidth, sf[1] - py * halfWidth);
+        ctx.lineTo(sf[0] + px * halfWidth, sf[1] + py * halfWidth);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    // Draw corner labels
+    if (showCorners && track.corners?.length > 0) {
+      drawCornerLabels(ctx, track.corners, scale);
     }
 
     // Draw drivers
@@ -145,6 +200,36 @@ export default function TrackCanvas({
         if (code === selectedDriver || code === hoveredDriverRef.current)
           continue;
         drawDriver(ctx, code, data, drivers[code], scale, false);
+      }
+
+      // Draw highlighted driver (from battle events)
+      if (
+        highlightedDriver &&
+        highlightedDriver !== selectedDriver &&
+        highlightedDriver !== hoveredDriverRef.current &&
+        frame.d[highlightedDriver]
+      ) {
+        const hData = frame.d[highlightedDriver];
+        const hColor = drivers[highlightedDriver]
+          ? `#${drivers[highlightedDriver].color}`
+          : "#fff";
+        // Pulsing ring
+        const ringRadius = 14 / scale;
+        ctx.strokeStyle = hColor;
+        ctx.lineWidth = 2 / scale;
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath();
+        ctx.arc(hData[0], hData[1], ringRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        drawDriver(
+          ctx,
+          highlightedDriver,
+          hData,
+          drivers[highlightedDriver],
+          scale,
+          true,
+        );
       }
 
       // Draw hovered driver
@@ -182,7 +267,17 @@ export default function TrackCanvas({
     }
 
     ctx.restore();
-  }, [dimensions, frame, track, drivers, selectedDriver, getTransform]);
+  }, [
+    dimensions,
+    frame,
+    track,
+    drivers,
+    selectedDriver,
+    highlightedDriver,
+    drsEnabled,
+    showCorners,
+    getTransform,
+  ]);
 
   // Mouse handling
   const handleMouseMove = useCallback(
@@ -253,7 +348,7 @@ export default function TrackCanvas({
   }, []);
 
   return (
-    <div ref={containerRef} className="relative w-full">
+    <div ref={containerRef} className="relative w-full h-full">
       <canvas
         ref={canvasRef}
         style={{ width: dimensions.width, height: dimensions.height }}
@@ -262,6 +357,22 @@ export default function TrackCanvas({
         onClick={handleClick}
         onMouseLeave={handleMouseLeave}
       />
+      {/* Track overlay controls */}
+      {track.corners?.length > 0 && (
+        <div className="absolute top-2 right-2 flex gap-1">
+          <button
+            type="button"
+            onClick={() => setShowCorners((s) => !s)}
+            className={`px-2 py-0.5 rounded-sm text-[9px] font-mono transition-colors ${
+              showCorners
+                ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
+                : "bg-bg-primary/60 text-text-muted border border-border-primary/40"
+            }`}
+          >
+            Corners
+          </button>
+        </div>
+      )}
       {/* Tooltip - show for hovered driver, or selected driver following their position */}
       {(() => {
         const { scale, offsetX, offsetY } = getTransform(
@@ -295,6 +406,27 @@ export default function TrackCanvas({
       })()}
     </div>
   );
+}
+
+function drawCornerLabels(
+  ctx: CanvasRenderingContext2D,
+  corners: ReplayCorner[],
+  scale: number,
+) {
+  ctx.font = `bold ${CORNER_LABEL_FONT_SIZE / scale}px monospace`;
+  ctx.fillStyle = CORNER_LABEL_COLOR;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  // Deduplicate: only show unique corner numbers (some circuits have 2A, 2B, etc)
+  const seen = new Set<number>();
+  for (const corner of corners) {
+    if (seen.has(corner.number)) continue;
+    seen.add(corner.number);
+
+    const label = `T${corner.number}`;
+    ctx.fillText(label, corner.x, corner.y);
+  }
 }
 
 function drawDriver(
@@ -354,7 +486,12 @@ function drawSafetyCar(
 
   if (!leaderFound) return;
 
-  const scColor = frame.sc === 1 ? "#FFA500" : "#FFD700"; // SC = orange, VSC = gold
+  const scColors: Record<number, string> = {
+    1: "#FFA500", // SC = orange
+    2: "#FFD700", // VSC = gold
+    3: "#FF0000", // Red flag = red
+  };
+  const scColor = scColors[frame.sc] ?? "#FFA500";
   const radius = 8 / scale;
 
   // Pulsing effect via simple alpha
@@ -368,8 +505,9 @@ function drawSafetyCar(
   ctx.fillStyle = "#000";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
+  const scLabels: Record<number, string> = { 1: "SC", 2: "VSC", 3: "RED" };
   ctx.fillText(
-    frame.sc === 1 ? "SC" : "VSC",
+    scLabels[frame.sc] ?? "SC",
     leaderX + 15 / scale,
     leaderY - 15 / scale,
   );
@@ -408,7 +546,19 @@ function DriverTooltip({
   data: ReplayDriverFrame;
   containerWidth: number;
 }) {
-  const [, , speed, gear, drs, compound, tyreLife, _lap, position] = data;
+  const [
+    ,
+    ,
+    speed,
+    gear,
+    drs,
+    compound,
+    tyreLife,
+    _lap,
+    position,
+    throttle,
+    brake,
+  ] = data;
   const flipX = x > containerWidth - 180;
 
   return (
@@ -445,6 +595,12 @@ function DriverTooltip({
         <span className="text-text-primary">{Math.round(speed)} km/h</span>
         <span>Gear</span>
         <span className="text-text-primary">{gear}</span>
+        <span>Throttle</span>
+        <span className="text-text-primary">{Math.round(throttle ?? 0)}%</span>
+        <span>Brake</span>
+        <span className={brake ? "text-red-400" : "text-text-muted"}>
+          {brake ? "ON" : "OFF"}
+        </span>
         <span>DRS</span>
         <span className={drs ? "text-green-400" : "text-text-muted"}>
           {drs ? "OPEN" : "OFF"}

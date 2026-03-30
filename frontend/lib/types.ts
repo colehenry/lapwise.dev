@@ -675,24 +675,26 @@ export interface ReplaySeasonsResponse {
   seasons: number[];
 }
 
-/** Driver data per frame: [x, y, speed, gear, drs, compound_idx, tyre_life, lap, position] */
+/** Driver data per frame: [x, y, speed, gear, drs, compound_idx, tyre_life, lap, position, throttle, brake] */
 export type ReplayDriverFrame = [
-  number, // x
-  number, // y
-  number, // speed
-  number, // gear
-  number, // drs (0 or 1)
-  number, // compound_idx (0=SOFT, 1=MED, 2=HARD, 3=INTER, 4=WET)
-  number, // tyre_life
-  number, // lap
-  number, // position
+  number, // 0: x
+  number, // 1: y
+  number, // 2: speed
+  number, // 3: gear
+  number, // 4: drs (0 or 1)
+  number, // 5: compound_idx (0=SOFT, 1=MED, 2=HARD, 3=INTER, 4=WET)
+  number, // 6: tyre_life
+  number, // 7: lap
+  number, // 8: position
+  number, // 9: throttle (0-100)
+  number, // 10: brake (0 or 1)
 ];
 
 export interface ReplayFrame {
   t: number;
   lap: number;
   d: Record<string, ReplayDriverFrame>;
-  sc: number; // 0=none, 1=SC, 2=VSC
+  sc: number; // 0=none, 1=SC, 2=VSC, 3=red flag
   w?: ReplayWeather;
 }
 
@@ -727,11 +729,21 @@ export interface ReplayMetadata {
   fps: number;
   total_duration_seconds: number;
   total_laps: number;
+  circuit_length_m: number | null;
+}
+
+export interface ReplayCorner {
+  x: number;
+  y: number;
+  number: number;
+  letter: string;
 }
 
 export interface ReplayTrack {
   polyline: [number, number][];
   rotation_deg: number;
+  corners: ReplayCorner[];
+  drs_zones: [number, number][][];
 }
 
 export interface ReplayData {
@@ -740,4 +752,29 @@ export interface ReplayData {
   drivers: Record<string, ReplayDriverInfo>;
   frames: ReplayFrame[];
   race_control: ReplayRaceControlMessage[];
+}
+
+// ─── Battle Feed Event Types ────────────────────────────────────
+
+export type BattleEventType =
+  | "overtake"
+  | "pit_stop"
+  | "safety_car"
+  | "red_flag"
+  | "weather"
+  | "drs"
+  | "race_control";
+
+export interface BattleEvent {
+  id: string;
+  t: number;
+  lap: number;
+  type: BattleEventType;
+  message: string;
+  /** Primary driver code (overtaker, pit stopper, or referenced driver) */
+  driver?: string;
+  /** Secondary driver code (overtaken driver) */
+  driver2?: string;
+  /** Race control category for race_control type events */
+  category?: string | null;
 }

@@ -2,11 +2,13 @@
 
 import Image from "next/image";
 import { useMemo } from "react";
+import { TrianglePattern } from "@/components/Patterns";
 import { isValidHeadshotUrl } from "@/lib/api";
 import type {
   ReplayDriverFrame,
   ReplayDriverInfo,
   ReplayFrame,
+  ReplayMetadata,
   ReplayTrack,
 } from "@/lib/types";
 
@@ -14,7 +16,9 @@ interface LeaderboardProps {
   drivers: Record<string, ReplayDriverInfo>;
   frame: ReplayFrame | undefined;
   track: ReplayTrack;
+  metadata: ReplayMetadata;
   selectedDriver: string | null;
+  compareDriver?: string | null;
   onSelectDriver: (code: string | null) => void;
 }
 
@@ -94,6 +98,7 @@ function computeGaps(
   sorted: { code: string; data: ReplayDriverFrame }[],
   polyline: [number, number][],
   arcLengths: number[],
+  circuitLengthM: number,
 ): (string | null)[] {
   if (sorted.length === 0) return [];
 
@@ -108,10 +113,6 @@ function computeGaps(
   );
   const leaderSpeed = sorted[0].data[2]; // km/h
 
-  // Total track length in coordinate units
-  const totalLength = arcLengths[arcLengths.length - 1];
-  // Approximate track length in meters (coordinate range is 1000, typical F1 circuit ~5km)
-  // We use leader speed to convert distance to time
   const speedMs = leaderSpeed > 0 ? (leaderSpeed * 1000) / 3600 : 50; // m/s fallback
 
   for (let i = 1; i < sorted.length; i++) {
@@ -142,12 +143,8 @@ function computeGaps(
     let progressDiff = leaderProgress - driverProgress;
     if (progressDiff < 0) progressDiff += 1; // Handle wrap-around
 
-    // Convert to approximate seconds
-    // Track distance in coordinate units * approximate scale
-    const distUnits = progressDiff * totalLength;
-    // Rough scale: 1000 coord units ≈ track length, speed is in km/h
-    const approxTrackMeters = 5000; // reasonable F1 circuit length
-    const distMeters = (distUnits / totalLength) * approxTrackMeters;
+    // Convert to meters using actual circuit length, then to seconds
+    const distMeters = progressDiff * circuitLengthM;
     const gapSeconds = distMeters / speedMs;
 
     if (gapSeconds < 0.1) {
@@ -166,7 +163,9 @@ export default function Leaderboard({
   drivers,
   frame,
   track,
+  metadata,
   selectedDriver,
+  compareDriver,
   onSelectDriver,
 }: LeaderboardProps) {
   // Precompute arc lengths once
@@ -174,6 +173,9 @@ export default function Leaderboard({
     () => computeArcLengths(track.polyline),
     [track.polyline],
   );
+
+  // Use actual circuit length from metadata, fallback to 5000m
+  const circuitLengthM = metadata.circuit_length_m ?? 5000;
 
   if (!frame) return null;
 
@@ -190,31 +192,37 @@ export default function Leaderboard({
     });
 
   // Compute gaps
-  const gaps = computeGaps(sorted, track.polyline, arcLengths);
+  const gaps = computeGaps(sorted, track.polyline, arcLengths, circuitLengthM);
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm">
-      <div className="px-3 py-2 border-b border-border-primary">
-        <h3 className="text-[10px] font-mono tracking-widest text-text-muted uppercase font-bold">
+    <div className="bg-bg-tertiary border border-border-primary rounded-sm flex flex-col flex-1 min-h-0 overflow-hidden">
+      <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden shrink-0">
+        <TrianglePattern id="replay-leaderboard-triangles" />
+        <h3 className="relative z-10 text-[10px] font-mono tracking-widest text-text-muted uppercase font-bold">
           Positions
         </h3>
       </div>
-      <div className="max-h-[450px] overflow-y-auto">
+      <div className="overflow-y-auto flex-1 min-h-0">
         {sorted.map(({ code, data }, idx) => {
           const info = drivers[code];
           const position = data[8];
           const compound = data[5];
           const tyreLife = data[6];
           const isSelected = code === selectedDriver;
+          const isCompare = code === compareDriver;
           const gap = gaps[idx];
 
           return (
             <button
               key={code}
               type="button"
-              onClick={() => onSelectDriver(isSelected ? null : code)}
+              onClick={() => onSelectDriver(code)}
               className={`w-full flex items-center gap-2 px-3 py-1.5 text-left transition-colors hover:bg-bg-elevated ${
-                isSelected ? "bg-bg-elevated" : ""
+                isSelected
+                  ? "bg-bg-elevated"
+                  : isCompare
+                    ? "bg-bg-elevated/50"
+                    : ""
               }`}
             >
               {/* Position */}

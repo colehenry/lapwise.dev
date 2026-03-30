@@ -1,42 +1,69 @@
 "use client";
 
+import { useState } from "react";
+
+interface LapBoundary {
+  lap: number;
+  frameIndex: number;
+}
+
+interface TimelineEvent {
+  frameIndex: number;
+  type: "sc" | "vsc" | "red_flag" | "weather" | "drs";
+  label: string;
+}
+
 interface PlaybackControlsProps {
   isPlaying: boolean;
   playbackSpeed: number;
   currentFrame: number;
   totalFrames: number;
-  currentTime: number;
-  totalTime: number;
+  currentLap: number;
+  totalLaps: number;
   onTogglePlay: () => void;
   onSpeedChange: (speed: number) => void;
   onSeek: (frame: number) => void;
   speedOptions: number[];
+  lapBoundaries: LapBoundary[];
+  timelineEvents: TimelineEvent[];
 }
 
-function formatTime(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  if (h > 0)
-    return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
+const EVENT_COLORS: Record<string, string> = {
+  sc: "#f59e0b", // yellow
+  vsc: "#eab308", // amber
+  red_flag: "#ef4444", // red
+  weather: "#06b6d4", // cyan
+  drs: "#22c55e", // green
+};
 
 export default function PlaybackControls({
   isPlaying,
   playbackSpeed,
   currentFrame,
   totalFrames,
-  currentTime,
-  totalTime,
+  currentLap,
+  totalLaps,
   onTogglePlay,
   onSpeedChange,
   onSeek,
   speedOptions,
+  lapBoundaries,
+  timelineEvents,
 }: PlaybackControlsProps) {
+  // Find frame index for jumping to a specific lap
+  const seekToLap = (lap: number) => {
+    const boundary = lapBoundaries.find((b) => b.lap === lap);
+    if (boundary) onSeek(boundary.frameIndex);
+  };
+
+  const [hoveredEvent, setHoveredEvent] = useState<number | null>(null);
+
+  const progressPct =
+    totalFrames > 1 ? (currentFrame / (totalFrames - 1)) * 100 : 0;
+
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-sm p-3 shadow-sm space-y-2">
-      {/* Scrub bar */}
+      {/* Timeline with event markers */}
       <div className="flex items-center gap-3">
         {/* Play/Pause */}
         <button
@@ -59,31 +86,114 @@ export default function PlaybackControls({
           )}
         </button>
 
-        {/* Time */}
-        <span className="text-xs font-mono text-text-muted w-16 text-right shrink-0">
-          {formatTime(currentTime)}
+        {/* Lap indicator */}
+        <span className="text-xs font-mono text-text-primary w-20 text-center shrink-0 font-bold">
+          Lap {currentLap}/{totalLaps}
         </span>
 
-        {/* Slider */}
-        <input
-          type="range"
-          min={0}
-          max={totalFrames - 1}
-          value={currentFrame}
-          onChange={(e) => onSeek(Number(e.target.value))}
-          className="flex-1 h-1.5 bg-bg-primary rounded-full appearance-none cursor-pointer accent-purple-500
-                     [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3
-                     [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-500
-                     [&::-webkit-slider-thumb]:cursor-pointer"
-        />
+        {/* Custom timeline */}
+        <div className="flex-1 relative h-6 group">
+          {/* Track bar background */}
+          <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1.5 bg-bg-primary rounded-full" />
 
-        {/* Total time */}
-        <span className="text-xs font-mono text-text-muted w-16 shrink-0">
-          {formatTime(totalTime)}
-        </span>
+          {/* Progress fill */}
+          <div
+            className="absolute top-1/2 -translate-y-1/2 left-0 h-1.5 bg-purple-500/60 rounded-full"
+            style={{ width: `${progressPct}%` }}
+          />
+
+          {/* Lap boundary ticks */}
+          {lapBoundaries.map((b) => {
+            const pct = (b.frameIndex / Math.max(totalFrames - 1, 1)) * 100;
+            return (
+              <button
+                key={b.lap}
+                type="button"
+                className="absolute top-1/2 -translate-y-1/2 w-px h-3 bg-text-muted/30 hover:bg-text-muted/60 cursor-pointer"
+                style={{ left: `${pct}%` }}
+                onClick={() => seekToLap(b.lap)}
+                title={`Lap ${b.lap}`}
+              >
+                <span className="sr-only">Lap {b.lap}</span>
+              </button>
+            );
+          })}
+
+          {/* Event callout markers */}
+          {timelineEvents.map((ev, i) => {
+            const pct = (ev.frameIndex / Math.max(totalFrames - 1, 1)) * 100;
+            const color = EVENT_COLORS[ev.type] ?? "#999";
+            const isHovered = hoveredEvent === i;
+            return (
+              <button
+                key={`${ev.type}-${i}`}
+                type="button"
+                className="absolute top-0 -translate-x-1/2 cursor-pointer z-30"
+                style={{ left: `${pct}%` }}
+                onClick={() => onSeek(ev.frameIndex)}
+                onMouseEnter={() => setHoveredEvent(i)}
+                onMouseLeave={() => setHoveredEvent(null)}
+              >
+                <div
+                  className={`rounded-full transition-transform ${isHovered ? "w-2 h-2 scale-125" : "w-1.5 h-1.5"}`}
+                  style={{ backgroundColor: color }}
+                />
+                {isHovered && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-bg-elevated border border-border-primary rounded-sm shadow-lg whitespace-nowrap pointer-events-none">
+                    <span className="text-[10px] font-mono text-text-primary">
+                      {ev.label}
+                    </span>
+                  </div>
+                )}
+              </button>
+            );
+          })}
+
+          {/* Playhead */}
+          <div
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-purple-500 rounded-full shadow-sm border border-purple-300/50 pointer-events-none z-10"
+            style={{ left: `${progressPct}%` }}
+          />
+
+          {/* Invisible range input for scrubbing */}
+          <input
+            type="range"
+            min={0}
+            max={totalFrames - 1}
+            value={currentFrame}
+            onChange={(e) => onSeek(Number(e.target.value))}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+          />
+        </div>
+
+        {/* Lap jump buttons */}
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              const prevLap = lapBoundaries.findLast((b) => b.lap < currentLap);
+              if (prevLap) onSeek(prevLap.frameIndex);
+            }}
+            className="w-6 h-6 flex items-center justify-center rounded-sm bg-bg-primary border border-border-primary text-text-muted hover:text-text-primary text-[10px] font-mono transition-colors"
+            title="Previous lap"
+          >
+            &larr;
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const nextLap = lapBoundaries.find((b) => b.lap > currentLap);
+              if (nextLap) onSeek(nextLap.frameIndex);
+            }}
+            className="w-6 h-6 flex items-center justify-center rounded-sm bg-bg-primary border border-border-primary text-text-muted hover:text-text-primary text-[10px] font-mono transition-colors"
+            title="Next lap"
+          >
+            &rarr;
+          </button>
+        </div>
       </div>
 
-      {/* Speed + shortcuts */}
+      {/* Speed controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1">
           <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono mr-1">
@@ -106,7 +216,7 @@ export default function PlaybackControls({
         </div>
 
         <div className="text-[10px] text-text-muted font-mono hidden md:block">
-          Space: play/pause &middot; &larr;&rarr;: skip 10s &middot; +/-: speed
+          Space: play &middot; &larr;&rarr;: skip lap &middot; +/-: speed
         </div>
       </div>
     </div>

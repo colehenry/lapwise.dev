@@ -9,10 +9,18 @@ interface RaceInfoProps {
   weather: ReplayWeather | null;
 }
 
-const SC_LABELS: Record<number, { text: string; color: string }> = {
-  0: { text: "GREEN", color: "text-green-400" },
-  1: { text: "SAFETY CAR", color: "text-yellow-400" },
-  2: { text: "VSC", color: "text-yellow-300" },
+const SC_LABELS: Record<
+  number,
+  { text: string; color: string; border: string }
+> = {
+  0: { text: "GREEN", color: "text-green-400", border: "border-green-500/30" },
+  1: {
+    text: "SAFETY CAR",
+    color: "text-yellow-400",
+    border: "border-yellow-500/30",
+  },
+  2: { text: "VSC", color: "text-yellow-300", border: "border-yellow-500/30" },
+  3: { text: "RED FLAG", color: "text-red-400", border: "border-red-500/30" },
 };
 
 export default function RaceInfo({
@@ -37,20 +45,30 @@ export default function RaceInfo({
 
       {/* Track status */}
       <div
-        className={`px-2.5 py-1 rounded-sm border font-bold text-[10px] tracking-widest ${
-          scState === 0
-            ? "border-green-500/30 text-green-400"
-            : "border-yellow-500/30 text-yellow-400"
-        }`}
+        className={`px-2.5 py-1 rounded-sm border font-bold text-[10px] tracking-widest ${sc.border} ${sc.color}`}
       >
         {sc.text}
       </div>
 
       {/* Weather */}
       {weather && (
-        <div className="hidden sm:flex items-center gap-1.5 text-text-muted">
-          <span>{weather.rainfall ? "🌧" : "☀️"}</span>
+        <div className="hidden sm:flex items-center gap-2 text-text-muted">
+          <span>{weather.rainfall ? "\u{1F327}" : "\u2600\uFE0F"}</span>
           <span className="text-[10px]">{weather.track_temp}°C</span>
+          <span
+            className="text-[10px] text-text-muted/60"
+            title="Air temperature"
+          >
+            Air {weather.air_temp}°C
+          </span>
+          <span className="text-[10px] text-text-muted/60" title="Humidity">
+            {weather.humidity}%
+          </span>
+          {weather.wind_speed > 0 && (
+            <span className="text-[10px] text-text-muted/60" title="Wind speed">
+              {weather.wind_speed} km/h
+            </span>
+          )}
         </div>
       )}
     </div>

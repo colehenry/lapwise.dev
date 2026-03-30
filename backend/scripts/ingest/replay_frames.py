@@ -125,7 +125,8 @@ def extract_driver_telemetry(fastf1_session, track_rotation_rad, norm_params):
     Returns:
         dict: {driver_code: DataFrame with columns
             [t, x, y, speed, gear, drs,
-             compound_idx, tyre_life, lap, position]}
+             compound_idx, tyre_life, lap, position,
+             throttle, brake]}
     """
     all_laps = fastf1_session.laps
     if all_laps is None or len(all_laps) == 0:
@@ -189,12 +190,34 @@ def extract_driver_telemetry(fastf1_session, track_rotation_rad, norm_params):
                     speed = tel["Speed"].values if "Speed" in cols else zeros
                     gear = tel["nGear"].values if "nGear" in cols else zeros
                     drs = tel["DRS"].values if "DRS" in cols else zeros
+                    throttle = (
+                        tel["Throttle"].values
+                        if "Throttle" in cols
+                        else zeros
+                    )
+                    brake_raw = (
+                        tel["Brake"].values
+                        if "Brake" in cols
+                        else zeros
+                    )
 
                     # DRS: convert to binary (>=10 means open in FastF1)
                     drs_binary = np.where(
                         np.isnan(drs),
                         0,
                         np.where(drs >= 10, 1, 0),
+                    )
+
+                    # Throttle: 0-100, clamp and handle NaN
+                    throttle_clean = np.where(
+                        np.isnan(throttle), 0, np.clip(throttle, 0, 100)
+                    )
+
+                    # Brake: binary 0/1 (FastF1 gives bool or 0-100)
+                    brake_binary = np.where(
+                        np.isnan(brake_raw),
+                        0,
+                        np.where(brake_raw > 0, 1, 0),
                     )
 
                     df = pd.DataFrame(
@@ -209,6 +232,8 @@ def extract_driver_telemetry(fastf1_session, track_rotation_rad, norm_params):
                             "tyre_life": np.full(n, tyre_life),
                             "lap": np.full(n, lap_num),
                             "position": np.full(n, position),
+                            "throttle": throttle_clean,
+                            "brake": brake_binary,
                         }
                     )
 
@@ -289,7 +314,7 @@ def compute_normalization_params(fastf1_session, track_rotation_rad):
 
 def interpolate_frames(drivers_data, t_min, t_max):
     """
-    Interpolate all driver telemetry to uniform 25 FPS time grid.
+    Interpolate all driver telemetry to uniform 10 FPS time grid.
 
     Returns:
         tuple: (timeline array, dict of {driver_code:
@@ -320,6 +345,12 @@ def interpolate_frames(drivers_data, t_min, t_max):
         lap_interp = df["lap"].values[indices]
         position_interp = df["position"].values[indices]
 
+        # Throttle: linear interpolation (continuous 0-100)
+        throttle_interp = np.interp(timeline, t, df["throttle"].values)
+
+        # Brake: nearest-neighbor (binary 0/1)
+        brake_interp = df["brake"].values[indices]
+
         # Mask frames outside driver's telemetry range
         valid_mask = (timeline >= t[0]) & (timeline <= t[-1])
 
@@ -333,6 +364,8 @@ def interpolate_frames(drivers_data, t_min, t_max):
             "tyre_life": tyre_life_interp,
             "lap": lap_interp,
             "position": position_interp,
+            "throttle": throttle_interp,
+            "brake": brake_interp,
             "valid": valid_mask,
         }
 
@@ -344,7 +377,7 @@ def build_track_status_timeline(fastf1_session, timeline):
     Build per-frame safety car state from track status data.
 
     Status codes: 0=green, 1=yellow, 4=SC, 5=red, 6=VSC, 7=VSC ending
-    Returns: array of SC state per frame (0=none, 1=SC, 2=VSC)
+    Returns: array of SC state per frame (0=none, 1=SC, 2=VSC, 3=red flag)
     """
     n_frames = len(timeline)
     sc_state = np.zeros(n_frames, dtype=int)
@@ -371,6 +404,8 @@ def build_track_status_timeline(fastf1_session, timeline):
             status_code = events[event_idx][1]
             if status_code == "4":
                 current_sc = 1  # Safety Car
+            elif status_code == "5":
+                current_sc = 3  # Red Flag
             elif status_code == "6":
                 current_sc = 2  # VSC
             elif status_code in ("1", "7"):
@@ -543,6 +578,99 @@ def get_driver_metadata(fastf1_session, year):
     return drivers
 
 
+def extract_corners(fastf1_session, track_rotation_rad, norm_params):
+    """
+    Extract corner positions from circuit_info and normalize
+    to match the track polyline coordinate space.
+
+    Returns:
+        list of dicts: [{x, y, number, letter}] or empty list
+    """
+    try:
+        circuit_info = fastf1_session.get_circuit_info()
+        corners_df = circuit_info.corners
+        if corners_df is None or len(corners_df) == 0:
+            return []
+
+        xy = corners_df.loc[:, ("X", "Y")].to_numpy()
+        xy_rotated = rotate(xy, angle=track_rotation_rad)
+        xy_norm = _apply_normalization(xy_rotated, norm_params)
+
+        corners = []
+        for i, (_, row) in enumerate(corners_df.iterrows()):
+            corners.append(
+                {
+                    "x": round(float(xy_norm[i, 0]), 1),
+                    "y": round(float(xy_norm[i, 1]), 1),
+                    "number": int(row.get("Number", 0)),
+                    "letter": str(row.get("Letter", "")),
+                }
+            )
+        return corners
+
+    except Exception as e:
+        print(f"    ⚠️  Could not extract corners: {e}")
+        return []
+
+
+def extract_drs_zones(fastf1_session, track_rotation_rad, norm_params):
+    """
+    Extract DRS zones from the fastest lap telemetry.
+    Scans for consecutive samples where DRS >= 10, clusters them
+    into zone polyline segments.
+
+    Returns:
+        list of zones, each a list of [x, y] pairs, or empty list
+    """
+    try:
+        fastest_lap = fastf1_session.laps.pick_fastest()
+        if fastest_lap is None:
+            return []
+
+        tel = fastest_lap.get_telemetry()
+        if "DRS" not in tel.columns:
+            return []
+
+        drs_vals = tel["DRS"].values
+        xy = tel.loc[:, ("X", "Y")].to_numpy()
+        xy_rotated = rotate(xy, angle=track_rotation_rad)
+        xy_norm = _apply_normalization(xy_rotated, norm_params)
+
+        # Find contiguous DRS-open segments (DRS >= 10)
+        zones = []
+        current_zone = []
+
+        for i in range(len(drs_vals)):
+            val = drs_vals[i]
+            if not np.isnan(val) and val >= 10:
+                current_zone.append(
+                    [round(float(xy_norm[i, 0]), 1), round(float(xy_norm[i, 1]), 1)]
+                )
+            else:
+                if len(current_zone) >= 5:
+                    # Subsample to reduce blob size (keep every 5th point + endpoints)
+                    sampled = [current_zone[0]]
+                    for j in range(5, len(current_zone) - 1, 5):
+                        sampled.append(current_zone[j])
+                    sampled.append(current_zone[-1])
+                    zones.append(sampled)
+                current_zone = []
+
+        # Handle zone that wraps across lap boundary
+        if len(current_zone) >= 5:
+            sampled = [current_zone[0]]
+            for j in range(5, len(current_zone) - 1, 5):
+                sampled.append(current_zone[j])
+            sampled.append(current_zone[-1])
+            zones.append(sampled)
+
+        return zones
+
+    except Exception as e:
+        print(f"    ⚠️  Could not extract DRS zones: {e}")
+        return []
+
+
 def generate_replay_data(fastf1_session, session_id, season, round_num, event_name):
     """
     Generate complete replay data for a race session.
@@ -568,12 +696,34 @@ def generate_replay_data(fastf1_session, session_id, season, round_num, event_na
 
     print(f"    Track: {len(polyline)} points")
 
-    # Step 2: Compute normalization params
+    # Step 2: Compute normalization params + circuit length
     track_rotation_rad = rotation_deg / 180 * np.pi
     norm_params = compute_normalization_params(fastf1_session, track_rotation_rad)
     if norm_params is None:
         print("  ❌ Could not compute normalization params")
         return None, None
+
+    # Extract circuit length from fastest lap telemetry Distance column
+    circuit_length_m = None
+    try:
+        fastest_lap = fastf1_session.laps.pick_fastest()
+        if fastest_lap is not None:
+            tel = fastest_lap.get_telemetry()
+            if "Distance" in tel.columns and len(tel) > 0:
+                circuit_length_m = round(float(tel["Distance"].max()), 1)
+                print(f"    Circuit length: {circuit_length_m:.0f}m")
+    except Exception as e:
+        print(f"    ⚠️  Could not extract circuit length: {e}")
+
+    # Step 2b: Extract corner positions
+    corners = extract_corners(fastf1_session, track_rotation_rad, norm_params)
+    print(f"    Corners: {len(corners)}")
+
+    # Step 2c: Extract DRS zones (pre-2026 only)
+    drs_zones = []
+    if season < 2026:
+        drs_zones = extract_drs_zones(fastf1_session, track_rotation_rad, norm_params)
+        print(f"    DRS zones: {len(drs_zones)}")
 
     # Step 3: Extract driver telemetry
     drivers_data = extract_driver_telemetry(
@@ -653,6 +803,8 @@ def generate_replay_data(fastf1_session, session_id, season, round_num, event_na
             tyre_life = int(interp["tyre_life"][i])
             lap = int(interp["lap"][i])
             pos = int(interp["position"][i])
+            throttle = round(float(interp["throttle"][i]), 1)
+            brake = int(interp["brake"][i])
 
             d[driver_code] = [
                 x,
@@ -664,6 +816,8 @@ def generate_replay_data(fastf1_session, session_id, season, round_num, event_na
                 tyre_life,
                 lap,
                 pos,
+                throttle,
+                brake,
             ]
             max_lap = max(max_lap, lap)
 
@@ -689,10 +843,13 @@ def generate_replay_data(fastf1_session, session_id, season, round_num, event_na
             "fps": FPS,
             "total_duration_seconds": round(float(t_max - t_min), 2),
             "total_laps": total_laps,
+            "circuit_length_m": circuit_length_m,
         },
         "track": {
             "polyline": polyline,
             "rotation_deg": rotation_deg,
+            "corners": corners,
+            "drs_zones": drs_zones,
         },
         "drivers": driver_meta,
         "frames": frames,
