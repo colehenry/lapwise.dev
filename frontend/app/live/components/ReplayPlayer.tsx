@@ -11,7 +11,10 @@ import Leaderboard from "./Leaderboard";
 import PlaybackControls from "./PlaybackControls";
 import RaceInfo from "./RaceInfo";
 import TelemetryPanel from "./TelemetryPanel";
-import TrackCanvas from "./TrackCanvas";
+import TrackCanvas, {
+  DriverTooltip,
+  type TrackTooltipData,
+} from "./TrackCanvas";
 
 interface ReplayPlayerProps {
   season: number;
@@ -49,6 +52,10 @@ export default function ReplayPlayer({
   const [selectedDriver, setSelectedDriver] = useState<string | null>(null);
   const [compareDriver, setCompareDriver] = useState<string | null>(null);
   const [feedCollapsed, setFeedCollapsed] = useState(false);
+  const [trackTooltip, setTrackTooltip] = useState<TrackTooltipData | null>(
+    null,
+  );
+  const trackCardRef = useRef<HTMLDivElement>(null);
 
   // Current weather (tracked as weather only appears on change frames)
   const currentWeatherRef = useRef<ReplayWeather | null>(null);
@@ -372,7 +379,10 @@ export default function ReplayPlayer({
         {/* Top row: Track + Feed | Leaderboard — shared fixed height */}
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Track card with race feed */}
-          <div className="flex-1 min-w-0 lg:h-[462px]">
+          <div
+            className="flex-1 min-w-0 lg:h-[462px] relative"
+            ref={trackCardRef}
+          >
             <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden h-full flex flex-col">
               <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden shrink-0">
                 <TrianglePattern id="replay-track-triangles" />
@@ -392,6 +402,7 @@ export default function ReplayPlayer({
                     scState={currentFrame?.sc ?? 0}
                     drsEnabled={drsEnabled}
                     onSelectDriver={setSelectedDriver}
+                    onTooltipChange={setTrackTooltip}
                   />
                 </div>
                 {/* Race feed panel — collapsible */}
@@ -436,6 +447,17 @@ export default function ReplayPlayer({
                 )}
               </div>
             </div>
+            {/* Driver tooltip — rendered outside card overflow to avoid clipping */}
+            {trackTooltip && (
+              <DriverTooltip
+                x={trackTooltip.screenX}
+                y={trackTooltip.screenY + 40}
+                code={trackTooltip.code}
+                driver={trackTooltip.driver}
+                data={trackTooltip.data}
+                containerWidth={trackCardRef.current?.offsetWidth ?? 800}
+              />
+            )}
           </div>
 
           {/* Sidebar — leaderboard: same fixed height as track card */}
