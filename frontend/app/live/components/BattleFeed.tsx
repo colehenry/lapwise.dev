@@ -181,7 +181,12 @@ function computeBattleEvents(replayData: ReplayData): BattleEvent[] {
         id: `sc-${eventId++}`,
         t: frame.t,
         lap: frame.lap,
-        type: frame.sc === 3 ? "red_flag" : "safety_car",
+        type:
+          frame.sc === 0
+            ? "green_flag"
+            : frame.sc === 3
+              ? "red_flag"
+              : "safety_car",
         message: scLabels[frame.sc] ?? "TRACK STATUS CHANGE",
       });
     }
@@ -261,6 +266,11 @@ const EVENT_STYLES: Record<
     icon: "⚠",
     accent: "text-yellow-400",
     bg: "border-l-yellow-500",
+  },
+  green_flag: {
+    icon: "🟢",
+    accent: "text-green-400",
+    bg: "border-l-green-500",
   },
   red_flag: {
     icon: "🛑",

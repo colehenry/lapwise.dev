@@ -8,7 +8,7 @@ import { fetchReplayData } from "@/lib/api";
 import type { BattleEvent, ReplayData, ReplayWeather } from "@/lib/types";
 import BattleFeed from "./BattleFeed";
 import Leaderboard from "./Leaderboard";
-import PlaybackControls from "./PlaybackControls";
+import { PlaybackHeader, PlaybackTimeline } from "./PlaybackControls";
 import RaceInfo from "./RaceInfo";
 import TelemetryPanel from "./TelemetryPanel";
 import TrackCanvas, {
@@ -52,6 +52,7 @@ export default function ReplayPlayer({
   const [selectedDriver, setSelectedDriver] = useState<string | null>(null);
   const [compareDriver, setCompareDriver] = useState<string | null>(null);
   const [feedCollapsed, setFeedCollapsed] = useState(false);
+  const [showCorners, setShowCorners] = useState(true);
   const [trackTooltip, setTrackTooltip] = useState<TrackTooltipData | null>(
     null,
   );
@@ -384,11 +385,25 @@ export default function ReplayPlayer({
             ref={trackCardRef}
           >
             <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden h-full flex flex-col">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden shrink-0">
+              {/* Playback header */}
+              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-3 flex items-center overflow-hidden shrink-0">
                 <TrianglePattern id="replay-track-triangles" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Track Map
-                </span>
+                <div className="relative z-10 w-full">
+                  <PlaybackHeader
+                    isPlaying={isPlaying}
+                    playbackSpeed={playbackSpeed}
+                    currentLap={currentFrame?.lap ?? 0}
+                    totalLaps={replayData.metadata.total_laps}
+                    onTogglePlay={handleTogglePlay}
+                    onSpeedChange={setPlaybackSpeed}
+                    onSeek={handleSeek}
+                    speedOptions={SPEED_OPTIONS}
+                    lapBoundaries={lapBoundaries}
+                    showCorners={showCorners}
+                    hasCorners={(replayData.track.corners?.length ?? 0) > 0}
+                    onToggleCorners={() => setShowCorners((s) => !s)}
+                  />
+                </div>
               </div>
               <div className="flex flex-1 min-h-0">
                 {/* Track canvas */}
@@ -401,6 +416,7 @@ export default function ReplayPlayer({
                     highlightedDriver={highlightedDriver}
                     scState={currentFrame?.sc ?? 0}
                     drsEnabled={drsEnabled}
+                    showCorners={showCorners}
                     onSelectDriver={setSelectedDriver}
                     onTooltipChange={setTrackTooltip}
                   />
@@ -446,6 +462,15 @@ export default function ReplayPlayer({
                   </div>
                 )}
               </div>
+              {/* Timeline bar at bottom of track card */}
+              <PlaybackTimeline
+                currentFrame={frameIndex}
+                totalFrames={totalFrames}
+                currentLap={currentFrame?.lap ?? 0}
+                onSeek={handleSeek}
+                lapBoundaries={lapBoundaries}
+                timelineEvents={timelineEvents}
+              />
             </div>
             {/* Driver tooltip — rendered outside card overflow to avoid clipping */}
             {trackTooltip && (
@@ -485,22 +510,6 @@ export default function ReplayPlayer({
             />
           </div>
         </div>
-
-        {/* Full-width controls below the row */}
-        <PlaybackControls
-          isPlaying={isPlaying}
-          playbackSpeed={playbackSpeed}
-          currentFrame={frameIndex}
-          totalFrames={totalFrames}
-          currentLap={currentFrame?.lap ?? 0}
-          totalLaps={replayData.metadata.total_laps}
-          onTogglePlay={handleTogglePlay}
-          onSpeedChange={setPlaybackSpeed}
-          onSeek={handleSeek}
-          speedOptions={SPEED_OPTIONS}
-          lapBoundaries={lapBoundaries}
-          timelineEvents={timelineEvents}
-        />
 
         {/* Full-width telemetry panel */}
         {selectedDriver && (
