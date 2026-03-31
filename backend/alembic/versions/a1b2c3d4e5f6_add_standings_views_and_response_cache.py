@@ -11,15 +11,16 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision: str = 'a1b2c3d4e5f6'
-down_revision: Union[str, None] = '83f77547ae09'
+revision: str = "a1b2c3d4e5f6"
+down_revision: Union[str, None] = "83f77547ae09"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
     # Driver standings view — aggregates points/wins/podiums per driver per year
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE VIEW v_driver_standings AS
         WITH driver_year_team AS (
             SELECT DISTINCT ON (s.year, sr.driver_id)
@@ -61,10 +62,12 @@ def upgrade() -> None:
         FROM points_agg pa
         JOIN drivers d ON d.id = pa.driver_id
         LEFT JOIN driver_year_team dyt ON dyt.year = pa.year AND dyt.driver_id = pa.driver_id
-    """)
+    """
+    )
 
     # Constructor standings view — aggregates team points/wins per year
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE VIEW v_constructor_standings AS
         SELECT
             s.year,
@@ -80,22 +83,28 @@ def upgrade() -> None:
         JOIN teams t ON t.id = sr.team_id
         WHERE s.session_type = 'race'
         GROUP BY s.year, t.id, t.name, t.team_color
-    """)
+    """
+    )
 
     # Response cache table — stores pre-generated AI answers for suggestion questions
     op.create_table(
-        'ai_response_cache',
-        sa.Column('question_hash', sa.Text(), nullable=False),
-        sa.Column('response_text', sa.Text(), nullable=False),
-        sa.Column('charts_json', postgresql.JSONB(), nullable=True),
-        sa.Column('queries_json', postgresql.JSONB(), nullable=True),
-        sa.Column('follow_ups_json', postgresql.JSONB(), nullable=True),
-        sa.Column('cached_at', sa.DateTime(timezone=True), server_default=sa.text('NOW()'), nullable=False),
-        sa.PrimaryKeyConstraint('question_hash')
+        "ai_response_cache",
+        sa.Column("question_hash", sa.Text(), nullable=False),
+        sa.Column("response_text", sa.Text(), nullable=False),
+        sa.Column("charts_json", postgresql.JSONB(), nullable=True),
+        sa.Column("queries_json", postgresql.JSONB(), nullable=True),
+        sa.Column("follow_ups_json", postgresql.JSONB(), nullable=True),
+        sa.Column(
+            "cached_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("NOW()"),
+            nullable=False,
+        ),
+        sa.PrimaryKeyConstraint("question_hash"),
     )
 
 
 def downgrade() -> None:
-    op.drop_table('ai_response_cache')
+    op.drop_table("ai_response_cache")
     op.execute("DROP VIEW IF EXISTS v_constructor_standings")
     op.execute("DROP VIEW IF EXISTS v_driver_standings")

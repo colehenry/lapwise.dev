@@ -190,16 +190,8 @@ def extract_driver_telemetry(fastf1_session, track_rotation_rad, norm_params):
                     speed = tel["Speed"].values if "Speed" in cols else zeros
                     gear = tel["nGear"].values if "nGear" in cols else zeros
                     drs = tel["DRS"].values if "DRS" in cols else zeros
-                    throttle = (
-                        tel["Throttle"].values
-                        if "Throttle" in cols
-                        else zeros
-                    )
-                    brake_raw = (
-                        tel["Brake"].values
-                        if "Brake" in cols
-                        else zeros
-                    )
+                    throttle = tel["Throttle"].values if "Throttle" in cols else zeros
+                    brake_raw = tel["Brake"].values if "Brake" in cols else zeros
 
                     # DRS: convert to binary (>=10 means open in FastF1)
                     drs_binary = np.where(

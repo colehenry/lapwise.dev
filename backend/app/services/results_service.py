@@ -2278,9 +2278,7 @@ class ResultsService:
                     )
                 )
 
-        drivers = [
-            DriverLapDistribution(**data) for data in drivers_dict.values()
-        ]
+        drivers = [DriverLapDistribution(**data) for data in drivers_dict.values()]
 
         return LapDistributionResponse(
             year=season,

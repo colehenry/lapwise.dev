@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import LivePage from "./LivePage";
 
 export const metadata = {
@@ -7,5 +8,9 @@ export const metadata = {
 };
 
 export default function LivePageRoute() {
-  return <LivePage />;
+  return (
+    <Suspense>
+      <LivePage />
+    </Suspense>
+  );
 }

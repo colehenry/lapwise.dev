@@ -4,9 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import JumpToRace from "@/components/JumpToRace";
 import PageHeader from "@/components/PageHeader";
-import { GridPattern } from "@/components/Patterns";
 import ExpandButton from "@/components/ui/ExpandButton";
 import Skeleton from "@/components/ui/Skeleton";
 import SortPills from "@/components/ui/SortPills";
@@ -195,8 +193,8 @@ export default function DriversPage() {
       drivers = drivers.filter(
         (d) =>
           d.full_name.toLowerCase().includes(q) ||
-          (d.driver_code && d.driver_code.toLowerCase().includes(q)) ||
-          (d.current_team && d.current_team.toLowerCase().includes(q)) ||
+          d.driver_code?.toLowerCase().includes(q) ||
+          d.current_team?.toLowerCase().includes(q) ||
           (d.country_code &&
             getCountryName(d.country_code).toLowerCase().includes(q)),
       );
@@ -233,7 +231,7 @@ export default function DriversPage() {
 
   useEffect(() => {
     setIsExpanded(false);
-  }, [searchQuery, sortKey, selectedYear]);
+  }, []);
 
   const visibleDrivers = isExpanded
     ? filteredDrivers

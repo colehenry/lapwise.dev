@@ -395,25 +395,33 @@ export default function ChatMessage({
                       const rows: React.ReactNode[][] = [];
 
                       try {
-                        const theadRows = (thead as React.ReactElement)?.props
+                        type ElWithChildren = React.ReactElement<{
+                          children?: React.ReactNode;
+                        }>;
+                        const theadRows = (thead as ElWithChildren)?.props
                           ?.children;
                         const headerRow = Array.isArray(theadRows)
                           ? theadRows[0]
                           : theadRows;
-                        const ths = headerRow?.props?.children;
+                        const ths = (headerRow as ElWithChildren)?.props
+                          ?.children;
                         for (const th of Array.isArray(ths) ? ths : [ths]) {
-                          headers.push(th?.props?.children ?? "");
+                          headers.push(
+                            (th as ElWithChildren)?.props?.children ?? "",
+                          );
                         }
 
-                        const tbodyRows = (tbody as React.ReactElement)?.props
+                        const tbodyRows = (tbody as ElWithChildren)?.props
                           ?.children;
                         for (const tr of Array.isArray(tbodyRows)
                           ? tbodyRows
                           : [tbodyRows]) {
-                          const tds = tr?.props?.children;
+                          const tds = (tr as ElWithChildren)?.props?.children;
                           const row: React.ReactNode[] = [];
                           for (const td of Array.isArray(tds) ? tds : [tds]) {
-                            row.push(td?.props?.children ?? "");
+                            row.push(
+                              (td as ElWithChildren)?.props?.children ?? "",
+                            );
                           }
                           rows.push(row);
                         }

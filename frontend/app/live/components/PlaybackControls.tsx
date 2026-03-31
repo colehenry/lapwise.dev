@@ -158,7 +158,7 @@ export function PlaybackHeader({
 export function PlaybackTimeline({
   currentFrame,
   totalFrames,
-  currentLap,
+  currentLap: _currentLap,
   onSeek,
   lapBoundaries,
   timelineEvents,

@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import PostCard from "@/components/discussions/PostCard";
 import { GridPattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import TiltCard from "@/components/ui/TiltCard";
@@ -150,6 +149,7 @@ export default function HomeDiscussionSection() {
                           className="w-4 h-4"
                           fill="currentColor"
                           viewBox="0 0 24 24"
+                          aria-hidden="true"
                         >
                           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z" />
                         </svg>

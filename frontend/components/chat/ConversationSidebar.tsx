@@ -46,7 +46,6 @@ export default function ConversationSidebar({
     e.stopPropagation();
     setEditingId(conv.id);
     setEditTitle(conv.title || "");
-    setConfirmDelete(null);
   }
 
   function commitEdit(id: string) {

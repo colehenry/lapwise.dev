@@ -49,7 +49,7 @@ export default function TrackCanvas({
   frame,
   selectedDriver,
   highlightedDriver,
-  scState = 0,
+  scState: _scState = 0,
   drsEnabled = false,
   showCorners = true,
   onSelectDriver,
