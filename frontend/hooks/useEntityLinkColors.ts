@@ -28,9 +28,9 @@ async function fetchEntityLinkColors(): Promise<EntityLinkColors> {
     }
   }
 
-  for (const constructor of data.constructors ?? []) {
-    if (constructor.team_name && constructor.team_color) {
-      teamColors.set(constructor.team_name, `#${constructor.team_color}`);
+  for (const team of data.constructors ?? []) {
+    if (team.team_name && team.team_color) {
+      teamColors.set(team.team_name, `#${team.team_color}`);
     }
   }
 

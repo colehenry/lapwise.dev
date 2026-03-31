@@ -454,7 +454,7 @@ export default function EntityHistoryGraph({
                 {raceChartData.map(
                   (entry: Record<string, unknown>, index: number) => (
                     <Cell
-                      key={`race-bar-${index}`}
+                      key={`race-bar-${String(entry.round ?? index)}`}
                       fill={
                         entry.team_color
                           ? `#${entry.team_color}`

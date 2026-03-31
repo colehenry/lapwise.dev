@@ -116,7 +116,7 @@ async function generateFollowUps(
       system:
         "You generate follow-up question suggestions for an F1 analytics chatbot. Return exactly 3 short, specific, actionable questions as a JSON array of strings. No explanation, just the array.",
       prompt: `User asked: "${question}"\n\nAnswer summary: "${answer.slice(0, 800)}"\n\nGenerate 3 follow-up questions as a JSON array.`,
-      maxTokens: 200,
+      maxOutputTokens: 200,
       abortSignal: timeoutController.signal,
     });
     clearTimeout(timeoutId);
