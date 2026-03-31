@@ -760,6 +760,7 @@ export type BattleEventType =
   | "overtake"
   | "pit_stop"
   | "safety_car"
+  | "green_flag"
   | "red_flag"
   | "weather"
   | "drs"

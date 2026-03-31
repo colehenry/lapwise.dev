@@ -27,6 +27,7 @@ interface TrackCanvasProps {
   highlightedDriver?: string | null;
   scState?: number;
   drsEnabled?: boolean;
+  showCorners?: boolean;
   onSelectDriver: (code: string | null) => void;
   onTooltipChange?: (tooltip: TrackTooltipData | null) => void;
 }
@@ -50,6 +51,7 @@ export default function TrackCanvas({
   highlightedDriver,
   scState = 0,
   drsEnabled = false,
+  showCorners = true,
   onSelectDriver,
   onTooltipChange,
 }: TrackCanvasProps) {
@@ -57,9 +59,7 @@ export default function TrackCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
   const trackPathRef = useRef<Path2D | null>(null);
-  const [showCorners, setShowCorners] = useState(true);
   const hoveredDriverRef = useRef<string | null>(null);
-  const [_hoveredDriver, setHoveredDriver] = useState<string | null>(null);
 
   // Compute bounding box of all track elements
   const bounds = useMemo(() => {
@@ -362,17 +362,16 @@ export default function TrackCanvas({
       }
 
       hoveredDriverRef.current = closest;
-      setHoveredDriver(closest);
 
-      if (closest && frame.d[closest] && drivers[closest]) {
-        const driverData = frame.d[closest];
-        const screenX = driverData[0] * scale + offsetX;
-        const screenY = driverData[1] * scale + offsetY;
+      // Resolve tooltip: hovered driver takes priority, then selected driver
+      const tooltipCode = closest ?? selectedDriver;
+      if (tooltipCode && frame.d[tooltipCode] && drivers[tooltipCode]) {
+        const driverData = frame.d[tooltipCode];
         onTooltipChange?.({
-          screenX,
-          screenY,
-          code: closest,
-          driver: drivers[closest],
+          screenX: driverData[0] * scale + offsetX,
+          screenY: driverData[1] * scale + offsetY,
+          code: tooltipCode,
+          driver: drivers[tooltipCode],
           data: driverData,
         });
       } else {
@@ -381,7 +380,7 @@ export default function TrackCanvas({
 
       canvasRef.current.style.cursor = closest ? "pointer" : "default";
     },
-    [frame, dimensions, getTransform, drivers, onTooltipChange],
+    [frame, dimensions, getTransform, drivers, selectedDriver, onTooltipChange],
   );
 
   const handleClick = useCallback(() => {
@@ -398,25 +397,54 @@ export default function TrackCanvas({
 
   const handleMouseLeave = useCallback(() => {
     hoveredDriverRef.current = null;
-    setHoveredDriver(null);
-    onTooltipChange?.(null);
-  }, [onTooltipChange]);
+    // Fall back to selected driver tooltip
+    if (selectedDriver && frame?.d[selectedDriver] && drivers[selectedDriver]) {
+      const { scale, offsetX, offsetY } = getTransform(
+        dimensions.width,
+        dimensions.height,
+      );
+      const driverData = frame.d[selectedDriver];
+      onTooltipChange?.({
+        screenX: driverData[0] * scale + offsetX,
+        screenY: driverData[1] * scale + offsetY,
+        code: selectedDriver,
+        driver: drivers[selectedDriver],
+        data: driverData,
+      });
+    } else {
+      onTooltipChange?.(null);
+    }
+  }, [
+    selectedDriver,
+    frame,
+    drivers,
+    dimensions,
+    getTransform,
+    onTooltipChange,
+  ]);
 
-  // Emit selected driver tooltip when no hover (follows driver position each frame)
+  // Update selected driver tooltip position on frame changes (playback)
+  const lastEmittedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (hoveredDriverRef.current) return; // hover takes priority
+    if (hoveredDriverRef.current) return;
     if (
       !selectedDriver ||
       !frame?.d[selectedDriver] ||
       !drivers[selectedDriver]
-    )
+    ) {
+      if (lastEmittedRef.current) {
+        lastEmittedRef.current = null;
+        onTooltipChange?.(null);
+      }
       return;
+    }
 
     const { scale, offsetX, offsetY } = getTransform(
       dimensions.width,
       dimensions.height,
     );
     const driverData = frame.d[selectedDriver];
+    lastEmittedRef.current = selectedDriver;
     onTooltipChange?.({
       screenX: driverData[0] * scale + offsetX,
       screenY: driverData[1] * scale + offsetY,
@@ -443,22 +471,6 @@ export default function TrackCanvas({
         onClick={handleClick}
         onMouseLeave={handleMouseLeave}
       />
-      {/* Track overlay controls */}
-      {track.corners?.length > 0 && (
-        <div className="absolute top-2 right-2 flex gap-1">
-          <button
-            type="button"
-            onClick={() => setShowCorners((s) => !s)}
-            className={`px-2 py-0.5 rounded-sm text-[9px] font-mono transition-colors ${
-              showCorners
-                ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
-                : "bg-bg-primary/60 text-text-muted border border-border-primary/40"
-            }`}
-          >
-            Corners
-          </button>
-        </div>
-      )}
     </div>
   );
 }
