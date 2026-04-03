@@ -37,11 +37,14 @@ const DRIVER_RADIUS = 6;
 const SELECTED_RADIUS = 9;
 const TRACK_WIDTH = 8;
 const TRACK_COLOR = "rgba(255, 255, 255, 0.12)";
+const TRACK_GLOW_COLOR = "rgba(255, 255, 255, 0.04)";
 const SF_LINE_COLOR = "rgba(255, 255, 255, 0.5)";
 const DRS_ZONE_COLOR_ACTIVE = "rgba(0, 220, 80, 0.35)";
 const DRS_ZONE_COLOR_INACTIVE = "rgba(0, 220, 80, 0.10)";
 const CORNER_LABEL_COLOR = "rgba(255, 255, 255, 0.35)";
 const CORNER_LABEL_FONT_SIZE = 9;
+const GRID_SPACING = 40;
+const GRID_COLOR = "rgba(255, 255, 255, 0.02)";
 
 export default function TrackCanvas({
   track,
@@ -60,6 +63,10 @@ export default function TrackCanvas({
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
   const trackPathRef = useRef<Path2D | null>(null);
   const hoveredDriverRef = useRef<string | null>(null);
+
+  // Track position changes for pulse animation
+  const prevPositionsRef = useRef<Record<string, number>>({});
+  const pulsingDriversRef = useRef<Record<string, number>>({});
 
   // Compute bounding box of all track elements
   const bounds = useMemo(() => {
@@ -154,6 +161,29 @@ export default function TrackCanvas({
     return () => observer.disconnect();
   }, []);
 
+  // Detect position changes for pulse animation
+  useEffect(() => {
+    if (!frame) return;
+    const now = Date.now();
+    const prev = prevPositionsRef.current;
+    const pulsing = pulsingDriversRef.current;
+
+    for (const [code, data] of Object.entries(frame.d)) {
+      const pos = data[8];
+      if (prev[code] !== undefined && prev[code] !== pos && pos > 0) {
+        pulsing[code] = now;
+      }
+      prev[code] = pos;
+    }
+
+    // Clean up expired pulses (>1.5s)
+    for (const code of Object.keys(pulsing)) {
+      if (now - pulsing[code] > 1500) {
+        delete pulsing[code];
+      }
+    }
+  }, [frame]);
+
   // Draw
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -169,8 +199,28 @@ export default function TrackCanvas({
     canvas.height = height * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Clear
-    ctx.clearRect(0, 0, width, height);
+    // Background gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+    bgGrad.addColorStop(0, "#080809");
+    bgGrad.addColorStop(1, "#040404");
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    // Subtle grid pattern
+    ctx.strokeStyle = GRID_COLOR;
+    ctx.lineWidth = 1;
+    for (let gx = 0; gx < width; gx += GRID_SPACING) {
+      ctx.beginPath();
+      ctx.moveTo(gx, 0);
+      ctx.lineTo(gx, height);
+      ctx.stroke();
+    }
+    for (let gy = 0; gy < height; gy += GRID_SPACING) {
+      ctx.beginPath();
+      ctx.moveTo(0, gy);
+      ctx.lineTo(width, gy);
+      ctx.stroke();
+    }
 
     const { scale, offsetX, offsetY } = getTransform(width, height);
 
@@ -179,12 +229,25 @@ export default function TrackCanvas({
     ctx.translate(offsetX, offsetY);
     ctx.scale(scale, scale);
 
-    // Draw track polyline
+    // Draw track polyline with outer glow
     if (trackPathRef.current) {
-      ctx.strokeStyle = TRACK_COLOR;
-      ctx.lineWidth = TRACK_WIDTH / scale;
+      // Outer glow layer
+      ctx.strokeStyle = TRACK_GLOW_COLOR;
+      ctx.lineWidth = (TRACK_WIDTH + 12) / scale;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
+      ctx.stroke(trackPathRef.current);
+
+      // Team-colored glow when a driver is selected
+      if (selectedDriver && drivers[selectedDriver]) {
+        ctx.strokeStyle = `${`#${drivers[selectedDriver].color}`}08`;
+        ctx.lineWidth = (TRACK_WIDTH + 20) / scale;
+        ctx.stroke(trackPathRef.current);
+      }
+
+      // Main track line
+      ctx.strokeStyle = TRACK_COLOR;
+      ctx.lineWidth = TRACK_WIDTH / scale;
       ctx.stroke(trackPathRef.current);
     }
 
@@ -243,12 +306,19 @@ export default function TrackCanvas({
     // Draw drivers
     if (frame) {
       const driverEntries = Object.entries(frame.d);
+      const now = Date.now();
+      const pulsing = pulsingDriversRef.current;
 
       // Draw non-selected drivers first
       for (const [code, data] of driverEntries) {
         if (code === selectedDriver || code === hoveredDriverRef.current)
           continue;
-        drawDriver(ctx, code, data, drivers[code], scale, false);
+        const pulseStart = pulsing[code];
+        const pulseProgress =
+          pulseStart !== undefined
+            ? Math.min((now - pulseStart) / 1500, 1)
+            : undefined;
+        drawDriver(ctx, code, data, drivers[code], scale, false, pulseProgress);
       }
 
       // Draw highlighted driver (from battle events)
@@ -503,16 +573,28 @@ function drawDriver(
   info: ReplayDriverInfo | undefined,
   scale: number,
   isHighlighted: boolean,
+  pulseProgress?: number,
 ) {
   const [x, y] = data;
   const color = info ? `#${info.color}` : "#999";
   const radius = (isHighlighted ? SELECTED_RADIUS : DRIVER_RADIUS) / scale;
 
-  // Glow for highlighted
-  if (isHighlighted) {
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 12 / scale;
+  // Pulse ring on position change
+  if (pulseProgress !== undefined && pulseProgress < 1) {
+    const pulseRadius = radius + (12 / scale) * pulseProgress;
+    const pulseAlpha = 0.6 * (1 - pulseProgress);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2 / scale;
+    ctx.globalAlpha = pulseAlpha;
+    ctx.beginPath();
+    ctx.arc(x, y, pulseRadius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
   }
+
+  // Team color outer glow (always on)
+  ctx.shadowColor = color;
+  ctx.shadowBlur = (isHighlighted ? 14 : 6) / scale;
 
   ctx.fillStyle = color;
   ctx.beginPath();

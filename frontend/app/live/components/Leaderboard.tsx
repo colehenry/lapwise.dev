@@ -15,6 +15,8 @@ import type {
 interface LeaderboardProps {
   drivers: Record<string, ReplayDriverInfo>;
   frame: ReplayFrame | undefined;
+  allFrames: ReplayFrame[];
+  frameIndex: number;
   track: ReplayTrack;
   metadata: ReplayMetadata;
   selectedDriver: string | null;
@@ -117,9 +119,8 @@ function computeGaps(
 
   for (let i = 1; i < sorted.length; i++) {
     const driverLap = sorted[i].data[7];
-    const driverPos = sorted[i].data[8];
 
-    if (driverPos === 0) {
+    if (driverLap <= 0) {
       gaps.push(null);
       continue;
     }
@@ -159,9 +160,18 @@ function computeGaps(
   return gaps;
 }
 
+/** Precomputed lap completion: { frameIndex, driver, lapTime } sorted by frame index */
+interface LapCompletion {
+  frameIdx: number;
+  driver: string;
+  lapTime: number;
+}
+
 export default function Leaderboard({
   drivers,
   frame,
+  allFrames,
+  frameIndex,
   track,
   metadata,
   selectedDriver,
@@ -177,19 +187,92 @@ export default function Leaderboard({
   // Use actual circuit length from metadata, fallback to 5000m
   const circuitLengthM = metadata.circuit_length_m ?? 5000;
 
+  // Compute grid positions from lap 1 start
+  const gridPositions = useMemo(() => {
+    const grid: Record<string, number> = {};
+    for (const f of allFrames) {
+      for (const [code, data] of Object.entries(f.d)) {
+        if (data[8] > 0 && !(code in grid)) {
+          grid[code] = data[8];
+        }
+      }
+      if (Object.keys(grid).length >= Object.keys(f.d).length) break;
+    }
+    return grid;
+  }, [allFrames]);
+
+  // Precompute all lap completions once (sorted by frame index)
+  const lapCompletions = useMemo(() => {
+    const lapStarts: Record<
+      string,
+      Record<number, { t: number; fi: number }>
+    > = {};
+    const completions: LapCompletion[] = [];
+
+    for (let fi = 0; fi < allFrames.length; fi++) {
+      const f = allFrames[fi];
+      for (const [code, data] of Object.entries(f.d)) {
+        const lap = data[7];
+        if (lap <= 0) continue;
+        if (!lapStarts[code]) lapStarts[code] = {};
+        if (!(lap in lapStarts[code])) {
+          lapStarts[code][lap] = { t: f.t, fi };
+          const prev = lapStarts[code][lap - 1];
+          if (prev !== undefined && lap > 1) {
+            const lapTime = f.t - prev.t;
+            if (lapTime > 10) {
+              completions.push({ frameIdx: fi, driver: code, lapTime });
+            }
+          }
+        }
+      }
+    }
+    return completions;
+  }, [allFrames]);
+
+  // Derive current fastest lap holder from precomputed data + current frame index
+  const fastestLapDriver = useMemo(() => {
+    let bestDriver: string | null = null;
+    let bestTime = Infinity;
+    for (const lc of lapCompletions) {
+      if (lc.frameIdx > frameIndex) break;
+      if (lc.lapTime < bestTime) {
+        bestTime = lc.lapTime;
+        bestDriver = lc.driver;
+      }
+    }
+    return bestDriver;
+  }, [lapCompletions, frameIndex]);
+
   if (!frame) return null;
 
-  // Sort drivers by position
-  const sorted = Object.entries(frame.d)
-    .map(([code, data]) => ({ code, data }))
-    .sort((a, b) => {
-      const posA = a.data[8];
-      const posB = b.data[8];
-      if (posA === 0 && posB === 0) return 0;
-      if (posA === 0) return 1;
-      if (posB === 0) return -1;
-      return posA - posB;
-    });
+  // Compute real-time race progress for each driver: lap + track fraction
+  // Higher = further ahead in the race
+  const driverProgress = Object.entries(frame.d).map(([code, data]) => {
+    const lap = data[7];
+    const progress = getTrackProgress(
+      data[0],
+      data[1],
+      track.polyline,
+      arcLengths,
+    );
+    return { code, data, raceProgress: lap + progress };
+  });
+
+  // Sort by race progress descending (furthest ahead = P1)
+  const sorted = driverProgress.sort((a, b) => {
+    // Drivers with lap 0 go to the bottom
+    if (a.data[7] <= 0 && b.data[7] <= 0) return 0;
+    if (a.data[7] <= 0) return 1;
+    if (b.data[7] <= 0) return -1;
+    return b.raceProgress - a.raceProgress;
+  });
+
+  // Assign computed positions (1-indexed)
+  const computedPositions: Record<string, number> = {};
+  for (let i = 0; i < sorted.length; i++) {
+    computedPositions[sorted[i].code] = sorted[i].data[7] > 0 ? i + 1 : 0;
+  }
 
   // Compute gaps
   const gaps = computeGaps(sorted, track.polyline, arcLengths, circuitLengthM);
@@ -205,30 +288,47 @@ export default function Leaderboard({
       <div className="overflow-y-auto flex-1 min-h-0">
         {sorted.map(({ code, data }, idx) => {
           const info = drivers[code];
-          const position = data[8];
+          const position = computedPositions[code] ?? 0;
           const compound = data[5];
           const tyreLife = data[6];
           const isSelected = code === selectedDriver;
           const isCompare = code === compareDriver;
           const gap = gaps[idx];
+          const isFastestLap = code === fastestLapDriver;
+
+          // Position change vs grid
+          const gridPos = gridPositions[code];
+          const posChange = gridPos && position > 0 ? gridPos - position : 0;
 
           return (
             <button
               key={code}
               type="button"
               onClick={() => onSelectDriver(code)}
-              className={`w-full flex items-center gap-2 px-3 py-1.5 text-left transition-colors hover:bg-bg-elevated ${
+              className={`w-full flex items-center gap-1.5 px-3 py-1.5 text-left transition-colors hover:bg-bg-elevated ${
                 isSelected
                   ? "bg-bg-elevated"
                   : isCompare
                     ? "bg-bg-elevated/50"
                     : ""
-              }`}
+              } ${isFastestLap ? "border-l-2 border-purple-500" : ""}`}
             >
-              {/* Position */}
-              <span className="text-xs font-mono text-text-muted w-5 text-right shrink-0">
-                {position || "–"}
-              </span>
+              {/* Position + change indicator */}
+              <div className="flex items-center w-8 shrink-0 justify-end gap-0.5">
+                {posChange > 0 && (
+                  <span className="text-[8px] text-green-400">
+                    ▲{posChange}
+                  </span>
+                )}
+                {posChange < 0 && (
+                  <span className="text-[8px] text-red-400">
+                    ▼{Math.abs(posChange)}
+                  </span>
+                )}
+                <span className="text-xs font-mono text-text-muted w-5 text-right">
+                  {position || "–"}
+                </span>
+              </div>
 
               {/* Team color bar */}
               <div
@@ -252,14 +352,26 @@ export default function Leaderboard({
                 <div className="w-5 h-5 rounded-full bg-bg-primary shrink-0" />
               )}
 
-              {/* Driver code */}
-              <span
-                className={`text-xs font-mono font-semibold flex-1 ${
-                  isSelected ? "text-text-primary" : "text-text-secondary"
-                }`}
-              >
-                {code}
-              </span>
+              {/* Driver number + code */}
+              <div className="flex items-baseline gap-1 flex-1 min-w-0">
+                {info && (
+                  <span className="text-[9px] font-mono text-text-muted">
+                    {info.number}
+                  </span>
+                )}
+                <span
+                  className={`text-xs font-mono font-semibold truncate ${
+                    isSelected ? "text-text-primary" : "text-text-secondary"
+                  }`}
+                >
+                  {code}
+                </span>
+                {isFastestLap && (
+                  <span className="text-[8px] text-purple-400 font-mono">
+                    FL
+                  </span>
+                )}
+              </div>
 
               {/* Gap interval */}
               {gap && (

@@ -490,6 +490,8 @@ export default function ReplayPlayer({
             <Leaderboard
               drivers={replayData.drivers}
               frame={currentFrame}
+              allFrames={replayData.frames}
+              frameIndex={frameIndex}
               track={replayData.track}
               metadata={replayData.metadata}
               selectedDriver={selectedDriver}
