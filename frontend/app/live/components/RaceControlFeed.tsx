@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { ReplayRaceControlMessage } from "@/lib/types";
 
 interface RaceControlFeedProps {
@@ -32,15 +32,14 @@ export default function RaceControlFeed({
 
   // Auto-scroll to latest when new messages appear
   const prevCountRef = useRef(0);
-  if (visibleMessages.length !== prevCountRef.current) {
-    prevCountRef.current = visibleMessages.length;
-    // Schedule scroll after render
-    queueMicrotask(() => {
+  useEffect(() => {
+    if (visibleMessages.length !== prevCountRef.current) {
+      prevCountRef.current = visibleMessages.length;
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
-    });
-  }
+    }
+  }, [visibleMessages.length]);
 
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-sm">

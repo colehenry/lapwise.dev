@@ -9,7 +9,13 @@ export const metadata = {
 
 export default function LivePageRoute() {
   return (
-    <Suspense>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-bg-secondary flex items-center justify-center">
+          <span className="text-text-muted text-sm font-mono">Loading...</span>
+        </div>
+      }
+    >
       <LivePage />
     </Suspense>
   );

@@ -84,6 +84,16 @@ export default function ReplayPlayer({
   const animFrameRef = useRef<number>(0);
   const lastTimestampRef = useRef<number>(0);
   const fractionalFrameRef = useRef<number>(0);
+  const frameIndexRef = useRef<number>(0);
+  const playbackSpeedRef = useRef<number>(playbackSpeed);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    frameIndexRef.current = frameIndex;
+  }, [frameIndex]);
+  useEffect(() => {
+    playbackSpeedRef.current = playbackSpeed;
+  }, [playbackSpeed]);
 
   // Update ref when data loads
   useEffect(() => {
@@ -100,49 +110,47 @@ export default function ReplayPlayer({
     }
   }, [replayData]);
 
-  // Animation loop
-  const animate = useCallback(
-    (timestamp: number) => {
-      const data = dataRef.current;
-      if (!data || !isPlaying) return;
+  // Animation loop — reads from refs to avoid recreating on every frame
+  const animate = useCallback((timestamp: number) => {
+    const data = dataRef.current;
+    if (!data) return;
 
-      if (lastTimestampRef.current === 0) {
-        lastTimestampRef.current = timestamp;
-        animFrameRef.current = requestAnimationFrame(animate);
-        return;
-      }
-
-      const elapsed = timestamp - lastTimestampRef.current;
+    if (lastTimestampRef.current === 0) {
       lastTimestampRef.current = timestamp;
-
-      // Advance fractional frame index
-      const frameDuration = 1000 / data.metadata.fps;
-      fractionalFrameRef.current += playbackSpeed * (elapsed / frameDuration);
-
-      const newIndex = Math.floor(fractionalFrameRef.current);
-
-      if (newIndex >= data.metadata.total_frames) {
-        // Reached end
-        setIsPlaying(false);
-        setFrameIndex(data.metadata.total_frames - 1);
-        fractionalFrameRef.current = data.metadata.total_frames - 1;
-        return;
-      }
-
-      if (newIndex !== frameIndex) {
-        // Update weather if the new frame has it
-        const frame = data.frames[newIndex];
-        if (frame?.w) {
-          currentWeatherRef.current = frame.w;
-          setCurrentWeather(frame.w);
-        }
-        setFrameIndex(newIndex);
-      }
-
       animFrameRef.current = requestAnimationFrame(animate);
-    },
-    [isPlaying, playbackSpeed, frameIndex],
-  );
+      return;
+    }
+
+    const elapsed = timestamp - lastTimestampRef.current;
+    lastTimestampRef.current = timestamp;
+
+    // Advance fractional frame index
+    const frameDuration = 1000 / data.metadata.fps;
+    fractionalFrameRef.current +=
+      playbackSpeedRef.current * (elapsed / frameDuration);
+
+    const newIndex = Math.floor(fractionalFrameRef.current);
+
+    if (newIndex >= data.metadata.total_frames) {
+      // Reached end
+      setIsPlaying(false);
+      setFrameIndex(data.metadata.total_frames - 1);
+      fractionalFrameRef.current = data.metadata.total_frames - 1;
+      return;
+    }
+
+    if (newIndex !== frameIndexRef.current) {
+      // Update weather if the new frame has it
+      const frame = data.frames[newIndex];
+      if (frame?.w) {
+        currentWeatherRef.current = frame.w;
+        setCurrentWeather(frame.w);
+      }
+      setFrameIndex(newIndex);
+    }
+
+    animFrameRef.current = requestAnimationFrame(animate);
+  }, []);
 
   useEffect(() => {
     if (isPlaying) {
