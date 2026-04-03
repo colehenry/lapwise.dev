@@ -509,3 +509,36 @@ class WeatherResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ============================================================================
+# Lap Time Distribution Schemas (for /api/results/{season}/{round}/lap-time-distribution)
+# ============================================================================
+
+
+class DistributionLap(BaseModel):
+    """Single lap entry for distribution chart"""
+
+    lap_number: Optional[int] = None
+    lap_time_seconds: float
+    compound: Optional[str] = None
+
+
+class DriverLapDistribution(BaseModel):
+    """Driver with their valid lap times for distribution rendering"""
+
+    driver_code: Optional[str] = None
+    driver_slug: Optional[str] = None
+    full_name: str
+    team_color: Optional[str] = None
+    final_position: Optional[int] = None
+    laps: List[DistributionLap]
+
+
+class LapDistributionResponse(BaseModel):
+    """Complete response for GET /api/results/{season}/{round}/lap-time-distribution"""
+
+    year: int
+    round: int
+    event_name: str
+    drivers: List[DriverLapDistribution]

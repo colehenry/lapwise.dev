@@ -4,9 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import JumpToRace from "@/components/JumpToRace";
 import PageHeader from "@/components/PageHeader";
-import { GridPattern } from "@/components/Patterns";
 import ExpandButton from "@/components/ui/ExpandButton";
 import Skeleton from "@/components/ui/Skeleton";
 import SortPills from "@/components/ui/SortPills";
@@ -166,7 +164,7 @@ export default function CircuitsPage() {
 
   useEffect(() => {
     setIsExpanded(false);
-  }, [searchQuery, sortKey, selectedYear]);
+  }, []);
 
   const visibleCircuits = isExpanded
     ? filteredCircuits

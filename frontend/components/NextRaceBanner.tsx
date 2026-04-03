@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
+import { useRef } from "react";
 import { ConcentricPattern, GridPattern } from "@/components/Patterns";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import { getCircuitFlagEmoji } from "@/lib/flags";
@@ -47,6 +48,15 @@ function formatEventDate(dateString: string): string {
 }
 
 export default function NextRaceBanner() {
+  const calendarRef = useRef<HTMLDivElement>(null);
+
+  const handleScrollClick = () => {
+    const el = calendarRef.current;
+    if (!el) return;
+    const scrollIncrement = el.clientWidth * 0.5;
+    el.scrollBy({ left: scrollIncrement, behavior: "smooth" });
+  };
+
   const {
     data: events,
     isLoading,
@@ -76,26 +86,39 @@ export default function NextRaceBanner() {
               2026 Race Calendar
             </span>
           </div>
-          <div className="hidden sm:flex items-center gap-2 text-[10px] text-text-tertiary font-mono font-bold uppercase tracking-widest">
-            <span>Scroll to explore</span>
-            <svg
-              className="w-3 h-3 animate-bounce-x"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="hidden sm:flex items-center text-[10px] font-mono font-bold uppercase tracking-widest">
+            <button
+              type="button"
+              onClick={handleScrollClick}
+              className="group flex items-center gap-2 text-text-tertiary hover:text-purple-400 transition-colors duration-200 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-500 rounded"
+              aria-label="Scroll through the race calendar"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 8l4 4m0 0l-4 4m4-4H3"
-              />
-            </svg>
+              <span className="transition-colors duration-200 group-hover:text-text-primary">
+                Scroll
+              </span>
+              <svg
+                className="w-3 h-3 animate-bounce-x"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 8l4 4m0 0l-4 4m4-4H3"
+                />
+              </svg>
+            </button>
           </div>
         </div>
 
         {/* Horizontal Scrollable Events */}
-        <div className="overflow-x-auto overflow-y-visible -mx-6 px-6 pb-8 scrollbar-hide">
+        <div
+          ref={calendarRef}
+          className="overflow-x-auto overflow-y-visible -mx-6 px-6 pb-8 scrollbar-hide"
+        >
           <div className="flex gap-5 min-w-min">
             {events.map((event) => {
               const daysUntil = getDaysUntilEvent(event.event_date);
@@ -180,6 +203,7 @@ export default function NextRaceBanner() {
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
+                            aria-hidden="true"
                           >
                             <path
                               strokeLinecap="round"
@@ -217,6 +241,7 @@ export default function NextRaceBanner() {
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
+                              aria-hidden="true"
                             >
                               <path
                                 strokeLinecap="round"

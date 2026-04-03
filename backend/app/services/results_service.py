@@ -51,6 +51,9 @@ from app.schemas.result import (
     QualifyingSectorResponse,
     WeatherDataPoint,
     WeatherResponse,
+    DistributionLap,
+    DriverLapDistribution,
+    LapDistributionResponse,
 )
 
 
@@ -2198,3 +2201,88 @@ class ResultsService:
 
         rounds = [RoundSummary(**round_data) for round_data in rounds_dict.values()]
         return SeasonRoundsResponse(year=season, rounds=rounds)
+
+    @staticmethod
+    async def get_lap_distribution(
+        db: AsyncSession, season: int, round_num: int
+    ) -> Optional[LapDistributionResponse]:
+        """
+        Get lap time distribution data for all drivers in a specific race.
+
+        Returns only valid laps (non-null lap_time_seconds) with compound info,
+        grouped by driver and sorted by finishing position. Used for the ridge
+        plot distribution chart.
+        """
+        session_query = (
+            select(Session)
+            .where(Session.year == season)
+            .where(Session.round == round_num)
+            .where(Session.session_type == "race")
+        )
+
+        session_result = await db.execute(session_query)
+        session = session_result.scalar_one_or_none()
+
+        if not session:
+            return None
+
+        laps_query = (
+            select(
+                Lap.lap_number,
+                Lap.lap_time_seconds,
+                Lap.compound,
+                Driver.driver_code,
+                Driver.jolpica_id,
+                Driver.full_name,
+                Team.team_color,
+                SessionResult.position.label("final_position"),
+            )
+            .join(Driver, Lap.driver_id == Driver.id)
+            .join(
+                SessionResult,
+                (SessionResult.session_id == Lap.session_id)
+                & (SessionResult.driver_id == Lap.driver_id),
+            )
+            .join(Team, SessionResult.team_id == Team.id)
+            .where(Lap.session_id == session.id)
+            .where(Lap.lap_time_seconds.isnot(None))
+            .order_by(SessionResult.position, Lap.lap_number)
+        )
+
+        laps_result = await db.execute(laps_query)
+        lap_rows = laps_result.all()
+
+        if not lap_rows:
+            return None
+
+        drivers_dict: dict = {}
+        for row in lap_rows:
+            key = row.driver_code or row.full_name
+            if key not in drivers_dict:
+                drivers_dict[key] = {
+                    "driver_code": row.driver_code,
+                    "driver_slug": _make_slug(row.jolpica_id, row.full_name),
+                    "full_name": row.full_name,
+                    "team_color": row.team_color,
+                    "final_position": row.final_position,
+                    "laps": [],
+                }
+
+            t = ResultsService.sanitize_float(row.lap_time_seconds)
+            if t is not None:
+                drivers_dict[key]["laps"].append(
+                    DistributionLap(
+                        lap_number=row.lap_number,
+                        lap_time_seconds=t,
+                        compound=row.compound,
+                    )
+                )
+
+        drivers = [DriverLapDistribution(**data) for data in drivers_dict.values()]
+
+        return LapDistributionResponse(
+            year=season,
+            round=round_num,
+            event_name=session.event_name,
+            drivers=drivers,
+        )

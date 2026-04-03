@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     email_from: str = "noreply@lapwise.dev"
     frontend_url: str = "http://localhost:3000"
 
+    # AI
+    ai_daily_query_limit: int = 20
+    ai_db_url: str | None = None  # Read-only connection for AI queries
+
     # FastF1
     fastf1_cache_dir: str = "./cache"
 

@@ -108,6 +108,7 @@ dist/
 # PostgreSQL dumps
 *.sql
 *.dump
+!backend/ai/schema_context.sql
 
 # ============================================================================
 # Docker
