@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AIAnalystPreview from "@/components/home/AIAnalystPreview";
+import LiveReplayPreview from "@/components/home/LiveReplayPreview";
 import SeasonRoundSelector from "@/components/home/SeasonRoundSelector";
 import TopRightLatestRace from "@/components/home/TopRightLatestRace";
 import NextRaceBanner from "@/components/NextRaceBanner";
@@ -175,6 +176,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Live Replay Preview */}
+      <LiveReplayPreview />
 
       {/* AI Analyst Preview */}
       <AIAnalystPreview />
