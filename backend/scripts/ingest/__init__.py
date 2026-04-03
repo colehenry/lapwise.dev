@@ -14,6 +14,8 @@ from .sessions import ingest_session_metadata
 from .participants import ingest_driver, ingest_team
 from .results import ingest_race_results, ingest_qualifying_results
 from .telemetry import ingest_lap_data, ingest_weather_data, ingest_track_status
+from .race_control import ingest_race_control_messages
+from .replay_frames import generate_replay_data
 
 __all__ = [
     "write_failure_log",
@@ -34,4 +36,6 @@ __all__ = [
     "ingest_lap_data",
     "ingest_weather_data",
     "ingest_track_status",
+    "ingest_race_control_messages",
+    "generate_replay_data",
 ]

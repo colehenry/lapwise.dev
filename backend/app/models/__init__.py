@@ -31,6 +31,9 @@ from app.models.post import Post, PostType
 from app.models.post_tag import post_tags  # noqa: F401
 from app.models.comment import Comment
 from app.models.vote import Vote
+from app.models.ai_conversation import AIConversation
+from app.models.ai_message import AIMessage
+from app.models.replay_data import ReplayData
 
 # Export all models
 __all__ = [
@@ -54,4 +57,7 @@ __all__ = [
     "PostType",
     "Comment",
     "Vote",
+    "AIConversation",
+    "AIMessage",
+    "ReplayData",
 ]

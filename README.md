@@ -23,10 +23,14 @@ Lapwise is a full-stack Formula 1 analytics platform that lets fans explore 76 y
 
 **Race Results and Standings** -- Browse every season from 1950 to present. Full qualifying, race, and sprint results with driver standings and constructor championships.
 
+<p align="center">
+  <img src="docs/images/points_progression.png" alt="Points progression chart" width="100%" />
+</p>
+
 **Driver and Constructor Profiles** -- Career statistics, season-by-season points progression, and complete race history for every driver and team in F1 history.
 
 <p align="center">
-  <img src="docs/images/points_progression.png" alt="Points progression chart" width="100%" />
+  <img src="docs/images/lewis.png" alt="Driver profile page" width="100%" />
 </p>
 
 **Telemetry Visualizations** -- Lap time distributions, race pace analysis, and position change charts built from real session data via FastF1.
@@ -35,8 +39,16 @@ Lapwise is a full-stack Formula 1 analytics platform that lets fans explore 76 y
 
 **Community Discussions** -- Threaded forum with voting, tagging, and markdown support for race weekend conversations.
 
+**AI Analyst** -- Ask questions about Formula 1 and get AI-powered answers with strategy breakdowns, data tables, and interactive charts.
+
 <p align="center">
-  <img src="docs/images/lewis.png" alt="Driver profile page" width="100%" />
+  <img src="docs/images/ai.png" alt="AI Analyst chat" width="100%" />
+</p>
+
+**Race Replay** -- Watch full race replays with animated driver positions on track maps, real-time telemetry comparisons, and a live leaderboard.
+
+<p align="center">
+  <img src="docs/images/replay.png" alt="Race replay viewer" width="100%" />
 </p>
 
 ---

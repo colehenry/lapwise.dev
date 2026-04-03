@@ -14,12 +14,8 @@ interface NavLink {
   imageSrc?: string;
 }
 
-const navLinks: NavLink[] = [
-  {
-    href: "/results",
-    label: "Race Weekend Hub",
-    icon: "M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
-  },
+// The three "archive" sub-items collapsed under Data Archive
+const archiveLinks: NavLink[] = [
   {
     href: "/drivers",
     label: "Drivers",
@@ -71,12 +67,81 @@ const navLinks: NavLink[] = [
       </svg>
     ),
   },
+];
+
+const navLinksBefore: NavLink[] = [
+  {
+    href: "/results",
+    label: "Race Weekend Hub",
+    icon: "M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
+  },
+];
+
+const navLinksAfter: NavLink[] = [
+  {
+    href: "/live",
+    label: "Replay",
+    icon: "M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z",
+  },
   {
     href: "/discussions",
     label: "Discuss",
     icon: "M7 8h10M7 12h6m-6 8l-4-4H3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9l-4 4z",
   },
+  {
+    href: "/ask",
+    label: "Analyze",
+    renderIcon: (active: boolean, scrolled: boolean) => (
+      <svg
+        className={`shrink-0 transition-all duration-500 ${
+          scrolled ? "w-6 h-6" : "w-4 h-4"
+        } ${active ? "text-purple-400" : "text-text-muted group-hover:text-text-primary"}`}
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <title>AI Analyst</title>
+        <path
+          fillRule="evenodd"
+          d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"
+          clipRule="evenodd"
+        />
+      </svg>
+    ),
+  },
 ];
+
+// Database/archive icon for the Data Archive trigger
+function DatabaseIcon({
+  active,
+  scrolled,
+}: {
+  active: boolean;
+  scrolled: boolean;
+}) {
+  const sizeClass = scrolled ? "w-6 h-6" : "w-4 h-4";
+  const colorClass = active
+    ? "text-purple-400"
+    : "text-text-muted group-hover:text-text-primary";
+  return (
+    <svg
+      className={`shrink-0 transition-all duration-500 ${sizeClass} ${colorClass}`}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <title>Data Archive</title>
+      <ellipse cx="12" cy="5" rx="9" ry="3" />
+      <path d="M3 5v4c0 1.657 4.03 3 9 3s9-1.343 9-3V5" />
+      <path d="M3 9v4c0 1.657 4.03 3 9 3s9-1.343 9-3V9" />
+      <path d="M3 13v4c0 1.657 4.03 3 9 3s9-1.343 9-3v-4" />
+    </svg>
+  );
+}
 
 function NavIcon({
   link,
@@ -124,6 +189,77 @@ function NavIcon({
         d={link.icon}
       />
     </svg>
+  );
+}
+
+// Dropdown for top-bar (drops below)
+function DataArchiveTopBarDropdown({
+  isActive,
+}: {
+  isActive: (href: string) => boolean;
+}) {
+  return (
+    <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2 w-44 z-50">
+      <div className="bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden animate-scaleIn">
+        {archiveLinks.map((link) => {
+          const active = isActive(link.href);
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`group flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors ${
+                active
+                  ? "text-purple-300 bg-purple-500/10"
+                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60"
+              }`}
+            >
+              <NavIcon link={link} active={active} scrolled={false} />
+              <span className="text-xs font-bold font-mono uppercase tracking-widest whitespace-nowrap">
+                {link.label}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Submenu for floating dock (pops right)
+function DataArchiveDockSubmenu({
+  isActive,
+}: {
+  isActive: (href: string) => boolean;
+}) {
+  return (
+    <div className="absolute left-full top-0 pl-2 w-44 z-50">
+      <div className="bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden animate-scaleIn">
+        <div className="px-3 py-2 border-b border-border-primary">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+            Data Archive
+          </p>
+        </div>
+        {archiveLinks.map((link) => {
+          const active = isActive(link.href);
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`group flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors ${
+                active
+                  ? "text-purple-300 bg-purple-500/10"
+                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60"
+              }`}
+            >
+              <NavIcon link={link} active={active} scrolled={false} />
+              <span className="text-xs font-bold font-mono uppercase tracking-widest whitespace-nowrap">
+                {link.label}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -205,13 +341,18 @@ export default function Navigation() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [mobileArchiveOpen, setMobileArchiveOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const archiveRef = useRef<HTMLDivElement>(null);
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
   };
+
+  const isArchiveActive = archiveLinks.some((l) => isActive(l.href));
 
   const handleScroll = useCallback(() => {
     setScrolled(window.scrollY >= 56);
@@ -227,6 +368,7 @@ export default function Navigation() {
   useEffect(() => {
     setMobileOpen(false);
     setUserMenuOpen(false);
+    setArchiveOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -256,6 +398,7 @@ export default function Navigation() {
       if (e.key === "Escape") {
         setMobileOpen(false);
         setUserMenuOpen(false);
+        setArchiveOpen(false);
       }
     };
     document.addEventListener("keydown", handleKeyDown);
@@ -293,7 +436,68 @@ export default function Navigation() {
 
           {/* Center nav links — desktop */}
           <div className="hidden md:flex items-center justify-center gap-1 shrink-0">
-            {navLinks.map((link) => {
+            {navLinksBefore.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`group flex items-center gap-2 px-3.5 py-2 rounded-full transition-all duration-300 hover:scale-[1.04] active:scale-[0.97] ${
+                    active
+                      ? "bg-purple-500/15 text-purple-300 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
+                      : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/80 border border-transparent hover:border-border-secondary/60"
+                  }`}
+                >
+                  <NavIcon link={link} active={active} scrolled={false} />
+                  <span className="text-xs font-bold font-mono uppercase tracking-widest whitespace-nowrap">
+                    {link.label}
+                  </span>
+                </Link>
+              );
+            })}
+
+            {/* Data Archive dropdown trigger */}
+            <div
+              ref={archiveRef}
+              role="none"
+              className="relative"
+              onMouseEnter={() => setArchiveOpen(true)}
+              onMouseLeave={() => setArchiveOpen(false)}
+            >
+              <button
+                type="button"
+                className={`group flex items-center gap-2 px-3.5 py-2 rounded-full transition-all duration-300 hover:scale-[1.04] active:scale-[0.97] ${
+                  isArchiveActive
+                    ? "bg-purple-500/15 text-purple-300 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
+                    : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/80 border border-transparent hover:border-border-secondary/60"
+                }`}
+              >
+                <DatabaseIcon active={isArchiveActive} scrolled={false} />
+                <span className="text-xs font-bold font-mono uppercase tracking-widest whitespace-nowrap">
+                  Data Archive
+                </span>
+                <svg
+                  className={`w-3 h-3 transition-transform duration-200 ${archiveOpen ? "rotate-180" : ""} ${isArchiveActive ? "text-purple-400" : "text-text-muted group-hover:text-text-primary"}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+
+              {archiveOpen && !scrolled && (
+                <DataArchiveTopBarDropdown isActive={isActive} />
+              )}
+            </div>
+
+            {navLinksAfter.map((link) => {
               const active = isActive(link.href);
               return (
                 <Link
@@ -352,6 +556,7 @@ export default function Navigation() {
             ) : (
               <div
                 ref={userMenuRef}
+                role="none"
                 className="relative"
                 onMouseEnter={() => setUserMenuOpen(true)}
                 onMouseLeave={() => setUserMenuOpen(false)}
@@ -458,8 +663,59 @@ export default function Navigation() {
 
         <div className="w-8 h-px bg-border-primary my-0.5" />
 
-        {/* Nav icons */}
-        {navLinks.map((link) => {
+        {/* Nav icons — before archive */}
+        {navLinksBefore.map((link) => {
+          const active = isActive(link.href);
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              title={link.label}
+              className={`group relative w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.12] active:scale-95 ${
+                active
+                  ? "bg-purple-500/15 border border-purple-500/25 shadow-[inset_0_0_10px_rgba(160,32,240,0.1)]"
+                  : "border border-transparent hover:bg-bg-elevated/80 hover:border-border-secondary/60"
+              }`}
+            >
+              <NavIcon link={link} active={active} scrolled={true} />
+              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
+                {link.label}
+              </span>
+            </Link>
+          );
+        })}
+
+        {/* Data Archive dock item */}
+        <div
+          role="none"
+          className="relative group/archive"
+          onMouseEnter={() => setArchiveOpen(true)}
+          onMouseLeave={() => setArchiveOpen(false)}
+        >
+          <button
+            type="button"
+            className={`group relative w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.12] active:scale-95 ${
+              isArchiveActive
+                ? "bg-purple-500/15 border border-purple-500/25 shadow-[inset_0_0_10px_rgba(160,32,240,0.1)]"
+                : "border border-transparent hover:bg-bg-elevated/80 hover:border-border-secondary/60"
+            }`}
+            aria-label="Data Archive"
+          >
+            <DatabaseIcon active={isArchiveActive} scrolled={true} />
+            {!archiveOpen && (
+              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
+                Data Archive
+              </span>
+            )}
+          </button>
+
+          {archiveOpen && scrolled && (
+            <DataArchiveDockSubmenu isActive={isActive} />
+          )}
+        </div>
+
+        {/* Nav icons — after archive */}
+        {navLinksAfter.map((link) => {
           const active = isActive(link.href);
           return (
             <Link
@@ -513,6 +769,7 @@ export default function Navigation() {
         ) : (
           <div
             ref={scrolled ? userMenuRef : undefined}
+            role="none"
             className="relative"
             onMouseEnter={() => setUserMenuOpen(true)}
             onMouseLeave={() => setUserMenuOpen(false)}
@@ -565,7 +822,83 @@ export default function Navigation() {
           />
           <div className="fixed top-14 left-0 right-0 z-[1150] md:hidden bg-bg-secondary/95 backdrop-blur-xl border-b border-border-primary shadow-[0_16px_48px_rgba(0,0,0,0.5)] animate-slideDown">
             <div className="px-4 py-3 space-y-1">
-              {navLinks.map((link) => {
+              {navLinksBefore.map((link) => {
+                const active = isActive(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`group flex items-center gap-3 px-4 py-3 text-sm rounded-2xl transition-all duration-200 active:scale-[0.98] ${
+                      active
+                        ? "text-purple-300 bg-purple-500/12 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.06)]"
+                        : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 border border-transparent"
+                    }`}
+                  >
+                    <NavIcon link={link} active={active} scrolled={false} />
+                    {link.label}
+                  </Link>
+                );
+              })}
+
+              {/* Data Archive — expandable section in mobile */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setMobileArchiveOpen(!mobileArchiveOpen)}
+                  className={`group w-full flex items-center gap-3 px-4 py-3 text-sm rounded-2xl transition-all duration-200 active:scale-[0.98] ${
+                    isArchiveActive
+                      ? "text-purple-300 bg-purple-500/12 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.06)]"
+                      : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 border border-transparent"
+                  }`}
+                >
+                  <DatabaseIcon active={isArchiveActive} scrolled={false} />
+                  <span className="flex-1 text-left">Data Archive</span>
+                  <svg
+                    className={`w-4 h-4 transition-transform duration-200 ${mobileArchiveOpen ? "rotate-180" : ""} ${isArchiveActive ? "text-purple-400" : "text-text-muted"}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                {mobileArchiveOpen && (
+                  <div className="mt-1 ml-4 space-y-1 border-l border-border-primary pl-3">
+                    {archiveLinks.map((link) => {
+                      const active = isActive(link.href);
+                      return (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          onClick={() => setMobileOpen(false)}
+                          className={`group flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl transition-all duration-200 active:scale-[0.98] ${
+                            active
+                              ? "text-purple-300 bg-purple-500/12 border border-purple-500/20"
+                              : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 border border-transparent"
+                          }`}
+                        >
+                          <NavIcon
+                            link={link}
+                            active={active}
+                            scrolled={false}
+                          />
+                          {link.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {navLinksAfter.map((link) => {
                 const active = isActive(link.href);
                 return (
                   <Link

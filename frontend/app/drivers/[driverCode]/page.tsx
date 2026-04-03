@@ -7,12 +7,11 @@ import { useParams, useRouter } from "next/navigation";
 import DriverResultsTable from "@/components/DriverResultsTable";
 import DriverSeasonHistoryGraph from "@/components/DriverSeasonHistoryGraph";
 import DriverStatisticsPanel from "@/components/DriverStatisticsPanel";
-import JumpToRace from "@/components/JumpToRace";
 import PageHeader from "@/components/PageHeader";
 import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
 import TabBar from "@/components/ui/TabBar";
 import { useTabSync } from "@/hooks/useTabSync";
-import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
+import { apiHeaders, apiUrl } from "@/lib/api";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
 import type { DriverProfile } from "@/lib/types";
 

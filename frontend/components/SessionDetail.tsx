@@ -210,6 +210,23 @@ export default function SessionDetail({
                     Highlights
                   </a>
                 )}
+                {session.year >= 2018 && (
+                  <Link
+                    href={`/live?season=${session.year}&round=${session.round}`}
+                    className="inline-flex items-center gap-1 text-[10px] tracking-widest uppercase font-bold font-mono text-purple-400 hover:text-purple-300 transition-colors duration-150 px-2 py-1 border border-purple-500/30 rounded-sm hover:border-purple-500/60"
+                  >
+                    <svg
+                      className="w-3 h-3"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <title>Race Replay</title>
+                      <path d="M8 5.14v14.72a1 1 0 0 0 1.5.86l11-7.36a1 1 0 0 0 0-1.72l-11-7.36A1 1 0 0 0 8 5.14z" />
+                    </svg>
+                    Race Replay
+                  </Link>
+                )}
               </div>
 
               <div className="flex flex-col gap-1">

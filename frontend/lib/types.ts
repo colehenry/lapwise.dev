@@ -256,6 +256,32 @@ export type LapTimesResponse = {
   race_control_events: RaceControlEvent[];
 };
 
+// Lap Time Distribution types (for ridge plot chart)
+export type DistributionLap = {
+  lap_number: number | null;
+  lap_time_seconds: number;
+  compound: string | null;
+};
+
+export type DriverLapDistribution = {
+  driver_code: string | null;
+  driver_slug: string | null;
+  full_name: string;
+  team_color: string | null;
+  final_position: number | null;
+  laps: DistributionLap[];
+};
+
+export type LapDistributionResponse = {
+  year: number;
+  round: number;
+  event_name: string;
+  drivers: DriverLapDistribution[];
+};
+
+export const distDriverKey = (driver: DriverLapDistribution): string =>
+  driver.driver_code ?? driver.full_name;
+
 // Graph mode types (used by history graphs)
 export type GraphMode = "season" | "race";
 export type DataMode = "position" | "points";
@@ -624,4 +650,132 @@ export interface CommentResponse {
 export interface CommentListResponse {
   comments: CommentResponse[];
   next_cursor: string | null;
+}
+
+// ─── Replay Types ─────────────────────────────────────────────
+
+export interface ReplayListItem {
+  round: number;
+  event_name: string;
+  date: string;
+  circuit_name: string;
+  circuit_id: number;
+  total_laps: number;
+  total_duration_seconds: number;
+  driver_count: number;
+  compressed_size_bytes: number;
+}
+
+export interface ReplayListResponse {
+  season: number;
+  replays: ReplayListItem[];
+}
+
+export interface ReplaySeasonsResponse {
+  seasons: number[];
+}
+
+/** Driver data per frame: [x, y, speed, gear, drs, compound_idx, tyre_life, lap, position, throttle, brake] */
+export type ReplayDriverFrame = [
+  number, // 0: x
+  number, // 1: y
+  number, // 2: speed
+  number, // 3: gear
+  number, // 4: drs (0 or 1)
+  number, // 5: compound_idx (0=SOFT, 1=MED, 2=HARD, 3=INTER, 4=WET)
+  number, // 6: tyre_life
+  number, // 7: lap
+  number, // 8: position
+  number, // 9: throttle (0-100)
+  number, // 10: brake (0 or 1)
+];
+
+export interface ReplayFrame {
+  t: number;
+  lap: number;
+  d: Record<string, ReplayDriverFrame>;
+  sc: number; // 0=none, 1=SC, 2=VSC, 3=red flag
+  w?: ReplayWeather;
+}
+
+export interface ReplayWeather {
+  air_temp: number;
+  track_temp: number;
+  humidity: number;
+  wind_speed: number;
+  rainfall: boolean;
+}
+
+export interface ReplayDriverInfo {
+  color: string;
+  full_name: string;
+  number: number;
+  headshot_url: string | null;
+}
+
+export interface ReplayRaceControlMessage {
+  t: number;
+  category: string | null;
+  message: string;
+  driver_number: number | null;
+}
+
+export interface ReplayMetadata {
+  session_id: number;
+  season: number;
+  round: number;
+  event_name: string;
+  total_frames: number;
+  fps: number;
+  total_duration_seconds: number;
+  total_laps: number;
+  circuit_length_m: number | null;
+}
+
+export interface ReplayCorner {
+  x: number;
+  y: number;
+  number: number;
+  letter: string;
+}
+
+export interface ReplayTrack {
+  polyline: [number, number][];
+  rotation_deg: number;
+  corners: ReplayCorner[];
+  drs_zones: [number, number][][];
+}
+
+export interface ReplayData {
+  metadata: ReplayMetadata;
+  track: ReplayTrack;
+  drivers: Record<string, ReplayDriverInfo>;
+  frames: ReplayFrame[];
+  race_control: ReplayRaceControlMessage[];
+}
+
+// ─── Battle Feed Event Types ────────────────────────────────────
+
+export type BattleEventType =
+  | "overtake"
+  | "pit_stop"
+  | "safety_car"
+  | "green_flag"
+  | "red_flag"
+  | "weather"
+  | "drs"
+  | "race_control";
+
+export interface BattleEvent {
+  id: string;
+  t: number;
+  lap: number;
+  type: BattleEventType;
+  message: string;
+  /** Primary driver code (overtaker, pit stopper, or referenced driver) */
+  driver?: string;
+  /** Secondary driver code (overtaken driver) */
+  driver2?: string;
+  /** Race control category for race_control type events */
+  category?: string | null;
 }

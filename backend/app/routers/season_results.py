@@ -21,6 +21,7 @@ from app.schemas.result import (
     LapTimesResponse,
     QualifyingSectorResponse,
     WeatherResponse,
+    LapDistributionResponse,
 )
 
 router = APIRouter()
@@ -408,6 +409,40 @@ async def get_weather_data(
         )
 
     return weather
+
+
+@router.get(
+    "/{season}/{round}/lap-time-distribution",
+    response_model=LapDistributionResponse,
+)
+async def get_lap_time_distribution(
+    season: int,
+    round: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Get lap time distribution data for all drivers in a specific race.
+
+    Returns valid lap times with compound info per driver, for rendering
+    a ridge/density plot showing the distribution of lap times.
+    Only available for seasons 2018+ (FastF1 data required).
+    """
+    if season < 2018:
+        raise HTTPException(
+            status_code=404,
+            detail="Lap time distribution data not available before 2018",
+        )
+
+    distribution = await ResultsService.get_lap_distribution(db, season, round)
+
+    if not distribution:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No lap data found for season {season}, round {round}",
+        )
+
+    return distribution
 
 
 @router.get("/{season}/{round}", response_model=SessionResultsResponse)
