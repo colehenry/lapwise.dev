@@ -34,6 +34,42 @@ const BLOCKED_SQL_PATTERNS =
   /\b(INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE|GRANT|REVOKE|CREATE|EXECUTE)\b/i;
 
 /**
+ * Tables that must never be queried by the AI agent.
+ */
+const RESTRICTED_TABLES = [
+  "users",
+  "refresh_tokens",
+  "email_verification_tokens",
+  "password_reset_tokens",
+  "login_history",
+  "posts",
+  "comments",
+  "votes",
+  "tags",
+  "post_tags",
+  "ai_conversations",
+  "ai_messages",
+];
+
+/**
+ * Returns an error message if the SQL text references a restricted table.
+ */
+function checkRestrictedTables(
+  sql: string,
+): { valid: true } | { valid: false; error: string } {
+  const lower = sql.toLowerCase();
+  for (const table of RESTRICTED_TABLES) {
+    if (new RegExp(`\\b${table}\\b`, "i").test(lower)) {
+      return {
+        valid: false,
+        error: `Access to table '${table}' is not permitted. Only F1 data tables are queryable.`,
+      };
+    }
+  }
+  return { valid: true };
+}
+
+/**
  * Validates a SQL query is read-only and safe to execute.
  */
 function validateSQL(sql: string): { valid: boolean; error?: string } {
@@ -51,30 +87,9 @@ function validateSQL(sql: string): { valid: boolean; error?: string } {
     };
   }
 
-  const lowerSQL = trimmed.toLowerCase();
-  const restrictedTables = [
-    "users",
-    "refresh_tokens",
-    "email_verification_tokens",
-    "password_reset_tokens",
-    "login_history",
-    "posts",
-    "comments",
-    "votes",
-    "tags",
-    "post_tags",
-    "ai_conversations",
-    "ai_messages",
-  ];
-
-  for (const table of restrictedTables) {
-    const tablePattern = new RegExp(`\\b${table}\\b`, "i");
-    if (tablePattern.test(lowerSQL)) {
-      return {
-        valid: false,
-        error: `Access to table '${table}' is not permitted. Only F1 data tables are queryable.`,
-      };
-    }
+  const tableCheck = checkRestrictedTables(trimmed);
+  if (!tableCheck.valid) {
+    return tableCheck;
   }
 
   return { valid: true };
@@ -173,6 +188,13 @@ export const getSampleData = tool({
 
     if (where_clause && BLOCKED_SQL_PATTERNS.test(where_clause)) {
       return { error: "WHERE clause contains blocked keywords." };
+    }
+
+    if (where_clause) {
+      const tableCheck = checkRestrictedTables(where_clause);
+      if (!tableCheck.valid) {
+        return { error: tableCheck.error };
+      }
     }
 
     try {
