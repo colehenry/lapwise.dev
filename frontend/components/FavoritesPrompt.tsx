@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import FavoritesPicker from "@/components/favorites/FavoritesPicker";
-import { apiUrl } from "@/lib/api";
+import { apiUrl, extractErrorMessage } from "@/lib/api";
 import { fetchWithAuth } from "@/lib/auth";
 
 const DISMISS_KEY = "favorites_dismissed";
@@ -42,8 +42,9 @@ export default function FavoritesPrompt() {
           body: JSON.stringify(favorites),
         });
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.detail || "Failed to save favorites");
+          throw new Error(
+            await extractErrorMessage(res, "Failed to save favorites"),
+          );
         }
         await refreshUser();
         setShowPicker(false);
