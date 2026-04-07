@@ -289,9 +289,13 @@ export default function ReplayPlayer({
     return () => window.removeEventListener("keydown", handleKey);
   }, [frameIndex, playbackSpeed, handleSeek, lapBoundaries]);
 
+  // DRS was removed from F1 starting in the 2026 season
+  const hasDrs = season < 2026;
+
   // Derive DRS enabled state from race control messages
   const raceControl = replayData?.race_control;
   const drsEnabled = useMemo(() => {
+    if (!hasDrs) return false;
     if (!raceControl?.length) return false;
     let enabled = false;
     for (const msg of raceControl) {
@@ -306,7 +310,7 @@ export default function ReplayPlayer({
       }
     }
     return enabled;
-  }, [raceControl, currentTime]);
+  }, [raceControl, currentTime, hasDrs]);
 
   if (isLoading) {
     return (
@@ -424,6 +428,7 @@ export default function ReplayPlayer({
                     highlightedDriver={highlightedDriver}
                     scState={currentFrame?.sc ?? 0}
                     drsEnabled={drsEnabled}
+                    hasDrs={hasDrs}
                     showCorners={showCorners}
                     onSelectDriver={setSelectedDriver}
                     onTooltipChange={setTrackTooltip}
@@ -450,6 +455,7 @@ export default function ReplayPlayer({
                         replayData={replayData}
                         currentTime={currentTime}
                         currentLap={currentFrame?.lap ?? 0}
+                        hasDrs={hasDrs}
                         onSelectDriver={setSelectedDriver}
                         onBattleEvent={handleBattleEvent}
                       />
@@ -489,6 +495,7 @@ export default function ReplayPlayer({
                 driver={trackTooltip.driver}
                 data={trackTooltip.data}
                 containerWidth={trackCardRef.current?.offsetWidth ?? 800}
+                hasDrs={hasDrs}
               />
             )}
           </div>
@@ -528,6 +535,7 @@ export default function ReplayPlayer({
             selectedDriver={selectedDriver}
             compareDriver={compareDriver}
             frameIndex={frameIndex}
+            hasDrs={hasDrs}
             onClearCompare={() => setCompareDriver(null)}
           />
         )}
