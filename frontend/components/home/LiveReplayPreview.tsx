@@ -1,16 +1,19 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import TrackCanvas from "@/app/live/components/TrackCanvas";
 import Skeleton from "@/components/ui/Skeleton";
-import { fetchReplayData, isValidHeadshotUrl } from "@/lib/api";
+import {
+  fetchAvailableReplays,
+  fetchReplayData,
+  fetchReplaySeasons,
+  isValidHeadshotUrl,
+} from "@/lib/api";
 import type { ReplayData, ReplayDriverFrame, ReplayFrame } from "@/lib/types";
 
-const SEASON = 2025;
-const ROUND = 1; // Australian GP — Melbourne
 const PLAYBACK_SPEED = 2;
 const START_LAP = 10; // Skip formation / early laps for more action
 const TOP_N = 10; // Drivers shown in mini leaderboard
@@ -78,23 +81,37 @@ function getTrackProgress(
   return bestArcLength / totalLength;
 }
 
-/** Sort drivers by race progress (lap + track fraction) */
+/** Sort drivers by authoritative race position (data[8]).
+ *  Falls back to lap + track progress only when position is missing,
+ *  since deriving order from x/y causes a one-frame flicker at the
+ *  start/finish line when the position wraps before the lap ticks. */
 function sortDriversByProgress(
   frame: ReplayFrame,
   polyline: [number, number][],
   arcLengths: number[],
 ): { code: string; data: ReplayDriverFrame }[] {
-  const entries = Object.entries(frame.d).map(([code, data]) => {
-    const lap = data[7];
-    const progress = getTrackProgress(data[0], data[1], polyline, arcLengths);
-    return { code, data, raceProgress: lap + progress };
-  });
+  const entries = Object.entries(frame.d).map(([code, data]) => ({
+    code,
+    data,
+  }));
 
   return entries.sort((a, b) => {
-    if (a.data[7] <= 0 && b.data[7] <= 0) return 0;
-    if (a.data[7] <= 0) return 1;
-    if (b.data[7] <= 0) return -1;
-    return b.raceProgress - a.raceProgress;
+    const lapA = a.data[7];
+    const lapB = b.data[7];
+    if (lapA <= 0 && lapB <= 0) return 0;
+    if (lapA <= 0) return 1;
+    if (lapB <= 0) return -1;
+
+    const posA = a.data[8];
+    const posB = b.data[8];
+    if (posA > 0 && posB > 0) return posA - posB;
+
+    // Fallback: lap + track fraction
+    const progA =
+      lapA + getTrackProgress(a.data[0], a.data[1], polyline, arcLengths);
+    const progB =
+      lapB + getTrackProgress(b.data[0], b.data[1], polyline, arcLengths);
+    return progB - progA;
   });
 }
 
@@ -235,21 +252,46 @@ function MiniLeaderboard({
 function buildDriverLapTelemetry(
   allFrames: ReplayFrame[],
   driverCode: string,
-): Map<number, { frameIndices: number[]; throttles: number[]; brakes: number[] }> {
-  const map = new Map<number, { frameIndices: number[]; throttles: number[]; brakes: number[] }>();
+): Map<
+  number,
+  {
+    frameIndices: number[];
+    throttles: number[];
+    brakes: number[];
+    speeds: number[];
+  }
+> {
+  const map = new Map<
+    number,
+    {
+      frameIndices: number[];
+      throttles: number[];
+      brakes: number[];
+      speeds: number[];
+    }
+  >();
   for (let i = 0; i < allFrames.length; i++) {
     const d = allFrames[i]?.d[driverCode];
     if (!d) continue;
     const lap = d[7];
     if (lap <= 0) continue;
-    if (!map.has(lap)) map.set(lap, { frameIndices: [], throttles: [], brakes: [] });
+    if (!map.has(lap))
+      map.set(lap, {
+        frameIndices: [],
+        throttles: [],
+        brakes: [],
+        speeds: [],
+      });
     const entry = map.get(lap)!;
     entry.frameIndices.push(i);
     entry.throttles.push(d[9] ?? 0);
     entry.brakes.push(d[10] ?? 0);
+    entry.speeds.push(d[2] ?? 0);
   }
   return map;
 }
+
+const SPEED_MAX = 360; // km/h reference for speed normalization
 
 /** Lap-based throttle + brake trace canvas for the race leader */
 function LeaderTelemetry({
@@ -299,16 +341,23 @@ function LeaderTelemetry({
     const h = rect.height;
     const labelW = 32;
     const chartW = w - labelW;
-    const halfH = h / 2;
+    const stripH = h / 3;
+    const thrBot = stripH;
+    const brkTop = stripH;
+    const brkBot = stripH * 2;
+    const spdTop = stripH * 2;
+    const spdBot = h;
 
     ctx.clearRect(0, 0, w, h);
 
-    // Divider line
+    // Divider lines
     ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(labelW, halfH);
-    ctx.lineTo(w, halfH);
+    ctx.moveTo(labelW, thrBot);
+    ctx.lineTo(w, thrBot);
+    ctx.moveTo(labelW, brkBot);
+    ctx.lineTo(w, brkBot);
     ctx.stroke();
 
     // Labels
@@ -316,8 +365,9 @@ function LeaderTelemetry({
     ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText("THR", 4, halfH / 2);
-    ctx.fillText("BRK", 4, halfH + halfH / 2);
+    ctx.fillText("THR", 4, thrBot / 2);
+    ctx.fillText("BRK", 4, brkTop + stripH / 2);
+    ctx.fillText("SPD", 4, spdTop + stripH / 2);
 
     // Find current lap data
     const currentLap = frame.d[leaderCode]?.[7] ?? 0;
@@ -333,17 +383,18 @@ function LeaderTelemetry({
     }
     const drawUpTo = progressIdx + 1;
     const xScale = chartW / (totalSamples - 1);
+    const innerH = stripH - 4;
 
     // Throttle fill
     ctx.fillStyle = "rgba(34, 197, 94, 0.12)";
     ctx.beginPath();
-    ctx.moveTo(labelW, halfH);
+    ctx.moveTo(labelW, thrBot);
     for (let i = 0; i < drawUpTo; i++) {
       const x = labelW + i * xScale;
       const tVal = lapData.throttles[i] / 100;
-      ctx.lineTo(x, halfH - tVal * (halfH - 4));
+      ctx.lineTo(x, thrBot - tVal * innerH);
     }
-    ctx.lineTo(labelW + (drawUpTo - 1) * xScale, halfH);
+    ctx.lineTo(labelW + (drawUpTo - 1) * xScale, thrBot);
     ctx.closePath();
     ctx.fill();
 
@@ -353,7 +404,7 @@ function LeaderTelemetry({
     ctx.beginPath();
     for (let i = 0; i < drawUpTo; i++) {
       const x = labelW + i * xScale;
-      const y = halfH - (lapData.throttles[i] / 100) * (halfH - 4);
+      const y = thrBot - (lapData.throttles[i] / 100) * innerH;
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
@@ -362,13 +413,13 @@ function LeaderTelemetry({
     // Brake fill
     ctx.fillStyle = "rgba(239, 68, 68, 0.15)";
     ctx.beginPath();
-    ctx.moveTo(labelW, h);
+    ctx.moveTo(labelW, brkBot);
     for (let i = 0; i < drawUpTo; i++) {
       const x = labelW + i * xScale;
       const bVal = lapData.brakes[i];
-      ctx.lineTo(x, h - bVal * (halfH - 4));
+      ctx.lineTo(x, brkBot - bVal * innerH);
     }
-    ctx.lineTo(labelW + (drawUpTo - 1) * xScale, h);
+    ctx.lineTo(labelW + (drawUpTo - 1) * xScale, brkBot);
     ctx.closePath();
     ctx.fill();
 
@@ -378,7 +429,33 @@ function LeaderTelemetry({
     ctx.beginPath();
     for (let i = 0; i < drawUpTo; i++) {
       const x = labelW + i * xScale;
-      const y = h - lapData.brakes[i] * (halfH - 4);
+      const y = brkBot - lapData.brakes[i] * innerH;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Speed fill
+    ctx.fillStyle = "rgba(96, 165, 250, 0.12)";
+    ctx.beginPath();
+    ctx.moveTo(labelW, spdBot);
+    for (let i = 0; i < drawUpTo; i++) {
+      const x = labelW + i * xScale;
+      const sVal = Math.min(lapData.speeds[i] / SPEED_MAX, 1);
+      ctx.lineTo(x, spdBot - sVal * innerH);
+    }
+    ctx.lineTo(labelW + (drawUpTo - 1) * xScale, spdBot);
+    ctx.closePath();
+    ctx.fill();
+
+    // Speed line
+    ctx.strokeStyle = "#60a5fa";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < drawUpTo; i++) {
+      const x = labelW + i * xScale;
+      const sVal = Math.min(lapData.speeds[i] / SPEED_MAX, 1);
+      const y = spdBot - sVal * innerH;
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
@@ -392,30 +469,64 @@ function LeaderTelemetry({
       <div className="flex items-center gap-2 px-4 py-1.5 border-b border-white/[0.06]">
         <div
           className="h-2.5 w-1 rounded-full"
-          style={{ backgroundColor: leaderInfo ? `#${leaderInfo.color}` : "#666" }}
+          style={{
+            backgroundColor: leaderInfo ? `#${leaderInfo.color}` : "#666",
+          }}
         />
         <span className="font-mono text-[10px] font-bold text-text-primary tracking-wide">
           {leaderCode}
         </span>
         <span className="text-[9px] font-mono text-text-muted">P1</span>
       </div>
-      <canvas
-        ref={canvasRef}
-        className="w-full"
-        style={{ height: 64 }}
-      />
+      <canvas ref={canvasRef} className="w-full" style={{ height: 96 }} />
     </div>
   );
 }
 
 export default function LiveReplayPreview() {
+  // 1. Find the latest season that has replay data
+  const { data: replaySeasons } = useQuery({
+    queryKey: ["replaySeasons"],
+    queryFn: fetchReplaySeasons,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const latestSeason = useMemo(() => {
+    if (!replaySeasons || replaySeasons.length === 0) return null;
+    return Math.max(...replaySeasons);
+  }, [replaySeasons]);
+
+  // 2. Find the most recent replay within that season
+  const { data: availableReplays } = useQuery({
+    queryKey: ["availableReplays", latestSeason],
+    queryFn: () => fetchAvailableReplays(latestSeason as number),
+    enabled: latestSeason !== null,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const latestReplay = useMemo(() => {
+    if (!availableReplays || availableReplays.replays.length === 0) return null;
+    // Pick the most recent by date (fall back to highest round)
+    return [...availableReplays.replays].sort((a, b) => {
+      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (dateDiff !== 0) return dateDiff;
+      return b.round - a.round;
+    })[0];
+  }, [availableReplays]);
+
+  const activeSeason = latestSeason;
+  const activeRound = latestReplay?.round ?? null;
+
+  // 3. Fetch the replay frame data for the chosen session
   const {
     data: replayData,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["preview-replay", SEASON, ROUND],
-    queryFn: () => fetchReplayData(SEASON, ROUND),
+    queryKey: ["preview-replay", activeSeason, activeRound],
+    queryFn: () =>
+      fetchReplayData(activeSeason as number, activeRound as number),
+    enabled: activeSeason !== null && activeRound !== null,
     staleTime: Number.POSITIVE_INFINITY,
     gcTime: 30 * 60 * 1000,
   });
@@ -525,9 +636,9 @@ export default function LiveReplayPreview() {
                 <span className="text-sm font-bold text-text-primary">
                   Live Replay
                 </span>
-                {replayData && (
+                {replayData && activeSeason !== null && (
                   <span className="ml-2 text-xs text-text-muted">
-                    {replayData.metadata.event_name} {SEASON}
+                    {replayData.metadata.event_name} {activeSeason}
                   </span>
                 )}
               </div>
@@ -576,7 +687,10 @@ export default function LiveReplayPreview() {
                 <div className="flex flex-col lg:flex-row gap-4">
                   {/* Track canvas */}
                   <div className="flex-1 min-w-0 rounded-xl border border-white/[0.06] bg-black overflow-hidden">
-                    <div className="relative flex items-center justify-center" style={{ height: 380 }}>
+                    <div
+                      className="relative flex items-center justify-center"
+                      style={{ height: 380 }}
+                    >
                       <TrackCanvas
                         track={replayData.track}
                         drivers={replayData.drivers}
@@ -641,7 +755,11 @@ export default function LiveReplayPreview() {
             </div>
 
             <Link
-              href={`/live?season=${SEASON}&round=${ROUND}`}
+              href={
+                activeSeason !== null && activeRound !== null
+                  ? `/live?season=${activeSeason}&round=${activeRound}`
+                  : "/live"
+              }
               className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-purple-400 transition-colors hover:text-purple-300"
             >
               Watch full replay
