@@ -9,7 +9,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { apiUrl } from "@/lib/api";
+import { apiUrl, extractErrorMessage } from "@/lib/api";
 import {
   clearAccessToken,
   fetchWithAuth,
@@ -77,8 +77,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || "Login failed");
+      throw new Error(await extractErrorMessage(res, "Login failed"));
     }
 
     const data = await res.json();
@@ -100,8 +99,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Registration failed");
+        throw new Error(await extractErrorMessage(res, "Registration failed"));
       }
     },
     [],

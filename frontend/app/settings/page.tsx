@@ -6,7 +6,7 @@ import { useAuth } from "@/components/AuthProvider";
 import FavoritesPicker from "@/components/favorites/FavoritesPicker";
 import Button from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
-import { apiUrl } from "@/lib/api";
+import { apiUrl, extractErrorMessage } from "@/lib/api";
 import { fetchWithAuth } from "@/lib/auth";
 
 export default function SettingsPage() {
@@ -114,8 +114,9 @@ export default function SettingsPage() {
         }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Failed");
+        throw new Error(
+          await extractErrorMessage(res, "Failed to change password"),
+        );
       }
       setPasswordMsg("Password changed");
       setOldPassword("");
@@ -140,8 +141,9 @@ export default function SettingsPage() {
         body: JSON.stringify({ password: deletePassword }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Failed to delete account");
+        throw new Error(
+          await extractErrorMessage(res, "Failed to delete account"),
+        );
       }
       await logout();
       router.push("/");

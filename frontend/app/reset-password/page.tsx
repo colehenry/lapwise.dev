@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { apiUrl } from "@/lib/api";
+import { apiUrl, extractErrorMessage } from "@/lib/api";
 
 export default function ResetPasswordPage() {
   return (
@@ -61,8 +61,7 @@ function ResetPasswordForm() {
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Reset failed");
+        throw new Error(await extractErrorMessage(res, "Reset failed"));
       }
 
       router.push("/login?reset=true");

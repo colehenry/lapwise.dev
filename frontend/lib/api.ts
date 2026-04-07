@@ -25,6 +25,38 @@ export function apiUrl(path: string): string {
 }
 
 /**
+ * Extracts a human-readable error message from a FastAPI error response.
+ * Handles both HTTPException-style string `detail` and Pydantic validation
+ * errors, where `detail` is an array of `{ msg, loc, type }` objects.
+ *
+ * Without this, code that does `throw new Error(err.detail)` ends up
+ * stringifying the array to "[object Object]".
+ */
+export async function extractErrorMessage(
+  res: Response,
+  fallback: string,
+): Promise<string> {
+  const body = await res.json().catch(() => null);
+  if (!body) return fallback;
+  const detail = body.detail;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object" && typeof item.msg === "string") {
+          return item.msg.replace(/^Value error,\s*/i, "");
+        }
+        return null;
+      })
+      .filter((m): m is string => !!m);
+    if (messages.length > 0) return messages.join(". ");
+  }
+  if (typeof body.message === "string") return body.message;
+  return fallback;
+}
+
+/**
  * Returns headers object with API key for authenticated requests
  */
 export function apiHeaders(): HeadersInit {
