@@ -32,6 +32,65 @@ type RoundsData = {
   rounds: RoundSummary[];
 };
 
+function QualifyingPointsInfo() {
+  return (
+    <div className="absolute top-3 right-3 z-30 group">
+      <button
+        type="button"
+        aria-label="How qualifying points are calculated"
+        className="w-4 h-4 rounded-full border border-border-secondary bg-bg-primary text-text-muted hover:text-purple-300 hover:border-purple-500 flex items-center justify-center text-[9px] font-bold font-mono transition-colors duration-150"
+      >
+        ?
+      </button>
+      <div className="hidden group-hover:block group-focus-within:block absolute right-0 top-full mt-2 w-64 bg-bg-primary border border-border-secondary rounded-sm p-3 shadow-lg z-30">
+        <p className="text-[10px] text-text-secondary leading-relaxed normal-case tracking-normal font-sans">
+          The "points" metric for qualifying is an unofficial 
+          <span className="font-mono text-purple-300"> Lapwise </span> 
+          stat for ranking one-lap pace. Each qualifying session awards{" "}
+          <span className="font-mono text-purple-300">21−position</span>{" "}
+          points: (P1 = 20, P20 = 1). These "points" do not affect the championship standings in any way.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+type QualifyingMedalLine = {
+  poles: number;
+  p2s: number;
+  p3s: number;
+  total: number;
+};
+
+function QualifyingMedals({ poles, p2s, p3s, total }: QualifyingMedalLine) {
+  const medals = [
+    { count: poles, icon: "🥇", label: "P1s" },
+    { count: p2s, icon: "🥈", label: "P2s" },
+    { count: p3s, icon: "🥉", label: "P3s" },
+  ].filter((m) => m.count > 0);
+
+  return (
+    <div className="flex items-center gap-3">
+      {medals.map((m) => (
+        <div key={m.label} className="flex flex-col items-center">
+          <span className="text-xs" title={m.label}>
+            {m.icon}
+          </span>
+          <span className="text-xs font-bold text-text-primary">{m.count}</span>
+        </div>
+      ))}
+      <div className="flex items-baseline gap-1">
+        <span className="text-[9px] text-text-muted tracking-widest font-mono">
+          PTS
+        </span>
+        <span className="text-lg font-bold text-text-primary font-mono">
+          {total}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function ResultsPage() {
   const params = useParams();
   const router = useRouter();
@@ -205,9 +264,10 @@ export default function ResultsPage() {
         <div className="mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Driver Standings */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm flex flex-col">
+            <div className="relative bg-bg-tertiary border border-border-primary rounded-sm shadow-sm flex flex-col">
+              {sessionType === "qualifying" && <QualifyingPointsInfo />}
               {/* Header band with Pattern A */}
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center gap-2 overflow-hidden">
                 <GridPattern id="driver-grid" />
                 <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-nowrap">
                   {sessionType === "race"
@@ -273,32 +333,15 @@ export default function ResultsPage() {
 
                     {/* Results / Points */}
                     {sessionType === "qualifying" ? (
-                      <div className="flex items-center gap-3">
-                        <div className="flex flex-col items-center">
-                          <span className="text-xs" title="P1s">
-                            🥇
-                          </span>
-                          <span className="text-xs font-bold text-text-primary">
-                            {(driver as DriverQualifyingStanding).poles}
-                          </span>
-                        </div>
-                        <div className="flex flex-col items-center">
-                          <span className="text-xs" title="P2s">
-                            🥈
-                          </span>
-                          <span className="text-xs font-bold text-text-primary">
-                            {(driver as DriverQualifyingStanding).p2s}
-                          </span>
-                        </div>
-                        <div className="flex flex-col items-center">
-                          <span className="text-xs" title="P3s">
-                            🥉
-                          </span>
-                          <span className="text-xs font-bold text-text-primary">
-                            {(driver as DriverQualifyingStanding).p3s}
-                          </span>
-                        </div>
-                      </div>
+                      <QualifyingMedals
+                        poles={(driver as DriverQualifyingStanding).poles}
+                        p2s={(driver as DriverQualifyingStanding).p2s}
+                        p3s={(driver as DriverQualifyingStanding).p3s}
+                        total={
+                          (driver as DriverQualifyingStanding)
+                            .total_qualifying_points
+                        }
+                      />
                     ) : (
                       <div className="flex items-baseline gap-1">
                         <span className="text-[9px] text-text-muted tracking-widest font-mono">
@@ -315,9 +358,10 @@ export default function ResultsPage() {
             </div>
 
             {/* Constructor Standings */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm flex flex-col">
+            <div className="relative bg-bg-tertiary border border-border-primary rounded-sm shadow-sm flex flex-col">
+              {sessionType === "qualifying" && <QualifyingPointsInfo />}
               {/* Header band with Pattern A */}
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center gap-2 overflow-hidden">
                 <GridPattern id="constructor-grid" />
                 <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-nowrap">
                   {sessionType === "race"
@@ -403,32 +447,15 @@ export default function ResultsPage() {
 
                       {/* Results / Points */}
                       {sessionType === "qualifying" ? (
-                        <div className="flex items-center gap-3">
-                          <div className="flex flex-col items-center">
-                            <span className="text-xs" title="P1s">
-                              🥇
-                            </span>
-                            <span className="text-xs font-bold text-text-primary">
-                              {(team as ConstructorQualifyingStanding).poles}
-                            </span>
-                          </div>
-                          <div className="flex flex-col items-center">
-                            <span className="text-xs" title="P2s">
-                              🥈
-                            </span>
-                            <span className="text-xs font-bold text-text-primary">
-                              {(team as ConstructorQualifyingStanding).p2s}
-                            </span>
-                          </div>
-                          <div className="flex flex-col items-center">
-                            <span className="text-xs" title="P3s">
-                              🥉
-                            </span>
-                            <span className="text-xs font-bold text-text-primary">
-                              {(team as ConstructorQualifyingStanding).p3s}
-                            </span>
-                          </div>
-                        </div>
+                        <QualifyingMedals
+                          poles={(team as ConstructorQualifyingStanding).poles}
+                          p2s={(team as ConstructorQualifyingStanding).p2s}
+                          p3s={(team as ConstructorQualifyingStanding).p3s}
+                          total={
+                            (team as ConstructorQualifyingStanding)
+                              .total_qualifying_points
+                          }
+                        />
                       ) : (
                         <div className="flex items-baseline gap-1">
                           <span className="text-[9px] text-text-muted tracking-widest font-mono">
