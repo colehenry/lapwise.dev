@@ -1,29 +1,41 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import GoogleButton, { OrDivider } from "@/components/auth/GoogleButton";
 import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { apiUrl } from "@/lib/api";
+import { apiUrl, extractErrorMessage } from "@/lib/api";
+import { setAccessToken } from "@/lib/auth";
+import { setLoggedInCookie } from "@/lib/cookies";
 
-export default function RegisterPage() {
+/**
+ * Username picker shown after a brand-new Google sign-up. The backend has
+ * stashed a short-lived `pending_oauth_signup` cookie containing the OAuth
+ * profile; submitting this form finalizes the account.
+ */
+export default function ChooseUsernamePage() {
+  return (
+    <Suspense>
+      <ChooseUsernameForm />
+    </Suspense>
+  );
+}
+
+function ChooseUsernameForm() {
   const router = useRouter();
-  const { register } = useAuth();
+  const searchParams = useSearchParams();
+  const { refreshUser } = useAuth();
 
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState(searchParams.get("suggested") || "");
   const [usernameStatus, setUsernameStatus] = useState<
     "idle" | "checking" | "available" | "taken" | "invalid"
   >("idle");
   const [usernameMessage, setUsernameMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
+  // Same debounced availability check as the password-signup page
   useEffect(() => {
     const normalized = username.toLowerCase().trim();
     if (!normalized) {
@@ -79,10 +91,6 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
     if (usernameStatus === "taken" || usernameStatus === "invalid") {
       setError("Please choose an available username");
       return;
@@ -90,10 +98,22 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register(email, username, password);
-      router.push("/verify-email?registered=true");
+      const res = await fetch(apiUrl("/auth/oauth/google/complete"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username: username.toLowerCase().trim() }),
+      });
+      if (!res.ok) {
+        throw new Error(await extractErrorMessage(res, "Sign-up failed"));
+      }
+      const data = await res.json();
+      setAccessToken(data.access_token);
+      setLoggedInCookie();
+      await refreshUser();
+      router.replace("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed");
+      setError(err instanceof Error ? err.message : "Sign-up failed");
     } finally {
       setLoading(false);
     }
@@ -103,34 +123,13 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
         <h1 className="text-2xl font-bold text-text-primary mb-1">
-          Join <span className="text-purple-500">Lapwise</span>
+          Choose a username
         </h1>
         <p className="text-text-muted text-sm mb-8">
-          Create an account to join the discussion.
+          This is the name that will appear on discussion boards.
         </p>
 
-        <GoogleButton />
-        <OrDivider />
-
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm text-text-secondary mb-1.5"
-            >
-              Email
-            </label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              placeholder="you@example.com"
-            />
-          </div>
-
           <div>
             <label
               htmlFor="username"
@@ -144,6 +143,7 @@ export default function RegisterPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase())}
               required
+              autoFocus
               autoComplete="username"
               pattern="^[a-z0-9_]{3,20}$"
               className="font-mono text-sm"
@@ -172,64 +172,22 @@ export default function RegisterPage() {
             )}
           </div>
 
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm text-text-secondary mb-1.5"
-            >
-              Password
-            </label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              autoComplete="new-password"
-            />
-            <p className="text-xs text-text-muted mt-1">
-              Min 8 characters with uppercase, lowercase, and a number
-            </p>
-          </div>
-
-          <div>
-            <label
-              htmlFor="confirmPassword"
-              className="block text-sm text-text-secondary mb-1.5"
-            >
-              Confirm password
-            </label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              autoComplete="new-password"
-            />
-          </div>
-
           {error && (
             <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-sm px-3 py-2">
               {error}
             </p>
           )}
 
-          <Button type="submit" variant="primary" fullWidth isLoading={loading}>
-            Create account
+          <Button
+            type="submit"
+            variant="primary"
+            fullWidth
+            isLoading={loading}
+            disabled={usernameStatus !== "available"}
+          >
+            Finish sign-up
           </Button>
         </form>
-
-        <p className="text-center text-sm text-text-muted mt-6">
-          Already have an account?{" "}
-          <Link
-            href="/login"
-            className="text-purple-400 hover:text-purple-300 transition-colors"
-          >
-            Log in
-          </Link>
-        </p>
       </div>
     </div>
   );

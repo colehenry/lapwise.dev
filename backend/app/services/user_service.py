@@ -173,13 +173,26 @@ class UserService:
 
     @staticmethod
     async def change_password(
-        db: AsyncSession, user_id: int, old_password: str, new_password: str
+        db: AsyncSession,
+        user_id: int,
+        old_password: str | None,
+        new_password: str,
     ) -> bool:
+        """Set or change a user's password.
+
+        For OAuth-only users (hashed_password is None) the old_password is
+        ignored — they're setting an initial password so they can disconnect
+        the OAuth provider later. For users who already have a password, the
+        old one must verify.
+        """
         user = await UserService.get_user_by_id(db, user_id)
-        if not user or not user.hashed_password:
+        if not user:
             return False
-        if not AuthService.verify_password(old_password, user.hashed_password):
-            return False
+        if user.hashed_password is not None:
+            if not old_password or not AuthService.verify_password(
+                old_password, user.hashed_password
+            ):
+                return False
         user.hashed_password = AuthService.hash_password(new_password)
         await db.commit()
         return True

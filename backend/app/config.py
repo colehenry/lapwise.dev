@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     email_from: str = "noreply@lapwise.dev"
     frontend_url: str = "http://localhost:3000"
 
+    # OAuth
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    oauth_redirect_base_url: str = "http://localhost:8000"
+
     # AI
     ai_daily_query_limit: int = 20
     ai_db_url: str | None = None  # Read-only connection for AI queries

@@ -541,6 +541,7 @@ export interface UserProfile {
   avatar_url: string | null;
   bio: string | null;
   created_at: string;
+  has_password: boolean;
   favorite_driver: FavoriteDriver | null;
   favorite_team: FavoriteTeam | null;
   favorite_circuit: FavoriteCircuit | null;
