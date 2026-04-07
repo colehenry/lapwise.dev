@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings
 from app.limiter import limiter
@@ -33,6 +34,17 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["Content-Type", "Authorization", "X-API-Key"],
+)
+
+# Session middleware — required by Authlib's OAuth client to store state/nonce
+# during the OAuth dance. Cookie is httponly and short-lived.
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.secret_key,
+    session_cookie="lapwise_oauth_session",
+    max_age=600,  # 10 minutes — only needs to outlive the OAuth round-trip
+    same_site="lax",
+    https_only=settings.frontend_url.startswith("https://"),
 )
 
 
@@ -68,6 +80,7 @@ from app.routers import (
     events,
     circuits,
     auth,
+    oauth,
     posts,
     tags,
     users,
@@ -76,6 +89,7 @@ from app.routers import (
 )
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(oauth.router, prefix="/auth/oauth", tags=["oauth"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(season_results.router, prefix="/api/results", tags=["results"])

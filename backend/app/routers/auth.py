@@ -63,6 +63,7 @@ def _clear_refresh_cookie(response: Response) -> None:
 
 async def _user_profile(user: User, db: AsyncSession) -> UserProfile:
     profile = UserProfile.model_validate(user)
+    profile.has_password = user.hashed_password is not None
     favorites = await UserService.resolve_user_favorites(db, user)
     if "favorite_driver" in favorites:
         profile.favorite_driver = favorites["favorite_driver"]

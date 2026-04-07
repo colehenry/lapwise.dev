@@ -26,6 +26,7 @@ from app.models.refresh_token import RefreshToken
 from app.models.email_verification_token import EmailVerificationToken
 from app.models.password_reset_token import PasswordResetToken
 from app.models.login_history import LoginHistory
+from app.models.oauth_account import OAuthAccount
 from app.models.tag import Tag
 from app.models.post import Post, PostType
 from app.models.post_tag import post_tags  # noqa: F401
@@ -52,6 +53,7 @@ __all__ = [
     "EmailVerificationToken",
     "PasswordResetToken",
     "LoginHistory",
+    "OAuthAccount",
     "Tag",
     "Post",
     "PostType",
