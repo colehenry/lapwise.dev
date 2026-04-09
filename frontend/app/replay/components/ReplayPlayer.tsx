@@ -87,10 +87,9 @@ export default function ReplayPlayer({
   const frameIndexRef = useRef<number>(0);
   const playbackSpeedRef = useRef<number>(playbackSpeed);
 
-  // Keep refs in sync with state
-  useEffect(() => {
-    frameIndexRef.current = frameIndex;
-  }, [frameIndex]);
+  // Keep playbackSpeed ref in sync with state
+  // (frameIndexRef is maintained synchronously inside animate + handleSeek
+  // to avoid stale-ref races under concurrent rendering)
   useEffect(() => {
     playbackSpeedRef.current = playbackSpeed;
   }, [playbackSpeed]);
@@ -133,9 +132,11 @@ export default function ReplayPlayer({
 
     if (newIndex >= data.metadata.total_frames) {
       // Reached end
+      const endIndex = data.metadata.total_frames - 1;
       setIsPlaying(false);
-      setFrameIndex(data.metadata.total_frames - 1);
-      fractionalFrameRef.current = data.metadata.total_frames - 1;
+      frameIndexRef.current = endIndex;
+      setFrameIndex(endIndex);
+      fractionalFrameRef.current = endIndex;
       return;
     }
 
@@ -146,6 +147,9 @@ export default function ReplayPlayer({
         currentWeatherRef.current = frame.w;
         setCurrentWeather(frame.w);
       }
+      // Update ref synchronously so subsequent RAFs see the new value
+      // even before React commits the state update.
+      frameIndexRef.current = newIndex;
       setFrameIndex(newIndex);
     }
 
@@ -166,6 +170,7 @@ export default function ReplayPlayer({
 
   const handleSeek = useCallback((newIndex: number) => {
     fractionalFrameRef.current = newIndex;
+    frameIndexRef.current = newIndex;
     setFrameIndex(newIndex);
     // Scan backwards for most recent weather
     const data = dataRef.current;
