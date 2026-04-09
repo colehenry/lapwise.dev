@@ -10,6 +10,10 @@ export interface DriverStanding {
   team_color: string | null;
   total_points: number;
   headshot_url: string | null;
+  wins: number;
+  p2s: number;
+  p3s: number;
+  position_counts: Record<string, number>;
 }
 
 export interface ConstructorStanding {
@@ -18,6 +22,10 @@ export interface ConstructorStanding {
   team_color: string | null;
   logo_url: string | null;
   total_points: number;
+  wins: number;
+  p2s: number;
+  p3s: number;
+  position_counts: Record<string, number>;
 }
 
 export interface StandingsResponse {
@@ -39,6 +47,7 @@ export interface DriverQualifyingStanding {
   poles: number;
   p2s: number;
   p3s: number;
+  position_counts: Record<string, number>;
 }
 
 export interface ConstructorQualifyingStanding {
@@ -50,12 +59,14 @@ export interface ConstructorQualifyingStanding {
   poles: number;
   p2s: number;
   p3s: number;
+  position_counts: Record<string, number>;
 }
 
 export interface QualifyingStandingsResponse {
   year: number;
   drivers: DriverQualifyingStanding[];
   constructors: ConstructorQualifyingStanding[];
+  formula_base: number;
 }
 
 export interface PodiumDriver {

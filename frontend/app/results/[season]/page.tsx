@@ -32,7 +32,8 @@ type RoundsData = {
   rounds: RoundSummary[];
 };
 
-function QualifyingPointsInfo() {
+function QualifyingPointsInfo({ formulaBase }: { formulaBase: number }) {
+  const maxPoints = formulaBase - 1;
   return (
     <div className="absolute top-3 right-3 z-30 group">
       <button
@@ -42,32 +43,68 @@ function QualifyingPointsInfo() {
       >
         ?
       </button>
-      <div className="hidden group-hover:block group-focus-within:block absolute right-0 top-full mt-2 w-64 bg-bg-primary border border-border-secondary rounded-sm p-3 shadow-lg z-30">
+      <div className="hidden group-hover:block group-focus-within:block absolute right-0 top-full mt-2 w-56 bg-bg-primary border border-border-secondary rounded-sm p-3 shadow-lg z-30">
         <p className="text-[10px] text-text-secondary leading-relaxed normal-case tracking-normal font-sans">
-          The "points" metric for qualifying is an unofficial 
-          <span className="font-mono text-purple-300"> Lapwise </span> 
-          stat for ranking one-lap pace. Each qualifying session awards{" "}
-          <span className="font-mono text-purple-300">21−position</span>{" "}
-          points: (P1 = 20, P20 = 1). These "points" do not affect the championship standings in any way.
+          Unofficial <span className="font-mono text-purple-300">Lapwise</span>{" "}
+          metric for one-lap pace. Each qualifying awards{" "}
+          <span className="font-mono text-purple-300">
+            {formulaBase}−position
+          </span>{" "}
+          points (P1 = {maxPoints}, P{maxPoints} = 1). Scales to grid size so
+          every driver scores. Does not affect the championship.
         </p>
       </div>
     </div>
   );
 }
 
-type QualifyingMedalLine = {
-  poles: number;
-  p2s: number;
-  p3s: number;
+type MedalsProps = {
+  p1: number;
+  p2: number;
+  p3: number;
   total: number;
+  name: string;
+  positionCounts: Record<string, number>;
+  mode: "race" | "qualifying";
 };
 
-function QualifyingMedals({ poles, p2s, p3s, total }: QualifyingMedalLine) {
+function MedalsWithBreakdown({
+  p1,
+  p2,
+  p3,
+  total,
+  name,
+  positionCounts,
+  mode,
+}: MedalsProps) {
+  // For qualifying, hide medals a driver never earned. For race, always show
+  // the 1/2/3 pane when non-zero (race P1-P3 are podium positions).
   const medals = [
-    { count: poles, icon: "🥇", label: "P1s" },
-    { count: p2s, icon: "🥈", label: "P2s" },
-    { count: p3s, icon: "🥉", label: "P3s" },
+    { count: p1, icon: "🥇", label: "P1s" },
+    { count: p2, icon: "🥈", label: "P2s" },
+    { count: p3, icon: "🥉", label: "P3s" },
   ].filter((m) => m.count > 0);
+
+  const [tooltipPos, setTooltipPos] = useState<{
+    top: number;
+    right: number;
+  } | null>(null);
+
+  const sorted = Object.entries(positionCounts)
+    .map(([pos, count]) => ({ pos: Number(pos), count }))
+    .filter((e) => e.count > 0)
+    .sort((a, b) => a.pos - b.pos);
+
+  const showTooltip = (el: HTMLElement) => {
+    const rect = el.getBoundingClientRect();
+    setTooltipPos({
+      top: rect.bottom + 8,
+      right: window.innerWidth - rect.right,
+    });
+  };
+
+  const tooltipLabel =
+    mode === "race" ? "race finishes" : "qualifying positions";
 
   return (
     <div className="flex items-center gap-3">
@@ -79,13 +116,57 @@ function QualifyingMedals({ poles, p2s, p3s, total }: QualifyingMedalLine) {
           <span className="text-xs font-bold text-text-primary">{m.count}</span>
         </div>
       ))}
-      <div className="flex items-baseline gap-1">
-        <span className="text-[9px] text-text-muted tracking-widest font-mono">
-          PTS
-        </span>
-        <span className="text-lg font-bold text-text-primary font-mono">
-          {total}
-        </span>
+      <div className="relative">
+        <button
+          type="button"
+          aria-label={`${name} ${tooltipLabel} breakdown`}
+          onMouseEnter={(e) => showTooltip(e.currentTarget)}
+          onMouseLeave={() => setTooltipPos(null)}
+          onFocus={(e) => showTooltip(e.currentTarget)}
+          onBlur={() => setTooltipPos(null)}
+          className="flex items-baseline gap-1 cursor-help"
+        >
+          <span className="text-[9px] text-text-muted tracking-widest font-mono">
+            PTS
+          </span>
+          <span className="text-lg font-bold text-text-primary font-mono">
+            {total}
+          </span>
+        </button>
+        {tooltipPos && (
+          <div
+            className="fixed w-36 bg-bg-primary border border-border-secondary rounded-sm p-2 shadow-lg z-50 pointer-events-none"
+            style={{ top: tooltipPos.top, right: tooltipPos.right }}
+          >
+            <p className="text-[10px] font-bold text-text-primary mb-1.5 truncate">
+              {name}
+            </p>
+            {sorted.length === 0 ? (
+              <p className="text-[10px] text-text-muted">No results</p>
+            ) : (
+              <div className="flex flex-col gap-0.5">
+                {sorted.map(({ pos, count }) => {
+                  const medal =
+                    pos === 1 ? "🥇" : pos === 2 ? "🥈" : pos === 3 ? "🥉" : "";
+                  return (
+                    <div
+                      key={pos}
+                      className="flex items-center justify-between text-[10px] text-text-secondary font-mono"
+                    >
+                      <span className="flex items-center gap-1">
+                        {medal && <span>{medal}</span>}
+                        <span>P{pos}</span>
+                      </span>
+                      <span className="text-text-primary font-bold">
+                        {count}x
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -265,7 +346,11 @@ export default function ResultsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Driver Standings */}
             <div className="relative bg-bg-tertiary border border-border-primary rounded-sm shadow-sm flex flex-col">
-              {sessionType === "qualifying" && <QualifyingPointsInfo />}
+              {sessionType === "qualifying" && (
+                <QualifyingPointsInfo
+                  formulaBase={qualifyingStandings?.formula_base ?? 21}
+                />
+              )}
               {/* Header band with Pattern A */}
               <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center gap-2 overflow-hidden">
                 <GridPattern id="driver-grid" />
@@ -333,24 +418,32 @@ export default function ResultsPage() {
 
                     {/* Results / Points */}
                     {sessionType === "qualifying" ? (
-                      <QualifyingMedals
-                        poles={(driver as DriverQualifyingStanding).poles}
-                        p2s={(driver as DriverQualifyingStanding).p2s}
-                        p3s={(driver as DriverQualifyingStanding).p3s}
+                      <MedalsWithBreakdown
+                        mode="qualifying"
+                        p1={(driver as DriverQualifyingStanding).poles}
+                        p2={(driver as DriverQualifyingStanding).p2s}
+                        p3={(driver as DriverQualifyingStanding).p3s}
                         total={
                           (driver as DriverQualifyingStanding)
                             .total_qualifying_points
                         }
+                        name={driver.full_name}
+                        positionCounts={
+                          (driver as DriverQualifyingStanding).position_counts
+                        }
                       />
                     ) : (
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-[9px] text-text-muted tracking-widest font-mono">
-                          PTS
-                        </span>
-                        <span className="text-lg font-bold text-text-primary font-mono">
-                          {(driver as DriverStanding).total_points}
-                        </span>
-                      </div>
+                      <MedalsWithBreakdown
+                        mode="race"
+                        p1={(driver as DriverStanding).wins}
+                        p2={(driver as DriverStanding).p2s}
+                        p3={(driver as DriverStanding).p3s}
+                        total={(driver as DriverStanding).total_points}
+                        name={driver.full_name}
+                        positionCounts={
+                          (driver as DriverStanding).position_counts
+                        }
+                      />
                     )}
                   </div>
                 ))}
@@ -359,7 +452,11 @@ export default function ResultsPage() {
 
             {/* Constructor Standings */}
             <div className="relative bg-bg-tertiary border border-border-primary rounded-sm shadow-sm flex flex-col">
-              {sessionType === "qualifying" && <QualifyingPointsInfo />}
+              {sessionType === "qualifying" && (
+                <QualifyingPointsInfo
+                  formulaBase={qualifyingStandings?.formula_base ?? 21}
+                />
+              )}
               {/* Header band with Pattern A */}
               <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center gap-2 overflow-hidden">
                 <GridPattern id="constructor-grid" />
@@ -447,24 +544,33 @@ export default function ResultsPage() {
 
                       {/* Results / Points */}
                       {sessionType === "qualifying" ? (
-                        <QualifyingMedals
-                          poles={(team as ConstructorQualifyingStanding).poles}
-                          p2s={(team as ConstructorQualifyingStanding).p2s}
-                          p3s={(team as ConstructorQualifyingStanding).p3s}
+                        <MedalsWithBreakdown
+                          mode="qualifying"
+                          p1={(team as ConstructorQualifyingStanding).poles}
+                          p2={(team as ConstructorQualifyingStanding).p2s}
+                          p3={(team as ConstructorQualifyingStanding).p3s}
                           total={
                             (team as ConstructorQualifyingStanding)
                               .total_qualifying_points
                           }
+                          name={team.team_name}
+                          positionCounts={
+                            (team as ConstructorQualifyingStanding)
+                              .position_counts
+                          }
                         />
                       ) : (
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-[9px] text-text-muted tracking-widest font-mono">
-                            PTS
-                          </span>
-                          <span className="text-lg font-bold text-text-primary font-mono">
-                            {(team as ConstructorStanding).total_points}
-                          </span>
-                        </div>
+                        <MedalsWithBreakdown
+                          mode="race"
+                          p1={(team as ConstructorStanding).wins}
+                          p2={(team as ConstructorStanding).p2s}
+                          p3={(team as ConstructorStanding).p3s}
+                          total={(team as ConstructorStanding).total_points}
+                          name={team.team_name}
+                          positionCounts={
+                            (team as ConstructorStanding).position_counts
+                          }
+                        />
                       )}
                     </div>
                   </div>

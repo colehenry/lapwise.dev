@@ -8,7 +8,7 @@ import { fetchAvailableReplays, fetchReplaySeasons } from "@/lib/api";
 import ReplayBrowser from "./components/ReplayBrowser";
 import ReplayPlayer from "./components/ReplayPlayer";
 
-export default function LivePage() {
+export default function ReplayPage() {
   const searchParams = useSearchParams();
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [selectedReplay, setSelectedReplay] = useState<{
@@ -25,7 +25,7 @@ export default function LivePage() {
 
   const activeSeason = selectedSeason ?? seasons[0] ?? null;
 
-  // Auto-select replay from URL params (e.g., /live?season=2024&round=5)
+  // Auto-select replay from URL params (e.g., /replay?season=2024&round=5)
   useEffect(() => {
     if (autoLoaded || selectedReplay) return;
 

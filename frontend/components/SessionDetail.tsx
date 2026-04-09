@@ -212,7 +212,7 @@ export default function SessionDetail({
                 )}
                 {session.year >= 2018 && (
                   <Link
-                    href={`/live?season=${session.year}&round=${session.round}`}
+                    href={`/replay?season=${session.year}&round=${session.round}`}
                     className="inline-flex items-center gap-1 text-[10px] tracking-widest uppercase font-bold font-mono text-purple-400 hover:text-purple-300 transition-colors duration-150 px-2 py-1 border border-purple-500/30 rounded-sm hover:border-purple-500/60"
                   >
                     <svg
