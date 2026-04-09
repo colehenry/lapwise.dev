@@ -1,13 +1,13 @@
 import { Suspense } from "react";
-import LivePage from "./LivePage";
+import ReplayPage from "./ReplayPage";
 
 export const metadata = {
-  title: "Live & Replay — Lapwise",
+  title: "Race Replay — Lapwise",
   description:
-    "Watch race replays with animated driver positions on track maps, or follow live race data during active F1 sessions.",
+    "Watch race replays with animated driver positions on track maps and full telemetry from past F1 sessions.",
 };
 
-export default function LivePageRoute() {
+export default function ReplayPageRoute() {
   return (
     <Suspense
       fallback={
@@ -16,7 +16,7 @@ export default function LivePageRoute() {
         </div>
       }
     >
-      <LivePage />
+      <ReplayPage />
     </Suspense>
   );
 }

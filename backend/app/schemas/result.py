@@ -7,7 +7,7 @@ These schemas define what data the API endpoints will return to the frontend.
 
 from pydantic import BaseModel
 from datetime import date
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 
 class CircuitInfo(BaseModel):
@@ -133,6 +133,10 @@ class DriverStanding(BaseModel):
     team_color: Optional[str] = None
     total_points: float
     headshot_url: Optional[str] = None
+    wins: int = 0
+    p2s: int = 0
+    p3s: int = 0
+    position_counts: Dict[int, int] = {}
 
     class Config:
         from_attributes = True
@@ -146,6 +150,10 @@ class ConstructorStanding(BaseModel):
     team_color: Optional[str] = None
     logo_url: Optional[str] = None
     total_points: float
+    wins: int = 0
+    p2s: int = 0
+    p3s: int = 0
+    position_counts: Dict[int, int] = {}
 
     class Config:
         from_attributes = True
@@ -186,6 +194,7 @@ class DriverQualifyingStanding(BaseModel):
     poles: int
     p2s: int
     p3s: int
+    position_counts: Dict[int, int] = {}
 
     class Config:
         from_attributes = True
@@ -202,6 +211,7 @@ class ConstructorQualifyingStanding(BaseModel):
     poles: int
     p2s: int
     p3s: int
+    position_counts: Dict[int, int] = {}
 
     class Config:
         from_attributes = True
@@ -209,12 +219,16 @@ class ConstructorQualifyingStanding(BaseModel):
 
 class QualifyingStandingsResponse(BaseModel):
     """
-    Complete qualifying standings response for GET /api/results/{season}/qualifying-standings.
+    Complete qualifying standings response for
+    GET /api/results/{season}/qualifying-standings.
     """
 
     year: int
     drivers: List[DriverQualifyingStanding]
     constructors: List[ConstructorQualifyingStanding]
+    # Dynamic points formula base: points = formula_base - position.
+    # Equals (max grid size + 1) for the season.
+    formula_base: int = 21
 
     class Config:
         from_attributes = True

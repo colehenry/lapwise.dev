@@ -239,6 +239,25 @@ class ResultsService:
             if row:
                 latest_results[driver_id] = row
 
+        # Per-driver race position histogram (race + sprint_race)
+        race_types = ["race", "sprint_race"]
+        driver_race_positions: dict[int, dict[int, int]] = {}
+        driver_race_pos_result = await db.execute(
+            select(
+                SessionResult.driver_id,
+                SessionResult.position,
+                func.count().label("count"),
+            )
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(race_types))
+            .where(SessionResult.position.isnot(None))
+            .group_by(SessionResult.driver_id, SessionResult.position)
+        )
+        for row in driver_race_pos_result:
+            pos_map = driver_race_positions.setdefault(row.driver_id, {})
+            pos_map[int(row.position)] = int(row.count)
+
         # Build driver standings by combining points with latest team info
         driver_standings_data = []
         standings_result = await db.execute(
@@ -249,6 +268,7 @@ class ResultsService:
             driver_id = driver_row.driver_id
             if driver_id in latest_results:
                 session_result, team, headshot_url = latest_results[driver_id]
+                pos_counts = driver_race_positions.get(driver_id, {})
                 driver_standings_data.append(
                     {
                         "driver_code": driver_row.driver_code,
@@ -261,6 +281,10 @@ class ResultsService:
                         "team_name": team.name,
                         "team_color": team.team_color,
                         "headshot_url": headshot_url,
+                        "wins": pos_counts.get(1, 0),
+                        "p2s": pos_counts.get(2, 0),
+                        "p3s": pos_counts.get(3, 0),
+                        "position_counts": pos_counts,
                     }
                 )
 
@@ -279,6 +303,10 @@ class ResultsService:
                 team_color=row["team_color"],
                 total_points=float(row["total_points"]),
                 headshot_url=row["headshot_url"],
+                wins=row["wins"],
+                p2s=row["p2s"],
+                p3s=row["p3s"],
+                position_counts=row["position_counts"],
             )
             for idx, row in enumerate(driver_standings_data)
         ]
@@ -305,6 +333,25 @@ class ResultsService:
         constructor_result = await db.execute(constructor_query)
         constructor_rows = constructor_result.all()
 
+        # Per-team race position histogram
+        team_race_positions: dict[str, dict[int, int]] = {}
+        team_race_pos_result = await db.execute(
+            select(
+                Team.name.label("team_name"),
+                SessionResult.position,
+                func.count().label("count"),
+            )
+            .join(SessionResult, Team.id == SessionResult.team_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(race_types))
+            .where(SessionResult.position.isnot(None))
+            .group_by(Team.name, SessionResult.position)
+        )
+        for row in team_race_pos_result:
+            pos_map = team_race_positions.setdefault(row.team_name, {})
+            pos_map[int(row.position)] = int(row.count)
+
         constructors = [
             ConstructorStanding(
                 position=idx + 1,
@@ -312,6 +359,10 @@ class ResultsService:
                 team_color=row.team_color,
                 logo_url=row.logo_url,
                 total_points=float(row.total_points),
+                wins=team_race_positions.get(row.team_name, {}).get(1, 0),
+                p2s=team_race_positions.get(row.team_name, {}).get(2, 0),
+                p3s=team_race_positions.get(row.team_name, {}).get(3, 0),
+                position_counts=team_race_positions.get(row.team_name, {}),
             )
             for idx, row in enumerate(constructor_rows)
         ]
@@ -326,7 +377,9 @@ class ResultsService:
     ) -> Optional[QualifyingStandingsResponse]:
         """
         Get driver and constructor qualifying standings for a season.
-        Calculates qualifying points: P1=20, P2=19, ..., P20=1.
+        Calculates qualifying points dynamically: formula_base - position,
+        where formula_base = (max grid size for the season) + 1. This keeps
+        every driver with at least 1 point regardless of grid size.
         """
         # Check if season exists
         season_check = await db.execute(
@@ -335,10 +388,21 @@ class ResultsService:
         if not season_check.first():
             return None
 
+        # Dynamically determine the max grid size from qualifying sessions
+        quali_types = ["qualifying", "sprint_qualifying"]
+        max_pos_result = await db.execute(
+            select(func.max(SessionResult.position))
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(quali_types))
+        )
+        max_grid = max_pos_result.scalar() or 20
+        formula_base = int(max_grid) + 1
+
         # ====================================================================
         # Driver Qualifying Standings Query
         # ====================================================================
-        # Points: 21 - position (clamped to min 0)
+        # Points: formula_base - position
         # Session types: qualifying, sprint_qualifying
         points_subquery = (
             select(
@@ -349,7 +413,10 @@ class ResultsService:
                 Driver.country_code,
                 func.sum(
                     case(
-                        (SessionResult.position <= 20, 21 - SessionResult.position),
+                        (
+                            SessionResult.position <= max_grid,
+                            formula_base - SessionResult.position,
+                        ),
                         else_=0,
                     )
                 ).label("total_points"),
@@ -362,7 +429,7 @@ class ResultsService:
             .join(SessionResult, Driver.id == SessionResult.driver_id)
             .join(Session, SessionResult.session_id == Session.id)
             .where(Session.year == season)
-            .where(Session.session_type.in_(["qualifying", "sprint_qualifying"]))
+            .where(Session.session_type.in_(quali_types))
             .where(SessionResult.position.isnot(None))
             .group_by(
                 Driver.id,
@@ -404,6 +471,24 @@ class ResultsService:
             if row:
                 latest_results[driver_id] = row
 
+        # Per-driver position histogram across qualifying sessions
+        driver_position_counts: dict[int, dict[int, int]] = {}
+        driver_pos_result = await db.execute(
+            select(
+                SessionResult.driver_id,
+                SessionResult.position,
+                func.count().label("count"),
+            )
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(quali_types))
+            .where(SessionResult.position.isnot(None))
+            .group_by(SessionResult.driver_id, SessionResult.position)
+        )
+        for row in driver_pos_result:
+            pos_map = driver_position_counts.setdefault(row.driver_id, {})
+            pos_map[int(row.position)] = int(row.count)
+
         # Build driver standings
         driver_standings_data = []
         standings_result = await db.execute(
@@ -429,6 +514,7 @@ class ResultsService:
                         "poles": int(driver_row.poles),
                         "p2s": int(driver_row.p2s),
                         "p3s": int(driver_row.p3s),
+                        "position_counts": driver_position_counts.get(driver_id, {}),
                     }
                 )
 
@@ -447,7 +533,10 @@ class ResultsService:
                 Team.logo_url,
                 func.sum(
                     case(
-                        (SessionResult.position <= 20, 21 - SessionResult.position),
+                        (
+                            SessionResult.position <= max_grid,
+                            formula_base - SessionResult.position,
+                        ),
                         else_=0,
                     )
                 ).label("total_points"),
@@ -460,13 +549,16 @@ class ResultsService:
             .join(SessionResult, Team.id == SessionResult.team_id)
             .join(Session, SessionResult.session_id == Session.id)
             .where(Session.year == season)
-            .where(Session.session_type.in_(["qualifying", "sprint_qualifying"]))
+            .where(Session.session_type.in_(quali_types))
             .where(SessionResult.position.isnot(None))
             .group_by(Team.id, Team.name, Team.team_color, Team.logo_url)
             .order_by(
                 func.sum(
                     case(
-                        (SessionResult.position <= 20, 21 - SessionResult.position),
+                        (
+                            SessionResult.position <= max_grid,
+                            formula_base - SessionResult.position,
+                        ),
                         else_=0,
                     )
                 ).desc()
@@ -475,6 +567,25 @@ class ResultsService:
 
         constructor_result = await db.execute(constructor_query)
         constructor_rows = constructor_result.all()
+
+        # Per-team position histogram across qualifying sessions
+        team_position_counts: dict[str, dict[int, int]] = {}
+        team_pos_result = await db.execute(
+            select(
+                Team.name.label("team_name"),
+                SessionResult.position,
+                func.count().label("count"),
+            )
+            .join(SessionResult, Team.id == SessionResult.team_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(quali_types))
+            .where(SessionResult.position.isnot(None))
+            .group_by(Team.name, SessionResult.position)
+        )
+        for row in team_pos_result:
+            pos_map = team_position_counts.setdefault(row.team_name, {})
+            pos_map[int(row.position)] = int(row.count)
 
         constructors = [
             ConstructorQualifyingStanding(
@@ -486,12 +597,16 @@ class ResultsService:
                 poles=int(row.poles),
                 p2s=int(row.p2s),
                 p3s=int(row.p3s),
+                position_counts=team_position_counts.get(row.team_name, {}),
             )
             for idx, row in enumerate(constructor_rows)
         ]
 
         return QualifyingStandingsResponse(
-            year=season, drivers=drivers, constructors=constructors
+            year=season,
+            drivers=drivers,
+            constructors=constructors,
+            formula_base=formula_base,
         )
 
     @staticmethod
@@ -521,9 +636,23 @@ class ResultsService:
     async def _get_driver_qualifying_progression(
         db: AsyncSession, season: int
     ) -> Optional[PointsProgressionResponse]:
-        # Points: 21 - position (clamped to min 0) for final position sorting
+        # Dynamically determine the max grid size for this season
+        quali_types = ["qualifying", "sprint_qualifying"]
+        max_pos_result = await db.execute(
+            select(func.max(SessionResult.position))
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(quali_types))
+        )
+        max_grid = max_pos_result.scalar() or 20
+        formula_base = int(max_grid) + 1
+
+        # Points: formula_base - position, zero below the grid
         qualifying_points = case(
-            (SessionResult.position <= 20, 21 - SessionResult.position),
+            (
+                SessionResult.position <= max_grid,
+                formula_base - SessionResult.position,
+            ),
             else_=0,
         )
 
@@ -657,8 +786,21 @@ class ResultsService:
     async def _get_constructor_qualifying_progression(
         db: AsyncSession, season: int
     ) -> Optional[PointsProgressionResponse]:
+        quali_types = ["qualifying", "sprint_qualifying"]
+        max_pos_result = await db.execute(
+            select(func.max(SessionResult.position))
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(quali_types))
+        )
+        max_grid = max_pos_result.scalar() or 20
+        formula_base = int(max_grid) + 1
+
         qualifying_points = case(
-            (SessionResult.position <= 20, 21 - SessionResult.position),
+            (
+                SessionResult.position <= max_grid,
+                formula_base - SessionResult.position,
+            ),
             else_=0,
         )
 

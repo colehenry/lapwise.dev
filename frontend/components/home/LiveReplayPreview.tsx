@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import TrackCanvas from "@/app/live/components/TrackCanvas";
+import TrackCanvas from "@/app/replay/components/TrackCanvas";
 import Skeleton from "@/components/ui/Skeleton";
 import {
   fetchAvailableReplays,
@@ -644,7 +644,7 @@ export default function LiveReplayPreview() {
               </div>
             </div>
             <Link
-              href="/live"
+              href="/replay"
               className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-text-muted transition-all hover:border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-300"
             >
               Try it
@@ -757,8 +757,8 @@ export default function LiveReplayPreview() {
             <Link
               href={
                 activeSeason !== null && activeRound !== null
-                  ? `/live?season=${activeSeason}&round=${activeRound}`
-                  : "/live"
+                  ? `/replay?season=${activeSeason}&round=${activeRound}`
+                  : "/replay"
               }
               className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-purple-400 transition-colors hover:text-purple-300"
             >
