@@ -62,9 +62,9 @@ const features: Feature[] = [
   },
   {
     label: "07",
-    title: "AI Analyst",
+    title: "Ask Clutch",
     description:
-      "Ask questions about Formula 1 in plain English and get answers with strategy breakdowns, data tables, and interactive charts pulled straight from the database.",
+      "Ask Clutch, our AI analyst, questions about Formula 1 in plain English and get answers with strategy breakdowns, data tables, and interactive charts pulled straight from the database.",
   },
   {
     label: "08",
