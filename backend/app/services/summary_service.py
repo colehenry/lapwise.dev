@@ -275,7 +275,7 @@ RESULTS:
 
 Based on this data, provide:
 1. A concise 2-3 paragraph narrative summary of the session highlighting the key storylines
-2. The top 3 most important, surprising, or dramatic things that happened
+2. The top 3 most important, surprising, or dramatic things that happened, with each item covering a different event or storyline
 
 You MUST respond with valid JSON in this exact format:
 {{
@@ -289,10 +289,19 @@ You MUST respond with valid JSON in this exact format:
 
 Fact-check rules:
 - Final results are not enough to describe how the race unfolded. For races and sprints, verify every narrative claim against the Race Dynamics Evidence section before writing it.
+- The top_3 items must be unique. Do not write three bullets that all describe the same root cause, such as the winner's Safety Car timing from slightly different angles.
+- Each top_3 item should have its own subject and evidence. Prefer a mix such as: lead/winner-deciding moment, a separate recovery/drop/penalty, a podium or midfield swing, a DNF/DNS/incident, fastest lap, or teammate/team contrast.
+- At most one top_3 item may focus on the race winner's victory path. At most one top_3 item may focus on a Safety Car/VSC pit-window swing unless there were multiple unrelated neutralized periods with distinct consequences.
+- If two candidate bullets rely on the same laps, same pit window, and same drivers, merge them into one bullet and choose a different storyline for the remaining slot.
 - Do NOT say a driver "led from pole to flag", "controlled the race", "dominated", or "never looked threatened" unless the leader timeline, lap 1 position, laps led, and gap data explicitly support it.
-- Avoid "dominant" for a winner who lost positions at the start, first led during/after a SC/VSC pit window, or did not control the opening phase. If appropriate, say they controlled the final stint instead.
+- Do not use the words "dominant", "dominates", "dominated", or "dominance" anywhere in the response. Use measurable wording instead, such as "led 33 laps", "controlled the final stint", or "won by 13.722s".
+- Do not use "dominant", "dominates", "dominance", or headline phrases like "Dominant Victory" for a winner who lost positions at the start, first led during/after a SC/VSC pit window, or did not control the opening phase. If appropriate, say they controlled the final stint instead.
+- If a Safety Car/VSC pit window materially changed the lead or track position, the headline and summary must foreground the timing/strategy swing rather than framing the win as raw dominance.
+- Do not describe a gap as "comfortable" unless it was at least 5 seconds in a Grand Prix or at least 2 seconds in a sprint and was not immediately after a neutralized period.
 - If the winner lost the lead, dropped positions at the start, regained P1 through pit timing, or benefited from SC/VSC timing, say that clearly.
 - Do not describe a pass, surge, or on-track overtake unless lap-position changes and context support it. A lead gained during a pit/SC cycle should be described as strategy/timing, not a racing move.
+- Use conservative language for position changes. Say "moved ahead", "took the lead", or "lost places" unless the supplied transcript or race-control evidence explicitly describes the overtaking move.
+- Do not invent driving-mechanics detail such as inside/outside lines, battery/ERS deployment, tyre degradation management, car setup, pressure, or track-temperature effects unless that exact context is present in the supplied evidence.
 - Use only the pit stops listed in Race Dynamics Evidence. Never infer "conceptual", hidden, extra, or forced pit stops that are not listed.
 - If the pit-stop evidence covers only the top finishers, call them "top finishers", not "all points finishers" or the full field.
 - Treat the YouTube transcript as supporting context only. If it conflicts with lap positions, pit stops, race control, or final results, trust the structured data.

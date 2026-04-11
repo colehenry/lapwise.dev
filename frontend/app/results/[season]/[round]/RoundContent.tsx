@@ -18,7 +18,6 @@ import QualifyingSectorHeatmap from "@/components/QualifyingSectorHeatmap";
 import RaceTrackEvolutionChart from "@/components/RaceTrackEvolutionChart";
 import SessionDetail from "@/components/SessionDetail";
 import type { SessionSummary } from "@/components/SessionSummaryCard";
-import SessionSummaryCard from "@/components/SessionSummaryCard";
 import SpeedTrapChart from "@/components/SpeedTrapChart";
 import TrackEvolutionChart from "@/components/TrackEvolutionChart";
 import TyreDegradationChart from "@/components/TyreDegradationChart";
@@ -343,12 +342,6 @@ export default function RoundContent() {
         {/* Race / Qualifying / Sprint tabs — show SessionDetail */}
         {isResultsTab && (
           <>
-            {/* AI Summary Card */}
-            {activeSummary && (
-              <div className="px-6 pt-6">
-                <SessionSummaryCard summary={activeSummary} />
-              </div>
-            )}
             {/* Practice sub-toggle (FP1/FP2/FP3) */}
             {activeTab === "practice" && (
               <div className="px-6 pt-6 flex justify-center">
@@ -391,6 +384,7 @@ export default function RoundContent() {
               onSessionTypeChange={undefined}
               onBack={() => router.push(`/results/${season}`)}
               hideHeader={true}
+              summary={activeSummary}
             />
             {(activeTab === "qualifying" ||
               activeTab === "sprint-qualifying") && (

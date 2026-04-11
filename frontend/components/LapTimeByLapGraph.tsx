@@ -52,6 +52,9 @@ interface LapTimeByLapGraphProps {
   round: number;
   isSprint?: boolean;
   practiceSession?: 1 | 2 | 3;
+  initialViewMode?: ViewMode;
+  initialDrivers?: string[];
+  embedded?: boolean;
 }
 
 // Compound colors for tyre-colored styling
@@ -743,10 +746,13 @@ export default function LapTimeByLapGraph({
   round,
   isSprint = false,
   practiceSession,
+  initialViewMode = "lapTime",
+  initialDrivers,
+  embedded = false,
 }: LapTimeByLapGraphProps) {
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("lapTime");
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -793,9 +799,22 @@ export default function LapTimeByLapGraph({
       const sorted = [...data.drivers].sort(
         (a, b) => (a.final_position || 999) - (b.final_position || 999),
       );
-      setSelectedDrivers(sorted.slice(0, 3).map((d) => driverKey(d)));
+      const requested = initialDrivers?.map((driver) => driver.toUpperCase());
+      const matchingDrivers =
+        requested && requested.length > 0
+          ? sorted
+              .filter((driver) =>
+                requested.includes(driverKey(driver).toUpperCase()),
+              )
+              .map((driver) => driverKey(driver))
+          : [];
+      setSelectedDrivers(
+        matchingDrivers.length > 0
+          ? matchingDrivers
+          : sorted.slice(0, 3).map((d) => driverKey(d)),
+      );
     }
-  }, [data]);
+  }, [data, initialDrivers]);
 
   // Compute track status bands
   const statusBands = useMemo(() => {
@@ -1369,7 +1388,7 @@ export default function LapTimeByLapGraph({
   };
 
   return (
-    <div>
+    <div className={embedded ? "min-h-[420px]" : ""}>
       <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
         <h3 className="text-sm font-bold text-text-secondary font-mono">
           {data.event_name.replace("Grand Prix", "GP")} - {viewLabels[viewMode]}

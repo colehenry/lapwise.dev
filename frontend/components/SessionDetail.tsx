@@ -12,6 +12,8 @@ import {
 import type { SessionResultsResponse } from "@/lib/types";
 import LapTimeByLapGraph from "./LapTimeByLapGraph";
 import { GridPattern, TrianglePattern } from "./Patterns";
+import type { SessionSummary } from "./SessionSummaryCard";
+import SessionSummaryCard from "./SessionSummaryCard";
 import { TrackMapFull } from "./TrackMapDisplay";
 import TyreStintChart from "./TyreStintChart";
 
@@ -24,6 +26,7 @@ interface SessionDetailProps {
   onSessionTypeChange?: (mode: "race" | "qualifying") => void;
   onBack: () => void;
   hideHeader?: boolean;
+  summary?: SessionSummary | null;
 }
 
 // Helper to format time in seconds to "MM:SS.mmm" or "+SS.mmm"
@@ -72,6 +75,7 @@ export default function SessionDetail({
   onSessionTypeChange,
   onBack,
   hideHeader = false,
+  summary,
 }: SessionDetailProps) {
   const [expandedResults, setExpandedResults] = useState<boolean>(false);
   const [selectedGapDrivers, setSelectedGapDrivers] = useState<string[]>([]);
@@ -529,6 +533,12 @@ export default function SessionDetail({
             </table>
           </div>
         </div>
+
+        {summary && (
+          <div className="mt-4">
+            <SessionSummaryCard summary={summary} />
+          </div>
+        )}
 
         {/* Expand/Collapse Button */}
         <div className="mt-4 mb-8 flex justify-center">

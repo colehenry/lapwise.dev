@@ -47,7 +47,7 @@ export default function SessionSummaryCard({
       <div className="px-4 py-3 flex items-center gap-2 border-b border-border-primary/60">
         <ClutchIcon className="h-4 w-4 text-purple-400" title="AI Summary" />
         <span className="text-[10px] tracking-widest text-purple-400 font-bold uppercase font-mono">
-          AI {sessionLabel} Summary
+          Clutch's {sessionLabel} Summary
         </span>
         <span className="ml-auto text-[10px] text-text-muted font-mono">
           {new Date(summary.generated_at).toLocaleDateString()}
