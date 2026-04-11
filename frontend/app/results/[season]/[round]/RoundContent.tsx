@@ -3,16 +3,26 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import CrossSessionComparison from "@/components/CrossSessionComparison";
+import FastestLapTimeline from "@/components/FastestLapTimeline";
 import JumpToRace from "@/components/JumpToRace";
 import LapTimeByLapGraph from "@/components/LapTimeByLapGraph";
 import LapTimeDistributionChart from "@/components/LapTimeDistributionChart";
+import LongRunPaceChart from "@/components/LongRunPaceChart";
 import { TrianglePattern } from "@/components/Patterns";
+import PitStopDeltaChart from "@/components/PitStopDeltaChart";
+import PracticeSectorHeatmap from "@/components/PracticeSectorHeatmap";
+import QualifyingProgressionChart from "@/components/QualifyingProgressionChart";
 import QualifyingSectorComparison from "@/components/QualifyingSectorComparison";
+import QualifyingSectorHeatmap from "@/components/QualifyingSectorHeatmap";
+import RaceTrackEvolutionChart from "@/components/RaceTrackEvolutionChart";
 import SessionDetail from "@/components/SessionDetail";
 import type { SessionSummary } from "@/components/SessionSummaryCard";
 import SessionSummaryCard from "@/components/SessionSummaryCard";
 import SpeedTrapChart from "@/components/SpeedTrapChart";
+import TrackEvolutionChart from "@/components/TrackEvolutionChart";
 import TyreDegradationChart from "@/components/TyreDegradationChart";
+import TyreProgrammeChart from "@/components/TyreProgrammeChart";
 import WeatherChart from "@/components/WeatherChart";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import type { SessionResultsResponse } from "@/lib/types";
@@ -384,7 +394,23 @@ export default function RoundContent() {
             />
             {(activeTab === "qualifying" ||
               activeTab === "sprint-qualifying") && (
-              <div className="p-6">
+              <div className="p-6 space-y-6">
+                {/* Q1/Q2/Q3 Progression */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="quali-prog-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      Q1 → Q2 → Q3 Progression
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <QualifyingProgressionChart
+                      qualifyingData={getSessionDetailData()}
+                    />
+                  </div>
+                </div>
+
+                {/* Sector Comparison (existing 2-driver) */}
                 <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
                   <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
                     <TrianglePattern id="qualifying-tab-sector-triangles" />
@@ -399,10 +425,27 @@ export default function RoundContent() {
                     />
                   </div>
                 </div>
+
+                {/* Sector Heatmap (all drivers) */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="quali-heat-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      Sector Heatmap — All Drivers
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <QualifyingSectorHeatmap
+                      season={seasonNum}
+                      round={roundNum}
+                    />
+                  </div>
+                </div>
               </div>
             )}
             {activeTab === "race" && (
-              <div className="p-6">
+              <div className="p-6 space-y-6">
+                {/* Lap Time Distribution */}
                 <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
                   <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
                     <TrianglePattern id="lap-dist-triangles" />
@@ -417,25 +460,139 @@ export default function RoundContent() {
                     />
                   </div>
                 </div>
-              </div>
-            )}
-            {activeTab === "practice" && (
-              <div className="p-6">
+
+                {/* Fastest Lap Timeline */}
                 <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
                   <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                    <TrianglePattern id="practice-lap-triangles" />
+                    <TrianglePattern id="fastest-lap-triangles" />
                     <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                      FP{practiceSub} Lap Analysis
+                      Fastest Lap Timeline
                     </span>
                   </div>
                   <div className="p-6">
-                    <LapTimeByLapGraph
+                    <FastestLapTimeline season={seasonNum} round={roundNum} />
+                  </div>
+                </div>
+
+                {/* Pit Stop Delta */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="pit-stop-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      Pit Stop Duration
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <PitStopDeltaChart season={seasonNum} round={roundNum} />
+                  </div>
+                </div>
+
+                {/* Race Pace Evolution */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="race-track-evo-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      Race Pace Evolution
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <RaceTrackEvolutionChart
+                      season={seasonNum}
+                      round={roundNum}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+            {activeTab === "practice" && (
+              <div className="p-6 space-y-6">
+                {/* Long Run Pace */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="long-run-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      FP{practiceSub} Long Run Pace
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <LongRunPaceChart
                       season={seasonNum}
                       round={roundNum}
                       practiceSession={practiceSub}
                     />
                   </div>
                 </div>
+
+                {/* Track Evolution */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="track-evo-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      FP{practiceSub} Track Evolution
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <TrackEvolutionChart
+                      season={seasonNum}
+                      round={roundNum}
+                      practiceSession={practiceSub}
+                    />
+                  </div>
+                </div>
+
+                {/* Sector Heatmap */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="sector-heat-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      FP{practiceSub} Sector Analysis
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <PracticeSectorHeatmap
+                      season={seasonNum}
+                      round={roundNum}
+                      practiceSession={practiceSub}
+                    />
+                  </div>
+                </div>
+
+                {/* Tyre Programme */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="tyre-prog-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      FP{practiceSub} Tyre Programme
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <TyreProgrammeChart
+                      season={seasonNum}
+                      round={roundNum}
+                      practiceSession={practiceSub}
+                    />
+                  </div>
+                </div>
+
+                {/* Cross-Session Comparison (only when multiple FP sessions exist) */}
+                {(fp1Data || fp2Data || fp3Data) &&
+                  [fp1Data, fp2Data, fp3Data].filter(Boolean).length >= 2 && (
+                    <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                      <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                        <TrianglePattern id="cross-session-triangles" />
+                        <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                          FP1 / FP2 / FP3 Session Comparison
+                        </span>
+                      </div>
+                      <div className="p-6">
+                        <CrossSessionComparison
+                          fp1Data={fp1Data}
+                          fp2Data={fp2Data}
+                          fp3Data={fp3Data}
+                        />
+                      </div>
+                    </div>
+                  )}
               </div>
             )}
           </>

@@ -9,6 +9,7 @@ import JumpToRace from "@/components/JumpToRace";
 import PageHeader from "@/components/PageHeader";
 import { GridPattern, TrianglePattern } from "@/components/Patterns";
 import PointsByRoundGraph from "@/components/PointsByRoundGraph";
+import TeammateHeadToHead from "@/components/TeammateHeadToHead";
 import { TrackMapCompact } from "@/components/TrackMapDisplay";
 import TiltCard from "@/components/ui/TiltCard";
 import {
@@ -629,16 +630,29 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* ── Points Progression Graph ── */}
+        {/* ── Championship Battle Graph ── */}
         <div className="mb-6 bg-bg-tertiary border border-border-primary rounded-sm shadow-sm">
           <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
             <TrianglePattern id="points-triangles" />
             <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-              Points Progression
+              Championship Battle
             </span>
           </div>
           <div className="p-4">
             <PointsByRoundGraph season={season} pointsType={sessionType} />
+          </div>
+        </div>
+
+        {/* ── Teammate H2H ── */}
+        <div className="mb-6 bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+          <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+            <TrianglePattern id="teammate-h2h-triangles" />
+            <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+              Teammate Head-to-Head
+            </span>
+          </div>
+          <div className="p-4">
+            <TeammateHeadToHead season={season} mode={sessionType} />
           </div>
         </div>
 

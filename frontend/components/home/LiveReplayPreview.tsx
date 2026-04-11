@@ -275,14 +275,16 @@ function buildDriverLapTelemetry(
     if (!d) continue;
     const lap = d[7];
     if (lap <= 0) continue;
-    if (!map.has(lap))
-      map.set(lap, {
+    let entry = map.get(lap);
+    if (!entry) {
+      entry = {
         frameIndices: [],
         throttles: [],
         brakes: [],
         speeds: [],
-      });
-    const entry = map.get(lap)!;
+      };
+      map.set(lap, entry);
+    }
     entry.frameIndices.push(i);
     entry.throttles.push(d[9] ?? 0);
     entry.brakes.push(d[10] ?? 0);

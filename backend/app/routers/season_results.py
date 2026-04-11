@@ -26,6 +26,7 @@ from app.schemas.result import (
     QualifyingSectorResponse,
     WeatherResponse,
     LapDistributionResponse,
+    TeammateH2HResponse,
 )
 from app.schemas.summary import (
     RoundSummariesResponse,
@@ -193,6 +194,30 @@ async def get_points_progression(
         )
 
     return progression
+
+
+@router.get("/{season}/teammate-h2h", response_model=TeammateH2HResponse)
+async def get_teammate_h2h(
+    season: int,
+    mode: str = "race",
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Get head-to-head teammate comparison for a season.
+
+    mode=race (default): finishing position in race/sprint sessions.
+    mode=qualifying: qualifying position in quali/sprint-quali sessions.
+    """
+    h2h = await ResultsService.get_teammate_h2h(db, season, mode=mode)
+
+    if not h2h:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No {mode} data found for season {season}",
+        )
+
+    return h2h
 
 
 @router.get("/{season}/qualifying", response_model=SeasonRoundsResponse)

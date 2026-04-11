@@ -226,6 +226,7 @@ export type LapData = {
   fresh_tyre: boolean | null;
   is_personal_best: boolean | null;
   deleted: boolean | null;
+  lap_start_time_seconds: number | null;
 };
 
 export type TrackStatusEvent = {
