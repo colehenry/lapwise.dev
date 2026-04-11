@@ -170,6 +170,7 @@ The physical compounds are C1 (hardest) through C5 (softest). At each race, Pire
 - Safety car deployments create strategic pit stop windows — drivers who pit under SC lose less time.
 - **VSC** (introduced 2015) causes less disruption than full SC but still affects strategy.
 - Count SC/VSC deployments per race: `SELECT COUNT(*) FROM track_status WHERE session_id = X AND status IN ('4', '6')`.
+- Do not call a safety car "lucky" or decisive unless pit stop timing, position changes, or race-control context shows the driver gained track position or avoided a normal green-flag pit loss during the neutralized period.
 
 ### DRS (Drag Reduction System) — Since 2011
 - Opens rear wing flap to reduce drag (~10-15 km/h advantage on straights).
@@ -316,6 +317,47 @@ WHERE s.year = 2024 AND s.round = 1 AND s.session_type = 'race'
   AND sr.position IS NOT NULL AND sr.grid_position IS NOT NULL
 ORDER BY positions_gained DESC;
 ```
+
+### Race Narrative Fact Check
+
+Use lap-by-lap positions before making qualitative claims about how a race unfolded. Final result, grid position, and winning margin do not prove dominance or pole-to-flag control.
+
+```sql
+-- Leader timeline and laps led for a specific race session
+WITH leaders AS (
+  SELECT l.lap_number, d.full_name, d.driver_code
+  FROM laps l
+  JOIN drivers d ON l.driver_id = d.id
+  WHERE l.session_id = 123
+    AND l.position = 1
+)
+SELECT full_name, driver_code,
+       MIN(lap_number) AS first_led_lap,
+       MAX(lap_number) AS last_led_lap,
+       COUNT(*) AS laps_led
+FROM leaders
+GROUP BY full_name, driver_code
+ORDER BY laps_led DESC;
+```
+
+```sql
+-- Position path for key drivers, useful for checking starts, recoveries, and lead changes
+SELECT l.lap_number, d.driver_code, l.position, l.compound, l.stint,
+       l.pit_in_time_seconds IS NOT NULL AS pit_in,
+       l.pit_out_time_seconds IS NOT NULL AS pit_out,
+       l.track_status
+FROM laps l
+JOIN drivers d ON l.driver_id = d.id
+WHERE l.session_id = 123
+  AND d.driver_code IN ('ANT', 'PIA', 'LEC')
+ORDER BY l.lap_number, l.position;
+```
+
+Narrative guardrails:
+- "Led from pole to flag" requires grid P1, lap 1 P1, P1 on every completed lap, and finish P1.
+- "Dominant" requires evidence such as most/all laps led, sustained pace/gap advantage, or an unchallenged final stint. A large final margin alone can be caused by SC/VSC, pit timing, penalties, or rival issues.
+- "Recovered" requires a verified lost position and later regain in `laps.position`.
+- "Benefited from SC/VSC" requires pit, gap, or position evidence overlapping laps/status code `"4"` or `"6"`.
 
 ### Safety Car Impact
 ```sql
