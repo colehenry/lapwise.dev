@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { stripLapwiseEmbeds } from "@/components/discussions/MarkdownContent";
 import TagPill from "@/components/discussions/TagPill";
 import UserAvatar from "@/components/discussions/UserAvatar";
 import VoteButton from "@/components/discussions/VoteButton";
@@ -24,6 +25,7 @@ const typeVariants: Record<string, "purple" | "red" | "info" | "neutral"> = {
 export default function PostCard({ post }: { post: PostListItem }) {
   const label = typeLabels[post.post_type] ?? "Post";
   const variant = typeVariants[post.post_type] ?? "neutral";
+  const preview = stripLapwiseEmbeds(post.body);
 
   return (
     <Link
@@ -78,7 +80,7 @@ export default function PostCard({ post }: { post: PostListItem }) {
             {post.title}
           </h3>
           <p className="text-sm text-text-tertiary mt-2 leading-relaxed line-clamp-3">
-            {post.body}
+            {preview}
           </p>
 
           {post.tags.length > 0 && (

@@ -65,7 +65,8 @@ export default function SuggestedQuestions({
 
         {/* Hero text */}
         <p className="mx-auto mb-6 max-w-lg text-sm text-text-muted leading-relaxed">
-          Dive deeper into race results, driver comparisons, and strategy. Make your own custom graphs and analyses.
+          Dive deeper into race results, driver comparisons, and strategy. Make
+          your own custom graphs and analyses.
         </p>
 
         {/* Suggestion cards grid */}
