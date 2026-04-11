@@ -59,6 +59,7 @@ from scripts.ingest import (
     ingest_session_metadata,
     ingest_race_results,
     ingest_qualifying_results,
+    ingest_practice_results,
     ingest_lap_data,
     ingest_weather_data,
     ingest_track_status,
@@ -67,7 +68,15 @@ from scripts.ingest.highlights import ingest_highlights
 
 
 # Session types to ingest (configurable)
-DEFAULT_SESSION_TYPES = ["race", "qualifying", "sprint_race", "sprint_qualifying"]
+DEFAULT_SESSION_TYPES = [
+    "fp1",
+    "fp2",
+    "fp3",
+    "race",
+    "qualifying",
+    "sprint_race",
+    "sprint_qualifying",
+]
 
 
 def enable_fastf1_cache():
@@ -177,6 +186,12 @@ def main():
                     # FastF1 handles this fuzzy matching usually, but let's be safe
                     # For 2023 it was Sprint Shootout, 2024+ Sprint Qualifying
                     fastf1_name = "Sprint Qualifying"
+                elif session_type == "fp1":
+                    fastf1_name = "Practice 1"
+                elif session_type == "fp2":
+                    fastf1_name = "Practice 2"
+                elif session_type == "fp3":
+                    fastf1_name = "Practice 3"
                 else:
                     continue
 
@@ -201,10 +216,11 @@ def main():
                         continue
 
                     # Load FastF1 session data
-                    # Load flags match the telemetry availability windows below
+                    is_practice = session_type in ["fp1", "fp2", "fp3"]
                     print(f"  📥 Loading FastF1 data for {fastf1_name}...")
                     fastf1_session = load_session_with_retry(
-                        season_year, round_num, fastf1_name
+                        season_year, round_num, fastf1_name,
+                        practice=is_practice,
                     )
 
                     if fastf1_session is None:
@@ -218,13 +234,21 @@ def main():
                         ingest_qualifying_results(
                             db, fastf1_session, session_id, season_year
                         )
+                    elif session_type in ["fp1", "fp2", "fp3"]:
+                        ingest_practice_results(
+                            db, fastf1_session, session_id, season_year
+                        )
 
                     # Ingest Telemetry (availability depends on era)
-                    # 2018+:      Full telemetry from F1 Live Timing API (laps, weather, track status)
-                    # 1996-2017:  Basic lap times + weather from Jolpica (no track status/messages)
+                    # Practice: lap data only (skip weather/track status)
+                    # 2018+:      Full telemetry from F1 Live Timing API
+                    # 1996-2017:  Basic lap times + weather from Jolpica
                     # 1951-1995:  Weather only from Jolpica
                     # pre-1951:   No telemetry available
-                    if season_year >= 2018:
+                    if is_practice:
+                        if season_year >= 2018:
+                            ingest_lap_data(db, fastf1_session, session_id)
+                    elif season_year >= 2018:
                         ingest_lap_data(db, fastf1_session, session_id)
                         ingest_weather_data(db, fastf1_session, session_id)
                         ingest_track_status(db, fastf1_session, session_id)

@@ -5,9 +5,13 @@ API endpoints for season standings and round summaries.
 These endpoints power the new /results/[season] page.
 """
 
+import json
+
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
+from app.models import Session, SessionSummary
 from app.services.results_service import ResultsService, _make_slug
 from app.security import verify_api_key
 from app.schemas.result import (
@@ -22,6 +26,11 @@ from app.schemas.result import (
     QualifyingSectorResponse,
     WeatherResponse,
     LapDistributionResponse,
+)
+from app.schemas.summary import (
+    RoundSummariesResponse,
+    SessionSummaryResponse,
+    KeyFact,
 )
 
 router = APIRouter()
@@ -228,6 +237,102 @@ async def get_season_rounds(
         )
 
     return rounds
+
+
+@router.get(
+    "/{season}/{round}/summaries",
+    response_model=RoundSummariesResponse,
+)
+async def get_round_summaries(
+    season: int,
+    round: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """Get all AI-generated summaries for sessions in a round."""
+    query = (
+        select(SessionSummary, Session)
+        .join(Session, SessionSummary.session_id == Session.id)
+        .where(Session.year == season, Session.round == round)
+        .order_by(Session.date)
+    )
+    result = await db.execute(query)
+    rows = result.all()
+
+    summaries = []
+    for summary, session in rows:
+        try:
+            key_facts = [KeyFact(**f) for f in json.loads(summary.key_facts)]
+        except (json.JSONDecodeError, TypeError):
+            key_facts = []
+        summaries.append(
+            SessionSummaryResponse(
+                session_type=session.session_type,
+                event_name=session.event_name,
+                summary_text=summary.summary_text,
+                key_facts=key_facts,
+                model_used=summary.model_used,
+                generated_at=summary.generated_at,
+            )
+        )
+
+    if not summaries:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No summaries found for season {season}, round {round}",
+        )
+
+    return RoundSummariesResponse(year=season, round=round, summaries=summaries)
+
+
+@router.get(
+    "/{season}/{round}/practice/{session_num}/lap-times",
+    response_model=LapTimesResponse,
+)
+async def get_practice_lap_times(
+    season: int,
+    round: int,
+    session_num: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """Get lap-by-lap timing data for a practice session (1=FP1, 2=FP2, 3=FP3)."""
+    if session_num not in (1, 2, 3):
+        raise HTTPException(status_code=400, detail="session_num must be 1, 2, or 3")
+
+    lap_times = await ResultsService.get_practice_lap_times(
+        db, season, round, session_num
+    )
+    if not lap_times:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No lap data found for FP{session_num} in season {season}, round {round}",
+        )
+    return lap_times
+
+
+@router.get(
+    "/{season}/{round}/practice/{session_num}",
+    response_model=SessionResultsResponse,
+)
+async def get_practice_details(
+    season: int,
+    round: int,
+    session_num: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """Get results for a practice session (1=FP1, 2=FP2, 3=FP3)."""
+    if session_num not in (1, 2, 3):
+        raise HTTPException(status_code=400, detail="session_num must be 1, 2, or 3")
+
+    details = await ResultsService.get_practice_details(db, season, round, session_num)
+    if not details:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No FP{session_num} data found for season {season}, round {round}",
+        )
+    return details
 
 
 @router.get("/{season}/{round}/sprint/lap-times", response_model=LapTimesResponse)
