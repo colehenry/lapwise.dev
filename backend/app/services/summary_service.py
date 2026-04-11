@@ -297,8 +297,8 @@ Be specific with driver names, lap times, and positions. Highlight unexpected re
         try:
             from youtube_transcript_api import YouTubeTranscriptApi
 
-            transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
-            text = " ".join(entry["text"] for entry in transcript_list)
+            fetched = YouTubeTranscriptApi().fetch(video_id)
+            text = " ".join(snippet.text for snippet in fetched)
             return text
         except Exception as e:
             print(f"  ℹ️  Could not fetch transcript for {video_id}: {e}")

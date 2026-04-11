@@ -100,7 +100,7 @@ def safe_bool(val):
 
 def timedelta_to_seconds(td):
     """Convert pandas Timedelta to seconds (float)"""
-    if td is None:
+    if td is None or pd.isna(td):
         return None
     try:
         return td.total_seconds()

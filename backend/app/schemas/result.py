@@ -393,6 +393,9 @@ class LapData(BaseModel):
     is_personal_best: Optional[bool] = None
     deleted: Optional[bool] = None  # Lap time deleted by FIA
 
+    # Session timing
+    lap_start_time_seconds: Optional[float] = None  # Session elapsed time when lap began
+
     class Config:
         from_attributes = True
 
@@ -556,3 +559,38 @@ class LapDistributionResponse(BaseModel):
     round: int
     event_name: str
     drivers: List[DriverLapDistribution]
+
+
+# ============================================================================
+# Teammate H2H Schemas (for /api/results/{season}/teammate-h2h)
+# ============================================================================
+
+
+class TeammateDriverInfo(BaseModel):
+    code: Optional[str] = None
+    full_name: str
+    headshot_url: Optional[str] = None
+    wins: int
+
+    class Config:
+        from_attributes = True
+
+
+class TeammateH2HTeam(BaseModel):
+    team_name: str
+    team_color: Optional[str] = None
+    logo_url: Optional[str] = None
+    driver_a: TeammateDriverInfo
+    driver_b: TeammateDriverInfo
+    rounds_compared: int
+
+    class Config:
+        from_attributes = True
+
+
+class TeammateH2HResponse(BaseModel):
+    year: int
+    teams: List[TeammateH2HTeam]
+
+    class Config:
+        from_attributes = True

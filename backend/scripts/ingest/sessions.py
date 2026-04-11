@@ -17,7 +17,7 @@ def ingest_session_metadata(
 
     Returns: (session_id, should_process_results)
     """
-    round_num = event["RoundNumber"]
+    round_num = int(event["RoundNumber"])
     event_name = event["EventName"]
 
     existing_session = db.execute(
