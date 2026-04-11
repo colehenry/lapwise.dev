@@ -50,6 +50,7 @@ interface LapTimeByLapGraphProps {
   season: number;
   round: number;
   isSprint?: boolean;
+  practiceSession?: 1 | 2 | 3;
 }
 
 // Compound colors for tyre-colored styling
@@ -722,6 +723,7 @@ export default function LapTimeByLapGraph({
   season,
   round,
   isSprint = false,
+  practiceSession,
 }: LapTimeByLapGraphProps) {
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
@@ -746,11 +748,16 @@ export default function LapTimeByLapGraph({
   }, []);
 
   const { data, isLoading: loading } = useQuery<LapTimesResponse | null>({
-    queryKey: ["lap-times", season, round, isSprint],
+    queryKey: ["lap-times", season, round, isSprint, practiceSession],
     queryFn: async () => {
-      const endpoint = isSprint
-        ? `/api/results/${season}/${round}/sprint/lap-times`
-        : `/api/results/${season}/${round}/lap-times`;
+      let endpoint: string;
+      if (practiceSession) {
+        endpoint = `/api/results/${season}/${round}/practice/${practiceSession}/lap-times`;
+      } else if (isSprint) {
+        endpoint = `/api/results/${season}/${round}/sprint/lap-times`;
+      } else {
+        endpoint = `/api/results/${season}/${round}/lap-times`;
+      }
       const response = await fetch(apiUrl(endpoint), {
         cache: "no-store",
         headers: apiHeaders(),

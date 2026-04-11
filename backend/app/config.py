@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     # AI
     ai_daily_query_limit: int = 20
     ai_db_url: str | None = None  # Read-only connection for AI queries
+    anthropic_api_key: str = ""
 
     # FastF1
     fastf1_cache_dir: str = "./cache"

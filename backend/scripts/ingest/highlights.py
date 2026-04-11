@@ -28,6 +28,9 @@ SESSION_SEARCH_TERMS = {
         "Sprint Qualifying Highlights",
         "Sprint Shootout Highlights",
     ],
+    "fp1": ["Practice 1 Highlights", "FP1 Highlights"],
+    "fp2": ["Practice 2 Highlights", "FP2 Highlights"],
+    "fp3": ["Practice 3 Highlights", "FP3 Highlights"],
 }
 
 # Keywords to verify in the video title (lowercase)
@@ -36,6 +39,9 @@ SESSION_TITLE_KEYWORDS = {
     "qualifying": ["highlight", "qualifying"],
     "sprint_race": ["highlight", "sprint"],
     "sprint_qualifying": ["highlight", "sprint", "qualifying"],
+    "fp1": ["highlight", "practice"],
+    "fp2": ["highlight", "practice"],
+    "fp3": ["highlight", "practice"],
 }
 
 

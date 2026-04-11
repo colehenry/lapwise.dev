@@ -35,6 +35,7 @@ from app.models.vote import Vote
 from app.models.ai_conversation import AIConversation
 from app.models.ai_message import AIMessage
 from app.models.replay_data import ReplayData
+from app.models.session_summary import SessionSummary
 
 # Export all models
 __all__ = [
@@ -62,4 +63,5 @@ __all__ = [
     "AIConversation",
     "AIMessage",
     "ReplayData",
+    "SessionSummary",
 ]
