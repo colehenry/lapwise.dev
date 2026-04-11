@@ -30,6 +30,9 @@
 --      pit_duration_seconds and weather_data are useful supporting fields but may be sparse or missing.
 --  12. If a supporting table/field returns 0 rows, pivot to another data source instead of repeating
 --      near-identical queries with formatting-only changes.
+--  13. For race narrative claims ("led from pole to flag", "dominated", "recovered", "benefited from SC"),
+--      query laps.position by lap plus track_status/race_control_messages before interpreting. Final result,
+--      grid position, and winning margin alone do not prove how the race unfolded.
 -- =============================================================================
 
 -- DRIVERS: One row per driver across their entire career.
@@ -259,6 +262,12 @@ CREATE VIEW v_constructor_standings AS
 --
 -- Weather during a race:
 --   weather_data WHERE session_id = (SELECT id FROM sessions WHERE ...)
+--
+-- Race narrative fact check:
+--   laps.position gives track position after each completed lap.
+--   Use it to verify lap 1 position, leader changes, worst/best position, first lap in P1, and laps led.
+--   Combine laps.track_status or track_status.status with pit_in_time_seconds/pit_out_time_seconds
+--   before claiming SC/VSC luck or strategy gains.
 --
 -- Teammate comparison (same session, same team):
 --   session_results r1 JOIN session_results r2

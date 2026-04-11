@@ -6,6 +6,7 @@ Designed for sync usage in ingestion scripts.
 """
 
 import json
+import math
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DBSession
 
@@ -14,8 +15,10 @@ from app.models import (
     SessionResult,
     Driver,
     Team,
+    Lap,
     Weather,
     TrackStatus,
+    RaceControlMessage,
     SessionSummary,
 )
 from app.config import settings
@@ -84,6 +87,27 @@ class SummaryService:
             .all()
         )
 
+        # Load lap-by-lap positions and pit data for race narrative fact checks.
+        lap_rows = []
+        race_control_rows = []
+        if session.session_type in ("race", "sprint_race"):
+            lap_rows = db.execute(
+                select(Lap, Driver)
+                .join(Driver, Lap.driver_id == Driver.id)
+                .where(Lap.session_id == session_id)
+                .order_by(Lap.lap_number, Lap.position)
+            ).all()
+
+            race_control_rows = (
+                db.execute(
+                    select(RaceControlMessage)
+                    .where(RaceControlMessage.session_id == session_id)
+                    .order_by(RaceControlMessage.session_time_seconds)
+                )
+                .scalars()
+                .all()
+            )
+
         # Try to fetch YouTube transcript
         transcript_text = None
         if session.highlights_video_id:
@@ -93,7 +117,13 @@ class SummaryService:
 
         # Build the prompt
         prompt = SummaryService._build_prompt(
-            session, results, weather_rows, track_status_rows, transcript_text
+            session,
+            results,
+            weather_rows,
+            track_status_rows,
+            lap_rows,
+            race_control_rows,
+            transcript_text,
         )
 
         # Call Claude
@@ -119,7 +149,15 @@ class SummaryService:
         return summary
 
     @staticmethod
-    def _build_prompt(session, results, weather_rows, track_status_rows, transcript):
+    def _build_prompt(
+        session,
+        results,
+        weather_rows,
+        track_status_rows,
+        lap_rows,
+        race_control_rows,
+        transcript,
+    ):
         """Build a structured prompt for Claude based on session data."""
         session_type = session.session_type
         event_name = session.event_name
@@ -200,6 +238,10 @@ class SummaryService:
             else ""
         )
 
+        race_dynamics_text = SummaryService._build_race_dynamics_context(
+            session_type, results, lap_rows, race_control_rows
+        )
+
         # Transcript context
         transcript_section = ""
         if transcript:
@@ -228,6 +270,7 @@ RESULTS:
 {dnf_text}
 {weather_text}
 {track_events_text}
+{race_dynamics_text}
 {transcript_section}
 
 Based on this data, provide:
@@ -244,9 +287,287 @@ You MUST respond with valid JSON in this exact format:
   ]
 }}
 
-Be specific with driver names, lap times, and positions. Highlight unexpected results, dramatic moments, and championship implications. Use an engaging but factual tone."""
+Fact-check rules:
+- Final results are not enough to describe how the race unfolded. For races and sprints, verify every narrative claim against the Race Dynamics Evidence section before writing it.
+- Do NOT say a driver "led from pole to flag", "controlled the race", "dominated", or "never looked threatened" unless the leader timeline, lap 1 position, laps led, and gap data explicitly support it.
+- Avoid "dominant" for a winner who lost positions at the start, first led during/after a SC/VSC pit window, or did not control the opening phase. If appropriate, say they controlled the final stint instead.
+- If the winner lost the lead, dropped positions at the start, regained P1 through pit timing, or benefited from SC/VSC timing, say that clearly.
+- Do not describe a pass, surge, or on-track overtake unless lap-position changes and context support it. A lead gained during a pit/SC cycle should be described as strategy/timing, not a racing move.
+- Use only the pit stops listed in Race Dynamics Evidence. Never infer "conceptual", hidden, extra, or forced pit stops that are not listed.
+- If the pit-stop evidence covers only the top finishers, call them "top finishers", not "all points finishers" or the full field.
+- Treat the YouTube transcript as supporting context only. If it conflicts with lap positions, pit stops, race control, or final results, trust the structured data.
+- Do not infer incidents, strategy intent, championship implications, or luck unless the supplied data supports that exact claim.
+
+Be specific with driver names, lap times, lap numbers, positions, pit stops, and safety-car timing. Highlight unexpected results and dramatic moments only when they are backed by the evidence above. Use an engaging but factual tone."""
 
         return prompt
+
+    @staticmethod
+    def _build_race_dynamics_context(
+        session_type: str, results, lap_rows, race_control_rows
+    ) -> str:
+        """Build compact lap-position, pit-stop, and race-control context."""
+        if session_type not in ("race", "sprint_race") or not lap_rows:
+            return ""
+
+        result_by_driver_id = {
+            row.Driver.id: row.SessionResult for row in results if row.Driver
+        }
+        driver_names = {row.Driver.id: row.Driver.full_name for row in results}
+        driver_codes = {
+            row.Driver.id: row.Driver.driver_code or row.Driver.full_name
+            for row in results
+        }
+
+        positions_by_lap: dict[int, list[tuple[int, int]]] = {}
+        laps_by_driver: dict[int, list[Lap]] = {}
+        status_by_lap: dict[int, set[str]] = {}
+
+        for row in lap_rows:
+            lap = row.Lap
+            driver = row.Driver
+            driver_names[driver.id] = driver.full_name
+            driver_codes[driver.id] = driver.driver_code or driver.full_name
+            laps_by_driver.setdefault(driver.id, []).append(lap)
+            if lap.position is not None:
+                positions_by_lap.setdefault(lap.lap_number, []).append(
+                    (lap.position, driver.id)
+                )
+            if lap.track_status:
+                for status in str(lap.track_status):
+                    if status in {"4", "5", "6", "7"}:
+                        status_by_lap.setdefault(lap.lap_number, set()).add(status)
+
+        if not positions_by_lap:
+            return ""
+
+        leader_by_lap: list[tuple[int, int]] = []
+        for lap_number in sorted(positions_by_lap):
+            ordered = sorted(positions_by_lap[lap_number])
+            leader_by_lap.append((lap_number, ordered[0][1]))
+
+        leader_segments = SummaryService._compress_driver_segments(leader_by_lap)
+        leader_text = "; ".join(
+            f"{f'L{start}' if start == end else f'L{start}-{end}'} "
+            f"{driver_codes.get(driver_id, driver_id)}"
+            for start, end, driver_id in leader_segments
+        )
+
+        laps_led: dict[int, int] = {}
+        for _, driver_id in leader_by_lap:
+            laps_led[driver_id] = laps_led.get(driver_id, 0) + 1
+        laps_led_text = ", ".join(
+            f"{driver_codes.get(driver_id, driver_id)} {count}"
+            for driver_id, count in sorted(
+                laps_led.items(), key=lambda item: item[1], reverse=True
+            )
+        )
+
+        top_finishers = [
+            row.Driver.id
+            for row in results
+            if row.SessionResult.position is not None
+            and row.SessionResult.position <= 5
+        ]
+        position_summary_lines = []
+        for driver_id in top_finishers:
+            driver_laps = sorted(
+                laps_by_driver.get(driver_id, []), key=lambda lap: lap.lap_number
+            )
+            positions = [
+                lap.position for lap in driver_laps if lap.position is not None
+            ]
+            if not positions:
+                continue
+            result = result_by_driver_id.get(driver_id)
+            grid = getattr(result, "grid_position", None)
+            finish = getattr(result, "position", None)
+            lap1 = next(
+                (
+                    lap.position
+                    for lap in driver_laps
+                    if lap.lap_number == 1 and lap.position is not None
+                ),
+                None,
+            )
+            first_p1_lap = next(
+                (lap.lap_number for lap in driver_laps if lap.position == 1),
+                None,
+            )
+            position_summary_lines.append(
+                f"- {driver_codes.get(driver_id, driver_id)} ({driver_names.get(driver_id)}): "
+                f"grid P{grid if grid is not None else '?'}, "
+                f"lap 1 P{lap1 if lap1 is not None else '?'}, "
+                f"best P{min(positions)}, worst P{max(positions)}, "
+                f"finish P{finish if finish is not None else '?'}, "
+                f"laps led {laps_led.get(driver_id, 0)}, "
+                f"first P1 lap {first_p1_lap if first_p1_lap is not None else 'never'}"
+            )
+
+        status_labels = {
+            "4": "SC",
+            "5": "Red Flag",
+            "6": "VSC",
+            "7": "VSC Ending",
+        }
+        status_segments = []
+        for status in ("4", "6", "5", "7"):
+            status_laps = [
+                lap_number
+                for lap_number, statuses in sorted(status_by_lap.items())
+                if status in statuses
+            ]
+            status_segments.extend(
+                f"{status_labels[status]} L{start}"
+                if start == end
+                else f"{status_labels[status]} L{start}-{end}"
+                for start, end in SummaryService._compress_number_ranges(status_laps)
+            )
+        status_text = (
+            ", ".join(status_segments) if status_segments else "None in lap data"
+        )
+
+        pit_lines = []
+        sc_vsc_laps = {
+            lap_number
+            for lap_number, statuses in status_by_lap.items()
+            if statuses.intersection({"4", "6"})
+        }
+        for driver_id in top_finishers:
+            driver_laps = sorted(
+                laps_by_driver.get(driver_id, []), key=lambda lap: lap.lap_number
+            )
+            pending_pit_in = None
+            for lap in driver_laps:
+                has_pit_in = SummaryService._is_finite_number(lap.pit_in_time_seconds)
+                has_pit_out = SummaryService._is_finite_number(lap.pit_out_time_seconds)
+                if has_pit_in:
+                    pending_pit_in = lap
+                    if not has_pit_out:
+                        continue
+                if not has_pit_out:
+                    continue
+
+                in_lap = pending_pit_in.lap_number if pending_pit_in else lap.lap_number
+                out_lap = lap.lap_number
+                pit_in_time = (
+                    pending_pit_in.pit_in_time_seconds if pending_pit_in else None
+                )
+                duration_seconds = (
+                    lap.pit_out_time_seconds - pit_in_time
+                    if SummaryService._is_finite_number(lap.pit_out_time_seconds)
+                    and SummaryService._is_finite_number(pit_in_time)
+                    else None
+                )
+                duration = (
+                    f", {duration_seconds:.1f}s"
+                    if SummaryService._is_finite_number(duration_seconds)
+                    else (
+                        f", {lap.pit_duration_seconds:.1f}s"
+                        if SummaryService._is_finite_number(lap.pit_duration_seconds)
+                        else ""
+                    )
+                )
+                neutralized = (
+                    " under SC/VSC"
+                    if any(
+                        pit_lap in sc_vsc_laps
+                        for pit_lap in range(
+                            min(in_lap, out_lap), max(in_lap, out_lap) + 1
+                        )
+                    )
+                    else ""
+                )
+                compound = f" to {lap.compound}" if lap.compound else ""
+                lap_text = (
+                    f"L{in_lap}" if in_lap == out_lap else f"L{in_lap}-L{out_lap}"
+                )
+                pit_lines.append(
+                    f"- {driver_codes.get(driver_id, driver_id)} pit {lap_text}"
+                    f"{compound}{duration}{neutralized}"
+                )
+                pending_pit_in = None
+        pit_text = "\n".join(pit_lines[:30]) if pit_lines else "No pit stop rows found."
+
+        race_control_lines = []
+        for message in race_control_rows:
+            if not message.message:
+                continue
+            text = message.message.upper()
+            if any(
+                key in text
+                for key in (
+                    "SAFETY CAR",
+                    "VSC",
+                    "PENALTY",
+                    "INVESTIGATION",
+                    "INCIDENT",
+                    "DRS",
+                    "RETIRED",
+                    "STOPPED",
+                )
+            ):
+                lap = f"L{message.lap_number}" if message.lap_number else "time"
+                race_control_lines.append(f"- {lap}: {message.message}")
+        race_control_text = (
+            "\n".join(race_control_lines[:20])
+            if race_control_lines
+            else "No notable race control messages found."
+        )
+
+        return f"""
+
+Race Dynamics Evidence (use this to fact-check the narrative):
+- Leader timeline by completed lap: {leader_text}
+- Laps led: {laps_led_text}
+- Neutralized laps from lap data: {status_text}
+- Top finisher position paths:
+{chr(10).join(position_summary_lines)}
+- Pit stops for top finishers:
+{pit_text}
+- Notable race-control messages:
+{race_control_text}"""
+
+    @staticmethod
+    def _compress_driver_segments(
+        lap_driver_pairs: list[tuple[int, int]]
+    ) -> list[tuple[int, int, int]]:
+        segments: list[tuple[int, int, int]] = []
+        current_start = None
+        current_end = None
+        current_driver = None
+
+        for lap_number, driver_id in lap_driver_pairs:
+            if current_driver == driver_id and current_end == lap_number - 1:
+                current_end = lap_number
+                continue
+            if current_driver is not None and current_start is not None:
+                segments.append((current_start, current_end, current_driver))
+            current_start = current_end = lap_number
+            current_driver = driver_id
+
+        if current_driver is not None and current_start is not None:
+            segments.append((current_start, current_end, current_driver))
+        return segments
+
+    @staticmethod
+    def _compress_number_ranges(numbers: list[int]) -> list[tuple[int, int]]:
+        if not numbers:
+            return []
+        ranges: list[tuple[int, int]] = []
+        start = previous = numbers[0]
+        for number in numbers[1:]:
+            if number == previous + 1:
+                previous = number
+                continue
+            ranges.append((start, previous))
+            start = previous = number
+        ranges.append((start, previous))
+        return ranges
+
+    @staticmethod
+    def _is_finite_number(value) -> bool:
+        return isinstance(value, (int, float)) and math.isfinite(value)
 
     @staticmethod
     def _call_claude(prompt: str) -> dict | None:

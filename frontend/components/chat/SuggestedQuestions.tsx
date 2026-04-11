@@ -21,7 +21,9 @@ export default function SuggestedQuestions({
           <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-purple-500/30 bg-purple-500/15 text-purple-300">
             <ClutchIcon className="h-5 w-5" />
           </div>
-          <h3 className="mb-1 text-sm font-bold text-text-primary">Clutch</h3>
+          <h3 className="mb-1 text-sm font-bold text-text-primary">
+            Ask <span className="text-purple-300">Clutch</span>
+          </h3>
           <p className="mb-4 text-xs text-text-muted">
             Ask Clutch anything about F1
           </p>
@@ -57,15 +59,13 @@ export default function SuggestedQuestions({
         <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-purple-500/20 bg-purple-500/10 text-purple-300 shadow-[0_0_40px_-10px_rgba(160,32,240,0.25)]">
           <ClutchIcon className="h-6 w-6" />
         </div>
+        <h2 className="mb-1.5 flex items-center justify-center gap-2 text-xl font-bold tracking-tight text-text-primary">
+          Ask <span className="text-purple-300">Clutch</span>
+        </h2>
 
         {/* Hero text */}
-        <h2 className="mb-1.5 flex items-center justify-center gap-2 text-xl font-bold tracking-tight text-text-primary">
-          Got a question? Ask Clutch
-          <ClutchIcon className="h-5 w-5 text-purple-300" />
-        </h2>
         <p className="mx-auto mb-6 max-w-lg text-sm text-text-muted leading-relaxed">
-          Dive deeper into race results, driver comparisons, weather, strategy,
-          and championship trends — all backed by real data.
+          Dive deeper into race results, driver comparisons, and strategy. Make your own custom graphs and analyses.
         </p>
 
         {/* Suggestion cards grid */}
