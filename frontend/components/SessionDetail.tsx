@@ -534,14 +534,8 @@ export default function SessionDetail({
           </div>
         </div>
 
-        {summary && (
-          <div className="mt-4">
-            <SessionSummaryCard summary={summary} />
-          </div>
-        )}
-
         {/* Expand/Collapse Button */}
-        <div className="mt-4 mb-8 flex justify-center">
+        <div className={`mt-4 flex justify-center ${summary ? "" : "mb-8"}`}>
           <button
             type="button"
             onClick={() => setExpandedResults(!expandedResults)}
@@ -564,6 +558,12 @@ export default function SessionDetail({
             </svg>
           </button>
         </div>
+
+        {summary && (
+          <div className="mt-4 mb-8">
+            <SessionSummaryCard summary={summary} />
+          </div>
+        )}
 
         {/* ── Lap Time Graph (Race) or Gap Chart (Qualifying) ── */}
         {!isPractice && (

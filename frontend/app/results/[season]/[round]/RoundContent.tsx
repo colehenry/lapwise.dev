@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import CrossSessionComparison from "@/components/CrossSessionComparison";
 import FastestLapTimeline from "@/components/FastestLapTimeline";
 import JumpToRace from "@/components/JumpToRace";
-import LapTimeByLapGraph from "@/components/LapTimeByLapGraph";
 import LapTimeDistributionChart from "@/components/LapTimeDistributionChart";
 import LongRunPaceChart from "@/components/LongRunPaceChart";
 import { TrianglePattern } from "@/components/Patterns";
@@ -18,11 +17,9 @@ import QualifyingSectorHeatmap from "@/components/QualifyingSectorHeatmap";
 import RaceTrackEvolutionChart from "@/components/RaceTrackEvolutionChart";
 import SessionDetail from "@/components/SessionDetail";
 import type { SessionSummary } from "@/components/SessionSummaryCard";
-import SpeedTrapChart from "@/components/SpeedTrapChart";
 import TrackEvolutionChart from "@/components/TrackEvolutionChart";
 import TyreDegradationChart from "@/components/TyreDegradationChart";
 import TyreProgrammeChart from "@/components/TyreProgrammeChart";
-import WeatherChart from "@/components/WeatherChart";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import type { SessionResultsResponse } from "@/lib/types";
 
@@ -31,9 +28,7 @@ type TabType =
   | "qualifying"
   | "sprint"
   | "sprint-qualifying"
-  | "practice"
-  | "strategy"
-  | "analysis";
+  | "practice";
 
 const TAB_LABELS: Record<TabType, string> = {
   race: "Race",
@@ -41,9 +36,19 @@ const TAB_LABELS: Record<TabType, string> = {
   sprint: "Sprint",
   "sprint-qualifying": "Sprint Quali",
   practice: "Practice",
-  strategy: "Strategy",
-  analysis: "Analysis",
 };
+
+const VALID_TABS = new Set<TabType>([
+  "race",
+  "qualifying",
+  "sprint",
+  "sprint-qualifying",
+  "practice",
+]);
+
+function parseTab(tab: string | null): TabType {
+  return tab && VALID_TABS.has(tab as TabType) ? (tab as TabType) : "race";
+}
 
 async function fetchSession(
   season: string,
@@ -71,8 +76,9 @@ export default function RoundContent() {
   const roundNum = Number.parseInt(round, 10);
 
   // Parse initial tab from URL
-  const urlTab = searchParams.get("tab") as TabType | null;
-  const [activeTab, setActiveTab] = useState<TabType>(urlTab || "race");
+  const rawUrlTab = searchParams.get("tab");
+  const urlTab = parseTab(rawUrlTab);
+  const [activeTab, setActiveTab] = useState<TabType>(urlTab);
 
   // Scroll to top on page load
   useEffect(() => {
@@ -81,10 +87,15 @@ export default function RoundContent() {
 
   // Sync tab from URL changes (back/forward nav)
   useEffect(() => {
-    if (urlTab) {
-      setActiveTab(urlTab);
-    }
+    setActiveTab(urlTab);
   }, [urlTab]);
+
+  // Collapse legacy/deleted tab URLs like ?tab=strategy back to the race tab.
+  useEffect(() => {
+    if (rawUrlTab && !VALID_TABS.has(rawUrlTab as TabType)) {
+      router.replace(`/results/${season}/${round}`, { scroll: false });
+    }
+  }, [rawUrlTab, router, season, round]);
 
   const enabled = !!season && !!round;
 
@@ -184,7 +195,14 @@ export default function RoundContent() {
     if (sprintQualData) availableTabs.push("sprint-qualifying");
   }
   if (hasPractice) availableTabs.push("practice");
-  availableTabs.push("strategy", "analysis");
+  const isActiveTabAvailable = availableTabs.includes(activeTab);
+
+  useEffect(() => {
+    if (!loading && !isActiveTabAvailable) {
+      setActiveTab("race");
+      router.replace(`/results/${season}/${round}`, { scroll: false });
+    }
+  }, [isActiveTabAvailable, loading, router, season, round]);
 
   if (loading) {
     return (
@@ -496,6 +514,19 @@ export default function RoundContent() {
                     />
                   </div>
                 </div>
+
+                {/* Tyre Degradation */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="tyre-deg-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      Tyre Degradation
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <TyreDegradationChart season={seasonNum} round={roundNum} />
+                  </div>
+                </div>
               </div>
             )}
             {activeTab === "practice" && (
@@ -590,84 +621,6 @@ export default function RoundContent() {
               </div>
             )}
           </>
-        )}
-
-        {/* Strategy Tab */}
-        {activeTab === "strategy" && (
-          <div className="p-6 space-y-6">
-            {/* Tyre Degradation */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                <TrianglePattern id="tyre-deg-triangles" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Tyre Degradation
-                </span>
-              </div>
-              <div className="p-6">
-                <TyreDegradationChart season={seasonNum} round={roundNum} />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Analysis Tab */}
-        {activeTab === "analysis" && (
-          <div className="p-6 space-y-6">
-            {/* Position Battle */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                <TrianglePattern id="analysis-lap-triangles" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Lap Analysis
-                </span>
-              </div>
-              <div className="p-6">
-                <LapTimeByLapGraph season={seasonNum} round={roundNum} />
-              </div>
-            </div>
-
-            {/* Qualifying Sector Comparison */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                <TrianglePattern id="qualifying-sector-triangles" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Qualifying Sectors
-                </span>
-              </div>
-              <div className="p-6">
-                <QualifyingSectorComparison
-                  season={seasonNum}
-                  round={roundNum}
-                />
-              </div>
-            </div>
-
-            {/* Speed Traps */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                <TrianglePattern id="speed-trap-triangles" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Speed Traps
-                </span>
-              </div>
-              <div className="p-6">
-                <SpeedTrapChart season={seasonNum} round={roundNum} />
-              </div>
-            </div>
-
-            {/* Weather */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                <TrianglePattern id="weather-triangles" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Weather Conditions
-                </span>
-              </div>
-              <div className="p-6">
-                <WeatherChart season={seasonNum} round={roundNum} />
-              </div>
-            </div>
-          </div>
         )}
       </div>
     </main>
