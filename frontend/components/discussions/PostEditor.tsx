@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import EmbedBuilder from "@/components/discussions/EmbedBuilder";
 import MarkdownContent from "@/components/discussions/MarkdownContent";
 import TagPill from "@/components/discussions/TagPill";
 import Button from "@/components/ui/Button";
@@ -246,60 +247,7 @@ export default function PostEditor({
               placeholder="Share your analysis, questions, or insights..."
               className="py-3"
             />
-            <div className="rounded-sm border border-border-primary bg-bg-tertiary/60 px-3 py-2">
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <MonoLabel>Lapwise embeds</MonoLabel>
-                <span className="text-xs text-text-muted">
-                  Edit season, round, drivers, and title after inserting.
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    appendEmbed(
-                      '::lapwise-chart{type="position-battle" season=2026 round=3 view="position" drivers="ANT,PIA,RUS" title="Position Battle"}',
-                    )
-                  }
-                  className="rounded-sm border border-border-primary px-2.5 py-1 text-xs text-text-secondary transition-colors hover:border-purple-500/60 hover:text-purple-300"
-                >
-                  Position chart
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    appendEmbed(
-                      '::lapwise-chart{type="pit-stop-delta" season=2026 round=3 title="Pit Stop Delta"}',
-                    )
-                  }
-                  className="rounded-sm border border-border-primary px-2.5 py-1 text-xs text-text-secondary transition-colors hover:border-purple-500/60 hover:text-purple-300"
-                >
-                  Pit chart
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    appendEmbed(
-                      '::lapwise-chart{type="race-pace-evolution" season=2026 round=3 title="Race Pace Evolution"}',
-                    )
-                  }
-                  className="rounded-sm border border-border-primary px-2.5 py-1 text-xs text-text-secondary transition-colors hover:border-purple-500/60 hover:text-purple-300"
-                >
-                  Pace chart
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    appendEmbed(
-                      '::lapwise-table{type="race-results" season=2026 round=3 limit=10 title="Race Results"}',
-                    )
-                  }
-                  className="rounded-sm border border-border-primary px-2.5 py-1 text-xs text-text-secondary transition-colors hover:border-purple-500/60 hover:text-purple-300"
-                >
-                  Results table
-                </button>
-              </div>
-            </div>
+            <EmbedBuilder onInsert={appendEmbed} />
           </div>
         ) : (
           <div className="min-h-[260px] rounded-sm border border-border-primary bg-bg-tertiary p-4">

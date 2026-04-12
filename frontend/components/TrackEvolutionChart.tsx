@@ -31,6 +31,7 @@ interface TrackEvolutionChartProps {
   season: number;
   round: number;
   practiceSession: 1 | 2 | 3;
+  initialDrivers?: string[];
 }
 
 const formatTime = (s: number) => {
@@ -52,10 +53,12 @@ export default function TrackEvolutionChart({
   season,
   round,
   practiceSession,
+  initialDrivers,
 }: TrackEvolutionChartProps) {
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const initialDriverKey = initialDrivers?.join(",") ?? "";
 
   const { data, isLoading } = useQuery<LapTimesResponse | null>({
     queryKey: ["lap-times", season, round, false, practiceSession],
@@ -77,9 +80,15 @@ export default function TrackEvolutionChart({
       const sorted = [...data.drivers].sort(
         (a, b) => (a.final_position ?? 999) - (b.final_position ?? 999),
       );
-      setSelectedDrivers(sorted.slice(0, 10).map((d) => driverKey(d)));
+      const available = new Set(sorted.map((d) => driverKey(d)));
+      const requested = initialDriverKey.split(",").filter((key) =>
+        available.has(key),
+      );
+      setSelectedDrivers(
+        requested.length > 0 ? requested : sorted.slice(0, 10).map((d) => driverKey(d)),
+      );
     }
-  }, [data]);
+  }, [data, initialDriverKey]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {

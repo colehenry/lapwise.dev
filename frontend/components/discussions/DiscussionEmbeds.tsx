@@ -1,12 +1,27 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import CrossSessionComparison from "@/components/CrossSessionComparison";
 import FastestLapTimeline from "@/components/FastestLapTimeline";
 import LapTimeByLapGraph from "@/components/LapTimeByLapGraph";
+import LapTimeDistributionChart from "@/components/LapTimeDistributionChart";
+import LongRunPaceChart from "@/components/LongRunPaceChart";
 import PitStopDeltaChart from "@/components/PitStopDeltaChart";
+import PointsByRoundGraph from "@/components/PointsByRoundGraph";
+import PracticeSectorHeatmap from "@/components/PracticeSectorHeatmap";
 import QualifyingProgressionChart from "@/components/QualifyingProgressionChart";
+import QualifyingSectorComparison from "@/components/QualifyingSectorComparison";
+import QualifyingSectorHeatmap from "@/components/QualifyingSectorHeatmap";
 import RaceTrackEvolutionChart from "@/components/RaceTrackEvolutionChart";
+import SpeedTrapChart from "@/components/SpeedTrapChart";
+import TeammateHeadToHead from "@/components/TeammateHeadToHead";
+import TrackEvolutionChart from "@/components/TrackEvolutionChart";
+import TyreDegradationChart from "@/components/TyreDegradationChart";
+import TyreProgrammeChart from "@/components/TyreProgrammeChart";
+import TyreStintChart from "@/components/TyreStintChart";
+import WeatherChart from "@/components/WeatherChart";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { getDiscussionEmbed } from "@/lib/discussionEmbedRegistry";
 import type { SessionResultsResponse } from "@/lib/types";
 
 export interface DiscussionEmbedAttrs {
@@ -16,8 +31,11 @@ export interface DiscussionEmbedAttrs {
   title?: string;
   view?: string;
   drivers?: string;
+  entities?: string;
   isSprint?: string;
   practiceSession?: string;
+  mode?: string;
+  pointsType?: string;
   limit?: string;
 }
 
@@ -72,20 +90,26 @@ function EmbedError({ message }: { message: string }) {
 function RaceResultsEmbed({
   season,
   round,
-  isSprint,
+  type,
   limit,
 }: {
   season: number;
   round: number;
-  isSprint: boolean;
+  type: string;
   limit: number;
 }) {
   const { data, isLoading } = useQuery<SessionResultsResponse | null>({
-    queryKey: ["discussion-results-table", season, round, isSprint],
+    queryKey: ["discussion-results-table", season, round, type],
     queryFn: async () => {
-      const endpoint = isSprint
-        ? `/api/results/${season}/${round}/sprint`
-        : `/api/results/${season}/${round}`;
+      const suffix =
+        type === "sprint-results"
+          ? "/sprint"
+          : type === "qualifying-results"
+            ? "/qualifying"
+            : type === "sprint-qualifying-results"
+              ? "/sprint-qualifying"
+              : "";
+      const endpoint = `/api/results/${season}/${round}${suffix}`;
       const res = await fetch(apiUrl(endpoint), {
         cache: "no-store",
         headers: apiHeaders(),
@@ -189,6 +213,44 @@ function QualifyingProgressionEmbed({
   return <QualifyingProgressionChart qualifyingData={data} />;
 }
 
+function CrossSessionComparisonEmbed({
+  season,
+  round,
+}: {
+  season: number;
+  round: number;
+}) {
+  const fetchSession = async (practiceSession: 1 | 2 | 3) => {
+    const res = await fetch(
+      apiUrl(`/api/results/${season}/${round}/practice/${practiceSession}`),
+      { cache: "no-store", headers: apiHeaders() },
+    );
+    if (!res.ok) return null;
+    return res.json() as Promise<SessionResultsResponse>;
+  };
+
+  const { data: fp1Data } = useQuery({
+    queryKey: ["discussion-cross-session", season, round, 1],
+    queryFn: () => fetchSession(1),
+  });
+  const { data: fp2Data } = useQuery({
+    queryKey: ["discussion-cross-session", season, round, 2],
+    queryFn: () => fetchSession(2),
+  });
+  const { data: fp3Data } = useQuery({
+    queryKey: ["discussion-cross-session", season, round, 3],
+    queryFn: () => fetchSession(3),
+  });
+
+  return (
+    <CrossSessionComparison
+      fp1Data={fp1Data}
+      fp2Data={fp2Data}
+      fp3Data={fp3Data}
+    />
+  );
+}
+
 export function DiscussionEmbed({
   kind,
   attrs,
@@ -201,24 +263,32 @@ export function DiscussionEmbed({
   const type = attrs.type;
   const isSprint = toBoolean(attrs.isSprint);
   const practiceSession = toNumber(attrs.practiceSession);
+  const embedDefinition = getDiscussionEmbed(type);
 
-  if (!season || !round || !type) {
+  if (!season || !type || (embedDefinition?.needsRound !== false && !round)) {
     return (
-      <EmbedError message="This Lapwise embed needs type, season, and round parameters." />
+      <EmbedError message="This Lapwise embed needs type, season, and any required round parameters." />
     );
   }
 
   if (kind === "lapwise-table") {
-    if (type !== "race-results") {
+    if (
+      ![
+        "race-results",
+        "qualifying-results",
+        "sprint-results",
+        "sprint-qualifying-results",
+      ].includes(type)
+    ) {
       return <EmbedError message={`Unsupported Lapwise table: ${type}`} />;
     }
 
     return (
-      <EmbedShell title={attrs.title || "Race Results"}>
+      <EmbedShell title={attrs.title || embedDefinition?.label || "Results"}>
         <RaceResultsEmbed
           season={season}
-          round={round}
-          isSprint={isSprint}
+          round={round as number}
+          type={type}
           limit={toNumber(attrs.limit) || 10}
         />
       </EmbedShell>
@@ -227,6 +297,11 @@ export function DiscussionEmbed({
 
   const title = attrs.title;
   const drivers = parseDrivers(attrs.drivers);
+  const entities = parseDrivers(attrs.entities);
+  const fp =
+    practiceSession === 1 || practiceSession === 2 || practiceSession === 3
+      ? practiceSession
+      : 1;
   const initialViewMode =
     attrs.view === "gap"
       ? "gapToLeader"
@@ -241,15 +316,9 @@ export function DiscussionEmbed({
         <EmbedShell title={title}>
           <LapTimeByLapGraph
             season={season}
-            round={round}
+            round={round as number}
             isSprint={isSprint}
-            practiceSession={
-              practiceSession === 1 ||
-              practiceSession === 2 ||
-              practiceSession === 3
-                ? practiceSession
-                : undefined
-            }
+            practiceSession={practiceSession === 1 || practiceSession === 2 || practiceSession === 3 ? practiceSession : undefined}
             initialViewMode={initialViewMode}
             initialDrivers={drivers}
             embedded
@@ -261,15 +330,55 @@ export function DiscussionEmbed({
         <EmbedShell title={title}>
           <PitStopDeltaChart
             season={season}
-            round={round}
+            round={round as number}
             isSprint={isSprint}
           />
+        </EmbedShell>
+      );
+    case "tyre-stints":
+      return (
+        <EmbedShell title={title}>
+          <TyreStintChart
+            season={season}
+            round={round as number}
+            isSprint={isSprint}
+            initialDrivers={drivers}
+          />
+        </EmbedShell>
+      );
+    case "tyre-degradation":
+      return (
+        <EmbedShell title={title}>
+          <TyreDegradationChart
+            season={season}
+            round={round as number}
+            isSprint={isSprint}
+            initialDrivers={drivers}
+          />
+        </EmbedShell>
+      );
+    case "speed-trap":
+      return (
+        <EmbedShell title={title}>
+          <SpeedTrapChart season={season} round={round as number} isSprint={isSprint} />
         </EmbedShell>
       );
     case "race-pace-evolution":
       return (
         <EmbedShell title={title}>
-          <RaceTrackEvolutionChart season={season} round={round} />
+          <RaceTrackEvolutionChart season={season} round={round as number} />
+        </EmbedShell>
+      );
+    case "lap-time-distribution":
+      return (
+        <EmbedShell title={title}>
+          <LapTimeDistributionChart season={season} round={round as number} />
+        </EmbedShell>
+      );
+    case "weather":
+      return (
+        <EmbedShell title={title}>
+          <WeatherChart season={season} round={round as number} />
         </EmbedShell>
       );
     case "fastest-lap-timeline":
@@ -277,7 +386,7 @@ export function DiscussionEmbed({
         <EmbedShell title={title}>
           <FastestLapTimeline
             season={season}
-            round={round}
+            round={round as number}
             isSprint={isSprint}
           />
         </EmbedShell>
@@ -287,8 +396,91 @@ export function DiscussionEmbed({
         <EmbedShell title={title}>
           <QualifyingProgressionEmbed
             season={season}
-            round={round}
+            round={round as number}
             isSprint={isSprint}
+          />
+        </EmbedShell>
+      );
+    case "qualifying-sector-heatmap":
+      return (
+        <EmbedShell title={title}>
+          <QualifyingSectorHeatmap season={season} round={round as number} />
+        </EmbedShell>
+      );
+    case "qualifying-sector-comparison":
+      return (
+        <EmbedShell title={title}>
+          <QualifyingSectorComparison season={season} round={round as number} />
+        </EmbedShell>
+      );
+    case "long-run-pace":
+      return (
+        <EmbedShell title={title}>
+          <LongRunPaceChart
+            season={season}
+            round={round as number}
+            practiceSession={fp}
+            initialDrivers={drivers}
+          />
+        </EmbedShell>
+      );
+    case "track-evolution":
+      return (
+        <EmbedShell title={title}>
+          <TrackEvolutionChart
+            season={season}
+            round={round as number}
+            practiceSession={fp}
+            initialDrivers={drivers}
+          />
+        </EmbedShell>
+      );
+    case "tyre-programme":
+      return (
+        <EmbedShell title={title}>
+          <TyreProgrammeChart
+            season={season}
+            round={round as number}
+            practiceSession={fp}
+            initialDrivers={drivers}
+          />
+        </EmbedShell>
+      );
+    case "practice-sector-heatmap":
+      return (
+        <EmbedShell title={title}>
+          <PracticeSectorHeatmap
+            season={season}
+            round={round as number}
+            practiceSession={fp}
+            initialDrivers={drivers}
+          />
+        </EmbedShell>
+      );
+    case "cross-session-comparison":
+      return (
+        <EmbedShell title={title}>
+          <CrossSessionComparisonEmbed season={season} round={round as number} />
+        </EmbedShell>
+      );
+    case "points-by-round":
+      return (
+        <EmbedShell title={title}>
+          <PointsByRoundGraph
+            season={String(season)}
+            pointsType={attrs.pointsType === "qualifying" ? "qualifying" : "race"}
+            initialMode={attrs.mode === "constructors" ? "constructors" : "drivers"}
+            initialEntities={entities}
+          />
+        </EmbedShell>
+      );
+    case "teammate-head-to-head":
+      return (
+        <EmbedShell title={title}>
+          <TeammateHeadToHead
+            season={String(season)}
+            mode={attrs.mode === "qualifying" ? "qualifying" : "race"}
+            initialTeams={entities}
           />
         </EmbedShell>
       );

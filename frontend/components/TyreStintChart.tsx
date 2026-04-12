@@ -17,6 +17,7 @@ interface TyreStintChartProps {
   season: number;
   round: number;
   isSprint?: boolean;
+  initialDrivers?: string[];
 }
 
 const COMPOUND_COLORS: Record<
@@ -97,10 +98,12 @@ export default function TyreStintChart({
   season,
   round,
   isSprint = false,
+  initialDrivers,
 }: TyreStintChartProps) {
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const initialDriverKey = initialDrivers?.join(",") ?? "";
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -131,15 +134,20 @@ export default function TyreStintChart({
     enabled: season >= 2018,
   });
 
-  // Auto-select top 10 drivers when data loads
   useEffect(() => {
     if (data?.drivers) {
       const sorted = [...data.drivers].sort(
         (a, b) => (a.final_position || 999) - (b.final_position || 999),
       );
-      setSelectedDrivers(sorted.slice(0, 10).map((d) => driverKey(d)));
+      const available = new Set(sorted.map((d) => driverKey(d)));
+      const requested = initialDriverKey.split(",").filter((key) =>
+        available.has(key),
+      );
+      setSelectedDrivers(
+        requested.length > 0 ? requested : sorted.slice(0, 10).map((d) => driverKey(d)),
+      );
     }
-  }, [data]);
+  }, [data, initialDriverKey]);
 
   const getDrivers = () => {
     if (!data?.drivers) return [];

@@ -55,6 +55,8 @@ type ChartDataPoint = {
 interface PointsByRoundGraphProps {
   season: string;
   pointsType?: "race" | "qualifying";
+  initialMode?: "drivers" | "constructors";
+  initialEntities?: string[];
 }
 
 // Custom X-axis Tick Component
@@ -165,11 +167,14 @@ const CustomTooltip = ({
 export default function PointsByRoundGraph({
   season,
   pointsType = "race",
+  initialMode = "drivers",
+  initialEntities,
 }: PointsByRoundGraphProps) {
-  const [mode, setMode] = useState<"drivers" | "constructors">("drivers");
+  const [mode, setMode] = useState<"drivers" | "constructors">(initialMode);
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const initialEntityKey = initialEntities?.join(",") ?? "";
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -201,21 +206,32 @@ export default function PointsByRoundGraph({
     },
   });
 
-  // Auto-select top 3 when data loads or mode changes
   useEffect(() => {
     if (!data) return;
     if (mode === "drivers" && data.drivers) {
       const sorted = [...data.drivers].sort(
         (a, b) => a.final_position - b.final_position,
       );
-      setSelectedEntities(sorted.slice(0, 3).map((d) => d.driver_code));
+      const available = new Set(sorted.map((d) => d.driver_code));
+      const requested = initialEntityKey.split(",").filter((key) =>
+        available.has(key),
+      );
+      setSelectedEntities(
+        requested.length > 0 ? requested : sorted.slice(0, 3).map((d) => d.driver_code),
+      );
     } else if (mode === "constructors" && data.constructors) {
       const sorted = [...data.constructors].sort(
         (a, b) => a.final_position - b.final_position,
       );
-      setSelectedEntities(sorted.slice(0, 3).map((c) => c.team_name));
+      const available = new Set(sorted.map((c) => c.team_name));
+      const requested = initialEntityKey.split(",").filter((key) =>
+        available.has(key),
+      );
+      setSelectedEntities(
+        requested.length > 0 ? requested : sorted.slice(0, 3).map((c) => c.team_name),
+      );
     }
-  }, [data, mode]);
+  }, [data, mode, initialEntityKey]);
 
   // Transform data for Recharts
   const getChartData = (): ChartDataPoint[] => {
