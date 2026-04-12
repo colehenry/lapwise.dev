@@ -55,6 +55,8 @@ type ChartDataPoint = {
 interface PointsByRoundGraphProps {
   season: string;
   pointsType?: "race" | "qualifying";
+  initialMode?: "drivers" | "constructors";
+  initialEntities?: string[];
 }
 
 // Custom X-axis Tick Component
@@ -66,18 +68,19 @@ interface XAxisTickProps {
 
 const CustomXAxisTick = (props: XAxisTickProps) => {
   const { x, y, payload } = props;
+  const label = String(payload?.value ?? "").replace("-sprint", "-s");
 
   return (
     <g transform={`translate(${x},${y})`}>
       <text
         x={0}
         y={0}
-        dy={16}
+        dy={12}
         textAnchor="middle"
         fill={CHART_COLORS.textTertiary}
         fontSize={12}
       >
-        {payload?.value}
+        {label}
       </text>
     </g>
   );
@@ -164,11 +167,14 @@ const CustomTooltip = ({
 export default function PointsByRoundGraph({
   season,
   pointsType = "race",
+  initialMode = "drivers",
+  initialEntities,
 }: PointsByRoundGraphProps) {
-  const [mode, setMode] = useState<"drivers" | "constructors">("drivers");
+  const [mode, setMode] = useState<"drivers" | "constructors">(initialMode);
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const initialEntityKey = initialEntities?.join(",") ?? "";
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -200,21 +206,36 @@ export default function PointsByRoundGraph({
     },
   });
 
-  // Auto-select top 3 when data loads or mode changes
   useEffect(() => {
     if (!data) return;
     if (mode === "drivers" && data.drivers) {
       const sorted = [...data.drivers].sort(
         (a, b) => a.final_position - b.final_position,
       );
-      setSelectedEntities(sorted.slice(0, 3).map((d) => d.driver_code));
+      const available = new Set(sorted.map((d) => d.driver_code));
+      const requested = initialEntityKey
+        .split(",")
+        .filter((key) => available.has(key));
+      setSelectedEntities(
+        requested.length > 0
+          ? requested
+          : sorted.slice(0, 3).map((d) => d.driver_code),
+      );
     } else if (mode === "constructors" && data.constructors) {
       const sorted = [...data.constructors].sort(
         (a, b) => a.final_position - b.final_position,
       );
-      setSelectedEntities(sorted.slice(0, 3).map((c) => c.team_name));
+      const available = new Set(sorted.map((c) => c.team_name));
+      const requested = initialEntityKey
+        .split(",")
+        .filter((key) => available.has(key));
+      setSelectedEntities(
+        requested.length > 0
+          ? requested
+          : sorted.slice(0, 3).map((c) => c.team_name),
+      );
     }
-  }, [data, mode]);
+  }, [data, mode, initialEntityKey]);
 
   // Transform data for Recharts
   const getChartData = (): ChartDataPoint[] => {
@@ -388,7 +409,7 @@ export default function PointsByRoundGraph({
   };
 
   return (
-    <div style={{ minHeight: "540px" }}>
+    <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold text-text-secondary font-mono">
           {season} {mode === "drivers" ? "Drivers'" : "Constructors'"}
@@ -477,210 +498,223 @@ export default function PointsByRoundGraph({
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="relative" style={{ minHeight: "400px" }}>
-        {chartData.length > 0 ? (
-          <>
-            <ResponsiveContainer width="100%" height={400}>
-              <LineChart
-                data={chartData}
-                margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
-              >
-                <defs>
-                  {entities
-                    .filter((entity) => {
-                      const key =
-                        mode === "drivers"
-                          ? (entity as DriverProgression).driver_code
-                          : (entity as ConstructorProgression).team_name;
-                      return selectedEntities.includes(key);
-                    })
-                    .map((entity) => {
-                      const key =
-                        mode === "drivers"
-                          ? (entity as DriverProgression).driver_code
-                          : (entity as ConstructorProgression).team_name;
-                      return (
-                        <filter
-                          key={`glow-${key}`}
-                          id={`glow-${key}`}
-                          x="-50%"
-                          y="-50%"
-                          width="200%"
-                          height="200%"
-                        >
-                          <feGaussianBlur
-                            stdDeviation="2"
-                            result="coloredBlur"
-                          />
-                          <feMerge>
-                            <feMergeNode in="coloredBlur" />
-                            <feMergeNode in="SourceGraphic" />
-                          </feMerge>
-                        </filter>
-                      );
-                    })}
-                </defs>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke={CHART_COLORS.borderPrimary}
-                />
-                <XAxis
-                  dataKey="round"
-                  stroke={CHART_COLORS.textTertiary}
-                  label={{
-                    value: "Round",
-                    position: "insideBottom",
-                    offset: -20,
-                    style: { fontWeight: "bold", fill: "white" },
-                  }}
-                  tick={<CustomXAxisTick />}
-                  interval={0}
-                />
-                <YAxis
-                  stroke={CHART_COLORS.textTertiary}
-                  reversed={isQualy}
-                  label={{
-                    value: isQualy ? "Position" : "Total Points",
-                    angle: -90,
-                    position: "center",
-                    dx: -30,
-                    style: { fontWeight: "bold", fill: "white" },
-                  }}
-                  domain={isQualy ? [1, 21] : [0, getYAxisMax()]}
-                  ticks={isQualy ? [1, 5, 10, 15, 20, 21] : undefined}
-                  tickFormatter={
-                    isQualy
-                      ? (value: number) =>
-                          value === 21 ? "DNF" : String(value)
-                      : undefined
-                  }
-                />
-                <Tooltip
-                  content={
-                    <CustomTooltip mode={mode} pointsType={pointsType} />
-                  }
-                />
-                {entities
-                  .filter((entity) => {
-                    const key =
-                      mode === "drivers"
-                        ? (entity as DriverProgression).driver_code
-                        : (entity as ConstructorProgression).team_name;
-                    return selectedEntities.includes(key);
-                  })
-                  .flatMap((entity) => {
-                    const color = getEntityColor(entity);
-                    const name =
-                      mode === "drivers"
-                        ? (entity as DriverProgression).full_name
-                        : (entity as ConstructorProgression).team_name;
-
-                    if (mode === "drivers") {
-                      const driver = entity as DriverProgression;
-                      return [
-                        <Line
-                          key={driver.driver_code}
-                          type="linear"
-                          dataKey={driver.driver_code}
-                          name={name}
-                          stroke={color}
-                          strokeWidth={2}
-                          dot={<CustomDot />}
-                          activeDot={{ r: 6, fill: color, stroke: color }}
-                          filter={`url(#glow-${driver.driver_code})`}
-                          isAnimationActive={true}
-                          connectNulls={false}
-                        />,
-                      ];
-                    } else {
-                      const team = entity as ConstructorProgression;
-                      if (isQualy) {
-                        // Render dots for each driver, no lines
-                        // Use stroke={color} so CustomDot picks up the team color
-                        return [0, 1, 2].map((dIdx) => (
-                          <Line
-                            key={`${team.team_name}-${dIdx}`}
-                            type="linear"
-                            dataKey={`${team.team_name}-${dIdx}`}
-                            name={name}
-                            stroke={color}
-                            strokeWidth={0}
-                            dot={<CustomDot />}
-                            activeDot={{ r: 6, fill: color, stroke: color }}
-                            isAnimationActive={true}
-                            connectNulls={false}
-                          />
-                        ));
-                      } else {
-                        return [
-                          <Line
-                            key={team.team_name}
-                            type="linear"
-                            dataKey={team.team_name}
-                            name={name}
-                            stroke={color}
-                            strokeWidth={2}
-                            dot={<CustomDot />}
-                            activeDot={{ r: 6, fill: color, stroke: color }}
-                            filter={`url(#glow-${team.team_name})`}
-                            isAnimationActive={true}
-                            connectNulls={false}
-                          />,
-                        ];
-                      }
-                    }
-                  })}
-              </LineChart>
-            </ResponsiveContainer>
-
-            {/* Custom Legend - Positioned in top-left */}
-            <div className="absolute top-8 left-25 bg-bg-primary/90 border border-border-primary rounded-sm p-3 backdrop-blur-sm pointer-events-none">
-              <div className="flex flex-col gap-1">
-                {entities
-                  .filter((entity) => {
-                    const key =
-                      mode === "drivers"
-                        ? (entity as DriverProgression).driver_code
-                        : (entity as ConstructorProgression).team_name;
-                    return selectedEntities.includes(key);
-                  })
-                  .map((entity) => {
-                    const key =
-                      mode === "drivers"
-                        ? (entity as DriverProgression).driver_code
-                        : (entity as ConstructorProgression).team_name;
-                    const name =
-                      mode === "drivers"
-                        ? (entity as DriverProgression).full_name
-                        : (entity as ConstructorProgression).team_name;
-                    const color = getEntityColor(entity);
-
-                    return (
-                      <div key={key} className="flex items-center gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: color }}
-                        />
-                        <span className="text-xs font-bold text-text-primary font-mono">
-                          {name}
-                        </span>
-                      </div>
-                    );
-                  })}
-              </div>
+      <div className="flex flex-row">
+        {/* Y-Axis Label - Congruent with X-Axis Label */}
+        {chartData.length > 0 && (
+          <div className="flex items-center justify-center w-4 shrink-0">
+            <div className="-rotate-90 whitespace-nowrap">
+              <span className="text-[11px] font-bold text-text-muted font-mono uppercase tracking-[0.2em]">
+                {isQualy ? "Position" : "Total Points"}
+              </span>
             </div>
-          </>
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
-              No data available. Select at least one{" "}
-              {mode === "drivers" ? "driver" : "constructor"} to view
-              progression.
-            </p>
           </div>
         )}
+
+        {/* Chart Area */}
+        <div className="flex-grow">
+          <div className="relative h-[400px]">
+            {chartData.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={chartData}
+                    margin={{ top: 20, right: 20, left: 0, bottom: 8 }}
+                  >
+                    <defs>
+                      {entities
+                        .filter((entity) => {
+                          const key =
+                            mode === "drivers"
+                              ? (entity as DriverProgression).driver_code
+                              : (entity as ConstructorProgression).team_name;
+                          return selectedEntities.includes(key);
+                        })
+                        .map((entity) => {
+                          const key =
+                            mode === "drivers"
+                              ? (entity as DriverProgression).driver_code
+                              : (entity as ConstructorProgression).team_name;
+                          return (
+                            <filter
+                              key={`glow-${key}`}
+                              id={`glow-${key}`}
+                              x="-50%"
+                              y="-50%"
+                              width="200%"
+                              height="200%"
+                            >
+                              <feGaussianBlur
+                                stdDeviation="2"
+                                result="coloredBlur"
+                              />
+                              <feMerge>
+                                <feMergeNode in="coloredBlur" />
+                                <feMergeNode in="SourceGraphic" />
+                              </feMerge>
+                            </filter>
+                          );
+                        })}
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke={CHART_COLORS.borderPrimary}
+                    />
+                    <XAxis
+                      dataKey="round"
+                      stroke={CHART_COLORS.textTertiary}
+                      height={30}
+                      tickMargin={4}
+                      tick={<CustomXAxisTick />}
+                      interval={0}
+                    />
+                    <YAxis
+                      stroke={CHART_COLORS.textTertiary}
+                      reversed={isQualy}
+                      domain={isQualy ? [1, 21] : [0, getYAxisMax()]}
+                      ticks={isQualy ? [1, 5, 10, 15, 20, 21] : undefined}
+                      tickFormatter={
+                        isQualy
+                          ? (value: number) =>
+                              value === 21 ? "DNF" : String(value)
+                          : undefined
+                      }
+                    />
+                    <Tooltip
+                      content={
+                        <CustomTooltip mode={mode} pointsType={pointsType} />
+                      }
+                    />
+                    {entities
+                      .filter((entity) => {
+                        const key =
+                          mode === "drivers"
+                            ? (entity as DriverProgression).driver_code
+                            : (entity as ConstructorProgression).team_name;
+                        return selectedEntities.includes(key);
+                      })
+                      .flatMap((entity) => {
+                        const color = getEntityColor(entity);
+                        const name =
+                          mode === "drivers"
+                            ? (entity as DriverProgression).full_name
+                            : (entity as ConstructorProgression).team_name;
+
+                        if (mode === "drivers") {
+                          const driver = entity as DriverProgression;
+                          return [
+                            <Line
+                              key={driver.driver_code}
+                              type="linear"
+                              dataKey={driver.driver_code}
+                              name={name}
+                              stroke={color}
+                              strokeWidth={2}
+                              dot={<CustomDot />}
+                              activeDot={{ r: 6, fill: color, stroke: color }}
+                              filter={`url(#glow-${driver.driver_code})`}
+                              isAnimationActive={true}
+                              connectNulls={false}
+                            />,
+                          ];
+                        } else {
+                          const team = entity as ConstructorProgression;
+                          if (isQualy) {
+                            // Render dots for each driver, no lines
+                            // Use stroke={color} so CustomDot picks up the team color
+                            return [0, 1, 2].map((dIdx) => (
+                              <Line
+                                key={`${team.team_name}-${dIdx}`}
+                                type="linear"
+                                dataKey={`${team.team_name}-${dIdx}`}
+                                name={name}
+                                stroke={color}
+                                strokeWidth={0}
+                                dot={<CustomDot />}
+                                activeDot={{ r: 6, fill: color, stroke: color }}
+                                isAnimationActive={true}
+                                connectNulls={false}
+                              />
+                            ));
+                          } else {
+                            return [
+                              <Line
+                                key={team.team_name}
+                                type="linear"
+                                dataKey={team.team_name}
+                                name={name}
+                                stroke={color}
+                                strokeWidth={2}
+                                dot={<CustomDot />}
+                                activeDot={{ r: 6, fill: color, stroke: color }}
+                                filter={`url(#glow-${team.team_name})`}
+                                isAnimationActive={true}
+                                connectNulls={false}
+                              />,
+                            ];
+                          }
+                        }
+                      })}
+                  </LineChart>
+                </ResponsiveContainer>
+
+                {/* Custom Legend - Positioned in top-left */}
+                <div className="absolute top-8 left-25 bg-bg-primary/90 border border-border-primary rounded-sm p-3 backdrop-blur-sm pointer-events-none">
+                  <div className="flex flex-col gap-1">
+                    {entities
+                      .filter((entity) => {
+                        const key =
+                          mode === "drivers"
+                            ? (entity as DriverProgression).driver_code
+                            : (entity as ConstructorProgression).team_name;
+                        return selectedEntities.includes(key);
+                      })
+                      .map((entity) => {
+                        const key =
+                          mode === "drivers"
+                            ? (entity as DriverProgression).driver_code
+                            : (entity as ConstructorProgression).team_name;
+                        const name =
+                          mode === "drivers"
+                            ? (entity as DriverProgression).full_name
+                            : (entity as ConstructorProgression).team_name;
+                        const color = getEntityColor(entity);
+
+                        return (
+                          <div key={key} className="flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: color }}
+                            />
+                            <span className="text-xs font-bold text-text-primary font-mono">
+                              {name}
+                            </span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
+                  No data available. Select at least one{" "}
+                  {mode === "drivers" ? "driver" : "constructor"} to view
+                  progression.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* X-Axis Label - Centered relative to the whole component */}
+      {chartData.length > 0 && (
+        <div className="text-center mt-2">
+          <span className="text-[11px] font-bold text-text-muted font-mono uppercase tracking-[0.2em]">
+            Round
+          </span>
+        </div>
+      )}
     </div>
   );
 }

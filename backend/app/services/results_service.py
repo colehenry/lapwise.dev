@@ -54,6 +54,9 @@ from app.schemas.result import (
     DistributionLap,
     DriverLapDistribution,
     LapDistributionResponse,
+    TeammateDriverInfo,
+    TeammateH2HTeam,
+    TeammateH2HResponse,
 )
 
 
@@ -229,6 +232,7 @@ class ResultsService:
                 )
                 .join(Session, SessionResult.session_id == Session.id)
                 .join(Team, SessionResult.team_id == Team.id)
+                .join(Driver, SessionResult.driver_id == Driver.id)
                 .where(SessionResult.driver_id == driver_id)
                 .where(Session.year == season)
                 .order_by(Session.date.desc(), Session.round.desc())
@@ -238,6 +242,25 @@ class ResultsService:
             row = result.first()
             if row:
                 latest_results[driver_id] = row
+
+        # Per-driver race position histogram (race + sprint_race)
+        race_types = ["race", "sprint_race"]
+        driver_race_positions: dict[int, dict[int, int]] = {}
+        driver_race_pos_result = await db.execute(
+            select(
+                SessionResult.driver_id,
+                SessionResult.position,
+                func.count().label("count"),
+            )
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(race_types))
+            .where(SessionResult.position.isnot(None))
+            .group_by(SessionResult.driver_id, SessionResult.position)
+        )
+        for row in driver_race_pos_result:
+            pos_map = driver_race_positions.setdefault(row.driver_id, {})
+            pos_map[int(row.position)] = int(row.count)
 
         # Build driver standings by combining points with latest team info
         driver_standings_data = []
@@ -249,6 +272,7 @@ class ResultsService:
             driver_id = driver_row.driver_id
             if driver_id in latest_results:
                 session_result, team, headshot_url = latest_results[driver_id]
+                pos_counts = driver_race_positions.get(driver_id, {})
                 driver_standings_data.append(
                     {
                         "driver_code": driver_row.driver_code,
@@ -261,6 +285,10 @@ class ResultsService:
                         "team_name": team.name,
                         "team_color": team.team_color,
                         "headshot_url": headshot_url,
+                        "wins": pos_counts.get(1, 0),
+                        "p2s": pos_counts.get(2, 0),
+                        "p3s": pos_counts.get(3, 0),
+                        "position_counts": pos_counts,
                     }
                 )
 
@@ -279,6 +307,10 @@ class ResultsService:
                 team_color=row["team_color"],
                 total_points=float(row["total_points"]),
                 headshot_url=row["headshot_url"],
+                wins=row["wins"],
+                p2s=row["p2s"],
+                p3s=row["p3s"],
+                position_counts=row["position_counts"],
             )
             for idx, row in enumerate(driver_standings_data)
         ]
@@ -305,6 +337,25 @@ class ResultsService:
         constructor_result = await db.execute(constructor_query)
         constructor_rows = constructor_result.all()
 
+        # Per-team race position histogram
+        team_race_positions: dict[str, dict[int, int]] = {}
+        team_race_pos_result = await db.execute(
+            select(
+                Team.name.label("team_name"),
+                SessionResult.position,
+                func.count().label("count"),
+            )
+            .join(SessionResult, Team.id == SessionResult.team_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(race_types))
+            .where(SessionResult.position.isnot(None))
+            .group_by(Team.name, SessionResult.position)
+        )
+        for row in team_race_pos_result:
+            pos_map = team_race_positions.setdefault(row.team_name, {})
+            pos_map[int(row.position)] = int(row.count)
+
         constructors = [
             ConstructorStanding(
                 position=idx + 1,
@@ -312,6 +363,10 @@ class ResultsService:
                 team_color=row.team_color,
                 logo_url=row.logo_url,
                 total_points=float(row.total_points),
+                wins=team_race_positions.get(row.team_name, {}).get(1, 0),
+                p2s=team_race_positions.get(row.team_name, {}).get(2, 0),
+                p3s=team_race_positions.get(row.team_name, {}).get(3, 0),
+                position_counts=team_race_positions.get(row.team_name, {}),
             )
             for idx, row in enumerate(constructor_rows)
         ]
@@ -326,7 +381,9 @@ class ResultsService:
     ) -> Optional[QualifyingStandingsResponse]:
         """
         Get driver and constructor qualifying standings for a season.
-        Calculates qualifying points: P1=20, P2=19, ..., P20=1.
+        Calculates qualifying points dynamically: formula_base - position,
+        where formula_base = (max grid size for the season) + 1. This keeps
+        every driver with at least 1 point regardless of grid size.
         """
         # Check if season exists
         season_check = await db.execute(
@@ -335,10 +392,21 @@ class ResultsService:
         if not season_check.first():
             return None
 
+        # Dynamically determine the max grid size from qualifying sessions
+        quali_types = ["qualifying", "sprint_qualifying"]
+        max_pos_result = await db.execute(
+            select(func.max(SessionResult.position))
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(quali_types))
+        )
+        max_grid = max_pos_result.scalar() or 20
+        formula_base = int(max_grid) + 1
+
         # ====================================================================
         # Driver Qualifying Standings Query
         # ====================================================================
-        # Points: 21 - position (clamped to min 0)
+        # Points: formula_base - position
         # Session types: qualifying, sprint_qualifying
         points_subquery = (
             select(
@@ -349,7 +417,10 @@ class ResultsService:
                 Driver.country_code,
                 func.sum(
                     case(
-                        (SessionResult.position <= 20, 21 - SessionResult.position),
+                        (
+                            SessionResult.position <= max_grid,
+                            formula_base - SessionResult.position,
+                        ),
                         else_=0,
                     )
                 ).label("total_points"),
@@ -362,7 +433,7 @@ class ResultsService:
             .join(SessionResult, Driver.id == SessionResult.driver_id)
             .join(Session, SessionResult.session_id == Session.id)
             .where(Session.year == season)
-            .where(Session.session_type.in_(["qualifying", "sprint_qualifying"]))
+            .where(Session.session_type.in_(quali_types))
             .where(SessionResult.position.isnot(None))
             .group_by(
                 Driver.id,
@@ -394,6 +465,7 @@ class ResultsService:
                 )
                 .join(Session, SessionResult.session_id == Session.id)
                 .join(Team, SessionResult.team_id == Team.id)
+                .join(Driver, SessionResult.driver_id == Driver.id)
                 .where(SessionResult.driver_id == driver_id)
                 .where(Session.year == season)
                 .order_by(Session.date.desc(), Session.round.desc())
@@ -403,6 +475,24 @@ class ResultsService:
             row = result.first()
             if row:
                 latest_results[driver_id] = row
+
+        # Per-driver position histogram across qualifying sessions
+        driver_position_counts: dict[int, dict[int, int]] = {}
+        driver_pos_result = await db.execute(
+            select(
+                SessionResult.driver_id,
+                SessionResult.position,
+                func.count().label("count"),
+            )
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(quali_types))
+            .where(SessionResult.position.isnot(None))
+            .group_by(SessionResult.driver_id, SessionResult.position)
+        )
+        for row in driver_pos_result:
+            pos_map = driver_position_counts.setdefault(row.driver_id, {})
+            pos_map[int(row.position)] = int(row.count)
 
         # Build driver standings
         driver_standings_data = []
@@ -429,6 +519,7 @@ class ResultsService:
                         "poles": int(driver_row.poles),
                         "p2s": int(driver_row.p2s),
                         "p3s": int(driver_row.p3s),
+                        "position_counts": driver_position_counts.get(driver_id, {}),
                     }
                 )
 
@@ -447,7 +538,10 @@ class ResultsService:
                 Team.logo_url,
                 func.sum(
                     case(
-                        (SessionResult.position <= 20, 21 - SessionResult.position),
+                        (
+                            SessionResult.position <= max_grid,
+                            formula_base - SessionResult.position,
+                        ),
                         else_=0,
                     )
                 ).label("total_points"),
@@ -460,13 +554,16 @@ class ResultsService:
             .join(SessionResult, Team.id == SessionResult.team_id)
             .join(Session, SessionResult.session_id == Session.id)
             .where(Session.year == season)
-            .where(Session.session_type.in_(["qualifying", "sprint_qualifying"]))
+            .where(Session.session_type.in_(quali_types))
             .where(SessionResult.position.isnot(None))
             .group_by(Team.id, Team.name, Team.team_color, Team.logo_url)
             .order_by(
                 func.sum(
                     case(
-                        (SessionResult.position <= 20, 21 - SessionResult.position),
+                        (
+                            SessionResult.position <= max_grid,
+                            formula_base - SessionResult.position,
+                        ),
                         else_=0,
                     )
                 ).desc()
@@ -475,6 +572,25 @@ class ResultsService:
 
         constructor_result = await db.execute(constructor_query)
         constructor_rows = constructor_result.all()
+
+        # Per-team position histogram across qualifying sessions
+        team_position_counts: dict[str, dict[int, int]] = {}
+        team_pos_result = await db.execute(
+            select(
+                Team.name.label("team_name"),
+                SessionResult.position,
+                func.count().label("count"),
+            )
+            .join(SessionResult, Team.id == SessionResult.team_id)
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(quali_types))
+            .where(SessionResult.position.isnot(None))
+            .group_by(Team.name, SessionResult.position)
+        )
+        for row in team_pos_result:
+            pos_map = team_position_counts.setdefault(row.team_name, {})
+            pos_map[int(row.position)] = int(row.count)
 
         constructors = [
             ConstructorQualifyingStanding(
@@ -486,12 +602,16 @@ class ResultsService:
                 poles=int(row.poles),
                 p2s=int(row.p2s),
                 p3s=int(row.p3s),
+                position_counts=team_position_counts.get(row.team_name, {}),
             )
             for idx, row in enumerate(constructor_rows)
         ]
 
         return QualifyingStandingsResponse(
-            year=season, drivers=drivers, constructors=constructors
+            year=season,
+            drivers=drivers,
+            constructors=constructors,
+            formula_base=formula_base,
         )
 
     @staticmethod
@@ -521,9 +641,23 @@ class ResultsService:
     async def _get_driver_qualifying_progression(
         db: AsyncSession, season: int
     ) -> Optional[PointsProgressionResponse]:
-        # Points: 21 - position (clamped to min 0) for final position sorting
+        # Dynamically determine the max grid size for this season
+        quali_types = ["qualifying", "sprint_qualifying"]
+        max_pos_result = await db.execute(
+            select(func.max(SessionResult.position))
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(quali_types))
+        )
+        max_grid = max_pos_result.scalar() or 20
+        formula_base = int(max_grid) + 1
+
+        # Points: formula_base - position, zero below the grid
         qualifying_points = case(
-            (SessionResult.position <= 20, 21 - SessionResult.position),
+            (
+                SessionResult.position <= max_grid,
+                formula_base - SessionResult.position,
+            ),
             else_=0,
         )
 
@@ -657,8 +791,21 @@ class ResultsService:
     async def _get_constructor_qualifying_progression(
         db: AsyncSession, season: int
     ) -> Optional[PointsProgressionResponse]:
+        quali_types = ["qualifying", "sprint_qualifying"]
+        max_pos_result = await db.execute(
+            select(func.max(SessionResult.position))
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(quali_types))
+        )
+        max_grid = max_pos_result.scalar() or 20
+        formula_base = int(max_grid) + 1
+
         qualifying_points = case(
-            (SessionResult.position <= 20, 21 - SessionResult.position),
+            (
+                SessionResult.position <= max_grid,
+                formula_base - SessionResult.position,
+            ),
             else_=0,
         )
 
@@ -1574,6 +1721,9 @@ class ResultsService:
                     fresh_tyre=row.fresh_tyre,
                     is_personal_best=row.is_personal_best,
                     deleted=row.deleted,
+                    lap_start_time_seconds=ResultsService.sanitize_float(
+                        row.lap_start_time_seconds
+                    ),
                 )
             )
 
@@ -2286,3 +2436,363 @@ class ResultsService:
             event_name=session.event_name,
             drivers=drivers,
         )
+
+    @staticmethod
+    async def get_practice_details(
+        db: AsyncSession, season: int, round_num: int, practice_num: int
+    ) -> Optional[SessionResultsResponse]:
+        """
+        Get results for a practice session (FP1/FP2/FP3).
+        """
+        session_type = f"fp{practice_num}"
+        session_query = (
+            select(Session)
+            .options(selectinload(Session.circuit))
+            .where(Session.year == season)
+            .where(Session.round == round_num)
+            .where(Session.session_type == session_type)
+        )
+
+        session_result = await db.execute(session_query)
+        session = session_result.scalar_one_or_none()
+
+        if not session:
+            return None
+
+        results_query = (
+            select(
+                SessionResult,
+                Driver,
+                Team,
+                ResultsService._headshot_fallback_expr().label("headshot_url"),
+            )
+            .join(Driver, SessionResult.driver_id == Driver.id)
+            .join(Team, SessionResult.team_id == Team.id)
+            .where(SessionResult.session_id == session.id)
+            .order_by(SessionResult.position)
+        )
+
+        results = await db.execute(results_query)
+        result_rows = results.all()
+
+        circuit = session.circuit
+
+        session_info = SessionInfo(
+            id=session.id,
+            year=session.year,
+            round=session.round,
+            session_type=session.session_type,
+            event_name=session.event_name,
+            date=session.date,
+            circuit=CircuitInfo(
+                id=circuit.id,
+                name=circuit.name,
+                location=circuit.location,
+                country=circuit.country,
+                track_length_km=circuit.track_length_km,
+                track_map_url=f"/track-maps/{circuit.id}.png",
+            ),
+            highlights_video_id=getattr(session, "highlights_video_id", None),
+        )
+
+        session_results = [
+            SessionResultDetail(
+                position=result.SessionResult.position,
+                status=result.SessionResult.status,
+                headshot_url=result.headshot_url,
+                driver=DriverInfo(
+                    driver_number=result.Driver.driver_number,
+                    driver_code=result.Driver.driver_code,
+                    driver_slug=result.Driver.driver_slug,
+                    full_name=result.Driver.full_name,
+                    country_code=result.Driver.country_code,
+                ),
+                team=TeamInfo(
+                    name=result.Team.name,
+                    team_color=result.Team.team_color,
+                ),
+                time_seconds=ResultsService.sanitize_float(
+                    result.SessionResult.time_seconds
+                ),
+            )
+            for result in result_rows
+        ]
+
+        return SessionResultsResponse(session=session_info, results=session_results)
+
+    @staticmethod
+    async def get_practice_lap_times(
+        db: AsyncSession, season: int, round_num: int, practice_num: int
+    ) -> Optional[LapTimesResponse]:
+        """
+        Get lap-by-lap timing data for a practice session.
+        """
+        session_type = f"fp{practice_num}"
+        session_query = (
+            select(Session)
+            .where(Session.year == season)
+            .where(Session.round == round_num)
+            .where(Session.session_type == session_type)
+        )
+
+        session_result = await db.execute(session_query)
+        session = session_result.scalar_one_or_none()
+
+        if not session:
+            return None
+
+        laps_query = (
+            select(
+                Lap.lap_number,
+                Lap.lap_time_seconds,
+                Lap.compound,
+                Lap.tyre_life,
+                Lap.stint,
+                Lap.track_status,
+                Lap.sector1_time_seconds,
+                Lap.sector2_time_seconds,
+                Lap.sector3_time_seconds,
+                Lap.pit_in_time_seconds,
+                Lap.pit_out_time_seconds,
+                Lap.pit_duration_seconds,
+                Lap.position,
+                Lap.speed_st,
+                Lap.speed_i1,
+                Lap.speed_i2,
+                Lap.speed_fl,
+                Lap.fresh_tyre,
+                Lap.is_personal_best,
+                Lap.deleted,
+                Lap.lap_start_time_seconds,
+                Driver.driver_code,
+                Driver.jolpica_id,
+                Driver.full_name,
+                Driver.country_code,
+                Team.team_color,
+                SessionResult.position.label("final_position"),
+            )
+            .join(Driver, Lap.driver_id == Driver.id)
+            .join(
+                SessionResult,
+                (SessionResult.session_id == Lap.session_id)
+                & (SessionResult.driver_id == Lap.driver_id),
+            )
+            .join(Team, SessionResult.team_id == Team.id)
+            .where(Lap.session_id == session.id)
+            .order_by(SessionResult.position, Lap.lap_number)
+        )
+
+        laps_result = await db.execute(laps_query)
+        lap_rows = laps_result.all()
+
+        if not lap_rows:
+            return None
+
+        track_status_events = await ResultsService.get_track_status(db, session.id)
+
+        total_laps = max(row.lap_number for row in lap_rows) if lap_rows else None
+
+        drivers_dict = {}
+        for row in lap_rows:
+            key = row.driver_code
+            if key not in drivers_dict:
+                drivers_dict[key] = DriverLapTimesData(
+                    driver_code=row.driver_code,
+                    driver_slug=_make_slug(row.jolpica_id, row.full_name),
+                    full_name=row.full_name,
+                    team_color=row.team_color,
+                    country_code=row.country_code,
+                    final_position=row.final_position,
+                    laps=[],
+                )
+
+            lap_time = ResultsService.sanitize_float(row.lap_time_seconds)
+            if lap_time is not None and lap_time > 0:
+                drivers_dict[key].laps.append(
+                    LapData(
+                        lap_number=row.lap_number,
+                        lap_time_seconds=lap_time,
+                        compound=row.compound,
+                        tyre_life=row.tyre_life,
+                        stint=row.stint,
+                        track_status=row.track_status,
+                        sector1_time_seconds=ResultsService.sanitize_float(
+                            row.sector1_time_seconds
+                        ),
+                        sector2_time_seconds=ResultsService.sanitize_float(
+                            row.sector2_time_seconds
+                        ),
+                        sector3_time_seconds=ResultsService.sanitize_float(
+                            row.sector3_time_seconds
+                        ),
+                        pit_in_time_seconds=ResultsService.sanitize_float(
+                            row.pit_in_time_seconds
+                        ),
+                        pit_out_time_seconds=ResultsService.sanitize_float(
+                            row.pit_out_time_seconds
+                        ),
+                        pit_duration_seconds=ResultsService.sanitize_float(
+                            row.pit_duration_seconds
+                        ),
+                        position=row.position,
+                        speed_st=ResultsService.sanitize_float(row.speed_st),
+                        speed_i1=ResultsService.sanitize_float(row.speed_i1),
+                        speed_i2=ResultsService.sanitize_float(row.speed_i2),
+                        speed_fl=ResultsService.sanitize_float(row.speed_fl),
+                        fresh_tyre=row.fresh_tyre,
+                        is_personal_best=row.is_personal_best,
+                        deleted=row.deleted,
+                        lap_start_time_seconds=ResultsService.sanitize_float(
+                            row.lap_start_time_seconds
+                        ),
+                    )
+                )
+
+        drivers = list(drivers_dict.values())
+
+        return LapTimesResponse(
+            year=season,
+            round=round_num,
+            event_name=session.event_name,
+            total_laps=total_laps,
+            drivers=drivers,
+            track_status_events=track_status_events,
+        )
+
+    @staticmethod
+    async def get_teammate_h2h(
+        db: AsyncSession, season: int, mode: str = "race"
+    ) -> Optional[TeammateH2HResponse]:
+        """
+        Compute head-to-head teammate comparison for a season.
+
+        mode="race"      → race + sprint_race sessions, position = finishing order
+        mode="qualifying" → qualifying + sprint_qualifying sessions, position = grid/quali order
+        """
+        if mode == "qualifying":
+            session_types = ["qualifying", "sprint_qualifying"]
+        else:
+            session_types = ["race", "sprint_race"]
+
+        query = (
+            select(
+                Session.round,
+                Session.session_type,
+                Driver.id.label("driver_id"),
+                Driver.driver_code,
+                Driver.jolpica_id,
+                Driver.full_name,
+                Team.id.label("team_id"),
+                Team.name.label("team_name"),
+                Team.team_color,
+                Team.logo_url,
+                SessionResult.position,
+                ResultsService._headshot_fallback_expr().label("headshot_url"),
+            )
+            .join(SessionResult, Session.id == SessionResult.session_id)
+            .join(Driver, SessionResult.driver_id == Driver.id)
+            .join(Team, SessionResult.team_id == Team.id)
+            .where(Session.year == season)
+            .where(Session.session_type.in_(session_types))
+            .where(SessionResult.position.isnot(None))
+            .order_by(Session.round, Team.id, SessionResult.position)
+        )
+
+        result = await db.execute(query)
+        rows = result.all()
+
+        if not rows:
+            return None
+
+        # Group by team
+        team_data: dict = {}
+        for row in rows:
+            team_id = row.team_id
+            if team_id not in team_data:
+                team_data[team_id] = {
+                    "team_name": row.team_name,
+                    "team_color": row.team_color,
+                    "logo_url": row.logo_url,
+                    "rounds": {},
+                    "driver_info": {},
+                    "driver_appearances": {},
+                }
+            td = team_data[team_id]
+            round_key = f"{row.round}-{row.session_type}"
+            if round_key not in td["rounds"]:
+                td["rounds"][round_key] = []
+            td["rounds"][round_key].append(
+                {"driver_id": row.driver_id, "position": int(row.position)}
+            )
+            did = row.driver_id
+            if did not in td["driver_info"]:
+                td["driver_info"][did] = {
+                    "code": row.driver_code,
+                    "full_name": row.full_name,
+                    "headshot_url": row.headshot_url,
+                }
+            td["driver_appearances"][did] = td["driver_appearances"].get(did, 0) + 1
+
+        teams_result = []
+        for td in team_data.values():
+            # Pick the two drivers with most appearances
+            top_drivers = sorted(
+                td["driver_appearances"].keys(),
+                key=lambda d: td["driver_appearances"][d],
+                reverse=True,
+            )
+            if len(top_drivers) < 2:
+                continue
+            driver_a_id, driver_b_id = top_drivers[0], top_drivers[1]
+
+            a_wins = b_wins = rounds_compared = 0
+            for round_results in td["rounds"].values():
+                a_res = next(
+                    (r for r in round_results if r["driver_id"] == driver_a_id), None
+                )
+                b_res = next(
+                    (r for r in round_results if r["driver_id"] == driver_b_id), None
+                )
+                if a_res and b_res:
+                    rounds_compared += 1
+                    if a_res["position"] < b_res["position"]:
+                        a_wins += 1
+                    else:
+                        b_wins += 1
+
+            if rounds_compared == 0:
+                continue
+
+            a_info = td["driver_info"][driver_a_id]
+            b_info = td["driver_info"][driver_b_id]
+
+            teams_result.append(
+                TeammateH2HTeam(
+                    team_name=td["team_name"],
+                    team_color=td["team_color"],
+                    logo_url=td["logo_url"],
+                    driver_a=TeammateDriverInfo(
+                        code=a_info["code"],
+                        full_name=a_info["full_name"],
+                        headshot_url=a_info["headshot_url"],
+                        wins=a_wins,
+                    ),
+                    driver_b=TeammateDriverInfo(
+                        code=b_info["code"],
+                        full_name=b_info["full_name"],
+                        headshot_url=b_info["headshot_url"],
+                        wins=b_wins,
+                    ),
+                    rounds_compared=rounds_compared,
+                )
+            )
+
+        if not teams_result:
+            return None
+
+        # Sort by total wins descending (most active teams first)
+        teams_result.sort(
+            key=lambda t: -(t.driver_a.wins + t.driver_b.wins), reverse=False
+        )
+
+        return TeammateH2HResponse(year=season, teams=teams_result)

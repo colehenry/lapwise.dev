@@ -51,6 +51,9 @@ class User(Base):
 
     # Relationships
     refresh_tokens = relationship("RefreshToken", back_populates="user")
+    oauth_accounts = relationship(
+        "OAuthAccount", back_populates="user", cascade="all, delete-orphan"
+    )
     email_verification_tokens = relationship(
         "EmailVerificationToken", back_populates="user"
     )

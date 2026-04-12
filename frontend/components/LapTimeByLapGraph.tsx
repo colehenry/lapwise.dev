@@ -6,6 +6,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -50,6 +51,10 @@ interface LapTimeByLapGraphProps {
   season: number;
   round: number;
   isSprint?: boolean;
+  practiceSession?: 1 | 2 | 3;
+  initialViewMode?: ViewMode;
+  initialDrivers?: string[];
+  embedded?: boolean;
 }
 
 // Compound colors for tyre-colored styling
@@ -85,6 +90,16 @@ const OUTLIER_LABELS: Record<OutlierReason, { label: string; color: string }> =
     lap1: { label: "L1", color: "#8b5cf6" },
     slow: { label: "SLOW", color: "#6b7280" },
   };
+
+// Bridge line colors keyed by OutlierReason
+const BRIDGE_LINE_COLORS: Record<string, string> = {
+  safety_car: "#eab308",
+  red_flag: "#ef4444",
+  vsc: "#f97316",
+  pit: "#60a5fa",
+  lap1: "#8b5cf6",
+  slow: "#6b7280",
+};
 
 // Helper to format seconds to MM:SS.mmm
 const formatLapTime = (seconds: number | null): string => {
@@ -194,34 +209,39 @@ interface DotProps {
   dataKey?: string;
 }
 
-// Per-driver outlier label (PIT, L1, SLOW)
+// Per-driver outlier labels (PIT, L1, SLOW) — stacked if multiple reasons
 const OutlierDot = (props: DotProps) => {
   const { cx, cy, payload, dataKey } = props;
   if (cx === undefined || cy === undefined || !payload || !dataKey) return null;
 
   const driverCode = dataKey.replace("_outlier_", "");
-  const reason = payload[`_outlier_reason_${driverCode}`] as
-    | OutlierReason
+  const reasonsStr = payload[`_outlier_reasons_${driverCode}`] as
+    | string
     | undefined;
-  if (!reason) return null;
+  if (!reasonsStr) return null;
 
-  // Skip track-wide events — the reference area band already labels these
-  if (reason === "safety_car" || reason === "vsc" || reason === "red_flag")
-    return null;
-
-  const config = OUTLIER_LABELS[reason];
+  const reasons = reasonsStr.split(",") as OutlierReason[];
   return (
-    <text
-      x={cx}
-      y={(cy ?? 0) - 4}
-      textAnchor="middle"
-      fill={config.color}
-      fontSize={7}
-      fontWeight="bold"
-      opacity={0.8}
-    >
-      {config.label}
-    </text>
+    <g>
+      {reasons.map((reason, i) => {
+        const config = OUTLIER_LABELS[reason];
+        if (!config) return null;
+        return (
+          <text
+            key={reason}
+            x={cx}
+            y={(cy ?? 0) - 4 - i * 9}
+            textAnchor="middle"
+            fill={config.color}
+            fontSize={7}
+            fontWeight="bold"
+            opacity={0.8}
+          >
+            {config.label}
+          </text>
+        );
+      })}
+    </g>
   );
 };
 
@@ -278,18 +298,18 @@ function computeVisualEventRanges(
   return ranges;
 }
 
-// Custom SVG pill label rendered at the bottom of the chart between event lines
-interface EventPillLabelProps {
-  viewBox?: { x: number; y: number; height: number };
+// Custom SVG pill label rendered at the bottom of a ReferenceArea
+interface EventAreaLabelProps {
+  viewBox?: { x: number; y: number; width: number; height: number };
   reasons: { label: string; color: string }[];
 }
 
-const EventPillLabel = ({ viewBox, reasons }: EventPillLabelProps) => {
+const EventAreaLabel = ({ viewBox, reasons }: EventAreaLabelProps) => {
   if (!viewBox || reasons.length === 0) return null;
-  const { x, y, height } = viewBox;
+  const { x, y, width, height } = viewBox;
+  const centerX = x + width / 2;
   const bottomY = y + height - 6;
 
-  // Stack pills vertically if multiple reasons
   return (
     <g>
       {reasons.map((r, i) => {
@@ -299,7 +319,7 @@ const EventPillLabel = ({ viewBox, reasons }: EventPillLabelProps) => {
         return (
           <g key={r.label}>
             <rect
-              x={x - pillW / 2}
+              x={centerX - pillW / 2}
               y={pillY - pillH + 2}
               width={pillW}
               height={pillH}
@@ -310,7 +330,7 @@ const EventPillLabel = ({ viewBox, reasons }: EventPillLabelProps) => {
               strokeWidth={0.75}
             />
             <text
-              x={x}
+              x={centerX}
               y={pillY - 2}
               textAnchor="middle"
               fill={r.color}
@@ -691,27 +711,30 @@ function detectOutlierLaps(
     }
   }
 
-  // Pass 2: lap-over-lap delta check — any lap >3s slower than the previous
-  // clean lap gets omitted. This catches the transitional laps around events.
-  let lastCleanTime: number | null = null;
+  // Pass 2: 107% rule — any lap time > 107% of the driver's personal best is omitted.
+  let personalBest = Infinity;
   for (const lap of sorted) {
-    if (lap.lap_time_seconds == null) continue;
-    if (outliers.has(lap.lap_number)) {
-      // Already flagged — don't update lastCleanTime
-      continue;
-    }
-
+    if (lap.lap_time_seconds == null || outliers.has(lap.lap_number)) continue;
     let normTime = lap.lap_time_seconds;
     if (lap.pit_duration_seconds != null && lap.pit_duration_seconds > 0) {
       normTime -= lap.pit_duration_seconds;
     }
+    if (normTime < personalBest) personalBest = normTime;
+  }
 
-    if (lastCleanTime != null && normTime - lastCleanTime > 2) {
-      // This lap is >3s slower than previous clean lap — find a reason
-      const bandReason = bandReasonForLap(lap.lap_number, statusBands);
-      outliers.set(lap.lap_number, bandReason ?? "slow");
-    } else {
-      lastCleanTime = normTime;
+  if (personalBest !== Infinity) {
+    const threshold = personalBest * 1.07;
+    for (const lap of sorted) {
+      if (lap.lap_time_seconds == null || outliers.has(lap.lap_number))
+        continue;
+      let normTime = lap.lap_time_seconds;
+      if (lap.pit_duration_seconds != null && lap.pit_duration_seconds > 0) {
+        normTime -= lap.pit_duration_seconds;
+      }
+      if (normTime > threshold) {
+        const bandReason = bandReasonForLap(lap.lap_number, statusBands);
+        outliers.set(lap.lap_number, bandReason ?? "slow");
+      }
     }
   }
 
@@ -722,10 +745,14 @@ export default function LapTimeByLapGraph({
   season,
   round,
   isSprint = false,
+  practiceSession,
+  initialViewMode = "lapTime",
+  initialDrivers,
+  embedded = false,
 }: LapTimeByLapGraphProps) {
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("lapTime");
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -746,11 +773,16 @@ export default function LapTimeByLapGraph({
   }, []);
 
   const { data, isLoading: loading } = useQuery<LapTimesResponse | null>({
-    queryKey: ["lap-times", season, round, isSprint],
+    queryKey: ["lap-times", season, round, isSprint, practiceSession],
     queryFn: async () => {
-      const endpoint = isSprint
-        ? `/api/results/${season}/${round}/sprint/lap-times`
-        : `/api/results/${season}/${round}/lap-times`;
+      let endpoint: string;
+      if (practiceSession) {
+        endpoint = `/api/results/${season}/${round}/practice/${practiceSession}/lap-times`;
+      } else if (isSprint) {
+        endpoint = `/api/results/${season}/${round}/sprint/lap-times`;
+      } else {
+        endpoint = `/api/results/${season}/${round}/lap-times`;
+      }
       const response = await fetch(apiUrl(endpoint), {
         cache: "no-store",
         headers: apiHeaders(),
@@ -767,9 +799,22 @@ export default function LapTimeByLapGraph({
       const sorted = [...data.drivers].sort(
         (a, b) => (a.final_position || 999) - (b.final_position || 999),
       );
-      setSelectedDrivers(sorted.slice(0, 3).map((d) => driverKey(d)));
+      const requested = initialDrivers?.map((driver) => driver.toUpperCase());
+      const matchingDrivers =
+        requested && requested.length > 0
+          ? sorted
+              .filter((driver) =>
+                requested.includes(driverKey(driver).toUpperCase()),
+              )
+              .map((driver) => driverKey(driver))
+          : [];
+      setSelectedDrivers(
+        matchingDrivers.length > 0
+          ? matchingDrivers
+          : sorted.slice(0, 3).map((d) => driverKey(d)),
+      );
     }
-  }, [data]);
+  }, [data, initialDrivers]);
 
   // Compute track status bands
   const statusBands = useMemo(() => {
@@ -965,10 +1010,22 @@ export default function LapTimeByLapGraph({
 
     // Build per-driver bridge segments: for each contiguous run of outlier laps,
     // linearly interpolate from the last clean value to the next clean value.
-    // This creates the dotted connector line data.
-    const bridgeValues = new Map<string, Map<number, number>>();
-    // Track which lap gets the label for each driver (middle of each run)
-    const labelLaps = new Map<string, Set<number>>();
+    // Bridge lines are colored per the dominant reason for each run.
+    const REASON_PRIORITY: OutlierReason[] = [
+      "red_flag",
+      "safety_car",
+      "vsc",
+      "pit",
+      "lap1",
+      "slow",
+    ];
+    // driver key → reason → (lap → bridge value)
+    const bridgeValuesByReason = new Map<
+      string,
+      Map<string, Map<number, number>>
+    >();
+    // driver key → label lap → per-driver reasons to show (excludes track-wide)
+    const labelReasonsMap = new Map<string, Map<number, OutlierReason[]>>();
 
     for (const driver of filteredDrivers) {
       const key = driverKey(driver);
@@ -979,8 +1036,8 @@ export default function LapTimeByLapGraph({
         .filter((l) => l.lap_time_seconds != null)
         .sort((a, b) => a.lap_number - b.lap_number);
 
-      const bridge = new Map<number, number>();
-      const labels = new Set<number>();
+      const reasonBridges = new Map<string, Map<number, number>>();
+      const labelReasons = new Map<number, OutlierReason[]>();
 
       // Walk through laps and find contiguous outlier runs
       let i = 0;
@@ -997,9 +1054,31 @@ export default function LapTimeByLapGraph({
         }
         const runEnd = i - 1; // inclusive
 
-        // Only label the middle lap of the run
+        // Collect all reasons in this run
+        const runReasonSet = new Set<OutlierReason>();
+        for (let j = runStart; j <= runEnd; j++) {
+          const r = driverOutliers.get(sorted[j].lap_number);
+          if (r) runReasonSet.add(r);
+        }
+
+        // Dominant reason drives bridge color
+        const dominantReason =
+          REASON_PRIORITY.find((r) => runReasonSet.has(r)) ?? "slow";
+
+        // Per-driver label reasons (skip track-wide events — shown by area bands)
+        const perDriverReasons = REASON_PRIORITY.filter(
+          (r) =>
+            runReasonSet.has(r) &&
+            r !== "safety_car" &&
+            r !== "vsc" &&
+            r !== "red_flag",
+        );
+
+        // Middle lap carries the label
         const midIdx = runStart + Math.floor((runEnd - runStart) / 2);
-        labels.add(sorted[midIdx].lap_number);
+        if (perDriverReasons.length > 0) {
+          labelReasons.set(sorted[midIdx].lap_number, perDriverReasons);
+        }
 
         // Get pre and post clean values
         const preVal =
@@ -1012,6 +1091,12 @@ export default function LapTimeByLapGraph({
         const startVal = preVal ?? postVal;
         const endVal = postVal ?? preVal;
         if (startVal == null || endVal == null) continue;
+
+        let bridge = reasonBridges.get(dominantReason);
+        if (!bridge) {
+          bridge = new Map<number, number>();
+          reasonBridges.set(dominantReason, bridge);
+        }
 
         // Include the anchor laps (last clean before, first clean after)
         if (preVal != null && runStart > 0) {
@@ -1031,11 +1116,11 @@ export default function LapTimeByLapGraph({
         }
       }
 
-      if (bridge.size > 0) {
-        bridgeValues.set(key, bridge);
+      if (reasonBridges.size > 0) {
+        bridgeValuesByReason.set(key, reasonBridges);
       }
-      if (labels.size > 0) {
-        labelLaps.set(key, labels);
+      if (labelReasons.size > 0) {
+        labelReasonsMap.set(key, labelReasons);
       }
     }
 
@@ -1061,21 +1146,30 @@ export default function LapTimeByLapGraph({
           // Omit from main line — null gap breaks it via connectNulls={false}
           dataPoint[`_outlier_reason_${key}`] = reason as unknown as number;
 
-          // Only place reason label on the middle lap of each contiguous run
-          if (labelLaps.get(key)?.has(lap.lap_number)) {
+          // Place per-driver label on the middle lap of each contiguous run
+          const labelReasonsList = labelReasonsMap
+            .get(key)
+            ?.get(lap.lap_number);
+          if (labelReasonsList && labelReasonsList.length > 0) {
             const markerY = getMarkerY(key, lap.lap_number);
             if (markerY != null) {
               dataPoint[`_outlier_${key}`] = markerY;
+              dataPoint[`_outlier_reasons_${key}`] = labelReasonsList.join(",");
             }
           }
         } else {
           dataPoint[key] = displayTime;
         }
 
-        // Bridge (dotted connector) data
-        const bridgeVal = bridgeValues.get(key)?.get(lapNum);
-        if (bridgeVal != null) {
-          dataPoint[`_bridge_${key}`] = bridgeVal;
+        // Bridge (dotted connector) data — keyed per reason for colored rendering
+        const driverBridges = bridgeValuesByReason.get(key);
+        if (driverBridges) {
+          for (const [bReason, lapMap] of driverBridges) {
+            const bridgeVal = lapMap.get(lapNum);
+            if (bridgeVal != null) {
+              dataPoint[`_bridge_${bReason}_${key}`] = bridgeVal;
+            }
+          }
         }
       }
 
@@ -1294,7 +1388,7 @@ export default function LapTimeByLapGraph({
   };
 
   return (
-    <div>
+    <div className={embedded ? "min-h-[420px]" : ""}>
       <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
         <h3 className="text-sm font-bold text-text-secondary font-mono">
           {data.event_name.replace("Grand Prix", "GP")} - {viewLabels[viewMode]}
@@ -1404,9 +1498,8 @@ export default function LapTimeByLapGraph({
                     ))}
                 </defs>
 
-                {/* Track event boundary lines + pill labels */}
-                {visualEventRanges.flatMap((range) => {
-                  // Use the color of the first (or most severe) reason
+                {/* Track event bands — colored area + boundary lines + pill labels */}
+                {visualEventRanges.flatMap((range, rangeIndex) => {
                   const primaryReason = range.reasons.includes("red_flag")
                     ? "red_flag"
                     : range.reasons.includes("safety_car")
@@ -1415,37 +1508,37 @@ export default function LapTimeByLapGraph({
                   const primaryStyle = TRACK_EVENT_COLORS[primaryReason];
                   if (!primaryStyle) return [];
 
-                  const midLap = (range.startLap + range.endLap) / 2;
                   const pills = range.reasons
                     .map((r) => TRACK_EVENT_COLORS[r])
                     .filter(Boolean);
+                  const keyBase = `${primaryReason}-${range.startLap}-${range.endLap}-${rangeIndex}`;
 
                   return [
-                    // Start boundary line
+                    <ReferenceArea
+                      key={`evt-area-${keyBase}`}
+                      x1={range.startLap}
+                      x2={range.endLap}
+                      fill={primaryStyle.color}
+                      fillOpacity={0.07}
+                      stroke="none"
+                      label={<EventAreaLabel reasons={pills} />}
+                    />,
                     <ReferenceLine
-                      key={`evt-s-${range.startLap}`}
+                      key={`evt-s-${keyBase}`}
                       x={range.startLap}
                       stroke={primaryStyle.color}
                       strokeDasharray="4 3"
-                      strokeOpacity={0.5}
+                      strokeOpacity={0.45}
                     />,
-                    // End boundary line (skip if same lap)
                     range.startLap !== range.endLap ? (
                       <ReferenceLine
-                        key={`evt-e-${range.endLap}`}
+                        key={`evt-e-${keyBase}`}
                         x={range.endLap}
                         stroke={primaryStyle.color}
                         strokeDasharray="4 3"
-                        strokeOpacity={0.5}
+                        strokeOpacity={0.45}
                       />
                     ) : null,
-                    // Invisible center line that carries the pill label
-                    <ReferenceLine
-                      key={`evt-pill-${range.startLap}-${range.endLap}`}
-                      x={midLap}
-                      stroke="none"
-                      label={<EventPillLabel reasons={pills} />}
-                    />,
                   ];
                 })}
 
@@ -1496,29 +1589,31 @@ export default function LapTimeByLapGraph({
                 />
                 {renderLines()}
 
-                {/* Dotted bridge lines across outlier gaps */}
+                {/* Dotted bridge lines across outlier gaps — colored per reason */}
                 {viewMode === "lapTime" &&
                   drivers
                     .filter((driver) =>
                       selectedDrivers.includes(driverKey(driver)),
                     )
-                    .map((driver) => (
-                      <Line
-                        key={`bridge-${driverKey(driver)}`}
-                        type="linear"
-                        dataKey={`_bridge_${driverKey(driver)}`}
-                        stroke={CHART_COLORS.textMuted}
-                        strokeWidth={1}
-                        strokeDasharray="3 3"
-                        strokeOpacity={0.5}
-                        dot={false}
-                        activeDot={false}
-                        isAnimationActive={false}
-                        legendType="none"
-                        tooltipType="none"
-                        connectNulls={false}
-                      />
-                    ))}
+                    .flatMap((driver) =>
+                      Object.keys(BRIDGE_LINE_COLORS).map((reason) => (
+                        <Line
+                          key={`bridge-${reason}-${driverKey(driver)}`}
+                          type="linear"
+                          dataKey={`_bridge_${reason}_${driverKey(driver)}`}
+                          stroke={BRIDGE_LINE_COLORS[reason]}
+                          strokeWidth={1.5}
+                          strokeDasharray="3 3"
+                          strokeOpacity={0.65}
+                          dot={false}
+                          activeDot={false}
+                          isAnimationActive={false}
+                          legendType="none"
+                          tooltipType="none"
+                          connectNulls={false}
+                        />
+                      )),
+                    )}
 
                 {/* Per-driver outlier reason labels (PIT, L1, SLOW) on the bridge */}
                 {viewMode === "lapTime" &&

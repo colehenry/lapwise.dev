@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import GoogleButton, { OrDivider } from "@/components/auth/GoogleButton";
 import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
@@ -13,6 +14,21 @@ export default function LoginPage() {
       <LoginForm />
     </Suspense>
   );
+}
+
+function oauthErrorMessage(code: string): string {
+  switch (code) {
+    case "exchange_failed":
+      return "Google sign-in didn't complete. Please try again.";
+    case "missing_profile":
+      return "Google didn't return your email. Please try again.";
+    case "email_unverified":
+      return "Your Google email isn't verified. Verify it with Google first.";
+    case "account_deactivated":
+      return "Your account is deactivated.";
+    default:
+      return "Google sign-in failed. Please try again.";
+  }
 }
 
 function LoginForm() {
@@ -26,6 +42,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   const redirect = searchParams.get("redirect") || "/";
+  const oauthError = searchParams.get("oauth_error");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -51,6 +68,15 @@ function LoginForm() {
         <p className="text-text-muted text-sm mb-8">
           Welcome back. Enter your credentials below.
         </p>
+
+        {oauthError && (
+          <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-sm px-3 py-2 mb-4">
+            {oauthErrorMessage(oauthError)}
+          </p>
+        )}
+
+        <GoogleButton next={redirect} />
+        <OrDivider />
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

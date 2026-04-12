@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import MarkdownContent from "@/components/discussions/MarkdownContent";
@@ -10,6 +11,16 @@ import { Input, Textarea } from "@/components/ui/Input";
 import MonoLabel from "@/components/ui/MonoLabel";
 import { fetchTags } from "@/lib/discussions";
 import type { DiscussionTag } from "@/lib/types";
+
+const EmbedBuilder = dynamic(
+  () => import("@/components/discussions/EmbedBuilder"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-10 rounded-sm border border-border-primary bg-bg-tertiary/60" />
+    ),
+  },
+);
 
 interface PostEditorProps {
   initial?: {
@@ -151,6 +162,14 @@ export default function PostEditor({
     setSuccess("Draft saved locally.");
   };
 
+  const appendEmbed = (snippet: string) => {
+    setBody((current) => {
+      const separator = current.trim() ? "\n\n" : "";
+      return `${current}${separator}${snippet}`;
+    });
+    setMode("write");
+  };
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -229,14 +248,17 @@ export default function PostEditor({
           </button>
         </div>
         {mode === "write" ? (
-          <Textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            maxLength={BODY_LIMIT}
-            rows={12}
-            placeholder="Share your analysis, questions, or insights..."
-            className="py-3"
-          />
+          <div className="space-y-3">
+            <Textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              maxLength={BODY_LIMIT}
+              rows={12}
+              placeholder="Share your analysis, questions, or insights..."
+              className="py-3"
+            />
+            <EmbedBuilder onInsert={appendEmbed} />
+          </div>
         ) : (
           <div className="min-h-[260px] rounded-sm border border-border-primary bg-bg-tertiary p-4">
             {body.trim() ? (

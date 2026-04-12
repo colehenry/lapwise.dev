@@ -14,6 +14,7 @@ interface BattleFeedProps {
   replayData: ReplayData;
   currentTime: number;
   currentLap: number;
+  hasDrs?: boolean;
   onSelectDriver?: (code: string | null) => void;
   onBattleEvent?: (event: BattleEvent) => void;
 }
@@ -61,7 +62,10 @@ function findNearestCorner(
 /**
  * Pre-compute all battle events from replay frame data.
  */
-function computeBattleEvents(replayData: ReplayData): BattleEvent[] {
+function computeBattleEvents(
+  replayData: ReplayData,
+  hasDrs: boolean,
+): BattleEvent[] {
   const { frames, race_control, drivers } = replayData;
   const events: BattleEvent[] = [];
   const numberToCode = buildNumberToCode(drivers);
@@ -233,6 +237,9 @@ function computeBattleEvents(replayData: ReplayData): BattleEvent[] {
     const isDrs =
       msg.category === "Drs" || msg.message.toUpperCase().includes("DRS");
 
+    // DRS was removed from F1 in 2026 — skip all DRS race control messages
+    if (!hasDrs && isDrs) continue;
+
     events.push({
       id: `rcm-${eventId++}`,
       t: msg.t,
@@ -335,14 +342,15 @@ function DriverBadge({
 export default function BattleFeed({
   replayData,
   currentTime,
+  hasDrs = true,
   onSelectDriver,
   onBattleEvent,
 }: BattleFeedProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const allEvents = useMemo(
-    () => computeBattleEvents(replayData),
-    [replayData],
+    () => computeBattleEvents(replayData, hasDrs),
+    [replayData, hasDrs],
   );
 
   // Filter to current time, then reverse so newest is first

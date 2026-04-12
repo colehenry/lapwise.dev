@@ -27,6 +27,7 @@ interface TrackCanvasProps {
   highlightedDriver?: string | null;
   scState?: number;
   drsEnabled?: boolean;
+  hasDrs?: boolean;
   showCorners?: boolean;
   onSelectDriver: (code: string | null) => void;
   onTooltipChange?: (tooltip: TrackTooltipData | null) => void;
@@ -54,6 +55,7 @@ export default function TrackCanvas({
   highlightedDriver,
   scState: _scState = 0,
   drsEnabled = false,
+  hasDrs = true,
   showCorners = true,
   onSelectDriver,
   onTooltipChange,
@@ -251,8 +253,8 @@ export default function TrackCanvas({
       ctx.stroke(trackPathRef.current);
     }
 
-    // Draw DRS zones
-    if (track.drs_zones?.length > 0) {
+    // Draw DRS zones (hidden for 2026+ seasons — DRS removed from F1)
+    if (hasDrs && track.drs_zones?.length > 0) {
       const zoneColor = drsEnabled
         ? DRS_ZONE_COLOR_ACTIVE
         : DRS_ZONE_COLOR_INACTIVE;
@@ -394,6 +396,7 @@ export default function TrackCanvas({
     selectedDriver,
     highlightedDriver,
     drsEnabled,
+    hasDrs,
     showCorners,
     getTransform,
   ]);
@@ -687,6 +690,7 @@ export function DriverTooltip({
   driver,
   data,
   containerWidth,
+  hasDrs = true,
 }: {
   x: number;
   y: number;
@@ -694,6 +698,7 @@ export function DriverTooltip({
   driver: ReplayDriverInfo;
   data: ReplayDriverFrame;
   containerWidth: number;
+  hasDrs?: boolean;
 }) {
   const [
     ,
@@ -750,10 +755,14 @@ export function DriverTooltip({
         <span className={brake ? "text-red-400" : "text-text-muted"}>
           {brake ? "ON" : "OFF"}
         </span>
-        <span>DRS</span>
-        <span className={drs ? "text-green-400" : "text-text-muted"}>
-          {drs ? "OPEN" : "OFF"}
-        </span>
+        {hasDrs && (
+          <>
+            <span>DRS</span>
+            <span className={drs ? "text-green-400" : "text-text-muted"}>
+              {drs ? "OPEN" : "OFF"}
+            </span>
+          </>
+        )}
         <span>Tyre</span>
         <span className="flex items-center gap-1">
           <span

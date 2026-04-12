@@ -13,6 +13,7 @@ from .circuits import ingest_circuit
 from .sessions import ingest_session_metadata
 from .participants import ingest_driver, ingest_team
 from .results import ingest_race_results, ingest_qualifying_results
+from .practice import ingest_practice_results
 from .telemetry import ingest_lap_data, ingest_weather_data, ingest_track_status
 from .race_control import ingest_race_control_messages
 from .replay_frames import generate_replay_data
@@ -33,6 +34,7 @@ __all__ = [
     "ingest_team",
     "ingest_race_results",
     "ingest_qualifying_results",
+    "ingest_practice_results",
     "ingest_lap_data",
     "ingest_weather_data",
     "ingest_track_status",

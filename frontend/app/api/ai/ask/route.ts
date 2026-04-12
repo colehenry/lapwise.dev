@@ -15,12 +15,16 @@ import { generateText, stepCountIs, streamText } from "ai";
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAIUser } from "@/lib/ai/auth";
 import { getConversationClient } from "@/lib/ai/db";
+import type { AIRoutingDecision } from "@/lib/ai/router";
+import { routeAIRequest } from "@/lib/ai/router";
 import { isSuggestedQuestion } from "@/lib/ai/suggestions";
 import { buildSystemPrompt } from "@/lib/ai/system-prompt";
 import {
   generateChart,
+  getRaceDynamics,
   getSampleData,
   getTableSchema,
+  resolveSession,
   runSQLQuery,
 } from "@/lib/ai/tools";
 
@@ -101,6 +105,37 @@ function summarizeToolOutput(
     });
   }
 
+  if (toolName === "resolve_session") {
+    const error = typeof output.error === "string" ? output.error : null;
+    const count = typeof output.count === "number" ? output.count : null;
+    const rows = Array.isArray(output.rows) ? output.rows.slice(0, 10) : [];
+
+    return JSON.stringify({
+      type: "session_resolution",
+      error,
+      count,
+      rows,
+      note: output.note,
+    });
+  }
+
+  if (toolName === "get_race_dynamics") {
+    return JSON.stringify({
+      type: "race_dynamics",
+      sessionId: output.sessionId,
+      leaderTimeline: output.leaderTimeline,
+      lapsLed: output.lapsLed,
+      neutralizedLaps: output.neutralizedLaps,
+      positionPaths: output.positionPaths,
+      pitStops: output.pitStops,
+      raceControl: Array.isArray(output.raceControl)
+        ? output.raceControl.slice(0, 10)
+        : output.raceControl,
+      evidenceRules: output.evidenceRules,
+      error: output.error,
+    });
+  }
+
   return JSON.stringify(output);
 }
 
@@ -114,9 +149,9 @@ async function generateFollowUps(
     const result = await generateText({
       model: anthropic("claude-haiku-4-5-20251001"),
       system:
-        "You generate follow-up question suggestions for an F1 analytics chatbot. Return exactly 3 short, specific, actionable questions as a JSON array of strings. No explanation, just the array.",
-      prompt: `User asked: "${question}"\n\nAnswer summary: "${answer.slice(0, 800)}"\n\nGenerate 3 follow-up questions as a JSON array.`,
-      maxOutputTokens: 200,
+        "You generate one follow-up question suggestion for an F1 analytics chatbot. Return exactly 1 short, specific, actionable question as a JSON array with one string. No explanation, just the array.",
+      prompt: `User asked: "${question}"\n\nAnswer summary: "${answer.slice(0, 800)}"\n\nGenerate 1 follow-up question as a JSON array with one string.`,
+      maxOutputTokens: 80,
       abortSignal: timeoutController.signal,
     });
     clearTimeout(timeoutId);
@@ -125,7 +160,7 @@ async function generateFollowUps(
     if (match) {
       const parsed = JSON.parse(match[0]);
       if (Array.isArray(parsed) && parsed.every((s) => typeof s === "string")) {
-        return parsed.slice(0, 3);
+        return parsed.slice(0, 1);
       }
     }
     return [];
@@ -175,6 +210,7 @@ async function writeCachedResponse(
 
 async function buildFallbackAnswer(params: {
   question: string;
+  routing: AIRoutingDecision;
   queries: string[];
   toolSummaries: ToolSummary[];
 }): Promise<string> {
@@ -197,7 +233,13 @@ Write the final answer to the user now. Use only the retrieved data, mention if 
   const fallbackTimeoutId = setTimeout(() => fallbackController.abort(), 30000);
   const fallback = await generateText({
     model: anthropic(AI_MODEL),
-    system: buildSystemPrompt(),
+    system: buildSystemPrompt({
+      question: params.question,
+      intent: params.routing.intent,
+      requiredTools: params.routing.requiredTools,
+      routerSource: params.routing.source,
+      routerConfidence: params.routing.confidence,
+    }),
     prompt: synthesisPrompt,
     abortSignal: fallbackController.signal,
   });
@@ -479,11 +521,20 @@ export async function POST(request: NextRequest) {
 
   // 8. Run the AI agent loop
   try {
+    const routing = await routeAIRequest(question);
     const result = streamText({
       model: anthropic(AI_MODEL),
-      system: buildSystemPrompt(),
+      system: buildSystemPrompt({
+        question,
+        intent: routing.intent,
+        requiredTools: routing.requiredTools,
+        routerSource: routing.source,
+        routerConfidence: routing.confidence,
+      }),
       messages,
       tools: {
+        resolve_session: resolveSession,
+        get_race_dynamics: getRaceDynamics,
         run_sql_query: runSQLQuery,
         get_table_schema: getTableSchema,
         get_sample_data: getSampleData,
@@ -569,6 +620,22 @@ export async function POST(request: NextRequest) {
                     stepType: "sample",
                   }),
                 );
+              } else if (part.toolName === "resolve_session") {
+                controller.enqueue(
+                  encodeLine({
+                    type: "status",
+                    message: "Resolving the session...",
+                    stepType: "sql",
+                  }),
+                );
+              } else if (part.toolName === "get_race_dynamics") {
+                controller.enqueue(
+                  encodeLine({
+                    type: "status",
+                    message: "Building race dynamics evidence...",
+                    stepType: "sql",
+                  }),
+                );
               } else if (part.toolName === "generate_chart") {
                 controller.enqueue(
                   encodeLine({
@@ -631,6 +698,7 @@ export async function POST(request: NextRequest) {
 
             const fallbackAnswer = await buildFallbackAnswer({
               question,
+              routing,
               queries: sqlQueries,
               toolSummaries,
             });
@@ -674,6 +742,7 @@ export async function POST(request: NextRequest) {
               queries: sqlQueries,
               followUps,
               usage,
+              routing,
             }),
           );
         } catch (error) {

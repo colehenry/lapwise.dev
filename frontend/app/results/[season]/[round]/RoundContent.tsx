@@ -3,15 +3,23 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import CrossSessionComparison from "@/components/CrossSessionComparison";
+import FastestLapTimeline from "@/components/FastestLapTimeline";
 import JumpToRace from "@/components/JumpToRace";
-import LapTimeByLapGraph from "@/components/LapTimeByLapGraph";
 import LapTimeDistributionChart from "@/components/LapTimeDistributionChart";
+import LongRunPaceChart from "@/components/LongRunPaceChart";
 import { TrianglePattern } from "@/components/Patterns";
+import PitStopDeltaChart from "@/components/PitStopDeltaChart";
+import PracticeSectorHeatmap from "@/components/PracticeSectorHeatmap";
+import QualifyingProgressionChart from "@/components/QualifyingProgressionChart";
 import QualifyingSectorComparison from "@/components/QualifyingSectorComparison";
+import QualifyingSectorHeatmap from "@/components/QualifyingSectorHeatmap";
+import RaceTrackEvolutionChart from "@/components/RaceTrackEvolutionChart";
 import SessionDetail from "@/components/SessionDetail";
-import SpeedTrapChart from "@/components/SpeedTrapChart";
+import type { SessionSummary } from "@/components/SessionSummaryCard";
+import TrackEvolutionChart from "@/components/TrackEvolutionChart";
 import TyreDegradationChart from "@/components/TyreDegradationChart";
-import WeatherChart from "@/components/WeatherChart";
+import TyreProgrammeChart from "@/components/TyreProgrammeChart";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import type { SessionResultsResponse } from "@/lib/types";
 
@@ -20,17 +28,27 @@ type TabType =
   | "qualifying"
   | "sprint"
   | "sprint-qualifying"
-  | "strategy"
-  | "analysis";
+  | "practice";
 
 const TAB_LABELS: Record<TabType, string> = {
   race: "Race",
   qualifying: "Qualifying",
   sprint: "Sprint",
   "sprint-qualifying": "Sprint Quali",
-  strategy: "Strategy",
-  analysis: "Analysis",
+  practice: "Practice",
 };
+
+const VALID_TABS = new Set<TabType>([
+  "race",
+  "qualifying",
+  "sprint",
+  "sprint-qualifying",
+  "practice",
+]);
+
+function parseTab(tab: string | null): TabType {
+  return tab && VALID_TABS.has(tab as TabType) ? (tab as TabType) : "race";
+}
 
 async function fetchSession(
   season: string,
@@ -58,8 +76,9 @@ export default function RoundContent() {
   const roundNum = Number.parseInt(round, 10);
 
   // Parse initial tab from URL
-  const urlTab = searchParams.get("tab") as TabType | null;
-  const [activeTab, setActiveTab] = useState<TabType>(urlTab || "race");
+  const rawUrlTab = searchParams.get("tab");
+  const urlTab = parseTab(rawUrlTab);
+  const [activeTab, setActiveTab] = useState<TabType>(urlTab);
 
   // Scroll to top on page load
   useEffect(() => {
@@ -68,10 +87,15 @@ export default function RoundContent() {
 
   // Sync tab from URL changes (back/forward nav)
   useEffect(() => {
-    if (urlTab) {
-      setActiveTab(urlTab);
-    }
+    setActiveTab(urlTab);
   }, [urlTab]);
+
+  // Collapse legacy/deleted tab URLs like ?tab=strategy back to the race tab.
+  useEffect(() => {
+    if (rawUrlTab && !VALID_TABS.has(rawUrlTab as TabType)) {
+      router.replace(`/results/${season}/${round}`, { scroll: false });
+    }
+  }, [rawUrlTab, router, season, round]);
 
   const enabled = !!season && !!round;
 
@@ -99,6 +123,39 @@ export default function RoundContent() {
     enabled,
   });
 
+  const { data: fp1Data } = useQuery({
+    queryKey: ["round-fp1", season, round],
+    queryFn: () => fetchSession(season, round, "practice/1"),
+    enabled,
+  });
+
+  const { data: fp2Data } = useQuery({
+    queryKey: ["round-fp2", season, round],
+    queryFn: () => fetchSession(season, round, "practice/2"),
+    enabled,
+  });
+
+  const { data: fp3Data } = useQuery({
+    queryKey: ["round-fp3", season, round],
+    queryFn: () => fetchSession(season, round, "practice/3"),
+    enabled,
+  });
+
+  const { data: summariesData } = useQuery<{
+    summaries: SessionSummary[];
+  } | null>({
+    queryKey: ["round-summaries", season, round],
+    queryFn: async () => {
+      const res = await fetch(
+        apiUrl(`/api/results/${season}/${round}/summaries`),
+        { cache: "no-store", headers: apiHeaders() },
+      );
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled,
+  });
+
   const { data: availableYears = [] } = useQuery<number[]>({
     queryKey: ["seasons"],
     queryFn: fetchSeasons,
@@ -107,6 +164,19 @@ export default function RoundContent() {
 
   const loading = raceLoading;
   const hasSprint = !!sprintData;
+  const hasPractice = !!fp1Data || !!fp2Data || !!fp3Data;
+
+  // Practice sub-tab: default to latest available (FP3 > FP2 > FP1)
+  const [practiceSub, setPracticeSub] = useState<1 | 2 | 3>(
+    fp3Data ? 3 : fp2Data ? 2 : 1,
+  );
+
+  // Update practice sub default when data loads
+  useEffect(() => {
+    if (fp3Data) setPracticeSub(3);
+    else if (fp2Data) setPracticeSub(2);
+    else if (fp1Data) setPracticeSub(1);
+  }, [fp1Data, fp2Data, fp3Data]);
 
   // Update URL when tab changes
   const switchTab = (tab: TabType) => {
@@ -118,13 +188,21 @@ export default function RoundContent() {
     router.replace(url, { scroll: false });
   };
 
-  // Available tabs (sprint tabs only if sprint data exists)
+  // Available tabs (conditional on data)
   const availableTabs: TabType[] = ["race", "qualifying"];
   if (hasSprint) {
     availableTabs.push("sprint");
     if (sprintQualData) availableTabs.push("sprint-qualifying");
   }
-  availableTabs.push("strategy", "analysis");
+  if (hasPractice) availableTabs.push("practice");
+  const isActiveTabAvailable = availableTabs.includes(activeTab);
+
+  useEffect(() => {
+    if (!loading && !isActiveTabAvailable) {
+      setActiveTab("race");
+      router.replace(`/results/${season}/${round}`, { scroll: false });
+    }
+  }, [isActiveTabAvailable, loading, router, season, round]);
 
   if (loading) {
     return (
@@ -159,6 +237,10 @@ export default function RoundContent() {
         return sprintData ?? null;
       case "sprint-qualifying":
         return sprintQualData ?? null;
+      case "practice":
+        if (practiceSub === 1) return fp1Data ?? null;
+        if (practiceSub === 2) return fp2Data ?? null;
+        return fp3Data ?? null;
       default:
         return raceData ?? null;
     }
@@ -175,12 +257,29 @@ export default function RoundContent() {
     "qualifying",
     "sprint",
     "sprint-qualifying",
+    "practice",
   ].includes(activeTab);
   const isSprint = activeTab === "sprint" || activeTab === "sprint-qualifying";
   const sessionTypeForDetail =
     activeTab === "qualifying" || activeTab === "sprint-qualifying"
       ? "qualifying"
       : "race";
+
+  // Find summary for the active tab
+  const getActiveSummary = (): SessionSummary | undefined => {
+    if (!summariesData?.summaries) return undefined;
+    const tabToSessionType: Record<string, string> = {
+      race: "race",
+      qualifying: "qualifying",
+      sprint: "sprint_race",
+      "sprint-qualifying": "sprint_qualifying",
+      practice: `fp${practiceSub}`,
+    };
+    const sessionType = tabToSessionType[activeTab];
+    if (!sessionType) return undefined;
+    return summariesData.summaries.find((s) => s.session_type === sessionType);
+  };
+  const activeSummary = getActiveSummary();
 
   return (
     <main className="min-h-screen bg-bg-secondary">
@@ -228,7 +327,8 @@ export default function RoundContent() {
                     const isDisabled =
                       (tab === "qualifying" && !qualifyingData) ||
                       (tab === "sprint" && !sprintData) ||
-                      (tab === "sprint-qualifying" && !sprintQualData);
+                      (tab === "sprint-qualifying" && !sprintQualData) ||
+                      (tab === "practice" && !hasPractice);
 
                     return (
                       <button
@@ -260,19 +360,69 @@ export default function RoundContent() {
         {/* Race / Qualifying / Sprint tabs — show SessionDetail */}
         {isResultsTab && (
           <>
+            {/* Practice sub-toggle (FP1/FP2/FP3) */}
+            {activeTab === "practice" && (
+              <div className="px-6 pt-6 flex justify-center">
+                <div className="inline-flex bg-bg-primary border border-border-primary rounded-sm overflow-hidden">
+                  {([1, 2, 3] as const).map((num) => {
+                    const hasData =
+                      num === 1 ? !!fp1Data : num === 2 ? !!fp2Data : !!fp3Data;
+                    const isActive = practiceSub === num;
+                    return (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => hasData && setPracticeSub(num)}
+                        disabled={!hasData}
+                        className={`px-5 py-2 text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
+                          isActive
+                            ? "bg-purple-500/20 text-purple-300 border-b-2 border-purple-500"
+                            : !hasData
+                              ? "text-text-muted/30 cursor-not-allowed"
+                              : "text-text-muted hover:text-text-secondary hover:bg-bg-secondary"
+                        }`}
+                      >
+                        FP{num}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <SessionDetail
               data={getSessionDetailData()}
-              qualifyingData={getQualifyingDataForTab()}
+              qualifyingData={
+                activeTab === "practice" ? null : getQualifyingDataForTab()
+              }
               season={season}
               isSprint={isSprint}
-              sessionType={sessionTypeForDetail}
+              sessionType={
+                activeTab === "practice" ? "practice" : sessionTypeForDetail
+              }
               onSessionTypeChange={undefined}
               onBack={() => router.push(`/results/${season}`)}
               hideHeader={true}
+              summary={activeSummary}
             />
             {(activeTab === "qualifying" ||
               activeTab === "sprint-qualifying") && (
-              <div className="p-6">
+              <div className="p-6 space-y-6">
+                {/* Q1/Q2/Q3 Progression */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="quali-prog-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      Q1 → Q2 → Q3 Progression
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <QualifyingProgressionChart
+                      qualifyingData={getSessionDetailData()}
+                    />
+                  </div>
+                </div>
+
+                {/* Sector Comparison (existing 2-driver) */}
                 <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
                   <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
                     <TrianglePattern id="qualifying-tab-sector-triangles" />
@@ -287,10 +437,27 @@ export default function RoundContent() {
                     />
                   </div>
                 </div>
+
+                {/* Sector Heatmap (all drivers) */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="quali-heat-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      Sector Heatmap — All Drivers
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <QualifyingSectorHeatmap
+                      season={seasonNum}
+                      round={roundNum}
+                    />
+                  </div>
+                </div>
               </div>
             )}
             {activeTab === "race" && (
-              <div className="p-6">
+              <div className="p-6 space-y-6">
+                {/* Lap Time Distribution */}
                 <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
                   <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
                     <TrianglePattern id="lap-dist-triangles" />
@@ -305,87 +472,155 @@ export default function RoundContent() {
                     />
                   </div>
                 </div>
+
+                {/* Fastest Lap Timeline */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="fastest-lap-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      Fastest Lap Timeline
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <FastestLapTimeline season={seasonNum} round={roundNum} />
+                  </div>
+                </div>
+
+                {/* Pit Stop Delta */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="pit-stop-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      Pit Stop Duration
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <PitStopDeltaChart season={seasonNum} round={roundNum} />
+                  </div>
+                </div>
+
+                {/* Race Pace Evolution */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="race-track-evo-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      Race Pace Evolution
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <RaceTrackEvolutionChart
+                      season={seasonNum}
+                      round={roundNum}
+                    />
+                  </div>
+                </div>
+
+                {/* Tyre Degradation */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="tyre-deg-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      Tyre Degradation
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <TyreDegradationChart season={seasonNum} round={roundNum} />
+                  </div>
+                </div>
+              </div>
+            )}
+            {activeTab === "practice" && (
+              <div className="p-6 space-y-6">
+                {/* Long Run Pace */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="long-run-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      FP{practiceSub} Long Run Pace
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <LongRunPaceChart
+                      season={seasonNum}
+                      round={roundNum}
+                      practiceSession={practiceSub}
+                    />
+                  </div>
+                </div>
+
+                {/* Track Evolution */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="track-evo-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      FP{practiceSub} Track Evolution
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <TrackEvolutionChart
+                      season={seasonNum}
+                      round={roundNum}
+                      practiceSession={practiceSub}
+                    />
+                  </div>
+                </div>
+
+                {/* Sector Heatmap */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="sector-heat-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      FP{practiceSub} Sector Analysis
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <PracticeSectorHeatmap
+                      season={seasonNum}
+                      round={roundNum}
+                      practiceSession={practiceSub}
+                    />
+                  </div>
+                </div>
+
+                {/* Tyre Programme */}
+                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                    <TrianglePattern id="tyre-prog-triangles" />
+                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                      FP{practiceSub} Tyre Programme
+                    </span>
+                  </div>
+                  <div className="p-6">
+                    <TyreProgrammeChart
+                      season={seasonNum}
+                      round={roundNum}
+                      practiceSession={practiceSub}
+                    />
+                  </div>
+                </div>
+
+                {/* Cross-Session Comparison (only when multiple FP sessions exist) */}
+                {(fp1Data || fp2Data || fp3Data) &&
+                  [fp1Data, fp2Data, fp3Data].filter(Boolean).length >= 2 && (
+                    <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+                      <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+                        <TrianglePattern id="cross-session-triangles" />
+                        <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                          FP1 / FP2 / FP3 Session Comparison
+                        </span>
+                      </div>
+                      <div className="p-6">
+                        <CrossSessionComparison
+                          fp1Data={fp1Data}
+                          fp2Data={fp2Data}
+                          fp3Data={fp3Data}
+                        />
+                      </div>
+                    </div>
+                  )}
               </div>
             )}
           </>
-        )}
-
-        {/* Strategy Tab */}
-        {activeTab === "strategy" && (
-          <div className="p-6 space-y-6">
-            {/* Tyre Degradation */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                <TrianglePattern id="tyre-deg-triangles" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Tyre Degradation
-                </span>
-              </div>
-              <div className="p-6">
-                <TyreDegradationChart season={seasonNum} round={roundNum} />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Analysis Tab */}
-        {activeTab === "analysis" && (
-          <div className="p-6 space-y-6">
-            {/* Position Battle */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                <TrianglePattern id="analysis-lap-triangles" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Lap Analysis
-                </span>
-              </div>
-              <div className="p-6">
-                <LapTimeByLapGraph season={seasonNum} round={roundNum} />
-              </div>
-            </div>
-
-            {/* Qualifying Sector Comparison */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                <TrianglePattern id="qualifying-sector-triangles" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Qualifying Sectors
-                </span>
-              </div>
-              <div className="p-6">
-                <QualifyingSectorComparison
-                  season={seasonNum}
-                  round={roundNum}
-                />
-              </div>
-            </div>
-
-            {/* Speed Traps */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                <TrianglePattern id="speed-trap-triangles" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Speed Traps
-                </span>
-              </div>
-              <div className="p-6">
-                <SpeedTrapChart season={seasonNum} round={roundNum} />
-              </div>
-            </div>
-
-            {/* Weather */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                <TrianglePattern id="weather-triangles" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Weather Conditions
-                </span>
-              </div>
-              <div className="p-6">
-                <WeatherChart season={seasonNum} round={roundNum} />
-              </div>
-            </div>
-          </div>
         )}
       </div>
     </main>

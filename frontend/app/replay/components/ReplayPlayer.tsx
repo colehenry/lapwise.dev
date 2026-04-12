@@ -87,10 +87,9 @@ export default function ReplayPlayer({
   const frameIndexRef = useRef<number>(0);
   const playbackSpeedRef = useRef<number>(playbackSpeed);
 
-  // Keep refs in sync with state
-  useEffect(() => {
-    frameIndexRef.current = frameIndex;
-  }, [frameIndex]);
+  // Keep playbackSpeed ref in sync with state
+  // (frameIndexRef is maintained synchronously inside animate + handleSeek
+  // to avoid stale-ref races under concurrent rendering)
   useEffect(() => {
     playbackSpeedRef.current = playbackSpeed;
   }, [playbackSpeed]);
@@ -133,9 +132,11 @@ export default function ReplayPlayer({
 
     if (newIndex >= data.metadata.total_frames) {
       // Reached end
+      const endIndex = data.metadata.total_frames - 1;
       setIsPlaying(false);
-      setFrameIndex(data.metadata.total_frames - 1);
-      fractionalFrameRef.current = data.metadata.total_frames - 1;
+      frameIndexRef.current = endIndex;
+      setFrameIndex(endIndex);
+      fractionalFrameRef.current = endIndex;
       return;
     }
 
@@ -146,6 +147,9 @@ export default function ReplayPlayer({
         currentWeatherRef.current = frame.w;
         setCurrentWeather(frame.w);
       }
+      // Update ref synchronously so subsequent RAFs see the new value
+      // even before React commits the state update.
+      frameIndexRef.current = newIndex;
       setFrameIndex(newIndex);
     }
 
@@ -166,6 +170,7 @@ export default function ReplayPlayer({
 
   const handleSeek = useCallback((newIndex: number) => {
     fractionalFrameRef.current = newIndex;
+    frameIndexRef.current = newIndex;
     setFrameIndex(newIndex);
     // Scan backwards for most recent weather
     const data = dataRef.current;
@@ -289,9 +294,13 @@ export default function ReplayPlayer({
     return () => window.removeEventListener("keydown", handleKey);
   }, [frameIndex, playbackSpeed, handleSeek, lapBoundaries]);
 
+  // DRS was removed from F1 starting in the 2026 season
+  const hasDrs = season < 2026;
+
   // Derive DRS enabled state from race control messages
   const raceControl = replayData?.race_control;
   const drsEnabled = useMemo(() => {
+    if (!hasDrs) return false;
     if (!raceControl?.length) return false;
     let enabled = false;
     for (const msg of raceControl) {
@@ -306,7 +315,7 @@ export default function ReplayPlayer({
       }
     }
     return enabled;
-  }, [raceControl, currentTime]);
+  }, [raceControl, currentTime, hasDrs]);
 
   if (isLoading) {
     return (
@@ -424,6 +433,7 @@ export default function ReplayPlayer({
                     highlightedDriver={highlightedDriver}
                     scState={currentFrame?.sc ?? 0}
                     drsEnabled={drsEnabled}
+                    hasDrs={hasDrs}
                     showCorners={showCorners}
                     onSelectDriver={setSelectedDriver}
                     onTooltipChange={setTrackTooltip}
@@ -450,6 +460,7 @@ export default function ReplayPlayer({
                         replayData={replayData}
                         currentTime={currentTime}
                         currentLap={currentFrame?.lap ?? 0}
+                        hasDrs={hasDrs}
                         onSelectDriver={setSelectedDriver}
                         onBattleEvent={handleBattleEvent}
                       />
@@ -489,6 +500,7 @@ export default function ReplayPlayer({
                 driver={trackTooltip.driver}
                 data={trackTooltip.data}
                 containerWidth={trackCardRef.current?.offsetWidth ?? 800}
+                hasDrs={hasDrs}
               />
             )}
           </div>
@@ -528,6 +540,7 @@ export default function ReplayPlayer({
             selectedDriver={selectedDriver}
             compareDriver={compareDriver}
             frameIndex={frameIndex}
+            hasDrs={hasDrs}
             onClearCompare={() => setCompareDriver(null)}
           />
         )}

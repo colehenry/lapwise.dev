@@ -100,7 +100,7 @@ def safe_bool(val):
 
 def timedelta_to_seconds(td):
     """Convert pandas Timedelta to seconds (float)"""
-    if td is None:
+    if td is None or pd.isna(td):
         return None
     try:
         return td.total_seconds()
@@ -130,23 +130,26 @@ def datetime_or_timedelta_to_seconds(value, session_start=None):
         return None
 
 
-def load_session_with_retry(year, round_num, session_name, max_retries=3):
+def load_session_with_retry(
+    year, round_num, session_name, max_retries=3, practice=False
+):
     """
     Load a FastF1 session with retry logic and exponential backoff.
 
     Note: For pre-2018 seasons, laps, weather, and messages data are not available.
     The function automatically adjusts what data to load based on the year.
+
+    Args:
+        practice: If True, only load laps (skip weather/messages for speed).
     """
     for attempt in range(max_retries):
         try:
             fastf1_sess = fastf1.get_session(year, round_num, session_name)
 
-            # Load flags by era to match Jolpica/Live Timing data availability:
-            # 2018+:      Full data from F1 Live Timing (laps, weather, messages)
-            # 1996-2017:  Basic laps + weather from Jolpica, no messages
-            # 1951-1995:  Weather only from Jolpica
-            # pre-1951:   Basic session data only
-            if year >= 2018:
+            if practice:
+                # Practice only needs laps + results (much faster)
+                fastf1_sess.load(laps=True, weather=False, messages=False)
+            elif year >= 2018:
                 fastf1_sess.load(laps=True, weather=True, messages=True)
             elif year >= 1996:
                 print(f"    ℹ️  Loading laps + weather only (1996-2017 season)")
@@ -189,15 +192,23 @@ def session_exists(event, session_type_name):
     """
     # Sprint sessions only exist at certain events
     if session_type_name in ["sprint_race", "sprint_qualifying"]:
-        # Check if the event format indicates a sprint weekend
-        # FastF1 uses 'sprint_qualifying' (or 'sprint_shootout' for 2023)
-        # as the EventFormat for sprint weekends
         try:
             event_format = event.get("EventFormat", "")
             return event_format in ("sprint_qualifying", "sprint_shootout", "sprint")
         except Exception:
-            # If we can't determine, assume it might exist and let FastF1 tell us
             return True
 
-    # Race and qualifying exist at all events
+    # FP3 does not exist at sprint weekends (replaced by sprint qualifying)
+    if session_type_name == "fp3":
+        try:
+            event_format = event.get("EventFormat", "")
+            return event_format not in (
+                "sprint_qualifying",
+                "sprint_shootout",
+                "sprint",
+            )
+        except Exception:
+            return True
+
+    # FP1, FP2, race, and qualifying exist at all events
     return True

@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import ConnectedAccounts from "@/components/auth/ConnectedAccounts";
 import FavoritesPicker from "@/components/favorites/FavoritesPicker";
 import Button from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
-import { apiUrl } from "@/lib/api";
+import { apiUrl, extractErrorMessage } from "@/lib/api";
 import { fetchWithAuth } from "@/lib/auth";
 
 export default function SettingsPage() {
@@ -108,18 +109,21 @@ export default function SettingsPage() {
       const res = await fetchWithAuth(apiUrl("/auth/change-password"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          old_password: oldPassword,
-          new_password: newPassword,
-        }),
+        body: JSON.stringify(
+          user?.has_password
+            ? { old_password: oldPassword, new_password: newPassword }
+            : { new_password: newPassword },
+        ),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Failed");
+        throw new Error(
+          await extractErrorMessage(res, "Failed to change password"),
+        );
       }
-      setPasswordMsg("Password changed");
+      setPasswordMsg(user?.has_password ? "Password changed" : "Password set");
       setOldPassword("");
       setNewPassword("");
+      await refreshUser();
     } catch (err) {
       setPasswordError(
         err instanceof Error ? err.message : "Failed to change password",
@@ -140,8 +144,9 @@ export default function SettingsPage() {
         body: JSON.stringify({ password: deletePassword }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Failed to delete account");
+        throw new Error(
+          await extractErrorMessage(res, "Failed to delete account"),
+        );
       }
       await logout();
       router.push("/");
@@ -264,28 +269,39 @@ export default function SettingsPage() {
         />
       </section>
 
+      {/* Connected accounts */}
+      <ConnectedAccounts />
+
       {/* Password Section */}
       <section className="mb-10">
         <h2 className="text-lg font-semibold text-text-primary mb-4">
-          Change password
+          {user.has_password ? "Change password" : "Set password"}
         </h2>
+        {!user.has_password && (
+          <p className="text-sm text-text-muted mb-4">
+            You signed up with Google. Set a password to enable email/username
+            login or to disconnect Google later.
+          </p>
+        )}
         <form onSubmit={handlePasswordChange} className="space-y-4">
-          <div>
-            <label
-              htmlFor="oldPassword"
-              className="block text-sm text-text-secondary mb-1.5"
-            >
-              Current password
-            </label>
-            <Input
-              id="oldPassword"
-              type="password"
-              value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-            />
-          </div>
+          {user.has_password && (
+            <div>
+              <label
+                htmlFor="oldPassword"
+                className="block text-sm text-text-secondary mb-1.5"
+              >
+                Current password
+              </label>
+              <Input
+                id="oldPassword"
+                type="password"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+            </div>
+          )}
           <div>
             <label
               htmlFor="newPassword"
@@ -315,7 +331,7 @@ export default function SettingsPage() {
             size="sm"
             isLoading={passwordLoading}
           >
-            Change password
+            {user.has_password ? "Change password" : "Set password"}
           </Button>
         </form>
       </section>

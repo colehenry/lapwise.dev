@@ -1,17 +1,23 @@
-from sqlalchemy import select, delete as sql_delete
+from sqlalchemy import select, delete as sql_delete, func
 from app.models import Session, SessionResult, Lap, Weather, TrackStatus
 
 
-def ingest_session_metadata(db, event, circuit_id, year, session_type, session_date):
+def ingest_session_metadata(
+    db, event, circuit_id, year, session_type, session_date, mode="override"
+):
     """
     Ingest session metadata.
 
-    If the session already exists its results, laps, weather, and track status
-    are deleted so the caller can re-ingest them cleanly (override mode).
+    Modes:
+        override (default): Always wipe child data and re-ingest.
+                            Used by ingest_season.py for historical re-runs.
+        append:             Skip if session already has results.
+                            Wipe only if session exists with no results (failed prior run).
+                            Used by ingest_single.py for automated pipeline.
 
     Returns: (session_id, should_process_results)
     """
-    round_num = event["RoundNumber"]
+    round_num = int(event["RoundNumber"])
     event_name = event["EventName"]
 
     existing_session = db.execute(
@@ -23,6 +29,19 @@ def ingest_session_metadata(db, event, circuit_id, year, session_type, session_d
     ).scalar_one_or_none()
 
     if existing_session:
+        if mode == "append":
+            result_count = db.execute(
+                select(func.count()).where(
+                    SessionResult.session_id == existing_session.id
+                )
+            ).scalar()
+            if result_count and result_count > 0:
+                print(
+                    f"  ✓ Already ingested: {year} R{round_num} {session_type} "
+                    f"({result_count} results) — skipping"
+                )
+                return existing_session.id, False
+
         # Wipe all child data so this run produces a clean, correct dataset
         db.execute(
             sql_delete(SessionResult).where(
