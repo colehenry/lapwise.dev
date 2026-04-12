@@ -1,16 +1,35 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+  useEffect,
+  useState,
+} from "react";
 import Markdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import UserAvatar from "@/components/discussions/UserAvatar";
 import ClutchIcon from "@/components/ui/ClutchIcon";
 import { useEntityLinkColors } from "@/hooks/useEntityLinkColors";
 import type { ChartConfig, StepType, ThinkingStep } from "@/lib/chat";
-import AIChart from "./AIChart";
-import AIDataTable from "./AIDataTable";
+
+const AIChart = dynamic(() => import("./AIChart"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[340px] rounded-sm border border-white/[0.06] bg-white/[0.02]" />
+  ),
+});
+
+const AIDataTable = dynamic(() => import("./AIDataTable"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-28 rounded-xl border border-white/[0.06] bg-white/[0.02]" />
+  ),
+});
 
 interface ChatMessageProps {
   messageRole: "user" | "assistant";
@@ -28,20 +47,48 @@ interface ChatMessageProps {
   compact?: boolean;
 }
 
-/**
- * Replace delta syntax with colored spans.
- *
- * {g:X}  — explicitly green (good/advantage), use for timing leads (-0.256s faster) and points leads
- * {r:X}  — explicitly red (bad/deficit), use for timing deficits (+0.256s slower) and points deficits
- * {+X}   — green (legacy: positive = gain/improvement)
- * {-X}   — red (legacy: negative = deficit/loss)
- */
-function processDeltas(text: string): string {
-  return text
-    .replace(/\{g:([^}]+)\}/g, '<span class="delta-positive">$1</span>')
-    .replace(/\{r:([^}]+)\}/g, '<span class="delta-negative">$1</span>')
-    .replace(/\{(\+[^}:]+)\}/g, '<span class="delta-positive">$1</span>')
-    .replace(/\{(-[^}:]+)\}/g, '<span class="delta-negative">$1</span>');
+const DELTA_TOKEN_PATTERN = /\{(?:g:([^}]+)|r:([^}]+)|(\+[^}:]+)|(-[^}:]+))\}/g;
+
+function renderDeltaText(text: string): ReactNode {
+  const parts: ReactNode[] = [];
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(DELTA_TOKEN_PATTERN)) {
+    if (match.index === undefined) continue;
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+
+    const positive = match[1] ?? match[3];
+    const negative = match[2] ?? match[4];
+    parts.push(
+      <span
+        key={`${match.index}-${match[0]}`}
+        className={positive ? "delta-positive" : "delta-negative"}
+      >
+        {positive ?? negative}
+      </span>,
+    );
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : text;
+}
+
+function renderDeltaChildren(children: ReactNode): ReactNode {
+  return Array.isArray(children)
+    ? children.map((child) => renderDeltaChildren(child))
+    : typeof children === "string"
+      ? renderDeltaText(children)
+      : isValidElement<{ children?: ReactNode }>(children)
+        ? cloneElement(children as ReactElement<{ children?: ReactNode }>, {
+            children: renderDeltaChildren(children.props.children),
+          })
+        : children;
 }
 
 function StepIcon({ stepType }: { stepType: StepType }) {
@@ -241,8 +288,6 @@ export default function ChatMessage({
   }
   const isUser = messageRole === "user";
   const avatarSize = compact ? "sm" : "md";
-  const processedContent = content ? processDeltas(content) : "";
-
   if (isLoading) {
     return (
       <div className="flex gap-3 py-3">
@@ -330,11 +375,10 @@ export default function ChatMessage({
               </div>
             )}
 
-            {processedContent && (
+            {content && (
               <div className="prose-chat text-sm text-text-secondary leading-relaxed">
                 <Markdown
                   remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw]}
                   components={{
                     a({ href, children }) {
                       if (!href) return <span>{children}</span>;
@@ -358,7 +402,7 @@ export default function ChatMessage({
                             rel="noreferrer noopener"
                             className="font-semibold transition-colors hover:text-purple-200"
                           >
-                            {children}
+                            {renderDeltaChildren(children)}
                           </a>
                         );
                       }
@@ -369,24 +413,59 @@ export default function ChatMessage({
                           className="font-semibold no-underline transition-opacity hover:opacity-80"
                           style={{ color: linkColor ?? "var(--text-primary)" }}
                         >
-                          {children}
+                          {renderDeltaChildren(children)}
                         </Link>
                       );
                     },
-                    table({ children }) {
-                      const thead = (children as React.ReactElement[])?.find?.(
-                        (c: React.ReactElement) => c?.type === "thead",
+                    p({ children }) {
+                      return <p>{renderDeltaChildren(children)}</p>;
+                    },
+                    li({ children }) {
+                      return <li>{renderDeltaChildren(children)}</li>;
+                    },
+                    strong({ children }) {
+                      return <strong>{renderDeltaChildren(children)}</strong>;
+                    },
+                    em({ children }) {
+                      return <em>{renderDeltaChildren(children)}</em>;
+                    },
+                    blockquote({ children }) {
+                      return (
+                        <blockquote>{renderDeltaChildren(children)}</blockquote>
                       );
-                      const tbody = (children as React.ReactElement[])?.find?.(
-                        (c: React.ReactElement) => c?.type === "tbody",
+                    },
+                    h1({ children }) {
+                      return <h1>{renderDeltaChildren(children)}</h1>;
+                    },
+                    h2({ children }) {
+                      return <h2>{renderDeltaChildren(children)}</h2>;
+                    },
+                    h3({ children }) {
+                      return <h3>{renderDeltaChildren(children)}</h3>;
+                    },
+                    h4({ children }) {
+                      return <h4>{renderDeltaChildren(children)}</h4>;
+                    },
+                    th({ children }) {
+                      return <th>{renderDeltaChildren(children)}</th>;
+                    },
+                    td({ children }) {
+                      return <td>{renderDeltaChildren(children)}</td>;
+                    },
+                    table({ children }) {
+                      const thead = (children as ReactElement[])?.find?.(
+                        (c: ReactElement) => c?.type === "thead",
+                      );
+                      const tbody = (children as ReactElement[])?.find?.(
+                        (c: ReactElement) => c?.type === "tbody",
                       );
 
-                      const headers: React.ReactNode[] = [];
-                      const rows: React.ReactNode[][] = [];
+                      const headers: ReactNode[] = [];
+                      const rows: ReactNode[][] = [];
 
                       try {
-                        type ElWithChildren = React.ReactElement<{
-                          children?: React.ReactNode;
+                        type ElWithChildren = ReactElement<{
+                          children?: ReactNode;
                         }>;
                         const theadRows = (thead as ElWithChildren)?.props
                           ?.children;
@@ -407,7 +486,7 @@ export default function ChatMessage({
                           ? tbodyRows
                           : [tbodyRows]) {
                           const tds = (tr as ElWithChildren)?.props?.children;
-                          const row: React.ReactNode[] = [];
+                          const row: ReactNode[] = [];
                           for (const td of Array.isArray(tds) ? tds : [tds]) {
                             row.push(
                               (td as ElWithChildren)?.props?.children ?? "",
@@ -426,7 +505,7 @@ export default function ChatMessage({
                     },
                   }}
                 >
-                  {processedContent}
+                  {content}
                 </Markdown>
               </div>
             )}

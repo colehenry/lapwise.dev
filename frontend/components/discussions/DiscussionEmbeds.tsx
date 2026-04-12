@@ -318,7 +318,13 @@ export function DiscussionEmbed({
             season={season}
             round={round as number}
             isSprint={isSprint}
-            practiceSession={practiceSession === 1 || practiceSession === 2 || practiceSession === 3 ? practiceSession : undefined}
+            practiceSession={
+              practiceSession === 1 ||
+              practiceSession === 2 ||
+              practiceSession === 3
+                ? practiceSession
+                : undefined
+            }
             initialViewMode={initialViewMode}
             initialDrivers={drivers}
             embedded
@@ -360,7 +366,11 @@ export function DiscussionEmbed({
     case "speed-trap":
       return (
         <EmbedShell title={title}>
-          <SpeedTrapChart season={season} round={round as number} isSprint={isSprint} />
+          <SpeedTrapChart
+            season={season}
+            round={round as number}
+            isSprint={isSprint}
+          />
         </EmbedShell>
       );
     case "race-pace-evolution":
@@ -460,7 +470,10 @@ export function DiscussionEmbed({
     case "cross-session-comparison":
       return (
         <EmbedShell title={title}>
-          <CrossSessionComparisonEmbed season={season} round={round as number} />
+          <CrossSessionComparisonEmbed
+            season={season}
+            round={round as number}
+          />
         </EmbedShell>
       );
     case "points-by-round":
@@ -468,8 +481,12 @@ export function DiscussionEmbed({
         <EmbedShell title={title}>
           <PointsByRoundGraph
             season={String(season)}
-            pointsType={attrs.pointsType === "qualifying" ? "qualifying" : "race"}
-            initialMode={attrs.mode === "constructors" ? "constructors" : "drivers"}
+            pointsType={
+              attrs.pointsType === "qualifying" ? "qualifying" : "race"
+            }
+            initialMode={
+              attrs.mode === "constructors" ? "constructors" : "drivers"
+            }
             initialEntities={entities}
           />
         </EmbedShell>

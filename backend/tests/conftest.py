@@ -16,6 +16,17 @@ from app.database import engine
 from app.main import app
 from app.services.auth_service import AuthService
 
+TEST_EMAILS = (
+    "testuser@lapwise.dev",
+    "unverified@lapwise.dev",
+    "admintest@lapwise.dev",
+    "new@example.com",
+    "other@example.com",
+    "weak@example.com",
+    "reserved@example.com",
+    "bad@example.com",
+)
+
 
 def _sync_db_url():
     """Convert async DB URL to sync psycopg2 URL."""
@@ -33,22 +44,16 @@ def _cleanup():
     """Remove all test-created auth data."""
     conn = _get_sync_conn()
     cur = conn.cursor()
-    fk_where = (
-        "user_id IN (SELECT id FROM users "
-        "WHERE email LIKE '%%@lapwise.dev' "
-        "OR email LIKE '%%@example.com')"
-    )
+    email_placeholders = ",".join(["%s"] * len(TEST_EMAILS))
+    fk_where = f"user_id IN (SELECT id FROM users WHERE email IN ({email_placeholders}))"
     cur.execute(
-        f"DELETE FROM login_history " f"WHERE ip_address = 'testclient' OR {fk_where}"
+        f"DELETE FROM login_history WHERE ip_address = 'testclient' OR {fk_where}",
+        TEST_EMAILS,
     )
-    cur.execute(f"DELETE FROM refresh_tokens WHERE {fk_where}")
-    cur.execute(f"DELETE FROM email_verification_tokens WHERE {fk_where}")
-    cur.execute(f"DELETE FROM password_reset_tokens WHERE {fk_where}")
-    cur.execute(
-        "DELETE FROM users "
-        "WHERE email LIKE '%%@lapwise.dev' "
-        "OR email LIKE '%%@example.com'"
-    )
+    cur.execute(f"DELETE FROM refresh_tokens WHERE {fk_where}", TEST_EMAILS)
+    cur.execute(f"DELETE FROM email_verification_tokens WHERE {fk_where}", TEST_EMAILS)
+    cur.execute(f"DELETE FROM password_reset_tokens WHERE {fk_where}", TEST_EMAILS)
+    cur.execute(f"DELETE FROM users WHERE email IN ({email_placeholders})", TEST_EMAILS)
     cur.close()
     conn.close()
 
