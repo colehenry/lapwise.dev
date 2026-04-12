@@ -11,7 +11,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS, CustomDot } from "@/components/chart-primitives";
+import {
+  CHART_COLORS,
+  CHART_TYPOGRAPHY,
+  CustomDot,
+} from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
 
 // Type definitions
@@ -138,7 +142,9 @@ const CustomTooltip = ({
 
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
-      <p className="font-bold text-white mb-2">{displayName}</p>
+      <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-2`}>
+        {displayName}
+      </p>
       {filteredPayload.map((entry: TooltipPayloadEntry) => {
         const value = entry.value;
         const isQualy = pointsType === "qualifying";
@@ -154,7 +160,9 @@ const CustomTooltip = ({
               className="w-3 h-3 rounded-full"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="font-bold text-white text-sm">
+            <span
+              className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-sm`}
+            >
               {entry.name}: {labelStr}
             </span>
           </div>
@@ -411,7 +419,7 @@ export default function PointsByRoundGraph({
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-bold text-text-secondary font-mono">
+        <h3 className={CHART_TYPOGRAPHY.titleClassName}>
           {season} {mode === "drivers" ? "Drivers'" : "Constructors'"}
           {isQualy ? " Qualifying Positions" : " Total Points"} by Round
         </h3>
@@ -503,7 +511,7 @@ export default function PointsByRoundGraph({
         {chartData.length > 0 && (
           <div className="flex items-center justify-center w-4 shrink-0">
             <div className="-rotate-90 whitespace-nowrap">
-              <span className="text-[11px] font-bold text-text-muted font-mono uppercase tracking-[0.2em]">
+              <span className={CHART_TYPOGRAPHY.axisLabelClassName}>
                 {isQualy ? "Position" : "Total Points"}
               </span>
             </div>
@@ -659,7 +667,7 @@ export default function PointsByRoundGraph({
 
                 {/* Custom Legend - Positioned in top-left */}
                 <div className="absolute top-8 left-25 bg-bg-primary/90 border border-border-primary rounded-sm p-3 backdrop-blur-sm pointer-events-none">
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1.5">
                     {entities
                       .filter((entity) => {
                         const key =
@@ -685,7 +693,7 @@ export default function PointsByRoundGraph({
                               className="w-3 h-3 rounded-full"
                               style={{ backgroundColor: color }}
                             />
-                            <span className="text-xs font-bold text-text-primary font-mono">
+                            <span className={CHART_TYPOGRAPHY.keyClassName}>
                               {name}
                             </span>
                           </div>
@@ -707,12 +715,13 @@ export default function PointsByRoundGraph({
         </div>
       </div>
 
-      {/* X-Axis Label - Centered relative to the whole component */}
+      {/* X-Axis Label - Centered under the plot area, not the y-axis label. */}
       {chartData.length > 0 && (
-        <div className="text-center mt-2">
-          <span className="text-[11px] font-bold text-text-muted font-mono uppercase tracking-[0.2em]">
-            Round
-          </span>
+        <div className="mt-2 flex flex-row">
+          <div className="w-4 shrink-0" />
+          <div className="flex-grow text-center">
+            <span className={CHART_TYPOGRAPHY.axisLabelClassName}>Round</span>
+          </div>
         </div>
       )}
     </div>

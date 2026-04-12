@@ -10,7 +10,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS } from "@/components/chart-primitives";
+import {
+  CHART_AXIS_LABEL_STYLE,
+  CHART_COLORS,
+  CHART_TYPOGRAPHY,
+} from "@/components/chart-primitives";
 import DriverMultiSelect from "@/components/charts/DriverMultiSelect";
 import {
   sortDriversByClassification,
@@ -241,14 +245,12 @@ export default function TrackEvolutionChart({
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                 style={{ backgroundColor: COMPOUND_COLORS[c] }}
               />
-              <span className="text-[10px] font-mono text-text-muted uppercase">
-                {c}
-              </span>
+              <span className={CHART_TYPOGRAPHY.keyClassName}>{c}</span>
             </div>
           ))}
           <div className="flex items-center gap-1.5">
             <div className="w-5 h-0.5 flex-shrink-0 bg-white/80 rounded-full" />
-            <span className="text-[10px] font-mono text-text-muted">Trend</span>
+            <span className={CHART_TYPOGRAPHY.keyClassName}>Trend</span>
           </div>
 
           <DriverMultiSelect
@@ -275,7 +277,7 @@ export default function TrackEvolutionChart({
               value: "Session Time",
               position: "insideBottomRight",
               offset: -4,
-              style: { fill: CHART_COLORS.textTertiary, fontSize: 10 },
+              style: CHART_AXIS_LABEL_STYLE,
             }}
           />
           <YAxis
@@ -298,10 +300,12 @@ export default function TrackEvolutionChart({
               if (!p?.y) return null;
               return (
                 <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs">
-                  <p className="text-text-muted font-mono mb-0.5">
+                  <p
+                    className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-0.5`}
+                  >
                     {formatSessionTime(p.x)}
                   </p>
-                  <p className="text-text-secondary font-mono">
+                  <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
                     {formatLapTime(p.y)}
                   </p>
                 </div>

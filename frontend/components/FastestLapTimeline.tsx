@@ -15,7 +15,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS } from "@/components/chart-primitives";
+import {
+  CHART_AXIS_LABEL_STYLE,
+  CHART_COLORS,
+  CHART_TYPOGRAPHY,
+} from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type {
   DriverLapTimes,
@@ -300,13 +304,13 @@ const TimelineTooltip = ({
 
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs">
-      <p className="font-bold text-text-primary font-mono">
+      <p className={CHART_TYPOGRAPHY.tooltipTitleClassName}>
         Lap {point.lapNumber}
       </p>
       {point.entries.map((entry) => (
         <p
           key={`${entry.driverCode}-${entry.fastestLapNumber}`}
-          className="font-mono"
+          className={CHART_TYPOGRAPHY.tooltipValueClassName}
           style={{ color: entry.teamColor }}
         >
           {entry.driverCode} · {formatTime(entry.lapTime)}
@@ -331,13 +335,13 @@ const AverageTooltip = ({
 
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs">
-      <p className="font-bold text-text-primary font-mono">
+      <p className={CHART_TYPOGRAPHY.tooltipTitleClassName}>
         Lap {point.lapNumber}
       </p>
-      <p className="font-mono text-text-secondary">
+      <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
         Avg {formatTime(point.averageLapTime)}
       </p>
-      <p className="font-mono text-text-muted">
+      <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
         {removeOutliers ? "Included" : "All"}:{" "}
         {describeSample(point.sampleSize, point.rawSampleSize)}
       </p>
@@ -589,7 +593,7 @@ export default function FastestLapTimeline({
                 position: "insideBottom",
                 offset: -8,
                 textAnchor: "middle",
-                style: { fill: CHART_COLORS.textTertiary, fontSize: 10 },
+                style: CHART_AXIS_LABEL_STYLE,
               }}
             />
             <YAxis type="number" dataKey="y" domain={[0, 1]} hide />

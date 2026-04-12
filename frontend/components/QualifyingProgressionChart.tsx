@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS } from "@/components/chart-primitives";
+import { CHART_COLORS, CHART_TYPOGRAPHY } from "@/components/chart-primitives";
 import type { SessionResultsResponse } from "@/lib/types";
 
 interface QualifyingProgressionChartProps {
@@ -146,7 +146,9 @@ export default function QualifyingProgressionChart({
                 .sort((a, b) => (a.value as number) - (b.value as number));
               return (
                 <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs space-y-0.5">
-                  <p className="text-text-muted font-mono font-bold mb-1">
+                  <p
+                    className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-1`}
+                  >
                     {label}
                   </p>
                   {sorted.map((p, index) => {
@@ -161,12 +163,14 @@ export default function QualifyingProgressionChart({
                         className="flex items-center justify-between gap-4"
                       >
                         <span
-                          className="font-mono font-bold"
+                          className={CHART_TYPOGRAPHY.tooltipValueClassName}
                           style={{ color: p.color }}
                         >
                           {String(dataKey)}
                         </span>
-                        <span className="font-mono text-text-secondary">
+                        <span
+                          className={CHART_TYPOGRAPHY.tooltipValueClassName}
+                        >
                           {formatTime(p.value as number)}
                         </span>
                       </div>

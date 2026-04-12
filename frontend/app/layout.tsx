@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Outfit } from "next/font/google";
+import { JetBrains_Mono, Outfit, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import AppShell from "@/components/AppShell";
 
@@ -12,6 +12,12 @@ const outfit = Outfit({
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains",
+  display: "swap",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
   display: "swap",
 });
 
@@ -29,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`antialiased ${outfit.variable} ${jetbrainsMono.variable}`}
+        className={`antialiased ${outfit.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable}`}
       >
         <AppShell>{children}</AppShell>
       </body>

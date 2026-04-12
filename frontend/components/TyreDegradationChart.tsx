@@ -12,7 +12,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS } from "@/components/chart-primitives";
+import {
+  CHART_AXIS_LABEL_STYLE,
+  CHART_COLORS,
+  CHART_TYPOGRAPHY,
+} from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import {
   type DriverLapTimes,
@@ -89,7 +93,7 @@ const DegradationTooltip = ({
 
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
-      <p className="font-bold text-text-primary mb-1 text-sm">
+      <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-1 text-sm`}>
         Tyre Age: {label} {label === 1 ? "lap" : "laps"}
       </p>
       {sample ? (
@@ -99,16 +103,20 @@ const DegradationTooltip = ({
               className="w-2.5 h-2.5 rounded-full"
               style={{ backgroundColor: sample.color }}
             />
-            <span className="text-text-secondary">{sample.compound}</span>
-            <span className="font-mono text-text-primary ml-auto">
+            <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
+              {sample.compound}
+            </span>
+            <span
+              className={`${CHART_TYPOGRAPHY.tooltipValueClassName} ml-auto`}
+            >
               {formatDelta(sample.pace_delta)}
             </span>
           </div>
-          <p className="text-text-muted font-mono">
+          <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
             {sample.driverCode} · stint {sample.stintLabel} · lap{" "}
             {sample.lapNumber}
           </p>
-          <p className="text-text-muted font-mono">
+          <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
             raw {formatLapTime(sample.lap_time)}
           </p>
         </div>
@@ -124,10 +132,12 @@ const DegradationTooltip = ({
                 className="w-2.5 h-2.5 rounded-full"
                 style={{ backgroundColor: entry.color }}
               />
-              <span className="text-text-secondary">
+              <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
                 {entry.name.replace(" fit", "")}
               </span>
-              <span className="font-mono text-text-primary ml-auto">
+              <span
+                className={`${CHART_TYPOGRAPHY.tooltipValueClassName} ml-auto`}
+              >
                 {formatDelta(entry.value)}
               </span>
             </div>
@@ -687,7 +697,7 @@ export default function TyreDegradationChart({
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h3 className="text-sm font-bold text-text-secondary font-mono">
+          <h3 className={CHART_TYPOGRAPHY.titleClassName}>
             {data.event_name.replace("Grand Prix", "GP")} - Tyre Degradation
           </h3>
           <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest mt-1">
@@ -844,7 +854,7 @@ export default function TyreDegradationChart({
                   value: "Tyre Age (laps)",
                   position: "insideBottom",
                   offset: -20,
-                  style: { fontWeight: "bold", fill: "white", fontSize: 12 },
+                  style: CHART_AXIS_LABEL_STYLE,
                 }}
                 tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
               />
@@ -855,7 +865,7 @@ export default function TyreDegradationChart({
                   angle: -90,
                   position: "center",
                   dx: -45,
-                  style: { fontWeight: "bold", fill: "white", fontSize: 12 },
+                  style: CHART_AXIS_LABEL_STYLE,
                 }}
                 tick={<CustomYAxisTick />}
                 domain={yDomain}
