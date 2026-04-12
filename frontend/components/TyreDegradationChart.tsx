@@ -4,21 +4,29 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CartesianGrid,
+  ComposedChart,
   Line,
-  LineChart,
   ResponsiveContainer,
+  Scatter,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 import { CHART_COLORS } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
-import { driverKey, type LapTimesResponse } from "@/lib/types";
+import {
+  type DriverLapTimes,
+  driverKey,
+  type LapData,
+  type LapTimesResponse,
+  type TrackStatusEvent,
+} from "@/lib/types";
 
 interface TyreDegradationChartProps {
   season: number;
   round: number;
   isSprint?: boolean;
+  initialDrivers?: string[];
 }
 
 const COMPOUND_COLORS: Record<string, string> = {
@@ -29,13 +37,9 @@ const COMPOUND_COLORS: Record<string, string> = {
   WET: "#3b82f6",
 };
 
-// Format seconds to MM:SS.mmm
-const formatLapTime = (seconds: number | null): string => {
-  if (seconds === null) return "-";
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toFixed(3).padStart(6, "0")}`;
-};
+const MIN_CLEAN_BASELINE_LAPS = 2;
+const MIN_COMPOUND_SAMPLES = 6;
+const FIT_WINDOW = 5;
 
 interface AxisTickProps {
   x?: number;
@@ -54,7 +58,7 @@ const CustomYAxisTick = (props: AxisTickProps) => {
         fill={CHART_COLORS.textTertiary}
         fontSize={11}
       >
-        {formatLapTime(payload?.value ?? null)}
+        {formatDelta(payload?.value ?? null)}
       </text>
     </g>
   );
@@ -65,6 +69,7 @@ interface DegradationTooltipEntry {
   value: number;
   color: string;
   name: string;
+  payload?: CleanSample | CurveDataPoint;
 }
 interface DegradationTooltipProps {
   active?: boolean;
@@ -78,41 +83,277 @@ const DegradationTooltip = ({
 }: DegradationTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
 
+  const sample = payload
+    .map((entry) => entry.payload)
+    .find((entry): entry is CleanSample => isCleanSample(entry));
+
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
       <p className="font-bold text-text-primary mb-1 text-sm">
         Tyre Age: {label} {label === 1 ? "lap" : "laps"}
       </p>
-      {payload.map((entry: DegradationTooltipEntry) => (
-        <div key={entry.dataKey} className="flex items-center gap-2 text-xs">
-          <div
-            className="w-2.5 h-2.5 rounded-full"
-            style={{ backgroundColor: entry.color }}
-          />
-          <span className="text-text-secondary">{entry.name}</span>
-          <span className="font-mono text-text-primary ml-auto">
-            {formatLapTime(entry.value)}
-          </span>
+      {sample ? (
+        <div className="space-y-1 text-xs">
+          <div className="flex items-center gap-2">
+            <div
+              className="w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: sample.color }}
+            />
+            <span className="text-text-secondary">{sample.compound}</span>
+            <span className="font-mono text-text-primary ml-auto">
+              {formatDelta(sample.pace_delta)}
+            </span>
+          </div>
+          <p className="text-text-muted font-mono">
+            {sample.driverCode} · stint {sample.stintLabel} · lap{" "}
+            {sample.lapNumber}
+          </p>
+          <p className="text-text-muted font-mono">
+            raw {formatLapTime(sample.lap_time)}
+          </p>
         </div>
-      ))}
+      ) : (
+        payload
+          .filter((entry) => entry.dataKey.endsWith("_fit"))
+          .map((entry: DegradationTooltipEntry) => (
+            <div
+              key={entry.dataKey}
+              className="flex items-center gap-2 text-xs"
+            >
+              <div
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ backgroundColor: entry.color }}
+              />
+              <span className="text-text-secondary">
+                {entry.name.replace(" fit", "")}
+              </span>
+              <span className="font-mono text-text-primary ml-auto">
+                {formatDelta(entry.value)}
+              </span>
+            </div>
+          ))
+      )}
     </div>
   );
 };
 
-type CompoundDataPoint = {
+type StatusBand = {
+  startLap: number;
+  endLap: number;
+  status: string;
+};
+
+type CleanSample = {
+  tyre_life: number;
+  lap_time: number;
+  pace_delta: number;
+  compound: string;
+  color: string;
+  driverCode: string;
+  stintLabel: string;
+  lapNumber: number;
+};
+
+type CurveDataPoint = {
   tyre_life: number;
   [key: string]: number | null | undefined;
 };
+
+type CompoundSummary = {
+  compound: string;
+  color: string;
+  sampleCount: number;
+  peakLap: number | null;
+  peakDelta: number | null;
+  falloffLap: number | null;
+  postFalloffSlope: number | null;
+  plusOneLap: number | null;
+};
+
+const formatLapTime = (seconds: number | null): string => {
+  if (seconds === null) return "-";
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toFixed(3).padStart(6, "0")}`;
+};
+
+const formatDelta = (seconds: number | null): string => {
+  if (seconds === null) return "-";
+  const sign = seconds > 0 ? "+" : "";
+  return `${sign}${seconds.toFixed(2)}s`;
+};
+
+const median = (values: number[]): number | null => {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 0) return (sorted[mid - 1] + sorted[mid]) / 2;
+  return sorted[mid];
+};
+
+const isCleanSample = (
+  payload: CleanSample | CurveDataPoint | undefined,
+): payload is CleanSample =>
+  Boolean(
+    payload &&
+      typeof (payload as CleanSample).driverCode === "string" &&
+      typeof (payload as CleanSample).color === "string" &&
+      typeof (payload as CleanSample).pace_delta === "number",
+  );
+
+function computeStatusBands(
+  trackStatusEvents: TrackStatusEvent[],
+  drivers: DriverLapTimes[],
+  totalLaps: number | null,
+): StatusBand[] {
+  if (!trackStatusEvents.length || !drivers.length) return [];
+
+  const leader = [...drivers]
+    .sort((a, b) => (a.final_position || 999) - (b.final_position || 999))
+    .find((driver) => driver.laps.length > 0);
+  if (!leader) return [];
+
+  const lapStartTimes = leader.laps
+    .filter((lap) => lap.lap_time_seconds != null)
+    .sort((a, b) => a.lap_number - b.lap_number);
+
+  const sessionTimeToLap = (sessionTime: number): number => {
+    let cumulative = 0;
+    for (const lap of lapStartTimes) {
+      cumulative += lap.lap_time_seconds ?? 0;
+      if (cumulative >= sessionTime) return lap.lap_number;
+    }
+    return lapStartTimes.length > 0
+      ? lapStartTimes[lapStartTimes.length - 1].lap_number
+      : 1;
+  };
+
+  const bands: StatusBand[] = [];
+  let currentBand: { startTime: number; status: string } | null = null;
+
+  for (const event of trackStatusEvents) {
+    const isNeutralizing = ["4", "5", "6"].includes(event.status);
+    const isClearing = ["1", "7"].includes(event.status);
+
+    if (isNeutralizing && !currentBand) {
+      currentBand = {
+        startTime: event.session_time_seconds,
+        status: event.status,
+      };
+    } else if (isClearing && currentBand) {
+      const startLap = sessionTimeToLap(currentBand.startTime);
+      const endLap = sessionTimeToLap(event.session_time_seconds);
+      if (endLap >= startLap) {
+        bands.push({
+          startLap: Math.max(1, startLap - 0.5),
+          endLap: endLap + 0.5,
+          status: currentBand.status,
+        });
+      }
+      currentBand = null;
+    } else if (isNeutralizing && currentBand) {
+      const startLap = sessionTimeToLap(currentBand.startTime);
+      const endLap = sessionTimeToLap(event.session_time_seconds);
+      if (endLap >= startLap) {
+        bands.push({
+          startLap: Math.max(1, startLap - 0.5),
+          endLap: endLap + 0.5,
+          status: currentBand.status,
+        });
+      }
+      currentBand = {
+        startTime: event.session_time_seconds,
+        status: event.status,
+      };
+    }
+  }
+
+  if (currentBand && totalLaps) {
+    const startLap = sessionTimeToLap(currentBand.startTime);
+    bands.push({
+      startLap: Math.max(1, startLap - 0.5),
+      endLap: totalLaps + 0.5,
+      status: currentBand.status,
+    });
+  }
+
+  return bands;
+}
+
+function isNeutralizedLap(lap: LapData, statusBands: StatusBand[]): boolean {
+  if (["4", "5", "6", "7"].includes(lap.track_status ?? "")) return true;
+  return statusBands.some(
+    (band) =>
+      lap.lap_number >= band.startLap - 1 && lap.lap_number <= band.endLap + 1,
+  );
+}
+
+function hasImpliedPit(lap: LapData, prevLap: LapData | null): boolean {
+  if (!prevLap) return false;
+  if (lap.compound && prevLap.compound && lap.compound !== prevLap.compound)
+    return true;
+  return (
+    lap.tyre_life != null &&
+    prevLap.tyre_life != null &&
+    lap.tyre_life < prevLap.tyre_life
+  );
+}
+
+function isStatisticalOutlier(lapTime: number, lapTimes: number[]): boolean {
+  const center = median(lapTimes);
+  if (center == null) return false;
+  const deviations = lapTimes.map((time) => Math.abs(time - center));
+  const mad = median(deviations) ?? 0;
+  const threshold = mad > 0 ? center + mad * 4 : center * 1.04;
+  return lapTime > threshold;
+}
+
+function smoothBinnedSamples(samples: CleanSample[]) {
+  const byAge = new Map<number, number[]>();
+  for (const sample of samples) {
+    const values = byAge.get(sample.tyre_life) ?? [];
+    values.push(sample.pace_delta);
+    byAge.set(sample.tyre_life, values);
+  }
+
+  const binned = Array.from(byAge.entries())
+    .map(([tyreLife, values]) => ({
+      tyreLife,
+      medianDelta: median(values) ?? 0,
+      count: values.length,
+    }))
+    .filter((point) => point.count >= 2)
+    .sort((a, b) => a.tyreLife - b.tyreLife);
+
+  return binned.map((point, index) => {
+    const start = Math.max(0, index - Math.floor(FIT_WINDOW / 2));
+    const end = Math.min(binned.length, index + Math.ceil(FIT_WINDOW / 2));
+    const window = binned.slice(start, end);
+    const weightedSum = window.reduce(
+      (sum, current) => sum + current.medianDelta * current.count,
+      0,
+    );
+    const weight = window.reduce((sum, current) => sum + current.count, 0);
+    return {
+      tyreLife: point.tyreLife,
+      fitDelta: weight > 0 ? weightedSum / weight : point.medianDelta,
+      medianDelta: point.medianDelta,
+      count: point.count,
+    };
+  });
+}
 
 export default function TyreDegradationChart({
   season,
   round,
   isSprint = false,
+  initialDrivers,
 }: TyreDegradationChartProps) {
   const [selectedCompounds, setSelectedCompounds] = useState<string[]>([]);
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
   const [showDriverDropdown, setShowDriverDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const initialDriverKey = initialDrivers?.join(",") ?? "";
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -149,9 +390,15 @@ export default function TyreDegradationChart({
       const sorted = [...data.drivers].sort(
         (a, b) => (a.final_position || 999) - (b.final_position || 999),
       );
-      setSelectedDrivers(sorted.slice(0, 3).map((d) => driverKey(d)));
+      const available = new Set(sorted.map((d) => driverKey(d)));
+      const requested = initialDriverKey.split(",").filter((key) =>
+        available.has(key),
+      );
+      setSelectedDrivers(
+        requested.length > 0 ? requested : sorted.slice(0, 3).map((d) => driverKey(d)),
+      );
     }
-  }, [data]);
+  }, [data, initialDriverKey]);
 
   // Auto-select all available compounds when data loads
   useEffect(() => {
@@ -178,90 +425,211 @@ export default function TyreDegradationChart({
     return Array.from(compounds);
   }, [data]);
 
-  // Build chart data: group laps by compound + tyre_life
+  const statusBands = useMemo(() => {
+    if (!data) return [];
+    return computeStatusBands(
+      data.track_status_events || [],
+      data.drivers,
+      data.total_laps ?? null,
+    );
+  }, [data]);
+
+  // Build clean, stint-normalized samples and fitted compound curves.
   const chartData = useMemo(() => {
     if (!data)
-      return { data: [] as CompoundDataPoint[], lineKeys: [] as string[] };
+      return {
+        data: [] as CurveDataPoint[],
+        lineKeys: [] as string[],
+        samplesByCompound: {} as Record<string, CleanSample[]>,
+        summaries: [] as CompoundSummary[],
+      };
 
     const filteredDrivers = data.drivers.filter((d) =>
       selectedDrivers.includes(driverKey(d)),
     );
 
-    // Map: compound -> tyre_life -> driver_code -> lap_times[]
-    const compoundMap = new Map<string, Map<number, Map<string, number[]>>>();
+    const samplesByCompound: Record<string, CleanSample[]> = {};
 
     for (const driver of filteredDrivers) {
-      for (const lap of driver.laps) {
-        if (
-          !lap.compound ||
-          !selectedCompounds.includes(lap.compound) ||
-          lap.tyre_life == null ||
-          lap.lap_time_seconds == null ||
-          lap.pit_duration_seconds != null
-        ) {
-          continue;
-        }
+      const sortedLaps = [...driver.laps].sort(
+        (a, b) => a.lap_number - b.lap_number,
+      );
+      const stints = new Map<string, LapData[]>();
+      let inferredStint = 1;
 
-        // Normalize pit laps out
-        const normalizedTime = lap.lap_time_seconds;
+      for (let index = 0; index < sortedLaps.length; index++) {
+        const lap = sortedLaps[index];
+        const prevLap = index > 0 ? sortedLaps[index - 1] : null;
+        if (hasImpliedPit(lap, prevLap)) inferredStint += 1;
 
-        if (!compoundMap.has(lap.compound)) {
-          compoundMap.set(lap.compound, new Map());
+        const stintLabel = String(lap.stint ?? inferredStint);
+        const laps = stints.get(stintLabel) ?? [];
+        laps.push(lap);
+        stints.set(stintLabel, laps);
+      }
+
+      for (const [stintLabel, stintLaps] of stints) {
+        const sortedStint = [...stintLaps].sort(
+          (a, b) => a.lap_number - b.lap_number,
+        );
+        const firstLapNumber = sortedStint[0]?.lap_number;
+
+        const preliminary = sortedStint.filter((lap, index) => {
+          const prevLap = index > 0 ? sortedStint[index - 1] : null;
+          return (
+            lap.compound &&
+            selectedCompounds.includes(lap.compound) &&
+            lap.tyre_life != null &&
+            lap.lap_time_seconds != null &&
+            !lap.deleted &&
+            lap.lap_number !== 1 &&
+            lap.lap_number !== firstLapNumber &&
+            !(
+              lap.pit_duration_seconds != null && lap.pit_duration_seconds > 0
+            ) &&
+            !hasImpliedPit(lap, prevLap) &&
+            !isNeutralizedLap(lap, statusBands)
+          );
+        });
+
+        if (preliminary.length < MIN_CLEAN_BASELINE_LAPS + 1) continue;
+
+        const lapTimes = preliminary.map(
+          (lap) => lap.lap_time_seconds as number,
+        );
+        const clean = preliminary.filter(
+          (lap) =>
+            !isStatisticalOutlier(lap.lap_time_seconds as number, lapTimes),
+        );
+
+        if (clean.length < MIN_CLEAN_BASELINE_LAPS + 1) continue;
+
+        const baselineLaps = clean
+          .slice(0, Math.max(MIN_CLEAN_BASELINE_LAPS, 3))
+          .map((lap) => lap.lap_time_seconds as number);
+        const baseline = median(baselineLaps);
+        if (baseline == null) continue;
+
+        const compound = clean[0]?.compound;
+        if (!compound) continue;
+
+        for (const lap of clean) {
+          if (
+            !lap.compound ||
+            lap.compound !== compound ||
+            lap.tyre_life == null ||
+            lap.lap_time_seconds == null
+          ) {
+            continue;
+          }
+
+          const sample: CleanSample = {
+            tyre_life: lap.tyre_life,
+            lap_time: lap.lap_time_seconds,
+            pace_delta: lap.lap_time_seconds - baseline,
+            compound: lap.compound,
+            color: COMPOUND_COLORS[lap.compound] || "#999",
+            driverCode: driverKey(driver),
+            stintLabel,
+            lapNumber: lap.lap_number,
+          };
+          const samples = samplesByCompound[lap.compound] ?? [];
+          samples.push(sample);
+          samplesByCompound[lap.compound] = samples;
         }
-        const tyreMap = compoundMap.get(lap.compound) ?? new Map();
-        if (!tyreMap.has(lap.tyre_life)) {
-          tyreMap.set(lap.tyre_life, new Map());
-        }
-        const driverMap = tyreMap.get(lap.tyre_life) ?? new Map();
-        const dk = driverKey(driver);
-        if (!driverMap.has(dk)) {
-          driverMap.set(dk, []);
-        }
-        driverMap.get(dk)?.push(normalizedTime);
       }
     }
 
-    // Build data points grouped by tyre_life
-    // One line per compound, showing average lap time across selected drivers
     const allTyreLives = new Set<number>();
-    const lineKeys: string[] = [];
+    const lineKeys = Object.keys(samplesByCompound).filter(
+      (compound) => samplesByCompound[compound].length >= MIN_COMPOUND_SAMPLES,
+    );
+    const fittedByCompound = new Map<
+      string,
+      ReturnType<typeof smoothBinnedSamples>
+    >();
 
-    for (const [compound] of compoundMap) {
-      lineKeys.push(compound);
-      const tyreMap = compoundMap.get(compound) ?? new Map();
-      for (const life of tyreMap.keys()) {
-        allTyreLives.add(life);
-      }
+    for (const compound of lineKeys) {
+      const fitted = smoothBinnedSamples(samplesByCompound[compound]);
+      fittedByCompound.set(compound, fitted);
+      for (const point of fitted) allTyreLives.add(point.tyreLife);
     }
 
     const sortedLives = Array.from(allTyreLives).sort((a, b) => a - b);
-
-    const points: CompoundDataPoint[] = sortedLives.map((life) => {
-      const point: CompoundDataPoint = { tyre_life: life };
+    const points: CurveDataPoint[] = sortedLives.map((life) => {
+      const point: CurveDataPoint = { tyre_life: life };
 
       for (const compound of lineKeys) {
-        const tyreMap = compoundMap.get(compound);
-        const driverMap = tyreMap?.get(life);
-
-        if (driverMap && driverMap.size > 0) {
-          // Average across all drivers for this compound+life
-          let sum = 0;
-          let count = 0;
-          for (const times of driverMap.values()) {
-            for (const t of times) {
-              sum += t;
-              count++;
-            }
-          }
-          point[compound] = sum / count;
-        }
+        const fitted = fittedByCompound
+          .get(compound)
+          ?.find((candidate) => candidate.tyreLife === life);
+        if (!fitted) continue;
+        point[`${compound}_fit`] = fitted.fitDelta;
+        point[`${compound}_median`] = fitted.medianDelta;
       }
 
       return point;
     });
 
-    return { data: points, lineKeys };
-  }, [data, selectedDrivers, selectedCompounds]);
+    const summaries = lineKeys.map((compound): CompoundSummary => {
+      const fitted = fittedByCompound.get(compound) ?? [];
+      const color = COMPOUND_COLORS[compound] || "#999";
+      const sampleCount = samplesByCompound[compound]?.length ?? 0;
+      if (fitted.length === 0) {
+        return {
+          compound,
+          color,
+          sampleCount,
+          peakLap: null,
+          peakDelta: null,
+          falloffLap: null,
+          postFalloffSlope: null,
+          plusOneLap: null,
+        };
+      }
+
+      const peak = fitted.reduce((best, current) =>
+        current.fitDelta < best.fitDelta ? current : best,
+      );
+      const falloff = fitted.find(
+        (point) =>
+          point.tyreLife > peak.tyreLife &&
+          point.fitDelta >= peak.fitDelta + 0.3,
+      );
+      const plusOne = fitted.find((point) => point.fitDelta >= 1);
+      const slopeStart = falloff ?? peak;
+      const slopePoints = fitted.filter(
+        (point) => point.tyreLife >= slopeStart.tyreLife,
+      );
+      let postFalloffSlope: number | null = null;
+      if (slopePoints.length >= 2) {
+        const first = slopePoints[0];
+        const last = slopePoints[slopePoints.length - 1];
+        const lapSpan = last.tyreLife - first.tyreLife;
+        if (lapSpan > 0) {
+          postFalloffSlope = (last.fitDelta - first.fitDelta) / lapSpan;
+        }
+      }
+
+      return {
+        compound,
+        color,
+        sampleCount,
+        peakLap: peak.tyreLife,
+        peakDelta: peak.fitDelta,
+        falloffLap: falloff?.tyreLife ?? null,
+        postFalloffSlope,
+        plusOneLap: plusOne?.tyreLife ?? null,
+      };
+    });
+
+    return {
+      data: points,
+      lineKeys,
+      samplesByCompound,
+      summaries,
+    };
+  }, [data, selectedDrivers, selectedCompounds, statusBands]);
 
   // Y-axis domain
   const yDomain = useMemo((): [number, number] => {
@@ -272,7 +640,7 @@ export default function TyreDegradationChart({
 
     for (const point of chartData.data) {
       for (const key of chartData.lineKeys) {
-        const val = point[key];
+        const val = point[`${key}_fit`];
         if (val != null && typeof val === "number") {
           min = Math.min(min, val);
           max = Math.max(max, val);
@@ -280,8 +648,9 @@ export default function TyreDegradationChart({
       }
     }
 
+    if (!Number.isFinite(min) || !Number.isFinite(max)) return [2, -1];
     const padding = (max - min) * 0.1;
-    return [max + padding, min - padding];
+    return [Math.max(max + padding, 1), Math.min(min - padding, -0.5)];
   }, [chartData]);
 
   const sortedDrivers = useMemo(() => {
@@ -315,9 +684,15 @@ export default function TyreDegradationChart({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <h3 className="text-sm font-bold text-text-secondary font-mono">
-          {data.event_name.replace("Grand Prix", "GP")} - Tyre Degradation
-        </h3>
+        <div>
+          <h3 className="text-sm font-bold text-text-secondary font-mono">
+            {data.event_name.replace("Grand Prix", "GP")} - Tyre Degradation
+          </h3>
+          <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest mt-1">
+            clean laps only · dots = stint-normalized laps · line = fitted
+            compound curve
+          </p>
+        </div>
 
         <div className="flex items-center gap-2">
           {/* Compound Filter */}
@@ -397,11 +772,60 @@ export default function TyreDegradationChart({
         </div>
       </div>
 
+      {chartData.summaries.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {chartData.summaries.map((summary) => (
+            <div
+              key={summary.compound}
+              className="border border-border-primary rounded-sm p-3 bg-bg-tertiary/40"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p
+                  className="text-xs font-bold font-mono uppercase"
+                  style={{ color: summary.color }}
+                >
+                  {summary.compound}
+                </p>
+                <p className="text-[10px] text-text-muted font-mono">
+                  {summary.sampleCount} laps
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-[10px] font-mono">
+                <span className="text-text-muted">Peak</span>
+                <span className="text-text-primary text-right">
+                  {summary.peakLap != null
+                    ? `lap ${summary.peakLap} (${formatDelta(summary.peakDelta)})`
+                    : "-"}
+                </span>
+                <span className="text-text-muted">Falloff</span>
+                <span className="text-text-primary text-right">
+                  {summary.falloffLap != null
+                    ? `lap ${summary.falloffLap}`
+                    : "-"}
+                </span>
+                <span className="text-text-muted">Deg/lap</span>
+                <span className="text-text-primary text-right">
+                  {summary.postFalloffSlope != null
+                    ? formatDelta(summary.postFalloffSlope)
+                    : "-"}
+                </span>
+                <span className="text-text-muted">+1.0s</span>
+                <span className="text-text-primary text-right">
+                  {summary.plusOneLap != null
+                    ? `lap ${summary.plusOneLap}`
+                    : "-"}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Chart */}
       <div className="relative" style={{ minHeight: "300px" }}>
         {chartData.data.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart
+            <ComposedChart
               data={chartData.data}
               margin={{ top: 10, right: 20, left: 60, bottom: 30 }}
             >
@@ -411,6 +835,8 @@ export default function TyreDegradationChart({
               />
               <XAxis
                 dataKey="tyre_life"
+                type="number"
+                allowDecimals={false}
                 stroke={CHART_COLORS.textTertiary}
                 label={{
                   value: "Tyre Age (laps)",
@@ -423,7 +849,7 @@ export default function TyreDegradationChart({
               <YAxis
                 stroke={CHART_COLORS.textTertiary}
                 label={{
-                  value: "Lap Time",
+                  value: "Pace vs Baseline",
                   angle: -90,
                   position: "center",
                   dx: -45,
@@ -435,26 +861,41 @@ export default function TyreDegradationChart({
               />
               <Tooltip content={<DegradationTooltip />} />
               {chartData.lineKeys.map((compound) => (
+                <Scatter
+                  key={`${compound}-samples`}
+                  name={`${compound} laps`}
+                  data={chartData.samplesByCompound[compound] ?? []}
+                  dataKey="pace_delta"
+                  fill={COMPOUND_COLORS[compound] || "#999"}
+                  opacity={0.18}
+                  isAnimationActive={false}
+                />
+              ))}
+              {chartData.lineKeys.map((compound) => (
                 <Line
-                  key={compound}
+                  key={`${compound}-fit`}
                   type="monotone"
-                  dataKey={compound}
-                  name={compound}
+                  dataKey={`${compound}_fit`}
+                  name={`${compound} fit`}
                   stroke={COMPOUND_COLORS[compound] || "#999"}
-                  strokeWidth={2.5}
-                  dot={{ r: 3, fill: COMPOUND_COLORS[compound] || "#999" }}
-                  activeDot={{ r: 5 }}
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={{
+                    r: 5,
+                    fill: COMPOUND_COLORS[compound] || "#999",
+                  }}
                   connectNulls={false}
                   isAnimationActive={true}
                   animationDuration={1200}
                 />
               ))}
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <p className="text-text-muted text-sm font-mono">
-              Select compounds and drivers to view degradation curves.
+              Select compounds and drivers with clean stints to view degradation
+              curves.
             </p>
           </div>
         )}

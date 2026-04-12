@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { isValidHeadshotUrl } from "@/lib/api";
 import {
   getCircuitFlagEmoji,
@@ -12,6 +12,7 @@ import {
 import type { SessionResultsResponse } from "@/lib/types";
 import LapTimeByLapGraph from "./LapTimeByLapGraph";
 import { GridPattern, TrianglePattern } from "./Patterns";
+import QualifyingSpreadChart from "./QualifyingSpreadChart";
 import type { SessionSummary } from "./SessionSummaryCard";
 import SessionSummaryCard from "./SessionSummaryCard";
 import { TrackMapFull } from "./TrackMapDisplay";
@@ -78,36 +79,8 @@ export default function SessionDetail({
   summary,
 }: SessionDetailProps) {
   const [expandedResults, setExpandedResults] = useState<boolean>(false);
-  const [selectedGapDrivers, setSelectedGapDrivers] = useState<string[]>([]);
-  const [showGapDropdown, setShowGapDropdown] = useState(false);
-  const gapDropdownRef = useRef<HTMLDivElement>(null);
   const isQualifying = sessionType === "qualifying";
   const isPractice = sessionType === "practice";
-
-  // Initialize selected drivers to top 10 when data changes
-  useEffect(() => {
-    if (data && data.results.length > 0) {
-      setSelectedGapDrivers(
-        data.results
-          .slice(0, 10)
-          .map((r) => r.driver.driver_code || r.driver.full_name),
-      );
-    }
-  }, [data]);
-
-  // Close gap dropdown on outside click
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (
-        gapDropdownRef.current &&
-        !gapDropdownRef.current.contains(e.target as Node)
-      ) {
-        setShowGapDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
 
   if (!data) return null;
 
@@ -583,171 +556,7 @@ export default function SessionDetail({
                   isSprint={isSprint}
                 />
               ) : (
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-bold text-text-primary uppercase tracking-wider font-mono">
-                      Gap to Pole Position
-                    </h3>
-                    <div className="relative" ref={gapDropdownRef}>
-                      <button
-                        type="button"
-                        onClick={() => setShowGapDropdown(!showGapDropdown)}
-                        className="px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-border-primary text-text-secondary hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer"
-                      >
-                        Select ({selectedGapDrivers.length})
-                      </button>
-                      {showGapDropdown && (
-                        <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-lg z-30 max-h-80 overflow-y-auto min-w-[240px]">
-                          {results.map((result) => {
-                            const driverKey =
-                              result.driver.driver_code ||
-                              result.driver.full_name;
-                            const isSelected =
-                              selectedGapDrivers.includes(driverKey);
-                            const teamColor = result.team.team_color
-                              ? `#${result.team.team_color}`
-                              : "#a855f5";
-
-                            return (
-                              <label
-                                key={driverKey}
-                                className="flex items-center gap-2 px-3 py-2 hover:bg-bg-elevated cursor-pointer"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={() => {
-                                    setSelectedGapDrivers((prev) =>
-                                      prev.includes(driverKey)
-                                        ? prev.filter((d) => d !== driverKey)
-                                        : [...prev, driverKey],
-                                    );
-                                  }}
-                                  className="w-4 h-4 accent-purple-500"
-                                />
-                                <span className="text-sm text-text-muted w-5 font-mono">
-                                  {result.position || "-"}
-                                </span>
-                                <span
-                                  className="text-sm font-semibold"
-                                  style={{ color: teamColor }}
-                                >
-                                  {result.driver.full_name}
-                                </span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    {(() => {
-                      const filteredResults = results.filter((r) =>
-                        selectedGapDrivers.includes(
-                          r.driver.driver_code || r.driver.full_name,
-                        ),
-                      );
-                      const poleTime =
-                        results[0].q3_time_seconds ||
-                        results[0].q2_time_seconds ||
-                        results[0].q1_time_seconds;
-                      const maxGap = Math.max(
-                        ...filteredResults.map((r) => {
-                          const rBest =
-                            r.q3_time_seconds ||
-                            r.q2_time_seconds ||
-                            r.q1_time_seconds;
-                          return rBest && poleTime ? rBest - poleTime : 0;
-                        }),
-                      );
-
-                      return filteredResults.map((result) => {
-                        const bestTime =
-                          result.q3_time_seconds ||
-                          result.q2_time_seconds ||
-                          result.q1_time_seconds;
-                        const hasNoTime = !bestTime;
-                        const gap =
-                          bestTime && poleTime ? bestTime - poleTime : 0;
-                        const widthPercent =
-                          maxGap > 0 ? (gap / maxGap) * 100 : 0;
-
-                        return (
-                          <div
-                            key={result.driver.driver_code}
-                            className="flex items-center gap-3"
-                          >
-                            <div className="w-8 text-right text-text-muted text-xs font-bold font-mono">
-                              {result.position || "-"}
-                            </div>
-                            <div className="w-24 flex items-center justify-end gap-2">
-                              {isValidHeadshotUrl(result.headshot_url) ? (
-                                <Image
-                                  src={result.headshot_url || ""}
-                                  alt={result.driver.full_name}
-                                  width={24}
-                                  height={24}
-                                  className="rounded-sm object-cover border border-border-secondary"
-                                />
-                              ) : (
-                                <div
-                                  className="w-6 h-6 rounded-sm flex items-center justify-center text-[8px] font-bold font-mono"
-                                  style={{
-                                    backgroundColor: result.team.team_color
-                                      ? `#${result.team.team_color}33`
-                                      : "#a855f533",
-                                    borderLeft: `2px solid ${result.team.team_color ? `#${result.team.team_color}` : "#a855f5"}`,
-                                    color: result.team.team_color
-                                      ? `#${result.team.team_color}`
-                                      : "#a855f5",
-                                  }}
-                                >
-                                  {(
-                                    result.driver.driver_code ||
-                                    result.driver.full_name.slice(0, 3)
-                                  ).slice(0, 3)}
-                                </div>
-                              )}
-                              <span className="text-text-primary text-xs font-bold font-mono">
-                                {result.driver.driver_code ||
-                                  result.driver.full_name
-                                    .slice(0, 3)
-                                    .toUpperCase()}
-                              </span>
-                            </div>
-                            {hasNoTime ? (
-                              <div className="flex-1 bg-bg-primary/30 h-6 rounded-sm border border-border-primary/50 flex items-center px-2">
-                                <span className="text-red-400 text-[10px] font-mono font-bold uppercase">
-                                  No Time
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="flex-1 bg-bg-primary/30 h-6 rounded-sm overflow-hidden border border-border-primary/50">
-                                <div
-                                  className="h-full transition-all duration-500 flex items-center justify-end pr-2"
-                                  style={{
-                                    width: `${Math.max(widthPercent, 1)}%`,
-                                    backgroundColor: result.team.team_color
-                                      ? `#${result.team.team_color}33`
-                                      : "#a020f033",
-                                    borderRight: `2px solid ${result.team.team_color ? `#${result.team.team_color}` : "#a020f0"}`,
-                                  }}
-                                >
-                                  {gap > 0 && (
-                                    <span className="text-text-primary text-[10px] font-mono font-bold">
-                                      +{gap.toFixed(3)}s
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
-                </div>
+                <QualifyingSpreadChart results={results} />
               )}
             </div>
           </div>

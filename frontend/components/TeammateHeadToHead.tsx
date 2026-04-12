@@ -10,6 +10,7 @@ const DEFAULT_SHOWN = 6;
 interface TeammateHeadToHeadProps {
   season: string;
   mode?: "race" | "qualifying";
+  initialTeams?: string[];
 }
 
 type DriverInfo = {
@@ -87,10 +88,12 @@ function DriverAvatar({
 export default function TeammateHeadToHead({
   season,
   mode = "race",
+  initialTeams,
 }: TeammateHeadToHeadProps) {
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const initialTeamKey = initialTeams?.join(",") ?? "";
 
   const { data, isLoading } = useQuery<H2HResponse | null>({
     queryKey: ["teammate-h2h", season, mode],
@@ -105,14 +108,21 @@ export default function TeammateHeadToHead({
     enabled: !!season,
   });
 
-  // Initialise to top 6 when data loads
   useEffect(() => {
     if (!data?.teams) return;
     const sorted = [...data.teams].sort(
       (a, b) => b.rounds_compared - a.rounds_compared,
     );
-    setSelectedTeams(sorted.slice(0, DEFAULT_SHOWN).map((t) => t.team_name));
-  }, [data]);
+    const available = new Set(sorted.map((t) => t.team_name));
+    const requested = initialTeamKey.split(",").filter((team) =>
+      available.has(team),
+    );
+    setSelectedTeams(
+      requested.length > 0
+        ? requested
+        : sorted.slice(0, DEFAULT_SHOWN).map((t) => t.team_name),
+    );
+  }, [data, initialTeamKey]);
 
   // Close dropdown on outside click
   useEffect(() => {
