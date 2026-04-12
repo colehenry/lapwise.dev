@@ -114,9 +114,9 @@ export default function TeammateHeadToHead({
       (a, b) => b.rounds_compared - a.rounds_compared,
     );
     const available = new Set(sorted.map((t) => t.team_name));
-    const requested = initialTeamKey.split(",").filter((team) =>
-      available.has(team),
-    );
+    const requested = initialTeamKey
+      .split(",")
+      .filter((team) => available.has(team));
     setSelectedTeams(
       requested.length > 0
         ? requested

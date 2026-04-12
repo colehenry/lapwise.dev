@@ -259,6 +259,7 @@ export default function EmbedBuilder({
     () => DISCUSSION_EMBEDS.find((embed) => embed.id === embedId),
     [embedId],
   );
+  const fieldIdPrefix = `embed-builder-${embedId}`;
 
   const { data: seasons = [] } = useQuery<number[]>({
     queryKey: ["seasons"],
@@ -284,7 +285,10 @@ export default function EmbedBuilder({
 
   useEffect(() => {
     if (!open || !selectedEmbed?.needsRound || rounds.length === 0) return;
-    if (values.round && rounds.some((round) => String(round.round) === values.round)) {
+    if (
+      values.round &&
+      rounds.some((round) => String(round.round) === values.round)
+    ) {
       return;
     }
     setValues((current) => ({
@@ -336,9 +340,7 @@ export default function EmbedBuilder({
         values.pointsType,
       ),
     enabled:
-      open &&
-      !!selectedEmbed?.controls.includes("entities") &&
-      !!values.season,
+      open && !!selectedEmbed?.controls.includes("entities") && !!values.season,
     staleTime: 1000 * 60 * 15,
   });
 
@@ -380,7 +382,9 @@ export default function EmbedBuilder({
   };
 
   const toggleDriver = (code: string) => {
-    const current = values.drivers ? values.drivers.split(",").filter(Boolean) : [];
+    const current = values.drivers
+      ? values.drivers.split(",").filter(Boolean)
+      : [];
     const next = current.includes(code)
       ? current.filter((item) => item !== code)
       : [...current, code];
@@ -388,7 +392,9 @@ export default function EmbedBuilder({
   };
 
   const toggleEntity = (key: string) => {
-    const current = values.entities ? values.entities.split(",").filter(Boolean) : [];
+    const current = values.entities
+      ? values.entities.split(",").filter(Boolean)
+      : [];
     const next = current.includes(key)
       ? current.filter((item) => item !== key)
       : [...current, key];
@@ -428,7 +434,12 @@ export default function EmbedBuilder({
             Pick the graph, season, round, and options here.
           </p>
         </div>
-        <Button type="button" size="sm" variant="secondary" onClick={() => setOpen(true)}>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          onClick={() => setOpen(true)}
+        >
           Add graph
         </Button>
       </div>
@@ -438,9 +449,12 @@ export default function EmbedBuilder({
           <div className="mx-auto max-w-6xl rounded-sm border border-border-primary bg-bg-secondary shadow-2xl">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-primary px-4 py-3">
               <div>
-                <h3 className="text-base font-bold text-text-primary">Add Lapwise graph</h3>
+                <h3 className="text-base font-bold text-text-primary">
+                  Add Lapwise graph
+                </h3>
                 <p className="mt-1 text-xs text-text-muted">
-                  The post gets a clean embed. The preview uses the same renderer readers see.
+                  The post gets a clean embed. The preview uses the same
+                  renderer readers see.
                 </p>
               </div>
               <button
@@ -516,7 +530,9 @@ export default function EmbedBuilder({
                       onClick={() => chooseEmbed(embed)}
                       className={selectClass(embed.id === embedId)}
                     >
-                      <span className="block font-bold text-text-primary">{embed.label}</span>
+                      <span className="block font-bold text-text-primary">
+                        {embed.label}
+                      </span>
                       <span className="mt-1 block text-[11px] leading-4 text-text-muted">
                         {embed.description}
                       </span>
@@ -560,7 +576,8 @@ export default function EmbedBuilder({
                           </option>
                           {rounds.map((round) => (
                             <option key={round.round} value={round.round}>
-                              R{String(round.round).padStart(2, "0")} - {round.event_name}
+                              R{String(round.round).padStart(2, "0")} -{" "}
+                              {round.event_name}
                             </option>
                           ))}
                         </select>
@@ -572,7 +589,9 @@ export default function EmbedBuilder({
                         <MonoLabel as="span">Session</MonoLabel>
                         <select
                           value={values.session ?? "race"}
-                          onChange={(e) => updateValue("session", e.target.value)}
+                          onChange={(e) =>
+                            updateValue("session", e.target.value)
+                          }
                           className="mt-1 w-full rounded-sm border border-border-primary bg-bg-primary px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-purple-500"
                         >
                           {getSessionOptions(selectedEmbed).map((option) => (
@@ -589,7 +608,9 @@ export default function EmbedBuilder({
                         <MonoLabel as="span">Practice</MonoLabel>
                         <select
                           value={values.practiceSession ?? "1"}
-                          onChange={(e) => updateValue("practiceSession", e.target.value)}
+                          onChange={(e) =>
+                            updateValue("practiceSession", e.target.value)
+                          }
                           className="mt-1 w-full rounded-sm border border-border-primary bg-bg-primary px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-purple-500"
                         >
                           <option value="1">FP1</option>
@@ -620,17 +641,23 @@ export default function EmbedBuilder({
                       <label className="block">
                         <MonoLabel as="span">Mode</MonoLabel>
                         <select
-                          value={values.mode ?? selectedEmbed.defaults?.mode ?? "race"}
+                          value={
+                            values.mode ??
+                            selectedEmbed.defaults?.mode ??
+                            "race"
+                          }
                           onChange={(e) => updateValue("mode", e.target.value)}
                           className="mt-1 w-full rounded-sm border border-border-primary bg-bg-primary px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-purple-500"
                         >
-                          {(modeOptions[selectedEmbed.id as keyof typeof modeOptions] ?? []).map(
-                            (option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ),
-                          )}
+                          {(
+                            modeOptions[
+                              selectedEmbed.id as keyof typeof modeOptions
+                            ] ?? []
+                          ).map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
                         </select>
                       </label>
                     )}
@@ -640,7 +667,9 @@ export default function EmbedBuilder({
                         <MonoLabel as="span">Points</MonoLabel>
                         <select
                           value={values.pointsType ?? "race"}
-                          onChange={(e) => updateValue("pointsType", e.target.value)}
+                          onChange={(e) =>
+                            updateValue("pointsType", e.target.value)
+                          }
                           className="mt-1 w-full rounded-sm border border-border-primary bg-bg-primary px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-purple-500"
                         >
                           {pointsTypeOptions.map((option) => (
@@ -653,9 +682,13 @@ export default function EmbedBuilder({
                     )}
 
                     {selectedEmbed.controls.includes("limit") && (
-                      <label className="block">
+                      <label
+                        className="block"
+                        htmlFor={`${fieldIdPrefix}-limit`}
+                      >
                         <MonoLabel as="span">Rows</MonoLabel>
                         <Input
+                          id={`${fieldIdPrefix}-limit`}
                           type="number"
                           min={1}
                           max={30}
@@ -667,9 +700,13 @@ export default function EmbedBuilder({
                     )}
 
                     {selectedEmbed.controls.includes("title") && (
-                      <label className="block md:col-span-2">
+                      <label
+                        className="block md:col-span-2"
+                        htmlFor={`${fieldIdPrefix}-title`}
+                      >
                         <MonoLabel as="span">Title</MonoLabel>
                         <Input
+                          id={`${fieldIdPrefix}-title`}
                           value={values.title ?? ""}
                           onChange={(e) => updateValue("title", e.target.value)}
                           className="mt-1"
@@ -769,7 +806,9 @@ export default function EmbedBuilder({
                     <div className="grid max-h-56 gap-2 overflow-y-auto rounded-sm border border-border-primary bg-bg-primary p-2 sm:grid-cols-2 lg:grid-cols-3">
                       {drivers.length > 0 ? (
                         filteredDrivers.map((driver) => {
-                          const selected = selectedDrivers.includes(driver.code);
+                          const selected = selectedDrivers.includes(
+                            driver.code,
+                          );
                           return (
                             <button
                               key={driver.code}
@@ -875,7 +914,9 @@ export default function EmbedBuilder({
                     <div className="grid max-h-56 gap-2 overflow-y-auto rounded-sm border border-border-primary bg-bg-primary p-2 sm:grid-cols-2 lg:grid-cols-3">
                       {entities.length > 0 ? (
                         filteredEntities.map((entity) => {
-                          const selected = selectedEntities.includes(entity.key);
+                          const selected = selectedEntities.includes(
+                            entity.key,
+                          );
                           return (
                             <button
                               key={entity.key}
@@ -883,7 +924,9 @@ export default function EmbedBuilder({
                               onClick={() => toggleEntity(entity.key)}
                               className={selectClass(selected)}
                             >
-                              <span className="block font-bold">{entity.label}</span>
+                              <span className="block font-bold">
+                                {entity.label}
+                              </span>
                               {entity.meta && (
                                 <span className="mt-0.5 block truncate text-[11px] text-text-muted">
                                   {entity.meta}
@@ -904,7 +947,9 @@ export default function EmbedBuilder({
                 <div className="rounded-sm border border-border-primary bg-bg-primary p-3">
                   <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                     <MonoLabel as="div">Embed</MonoLabel>
-                    <code className="break-all text-[11px] text-text-muted">{snippet}</code>
+                    <code className="break-all text-[11px] text-text-muted">
+                      {snippet}
+                    </code>
                   </div>
                   <div className="max-h-[520px] overflow-y-auto">
                     {canPreview && selectedEmbed ? (
@@ -921,7 +966,11 @@ export default function EmbedBuilder({
                 </div>
 
                 <div className="flex flex-wrap justify-end gap-2">
-                  <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setOpen(false)}
+                  >
                     Cancel
                   </Button>
                   <Button

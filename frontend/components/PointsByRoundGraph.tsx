@@ -213,22 +213,26 @@ export default function PointsByRoundGraph({
         (a, b) => a.final_position - b.final_position,
       );
       const available = new Set(sorted.map((d) => d.driver_code));
-      const requested = initialEntityKey.split(",").filter((key) =>
-        available.has(key),
-      );
+      const requested = initialEntityKey
+        .split(",")
+        .filter((key) => available.has(key));
       setSelectedEntities(
-        requested.length > 0 ? requested : sorted.slice(0, 3).map((d) => d.driver_code),
+        requested.length > 0
+          ? requested
+          : sorted.slice(0, 3).map((d) => d.driver_code),
       );
     } else if (mode === "constructors" && data.constructors) {
       const sorted = [...data.constructors].sort(
         (a, b) => a.final_position - b.final_position,
       );
       const available = new Set(sorted.map((c) => c.team_name));
-      const requested = initialEntityKey.split(",").filter((key) =>
-        available.has(key),
-      );
+      const requested = initialEntityKey
+        .split(",")
+        .filter((key) => available.has(key));
       setSelectedEntities(
-        requested.length > 0 ? requested : sorted.slice(0, 3).map((c) => c.team_name),
+        requested.length > 0
+          ? requested
+          : sorted.slice(0, 3).map((c) => c.team_name),
       );
     }
   }, [data, mode, initialEntityKey]);

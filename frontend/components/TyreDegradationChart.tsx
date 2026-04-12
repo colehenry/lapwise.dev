@@ -391,11 +391,13 @@ export default function TyreDegradationChart({
         (a, b) => (a.final_position || 999) - (b.final_position || 999),
       );
       const available = new Set(sorted.map((d) => driverKey(d)));
-      const requested = initialDriverKey.split(",").filter((key) =>
-        available.has(key),
-      );
+      const requested = initialDriverKey
+        .split(",")
+        .filter((key) => available.has(key));
       setSelectedDrivers(
-        requested.length > 0 ? requested : sorted.slice(0, 3).map((d) => driverKey(d)),
+        requested.length > 0
+          ? requested
+          : sorted.slice(0, 3).map((d) => driverKey(d)),
       );
     }
   }, [data, initialDriverKey]);

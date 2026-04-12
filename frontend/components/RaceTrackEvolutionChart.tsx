@@ -279,7 +279,7 @@ export default function RaceTrackEvolutionChart({
               className={`text-sm font-bold font-mono ${improvement > 0 ? "text-green-400" : "text-red-400"}`}
             >
               {improvement > 0 ? "+" : ""}
-              {improvement.toFixed(3)}s early→late
+              {improvement.toFixed(3)}s evolution
             </span>
           ) : (
             <span className="text-sm font-bold font-mono text-text-muted">

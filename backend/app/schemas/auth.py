@@ -165,7 +165,6 @@ class ChangePasswordRequest(BaseModel):
 
 
 class UserPublicProfile(BaseModel):
-    id: int
     username: str
     role: str
     avatar_url: Optional[str] = None

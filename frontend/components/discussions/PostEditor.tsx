@@ -1,9 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import EmbedBuilder from "@/components/discussions/EmbedBuilder";
 import MarkdownContent from "@/components/discussions/MarkdownContent";
 import TagPill from "@/components/discussions/TagPill";
 import Button from "@/components/ui/Button";
@@ -11,6 +11,16 @@ import { Input, Textarea } from "@/components/ui/Input";
 import MonoLabel from "@/components/ui/MonoLabel";
 import { fetchTags } from "@/lib/discussions";
 import type { DiscussionTag } from "@/lib/types";
+
+const EmbedBuilder = dynamic(
+  () => import("@/components/discussions/EmbedBuilder"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-10 rounded-sm border border-border-primary bg-bg-tertiary/60" />
+    ),
+  },
+);
 
 interface PostEditorProps {
   initial?: {
