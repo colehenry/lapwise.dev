@@ -1,21 +1,14 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { apiHeaders, apiUrl } from "@/lib/api";
+import { useMemo } from "react";
+import DriverMultiSelect from "@/components/charts/DriverMultiSelect";
 import {
-  type DriverLapTimes,
-  driverKey,
-  type LapTimesResponse,
-} from "@/lib/types";
-
-const COMPOUND_COLORS: Record<string, string> = {
-  SOFT: "#e8002d",
-  MEDIUM: "#ffd700",
-  HARD: "#c8c8c8",
-  INTERMEDIATE: "#39b54a",
-  WET: "#0067ff",
-};
+  sortDriversByClassification,
+  useDriverSelection,
+} from "@/hooks/useDriverSelection";
+import { usePracticeLapTimes } from "@/hooks/usePracticeLapTimes";
+import { COMPOUND_COLORS } from "@/lib/chart-utils";
+import { type DriverLapTimes, driverKey } from "@/lib/types";
 
 const COMPOUND_ORDER = ["SOFT", "MEDIUM", "HARD", "INTERMEDIATE", "WET"];
 
@@ -45,61 +38,14 @@ export default function TyreProgrammeChart({
   practiceSession,
   initialDrivers,
 }: TyreProgrammeChartProps) {
-  const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const initialDriverKey = initialDrivers?.join(",") ?? "";
-
-  const { data, isLoading } = useQuery<LapTimesResponse | null>({
-    queryKey: ["lap-times", season, round, false, practiceSession],
-    queryFn: async () => {
-      const res = await fetch(
-        apiUrl(
-          `/api/results/${season}/${round}/practice/${practiceSession}/lap-times`,
-        ),
-        { cache: "no-store", headers: apiHeaders() },
-      );
-      if (!res.ok) return null;
-      return res.json();
-    },
-    enabled: season >= 2018,
+  const { data, isLoading } = usePracticeLapTimes(
+    season,
+    round,
+    practiceSession,
+  );
+  const { selectedDrivers, toggleDriver } = useDriverSelection(data?.drivers, {
+    initialDrivers,
   });
-
-  useEffect(() => {
-    if (data?.drivers) {
-      const sorted = [...data.drivers].sort(
-        (a, b) => (a.final_position ?? 999) - (b.final_position ?? 999),
-      );
-      const available = new Set(sorted.map((d) => driverKey(d)));
-      const requested = initialDriverKey
-        .split(",")
-        .filter((key) => available.has(key));
-      setSelectedDrivers(
-        requested.length > 0
-          ? requested
-          : sorted.slice(0, 10).map((d) => driverKey(d)),
-      );
-    }
-  }, [data, initialDriverKey]);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const toggleDriver = (key: string) => {
-    setSelectedDrivers((prev) =>
-      prev.includes(key) ? prev.filter((d) => d !== key) : [...prev, key],
-    );
-  };
 
   const { allProgrammes, activeCompounds, compoundPace, dropdownDrivers } =
     useMemo(() => {
@@ -184,9 +130,7 @@ export default function TyreProgrammeChart({
           .map((c) => ({ ...c, delta: c.median - fastest }));
       }
 
-      const dropdownDrivers = [...data.drivers].sort(
-        (a, b) => (a.final_position ?? 999) - (b.final_position ?? 999),
-      );
+      const dropdownDrivers = sortDriversByClassification(data.drivers);
 
       return {
         allProgrammes: programmes,
@@ -287,48 +231,11 @@ export default function TyreProgrammeChart({
           ))}
         </div>
 
-        <div className="relative flex-shrink-0" ref={dropdownRef}>
-          <button
-            type="button"
-            onClick={() => setShowDropdown((v) => !v)}
-            className="px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-border-primary text-text-secondary hover:border-purple-500 hover:text-purple-300 transition-colors"
-          >
-            Drivers ({selectedDrivers.length})
-          </button>
-          {showDropdown && (
-            <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-10 min-w-[220px] max-h-[280px] overflow-y-auto">
-              {dropdownDrivers.map((driver) => {
-                const key = driverKey(driver);
-                const isSelected = selectedDrivers.includes(key);
-                const color = driver.team_color
-                  ? `#${driver.team_color}`
-                  : "#666";
-                return (
-                  <label
-                    key={key}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-bg-elevated cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleDriver(key)}
-                      className="w-4 h-4 accent-purple-500"
-                    />
-                    <span className="text-[10px] font-mono text-text-muted w-5">
-                      {driver.final_position ?? "-"}
-                    </span>
-                    <span
-                      className="text-xs font-bold font-mono"
-                      style={{ color }}
-                    >
-                      {driver.driver_code ?? driver.full_name}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <DriverMultiSelect
+          drivers={dropdownDrivers}
+          selectedDrivers={selectedDrivers}
+          onToggleDriver={toggleDriver}
+        />
       </div>
 
       {/* Usage bars */}

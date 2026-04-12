@@ -1,27 +1,75 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import CrossSessionComparison from "@/components/CrossSessionComparison";
-import FastestLapTimeline from "@/components/FastestLapTimeline";
 import JumpToRace from "@/components/JumpToRace";
-import LapTimeDistributionChart from "@/components/LapTimeDistributionChart";
-import LongRunPaceChart from "@/components/LongRunPaceChart";
 import { TrianglePattern } from "@/components/Patterns";
-import PitStopDeltaChart from "@/components/PitStopDeltaChart";
-import PracticeSectorHeatmap from "@/components/PracticeSectorHeatmap";
-import QualifyingProgressionChart from "@/components/QualifyingProgressionChart";
-import QualifyingSectorComparison from "@/components/QualifyingSectorComparison";
-import QualifyingSectorHeatmap from "@/components/QualifyingSectorHeatmap";
-import RaceTrackEvolutionChart from "@/components/RaceTrackEvolutionChart";
 import SessionDetail from "@/components/SessionDetail";
 import type { SessionSummary } from "@/components/SessionSummaryCard";
-import TrackEvolutionChart from "@/components/TrackEvolutionChart";
-import TyreDegradationChart from "@/components/TyreDegradationChart";
-import TyreProgrammeChart from "@/components/TyreProgrammeChart";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import type { SessionResultsResponse } from "@/lib/types";
+
+const ChartLoading = () => (
+  <div className="h-64 animate-pulse rounded-sm bg-bg-elevated" />
+);
+
+const CrossSessionComparison = dynamic(
+  () => import("@/components/CrossSessionComparison"),
+  { loading: ChartLoading, ssr: false },
+);
+const FastestLapTimeline = dynamic(
+  () => import("@/components/FastestLapTimeline"),
+  { loading: ChartLoading, ssr: false },
+);
+const LapTimeDistributionChart = dynamic(
+  () => import("@/components/LapTimeDistributionChart"),
+  { loading: ChartLoading, ssr: false },
+);
+const LongRunPaceChart = dynamic(
+  () => import("@/components/LongRunPaceChart"),
+  {
+    loading: ChartLoading,
+    ssr: false,
+  },
+);
+const PitStopDeltaChart = dynamic(
+  () => import("@/components/PitStopDeltaChart"),
+  { loading: ChartLoading, ssr: false },
+);
+const PracticeSectorHeatmap = dynamic(
+  () => import("@/components/PracticeSectorHeatmap"),
+  { loading: ChartLoading, ssr: false },
+);
+const QualifyingProgressionChart = dynamic(
+  () => import("@/components/QualifyingProgressionChart"),
+  { loading: ChartLoading, ssr: false },
+);
+const QualifyingSectorComparison = dynamic(
+  () => import("@/components/QualifyingSectorComparison"),
+  { loading: ChartLoading, ssr: false },
+);
+const QualifyingSectorHeatmap = dynamic(
+  () => import("@/components/QualifyingSectorHeatmap"),
+  { loading: ChartLoading, ssr: false },
+);
+const RaceTrackEvolutionChart = dynamic(
+  () => import("@/components/RaceTrackEvolutionChart"),
+  { loading: ChartLoading, ssr: false },
+);
+const TrackEvolutionChart = dynamic(
+  () => import("@/components/TrackEvolutionChart"),
+  { loading: ChartLoading, ssr: false },
+);
+const TyreDegradationChart = dynamic(
+  () => import("@/components/TyreDegradationChart"),
+  { loading: ChartLoading, ssr: false },
+);
+const TyreProgrammeChart = dynamic(
+  () => import("@/components/TyreProgrammeChart"),
+  { loading: ChartLoading, ssr: false },
+);
 
 type TabType =
   | "race"
