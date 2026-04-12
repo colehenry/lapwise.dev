@@ -11,7 +11,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS } from "@/components/chart-primitives";
+import {
+  CHART_AXIS_LABEL_STYLE,
+  CHART_COLORS,
+  CHART_TYPOGRAPHY,
+} from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type {
   CircuitLapTimeTrendResponse,
@@ -43,12 +47,16 @@ function TrendTooltip({ active, payload }: TrendTooltipProps) {
     : CHART_COLORS.purple;
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
-      <p className="font-bold text-text-primary text-sm mb-1">{entry.year}</p>
+    <div className="bg-bg-tertiary border border-border-primary rounded-sm p-3 shadow-xl">
+      <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-1`}>
+        {entry.year}
+      </p>
       <div className="space-y-1 text-xs">
         <div className="flex justify-between gap-4">
-          <span className="text-text-secondary">Fastest Lap</span>
-          <span className="font-mono text-text-primary font-bold">
+          <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
+            Fastest Lap
+          </span>
+          <span className="font-mono text-text-primary font-bold tabular-nums">
             {formatLapTime(entry.fastest_lap_seconds)}
           </span>
         </div>
@@ -57,7 +65,7 @@ function TrendTooltip({ active, payload }: TrendTooltipProps) {
             className="w-2 h-2 rounded-full"
             style={{ backgroundColor: teamColor }}
           />
-          <span className="text-text-secondary">
+          <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
             {entry.driver_code || entry.driver_name}
           </span>
         </div>
@@ -114,7 +122,7 @@ export default function CircuitLapTimeTrend({
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-bold text-text-secondary font-mono">
+      <h3 className={CHART_TYPOGRAPHY.titleClassName}>
         Fastest Race Lap by Year
       </h3>
 
@@ -136,7 +144,7 @@ export default function CircuitLapTimeTrend({
               value: "Year",
               position: "insideBottom",
               offset: -15,
-              style: { fill: CHART_COLORS.textTertiary, fontSize: 11 },
+              style: { ...CHART_AXIS_LABEL_STYLE },
             }}
           />
           <YAxis
@@ -150,7 +158,7 @@ export default function CircuitLapTimeTrend({
               angle: -90,
               position: "center",
               dx: -35,
-              style: { fill: CHART_COLORS.textTertiary, fontSize: 11 },
+              style: { ...CHART_AXIS_LABEL_STYLE },
             }}
           />
           <Tooltip content={<TrendTooltip />} />

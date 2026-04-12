@@ -758,6 +758,15 @@ export interface ReplayTrack {
   drs_zones: [number, number][][];
 }
 
+export interface ReplayTrackResponse {
+  season: number;
+  round: number;
+  event_name: string;
+  circuit_id: number;
+  circuit_name: string;
+  track: ReplayTrack;
+}
+
 export interface ReplayData {
   metadata: ReplayMetadata;
   track: ReplayTrack;

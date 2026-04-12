@@ -2,7 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { TrianglePattern } from "@/components/Patterns";
+import ArchivePanel from "@/components/archive/ArchivePanel";
+import MonoLabel from "@/components/ui/MonoLabel";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { CircuitStatDriver, CircuitStatisticsResponse } from "@/lib/types";
@@ -24,67 +25,45 @@ function StatList({
 }) {
   if (items.length === 0) return null;
 
-  const maxCount = items[0]?.count ?? 1;
-
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-      <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-        <TrianglePattern
-          id={`circuit-stat-${title.replace(/\s+/g, "-").toLowerCase()}`}
-        />
-        <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-          {title}
-        </span>
-      </div>
-      <div className="p-6">
-        <div className="space-y-2">
-          {items.map((item, idx) => {
-            const pct = (item.count / maxCount) * 100;
-            return (
-              <div key={`${item.name}-${idx}`} className="relative py-1.5">
-                {/* Background bar */}
-                <div
-                  className="absolute inset-y-0 left-0 rounded-sm opacity-10"
-                  style={{
-                    width: `${pct}%`,
-                    backgroundColor: item.color ? `#${item.color}` : "#a855f7",
-                  }}
+    <ArchivePanel
+      title={title}
+      headerId={`circuit-stat-${title.replace(/\s+/g, "-").toLowerCase()}`}
+    >
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {items.map((item, idx) => {
+          return (
+            <div
+              key={`${item.name}-${idx}`}
+              className="bg-bg-primary/60 border border-border-primary rounded-sm p-4 text-center min-w-0"
+            >
+              <MonoLabel className="block mb-2">Rank {idx + 1}</MonoLabel>
+              {item.color && (
+                <span
+                  className="mx-auto mb-3 block h-2 w-2 rounded-full"
+                  style={{ backgroundColor: `#${item.color}` }}
                 />
-                {/* Content */}
-                <div className="relative flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`font-mono text-sm w-6 text-right ${idx === 0 ? "text-yellow-400 font-bold" : "text-text-muted"}`}
-                    >
-                      {idx + 1}
-                    </span>
-                    {item.color && (
-                      <span
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: `#${item.color}` }}
-                      />
-                    )}
-                    {linkPrefix && (item.code || slugFromName) ? (
-                      <Link
-                        href={`${linkPrefix}${item.code || item.name.replace(/\s+/g, "-")}`}
-                        className="text-text-primary hover:text-purple-300 transition-colors"
-                      >
-                        {item.name}
-                      </Link>
-                    ) : (
-                      <span className="text-text-primary">{item.name}</span>
-                    )}
-                  </div>
-                  <span className="font-mono font-bold text-white">
-                    {item.count}
-                  </span>
-                </div>
+              )}
+              {linkPrefix && (item.code || slugFromName) ? (
+                <Link
+                  href={`${linkPrefix}${item.code || item.name.replace(/\s+/g, "-")}`}
+                  className="block text-sm font-semibold text-text-primary hover:text-purple-300 transition-colors break-words"
+                >
+                  {item.name}
+                </Link>
+              ) : (
+                <span className="block text-sm font-semibold text-text-primary break-words">
+                  {item.name}
+                </span>
+              )}
+              <div className="mt-3 text-2xl font-bold font-mono tabular-nums text-text-primary">
+                {item.count}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
-    </div>
+    </ArchivePanel>
   );
 }
 

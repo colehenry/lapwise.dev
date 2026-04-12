@@ -51,10 +51,10 @@ export default function CircuitRaceHistoryTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border-primary">
+    <div className="overflow-x-auto rounded-sm border border-border-primary bg-bg-tertiary">
       <table className="w-full text-sm">
         <thead>
-          <tr className="bg-bg-tertiary border-b border-border-primary">
+          <tr className="bg-bg-primary border-b border-border-primary">
             <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
               Year
             </th>
@@ -73,7 +73,7 @@ export default function CircuitRaceHistoryTable({
           {data.races.map((race) => (
             <tr
               key={`${race.year}-${race.round}`}
-              className="border-b border-border-primary/50 hover:bg-bg-tertiary/50 transition-colors"
+              className="border-b border-border-primary/50 hover:bg-bg-elevated/50 transition-colors"
             >
               <td className="px-3 py-2 text-text-secondary font-mono text-xs">
                 {race.year}

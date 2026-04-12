@@ -9,8 +9,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS } from "@/components/chart-primitives";
-import { TrianglePattern } from "@/components/Patterns";
+import ArchivePanel from "@/components/archive/ArchivePanel";
+import { CHART_COLORS, CHART_TYPOGRAPHY } from "@/components/chart-primitives";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { ConstructorRaceHistoryResponse } from "@/lib/types";
@@ -30,8 +30,13 @@ const ChartTooltip = ({
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-sm p-3 shadow-xl">
       {payload.map((entry) => (
-        <div key={entry.name} className="text-xs font-mono text-text-primary">
-          {entry.name}: {entry.value}
+        <div key={entry.name} className="flex items-center gap-2">
+          <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
+            {entry.name}
+          </span>
+          <span className="font-mono text-xs font-bold text-text-primary tabular-nums">
+            {entry.value}
+          </span>
         </div>
       ))}
     </div>
@@ -112,87 +117,74 @@ export default function ConstructorStatisticsPanel({
     <div className="space-y-8">
       {/* Wins & Podiums per Season */}
       {winPodiumData.length > 0 && (
-        <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-          <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-            <TrianglePattern id="constructor-wins-podiums" />
-            <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-              Wins & Podiums per Season
-            </span>
-          </div>
-          <div className="p-6">
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={winPodiumData}>
-                <XAxis
-                  dataKey="year"
-                  tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
-                  tickLine={false}
-                  axisLine={{ stroke: CHART_COLORS.borderPrimary }}
-                  interval={Math.max(
-                    0,
-                    Math.ceil(winPodiumData.length / 15) - 1,
-                  )}
-                />
-                <YAxis
-                  tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
-                  tickLine={false}
-                  axisLine={{ stroke: CHART_COLORS.borderPrimary }}
-                />
-                <Tooltip content={<ChartTooltip />} cursor={false} />
-                <Bar
-                  dataKey="podiums"
-                  fill="#a855f7"
-                  radius={[4, 4, 0, 0]}
-                  name="Podiums"
-                  activeBar={false}
-                />
-                <Bar
-                  dataKey="wins"
-                  fill="#facc15"
-                  radius={[4, 4, 0, 0]}
-                  name="Wins"
-                  activeBar={false}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <ArchivePanel
+          title="Wins & Podiums per Season"
+          headerId="constructor-wins-podiums"
+        >
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={winPodiumData}>
+              <XAxis
+                dataKey="year"
+                tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
+                tickLine={false}
+                axisLine={{ stroke: CHART_COLORS.borderPrimary }}
+                interval={Math.max(0, Math.ceil(winPodiumData.length / 15) - 1)}
+              />
+              <YAxis
+                tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
+                tickLine={false}
+                axisLine={{ stroke: CHART_COLORS.borderPrimary }}
+              />
+              <Tooltip content={<ChartTooltip />} cursor={false} />
+              <Bar
+                dataKey="podiums"
+                fill="#a855f7"
+                radius={[4, 4, 0, 0]}
+                name="Podiums"
+                activeBar={false}
+              />
+              <Bar
+                dataKey="wins"
+                fill="#facc15"
+                radius={[4, 4, 0, 0]}
+                name="Wins"
+                activeBar={false}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </ArchivePanel>
       )}
 
       {/* Best Finish Distribution */}
-      <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-        <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-          <TrianglePattern id="constructor-finish-dist" />
-          <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-            Finish Distribution
-          </span>
-        </div>
-        <div className="p-6">
-          <div className="space-y-3">
-            {distData.map((d) => {
-              const pct = races.length > 0 ? (d.count / races.length) * 100 : 0;
-              return (
-                <div key={d.label} className="flex items-center gap-3">
-                  <span className="text-xs font-mono text-text-secondary w-12 text-right">
-                    {d.label}
-                  </span>
-                  <div className="flex-1 h-6 bg-bg-elevated rounded-sm overflow-hidden">
-                    <div
-                      className="h-full rounded-sm transition-all duration-500"
-                      style={{
-                        width: `${Math.max(pct, 1)}%`,
-                        backgroundColor: distColors[d.label] || "#6b7280",
-                      }}
-                    />
-                  </div>
-                  <span className="text-xs font-mono text-text-muted w-16">
-                    {d.count} ({pct.toFixed(0)}%)
-                  </span>
+      <ArchivePanel
+        title="Finish Distribution"
+        headerId="constructor-finish-dist"
+      >
+        <div className="space-y-3">
+          {distData.map((d) => {
+            const pct = races.length > 0 ? (d.count / races.length) * 100 : 0;
+            return (
+              <div key={d.label} className="flex items-center gap-3">
+                <span className="text-xs font-mono text-text-secondary w-12 text-right">
+                  {d.label}
+                </span>
+                <div className="flex-1 h-6 bg-bg-elevated rounded-sm overflow-hidden">
+                  <div
+                    className="h-full rounded-sm transition-all duration-500"
+                    style={{
+                      width: `${Math.max(pct, 1)}%`,
+                      backgroundColor: distColors[d.label] || "#6b7280",
+                    }}
+                  />
                 </div>
-              );
-            })}
-          </div>
+                <span className="text-xs font-mono text-text-muted w-16">
+                  {d.count} ({pct.toFixed(0)}%)
+                </span>
+              </div>
+            );
+          })}
         </div>
-      </div>
+      </ArchivePanel>
     </div>
   );
 }

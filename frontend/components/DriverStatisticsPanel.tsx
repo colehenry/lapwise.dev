@@ -1,7 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { TrianglePattern } from "@/components/Patterns";
+import ArchivePanel from "@/components/archive/ArchivePanel";
+import MonoLabel from "@/components/ui/MonoLabel";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { DriverRaceHistoryResponse } from "@/lib/types";
@@ -85,65 +86,60 @@ export default function DriverStatisticsPanel({
   return (
     <div className="space-y-8">
       {/* Finish Position Distribution */}
-      <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-        <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-          <TrianglePattern id="stats-finish-position" />
-          <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-            Finish Position Distribution
-          </span>
-        </div>
-        <div className="p-6">
-          <div className="space-y-3">
-            {distData.map((d) => {
-              const pct = races.length > 0 ? (d.count / races.length) * 100 : 0;
-              return (
-                <div key={d.label} className="flex items-center gap-3">
-                  <span className="text-xs font-mono text-text-secondary w-12 text-right">
-                    {d.label}
-                  </span>
-                  <div className="flex-1 h-6 bg-bg-elevated rounded-sm overflow-hidden">
-                    <div
-                      className="h-full rounded-sm transition-all duration-500"
-                      style={{
-                        width: `${Math.max(pct, 1)}%`,
-                        backgroundColor: distColors[d.label] || "#6b7280",
-                      }}
-                    />
-                  </div>
-                  <span className="text-xs font-mono text-text-muted w-16">
-                    {d.count} ({pct.toFixed(0)}%)
-                  </span>
+      <ArchivePanel
+        title="Finish Position Distribution"
+        headerId="stats-finish-position"
+      >
+        <div className="space-y-3">
+          {distData.map((d) => {
+            const pct = races.length > 0 ? (d.count / races.length) * 100 : 0;
+            return (
+              <div key={d.label} className="flex items-center gap-3">
+                <span className="text-xs font-mono text-text-secondary w-12 text-right">
+                  {d.label}
+                </span>
+                <div className="flex-1 h-6 bg-bg-elevated rounded-sm overflow-hidden">
+                  <div
+                    className="h-full rounded-sm transition-all duration-500"
+                    style={{
+                      width: `${Math.max(pct, 1)}%`,
+                      backgroundColor: distColors[d.label] || "#6b7280",
+                    }}
+                  />
                 </div>
-              );
-            })}
-          </div>
+                <span className="text-xs font-mono text-text-muted w-16">
+                  {d.count} ({pct.toFixed(0)}%)
+                </span>
+              </div>
+            );
+          })}
         </div>
-      </div>
+      </ArchivePanel>
 
       {/* Status Breakdown */}
-      <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-        <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-          <TrianglePattern id="stats-status-breakdown" />
-          <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-            Status Breakdown
-          </span>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {statusData.map(([status, count]) => (
+      <ArchivePanel title="Status Breakdown" headerId="stats-status-breakdown">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {statusData.map(([status, count], index) => {
+            const pct = races.length > 0 ? (count / races.length) * 100 : 0;
+            return (
               <div
                 key={status}
-                className="bg-bg-elevated rounded-sm p-4 border border-border-primary/50"
+                className="bg-bg-primary/60 rounded-sm p-4 border border-border-primary text-center min-w-0"
               >
-                <p className="text-text-muted text-xs mb-1 truncate">
-                  {status}
-                </p>
-                <p className="text-white text-xl font-bold">{count}</p>
+                <MonoLabel className="block mb-2 break-words">
+                  {index + 1}. {status}
+                </MonoLabel>
+                <div className="text-2xl font-bold font-mono tabular-nums text-text-primary">
+                  {count}
+                </div>
+                <div className="mt-1 text-[10px] font-mono uppercase tracking-widest text-text-muted">
+                  {pct.toFixed(0)}% of starts
+                </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      </div>
+      </ArchivePanel>
     </div>
   );
 }

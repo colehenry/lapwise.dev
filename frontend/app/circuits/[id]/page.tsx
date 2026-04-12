@@ -3,6 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import ArchivePanel from "@/components/archive/ArchivePanel";
+import ArchiveStatTile from "@/components/archive/ArchiveStatTile";
 import CircuitLapRecords from "@/components/CircuitLapRecords";
 import CircuitLapTimeTrend from "@/components/CircuitLapTimeTrend";
 import CircuitRaceHistoryTable from "@/components/CircuitRaceHistoryTable";
@@ -12,7 +14,6 @@ import CircuitTyreStats from "@/components/CircuitTyreStats";
 import CircuitWeatherProfile from "@/components/CircuitWeatherProfile";
 import InteractiveTrackMap from "@/components/InteractiveTrackMap";
 import PageHeader from "@/components/PageHeader";
-import { TrianglePattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import TabBar from "@/components/ui/TabBar";
 import { useTabSync } from "@/hooks/useTabSync";
@@ -98,6 +99,8 @@ export default function CircuitDetailPage() {
     );
   }
 
+  const hasCoordinates = circuit.latitude != null && circuit.longitude != null;
+
   return (
     <div className="min-h-screen bg-bg-secondary">
       {/* Sticky Header */}
@@ -116,8 +119,7 @@ export default function CircuitDetailPage() {
       {/* Tab Content */}
       <div className="max-w-6xl mx-auto px-6 py-8">
         {activeTab === "overview" && (
-          <div className="space-y-8">
-            {/* Main grid: left column (map + recent race) / right column (stats + records + weather) */}
+          <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left column */}
               <div className="lg:col-span-2 flex flex-col gap-6">
@@ -137,60 +139,37 @@ export default function CircuitDetailPage() {
 
               {/* Right column */}
               <div className="lg:col-span-1 flex flex-col gap-4">
-                {/* Circuit Info Card */}
-                <div className="bg-bg-tertiary rounded-sm p-6 border border-border-primary">
-                  <h2 className="text-xl font-bold text-text-primary mb-6 flex items-center gap-2">
-                    Circuit Stats
-                  </h2>
-
-                  <div className="space-y-6">
-                    <div>
-                      <div className="text-2xl font-bold text-text-primary">
-                        {circuit.track_length_km
-                          ? `${circuit.track_length_km.toFixed(3)} km`
-                          : "N/A"}
-                      </div>
+                <ArchivePanel title="Circuit Profile">
+                  <div className="space-y-4 text-center">
+                    <div className="grid grid-cols-2 gap-2">
+                      <ArchiveStatTile
+                        label="Length"
+                        value={
+                          circuit.track_length_km
+                            ? `${circuit.track_length_km.toFixed(3)} km`
+                            : "N/A"
+                        }
+                      />
+                      <ArchiveStatTile
+                        label="Races"
+                        value={circuit.total_races}
+                      />
+                      <ArchiveStatTile
+                        label="First Race"
+                        value={circuit.first_year ?? "N/A"}
+                      />
+                      <ArchiveStatTile
+                        label="Most Recent"
+                        value={circuit.most_recent_year ?? "N/A"}
+                      />
                     </div>
 
-                    <div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-text-primary">
-                          {circuit.total_races}
-                        </span>
-                        <span className="text-text-tertiary">
-                          Grand Prix held
-                        </span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="text-xs text-text-muted uppercase tracking-wider mb-1">
-                        History
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-text-tertiary">First Race</span>
-                          <span className="text-text-primary font-medium">
-                            {circuit.first_year}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-text-tertiary">
-                            Most Recent
-                          </span>
-                          <span className="text-text-primary font-medium">
-                            {circuit.most_recent_year}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {(circuit.latitude || circuit.longitude) && (
-                      <div>
-                        <div className="text-xs text-text-muted uppercase tracking-wider mb-1">
+                    {hasCoordinates && (
+                      <div className="pt-4 border-t border-border-primary">
+                        <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1">
                           Coordinates
                         </div>
-                        <div className="text-sm font-mono text-text-tertiary">
+                        <div className="text-xs font-mono text-text-tertiary">
                           {circuit.latitude?.toFixed(4)},{" "}
                           {circuit.longitude?.toFixed(4)}
                         </div>
@@ -198,52 +177,34 @@ export default function CircuitDetailPage() {
                           href={`https://www.google.com/maps/search/?api=1&query=${circuit.latitude},${circuit.longitude}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs text-red-500 hover:text-red-400 mt-2 block"
+                          className="mt-3 inline-flex items-center rounded-sm border border-border-primary bg-bg-primary px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-secondary transition-colors hover:border-purple-500 hover:text-purple-300"
                         >
-                          View on Google Maps
+                          View Map
                         </a>
                       </div>
                     )}
                   </div>
-                </div>
+                </ArchivePanel>
 
-                {/* Lap Records Card */}
-                <div className="bg-bg-tertiary rounded-sm p-6 border border-border-primary">
+                <ArchivePanel title="Lap Records">
                   <CircuitLapRecords circuitId={id} />
-                </div>
+                </ArchivePanel>
 
-                {/* Weather Profile Card */}
-                <div className="bg-bg-tertiary rounded-sm p-6 border border-border-primary flex-1">
+                <ArchivePanel title="Weather Profile" className="flex-1">
                   <CircuitWeatherProfile circuitId={id} />
-                </div>
+                </ArchivePanel>
               </div>
             </div>
 
             {/* Lap Time Trend */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                <TrianglePattern id="lap-trend-triangles" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Lap Time Evolution
-                </span>
-              </div>
-              <div className="p-6">
-                <CircuitLapTimeTrend circuitId={id} />
-              </div>
-            </div>
+            <ArchivePanel title="Lap Time Evolution">
+              <CircuitLapTimeTrend circuitId={id} />
+            </ArchivePanel>
 
             {/* Tyre Strategy */}
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                <TrianglePattern id="tyre-stats-triangles" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                  Tyre Strategy
-                </span>
-              </div>
-              <div className="p-6">
-                <CircuitTyreStats circuitId={id} />
-              </div>
-            </div>
+            <ArchivePanel title="Tyre Strategy">
+              <CircuitTyreStats circuitId={id} />
+            </ArchivePanel>
           </div>
         )}
 
