@@ -422,6 +422,14 @@ body {
   color: var(--text-tertiary);
 }
 
+.markdown-content .markdown-clutch-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-left: 0.25rem;
+  vertical-align: -0.15em;
+}
+
 .markdown-content code {
   background: var(--background-primary);
   border: 1px solid var(--border-primary);
@@ -580,4 +588,15 @@ body {
 .delta-negative {
   color: #ef4444;
   font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms;
+    animation-iteration-count: 1;
+    scroll-behavior: auto;
+    transition-duration: 0.001ms;
+  }
 }

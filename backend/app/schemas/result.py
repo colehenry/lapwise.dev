@@ -7,7 +7,7 @@ These schemas define what data the API endpoints will return to the frontend.
 
 from pydantic import BaseModel
 from datetime import date
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 
 class CircuitInfo(BaseModel):
@@ -133,6 +133,10 @@ class DriverStanding(BaseModel):
     team_color: Optional[str] = None
     total_points: float
     headshot_url: Optional[str] = None
+    wins: int = 0
+    p2s: int = 0
+    p3s: int = 0
+    position_counts: Dict[int, int] = {}
 
     class Config:
         from_attributes = True
@@ -146,6 +150,10 @@ class ConstructorStanding(BaseModel):
     team_color: Optional[str] = None
     logo_url: Optional[str] = None
     total_points: float
+    wins: int = 0
+    p2s: int = 0
+    p3s: int = 0
+    position_counts: Dict[int, int] = {}
 
     class Config:
         from_attributes = True
@@ -186,6 +194,7 @@ class DriverQualifyingStanding(BaseModel):
     poles: int
     p2s: int
     p3s: int
+    position_counts: Dict[int, int] = {}
 
     class Config:
         from_attributes = True
@@ -202,6 +211,7 @@ class ConstructorQualifyingStanding(BaseModel):
     poles: int
     p2s: int
     p3s: int
+    position_counts: Dict[int, int] = {}
 
     class Config:
         from_attributes = True
@@ -209,12 +219,16 @@ class ConstructorQualifyingStanding(BaseModel):
 
 class QualifyingStandingsResponse(BaseModel):
     """
-    Complete qualifying standings response for GET /api/results/{season}/qualifying-standings.
+    Complete qualifying standings response for
+    GET /api/results/{season}/qualifying-standings.
     """
 
     year: int
     drivers: List[DriverQualifyingStanding]
     constructors: List[ConstructorQualifyingStanding]
+    # Dynamic points formula base: points = formula_base - position.
+    # Equals (max grid size + 1) for the season.
+    formula_base: int = 21
 
     class Config:
         from_attributes = True
@@ -379,6 +393,9 @@ class LapData(BaseModel):
     is_personal_best: Optional[bool] = None
     deleted: Optional[bool] = None  # Lap time deleted by FIA
 
+    # Session timing
+    lap_start_time_seconds: Optional[float] = None  # Session elapsed time when lap began
+
     class Config:
         from_attributes = True
 
@@ -542,3 +559,38 @@ class LapDistributionResponse(BaseModel):
     round: int
     event_name: str
     drivers: List[DriverLapDistribution]
+
+
+# ============================================================================
+# Teammate H2H Schemas (for /api/results/{season}/teammate-h2h)
+# ============================================================================
+
+
+class TeammateDriverInfo(BaseModel):
+    code: Optional[str] = None
+    full_name: str
+    headshot_url: Optional[str] = None
+    wins: int
+
+    class Config:
+        from_attributes = True
+
+
+class TeammateH2HTeam(BaseModel):
+    team_name: str
+    team_color: Optional[str] = None
+    logo_url: Optional[str] = None
+    driver_a: TeammateDriverInfo
+    driver_b: TeammateDriverInfo
+    rounds_compared: int
+
+    class Config:
+        from_attributes = True
+
+
+class TeammateH2HResponse(BaseModel):
+    year: int
+    teams: List[TeammateH2HTeam]
+
+    class Config:
+        from_attributes = True

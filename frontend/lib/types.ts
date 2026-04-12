@@ -10,6 +10,10 @@ export interface DriverStanding {
   team_color: string | null;
   total_points: number;
   headshot_url: string | null;
+  wins: number;
+  p2s: number;
+  p3s: number;
+  position_counts: Record<string, number>;
 }
 
 export interface ConstructorStanding {
@@ -18,6 +22,10 @@ export interface ConstructorStanding {
   team_color: string | null;
   logo_url: string | null;
   total_points: number;
+  wins: number;
+  p2s: number;
+  p3s: number;
+  position_counts: Record<string, number>;
 }
 
 export interface StandingsResponse {
@@ -39,6 +47,7 @@ export interface DriverQualifyingStanding {
   poles: number;
   p2s: number;
   p3s: number;
+  position_counts: Record<string, number>;
 }
 
 export interface ConstructorQualifyingStanding {
@@ -50,12 +59,14 @@ export interface ConstructorQualifyingStanding {
   poles: number;
   p2s: number;
   p3s: number;
+  position_counts: Record<string, number>;
 }
 
 export interface QualifyingStandingsResponse {
   year: number;
   drivers: DriverQualifyingStanding[];
   constructors: ConstructorQualifyingStanding[];
+  formula_base: number;
 }
 
 export interface PodiumDriver {
@@ -215,6 +226,7 @@ export type LapData = {
   fresh_tyre: boolean | null;
   is_personal_best: boolean | null;
   deleted: boolean | null;
+  lap_start_time_seconds: number | null;
 };
 
 export type TrackStatusEvent = {
@@ -541,13 +553,13 @@ export interface UserProfile {
   avatar_url: string | null;
   bio: string | null;
   created_at: string;
+  has_password: boolean;
   favorite_driver: FavoriteDriver | null;
   favorite_team: FavoriteTeam | null;
   favorite_circuit: FavoriteCircuit | null;
 }
 
 export interface UserPublicProfile {
-  id: number;
   username: string;
   role: string;
   avatar_url: string | null;

@@ -9,6 +9,7 @@ interface TelemetryPanelProps {
   selectedDriver: string | null;
   compareDriver: string | null;
   frameIndex: number;
+  hasDrs?: boolean;
   onClearCompare: () => void;
 }
 
@@ -33,7 +34,7 @@ const THROTTLE_HEIGHT = 55;
 const GEAR_HEIGHT = 40;
 const DRS_HEIGHT = 14;
 
-function getTotalHeight(showDelta: boolean) {
+function getTotalHeight(showDelta: boolean, showDrs: boolean) {
   return (
     CHART_PADDING_TOP +
     SPEED_HEIGHT +
@@ -42,8 +43,7 @@ function getTotalHeight(showDelta: boolean) {
     THROTTLE_HEIGHT +
     CHART_GAP +
     GEAR_HEIGHT +
-    CHART_GAP +
-    DRS_HEIGHT +
+    (showDrs ? CHART_GAP + DRS_HEIGHT : 0) +
     10
   );
 }
@@ -111,6 +111,7 @@ function drawTraces(
   configs: DrawConfig[],
   primaryProgressIdx: number,
   showDelta: boolean,
+  showDrs: boolean,
 ) {
   const chartWidth = width - CHART_PADDING_LEFT - CHART_PADDING_RIGHT;
 
@@ -131,8 +132,9 @@ function drawTraces(
   const tbH = THROTTLE_HEIGHT;
   const gearY0 = tbY0 + tbH + CHART_GAP;
   const gearH = GEAR_HEIGHT;
-  const drsY0 = gearY0 + gearH + CHART_GAP;
-  const drsH = DRS_HEIGHT;
+  const drsY0 = gearY0 + gearH + (showDrs ? CHART_GAP : 0);
+  const drsH = showDrs ? DRS_HEIGHT : 0;
+  const chartBottomY = showDrs ? drsY0 + drsH : gearY0 + gearH;
   const maxGear = 8;
 
   // --- Y-axis labels and grid ---
@@ -189,11 +191,13 @@ function drawTraces(
   ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
   ctx.fillText("GEAR", CHART_PADDING_LEFT - 6, gearY0 - 1);
 
-  // DRS label
-  ctx.font = LABEL_FONT;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-  ctx.textBaseline = "middle";
-  ctx.fillText("DRS", CHART_PADDING_LEFT - 6, drsY0 + drsH / 2);
+  // DRS label (hidden for 2026+ seasons)
+  if (showDrs) {
+    ctx.font = LABEL_FONT;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.textBaseline = "middle";
+    ctx.fillText("DRS", CHART_PADDING_LEFT - 6, drsY0 + drsH / 2);
+  }
 
   // --- Draw each driver's traces ---
   for (const cfg of configs) {
@@ -300,13 +304,15 @@ function drawTraces(
     }
     ctx.stroke();
 
-    // DRS blocks
-    for (let i = 0; i < drawUpTo; i++) {
-      if (lapData.drs[i]) {
-        const x = CHART_PADDING_LEFT + i * sampleScale * xScale;
-        const blockW = Math.max(sampleScale * xScale, 1);
-        ctx.fillStyle = hexToRgba("#22c55e", 0.6 * opacity);
-        ctx.fillRect(x, drsY0, blockW, drsH);
+    // DRS blocks (hidden for 2026+ seasons)
+    if (showDrs) {
+      for (let i = 0; i < drawUpTo; i++) {
+        if (lapData.drs[i]) {
+          const x = CHART_PADDING_LEFT + i * sampleScale * xScale;
+          const blockW = Math.max(sampleScale * xScale, 1);
+          ctx.fillStyle = hexToRgba("#22c55e", 0.6 * opacity);
+          ctx.fillRect(x, drsY0, blockW, drsH);
+        }
       }
     }
 
@@ -428,7 +434,7 @@ function drawTraces(
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
     ctx.moveTo(px, CHART_PADDING_TOP);
-    ctx.lineTo(px, drsY0 + drsH);
+    ctx.lineTo(px, chartBottomY);
     ctx.stroke();
     ctx.setLineDash([]);
   }
@@ -437,8 +443,8 @@ function drawTraces(
   ctx.strokeStyle = AXIS_COLOR;
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(CHART_PADDING_LEFT, drsY0 + drsH);
-  ctx.lineTo(width - CHART_PADDING_RIGHT, drsY0 + drsH);
+  ctx.moveTo(CHART_PADDING_LEFT, chartBottomY);
+  ctx.lineTo(width - CHART_PADDING_RIGHT, chartBottomY);
   ctx.stroke();
 }
 
@@ -530,6 +536,7 @@ export default function TelemetryPanel({
   selectedDriver,
   compareDriver,
   frameIndex,
+  hasDrs = true,
   onClearCompare,
 }: TelemetryPanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -614,7 +621,7 @@ export default function TelemetryPanel({
     if (!ctx) return;
 
     const hasDelta = !!compareLapData;
-    const totalHeight = getTotalHeight(hasDelta);
+    const totalHeight = getTotalHeight(hasDelta, hasDrs);
     const dpr = window.devicePixelRatio || 1;
     canvas.width = width * dpr;
     canvas.height = totalHeight * dpr;
@@ -639,7 +646,7 @@ export default function TelemetryPanel({
       });
     }
 
-    drawTraces(ctx, width, configs, progressIdx, hasDelta);
+    drawTraces(ctx, width, configs, progressIdx, hasDelta, hasDrs);
   }, [
     width,
     lapData,
@@ -650,6 +657,7 @@ export default function TelemetryPanel({
     compareColor,
     collapsed,
     selectedDriver,
+    hasDrs,
   ]);
 
   // Mouse hover for tooltip
@@ -742,7 +750,7 @@ export default function TelemetryPanel({
                 ref={canvasRef}
                 style={{
                   width: "100%",
-                  height: getTotalHeight(!!compareLapData),
+                  height: getTotalHeight(!!compareLapData, hasDrs),
                 }}
                 className="block"
                 onMouseMove={handleMouseMove}
@@ -754,7 +762,7 @@ export default function TelemetryPanel({
                   className="absolute top-0 pointer-events-none z-10"
                   style={{
                     left: tooltip.snappedX,
-                    height: getTotalHeight(!!compareLapData),
+                    height: getTotalHeight(!!compareLapData, hasDrs),
                     width: 1,
                     background: "rgba(255, 255, 255, 0.2)",
                   }}
@@ -874,16 +882,20 @@ export default function TelemetryPanel({
                       <span className="text-text-primary">
                         {tooltip.primary.gear}
                       </span>
-                      <span>DRS</span>
-                      <span
-                        className={
-                          tooltip.primary.drs
-                            ? "text-green-400"
-                            : "text-text-muted"
-                        }
-                      >
-                        {tooltip.primary.drs ? "OPEN" : "OFF"}
-                      </span>
+                      {hasDrs && (
+                        <>
+                          <span>DRS</span>
+                          <span
+                            className={
+                              tooltip.primary.drs
+                                ? "text-green-400"
+                                : "text-text-muted"
+                            }
+                          >
+                            {tooltip.primary.drs ? "OPEN" : "OFF"}
+                          </span>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>

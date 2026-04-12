@@ -42,10 +42,10 @@ export default function ProfilePage() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery<PostListResponse>({
-    queryKey: ["user-posts", profile?.id],
+    queryKey: ["user-posts", profile?.username],
     queryFn: async ({ pageParam }) => {
       const params = new URLSearchParams({
-        author_id: String(profile?.id),
+        author_username: profile?.username ?? username,
         sort: "new",
         limit: "10",
       });
@@ -58,7 +58,7 @@ export default function ProfilePage() {
     },
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.next_cursor,
-    enabled: !!profile?.id,
+    enabled: !!profile?.username,
   });
 
   const allPosts =

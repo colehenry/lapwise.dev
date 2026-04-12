@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import GoogleButton, { OrDivider } from "@/components/auth/GoogleButton";
 import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { apiUrl } from "@/lib/api";
@@ -107,6 +108,9 @@ export default function RegisterPage() {
         <p className="text-text-muted text-sm mb-8">
           Create an account to join the discussion.
         </p>
+
+        <GoogleButton />
+        <OrDivider />
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

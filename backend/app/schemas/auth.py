@@ -100,6 +100,7 @@ class UserProfile(BaseModel):
     avatar_url: Optional[str] = None
     bio: Optional[str] = None
     created_at: datetime
+    has_password: bool = True
     favorite_driver: FavoriteDriverResponse | None = None
     favorite_team: FavoriteTeamResponse | None = None
     favorite_circuit: FavoriteCircuitResponse | None = None
@@ -144,7 +145,7 @@ class ResetPasswordRequest(BaseModel):
 
 
 class ChangePasswordRequest(BaseModel):
-    old_password: str
+    old_password: str | None = None
     new_password: str
 
     @field_validator("new_password")
@@ -164,7 +165,6 @@ class ChangePasswordRequest(BaseModel):
 
 
 class UserPublicProfile(BaseModel):
-    id: int
     username: str
     role: str
     avatar_url: Optional[str] = None
