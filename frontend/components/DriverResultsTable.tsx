@@ -107,7 +107,7 @@ export default function DriverResultsTable({
               e.target.value === "all" ? "all" : Number(e.target.value),
             )
           }
-          className="bg-bg-tertiary border border-border-primary rounded px-3 py-1.5 text-sm text-text-primary focus:border-purple-500 focus:outline-none"
+          className="bg-bg-tertiary border border-border-primary rounded-sm px-3 py-1.5 text-sm text-text-primary focus:border-purple-500 focus:outline-none"
         >
           <option value="all">All Seasons</option>
           {data.available_years.map((y) => (
@@ -122,10 +122,10 @@ export default function DriverResultsTable({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-border-primary">
+      <div className="overflow-x-auto rounded-sm border border-border-primary bg-bg-tertiary">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-bg-tertiary border-b border-border-primary">
+            <tr className="bg-bg-primary border-b border-border-primary">
               <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
                 Year
               </th>
@@ -161,7 +161,7 @@ export default function DriverResultsTable({
               return (
                 <tr
                   key={`${race.year}-${race.round}-${idx}`}
-                  className="border-b border-border-primary/50 hover:bg-bg-tertiary/50 transition-colors"
+                  className="border-b border-border-primary/50 hover:bg-bg-elevated/50 transition-colors"
                 >
                   <td className="px-3 py-2 text-text-secondary font-mono text-xs">
                     {race.year}

@@ -13,7 +13,9 @@ import {
   YAxis,
 } from "recharts";
 import {
+  CHART_AXIS_LABEL_STYLE,
   CHART_COLORS,
+  CHART_TYPOGRAPHY,
   CustomXAxisTickRace,
   CustomXAxisTickSeason,
   RangeSelector,
@@ -67,15 +69,17 @@ function SeasonTooltipContent({
 
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-sm p-3 shadow-xl">
-      <p className="font-bold text-white mb-2">{data.year}</p>
+      <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-2`}>
+        {data.year}
+      </p>
       <div className="space-y-1">
         {showTeam && (
-          <p className="text-sm text-text-secondary">
-            <span className="font-semibold">Team:</span> {data.team_name}
+          <p className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-sm`}>
+            Team: {data.team_name}
           </p>
         )}
-        <p className="text-sm text-text-secondary">
-          <span className="font-semibold">Position:</span>{" "}
+        <p className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-sm`}>
+          Position:{" "}
           {data.championship_position
             ? `P${data.championship_position}`
             : "N/A"}
@@ -97,8 +101,8 @@ function SeasonTooltipContent({
             </span>
           )}
         </p>
-        <p className="text-sm text-text-secondary">
-          <span className="font-semibold">Points:</span> {data.total_points}
+        <p className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-sm`}>
+          Points: {data.total_points}
           {pointsChange !== null && (
             <span
               className={`ml-2 font-semibold ${
@@ -244,7 +248,7 @@ export default function EntityHistoryGraph({
       <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
         <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
           <TrianglePattern id="championship-history-empty-triangles" />
-          <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+          <span className={`relative z-10 ${CHART_TYPOGRAPHY.titleClassName}`}>
             Championship History
           </span>
         </div>
@@ -282,7 +286,7 @@ export default function EntityHistoryGraph({
     <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
       <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
         <TrianglePattern id="championship-history-triangles" />
-        <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+        <span className={`relative z-10 ${CHART_TYPOGRAPHY.titleClassName}`}>
           Championship History
         </span>
       </div>
@@ -375,8 +379,7 @@ export default function EntityHistoryGraph({
                       : "Total Points",
                   angle: -90,
                   position: "insideLeft",
-                  fill: CHART_COLORS.textTertiary,
-                  fontSize: 12,
+                  ...CHART_AXIS_LABEL_STYLE,
                 }}
               />
               <Tooltip content={<CustomTooltip />} cursor={false} />
@@ -441,8 +444,7 @@ export default function EntityHistoryGraph({
                       : "Total Points",
                   angle: -90,
                   position: "insideLeft",
-                  fill: CHART_COLORS.textTertiary,
-                  fontSize: 12,
+                  ...CHART_AXIS_LABEL_STYLE,
                 }}
               />
               <Tooltip content={<CustomTooltip />} cursor={false} />
@@ -454,7 +456,7 @@ export default function EntityHistoryGraph({
                 {raceChartData.map(
                   (entry: Record<string, unknown>, index: number) => (
                     <Cell
-                      key={`race-bar-${String(entry.round ?? index)}`}
+                      key={`race-bar-${String(entry.year ?? "unknown")}-${String(entry.round ?? index)}-${String(entry.session_type ?? "race")}-${index}`}
                       fill={
                         entry.team_color
                           ? `#${entry.team_color}`

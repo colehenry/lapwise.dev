@@ -4,6 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
+import ArchivePanel from "@/components/archive/ArchivePanel";
+import ArchiveStatTile from "@/components/archive/ArchiveStatTile";
 import DriverResultsTable from "@/components/DriverResultsTable";
 import DriverSeasonHistoryGraph from "@/components/DriverSeasonHistoryGraph";
 import DriverStatisticsPanel from "@/components/DriverStatisticsPanel";
@@ -80,6 +83,32 @@ export default function DriverProfilePage() {
     { label: "Podiums", value: data.total_podiums },
     { label: "Total Points", value: Math.round(data.total_points) },
   ];
+  const teamColor = data.current_team_color
+    ? `#${data.current_team_color}`
+    : null;
+  const highlights = [
+    {
+      label: "Win Rate",
+      value:
+        data.total_races > 0
+          ? `${((data.total_wins / data.total_races) * 100).toFixed(1)}%`
+          : "0%",
+    },
+    {
+      label: "Podium Rate",
+      value:
+        data.total_races > 0
+          ? `${((data.total_podiums / data.total_races) * 100).toFixed(1)}%`
+          : "0%",
+    },
+    {
+      label: "Points per Race",
+      value:
+        data.total_races > 0
+          ? (data.total_points / data.total_races).toFixed(2)
+          : "0",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-bg-secondary">
@@ -99,115 +128,62 @@ export default function DriverProfilePage() {
       {/* Tab Content */}
       <div className="max-w-5xl mx-auto px-6 py-8">
         {activeTab === "overview" && (
-          <div className="space-y-8">
-            {/* Header section - Centered */}
-            <div className="flex flex-col items-center gap-8">
-              {/* Driver Photo & Nationality */}
-              <div className="flex flex-col items-center gap-6 w-full">
-                {data.headshot_url ? (
-                  <div className="relative group flex-shrink-0">
-                    <div className="absolute -inset-1 bg-gradient-to-b from-purple-500/20 to-transparent rounded-sm blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
-                    <div className="relative">
-                      <Image
-                        src={data.headshot_url}
-                        alt={data.full_name}
-                        width={240}
-                        height={240}
-                        className="w-56 h-56 rounded-sm object-cover border border-border-primary bg-bg-tertiary"
-                        style={{
-                          borderBottomColor: data.current_team_color
-                            ? `#${data.current_team_color}`
-                            : "transparent",
-                          borderBottomWidth: data.current_team_color
-                            ? "4px"
-                            : "1px",
-                        }}
-                      />
-                      <div className="absolute top-2 right-2 bg-bg-primary/80 backdrop-blur-sm border border-border-primary px-2 py-1 rounded-sm">
-                        <span className="text-xl font-mono font-bold text-text-primary leading-none">
-                          {data.driver_code}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+          <div className="space-y-6">
+            <ArchiveDataHeader
+              title={data.full_name}
+              eyebrow="Driver Profile"
+              subtitle={`${data.current_team ?? "Independent entry"}${data.driver_number ? ` · #${data.driver_number}` : ""}`}
+              accentColor={teamColor}
+              stats={stats}
+              media={
+                data.headshot_url ? (
+                  <Image
+                    src={data.headshot_url}
+                    alt={data.full_name}
+                    width={180}
+                    height={180}
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
-                  <div className="w-56 h-56 rounded-sm flex items-center justify-center text-5xl font-bold text-text-tertiary border border-border-primary bg-bg-tertiary">
+                  <span className="text-5xl font-bold font-mono text-text-tertiary">
                     {data.driver_code}
-                  </div>
-                )}
-
-                {/* Country Info */}
-                {data.country_code && (
-                  <div className="flex items-center gap-3 bg-bg-tertiary border border-border-primary px-6 py-3 rounded-sm w-fit">
-                    <span className="text-3xl">
+                  </span>
+                )
+              }
+              meta={
+                <div className="flex items-center gap-3 bg-bg-primary border border-border-primary rounded-sm px-3 py-2">
+                  {data.country_code && (
+                    <span className="text-2xl">
                       {getDriverFlagEmoji(data.country_code)}
                     </span>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-text-muted uppercase font-bold tracking-widest leading-none mb-1">
-                        Nationality
-                      </span>
-                      <span className="text-lg font-bold text-text-primary leading-none">
-                        {getCountryName(data.country_code)}
-                      </span>
+                  )}
+                  <div>
+                    <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+                      Nationality
+                    </div>
+                    <div className="text-sm font-semibold text-text-primary">
+                      {data.country_code
+                        ? getCountryName(data.country_code)
+                        : "Unknown"}
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              }
+            />
 
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 w-full">
-                {stats.map((stat) => (
-                  <div
+            <ArchivePanel title="Career Highlights">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {highlights.map((stat) => (
+                  <ArchiveStatTile
                     key={stat.label}
-                    className="bg-bg-tertiary rounded-sm border border-border-primary p-4 flex flex-col items-center text-center"
-                  >
-                    <p className="text-text-muted text-[10px] uppercase font-bold tracking-wider mb-1">
-                      {stat.label}
-                    </p>
-                    <p className="text-text-primary text-2xl font-bold font-mono">
-                      {stat.value}
-                    </p>
-                  </div>
+                    label={stat.label}
+                    value={stat.value}
+                    accentColor={teamColor}
+                  />
                 ))}
               </div>
-            </div>
+            </ArchivePanel>
 
-            {/* Career Highlights - Restored to left-aligned */}
-            <div className="bg-bg-tertiary rounded-sm p-8 border border-border-primary">
-              <h2 className="text-sm font-bold text-text-secondary font-mono mb-6">
-                Career Highlights
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <p className="text-text-muted text-sm mb-2">Win Rate</p>
-                  <p className="text-text-primary text-2xl font-bold">
-                    {data.total_races > 0
-                      ? `${((data.total_wins / data.total_races) * 100).toFixed(1)}%`
-                      : "0%"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-text-muted text-sm mb-2">Podium Rate</p>
-                  <p className="text-text-primary text-2xl font-bold">
-                    {data.total_races > 0
-                      ? `${((data.total_podiums / data.total_races) * 100).toFixed(1)}%`
-                      : "0%"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-text-muted text-sm mb-2">
-                    Points per Race
-                  </p>
-                  <p className="text-text-primary text-2xl font-bold">
-                    {data.total_races > 0
-                      ? (data.total_points / data.total_races).toFixed(2)
-                      : "0"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Championship History Graph - Restored */}
             <DriverSeasonHistoryGraph driverCode={driverCode} />
           </div>
         )}

@@ -4,6 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
+import ArchivePanel from "@/components/archive/ArchivePanel";
+import ArchiveStatTile from "@/components/archive/ArchiveStatTile";
 import ConstructorResultsTable from "@/components/ConstructorResultsTable";
 import ConstructorSeasonHistoryGraph from "@/components/ConstructorSeasonHistoryGraph";
 import ConstructorStatisticsPanel from "@/components/ConstructorStatisticsPanel";
@@ -90,6 +93,30 @@ export default function ConstructorProfilePage() {
     { label: "Podiums", value: data.total_podiums },
     { label: "Total Points", value: Math.round(data.total_points) },
   ];
+  const teamColor = data.team_color ? `#${data.team_color}` : null;
+  const highlights = [
+    {
+      label: "Win Rate",
+      value:
+        data.total_races > 0
+          ? `${((data.total_wins / data.total_races) * 100).toFixed(1)}%`
+          : "0%",
+    },
+    {
+      label: "Podium Rate",
+      value:
+        data.total_races > 0
+          ? `${((data.total_podiums / data.total_races) * 100).toFixed(1)}%`
+          : "0%",
+    },
+    {
+      label: "Points per Race",
+      value:
+        data.total_races > 0
+          ? (data.total_points / data.total_races).toFixed(2)
+          : "0",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-bg-secondary">
@@ -109,105 +136,59 @@ export default function ConstructorProfilePage() {
       {/* Tab Content */}
       <div className="max-w-5xl mx-auto px-6 py-8">
         {activeTab === "overview" && (
-          <div className="space-y-8">
-            {/* Header section - Centered */}
-            <div className="flex flex-col items-center gap-8">
-              {/* Constructor Logo */}
-              {data.logo_url ? (
-                <div className="relative group flex-shrink-0">
-                  <div className="absolute -inset-1 bg-gradient-to-b from-purple-500/20 to-transparent rounded-sm blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
-                  <div
-                    className="relative w-56 h-56 rounded-sm overflow-hidden border border-border-primary bg-bg-tertiary flex items-center justify-center p-8"
-                    style={{
-                      borderBottomColor: data.team_color
-                        ? `#${data.team_color}`
-                        : "transparent",
-                      borderBottomWidth: data.team_color ? "4px" : "1px",
-                    }}
-                  >
-                    <Image
-                      src={data.logo_url}
-                      alt={data.team_name}
-                      width={180}
-                      height={180}
-                      className="w-full h-full object-contain"
-                      unoptimized={data.logo_url.includes("wikimedia.org")}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className="w-56 h-56 rounded-sm flex items-center justify-center border border-border-primary bg-bg-tertiary"
-                  style={{
-                    borderBottomColor: data.team_color
-                      ? `#${data.team_color}`
-                      : "transparent",
-                    borderBottomWidth: data.team_color ? "4px" : "1px",
-                  }}
-                >
+          <div className="space-y-6">
+            <ArchiveDataHeader
+              title={data.team_name}
+              eyebrow="Constructor Profile"
+              subtitle={`${data.latest_season ? `Active in ${data.latest_season}` : "Historical constructor"}${data.best_finish ? ` · Best finish ${getOrdinalSuffix(data.best_finish)}` : ""}`}
+              accentColor={teamColor}
+              stats={stats}
+              media={
+                data.logo_url ? (
+                  <Image
+                    src={data.logo_url}
+                    alt={data.team_name}
+                    width={180}
+                    height={180}
+                    className="h-full w-full object-contain p-7"
+                    unoptimized={data.logo_url.includes("wikimedia.org")}
+                  />
+                ) : (
                   <span className="text-text-primary font-bold text-5xl text-center px-4">
                     {data.team_name
                       .split(" ")
                       .map((word) => word[0])
                       .join("")}
                   </span>
-                </div>
-              )}
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 w-full">
-                {stats.map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="bg-bg-tertiary rounded-sm border border-border-primary p-4 flex flex-col items-center text-center"
-                  >
-                    <p className="text-text-muted text-[10px] uppercase font-bold tracking-wider mb-1">
-                      {stat.label}
-                    </p>
-                    <p className="text-text-primary text-2xl font-bold font-mono tabular-nums">
-                      {stat.value}
-                    </p>
+                )
+              }
+              meta={
+                data.best_finish ? (
+                  <div className="bg-bg-primary border border-border-primary rounded-sm px-3 py-2">
+                    <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+                      Best Finish
+                    </div>
+                    <div className="text-sm font-semibold text-text-primary">
+                      {getOrdinalSuffix(data.best_finish)}
+                    </div>
                   </div>
+                ) : null
+              }
+            />
+
+            <ArchivePanel title="Constructor Highlights">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {highlights.map((stat) => (
+                  <ArchiveStatTile
+                    key={stat.label}
+                    label={stat.label}
+                    value={stat.value}
+                    accentColor={teamColor}
+                  />
                 ))}
               </div>
-            </div>
+            </ArchivePanel>
 
-            {/* Team Highlights - Restored to left-aligned */}
-            <div className="bg-bg-tertiary rounded-sm border border-border-primary p-8">
-              <h2 className="text-sm font-bold text-text-secondary font-mono mb-6">
-                Constructor Highlights
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <p className="text-text-muted text-sm mb-2">Win Rate</p>
-                  <p className="text-text-primary text-2xl font-bold">
-                    {data.total_races > 0
-                      ? `${((data.total_wins / data.total_races) * 100).toFixed(1)}%`
-                      : "0%"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-text-muted text-sm mb-2">Podium Rate</p>
-                  <p className="text-text-primary text-2xl font-bold">
-                    {data.total_races > 0
-                      ? `${((data.total_podiums / data.total_races) * 100).toFixed(1)}%`
-                      : "0%"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-text-muted text-sm mb-2">
-                    Points per Race
-                  </p>
-                  <p className="text-text-primary text-2xl font-bold">
-                    {data.total_races > 0
-                      ? (data.total_points / data.total_races).toFixed(2)
-                      : "0"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Championship History Graph - Restored */}
             <ConstructorSeasonHistoryGraph teamName={teamName} />
           </div>
         )}
