@@ -11,7 +11,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS } from "@/components/chart-primitives";
+import {
+  CHART_AXIS_LABEL_STYLE,
+  CHART_COLORS,
+  CHART_TYPOGRAPHY,
+} from "@/components/chart-primitives";
 import DriverMultiSelect from "@/components/charts/DriverMultiSelect";
 import {
   sortDriversByClassification,
@@ -61,12 +65,15 @@ const CustomTooltip = ({
   if (!d) return null;
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs space-y-1">
-      <p className="font-bold text-text-primary font-mono">{d.driverCode}</p>
-      <p className="font-mono" style={{ color: getCompoundColor(d.compound) }}>
+      <p className={CHART_TYPOGRAPHY.tooltipTitleClassName}>{d.driverCode}</p>
+      <p
+        className={CHART_TYPOGRAPHY.tooltipValueClassName}
+        style={{ color: getCompoundColor(d.compound) }}
+      >
         {d.compound}
       </p>
       <div className="border-t border-border-primary/50 pt-1 space-y-0.5">
-        <p className="text-text-secondary font-mono">
+        <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
           Median&nbsp;&nbsp;{formatLapTime(d.median)}
         </p>
         <p className="text-text-muted font-mono text-[10px]">
@@ -271,9 +278,7 @@ export default function LongRunPaceChart({
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                 style={{ backgroundColor: COMPOUND_COLORS[c] }}
               />
-              <span className="text-[10px] font-mono text-text-muted uppercase">
-                {c}
-              </span>
+              <span className={CHART_TYPOGRAPHY.keyClassName}>{c}</span>
             </div>
           ))}
 
@@ -316,7 +321,7 @@ export default function LongRunPaceChart({
                 value: "Lap Time",
                 position: "insideBottomRight",
                 offset: -4,
-                style: { fill: CHART_COLORS.textTertiary, fontSize: 10 },
+                style: CHART_AXIS_LABEL_STYLE,
               }}
             />
             <YAxis

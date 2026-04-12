@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { CHART_TYPOGRAPHY } from "@/components/chart-primitives";
 import DriverMultiSelect from "@/components/charts/DriverMultiSelect";
 import {
   sortDriversByClassification,
@@ -234,22 +235,24 @@ export default function PracticeSectorHeatmap({
     <div className="space-y-3">
       {/* Legend + selector row */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-4 flex-wrap text-[10px] font-mono text-text-muted uppercase tracking-widest">
+        <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-sm bg-purple-500/20 border border-purple-500/40" />
-            <span>Session fastest</span>
+            <span className={CHART_TYPOGRAPHY.keyClassName}>
+              Session fastest
+            </span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-sm bg-green-500/15 border border-green-500/30" />
-            <span>≤ +0.1s</span>
+            <span className={CHART_TYPOGRAPHY.keyClassName}>≤ +0.1s</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-sm bg-yellow-500/10 border border-yellow-500/20" />
-            <span>≤ +0.3s</span>
+            <span className={CHART_TYPOGRAPHY.keyClassName}>≤ +0.3s</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-sm bg-red-500/10 border border-red-500/20" />
-            <span>&gt; +0.6s</span>
+            <span className={CHART_TYPOGRAPHY.keyClassName}>&gt; +0.6s</span>
           </div>
         </div>
 

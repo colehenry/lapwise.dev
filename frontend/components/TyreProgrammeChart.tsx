@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { CHART_TYPOGRAPHY } from "@/components/chart-primitives";
 import DriverMultiSelect from "@/components/charts/DriverMultiSelect";
 import {
   sortDriversByClassification,
@@ -188,7 +189,7 @@ export default function TyreProgrammeChart({
       {/* Compound pace delta summary */}
       {compoundPace.length >= 2 && (
         <div className="flex items-center gap-2 flex-wrap border border-border-primary/50 rounded-sm px-3 py-2 bg-bg-primary/30">
-          <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest flex-shrink-0">
+          <span className={`${CHART_TYPOGRAPHY.keyClassName} flex-shrink-0`}>
             Compound pace
           </span>
           <div className="w-px h-3 bg-border-primary flex-shrink-0" />
@@ -201,12 +202,12 @@ export default function TyreProgrammeChart({
                   style={{ backgroundColor: color }}
                 />
                 <span
-                  className="text-[11px] font-bold font-mono uppercase"
+                  className={CHART_TYPOGRAPHY.keyClassName}
                   style={{ color }}
                 >
                   {cp.compound.slice(0, 1)}
                 </span>
-                <span className="text-[11px] font-mono text-text-secondary">
+                <span className={CHART_TYPOGRAPHY.keyClassName}>
                   {cp.delta === 0 ? "baseline" : `+${cp.delta.toFixed(3)}s`}
                 </span>
               </div>
@@ -224,9 +225,7 @@ export default function TyreProgrammeChart({
                 className="w-3 h-3 rounded-sm flex-shrink-0"
                 style={{ backgroundColor: COMPOUND_COLORS[c] ?? "#888" }}
               />
-              <span className="text-[10px] font-mono text-text-muted uppercase">
-                {c}
-              </span>
+              <span className={CHART_TYPOGRAPHY.keyClassName}>{c}</span>
             </div>
           ))}
         </div>

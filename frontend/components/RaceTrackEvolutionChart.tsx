@@ -11,7 +11,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS } from "@/components/chart-primitives";
+import {
+  CHART_AXIS_LABEL_STYLE,
+  CHART_COLORS,
+  CHART_TYPOGRAPHY,
+} from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import { driverKey, type LapTimesResponse } from "@/lib/types";
 
@@ -309,7 +313,7 @@ export default function RaceTrackEvolutionChart({
                   }}
                 />
                 <span
-                  className="text-[10px] font-mono uppercase transition-colors"
+                  className={`${CHART_TYPOGRAPHY.keyClassName} transition-colors`}
                   style={{ color: isOn ? COMPOUND_COLORS[c] : undefined }}
                 >
                   {c}
@@ -319,7 +323,7 @@ export default function RaceTrackEvolutionChart({
           })}
           <div className="flex items-center gap-1.5">
             <div className="w-5 h-0.5 flex-shrink-0 bg-white/80 rounded-full" />
-            <span className="text-[10px] font-mono text-text-muted">Trend</span>
+            <span className={CHART_TYPOGRAPHY.keyClassName}>Trend</span>
           </div>
 
           {/* Driver selector */}
@@ -383,7 +387,7 @@ export default function RaceTrackEvolutionChart({
               value: "Lap",
               position: "insideBottomRight",
               offset: -4,
-              style: { fill: CHART_COLORS.textTertiary, fontSize: 10 },
+              style: CHART_AXIS_LABEL_STYLE,
             }}
           />
           <YAxis
@@ -406,8 +410,12 @@ export default function RaceTrackEvolutionChart({
               if (!p?.y) return null;
               return (
                 <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs">
-                  <p className="text-text-muted font-mono mb-0.5">Lap {p.x}</p>
-                  <p className="text-text-secondary font-mono">
+                  <p
+                    className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-0.5`}
+                  >
+                    Lap {p.x}
+                  </p>
+                  <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
                     {formatTime(p.y)}
                   </p>
                 </div>

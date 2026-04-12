@@ -12,6 +12,26 @@ export const CHART_COLORS = {
   purpleHover: "#8a1ad0", // purple-700 hover
 } as const;
 
+export const CHART_TYPOGRAPHY = {
+  titleClassName:
+    "text-xs font-bold font-mono text-text-secondary uppercase tracking-widest",
+  keyClassName:
+    "[font-family:var(--font-space-grotesk)] text-xs font-semibold text-text-secondary tracking-[0.025em]",
+  tooltipTitleClassName:
+    "[font-family:var(--font-space-grotesk)] font-semibold text-text-primary tracking-[0.025em]",
+  tooltipValueClassName:
+    "[font-family:var(--font-space-grotesk)] font-semibold text-text-secondary tracking-[0.02em]",
+  axisLabelClassName:
+    "text-[11px] font-bold text-text-muted font-mono uppercase tracking-[0.2em]",
+} as const;
+
+export const CHART_AXIS_LABEL_STYLE = {
+  fill: CHART_COLORS.textMuted,
+  fontSize: 11,
+  fontFamily: "var(--font-jetbrains)",
+  fontWeight: 700,
+} as const;
+
 export interface RangeSelectorProps {
   availableYears: number[];
   currentStart: number;

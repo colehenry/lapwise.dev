@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CHART_TYPOGRAPHY } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl, isValidHeadshotUrl } from "@/lib/api";
 
 // Types
@@ -437,7 +438,7 @@ export default function QualifyingSectorComparison({
                 className="w-2.5 h-2.5 rounded-sm"
                 style={{ backgroundColor: SECTOR_COLORS.purple }}
               />
-              <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
+              <span className={CHART_TYPOGRAPHY.keyClassName}>
                 Overall Best
               </span>
             </div>
@@ -446,18 +447,14 @@ export default function QualifyingSectorComparison({
                 className="w-2.5 h-2.5 rounded-sm"
                 style={{ backgroundColor: SECTOR_COLORS.green }}
               />
-              <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
-                Faster
-              </span>
+              <span className={CHART_TYPOGRAPHY.keyClassName}>Faster</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div
                 className="w-2.5 h-2.5 rounded-sm"
                 style={{ backgroundColor: SECTOR_COLORS.yellow }}
               />
-              <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
-                Slower
-              </span>
+              <span className={CHART_TYPOGRAPHY.keyClassName}>Slower</span>
             </div>
           </div>
         </div>

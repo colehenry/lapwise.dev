@@ -13,7 +13,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS } from "@/components/chart-primitives";
+import {
+  CHART_AXIS_LABEL_STYLE,
+  CHART_COLORS,
+  CHART_TYPOGRAPHY,
+} from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import {
   type DriverLapTimes,
@@ -412,7 +416,9 @@ const CustomTooltip = ({
 
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl max-w-xs">
-      <p className="font-bold text-text-primary mb-2">Lap {label}</p>
+      <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-2`}>
+        Lap {label}
+      </p>
       {lapEvents && lapEvents.length > 0 && (
         <div className="mb-2 space-y-0.5">
           {lapEvents.map((evt) => (
@@ -443,7 +449,9 @@ const CustomTooltip = ({
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: entry.color }}
               />
-              <span className="font-bold text-text-primary text-sm">
+              <span
+                className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-sm`}
+              >
                 {entry.name?.includes("(")
                   ? entry.name.split(" (")[0]
                   : entry.name}
@@ -464,7 +472,7 @@ const CustomTooltip = ({
               {viewMode === "position" && entry.value != null && (
                 <div>
                   <span className="text-text-muted">Position:</span>{" "}
-                  <span className="font-mono text-text-primary font-semibold">
+                  <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
                     P{entry.value}
                   </span>
                 </div>
@@ -474,7 +482,7 @@ const CustomTooltip = ({
                   <span className="text-text-muted">
                     {viewMode === "gapToLeader" ? "Gap:" : "Time:"}
                   </span>{" "}
-                  <span className="font-mono text-text-primary">
+                  <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
                     {viewMode === "gapToLeader" && entry.value === 0
                       ? "Leader"
                       : viewMode === "gapToLeader"
@@ -503,7 +511,10 @@ const CustomTooltip = ({
               {lapData?.pit_duration_seconds != null && (
                 <div>
                   <span className="text-text-muted">Pit stop:</span>{" "}
-                  <span className="font-mono text-orange-400">
+                  <span
+                    className={CHART_TYPOGRAPHY.tooltipValueClassName}
+                    style={{ color: "#fb923c" }}
+                  >
                     {lapData.pit_duration_seconds.toFixed(1)}s
                   </span>
                 </div>
@@ -511,15 +522,15 @@ const CustomTooltip = ({
               {lapData?.sector1_time_seconds != null && (
                 <div className="flex gap-2">
                   <span className="text-text-muted">S1</span>
-                  <span className="font-mono text-text-primary">
+                  <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
                     {lapData.sector1_time_seconds.toFixed(3)}
                   </span>
                   <span className="text-text-muted">S2</span>
-                  <span className="font-mono text-text-primary">
+                  <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
                     {lapData.sector2_time_seconds?.toFixed(3) ?? "-"}
                   </span>
                   <span className="text-text-muted">S3</span>
-                  <span className="font-mono text-text-primary">
+                  <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
                     {lapData.sector3_time_seconds?.toFixed(3) ?? "-"}
                   </span>
                 </div>
@@ -1260,9 +1271,7 @@ export default function LapTimeByLapGraph({
     return (
       <div>
         <div className="h-8 mb-4 flex items-center">
-          <h3 className="text-sm font-bold text-text-secondary font-mono">
-            Lap Time Analysis
-          </h3>
+          <h3 className={CHART_TYPOGRAPHY.titleClassName}>Lap Time Analysis</h3>
         </div>
         <div className="relative" style={{ height: "400px" }}>
           <div className="absolute inset-0 flex items-center justify-center">
@@ -1390,7 +1399,7 @@ export default function LapTimeByLapGraph({
   return (
     <div className={embedded ? "min-h-[420px]" : ""}>
       <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-        <h3 className="text-sm font-bold text-text-secondary font-mono">
+        <h3 className={CHART_TYPOGRAPHY.titleClassName}>
           {data.event_name.replace("Grand Prix", "GP")} - {viewLabels[viewMode]}
         </h3>
 
@@ -1553,11 +1562,7 @@ export default function LapTimeByLapGraph({
                     value: "Lap",
                     position: "insideBottomRight",
                     offset: -5,
-                    style: {
-                      fontWeight: "bold",
-                      fill: CHART_COLORS.textMuted,
-                      fontSize: 11,
-                    },
+                    style: CHART_AXIS_LABEL_STYLE,
                   }}
                   tick={<CustomXAxisTick />}
                 />
@@ -1568,11 +1573,7 @@ export default function LapTimeByLapGraph({
                     angle: -90,
                     position: "insideLeft",
                     dx: -10,
-                    style: {
-                      fontWeight: "bold",
-                      fill: CHART_COLORS.textMuted,
-                      fontSize: 11,
-                    },
+                    style: CHART_AXIS_LABEL_STYLE,
                   }}
                   tick={getYAxisTick()}
                   domain={getYAxisDomain()}
@@ -1655,7 +1656,9 @@ export default function LapTimeByLapGraph({
                           className="w-3 h-0.5"
                           style={{ backgroundColor: color }}
                         />
-                        <span className="text-[9px] font-bold text-text-secondary font-mono leading-tight">
+                        <span
+                          className={`${CHART_TYPOGRAPHY.keyClassName} text-[9px] leading-tight`}
+                        >
                           {driver.driver_code || driver.full_name}
                         </span>
                       </div>
