@@ -14,7 +14,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       <AuthProvider>
         <ScrollbarHandler />
         <Navigation />
-        <main className="min-h-screen pt-14 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
+        <main className="pt-14 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
           {children}
         </main>
         <Footer />

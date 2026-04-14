@@ -633,14 +633,14 @@ export default function ResultsPage() {
         </div>
 
         {/* ── Championship Battle Graph ── */}
-        <div className="mb-6 bg-bg-tertiary border border-border-primary rounded-sm shadow-sm">
+        <div className="mb-6 overflow-hidden bg-bg-tertiary border border-border-primary rounded-sm shadow-sm">
           <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
             <TrianglePattern id="points-triangles" />
             <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
               Championship Battle
             </span>
           </div>
-          <div className="p-4">
+          <div className="min-w-0 p-3 md:p-4">
             <PointsByRoundGraph season={season} pointsType={sessionType} />
           </div>
         </div>
@@ -679,17 +679,17 @@ export default function ResultsPage() {
                     onClick={() =>
                       handleRoundClick(round.round, round.session_type)
                     }
-                    className={`w-full bg-bg-tertiary border border-border-primary rounded-sm shadow-sm transition-all duration-150 cursor-pointer text-left min-h-[156px] md:h-[140px] relative overflow-hidden ${
+                    className={`w-full bg-bg-tertiary border border-border-primary rounded-sm shadow-sm transition-all duration-150 cursor-pointer text-left min-h-[158px] md:h-[140px] relative overflow-hidden ${
                       isSprint
                         ? "hover:border-red-500 hover:shadow-red"
                         : "hover:border-purple-500 hover:shadow-purple"
                     }`}
                   >
-                    <div className="flex h-full flex-col gap-2 p-3 md:flex-row md:items-center md:gap-4 md:p-4">
-                      {/* Left side: Race info and podium */}
-                      <div className="relative z-10 flex-1 min-w-0 flex flex-col pr-28 md:pr-0">
+                    <div className="relative z-10 flex h-full flex-col gap-2 p-3 md:flex-row md:items-center md:gap-4 md:p-4">
+                      {/* Race info and podium */}
+                      <div className="flex min-w-0 flex-1 flex-col pr-0">
                         {/* Round + Race name */}
-                        <div className="mb-1">
+                        <div className="mb-1 pr-32 md:pr-0">
                           <span className="text-[10px] text-text-muted tracking-widest uppercase font-mono font-bold">
                             RND {String(round.round).padStart(2, "0")}
                           </span>
@@ -710,7 +710,7 @@ export default function ResultsPage() {
                         </div>
 
                         {/* Circuit + date */}
-                        <p className="text-text-muted text-[10px] tracking-wide truncate">
+                        <p className="text-text-muted text-[10px] tracking-wide truncate pr-28 md:pr-0">
                           {round.circuit_name} •{" "}
                           {round.track_length_km
                             ? `${round.track_length_km.toFixed(3)} km • `
@@ -723,10 +723,10 @@ export default function ResultsPage() {
                         </p>
 
                         {/* Divider */}
-                        <div className="border-b border-border-primary my-1.5 md:my-2" />
+                        <div className="border-b border-border-primary my-2" />
 
                         {/* Podium row */}
-                        <div className="grid grid-cols-3 gap-1.5 md:flex md:items-center md:gap-3 md:mt-auto">
+                        <div className="mt-auto grid w-full grid-cols-3 items-end gap-2 md:flex md:items-center md:gap-3">
                           {round.podium.map((driver, idx) => {
                             const medals = ["🥇", "🥈", "🥉"];
                             const labels = ["P1", "P2", "P3"];
@@ -734,30 +734,32 @@ export default function ResultsPage() {
                             return (
                               <div
                                 key={driver.driver_code}
-                                className="flex min-w-0 items-center gap-1 rounded-sm bg-bg-primary/50 px-1.5 py-1 md:bg-transparent md:p-0"
+                                className="flex min-w-0 flex-col items-center justify-center gap-1.5 text-center md:flex-row md:gap-1 md:text-left"
                               >
-                                <div className="flex flex-col items-center">
-                                  <span className="text-[8px] md:text-[9px] text-text-muted tracking-widest font-mono leading-none">
-                                    {labels[idx]}
-                                  </span>
-                                  <span className="text-sm md:text-lg flex-shrink-0 leading-none">
-                                    {medals[idx]}
-                                  </span>
+                                <div className="relative flex w-full items-center justify-center md:w-auto md:gap-1">
+                                  <div className="absolute right-1/2 mr-7 flex min-w-6 flex-col items-end gap-0.5 md:static md:mr-0 md:min-w-0 md:items-center">
+                                    <span className="text-[8px] md:text-[9px] text-text-muted tracking-widest font-mono leading-none">
+                                      {labels[idx]}
+                                    </span>
+                                    <span className="text-sm md:text-base flex-shrink-0 leading-none">
+                                      {medals[idx]}
+                                    </span>
+                                  </div>
+
+                                  {isValidHeadshotUrl(driver.headshot_url) && (
+                                    <Image
+                                      src={driver.headshot_url}
+                                      alt={driver.full_name}
+                                      width={42}
+                                      height={42}
+                                      className="h-10 w-10 rounded-sm object-cover border border-border-secondary flex-shrink-0 md:h-8 md:w-8"
+                                    />
+                                  )}
                                 </div>
 
-                                {isValidHeadshotUrl(driver.headshot_url) && (
-                                  <Image
-                                    src={driver.headshot_url}
-                                    alt={driver.full_name}
-                                    width={26}
-                                    height={26}
-                                    className="rounded-sm object-cover border border-border-secondary flex-shrink-0 md:w-8 md:h-8"
-                                  />
-                                )}
-
-                                <div className="flex items-center">
+                                <div className="flex min-w-0 items-center justify-center">
                                   <div
-                                    className="font-bold text-[11px] md:text-xs font-mono truncate"
+                                    className="font-bold text-[12px] md:text-xs font-mono truncate"
                                     style={{
                                       color: driver.team_color
                                         ? `#${driver.team_color}`
@@ -781,7 +783,6 @@ export default function ResultsPage() {
                         </div>
                       </div>
 
-                      {/* Right side: Track map */}
                       <TrackMapCompact
                         circuitId={round.circuit_id}
                         circuitName={round.circuit_name}
