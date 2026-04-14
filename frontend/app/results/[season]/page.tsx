@@ -294,11 +294,12 @@ export default function ResultsPage() {
       <PageHeader
         title={season}
         subtitle="Season Results"
+        compactMobile
         leftContent={
           <select
             value={season}
             onChange={(e) => handleYearChange(e.target.value)}
-            className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
+            className="h-10 w-24 sm:w-auto bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-3 sm:px-4 py-2 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
           >
             {availableYears.map((year) => (
               <option key={year} value={year}>
@@ -308,12 +309,12 @@ export default function ResultsPage() {
           </select>
         }
       >
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1">
+        <div className="flex min-w-0 w-full items-center gap-2 sm:w-auto sm:gap-4">
+          <div className="grid min-w-0 flex-1 grid-cols-2 gap-1 sm:flex sm:items-center">
             <button
               type="button"
               onClick={() => setSessionType("race")}
-              className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
+              className={`px-4 py-2 sm:py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                 sessionType === "race"
                   ? "bg-purple-500/20 border border-purple-500 text-purple-300"
                   : "border border-transparent text-text-muted hover:text-text-secondary"
@@ -324,7 +325,7 @@ export default function ResultsPage() {
             <button
               type="button"
               onClick={() => setSessionType("qualifying")}
-              className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
+              className={`px-4 py-2 sm:py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                 sessionType === "qualifying"
                   ? "bg-purple-500/20 border border-purple-500 text-purple-300"
                   : "border border-transparent text-text-muted hover:text-text-secondary"
@@ -337,11 +338,12 @@ export default function ResultsPage() {
           <JumpToRace
             currentSeason={season}
             availableSeasons={availableYears}
+            label="Jump"
           />
         </div>
       </PageHeader>
 
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-3 md:p-6">
         {/* ── Championship Standings ── */}
         <div className="mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -677,22 +679,22 @@ export default function ResultsPage() {
                     onClick={() =>
                       handleRoundClick(round.round, round.session_type)
                     }
-                    className={`w-full bg-bg-tertiary border border-border-primary rounded-sm shadow-sm transition-all duration-150 cursor-pointer text-left h-[140px] relative overflow-hidden ${
+                    className={`w-full bg-bg-tertiary border border-border-primary rounded-sm shadow-sm transition-all duration-150 cursor-pointer text-left min-h-[156px] md:h-[140px] relative overflow-hidden ${
                       isSprint
                         ? "hover:border-red-500 hover:shadow-red"
                         : "hover:border-purple-500 hover:shadow-purple"
                     }`}
                   >
-                    <div className="flex items-center gap-4 p-4 h-full">
+                    <div className="flex h-full flex-col gap-2 p-3 md:flex-row md:items-center md:gap-4 md:p-4">
                       {/* Left side: Race info and podium */}
-                      <div className="flex-1 min-w-0 flex flex-col h-full">
+                      <div className="relative z-10 flex-1 min-w-0 flex flex-col pr-28 md:pr-0">
                         {/* Round + Race name */}
                         <div className="mb-1">
                           <span className="text-[10px] text-text-muted tracking-widest uppercase font-mono font-bold">
                             RND {String(round.round).padStart(2, "0")}
                           </span>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-semibold text-text-primary text-sm truncate">
+                            <h3 className="font-semibold text-text-primary text-sm md:text-sm truncate">
                               {round.event_name.replace("Grand Prix", "GP")}
                               {(round.session_type === "qualifying" ||
                                 round.session_type === "sprint_qualifying") &&
@@ -721,10 +723,10 @@ export default function ResultsPage() {
                         </p>
 
                         {/* Divider */}
-                        <div className="border-b border-border-primary my-2" />
+                        <div className="border-b border-border-primary my-1.5 md:my-2" />
 
                         {/* Podium row */}
-                        <div className="flex items-center gap-3 mt-auto">
+                        <div className="grid grid-cols-3 gap-1.5 md:flex md:items-center md:gap-3 md:mt-auto">
                           {round.podium.map((driver, idx) => {
                             const medals = ["🥇", "🥈", "🥉"];
                             const labels = ["P1", "P2", "P3"];
@@ -732,13 +734,13 @@ export default function ResultsPage() {
                             return (
                               <div
                                 key={driver.driver_code}
-                                className="flex items-center gap-0.5"
+                                className="flex min-w-0 items-center gap-1 rounded-sm bg-bg-primary/50 px-1.5 py-1 md:bg-transparent md:p-0"
                               >
                                 <div className="flex flex-col items-center">
-                                  <span className="text-[9px] text-text-muted tracking-widest font-mono">
+                                  <span className="text-[8px] md:text-[9px] text-text-muted tracking-widest font-mono leading-none">
                                     {labels[idx]}
                                   </span>
-                                  <span className="text-lg flex-shrink-0">
+                                  <span className="text-sm md:text-lg flex-shrink-0 leading-none">
                                     {medals[idx]}
                                   </span>
                                 </div>
@@ -747,15 +749,15 @@ export default function ResultsPage() {
                                   <Image
                                     src={driver.headshot_url}
                                     alt={driver.full_name}
-                                    width={32}
-                                    height={32}
-                                    className="rounded-sm object-cover border border-border-secondary flex-shrink-0"
+                                    width={26}
+                                    height={26}
+                                    className="rounded-sm object-cover border border-border-secondary flex-shrink-0 md:w-8 md:h-8"
                                   />
                                 )}
 
                                 <div className="flex items-center">
                                   <div
-                                    className="font-bold text-xs font-mono truncate"
+                                    className="font-bold text-[11px] md:text-xs font-mono truncate"
                                     style={{
                                       color: driver.team_color
                                         ? `#${driver.team_color}`

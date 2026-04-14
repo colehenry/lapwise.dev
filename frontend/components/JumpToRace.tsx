@@ -111,7 +111,7 @@ export default function JumpToRace({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center gap-2 uppercase tracking-widest"
+        className="w-full sm:w-auto bg-bg-primary border border-border-primary text-text-primary font-mono text-[11px] sm:text-xs font-bold px-3 sm:px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center justify-center gap-2 uppercase tracking-widest whitespace-nowrap"
       >
         <span>{label}</span>
         <svg
@@ -132,7 +132,7 @@ export default function JumpToRace({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-50 p-4">
+        <div className="fixed left-3 right-3 top-32 sm:absolute sm:left-auto sm:right-0 sm:top-auto mt-2 sm:w-80 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-50 p-4">
           <div className="mb-4">
             <label
               htmlFor="jump-season"

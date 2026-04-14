@@ -16,6 +16,7 @@ import {
   CHART_TYPOGRAPHY,
   CustomDot,
 } from "@/components/chart-primitives";
+import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import { apiHeaders, apiUrl } from "@/lib/api";
 
 // Type definitions
@@ -520,7 +521,7 @@ export default function PointsByRoundGraph({
 
         {/* Chart Area */}
         <div className="flex-grow">
-          <div className="relative h-[400px]">
+          <MobileChartFrame height={400} logicalWidth={900}>
             {chartData.length > 0 ? (
               <>
                 <ResponsiveContainer width="100%" height="100%">
@@ -711,7 +712,7 @@ export default function PointsByRoundGraph({
                 </p>
               </div>
             )}
-          </div>
+          </MobileChartFrame>
         </div>
       </div>
 

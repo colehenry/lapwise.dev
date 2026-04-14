@@ -149,10 +149,10 @@ export default function SessionDetail({
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-3 md:p-6">
         {/* ── Session Header Card ── */}
-        <div className="mb-6 bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden flex flex-col md:flex-row">
-          <div className="flex-1 p-6 relative">
+        <div className="mb-4 md:mb-6 bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden flex flex-col md:flex-row">
+          <div className="flex-1 p-4 md:p-6 relative">
             <GridPattern id="session-grid" />
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-2">

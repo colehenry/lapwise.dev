@@ -72,14 +72,14 @@ export default function NextRaceBanner() {
   }
 
   return (
-    <section className="w-full bg-bg-primary py-12 px-6 relative overflow-hidden">
+    <section className="w-full bg-bg-primary px-4 py-8 md:px-6 md:py-10 relative overflow-hidden">
       <GridPattern
         id="calendar-grid"
         className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.03] pointer-events-none"
       />
 
       <div className="max-w-6xl mx-auto relative z-10">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-5 md:mb-6">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
             <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
@@ -117,9 +117,9 @@ export default function NextRaceBanner() {
         {/* Horizontal Scrollable Events */}
         <div
           ref={calendarRef}
-          className="overflow-x-auto overflow-y-visible -mx-6 px-6 pb-8 scrollbar-hide"
+          className="overflow-x-auto overflow-y-visible -mx-4 px-4 pb-5 md:-mx-6 md:px-6 md:pb-6 scrollbar-hide"
         >
-          <div className="flex gap-5 min-w-min">
+          <div className="flex gap-3 md:gap-4 min-w-min">
             {events.map((event) => {
               const daysUntil = getDaysUntilEvent(event.event_date);
               const formattedDate = formatEventDate(event.event_date);
@@ -143,12 +143,12 @@ export default function NextRaceBanner() {
               return (
                 <div
                   key={`${event.event_date}-${event.event_name}`}
-                  className="flex-shrink-0 w-[240px]"
+                  className="flex-shrink-0 w-[208px] md:w-[220px]"
                 >
                   <div className="bg-bg-tertiary border border-border-primary rounded-sm overflow-hidden group hover:border-purple-500/50 transition-all duration-300 shadow-lg shadow-black/20">
-                    <div className="p-5 flex flex-col items-center text-center">
+                    <div className="p-3.5 md:p-4 flex flex-col items-center text-center">
                       {/* Top: Track Map Area (Flag removed from here) */}
-                      <div className="relative w-full h-24 mb-4 bg-bg-secondary/50 rounded-sm overflow-hidden border border-border-primary/30 flex items-center justify-center">
+                      <div className="relative w-full h-[4.5rem] md:h-20 mb-3 bg-bg-secondary/50 rounded-sm overflow-hidden border border-border-primary/30 flex items-center justify-center">
                         <ConcentricPattern
                           id={`event-pattern-${event.event_date}`}
                           className="absolute inset-0 w-full h-full opacity-10 pointer-events-none"
@@ -159,7 +159,7 @@ export default function NextRaceBanner() {
                             alt={event.circuit_name || ""}
                             width={120}
                             height={120}
-                            className="object-contain relative z-10 opacity-60 mix-blend-lighten max-h-[80px]"
+                            className="object-contain relative z-10 opacity-60 mix-blend-lighten max-h-14 md:max-h-16"
                           />
                         ) : (
                           <div className="text-[10px] text-text-muted font-mono uppercase tracking-widest relative z-10">
@@ -176,18 +176,18 @@ export default function NextRaceBanner() {
                       </span>
 
                       {/* GP Name with Flag inline before it */}
-                      <div className="flex items-center gap-2 mb-4 max-w-full">
-                        <span className="text-lg flex-shrink-0 transform group-hover:scale-110 transition-transform duration-300">
+                      <div className="flex items-center gap-2 mb-3 max-w-full">
+                        <span className="text-base flex-shrink-0 transform group-hover:scale-110 transition-transform duration-300">
                           {flag}
                         </span>
-                        <h3 className="text-base font-bold text-text-primary leading-tight line-clamp-1">
+                        <h3 className="text-sm md:text-base font-bold text-text-primary leading-tight line-clamp-1">
                           {event.event_name.replace("Grand Prix", "GP")}
                         </h3>
                       </div>
 
                       {/* Countdown */}
-                      <div className="flex flex-col items-center mb-5">
-                        <span className="text-4xl font-bold text-text-primary font-mono tracking-tighter leading-none">
+                      <div className="flex flex-col items-center mb-3.5 md:mb-4">
+                        <span className="text-3xl md:text-[2rem] font-bold text-text-primary font-mono tracking-tighter leading-none">
                           {daysUntil}
                         </span>
                         <span className="text-[9px] font-bold text-text-muted uppercase tracking-widest font-mono mt-1">
@@ -196,7 +196,7 @@ export default function NextRaceBanner() {
                       </div>
 
                       {/* Location & Date */}
-                      <div className="flex flex-col items-center gap-1 mb-6">
+                      <div className="flex flex-col items-center gap-1 mb-4">
                         <div className="flex items-center gap-1.5 text-text-secondary">
                           <svg
                             className="w-3 h-3"
@@ -224,7 +224,7 @@ export default function NextRaceBanner() {
                       </div>
 
                       {/* CTA Footer */}
-                      <div className="w-full pt-4 border-t border-border-primary/40 flex items-center justify-center">
+                      <div className="w-full pt-3 border-t border-border-primary/40 flex items-center justify-center">
                         {isNewCircuit && !isTesting ? (
                           <span className="text-[9px] font-bold font-mono tracking-widest uppercase text-purple-400 flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />

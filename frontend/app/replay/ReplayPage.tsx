@@ -70,12 +70,13 @@ export default function ReplayPage() {
       <PageHeader
         title="Race Replay"
         subtitle="Telemetry Replay"
+        compactMobile
         leftContent={
           seasons.length > 0 ? (
             <select
               value={activeSeason ?? ""}
               onChange={(e) => setSelectedSeason(Number(e.target.value))}
-              className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
+              className="h-10 w-24 bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-3 py-2 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
             >
               {seasons.map((year) => (
                 <option key={year} value={year}>
@@ -87,7 +88,7 @@ export default function ReplayPage() {
         }
       />
 
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-3 md:p-6">
         <ReplayBrowser
           season={activeSeason}
           onSelect={(season, round, eventName) =>

@@ -82,11 +82,11 @@ function ReplayCard({
       <button
         type="button"
         onClick={onSelect}
-        className="w-full bg-bg-tertiary border border-border-primary rounded-sm shadow-sm transition-all duration-150 cursor-pointer text-left h-[140px] relative overflow-hidden hover:border-purple-500 hover:shadow-purple"
+        className="w-full bg-bg-tertiary border border-border-primary rounded-sm shadow-sm transition-all duration-150 cursor-pointer text-left min-h-[132px] md:h-[140px] relative overflow-hidden hover:border-purple-500 hover:shadow-purple"
       >
-        <div className="flex items-center gap-4 p-4 h-full">
+        <div className="flex h-full flex-col gap-2 p-3 md:flex-row md:items-center md:gap-4 md:p-4">
           {/* Left side: Race info */}
-          <div className="flex-1 min-w-0 flex flex-col h-full">
+          <div className="relative z-10 flex-1 min-w-0 flex flex-col pr-28 md:h-full md:pr-0">
             {/* Round + Race name */}
             <div className="mb-1">
               <span className="text-[10px] text-text-muted tracking-widest uppercase font-mono font-bold">
@@ -108,11 +108,11 @@ function ReplayCard({
             </p>
 
             {/* Divider */}
-            <div className="border-b border-border-primary my-2" />
+            <div className="border-b border-border-primary my-1.5 md:my-2" />
 
             {/* Stats row */}
-            <div className="flex items-center gap-3 mt-auto">
-              <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2 mt-auto">
+              <div className="flex items-center gap-1">
                 <svg
                   className="w-3 h-3 text-text-muted"
                   fill="none"
@@ -132,7 +132,7 @@ function ReplayCard({
                   {replay.total_laps} LAPS
                 </span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <svg
                   className="w-3 h-3 text-text-muted"
                   fill="none"
@@ -152,7 +152,7 @@ function ReplayCard({
                   {replay.driver_count}
                 </span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <svg
                   className="w-3 h-3 text-text-muted"
                   fill="none"

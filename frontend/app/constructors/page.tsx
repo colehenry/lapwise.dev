@@ -218,11 +218,12 @@ export default function ConstructorsPage() {
             ? "All-Time Career Statistics"
             : `${selectedYear} Season Entries`
         }
+        compactMobile
       >
         <select
           value={selectedYear}
           onChange={(e) => setSelectedYear(e.target.value)}
-          className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-3 py-1.5 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
+          className="w-28 bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-3 py-2 md:py-1.5 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
         >
           <option value="all">ALL TIME</option>
           {availableYears.map((year) => (
@@ -233,7 +234,7 @@ export default function ConstructorsPage() {
         </select>
       </PageHeader>
 
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
+      <div className="max-w-6xl mx-auto px-3 py-3 md:px-8 md:py-6">
         {/* Controls */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <input

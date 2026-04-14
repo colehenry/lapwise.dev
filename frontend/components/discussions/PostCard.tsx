@@ -30,25 +30,26 @@ export default function PostCard({ post }: { post: PostListItem }) {
   return (
     <Link
       href={`/discussions/${post.id}`}
-      className="block border border-border-primary rounded-sm bg-bg-tertiary p-4 hover:border-purple-500/70 transition-all duration-150"
+      className="block border border-border-primary rounded-sm bg-bg-tertiary p-3 hover:border-purple-500/70 transition-all duration-150 md:p-4"
     >
-      <div className="flex gap-4">
+      <div className="flex gap-3 md:gap-4">
         {/* biome-ignore lint/a11y/useKeyWithClickEvents: preventDefault stops link navigation when clicking vote */}
         {/* biome-ignore lint/a11y/noStaticElementInteractions: interactive children need event isolation */}
         <div
-          className="flex flex-col items-center gap-2"
+          className="flex flex-col items-center gap-1.5 md:gap-2"
           onClick={(e) => e.preventDefault()}
         >
           <VoteButton
             postId={post.id}
             initialCount={post.vote_count}
             initialVoted={post.user_voted}
+            size="sm"
           />
           {post.is_locked && <MonoLabel>Locked</MonoLabel>}
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-text-muted font-mono uppercase tracking-wider">
+          <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-text-muted font-mono uppercase tracking-wider md:gap-2 md:text-xs">
             {post.is_pinned && (
               <span className="inline-flex items-center gap-1 text-purple-300">
                 <svg
@@ -76,40 +77,40 @@ export default function PostCard({ post }: { post: PostListItem }) {
             <span>{formatRelativeTime(post.created_at)}</span>
           </div>
 
-          <h3 className="text-lg font-semibold text-text-primary leading-snug mt-2">
+          <h3 className="text-base font-semibold text-text-primary leading-snug mt-1.5 md:mt-2 md:text-lg">
             {post.title}
           </h3>
-          <p className="text-sm text-text-tertiary mt-2 leading-relaxed line-clamp-3">
+          <p className="text-xs text-text-tertiary mt-1.5 leading-relaxed line-clamp-2 md:mt-2 md:text-sm md:line-clamp-3">
             {preview}
           </p>
 
           {post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
+            <div className="hidden flex-wrap gap-2 mt-3 sm:flex">
               {post.tags.map((tag) => (
                 <TagPill key={tag.id} label={tag.name} color={tag.color} />
               ))}
             </div>
           )}
 
-          <div className="mt-4 pt-3 border-t border-border-primary flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-xs text-text-muted">
+          <div className="mt-2.5 pt-2.5 border-t border-border-primary flex flex-wrap items-center justify-between gap-2 md:mt-4 md:pt-3 md:gap-3">
+            <div className="flex min-w-0 items-center gap-2 text-[10px] text-text-muted md:text-xs">
               <UserAvatar
                 username={post.author.username}
                 avatarUrl={post.author.avatar_url}
                 size="sm"
               />
-              <span className="font-mono uppercase tracking-wider">
+              <span className="min-w-0 truncate font-mono uppercase tracking-wider">
                 {post.author.username}
               </span>
               {post.author.role !== "user" && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full border border-border-secondary text-text-tertiary uppercase tracking-widest font-mono">
+                <span className="hidden text-[10px] px-2 py-0.5 rounded-full border border-border-secondary text-text-tertiary uppercase tracking-widest font-mono sm:inline">
                   {post.author.role}
                 </span>
               )}
             </div>
 
-            <div className="flex items-center gap-4 text-xs text-text-muted font-mono uppercase tracking-widest">
-              <span>{post.comment_count} comments</span>
+            <div className="flex items-center gap-4 text-[10px] text-text-muted font-mono uppercase tracking-widest md:text-xs">
+              <span>{post.comment_count} cmt</span>
             </div>
           </div>
         </div>
