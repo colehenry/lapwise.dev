@@ -40,7 +40,7 @@ export function TrackMapCompact({
 }: TrackMapCompactProps) {
   return (
     <div
-      className="flex-shrink-0 rounded-sm w-44 h-24 relative flex items-center justify-center overflow-hidden"
+      className="absolute right-2 bottom-2 w-28 h-20 opacity-70 md:static md:relative md:flex-shrink-0 md:w-44 md:h-24 md:opacity-100 rounded-sm flex items-center justify-center overflow-hidden"
       style={{
         background:
           "radial-gradient(ellipse at center, rgba(160, 32, 240, 0.12) 0%, rgba(160, 32, 240, 0.04) 50%, transparent 80%)",

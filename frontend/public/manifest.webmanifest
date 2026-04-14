@@ -1,0 +1,16 @@
+{
+  "name": "Lapwise",
+  "short_name": "Lapwise",
+  "description": "Formula 1 analytics, telemetry, and race replay.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

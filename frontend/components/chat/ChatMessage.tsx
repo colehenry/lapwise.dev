@@ -290,10 +290,10 @@ export default function ChatMessage({
   const avatarSize = compact ? "sm" : "md";
   if (isLoading) {
     return (
-      <div className="flex gap-3 py-3">
+      <div className="flex min-w-0 max-w-full gap-3 py-3">
         <AIAnalystAvatar size={avatarSize} />
-        <div className="flex-1 pt-0.5">
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+        <div className="min-w-0 flex-1 pt-0.5">
+          <div className="max-w-full rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
             <div className="flex items-center gap-2 text-xs text-text-muted">
               <svg
                 className="animate-spin h-3.5 w-3.5"
@@ -324,7 +324,9 @@ export default function ChatMessage({
   }
 
   return (
-    <div className={`flex gap-3 py-3 ${isUser ? "flex-row-reverse" : ""}`}>
+    <div
+      className={`flex min-w-0 max-w-full gap-2 py-3 md:gap-3 ${isUser ? "flex-row-reverse" : ""}`}
+    >
       <div className="shrink-0 pt-0.5">
         {isUser ? (
           <UserAvatar
@@ -338,13 +340,15 @@ export default function ChatMessage({
         )}
       </div>
 
-      <div className={`flex-1 min-w-0 ${isUser ? "text-right" : ""}`}>
+      <div
+        className={`min-w-0 flex-1 overflow-hidden ${isUser ? "text-right" : ""}`}
+      >
         {isUser ? (
-          <div className="inline-block max-w-[85%] rounded-2xl border border-white/[0.06] bg-white/[0.04] px-4 py-2.5 text-left text-sm text-text-primary">
+          <div className="inline-block max-w-[min(85%,calc(100vw-6rem))] whitespace-pre-wrap break-words rounded-2xl border border-white/[0.06] bg-white/[0.04] px-4 py-2.5 text-left text-sm text-text-primary">
             {content}
           </div>
         ) : (
-          <div className="space-y-2 rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 md:px-5">
+          <div className="min-w-0 max-w-full space-y-2 overflow-hidden rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 md:px-5">
             {steps && steps.length > 0 && (
               <ThinkingSteps steps={steps} isStreaming={isStreaming} />
             )}
@@ -376,7 +380,7 @@ export default function ChatMessage({
             )}
 
             {content && (
-              <div className="prose-chat text-sm text-text-secondary leading-relaxed">
+              <div className="prose-chat min-w-0 max-w-full text-sm text-text-secondary leading-relaxed">
                 <Markdown
                   remarkPlugins={[remarkGfm]}
                   components={{
@@ -511,7 +515,7 @@ export default function ChatMessage({
             )}
 
             {charts && charts.length > 0 && (
-              <div className="space-y-3">
+              <div className="min-w-0 max-w-full space-y-3 overflow-hidden">
                 {charts.map((chart, i) => (
                   <AIChart key={`chart-${chart.title}-${i}`} config={chart} />
                 ))}

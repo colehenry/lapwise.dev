@@ -391,6 +391,7 @@ export default function Navigation() {
         setMobileOpen(false);
         setUserMenuOpen(false);
         setArchiveOpen(false);
+        setMobileArchiveOpen(false);
       }
     };
     document.addEventListener("keydown", handleKeyDown);
@@ -591,7 +592,7 @@ export default function Navigation() {
           <button
             type="button"
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden ml-auto w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:text-text-primary hover:bg-bg-elevated/80 transition-all duration-200 hover:scale-[1.08] active:scale-95"
+            className="hidden"
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
           >
             <svg
@@ -804,16 +805,97 @@ export default function Navigation() {
         )}
       </div>
 
+      {/* Mobile app dock */}
+      <div className="fixed inset-x-0 bottom-0 z-[1200] md:hidden">
+        <div className="grid grid-cols-5 gap-1 border-t border-border-primary bg-bg-secondary/95 p-1 shadow-[0_-12px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl pb-[calc(0.25rem+env(safe-area-inset-bottom))]">
+          {[
+            ...navLinksBefore,
+            navLinksAfter[0],
+            navLinksAfter[2],
+            navLinksAfter[1],
+          ].map((link) => {
+            const active = isActive(link.href);
+            const mobileLabel = link.href === "/results" ? "Hub" : link.label;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-md px-1 text-[10px] font-bold uppercase leading-tight transition-colors ${
+                  active
+                    ? "bg-purple-500/15 text-purple-300"
+                    : "text-text-muted active:bg-bg-elevated/80"
+                }`}
+                aria-current={active ? "page" : undefined}
+              >
+                <NavIcon link={link} active={active} scrolled={false} />
+                <span className="max-w-full truncate">{mobileLabel}</span>
+              </Link>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setMobileOpen((open) => !open)}
+            className={`flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-md px-1 text-[10px] font-bold uppercase leading-tight transition-colors ${
+              mobileOpen
+                ? "bg-purple-500/15 text-purple-300"
+                : "text-text-muted active:bg-bg-elevated/80"
+            }`}
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              {mobileOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 7h16M4 12h16M4 17h16"
+                />
+              )}
+            </svg>
+            <span>More</span>
+          </button>
+        </div>
+      </div>
+
       {/* Mobile menu */}
       {mobileOpen && (
         <>
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1100] md:hidden"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1210] md:hidden"
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
-          <div className="fixed top-14 left-0 right-0 z-[1150] md:hidden bg-bg-secondary/95 backdrop-blur-xl border-b border-border-primary shadow-[0_16px_48px_rgba(0,0,0,0.5)] animate-slideDown">
-            <div className="px-4 py-3 space-y-1">
+          <div className="fixed inset-x-3 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-[1220] max-h-[calc(100dvh-7rem)] overflow-y-auto overscroll-contain rounded-lg border border-border-primary bg-bg-secondary/95 shadow-[0_16px_48px_rgba(0,0,0,0.5)] backdrop-blur-xl md:hidden animate-slideUp">
+            <div className="px-4 pb-2 pt-3">
+              <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border-secondary" />
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+                  Navigate
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-md px-2 py-1 text-xs font-bold text-text-muted active:bg-bg-elevated/80"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            <div className="px-4 pb-3 space-y-1">
               {navLinksBefore.map((link) => {
                 const active = isActive(link.href);
                 return (

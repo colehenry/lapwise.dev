@@ -18,6 +18,7 @@ import {
   CHART_COLORS,
   CHART_TYPOGRAPHY,
 } from "@/components/chart-primitives";
+import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import {
   type DriverLapTimes,
@@ -1476,7 +1477,7 @@ export default function LapTimeByLapGraph({
       </div>
 
       {/* Chart */}
-      <div className="relative -ml-2">
+      <MobileChartFrame height={420} logicalWidth={920} className="-ml-2">
         {chartData.length > 0 ? (
           <>
             <ResponsiveContainer width="100%" height={420}>
@@ -1675,7 +1676,7 @@ export default function LapTimeByLapGraph({
             </p>
           </div>
         )}
-      </div>
+      </MobileChartFrame>
     </div>
   );
 }

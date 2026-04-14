@@ -16,6 +16,7 @@ import {
   CHART_COLORS,
   CHART_TYPOGRAPHY,
 } from "@/components/chart-primitives";
+import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import { driverKey, type LapTimesResponse } from "@/lib/types";
 
@@ -372,83 +373,90 @@ export default function RaceTrackEvolutionChart({
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={280}>
-        <ScatterChart margin={{ top: 4, right: 16, left: 16, bottom: 20 }}>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke={CHART_COLORS.borderPrimary}
-          />
-          <XAxis
-            type="number"
-            dataKey="x"
-            domain={[1, maxLap]}
-            tick={{ fill: CHART_COLORS.textTertiary, fontSize: 10 }}
-            label={{
-              value: "Lap",
-              position: "insideBottomRight",
-              offset: -4,
-              style: CHART_AXIS_LABEL_STYLE,
-            }}
-          />
-          <YAxis
-            type="number"
-            dataKey="y"
-            domain={[minTime - pad, maxTime + pad]}
-            tick={{
-              fill: CHART_COLORS.textTertiary,
-              fontSize: 10,
-              fontFamily: "monospace",
-            }}
-            tickFormatter={formatTime}
-            width={72}
-          />
-          <Tooltip
-            cursor={false}
-            content={({ active, payload }) => {
-              if (!active || !payload?.length) return null;
-              const p = payload[0]?.payload as { x: number; y: number };
-              if (!p?.y) return null;
-              return (
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs">
-                  <p
-                    className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-0.5`}
-                  >
-                    Lap {p.x}
-                  </p>
-                  <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
-                    {formatTime(p.y)}
-                  </p>
-                </div>
-              );
-            }}
-          />
-          {allActiveCompounds
-            .filter((c) => selectedCompounds.includes(c))
-            .map((c) => (
-              <Scatter
-                key={c}
-                name={c}
-                data={lapsByCompound[c]}
-                fill={COMPOUND_COLORS[c]}
-                fillOpacity={0.35}
-                r={2.5}
-                isAnimationActive={false}
-              />
-            ))}
-          <Scatter
-            data={movingAvgPoints}
-            fill="transparent"
-            shape={(props: { cx?: number; cy?: number }) => (
-              <circle r={0} cx={props.cx ?? 0} cy={props.cy ?? 0} fill="none" />
-            )}
-            line={{ stroke: "rgba(255,255,255,0.85)", strokeWidth: 2.5 }}
-            lineType="joint"
-            isAnimationActive={false}
-            legendType="none"
-            name="trend"
-          />
-        </ScatterChart>
-      </ResponsiveContainer>
+      <MobileChartFrame height={280} logicalWidth={820}>
+        <ResponsiveContainer width="100%" height={280}>
+          <ScatterChart margin={{ top: 4, right: 16, left: 16, bottom: 20 }}>
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke={CHART_COLORS.borderPrimary}
+            />
+            <XAxis
+              type="number"
+              dataKey="x"
+              domain={[1, maxLap]}
+              tick={{ fill: CHART_COLORS.textTertiary, fontSize: 10 }}
+              label={{
+                value: "Lap",
+                position: "insideBottomRight",
+                offset: -4,
+                style: CHART_AXIS_LABEL_STYLE,
+              }}
+            />
+            <YAxis
+              type="number"
+              dataKey="y"
+              domain={[minTime - pad, maxTime + pad]}
+              tick={{
+                fill: CHART_COLORS.textTertiary,
+                fontSize: 10,
+                fontFamily: "monospace",
+              }}
+              tickFormatter={formatTime}
+              width={72}
+            />
+            <Tooltip
+              cursor={false}
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const p = payload[0]?.payload as { x: number; y: number };
+                if (!p?.y) return null;
+                return (
+                  <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs">
+                    <p
+                      className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-0.5`}
+                    >
+                      Lap {p.x}
+                    </p>
+                    <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
+                      {formatTime(p.y)}
+                    </p>
+                  </div>
+                );
+              }}
+            />
+            {allActiveCompounds
+              .filter((c) => selectedCompounds.includes(c))
+              .map((c) => (
+                <Scatter
+                  key={c}
+                  name={c}
+                  data={lapsByCompound[c]}
+                  fill={COMPOUND_COLORS[c]}
+                  fillOpacity={0.35}
+                  r={2.5}
+                  isAnimationActive={false}
+                />
+              ))}
+            <Scatter
+              data={movingAvgPoints}
+              fill="transparent"
+              shape={(props: { cx?: number; cy?: number }) => (
+                <circle
+                  r={0}
+                  cx={props.cx ?? 0}
+                  cy={props.cy ?? 0}
+                  fill="none"
+                />
+              )}
+              line={{ stroke: "rgba(255,255,255,0.85)", strokeWidth: 2.5 }}
+              lineType="joint"
+              isAnimationActive={false}
+              legendType="none"
+              name="trend"
+            />
+          </ScatterChart>
+        </ResponsiveContainer>
+      </MobileChartFrame>
 
       <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
         Green flag laps only · outlaps, pit laps, and lap 1 excluded · 110%

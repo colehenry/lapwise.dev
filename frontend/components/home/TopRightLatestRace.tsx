@@ -48,8 +48,8 @@ export default function TopRightLatestRace() {
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-2xl ml-auto">
-        <Skeleton className="h-[300px] w-full rounded-sm" />
+      <div className="w-full max-w-2xl">
+        <Skeleton className="h-[260px] w-full rounded-sm md:h-[300px]" />
       </div>
     );
   }
@@ -64,9 +64,9 @@ export default function TopRightLatestRace() {
     <div className="w-full max-w-2xl group relative">
       <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/20 to-red-500/20 rounded-sm blur opacity-20 group-hover:opacity-30 transition duration-500" />
 
-      <div className="relative overflow-visible bg-bg-tertiary border border-border-primary rounded-sm flex flex-col md:flex-row min-h-[300px]">
+      <div className="relative overflow-visible bg-bg-tertiary border border-border-primary rounded-sm flex flex-col md:flex-row min-h-[260px] md:min-h-[300px]">
         {/* Left: Results & Discussion CTA */}
-        <div className="flex-1 p-6 md:pr-10 relative z-10 flex flex-col justify-between">
+        <div className="flex-1 p-4 md:p-6 md:pr-10 relative z-10 flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2.5">
               <span className="text-[10px] text-purple-400 font-bold uppercase tracking-widest font-mono whitespace-nowrap">
@@ -78,14 +78,14 @@ export default function TopRightLatestRace() {
               </span>
             </div>
 
-            <h3 className="text-2xl font-bold text-text-primary leading-tight mb-0.5 whitespace-nowrap">
+            <h3 className="text-xl md:text-2xl font-bold text-text-primary leading-tight mb-0.5">
               {data.event_name}
             </h3>
-            <p className="text-[11px] text-text-muted font-mono uppercase tracking-wider mb-5 whitespace-nowrap">
+            <p className="text-[11px] text-text-muted font-mono uppercase tracking-wider mb-4 md:mb-5">
               {data.circuit_name}
             </p>
 
-            <div className="space-y-3 mb-8">
+            <div className="space-y-2.5 mb-5 md:space-y-3 md:mb-8">
               {data.podium.map((driver, idx) => (
                 <div
                   key={driver.driver_code}
@@ -111,7 +111,7 @@ export default function TopRightLatestRace() {
                   </div>
 
                   <div className="flex-1 flex items-center justify-between border-b border-border-primary/40 pb-1">
-                    <span className="text-sm font-bold text-text-primary whitespace-nowrap mr-4">
+                    <span className="text-sm font-bold text-text-primary mr-3 truncate md:mr-4">
                       {driver.full_name}
                     </span>
                     <span
@@ -136,7 +136,7 @@ export default function TopRightLatestRace() {
             </div>
           </div>
 
-          <div className="flex items-center gap-6 relative">
+          <div className="flex flex-wrap items-center gap-4 md:gap-6 relative">
             <Link
               href={`/results/${currentYear}/${data.round}`}
               className="px-4 py-2 bg-purple-500 text-text-primary text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-purple-600 transition-colors shadow-lg shadow-purple-500/20 whitespace-nowrap"
@@ -186,7 +186,7 @@ export default function TopRightLatestRace() {
         {/* Right: Track Map */}
         <Link
           href={`/circuits/${data.circuit_id}`}
-          className="md:w-64 bg-bg-secondary/40 border-t md:border-t-0 md:border-l border-border-primary relative flex items-center justify-center p-8 overflow-hidden group/map shrink-0"
+          className="h-36 md:h-auto md:w-64 bg-bg-secondary/40 border-t md:border-t-0 md:border-l border-border-primary relative flex items-center justify-center p-6 md:p-8 overflow-hidden group/map shrink-0"
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
         >

@@ -150,14 +150,16 @@ function DiscussionsFeed() {
       <PageHeader
         title="Discussions"
         subtitle="Community Analysis & Race Debriefs"
+        compactMobile
       >
         <Link
           href={newPostHref}
-          className="inline-flex items-center gap-2 border border-purple-500/60 bg-purple-500/15 text-purple-200 font-mono text-xs uppercase tracking-widest px-4 py-2 rounded-sm hover:bg-purple-500/25 transition-colors"
+          className="inline-flex items-center justify-center gap-1.5 border border-purple-500/60 bg-purple-500/15 text-purple-200 font-mono text-[10px] sm:text-xs uppercase tracking-widest px-3 py-2 sm:px-4 rounded-sm hover:bg-purple-500/25 transition-colors"
         >
-          New Post
+          <span className="sm:hidden">New</span>
+          <span className="hidden sm:inline">New Post</span>
           <svg
-            className="w-4 h-4"
+            className="w-3.5 h-3.5 sm:w-4 sm:h-4"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -174,10 +176,10 @@ function DiscussionsFeed() {
         </Link>
       </PageHeader>
 
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
-        <div className="flex flex-wrap items-center gap-6 mb-6">
+      <div className="max-w-6xl mx-auto px-3 py-3 md:px-8 md:py-6">
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 mb-3 md:flex md:flex-wrap md:gap-6 md:mb-6">
           <SortSelector value={sort} onChange={setSort} />
-          <div className="relative flex-1 max-w-xs">
+          <div className="relative min-w-0 md:flex-1 md:max-w-xs">
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted pointer-events-none"
               viewBox="0 0 24 24"
@@ -197,8 +199,8 @@ function DiscussionsFeed() {
               type="text"
               value={searchInput}
               onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Search discussions..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs font-mono bg-bg-tertiary border border-border-primary rounded-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500/60 transition-colors"
+              placeholder="Search..."
+              className="w-full pl-9 pr-3 py-2 text-xs font-mono bg-bg-tertiary border border-border-primary rounded-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500/60 transition-colors"
             />
             {searchInput && (
               <button
@@ -224,11 +226,15 @@ function DiscussionsFeed() {
               </button>
             )}
           </div>
-          {!isAuthenticated && <MonoLabel>Log in to publish</MonoLabel>}
+          {!isAuthenticated && (
+            <MonoLabel className="col-span-2 md:col-span-1">
+              Log in to publish
+            </MonoLabel>
+          )}
         </div>
 
-        <div className="space-y-5">
-          <div className="border border-border-primary rounded-sm bg-bg-tertiary/40 p-3">
+        <div className="space-y-3 md:space-y-5">
+          <div className="border border-border-primary rounded-sm bg-bg-tertiary/40 px-2 py-2 md:p-3">
             <TagFilter
               tags={tags}
               activeTag={activeTag}
@@ -237,7 +243,7 @@ function DiscussionsFeed() {
           </div>
 
           {pinnedPosts.length > 0 && (
-            <div className="space-y-3">
+            <div className="space-y-2 md:space-y-3">
               <MonoLabel as="div">Pinned</MonoLabel>
               {pinnedPosts.map((post) => (
                 <PostCard key={`pinned-${post.id}`} post={post} />
@@ -245,13 +251,13 @@ function DiscussionsFeed() {
             </div>
           )}
 
-          <div className="space-y-4">
+          <div className="space-y-2 md:space-y-4">
             {isLoading &&
               SKELETON_KEYS.map((key) => (
                 <Skeleton
                   key={`post-skeleton-${key}`}
                   variant="rectangular"
-                  height="140px"
+                  height="112px"
                   className="rounded-sm"
                 />
               ))}

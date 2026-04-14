@@ -17,6 +17,7 @@ import {
   CHART_COLORS,
   CHART_TYPOGRAPHY,
 } from "@/components/chart-primitives";
+import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import {
   type DriverLapTimes,
@@ -836,73 +837,75 @@ export default function TyreDegradationChart({
       {/* Chart */}
       <div className="relative" style={{ minHeight: "300px" }}>
         {chartData.data.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart
-              data={chartData.data}
-              margin={{ top: 10, right: 20, left: 60, bottom: 30 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke={CHART_COLORS.borderPrimary}
-              />
-              <XAxis
-                dataKey="tyre_life"
-                type="number"
-                allowDecimals={false}
-                stroke={CHART_COLORS.textTertiary}
-                label={{
-                  value: "Tyre Age (laps)",
-                  position: "insideBottom",
-                  offset: -20,
-                  style: CHART_AXIS_LABEL_STYLE,
-                }}
-                tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
-              />
-              <YAxis
-                stroke={CHART_COLORS.textTertiary}
-                label={{
-                  value: "Pace vs Baseline",
-                  angle: -90,
-                  position: "center",
-                  dx: -45,
-                  style: CHART_AXIS_LABEL_STYLE,
-                }}
-                tick={<CustomYAxisTick />}
-                domain={yDomain}
-                reversed={true}
-              />
-              <Tooltip content={<DegradationTooltip />} />
-              {chartData.lineKeys.map((compound) => (
-                <Scatter
-                  key={`${compound}-samples`}
-                  name={`${compound} laps`}
-                  data={chartData.samplesByCompound[compound] ?? []}
-                  dataKey="pace_delta"
-                  fill={COMPOUND_COLORS[compound] || "#999"}
-                  opacity={0.18}
-                  isAnimationActive={false}
+          <MobileChartFrame height={300} logicalWidth={860}>
+            <ResponsiveContainer width="100%" height={300}>
+              <ComposedChart
+                data={chartData.data}
+                margin={{ top: 10, right: 20, left: 60, bottom: 30 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={CHART_COLORS.borderPrimary}
                 />
-              ))}
-              {chartData.lineKeys.map((compound) => (
-                <Line
-                  key={`${compound}-fit`}
-                  type="monotone"
-                  dataKey={`${compound}_fit`}
-                  name={`${compound} fit`}
-                  stroke={COMPOUND_COLORS[compound] || "#999"}
-                  strokeWidth={3}
-                  dot={false}
-                  activeDot={{
-                    r: 5,
-                    fill: COMPOUND_COLORS[compound] || "#999",
+                <XAxis
+                  dataKey="tyre_life"
+                  type="number"
+                  allowDecimals={false}
+                  stroke={CHART_COLORS.textTertiary}
+                  label={{
+                    value: "Tyre Age (laps)",
+                    position: "insideBottom",
+                    offset: -20,
+                    style: CHART_AXIS_LABEL_STYLE,
                   }}
-                  connectNulls={false}
-                  isAnimationActive={true}
-                  animationDuration={1200}
+                  tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
                 />
-              ))}
-            </ComposedChart>
-          </ResponsiveContainer>
+                <YAxis
+                  stroke={CHART_COLORS.textTertiary}
+                  label={{
+                    value: "Pace vs Baseline",
+                    angle: -90,
+                    position: "center",
+                    dx: -45,
+                    style: CHART_AXIS_LABEL_STYLE,
+                  }}
+                  tick={<CustomYAxisTick />}
+                  domain={yDomain}
+                  reversed={true}
+                />
+                <Tooltip content={<DegradationTooltip />} />
+                {chartData.lineKeys.map((compound) => (
+                  <Scatter
+                    key={`${compound}-samples`}
+                    name={`${compound} laps`}
+                    data={chartData.samplesByCompound[compound] ?? []}
+                    dataKey="pace_delta"
+                    fill={COMPOUND_COLORS[compound] || "#999"}
+                    opacity={0.18}
+                    isAnimationActive={false}
+                  />
+                ))}
+                {chartData.lineKeys.map((compound) => (
+                  <Line
+                    key={`${compound}-fit`}
+                    type="monotone"
+                    dataKey={`${compound}_fit`}
+                    name={`${compound} fit`}
+                    stroke={COMPOUND_COLORS[compound] || "#999"}
+                    strokeWidth={3}
+                    dot={false}
+                    activeDot={{
+                      r: 5,
+                      fill: COMPOUND_COLORS[compound] || "#999",
+                    }}
+                    connectNulls={false}
+                    isAnimationActive={true}
+                    animationDuration={1200}
+                  />
+                ))}
+              </ComposedChart>
+            </ResponsiveContainer>
+          </MobileChartFrame>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <p className="text-text-muted text-sm font-mono">

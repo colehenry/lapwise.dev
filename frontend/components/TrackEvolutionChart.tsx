@@ -16,6 +16,7 @@ import {
   CHART_TYPOGRAPHY,
 } from "@/components/chart-primitives";
 import DriverMultiSelect from "@/components/charts/DriverMultiSelect";
+import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import {
   sortDriversByClassification,
   useDriverSelection,
@@ -261,82 +262,89 @@ export default function TrackEvolutionChart({
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={280}>
-        <ScatterChart margin={{ top: 4, right: 16, left: 16, bottom: 20 }}>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke={CHART_COLORS.borderPrimary}
-          />
-          <XAxis
-            type="number"
-            dataKey="x"
-            domain={[minSessionTime, maxSessionTime]}
-            tick={{ fill: CHART_COLORS.textTertiary, fontSize: 10 }}
-            tickFormatter={formatSessionTime}
-            label={{
-              value: "Session Time",
-              position: "insideBottomRight",
-              offset: -4,
-              style: CHART_AXIS_LABEL_STYLE,
-            }}
-          />
-          <YAxis
-            type="number"
-            dataKey="y"
-            domain={[minTime - pad, maxTime + pad]}
-            tick={{
-              fill: CHART_COLORS.textTertiary,
-              fontSize: 10,
-              fontFamily: "monospace",
-            }}
-            tickFormatter={formatLapTime}
-            width={72}
-          />
-          <Tooltip
-            cursor={false}
-            content={({ active, payload }) => {
-              if (!active || !payload?.length) return null;
-              const p = payload[0]?.payload as { x: number; y: number };
-              if (!p?.y) return null;
-              return (
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs">
-                  <p
-                    className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-0.5`}
-                  >
-                    {formatSessionTime(p.x)}
-                  </p>
-                  <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
-                    {formatLapTime(p.y)}
-                  </p>
-                </div>
-              );
-            }}
-          />
-          {activeCompounds.map((c) => (
-            <Scatter
-              key={c}
-              name={c}
-              data={lapsByCompound[c]}
-              fill={COMPOUND_COLORS[c]}
-              fillOpacity={0.35}
-              r={2.5}
-              isAnimationActive={false}
+      <MobileChartFrame height={280} logicalWidth={820}>
+        <ResponsiveContainer width="100%" height={280}>
+          <ScatterChart margin={{ top: 4, right: 16, left: 16, bottom: 20 }}>
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke={CHART_COLORS.borderPrimary}
             />
-          ))}
-          <Scatter
-            data={movingAvgPoints}
-            fill="transparent"
-            shape={(props: { cx?: number; cy?: number }) => (
-              <circle r={0} cx={props.cx ?? 0} cy={props.cy ?? 0} fill="none" />
-            )}
-            line={{ stroke: "rgba(255,255,255,0.85)", strokeWidth: 2.5 }}
-            lineType="joint"
-            isAnimationActive={false}
-            legendType="none"
-            name="trend"
-          />
-        </ScatterChart>
-      </ResponsiveContainer>
+            <XAxis
+              type="number"
+              dataKey="x"
+              domain={[minSessionTime, maxSessionTime]}
+              tick={{ fill: CHART_COLORS.textTertiary, fontSize: 10 }}
+              tickFormatter={formatSessionTime}
+              label={{
+                value: "Session Time",
+                position: "insideBottomRight",
+                offset: -4,
+                style: CHART_AXIS_LABEL_STYLE,
+              }}
+            />
+            <YAxis
+              type="number"
+              dataKey="y"
+              domain={[minTime - pad, maxTime + pad]}
+              tick={{
+                fill: CHART_COLORS.textTertiary,
+                fontSize: 10,
+                fontFamily: "monospace",
+              }}
+              tickFormatter={formatLapTime}
+              width={72}
+            />
+            <Tooltip
+              cursor={false}
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const p = payload[0]?.payload as { x: number; y: number };
+                if (!p?.y) return null;
+                return (
+                  <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs">
+                    <p
+                      className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-0.5`}
+                    >
+                      {formatSessionTime(p.x)}
+                    </p>
+                    <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
+                      {formatLapTime(p.y)}
+                    </p>
+                  </div>
+                );
+              }}
+            />
+            {activeCompounds.map((c) => (
+              <Scatter
+                key={c}
+                name={c}
+                data={lapsByCompound[c]}
+                fill={COMPOUND_COLORS[c]}
+                fillOpacity={0.35}
+                r={2.5}
+                isAnimationActive={false}
+              />
+            ))}
+            <Scatter
+              data={movingAvgPoints}
+              fill="transparent"
+              shape={(props: { cx?: number; cy?: number }) => (
+                <circle
+                  r={0}
+                  cx={props.cx ?? 0}
+                  cy={props.cy ?? 0}
+                  fill="none"
+                />
+              )}
+              line={{ stroke: "rgba(255,255,255,0.85)", strokeWidth: 2.5 }}
+              lineType="joint"
+              isAnimationActive={false}
+              legendType="none"
+              name="trend"
+            />
+          </ScatterChart>
+        </ResponsiveContainer>
+      </MobileChartFrame>
     </div>
   );
 }
