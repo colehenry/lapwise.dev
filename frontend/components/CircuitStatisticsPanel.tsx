@@ -76,7 +76,7 @@ function LeaderboardPanel({
         {items.map((item, idx) => {
           const slug =
             linkPrefix && (item.code || slugFromName)
-              ? item.code ?? item.name.replace(/\s+/g, "-")
+              ? (item.code ?? item.name.replace(/\s+/g, "-"))
               : null;
           const href = slug ? `${linkPrefix}${slug}` : null;
 

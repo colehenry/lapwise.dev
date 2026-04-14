@@ -340,12 +340,6 @@ export default function EntityHistoryGraph({
   const pointsLabel =
     dataMode === "points_per_race" ? "Points/Race" : "Total Points";
 
-  const winningYears = new Set(
-    (seasonData?.seasons ?? [])
-      .filter((s: SeasonEntry) => s.championship_position === 1)
-      .map((s: SeasonEntry) => s.year),
-  );
-
   const CustomSeasonTick = ({
     x,
     y,
@@ -440,7 +434,9 @@ export default function EntityHistoryGraph({
                     type="checkbox"
                     checked={dataMode === "points_per_race"}
                     onChange={(e) =>
-                      setDataMode(e.target.checked ? "points_per_race" : "points")
+                      setDataMode(
+                        e.target.checked ? "points_per_race" : "points",
+                      )
                     }
                     className="accent-purple-500"
                   />
@@ -507,7 +503,8 @@ export default function EntityHistoryGraph({
                         tickLine={false}
                         interval={Math.max(
                           0,
-                          Math.ceil((seasonData?.seasons?.length ?? 0) / 15) - 1,
+                          Math.ceil((seasonData?.seasons?.length ?? 0) / 15) -
+                            1,
                         )}
                       />
                       <YAxis
