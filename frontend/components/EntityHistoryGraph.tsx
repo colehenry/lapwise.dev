@@ -21,6 +21,7 @@ import {
   RangeSelector,
 } from "@/components/chart-primitives";
 import { TrianglePattern } from "@/components/Patterns";
+import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { DataMode, GraphMode } from "@/lib/types";
@@ -290,10 +291,10 @@ export default function EntityHistoryGraph({
           Championship History
         </span>
       </div>
-      <div className="p-6">
+      <div className="min-w-0 p-3 md:p-6">
         {/* Single row of toggles */}
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
-          <div className="flex gap-1">
+        <div className="mb-4 flex min-w-0 flex-col gap-2 md:mb-6 md:flex-row md:items-center md:justify-between md:flex-wrap">
+          <div className="grid grid-cols-2 gap-1 md:flex">
             <button
               type="button"
               onClick={() => setDataMode("position")}
@@ -310,7 +311,7 @@ export default function EntityHistoryGraph({
             </button>
           </div>
 
-          <div className="flex gap-1">
+          <div className="grid grid-cols-2 gap-1 md:flex">
             <button
               type="button"
               onClick={() => setGraphMode("season")}
@@ -339,135 +340,139 @@ export default function EntityHistoryGraph({
 
         {/* Season mode: Bar Chart */}
         {graphMode === "season" && (
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart
-              data={seasonData?.seasons}
-              margin={{ top: 10, right: 30, left: 10, bottom: 30 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke={CHART_COLORS.borderPrimary}
-              />
-              <XAxis
-                dataKey="year"
-                tick={<CustomXAxisTickSeason />}
-                stroke={CHART_COLORS.textMuted}
-                tickLine={false}
-                interval={Math.max(
-                  0,
-                  Math.ceil((seasonData?.seasons?.length ?? 0) / 15) - 1,
-                )}
-              />
-              <YAxis
-                reversed={dataMode === "position"}
-                domain={
-                  dataMode === "position"
-                    ? [
-                        0,
-                        (dataMax: number) =>
-                          Math.max(dataMax, config.positionDomainMax),
-                      ]
-                    : [0, "auto"]
-                }
-                tick={{ fill: CHART_COLORS.textTertiary, fontSize: 12 }}
-                stroke={CHART_COLORS.textMuted}
-                tickLine={false}
-                label={{
-                  value:
-                    dataMode === "position"
-                      ? config.positionLabel
-                      : "Total Points",
-                  angle: -90,
-                  position: "insideLeft",
-                  ...CHART_AXIS_LABEL_STYLE,
-                }}
-              />
-              <Tooltip content={<CustomTooltip />} cursor={false} />
-              <Bar
-                dataKey={seasonDataKey}
-                radius={[3, 3, 0, 0]}
-                activeBar={false}
+          <MobileChartFrame height={400} logicalWidth={820}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={seasonData?.seasons}
+                margin={{ top: 10, right: 30, left: 10, bottom: 30 }}
               >
-                {(seasonData?.seasons ?? []).map(
-                  (entry: SeasonEntry, index: number) => (
-                    <Cell
-                      key={`bar-${entry.year}-${index}`}
-                      fill={
-                        entry.team_color
-                          ? `#${entry.team_color}`
-                          : CHART_COLORS.purple
-                      }
-                    />
-                  ),
-                )}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={CHART_COLORS.borderPrimary}
+                />
+                <XAxis
+                  dataKey="year"
+                  tick={<CustomXAxisTickSeason />}
+                  stroke={CHART_COLORS.textMuted}
+                  tickLine={false}
+                  interval={Math.max(
+                    0,
+                    Math.ceil((seasonData?.seasons?.length ?? 0) / 15) - 1,
+                  )}
+                />
+                <YAxis
+                  reversed={dataMode === "position"}
+                  domain={
+                    dataMode === "position"
+                      ? [
+                          0,
+                          (dataMax: number) =>
+                            Math.max(dataMax, config.positionDomainMax),
+                        ]
+                      : [0, "auto"]
+                  }
+                  tick={{ fill: CHART_COLORS.textTertiary, fontSize: 12 }}
+                  stroke={CHART_COLORS.textMuted}
+                  tickLine={false}
+                  label={{
+                    value:
+                      dataMode === "position"
+                        ? config.positionLabel
+                        : "Total Points",
+                    angle: -90,
+                    position: "insideLeft",
+                    ...CHART_AXIS_LABEL_STYLE,
+                  }}
+                />
+                <Tooltip content={<CustomTooltip />} cursor={false} />
+                <Bar
+                  dataKey={seasonDataKey}
+                  radius={[3, 3, 0, 0]}
+                  activeBar={false}
+                >
+                  {(seasonData?.seasons ?? []).map(
+                    (entry: SeasonEntry, index: number) => (
+                      <Cell
+                        key={`bar-${entry.year}-${index}`}
+                        fill={
+                          entry.team_color
+                            ? `#${entry.team_color}`
+                            : CHART_COLORS.purple
+                        }
+                      />
+                    ),
+                  )}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </MobileChartFrame>
         )}
 
         {/* Race mode: Bar Chart with team colors */}
         {graphMode === "race" && (
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart
-              data={raceChartData}
-              margin={{ top: 10, right: 30, left: 10, bottom: 30 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke={CHART_COLORS.borderPrimary}
-              />
-              <XAxis
-                dataKey="raceIndex"
-                tick={<CustomXAxisTickRace />}
-                stroke={CHART_COLORS.textMuted}
-                tickLine={false}
-                interval="preserveStart"
-              />
-              <YAxis
-                reversed={dataMode === "position"}
-                domain={
-                  dataMode === "position"
-                    ? [
-                        0,
-                        (dataMax: number) =>
-                          Math.max(dataMax, config.positionDomainMax),
-                      ]
-                    : [0, "auto"]
-                }
-                tick={{ fill: CHART_COLORS.textTertiary, fontSize: 12 }}
-                stroke={CHART_COLORS.textMuted}
-                tickLine={false}
-                label={{
-                  value:
-                    dataMode === "position"
-                      ? config.positionLabel
-                      : "Total Points",
-                  angle: -90,
-                  position: "insideLeft",
-                  ...CHART_AXIS_LABEL_STYLE,
-                }}
-              />
-              <Tooltip content={<CustomTooltip />} cursor={false} />
-              <Bar
-                dataKey={raceDataKey}
-                radius={[3, 3, 0, 0]}
-                activeBar={false}
+          <MobileChartFrame height={400} logicalWidth={900}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={raceChartData}
+                margin={{ top: 10, right: 30, left: 10, bottom: 30 }}
               >
-                {raceChartData.map(
-                  (entry: Record<string, unknown>, index: number) => (
-                    <Cell
-                      key={`race-bar-${String(entry.year ?? "unknown")}-${String(entry.round ?? index)}-${String(entry.session_type ?? "race")}-${index}`}
-                      fill={
-                        entry.team_color
-                          ? `#${entry.team_color}`
-                          : CHART_COLORS.purple
-                      }
-                    />
-                  ),
-                )}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={CHART_COLORS.borderPrimary}
+                />
+                <XAxis
+                  dataKey="raceIndex"
+                  tick={<CustomXAxisTickRace />}
+                  stroke={CHART_COLORS.textMuted}
+                  tickLine={false}
+                  interval="preserveStart"
+                />
+                <YAxis
+                  reversed={dataMode === "position"}
+                  domain={
+                    dataMode === "position"
+                      ? [
+                          0,
+                          (dataMax: number) =>
+                            Math.max(dataMax, config.positionDomainMax),
+                        ]
+                      : [0, "auto"]
+                  }
+                  tick={{ fill: CHART_COLORS.textTertiary, fontSize: 12 }}
+                  stroke={CHART_COLORS.textMuted}
+                  tickLine={false}
+                  label={{
+                    value:
+                      dataMode === "position"
+                        ? config.positionLabel
+                        : "Total Points",
+                    angle: -90,
+                    position: "insideLeft",
+                    ...CHART_AXIS_LABEL_STYLE,
+                  }}
+                />
+                <Tooltip content={<CustomTooltip />} cursor={false} />
+                <Bar
+                  dataKey={raceDataKey}
+                  radius={[3, 3, 0, 0]}
+                  activeBar={false}
+                >
+                  {raceChartData.map(
+                    (entry: Record<string, unknown>, index: number) => (
+                      <Cell
+                        key={`race-bar-${String(entry.year ?? "unknown")}-${String(entry.round ?? index)}-${String(entry.session_type ?? "race")}-${index}`}
+                        fill={
+                          entry.team_color
+                            ? `#${entry.team_color}`
+                            : CHART_COLORS.purple
+                        }
+                      />
+                    ),
+                  )}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </MobileChartFrame>
         )}
 
         {/* Range Selector Modal */}

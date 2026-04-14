@@ -23,8 +23,6 @@ function nodeToSortKey(node: React.ReactNode): string {
 export default function AIDataTable({ headers, rows }: AIDataTableProps) {
   const [sortCol, setSortCol] = useState<number | null>(null);
   const [sortAsc, setSortAsc] = useState(true);
-  const minTableWidth = Math.max(360, headers.length * 96);
-
   function handleSort(col: number) {
     if (sortCol === col) {
       setSortAsc(!sortAsc);
@@ -50,15 +48,38 @@ export default function AIDataTable({ headers, rows }: AIDataTableProps) {
         });
 
   return (
-    <div className="relative max-w-full overflow-hidden rounded-xl border border-white/[0.06]">
-      <div className="overflow-x-auto">
-        <table className="w-max text-xs" style={{ minWidth: minTableWidth }}>
+    <div className="max-w-full overflow-hidden rounded-xl border border-white/[0.06]">
+      <div className="divide-y divide-white/[0.06] md:hidden">
+        {sortedRows.map((row, rowIndex) => (
+          <div
+            key={`mobile-${row.map(nodeToSortKey).join("||") || rowIndex}`}
+            className="bg-white/[0.015] px-3 py-2.5"
+          >
+            {row.map((cell, ci) => (
+              <div
+                key={`mobile-${rowIndex}-${nodeToSortKey(headers[ci]) || ci}`}
+                className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-3 py-1.5"
+              >
+                <div className="font-mono text-[9px] uppercase tracking-[0.08em] text-text-muted">
+                  {headers[ci]}
+                </div>
+                <div className="min-w-0 break-words text-right text-[11px] font-medium text-text-secondary">
+                  {cell}
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-max min-w-full text-[11px] md:text-xs">
           <thead>
             <tr className="border-b border-white/[0.06] bg-white/[0.03]">
               {headers.map((h, i) => (
                 <th
                   key={nodeToSortKey(h) || String(i)}
-                  className="whitespace-nowrap px-3 py-2 text-left font-mono text-[10px] uppercase tracking-[0.08em] text-text-muted cursor-pointer select-none hover:text-text-secondary transition-colors"
+                  className="whitespace-nowrap px-2.5 py-2 text-left font-mono text-[9px] uppercase tracking-[0.08em] text-text-muted cursor-pointer select-none hover:text-text-secondary transition-colors md:px-3 md:text-[10px]"
                   onClick={() => handleSort(i)}
                 >
                   <span className="flex items-center gap-1 whitespace-nowrap">
@@ -112,7 +133,7 @@ export default function AIDataTable({ headers, rows }: AIDataTableProps) {
                 {row.map((cell, ci) => (
                   <td
                     key={`${nodeToSortKey(headers[ci]) || ci}-${nodeToSortKey(cell)}`}
-                    className="whitespace-nowrap px-3 py-2 text-text-secondary"
+                    className="whitespace-nowrap px-2.5 py-2 text-text-secondary md:px-3"
                   >
                     {cell}
                   </td>
@@ -122,7 +143,6 @@ export default function AIDataTable({ headers, rows }: AIDataTableProps) {
           </tbody>
         </table>
       </div>
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-bg-tertiary to-transparent md:hidden" />
     </div>
   );
 }

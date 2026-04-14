@@ -325,9 +325,9 @@ export default function ChatMessage({
 
   return (
     <div
-      className={`flex min-w-0 max-w-full gap-2 py-3 md:gap-3 ${isUser ? "flex-row-reverse" : ""}`}
+      className={`flex min-w-0 max-w-full gap-0 py-2 md:gap-3 md:py-3 ${isUser ? "flex-row-reverse" : ""}`}
     >
-      <div className="shrink-0 pt-0.5">
+      <div className="hidden shrink-0 pt-0.5 sm:block">
         {isUser ? (
           <UserAvatar
             username={userName || "You"}
@@ -344,11 +344,11 @@ export default function ChatMessage({
         className={`min-w-0 flex-1 overflow-hidden ${isUser ? "text-right" : ""}`}
       >
         {isUser ? (
-          <div className="inline-block max-w-[min(85%,calc(100vw-6rem))] whitespace-pre-wrap break-words rounded-2xl border border-white/[0.06] bg-white/[0.04] px-4 py-2.5 text-left text-sm text-text-primary">
+          <div className="inline-block max-w-[min(90%,calc(100vw-2rem))] whitespace-pre-wrap break-words rounded-xl border border-white/[0.06] bg-white/[0.04] px-3 py-2 text-left text-xs leading-relaxed text-text-primary md:max-w-[85%] md:rounded-2xl md:px-4 md:py-2.5 md:text-sm">
             {content}
           </div>
         ) : (
-          <div className="min-w-0 max-w-full space-y-2 overflow-hidden rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3 md:px-5">
+          <div className="min-w-0 max-w-full space-y-2 overflow-hidden rounded-xl border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 md:rounded-2xl md:px-5 md:py-3">
             {steps && steps.length > 0 && (
               <ThinkingSteps steps={steps} isStreaming={isStreaming} />
             )}
@@ -380,7 +380,7 @@ export default function ChatMessage({
             )}
 
             {content && (
-              <div className="prose-chat min-w-0 max-w-full text-sm text-text-secondary leading-relaxed">
+              <div className="prose-chat min-w-0 max-w-full text-xs leading-relaxed text-text-secondary md:text-sm">
                 <Markdown
                   remarkPlugins={[remarkGfm]}
                   components={{
@@ -561,7 +561,7 @@ export default function ChatMessage({
 
             {!isStreaming && content && (
               <div className="flex items-center justify-between pt-1">
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
                   {followUps &&
                     followUps.length > 0 &&
                     onFollowUp &&
@@ -570,7 +570,7 @@ export default function ChatMessage({
                         key={q}
                         type="button"
                         onClick={() => onFollowUp(q)}
-                        className="rounded-full border border-purple-500/20 bg-purple-500/[0.06] px-2.5 py-1 text-[11px] text-purple-300 transition-all hover:border-purple-500/30 hover:bg-purple-500/10"
+                        className="max-w-full break-words rounded-full border border-purple-500/20 bg-purple-500/[0.06] px-2.5 py-1 text-left text-[11px] text-purple-300 transition-all hover:border-purple-500/30 hover:bg-purple-500/10"
                       >
                         {q}
                       </button>
