@@ -296,7 +296,7 @@ export const distDriverKey = (driver: DriverLapDistribution): string =>
 
 // Graph mode types (used by history graphs)
 export type GraphMode = "season" | "race";
-export type DataMode = "position" | "points";
+export type DataMode = "position" | "points" | "points_per_race";
 
 // Driver profile types
 export interface DriverProfile {
@@ -344,6 +344,8 @@ export interface DriverSeasonHistory {
   year: number;
   championship_position: number | null;
   total_points: number;
+  race_count?: number;
+  points_per_race?: number;
   team_name: string;
   team_color: string | null;
 }

@@ -15,6 +15,7 @@ import {
   fetchSeasons,
   isValidHeadshotUrl,
 } from "@/lib/api";
+import { getDriverHeadshotUrl } from "@/lib/entityImageOverrides";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
 import type { DriverListItem, DriverListResponse } from "@/lib/types";
 
@@ -33,6 +34,7 @@ async function fetchAllDrivers(): Promise<DriverListResponse> {
 
 function DriverCard({ driver }: { driver: DriverListItem }) {
   const isActive = driver.latest_season === CURRENT_YEAR;
+  const headshotUrl = getDriverHeadshotUrl(driver);
   const driverSlug =
     driver.driver_slug ||
     driver.driver_code ||
@@ -45,7 +47,7 @@ function DriverCard({ driver }: { driver: DriverListItem }) {
         <Link href={`/drivers/${driverSlug}`} className="block">
           <div className="flex items-center gap-3">
             {/* Headshot */}
-            {isValidHeadshotUrl(driver.headshot_url) ? (
+            {isValidHeadshotUrl(headshotUrl) ? (
               <div
                 className="w-14 h-14 rounded-sm overflow-hidden border-2 flex-shrink-0 bg-bg-secondary"
                 style={{
@@ -55,11 +57,11 @@ function DriverCard({ driver }: { driver: DriverListItem }) {
                 }}
               >
                 <Image
-                  src={driver.headshot_url}
+                  src={headshotUrl}
                   alt={driver.full_name}
                   width={56}
                   height={56}
-                  unoptimized={driver.headshot_url?.includes("wikimedia.org")}
+                  unoptimized={headshotUrl?.includes("wikimedia.org")}
                   className="w-full h-full object-cover"
                 />
               </div>

@@ -22,6 +22,8 @@ export default function ConstructorSeasonHistoryGraph({
     racePositionKey: "best_position",
     racePointsKey: "total_points",
     showTeamInSeasonTooltip: false,
+    defaultDataMode: "points_per_race",
+    showPointsPerRaceToggle: true,
     renderRaceTooltip: (data) => (
       <>
         <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-2`}>

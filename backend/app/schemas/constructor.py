@@ -69,6 +69,7 @@ class ConstructorSeasonHistory(BaseModel):
     year: int
     championship_position: Optional[int] = None
     total_points: float
+    race_count: int = 0
     team_color: Optional[str] = None
 
     class Config:

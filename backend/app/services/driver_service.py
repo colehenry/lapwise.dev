@@ -313,6 +313,7 @@ class DriverService:
                     year=year,
                     championship_position=championship_position,
                     total_points=float(season_row.total_points),
+                    race_count=int(season_row.race_count or 0),
                     team_name=season_row.team_name,
                     team_color=season_row.team_color,
                 )
@@ -457,6 +458,7 @@ class DriverService:
             select(
                 Session.year,
                 func.sum(SessionResult.points).label("total_points"),
+                func.count(SessionResult.id).label("race_count"),
                 func.max(Team.name).label("team_name"),  # Get most recent team
                 func.max(Team.team_color).label("team_color"),
             )

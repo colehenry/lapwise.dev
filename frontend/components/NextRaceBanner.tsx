@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
 import { ConcentricPattern, GridPattern } from "@/components/Patterns";
+import TrackMapImage from "@/components/TrackMapImage";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import { getCircuitFlagEmoji } from "@/lib/flags";
 
@@ -153,19 +153,14 @@ export default function NextRaceBanner() {
                           id={`event-pattern-${event.event_date}`}
                           className="absolute inset-0 w-full h-full opacity-10 pointer-events-none"
                         />
-                        {trackMapId ? (
-                          <Image
-                            src={`/track-maps/${trackMapId}.png`}
-                            alt={event.circuit_name || ""}
-                            width={120}
-                            height={120}
-                            className="object-contain relative z-10 opacity-60 mix-blend-lighten max-h-14 md:max-h-16"
-                          />
-                        ) : (
-                          <div className="text-[10px] text-text-muted font-mono uppercase tracking-widest relative z-10">
-                            No map available
-                          </div>
-                        )}
+                        <TrackMapImage
+                          circuitId={trackMapId}
+                          circuitName={event.circuit_name || "Circuit"}
+                          width={120}
+                          height={120}
+                          className="object-contain relative z-10 opacity-60 mix-blend-lighten max-h-14 md:max-h-16"
+                          fallbackClassName="relative z-10 px-3"
+                        />
                       </div>
 
                       {/* Event Identification */}

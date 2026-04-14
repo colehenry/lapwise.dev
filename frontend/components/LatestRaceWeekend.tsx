@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { ConcentricPattern } from "@/components/Patterns";
+import TrackMapImage from "@/components/TrackMapImage";
 import Skeleton from "@/components/ui/Skeleton";
 import TiltCard from "@/components/ui/TiltCard";
 import { apiHeaders, apiUrl, isValidHeadshotUrl } from "@/lib/api";
@@ -110,12 +111,13 @@ export default function LatestRaceWeekend() {
               {/* Right: Track map + CTA */}
               <div className="md:w-56 bg-bg-primary border-t md:border-t-0 md:border-l border-border-primary relative flex flex-col items-center justify-center p-4 overflow-hidden min-h-[140px]">
                 <ConcentricPattern id="latest-race-pattern" />
-                <Image
-                  src={`/track-maps/${data.circuit_id}.png`}
-                  alt={`${data.circuit_name} track map`}
+                <TrackMapImage
+                  circuitId={data.circuit_id}
+                  circuitName={data.circuit_name}
                   width={140}
                   height={80}
                   className="object-contain relative z-10 opacity-80 mix-blend-lighten mb-3"
+                  fallbackClassName="relative z-10 mb-3 h-20 w-full px-3"
                 />
                 <span className="relative z-10 text-[10px] tracking-widest text-purple-300 font-bold uppercase font-mono group-hover:text-purple-200 transition-colors duration-150 flex items-center gap-1">
                   Explore Full Race Weekend

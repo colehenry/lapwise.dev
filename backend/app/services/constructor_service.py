@@ -248,6 +248,7 @@ class ConstructorService:
                     year=year,
                     championship_position=championship_position,
                     total_points=float(season_row.total_points),
+                    race_count=int(season_row.race_count or 0),
                     team_color=team_data_map.get(year, (None, None))[1],
                 )
             )
@@ -446,6 +447,7 @@ class ConstructorService:
             select(
                 Session.year,
                 func.sum(SessionResult.points).label("total_points"),
+                func.count(Session.id.distinct()).label("race_count"),
             )
             .join(Session, SessionResult.session_id == Session.id)
             .where(SessionResult.team_id.in_(team_ids))

@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import Image from "next/image";
 import { type RefObject, useEffect, useMemo, useRef } from "react";
+import TrackMapImage from "@/components/TrackMapImage";
 import { fetchReplayTrackGeometry } from "@/lib/api";
 import type { ReplayTrack } from "@/lib/types";
 
@@ -40,7 +40,8 @@ const TRACK_WIDTH = 8;
 const TRACK_COLOR = "rgba(255, 255, 255, 0.88)";
 const TRACK_GLOW_COLOR = "rgba(255, 255, 255, 0.10)";
 const SF_LINE_COLOR = "rgba(255, 255, 255, 0.72)";
-const CORNER_LABEL_COLOR = "rgba(160, 160, 170, 0.82)";
+const CORNER_LABEL_COLOR = "rgba(196, 184, 214, 0.9)";
+const CORNER_LABEL_SHADOW_COLOR = "rgba(8, 8, 14, 0.72)";
 
 export default function InteractiveTrackMap({
   circuitId,
@@ -223,6 +224,10 @@ function drawCornerLabels(
   if (!track.corners?.length) return;
 
   ctx.fillStyle = CORNER_LABEL_COLOR;
+  ctx.shadowColor = CORNER_LABEL_SHADOW_COLOR;
+  ctx.shadowBlur = 3 / scale;
+  ctx.shadowOffsetX = 0.75 / scale;
+  ctx.shadowOffsetY = 0.75 / scale;
   ctx.font = `${9 / scale}px ui-monospace, SFMono-Regular, Menlo, monospace`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -231,9 +236,13 @@ function drawCornerLabels(
     const label = corner.letter
       ? `${corner.number}${corner.letter}`
       : String(corner.number);
-    ctx.fillStyle = CORNER_LABEL_COLOR;
     ctx.fillText(label, corner.x, corner.y);
   }
+
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
 }
 
 function StaticTrackFallback({
@@ -245,11 +254,12 @@ function StaticTrackFallback({
 }) {
   return (
     <div className="relative z-10 h-[350px] md:h-[400px] w-full">
-      <Image
-        src={`/track-maps/${circuitId}.png`}
-        alt={`${circuitName} track map`}
+      <TrackMapImage
+        circuitId={circuitId}
+        circuitName={circuitName}
         fill
         className="object-contain p-8"
+        fallbackClassName="h-full w-full px-4"
         draggable={false}
         style={{
           filter:

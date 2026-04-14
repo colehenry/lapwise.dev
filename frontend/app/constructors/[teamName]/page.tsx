@@ -5,8 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
+import ArchiveMetricBar from "@/components/archive/ArchiveMetricBar";
 import ArchivePanel from "@/components/archive/ArchivePanel";
-import ArchiveStatTile from "@/components/archive/ArchiveStatTile";
 import ConstructorResultsTable from "@/components/ConstructorResultsTable";
 import ConstructorSeasonHistoryGraph from "@/components/ConstructorSeasonHistoryGraph";
 import ConstructorStatisticsPanel from "@/components/ConstructorStatisticsPanel";
@@ -15,6 +15,11 @@ import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
 import TabBar from "@/components/ui/TabBar";
 import { useTabSync } from "@/hooks/useTabSync";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import {
+  getConstructorBannerUrl,
+  getConstructorLogoUrl,
+  getConstructorPhotoUrl,
+} from "@/lib/entityImageOverrides";
 import type { ConstructorProfile } from "@/lib/types";
 
 type ConstructorTab = "overview" | "results" | "statistics";
@@ -85,36 +90,34 @@ export default function ConstructorProfilePage() {
     );
   }
 
-  const stats = [
-    { label: "Seasons", value: data.total_seasons },
-    { label: "Races", value: data.total_races },
+  const headlineStats = [
     { label: "Championships", value: data.total_championships || 0 },
     { label: "Wins", value: data.total_wins },
     { label: "Podiums", value: data.total_podiums },
+  ];
+  const stats = [
+    { label: "Seasons", value: data.total_seasons },
+    { label: "Races", value: data.total_races },
     { label: "Total Points", value: Math.round(data.total_points) },
   ];
   const teamColor = data.team_color ? `#${data.team_color}` : null;
+  const logoUrl = getConstructorLogoUrl(data);
+  const photoUrl = getConstructorPhotoUrl(data);
+  const bannerUrl = getConstructorBannerUrl(data);
+  const winRate =
+    data.total_races > 0 ? (data.total_wins / data.total_races) * 100 : 0;
+  const podiumRate =
+    data.total_races > 0 ? (data.total_podiums / data.total_races) * 100 : 0;
   const highlights = [
     {
       label: "Win Rate",
-      value:
-        data.total_races > 0
-          ? `${((data.total_wins / data.total_races) * 100).toFixed(1)}%`
-          : "0%",
+      value: `${winRate.toFixed(1)}%`,
+      progress: winRate,
     },
     {
       label: "Podium Rate",
-      value:
-        data.total_races > 0
-          ? `${((data.total_podiums / data.total_races) * 100).toFixed(1)}%`
-          : "0%",
-    },
-    {
-      label: "Points per Race",
-      value:
-        data.total_races > 0
-          ? (data.total_points / data.total_races).toFixed(2)
-          : "0",
+      value: `${podiumRate.toFixed(1)}%`,
+      progress: podiumRate,
     },
   ];
 
@@ -143,15 +146,25 @@ export default function ConstructorProfilePage() {
               subtitle={`${data.latest_season ? `Active in ${data.latest_season}` : "Historical constructor"}${data.best_finish ? ` · Best finish ${getOrdinalSuffix(data.best_finish)}` : ""}`}
               accentColor={teamColor}
               stats={stats}
+              headlineStats={headlineStats}
+              bannerImageUrl={bannerUrl}
               media={
-                data.logo_url ? (
+                photoUrl ? (
                   <Image
-                    src={data.logo_url}
+                    src={photoUrl}
+                    alt={`${data.team_name} car`}
+                    width={320}
+                    height={180}
+                    className="h-full w-full scale-125 rotate-[-90deg] object-contain"
+                  />
+                ) : logoUrl ? (
+                  <Image
+                    src={logoUrl}
                     alt={data.team_name}
                     width={180}
                     height={180}
                     className="h-full w-full object-contain p-7"
-                    unoptimized={data.logo_url.includes("wikimedia.org")}
+                    unoptimized={logoUrl.includes("wikimedia.org")}
                   />
                 ) : (
                   <span className="text-text-primary font-bold text-5xl text-center px-4">
@@ -177,12 +190,13 @@ export default function ConstructorProfilePage() {
             />
 
             <ArchivePanel title="Constructor Highlights">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 rounded-sm border border-border-primary bg-bg-primary/20 px-4 md:px-5">
                 {highlights.map((stat) => (
-                  <ArchiveStatTile
+                  <ArchiveMetricBar
                     key={stat.label}
                     label={stat.label}
                     value={stat.value}
+                    progress={stat.progress}
                     accentColor={teamColor}
                   />
                 ))}
@@ -198,7 +212,10 @@ export default function ConstructorProfilePage() {
         )}
 
         {activeTab === "statistics" && (
-          <ConstructorStatisticsPanel teamName={teamName} />
+          <ConstructorStatisticsPanel
+            teamName={teamName}
+            accentColor={teamColor}
+          />
         )}
       </div>
     </div>
