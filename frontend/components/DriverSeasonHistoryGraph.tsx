@@ -22,6 +22,8 @@ export default function DriverSeasonHistoryGraph({
     racePositionKey: "position",
     racePointsKey: "points",
     showTeamInSeasonTooltip: true,
+    defaultDataMode: "points_per_race",
+    showPointsPerRaceToggle: true,
     renderRaceTooltip: (data) => (
       <>
         <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-2`}>

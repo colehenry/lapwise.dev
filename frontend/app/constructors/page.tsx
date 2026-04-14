@@ -10,6 +10,7 @@ import Skeleton from "@/components/ui/Skeleton";
 import SortPills from "@/components/ui/SortPills";
 import TiltCard from "@/components/ui/TiltCard";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
+import { getConstructorLogoUrl } from "@/lib/entityImageOverrides";
 import type { ConstructorListItem, ConstructorListResponse } from "@/lib/types";
 
 type SortKey = "wins" | "races" | "points" | "alpha";
@@ -29,6 +30,7 @@ function ConstructorCard({ team }: { team: ConstructorListItem }) {
   const teamNameUrl = team.team_name.replace(/ /g, "-");
   const isActive = team.latest_season === CURRENT_YEAR;
   const teamColor = team.team_color ? `#${team.team_color}` : "#888";
+  const logoUrl = getConstructorLogoUrl(team);
 
   // Generate initials from team name
   const initials = team.team_name
@@ -50,18 +52,18 @@ function ConstructorCard({ team }: { team: ConstructorListItem }) {
 
           <div className="flex items-center gap-3 p-4 pl-5">
             {/* Team logo or initials circle */}
-            {team.logo_url ? (
+            {logoUrl ? (
               <div
                 className="w-14 h-14 rounded-sm overflow-hidden border-2 bg-bg-secondary flex-shrink-0"
                 style={{ borderColor: teamColor }}
               >
                 <Image
-                  src={team.logo_url}
+                  src={logoUrl}
                   alt={team.team_name}
                   width={56}
                   height={56}
                   className="w-full h-full object-contain p-1"
-                  unoptimized={team.logo_url.includes("wikimedia.org")}
+                  unoptimized={logoUrl.includes("wikimedia.org")}
                 />
               </div>
             ) : (

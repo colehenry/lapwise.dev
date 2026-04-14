@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { ConcentricPattern } from "@/components/Patterns";
+import TrackMapImage from "@/components/TrackMapImage";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl, isValidHeadshotUrl } from "@/lib/api";
 import type { RoundSummary } from "@/lib/types";
@@ -192,12 +193,13 @@ export default function TopRightLatestRace() {
         >
           <ConcentricPattern id="latest-hero-pattern" />
           <div className="relative z-10 w-full h-full flex items-center justify-center transition-transform duration-500 ease-out group-hover/map:scale-110">
-            <Image
-              src={`/track-maps/${data.circuit_id}.png`}
-              alt={data.circuit_name}
+            <TrackMapImage
+              circuitId={data.circuit_id}
+              circuitName={data.circuit_name}
               width={200}
               height={200}
               className="object-contain opacity-80 mix-blend-lighten scale-[1.25]"
+              fallbackClassName="h-full w-full px-3"
             />
           </div>
 

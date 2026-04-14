@@ -80,6 +80,7 @@ class SeasonHistory(BaseModel):
     year: int
     championship_position: Optional[int] = None
     total_points: float
+    race_count: int = 0
     team_name: str
     team_color: Optional[str] = None
 

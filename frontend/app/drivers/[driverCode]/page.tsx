@@ -5,8 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
+import ArchiveMetricBar from "@/components/archive/ArchiveMetricBar";
 import ArchivePanel from "@/components/archive/ArchivePanel";
-import ArchiveStatTile from "@/components/archive/ArchiveStatTile";
 import DriverResultsTable from "@/components/DriverResultsTable";
 import DriverSeasonHistoryGraph from "@/components/DriverSeasonHistoryGraph";
 import DriverStatisticsPanel from "@/components/DriverStatisticsPanel";
@@ -15,6 +15,10 @@ import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
 import TabBar from "@/components/ui/TabBar";
 import { useTabSync } from "@/hooks/useTabSync";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import {
+  getDriverBannerUrl,
+  getDriverPortraitUrl,
+} from "@/lib/entityImageOverrides";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
 import type { DriverProfile } from "@/lib/types";
 
@@ -75,31 +79,35 @@ export default function DriverProfilePage() {
     );
   }
 
-  const stats = [
-    { label: "Seasons", value: data.total_seasons },
-    { label: "Races", value: data.total_races },
+  const headlineStats = [
     { label: "Championships", value: data.total_championships || 0 },
     { label: "Wins", value: data.total_wins },
     { label: "Podiums", value: data.total_podiums },
+  ];
+  const stats = [
+    { label: "Seasons", value: data.total_seasons },
+    { label: "Races", value: data.total_races },
     { label: "Total Points", value: Math.round(data.total_points) },
   ];
   const teamColor = data.current_team_color
     ? `#${data.current_team_color}`
     : null;
+  const portraitUrl = getDriverPortraitUrl(data);
+  const bannerUrl = getDriverBannerUrl(data);
+  const winRate =
+    data.total_races > 0 ? (data.total_wins / data.total_races) * 100 : 0;
+  const podiumRate =
+    data.total_races > 0 ? (data.total_podiums / data.total_races) * 100 : 0;
   const highlights = [
     {
       label: "Win Rate",
-      value:
-        data.total_races > 0
-          ? `${((data.total_wins / data.total_races) * 100).toFixed(1)}%`
-          : "0%",
+      value: `${winRate.toFixed(1)}%`,
+      progress: winRate,
     },
     {
       label: "Podium Rate",
-      value:
-        data.total_races > 0
-          ? `${((data.total_podiums / data.total_races) * 100).toFixed(1)}%`
-          : "0%",
+      value: `${podiumRate.toFixed(1)}%`,
+      progress: podiumRate,
     },
     {
       label: "Points per Race",
@@ -107,6 +115,7 @@ export default function DriverProfilePage() {
         data.total_races > 0
           ? (data.total_points / data.total_races).toFixed(2)
           : "0",
+      progress: undefined,
     },
   ];
 
@@ -135,14 +144,16 @@ export default function DriverProfilePage() {
               subtitle={`${data.current_team ?? "Independent entry"}${data.driver_number ? ` · #${data.driver_number}` : ""}`}
               accentColor={teamColor}
               stats={stats}
+              headlineStats={headlineStats}
+              bannerImageUrl={bannerUrl}
               media={
-                data.headshot_url ? (
+                portraitUrl ? (
                   <Image
-                    src={data.headshot_url}
+                    src={portraitUrl}
                     alt={data.full_name}
                     width={180}
                     height={180}
-                    className="h-full w-full object-cover"
+                    className="h-full max-h-[360px] w-full object-contain object-bottom"
                   />
                 ) : (
                   <span className="text-5xl font-bold font-mono text-text-tertiary">
@@ -172,12 +183,13 @@ export default function DriverProfilePage() {
             />
 
             <ArchivePanel title="Career Highlights">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 rounded-sm border border-border-primary bg-bg-primary/20 px-4 md:px-5">
                 {highlights.map((stat) => (
-                  <ArchiveStatTile
+                  <ArchiveMetricBar
                     key={stat.label}
                     label={stat.label}
                     value={stat.value}
+                    progress={stat.progress}
                     accentColor={teamColor}
                   />
                 ))}

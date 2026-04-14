@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import TrackMapImage from "@/components/TrackMapImage";
 
 /** Subtle dot grid SVG pattern */
 function DotGridPattern({ id = "dot-grid" }: { id?: string }) {
@@ -47,12 +47,13 @@ export function TrackMapCompact({
       }}
     >
       <DotGridPattern id={patternId} />
-      <Image
-        src={`/track-maps/${circuitId}.png`}
-        alt={`${circuitName} track map`}
+      <TrackMapImage
+        circuitId={circuitId}
+        circuitName={circuitName}
         width={160}
         height={88}
         className="object-contain w-full h-full relative z-10 opacity-90"
+        fallbackClassName="relative z-10 h-full w-full px-3"
         style={{
           filter:
             "drop-shadow(0 0 8px rgba(160, 32, 240, 0.35)) drop-shadow(0 0 20px rgba(160, 32, 240, 0.15))",
@@ -114,12 +115,13 @@ export function TrackMapFull({
 
       {/* Track image with glow */}
       {circuitId && (
-        <Image
-          src={`/track-maps/${circuitId}.png`}
-          alt={`${circuitName} track map`}
+        <TrackMapImage
+          circuitId={circuitId}
+          circuitName={circuitName}
           width={240}
           height={150}
           className="object-contain relative z-10 opacity-90 p-4"
+          fallbackClassName="relative z-10 h-full w-full px-4"
           style={{
             filter:
               "drop-shadow(0 0 10px rgba(160, 32, 240, 0.4)) drop-shadow(0 0 25px rgba(160, 32, 240, 0.15))",

@@ -8,6 +8,7 @@ import { useAuth } from "@/components/AuthProvider";
 import PostCard from "@/components/discussions/PostCard";
 import UserAvatar from "@/components/discussions/UserAvatar";
 import FavoritesPicker from "@/components/favorites/FavoritesPicker";
+import TrackMapImage from "@/components/TrackMapImage";
 import Button from "@/components/ui/Button";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl, isValidHeadshotUrl } from "@/lib/api";
@@ -236,12 +237,13 @@ export default function ProfilePage() {
                 href={`/circuits/${profile.favorite_circuit.circuit_id}`}
                 className="flex items-center gap-3 p-3 rounded-sm bg-bg-tertiary border border-border-primary hover:border-purple-500/50 transition-colors"
               >
-                {/* biome-ignore lint/performance/noImgElement: static track map */}
-                <img
-                  src={`/track-maps/${profile.favorite_circuit.circuit_id}.png`}
-                  alt=""
+                <TrackMapImage
+                  circuitId={profile.favorite_circuit.circuit_id}
+                  circuitName={profile.favorite_circuit.name}
+                  width={40}
+                  height={40}
                   className="w-10 h-10 object-contain opacity-60 shrink-0"
-                  loading="lazy"
+                  fallbackClassName="h-10 w-10 shrink-0"
                 />
                 <div className="min-w-0">
                   <p className="text-xs text-text-muted">Circuit</p>

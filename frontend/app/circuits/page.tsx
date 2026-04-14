@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import PageHeader from "@/components/PageHeader";
+import TrackMapImage from "@/components/TrackMapImage";
 import ExpandButton from "@/components/ui/ExpandButton";
 import Skeleton from "@/components/ui/Skeleton";
 import SortPills from "@/components/ui/SortPills";
@@ -38,12 +38,13 @@ function CircuitCard({ circuit }: { circuit: CircuitInfo }) {
           <div className="flex items-center gap-4">
             {/* Track map */}
             <div className="flex-shrink-0 w-20 h-20 rounded-sm bg-bg-secondary flex items-center justify-center border border-border-primary p-2">
-              <Image
-                src={`/track-maps/${circuit.id}.png`}
-                alt={`${circuit.name} track map`}
+              <TrackMapImage
+                circuitId={circuit.id}
+                circuitName={circuit.name}
                 width={80}
                 height={80}
                 className="object-contain w-full h-full"
+                fallbackClassName="h-full w-full px-2"
               />
             </div>
 

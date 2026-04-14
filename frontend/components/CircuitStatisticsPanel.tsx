@@ -12,13 +12,58 @@ interface CircuitStatisticsPanelProps {
   circuitId: string;
 }
 
-function StatList({
+function LeaderboardRow({
+  item,
+  rank,
+  href,
+}: {
+  item: CircuitStatDriver;
+  rank: number;
+  href: string | null;
+}) {
+  return (
+    <div className="grid grid-cols-[2rem_1fr_auto] items-center gap-4 border-b border-border-primary px-4 py-2.5 last:border-b-0">
+      <span className="font-mono text-xs font-bold tabular-nums text-text-muted text-right">
+        {String(rank).padStart(2, "0")}
+      </span>
+
+      <div className="flex items-center gap-2 min-w-0">
+        {item.color && (
+          <span
+            className="block h-2 w-2 shrink-0 rounded-full"
+            style={{ backgroundColor: `#${item.color}` }}
+          />
+        )}
+        {href ? (
+          <Link
+            href={href}
+            className="truncate text-sm font-semibold text-text-primary transition-colors hover:text-purple-300"
+          >
+            {item.name}
+          </Link>
+        ) : (
+          <span className="truncate text-sm font-semibold text-text-primary">
+            {item.name}
+          </span>
+        )}
+      </div>
+
+      <span className="font-mono text-sm font-bold tabular-nums text-text-secondary">
+        {item.count.toLocaleString()}
+      </span>
+    </div>
+  );
+}
+
+function LeaderboardPanel({
   title,
+  headerId,
   items,
   linkPrefix,
-  slugFromName = false,
+  slugFromName,
 }: {
   title: string;
+  headerId: string;
   items: CircuitStatDriver[];
   linkPrefix?: string;
   slugFromName?: boolean;
@@ -26,44 +71,61 @@ function StatList({
   if (items.length === 0) return null;
 
   return (
-    <ArchivePanel
-      title={title}
-      headerId={`circuit-stat-${title.replace(/\s+/g, "-").toLowerCase()}`}
-    >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <ArchivePanel title={title} headerId={headerId} bodyClassName="p-0">
+      <div>
         {items.map((item, idx) => {
+          const slug =
+            linkPrefix && (item.code || slugFromName)
+              ? item.code ?? item.name.replace(/\s+/g, "-")
+              : null;
+          const href = slug ? `${linkPrefix}${slug}` : null;
+
           return (
-            <div
+            <LeaderboardRow
               key={`${item.name}-${idx}`}
-              className="bg-bg-primary/60 border border-border-primary rounded-sm p-4 text-center min-w-0"
-            >
-              <MonoLabel className="block mb-2">Rank {idx + 1}</MonoLabel>
-              {item.color && (
-                <span
-                  className="mx-auto mb-3 block h-2 w-2 rounded-full"
-                  style={{ backgroundColor: `#${item.color}` }}
-                />
-              )}
-              {linkPrefix && (item.code || slugFromName) ? (
-                <Link
-                  href={`${linkPrefix}${item.code || item.name.replace(/\s+/g, "-")}`}
-                  className="block text-sm font-semibold text-text-primary hover:text-purple-300 transition-colors break-words"
-                >
-                  {item.name}
-                </Link>
-              ) : (
-                <span className="block text-sm font-semibold text-text-primary break-words">
-                  {item.name}
-                </span>
-              )}
-              <div className="mt-3 text-2xl font-bold font-mono tabular-nums text-text-primary">
-                {item.count}
-              </div>
-            </div>
+              item={item}
+              rank={idx + 1}
+              href={href}
+            />
           );
         })}
       </div>
     </ArchivePanel>
+  );
+}
+
+function SummaryCell({
+  label,
+  items,
+}: {
+  label: string;
+  items: CircuitStatDriver[];
+}) {
+  const leader = items[0];
+  return (
+    <div className="min-w-0 border border-border-primary bg-bg-primary/20 px-4 py-3">
+      <MonoLabel className="block mb-1">{label}</MonoLabel>
+      {leader ? (
+        <div className="flex items-baseline justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            {leader.color && (
+              <span
+                className="block h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: `#${leader.color}` }}
+              />
+            )}
+            <span className="truncate text-sm font-semibold text-text-primary">
+              {leader.name}
+            </span>
+          </div>
+          <span className="font-mono text-xl font-bold tabular-nums text-text-primary shrink-0">
+            {leader.count.toLocaleString()}
+          </span>
+        </div>
+      ) : (
+        <span className="text-sm text-text-muted">No data</span>
+      )}
+    </div>
   );
 }
 
@@ -83,17 +145,20 @@ export default function CircuitStatisticsPanel({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {Array.from({ length: 4 }, (_, i) => (
-          <Skeleton
-            key={`skel-${
-              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
-              i
-            }`}
-            variant="rectangular"
-            height="250px"
-          />
-        ))}
+      <div className="space-y-6">
+        <Skeleton variant="rectangular" height="80px" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {Array.from({ length: 4 }, (_, i) => (
+            <Skeleton
+              key={`skel-${
+                // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
+                i
+              }`}
+              variant="rectangular"
+              height="260px"
+            />
+          ))}
+        </div>
       </div>
     );
   }
@@ -107,28 +172,43 @@ export default function CircuitStatisticsPanel({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <StatList
-        title="Most Wins"
-        items={data.most_wins}
-        linkPrefix="/drivers/"
-      />
-      <StatList
-        title="Most Pole Positions"
-        items={data.most_poles}
-        linkPrefix="/drivers/"
-      />
-      <StatList
-        title="Most Fastest Laps"
-        items={data.most_fastest_laps}
-        linkPrefix="/drivers/"
-      />
-      <StatList
-        title="Constructor Wins"
-        items={data.constructor_wins}
-        linkPrefix="/constructors/"
-        slugFromName
-      />
+    <div className="space-y-6">
+      <ArchivePanel title="Circuit Leaders" headerId="circuit-stat-leaders">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+          <SummaryCell label="Wins" items={data.most_wins} />
+          <SummaryCell label="Poles" items={data.most_poles} />
+          <SummaryCell label="Fastest Laps" items={data.most_fastest_laps} />
+          <SummaryCell label="Constructor Wins" items={data.constructor_wins} />
+        </div>
+      </ArchivePanel>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <LeaderboardPanel
+          title="Most Wins"
+          headerId="circuit-stat-wins"
+          items={data.most_wins}
+          linkPrefix="/drivers/"
+        />
+        <LeaderboardPanel
+          title="Most Pole Positions"
+          headerId="circuit-stat-poles"
+          items={data.most_poles}
+          linkPrefix="/drivers/"
+        />
+        <LeaderboardPanel
+          title="Most Fastest Laps"
+          headerId="circuit-stat-fastest-laps"
+          items={data.most_fastest_laps}
+          linkPrefix="/drivers/"
+        />
+        <LeaderboardPanel
+          title="Constructor Wins"
+          headerId="circuit-stat-constructor-wins"
+          items={data.constructor_wins}
+          linkPrefix="/constructors/"
+          slugFromName
+        />
+      </div>
     </div>
   );
 }

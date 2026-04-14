@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import ArchivePanel from "@/components/archive/ArchivePanel";
-import ArchiveStatTile from "@/components/archive/ArchiveStatTile";
 import CircuitLapRecords from "@/components/CircuitLapRecords";
 import CircuitLapTimeTrend from "@/components/CircuitLapTimeTrend";
 import CircuitRaceHistoryTable from "@/components/CircuitRaceHistoryTable";
@@ -14,6 +13,7 @@ import CircuitTyreStats from "@/components/CircuitTyreStats";
 import CircuitWeatherProfile from "@/components/CircuitWeatherProfile";
 import InteractiveTrackMap from "@/components/InteractiveTrackMap";
 import PageHeader from "@/components/PageHeader";
+import MonoLabel from "@/components/ui/MonoLabel";
 import Skeleton from "@/components/ui/Skeleton";
 import TabBar from "@/components/ui/TabBar";
 import { useTabSync } from "@/hooks/useTabSync";
@@ -27,6 +27,28 @@ const TABS: { key: CircuitTab; label: string }[] = [
   { key: "history", label: "History" },
   { key: "statistics", label: "Statistics" },
 ];
+
+function CircuitProfileRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  const formattedValue =
+    typeof value === "number" && Number.isInteger(value)
+      ? value.toLocaleString()
+      : value;
+
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-b border-border-primary py-3 last:border-b-0">
+      <MonoLabel>{label}</MonoLabel>
+      <span className="text-right font-mono text-base font-bold tabular-nums text-text-primary">
+        {formattedValue}
+      </span>
+    </div>
+  );
+}
 
 async function fetchCircuit(id: string): Promise<CircuitInfo> {
   const res = await fetch(apiUrl(`/api/circuits/${id}`), {
@@ -140,9 +162,9 @@ export default function CircuitDetailPage() {
               {/* Right column */}
               <div className="lg:col-span-1 flex flex-col gap-4">
                 <ArchivePanel title="Circuit Profile">
-                  <div className="space-y-4 text-center">
-                    <div className="grid grid-cols-2 gap-2">
-                      <ArchiveStatTile
+                  <div className="space-y-4">
+                    <div className="rounded-sm border border-border-primary bg-bg-primary/20 px-4">
+                      <CircuitProfileRow
                         label="Length"
                         value={
                           circuit.track_length_km
@@ -150,15 +172,15 @@ export default function CircuitDetailPage() {
                             : "N/A"
                         }
                       />
-                      <ArchiveStatTile
+                      <CircuitProfileRow
                         label="Races"
                         value={circuit.total_races}
                       />
-                      <ArchiveStatTile
+                      <CircuitProfileRow
                         label="First Race"
                         value={circuit.first_year ?? "N/A"}
                       />
-                      <ArchiveStatTile
+                      <CircuitProfileRow
                         label="Most Recent"
                         value={circuit.most_recent_year ?? "N/A"}
                       />
