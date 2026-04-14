@@ -121,9 +121,7 @@ function SeasonBarRow({
         <div>
           <MonoLabel>Pts/Race</MonoLabel>
           <div className="mt-1 font-mono text-sm font-bold tabular-nums text-text-primary">
-            {season.races > 0
-              ? (season.points / season.races).toFixed(1)
-              : "0"}
+            {season.races > 0 ? (season.points / season.races).toFixed(1) : "0"}
           </div>
         </div>
       </div>
