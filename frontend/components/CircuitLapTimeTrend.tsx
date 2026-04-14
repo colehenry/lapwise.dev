@@ -11,10 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import {
-  CHART_COLORS,
-  CHART_TYPOGRAPHY,
-} from "@/components/chart-primitives";
+import { CHART_COLORS, CHART_TYPOGRAPHY } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type {
   CircuitLapTimeTrendResponse,
