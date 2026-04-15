@@ -6,6 +6,7 @@ import ArchivePanel from "@/components/archive/ArchivePanel";
 import MonoLabel from "@/components/ui/MonoLabel";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { constructorHref, driverHref } from "@/lib/entityLinks";
 import type { CircuitStatDriver, CircuitStatisticsResponse } from "@/lib/types";
 
 interface CircuitStatisticsPanelProps {
@@ -60,13 +61,13 @@ function LeaderboardPanel({
   headerId,
   items,
   linkPrefix,
-  slugFromName,
+  entityType,
 }: {
   title: string;
   headerId: string;
   items: CircuitStatDriver[];
   linkPrefix?: string;
-  slugFromName?: boolean;
+  entityType?: "driver" | "constructor";
 }) {
   if (items.length === 0) return null;
 
@@ -74,11 +75,18 @@ function LeaderboardPanel({
     <ArchivePanel title={title} headerId={headerId} bodyClassName="p-0">
       <div>
         {items.map((item, idx) => {
-          const slug =
-            linkPrefix && (item.code || slugFromName)
-              ? (item.code ?? item.name.replace(/\s+/g, "-"))
-              : null;
-          const href = slug ? `${linkPrefix}${slug}` : null;
+          const href =
+            entityType === "driver"
+              ? driverHref({
+                  driver_slug: item.slug,
+                  driver_code: item.code,
+                  full_name: item.name,
+                })
+              : entityType === "constructor"
+                ? constructorHref(item.name)
+                : linkPrefix && item.code
+                  ? `${linkPrefix}${item.code}`
+                  : null;
 
           return (
             <LeaderboardRow
@@ -97,11 +105,24 @@ function LeaderboardPanel({
 function SummaryCell({
   label,
   items,
+  entityType,
 }: {
   label: string;
   items: CircuitStatDriver[];
+  entityType?: "driver" | "constructor";
 }) {
   const leader = items[0];
+  const leaderHref = leader
+    ? entityType === "driver"
+      ? driverHref({
+          driver_slug: leader.slug,
+          driver_code: leader.code,
+          full_name: leader.name,
+        })
+      : entityType === "constructor"
+        ? constructorHref(leader.name)
+        : null
+    : null;
   return (
     <div className="min-w-0 border border-border-primary bg-bg-primary/20 px-4 py-3">
       <MonoLabel className="block mb-1">{label}</MonoLabel>
@@ -114,9 +135,18 @@ function SummaryCell({
                 style={{ backgroundColor: `#${leader.color}` }}
               />
             )}
-            <span className="truncate text-sm font-semibold text-text-primary">
-              {leader.name}
-            </span>
+            {leaderHref ? (
+              <Link
+                href={leaderHref}
+                className="truncate text-sm font-semibold text-text-primary transition-colors hover:text-purple-300"
+              >
+                {leader.name}
+              </Link>
+            ) : (
+              <span className="truncate text-sm font-semibold text-text-primary">
+                {leader.name}
+              </span>
+            )}
           </div>
           <span className="font-mono text-xl font-bold tabular-nums text-text-primary shrink-0">
             {leader.count.toLocaleString()}
@@ -175,10 +205,26 @@ export default function CircuitStatisticsPanel({
     <div className="space-y-6">
       <ArchivePanel title="Circuit Leaders" headerId="circuit-stat-leaders">
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-          <SummaryCell label="Wins" items={data.most_wins} />
-          <SummaryCell label="Poles" items={data.most_poles} />
-          <SummaryCell label="Fastest Laps" items={data.most_fastest_laps} />
-          <SummaryCell label="Constructor Wins" items={data.constructor_wins} />
+          <SummaryCell
+            label="Wins"
+            items={data.most_wins}
+            entityType="driver"
+          />
+          <SummaryCell
+            label="Poles"
+            items={data.most_poles}
+            entityType="driver"
+          />
+          <SummaryCell
+            label="Fastest Laps"
+            items={data.most_fastest_laps}
+            entityType="driver"
+          />
+          <SummaryCell
+            label="Constructor Wins"
+            items={data.constructor_wins}
+            entityType="constructor"
+          />
         </div>
       </ArchivePanel>
 
@@ -187,26 +233,25 @@ export default function CircuitStatisticsPanel({
           title="Most Wins"
           headerId="circuit-stat-wins"
           items={data.most_wins}
-          linkPrefix="/drivers/"
+          entityType="driver"
         />
         <LeaderboardPanel
           title="Most Pole Positions"
           headerId="circuit-stat-poles"
           items={data.most_poles}
-          linkPrefix="/drivers/"
+          entityType="driver"
         />
         <LeaderboardPanel
           title="Most Fastest Laps"
           headerId="circuit-stat-fastest-laps"
           items={data.most_fastest_laps}
-          linkPrefix="/drivers/"
+          entityType="driver"
         />
         <LeaderboardPanel
           title="Constructor Wins"
           headerId="circuit-stat-constructor-wins"
           items={data.constructor_wins}
-          linkPrefix="/constructors/"
-          slugFromName
+          entityType="constructor"
         />
       </div>
     </div>

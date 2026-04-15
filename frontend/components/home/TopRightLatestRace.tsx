@@ -8,6 +8,7 @@ import { ConcentricPattern } from "@/components/Patterns";
 import TrackMapImage from "@/components/TrackMapImage";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl, isValidHeadshotUrl } from "@/lib/api";
+import { circuitHref, driverHref } from "@/lib/entityLinks";
 import type { RoundSummary } from "@/lib/types";
 
 const formatGap = (
@@ -82,9 +83,12 @@ export default function TopRightLatestRace() {
             <h3 className="text-xl md:text-2xl font-bold text-text-primary leading-tight mb-0.5">
               {data.event_name}
             </h3>
-            <p className="text-[11px] text-text-muted font-mono uppercase tracking-wider mb-4 md:mb-5">
+            <Link
+              href={circuitHref(data.circuit_id) ?? "/circuits"}
+              className="inline-flex text-[11px] text-text-muted font-mono uppercase tracking-wider mb-4 md:mb-5 hover:text-purple-300 transition-colors"
+            >
               {data.circuit_name}
-            </p>
+            </Link>
 
             <div className="space-y-2.5 mb-5 md:space-y-3 md:mb-8">
               {data.podium.map((driver, idx) => (
@@ -112,9 +116,12 @@ export default function TopRightLatestRace() {
                   </div>
 
                   <div className="flex-1 flex items-center justify-between border-b border-border-primary/40 pb-1">
-                    <span className="text-sm font-bold text-text-primary mr-3 truncate md:mr-4">
+                    <Link
+                      href={driverHref(driver) ?? "/drivers"}
+                      className="text-sm font-bold text-text-primary mr-3 truncate md:mr-4 hover:text-purple-300 transition-colors"
+                    >
                       {driver.full_name}
-                    </span>
+                    </Link>
                     <span
                       className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-sm bg-bg-secondary whitespace-nowrap shrink-0"
                       style={{
@@ -186,7 +193,7 @@ export default function TopRightLatestRace() {
 
         {/* Right: Track Map */}
         <Link
-          href={`/circuits/${data.circuit_id}`}
+          href={circuitHref(data.circuit_id) ?? "/circuits"}
           className="h-36 md:h-auto md:w-64 bg-bg-secondary/40 border-t md:border-t-0 md:border-l border-border-primary relative flex items-center justify-center p-6 md:p-8 overflow-hidden group/map shrink-0"
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}

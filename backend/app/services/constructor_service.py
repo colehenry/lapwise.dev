@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, case
 
 from app.models import Team, SessionResult, Session, Driver
+from app.services.results_service import _make_slug
 from app.schemas.constructor import (
     ConstructorProfileResponse,
     ConstructorSeasonHistoryResponse,
@@ -132,8 +133,7 @@ class ConstructorService:
         """
         Get complete constructor profile with career statistics.
         """
-        # Normalize team name
-        team_name_normalized = team_name.replace("-", " ")
+        team_name_normalized = team_name
 
         # Get team basic info
         team = await ConstructorService._get_team_by_name(db, team_name_normalized)
@@ -222,7 +222,7 @@ class ConstructorService:
         """
         Get constructor's championship position and points for each season.
         """
-        team_name_normalized = team_name.replace("-", " ")
+        team_name_normalized = team_name
         team = await ConstructorService._get_team_by_name(db, team_name_normalized)
         if not team:
             return None
@@ -285,7 +285,7 @@ class ConstructorService:
         """
         Get constructor's race-by-race results across their career.
         """
-        team_name_normalized = team_name.replace("-", " ")
+        team_name_normalized = team_name
         team = await ConstructorService._get_team_by_name(db, team_name_normalized)
         if not team:
             return None
@@ -339,6 +339,8 @@ class ConstructorService:
             races_dict[race_key]["drivers"].append(
                 {
                     "name": row.full_name,
+                    "code": row.driver_code,
+                    "slug": _make_slug(row.jolpica_id, row.full_name),
                     "position": row.position,
                     "status": row.status,
                 }
@@ -359,6 +361,8 @@ class ConstructorService:
             drivers_list = race_data_dict["drivers"]
 
             driver_1_name = drivers_list[0]["name"] if len(drivers_list) > 0 else None
+            driver_1_code = drivers_list[0]["code"] if len(drivers_list) > 0 else None
+            driver_1_slug = drivers_list[0]["slug"] if len(drivers_list) > 0 else None
             driver_1_position = (
                 drivers_list[0]["position"] if len(drivers_list) > 0 else None
             )
@@ -366,6 +370,8 @@ class ConstructorService:
                 drivers_list[0]["status"] if len(drivers_list) > 0 else None
             )
             driver_2_name = drivers_list[1]["name"] if len(drivers_list) > 1 else None
+            driver_2_code = drivers_list[1]["code"] if len(drivers_list) > 1 else None
+            driver_2_slug = drivers_list[1]["slug"] if len(drivers_list) > 1 else None
             driver_2_position = (
                 drivers_list[1]["position"] if len(drivers_list) > 1 else None
             )
@@ -381,9 +387,13 @@ class ConstructorService:
                     best_position=race_data_dict["best_position"],
                     total_points=race_data_dict["total_points"],
                     driver_1_name=driver_1_name,
+                    driver_1_code=driver_1_code,
+                    driver_1_slug=driver_1_slug,
                     driver_1_position=driver_1_position,
                     driver_1_status=driver_1_status,
                     driver_2_name=driver_2_name,
+                    driver_2_code=driver_2_code,
+                    driver_2_slug=driver_2_slug,
                     driver_2_position=driver_2_position,
                     driver_2_status=driver_2_status,
                 )
@@ -401,36 +411,54 @@ class ConstructorService:
 
     @staticmethod
     async def _get_team_by_name(db: AsyncSession, name: str) -> Optional[Team]:
-        query = (
-            select(Team)
-            .where(func.lower(Team.name) == name.lower())
-            .order_by(Team.year.desc())
-            .limit(1)
-        )
-        result = await db.execute(query)
-        return result.scalar_one_or_none()
+        for candidate in (name, name.replace("-", " ")):
+            query = (
+                select(Team)
+                .where(func.lower(Team.name) == candidate.lower())
+                .order_by(Team.year.desc())
+                .limit(1)
+            )
+            result = await db.execute(query)
+            team = result.scalar_one_or_none()
+            if team:
+                return team
+        return None
 
     @staticmethod
     async def _get_all_team_ids(db: AsyncSession, name: str) -> List[int]:
-        query = select(Team.id).where(func.lower(Team.name) == name.lower())
-        result = await db.execute(query)
-        return [row[0] for row in result.all()]
+        for candidate in (name, name.replace("-", " ")):
+            query = select(Team.id).where(func.lower(Team.name) == candidate.lower())
+            result = await db.execute(query)
+            rows = result.all()
+            if rows:
+                return [row[0] for row in rows]
+        return []
 
     @staticmethod
     async def _get_team_id_map(
         db: AsyncSession, name: str
     ) -> Dict[int, Tuple[int, str]]:
-        query = select(Team.id, Team.year, Team.team_color).where(
-            func.lower(Team.name) == name.lower()
-        )
-        result = await db.execute(query)
-        return {row.year: (row.id, row.team_color) for row in result.all()}
+        for candidate in (name, name.replace("-", " ")):
+            query = select(Team.id, Team.year, Team.team_color).where(
+                func.lower(Team.name) == candidate.lower()
+            )
+            result = await db.execute(query)
+            rows = result.all()
+            if rows:
+                return {row.year: (row.id, row.team_color) for row in rows}
+        return {}
 
     @staticmethod
     async def _get_all_teams_info(db: AsyncSession, name: str):
-        query = select(Team.id, Team.year).where(func.lower(Team.name) == name.lower())
-        result = await db.execute(query)
-        return result.all()
+        for candidate in (name, name.replace("-", " ")):
+            query = select(Team.id, Team.year).where(
+                func.lower(Team.name) == candidate.lower()
+            )
+            result = await db.execute(query)
+            rows = result.all()
+            if rows:
+                return rows
+        return []
 
     @staticmethod
     async def _get_race_results_by_ids(
@@ -523,6 +551,8 @@ class ConstructorService:
                 SessionResult.points,
                 SessionResult.status,
                 Driver.full_name,
+                Driver.driver_code,
+                Driver.jolpica_id,
             )
             .join(SessionResult, Session.id == SessionResult.session_id)
             .join(Driver, SessionResult.driver_id == Driver.id)

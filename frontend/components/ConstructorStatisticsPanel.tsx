@@ -105,8 +105,9 @@ export default function ConstructorStatisticsPanel({
     useQuery<ConstructorRaceHistoryResponse>({
       queryKey: ["constructor-race-history", teamName, "all"],
       queryFn: async () => {
+        const encodedTeamName = encodeURIComponent(teamName);
         const res = await fetch(
-          apiUrl(`/api/constructors/${teamName}/race-history?all=true`),
+          apiUrl(`/api/constructors/${encodedTeamName}/race-history?all=true`),
           { headers: apiHeaders() },
         );
         if (!res.ok) throw new Error("Failed to fetch race history");

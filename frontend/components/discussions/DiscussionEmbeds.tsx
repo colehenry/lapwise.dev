@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import CrossSessionComparison from "@/components/CrossSessionComparison";
 import FastestLapTimeline from "@/components/FastestLapTimeline";
 import LapTimeByLapGraph from "@/components/LapTimeByLapGraph";
@@ -22,6 +23,7 @@ import TyreStintChart from "@/components/TyreStintChart";
 import WeatherChart from "@/components/WeatherChart";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import { getDiscussionEmbed } from "@/lib/discussionEmbedRegistry";
+import { constructorHref, driverHref } from "@/lib/entityLinks";
 import type { SessionResultsResponse } from "@/lib/types";
 
 export interface DiscussionEmbedAttrs {
@@ -148,13 +150,23 @@ function RaceResultsEmbed({
                 P{result.position ?? "-"}
               </td>
               <td className="py-2 pr-4 text-text-primary">
-                {result.driver.full_name}
+                <Link
+                  href={driverHref(result.driver) ?? "/drivers"}
+                  className="transition-colors hover:text-purple-300"
+                >
+                  {result.driver.full_name}
+                </Link>
                 {result.fastest_lap && (
                   <span className="ml-1 text-purple-300">FL</span>
                 )}
               </td>
               <td className="py-2 pr-4 text-text-tertiary">
-                {result.team.name}
+                <Link
+                  href={constructorHref(result.team.name) ?? "/constructors"}
+                  className="transition-colors hover:text-purple-300"
+                >
+                  {result.team.name}
+                </Link>
               </td>
               <td className="py-2 pr-4 font-mono text-text-tertiary">
                 {result.time_seconds != null

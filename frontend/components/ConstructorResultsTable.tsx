@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useState } from "react";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
-import type { ConstructorRaceHistoryResponse } from "@/lib/types";
+import { driverHref } from "@/lib/entityLinks";
+import type {
+  ConstructorRaceHistory,
+  ConstructorRaceHistoryResponse,
+} from "@/lib/types";
 
 function positionColor(pos: number | null): string {
   if (!pos) return "text-text-muted";
@@ -20,6 +24,43 @@ interface ConstructorResultsTableProps {
   includeSprint?: boolean;
 }
 
+function DriverResultCell({
+  race,
+  slot,
+}: {
+  race: ConstructorRaceHistory;
+  slot: 1 | 2;
+}) {
+  const name = slot === 1 ? race.driver_1_name : race.driver_2_name;
+  if (!name) return null;
+
+  const position = slot === 1 ? race.driver_1_position : race.driver_2_position;
+  const status = slot === 1 ? race.driver_1_status : race.driver_2_status;
+  const href = driverHref({
+    driver_slug: slot === 1 ? race.driver_1_slug : race.driver_2_slug,
+    driver_code: slot === 1 ? race.driver_1_code : race.driver_2_code,
+    full_name: name,
+  });
+
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className={`font-mono font-bold ${positionColor(position)}`}>
+        {position ? `P${position}` : status || "-"}
+      </span>
+      {href ? (
+        <Link
+          href={href}
+          className="text-text-secondary text-xs hover:text-purple-300 transition-colors"
+        >
+          {name}
+        </Link>
+      ) : (
+        <span className="text-text-secondary text-xs">{name}</span>
+      )}
+    </span>
+  );
+}
+
 export default function ConstructorResultsTable({
   teamName,
   includeSprint = true,
@@ -32,8 +73,9 @@ export default function ConstructorResultsTable({
     queryFn: async () => {
       const params = new URLSearchParams({ all: "true" });
       if (!includeSprint) params.set("include_sprint", "false");
+      const encodedTeamName = encodeURIComponent(teamName);
       const res = await fetch(
-        apiUrl(`/api/constructors/${teamName}/race-history?${params}`),
+        apiUrl(`/api/constructors/${encodedTeamName}/race-history?${params}`),
         { headers: apiHeaders() },
       );
       if (!res.ok) throw new Error("Failed to fetch race history");
@@ -149,36 +191,10 @@ export default function ConstructorResultsTable({
                   </Link>
                 </td>
                 <td className="px-3 py-2">
-                  {race.driver_1_name && (
-                    <span className="flex items-center gap-1.5">
-                      <span
-                        className={`font-mono font-bold ${positionColor(race.driver_1_position)}`}
-                      >
-                        {race.driver_1_position
-                          ? `P${race.driver_1_position}`
-                          : race.driver_1_status || "-"}
-                      </span>
-                      <span className="text-text-secondary text-xs">
-                        {race.driver_1_name}
-                      </span>
-                    </span>
-                  )}
+                  <DriverResultCell race={race} slot={1} />
                 </td>
                 <td className="px-3 py-2">
-                  {race.driver_2_name && (
-                    <span className="flex items-center gap-1.5">
-                      <span
-                        className={`font-mono font-bold ${positionColor(race.driver_2_position)}`}
-                      >
-                        {race.driver_2_position
-                          ? `P${race.driver_2_position}`
-                          : race.driver_2_status || "-"}
-                      </span>
-                      <span className="text-text-secondary text-xs">
-                        {race.driver_2_name}
-                      </span>
-                    </span>
-                  )}
+                  <DriverResultCell race={race} slot={2} />
                 </td>
                 <td
                   className={`px-3 py-2 text-center font-bold font-mono ${positionColor(race.best_position)}`}

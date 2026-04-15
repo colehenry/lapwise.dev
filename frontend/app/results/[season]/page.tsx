@@ -18,6 +18,7 @@ import {
   fetchSeasons,
   isValidHeadshotUrl,
 } from "@/lib/api";
+import { constructorHref, driverHref } from "@/lib/entityLinks";
 import type {
   ConstructorQualifyingStanding,
   ConstructorStanding,
@@ -397,7 +398,7 @@ export default function ResultsPage() {
                     {/* Driver Info */}
                     <div className="flex-1 flex flex-col justify-center">
                       <Link
-                        href={`/drivers/${driver.driver_slug || driver.driver_code}`}
+                        href={driverHref(driver) ?? "/drivers"}
                         className="font-semibold text-text-primary text-sm hover:text-purple-300 transition-colors duration-150"
                       >
                         {driver.full_name}
@@ -411,7 +412,9 @@ export default function ResultsPage() {
                         }}
                       >
                         <Link
-                          href={`/constructors/${driver.team_name.replace(/\s+/g, "-")}`}
+                          href={
+                            constructorHref(driver.team_name) ?? "/constructors"
+                          }
                           className="hover:text-purple-300 transition-colors duration-150"
                         >
                           {driver.team_name}
@@ -517,7 +520,9 @@ export default function ResultsPage() {
                           }}
                         >
                           <Link
-                            href={`/constructors/${team.team_name.replace(/\s+/g, "-")}`}
+                            href={
+                              constructorHref(team.team_name) ?? "/constructors"
+                            }
                             className="hover:text-purple-300 transition-colors duration-150"
                           >
                             {team.team_name}
@@ -530,7 +535,7 @@ export default function ResultsPage() {
                           ).map((driver, driverIdx, arr) => (
                             <span key={driver.driver_code}>
                               <Link
-                                href={`/drivers/${driver.driver_slug || driver.driver_code}`}
+                                href={driverHref(driver) ?? "/drivers"}
                                 className="hover:text-purple-300 transition-colors duration-150"
                               >
                                 {driver.full_name}

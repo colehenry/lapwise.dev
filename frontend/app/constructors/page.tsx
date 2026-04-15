@@ -12,6 +12,7 @@ import SprintToggle from "@/components/ui/SprintToggle";
 import TiltCard from "@/components/ui/TiltCard";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import { getConstructorLogoUrl } from "@/lib/entityImageOverrides";
+import { constructorHref } from "@/lib/entityLinks";
 import type { ConstructorListItem, ConstructorListResponse } from "@/lib/types";
 
 type SortKey = "wins" | "races" | "points" | "alpha";
@@ -33,7 +34,7 @@ async function fetchAllConstructors(
 }
 
 function ConstructorCard({ team }: { team: ConstructorListItem }) {
-  const teamNameUrl = team.team_name.replace(/ /g, "-");
+  const teamUrl = constructorHref(team.team_name) ?? "/constructors";
   const isActive = team.latest_season === CURRENT_YEAR;
   const teamColor = team.team_color ? `#${team.team_color}` : "#888";
   const logoUrl = getConstructorLogoUrl(team);
@@ -48,7 +49,7 @@ function ConstructorCard({ team }: { team: ConstructorListItem }) {
 
   return (
     <TiltCard>
-      <Link href={`/constructors/${teamNameUrl}`} className="block h-full">
+      <Link href={teamUrl} className="block h-full">
         <div className="relative border border-border-primary rounded-sm hover:border-purple-500 transition-all duration-200 bg-bg-tertiary h-full overflow-hidden">
           {/* Team color accent bar */}
           <div

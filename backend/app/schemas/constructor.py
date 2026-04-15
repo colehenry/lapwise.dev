@@ -99,9 +99,13 @@ class ConstructorRaceHistory(BaseModel):
     best_position: Optional[int] = None
     total_points: float
     driver_1_name: Optional[str] = None
+    driver_1_code: Optional[str] = None
+    driver_1_slug: Optional[str] = None
     driver_1_position: Optional[int] = None
     driver_1_status: Optional[str] = None
     driver_2_name: Optional[str] = None
+    driver_2_code: Optional[str] = None
+    driver_2_slug: Optional[str] = None
     driver_2_position: Optional[int] = None
     driver_2_status: Optional[str] = None
 

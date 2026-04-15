@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { constructorHref } from "@/lib/entityLinks";
 import type { DriverRaceHistoryResponse } from "@/lib/types";
 
 function positionColor(pos: number | null, status: string): string {
@@ -211,7 +212,9 @@ export default function DriverResultsTable({
                         />
                       )}
                       <Link
-                        href={`/constructors/${race.team_name.replace(/\s+/g, "-")}`}
+                        href={
+                          constructorHref(race.team_name) ?? "/constructors"
+                        }
                         className="text-text-secondary text-xs hover:text-purple-300 transition-colors"
                       >
                         {race.team_name}

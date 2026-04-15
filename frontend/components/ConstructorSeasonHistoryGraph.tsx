@@ -12,9 +12,11 @@ interface ConstructorSeasonHistoryGraphProps {
 export default function ConstructorSeasonHistoryGraph({
   teamName,
 }: ConstructorSeasonHistoryGraphProps) {
+  const encodedTeamName = encodeURIComponent(teamName);
   const config: EntityHistoryConfig = {
     entityType: "constructor",
     entityId: teamName,
+    entityPathId: encodedTeamName,
     apiBasePath: "/api/constructors",
     queryKeyPrefix: "constructor",
     positionLabel: "Championship Position",
