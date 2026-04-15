@@ -19,7 +19,6 @@ type SeasonStat = {
   podiums: number;
   points: number;
 };
-
 type DistributionStat = {
   label: string;
   count: number;
@@ -69,62 +68,6 @@ function BarTrack({
         className="h-full rounded-sm transition-all duration-500"
         style={{ width: `${width}%`, backgroundColor: color }}
       />
-    </div>
-  );
-}
-
-function SeasonBarRow({
-  season,
-  maxWins,
-  accentColor,
-}: {
-  season: SeasonStat;
-  maxWins: number;
-  accentColor: string;
-}) {
-  const winRate = season.races > 0 ? (season.wins / season.races) * 100 : 0;
-
-  return (
-    <div className="grid grid-cols-1 gap-3 border-b border-border-primary px-4 py-4 last:border-b-0 md:grid-cols-[5rem_1fr_auto] md:items-center">
-      <div>
-        <span className="font-mono text-lg font-bold tabular-nums text-text-primary">
-          {season.year}
-        </span>
-        <div className="mt-1 text-xs text-text-muted">
-          {season.races.toLocaleString()} races
-        </div>
-      </div>
-
-      <div className="min-w-0">
-        <div className="mb-2 flex items-baseline justify-between gap-3">
-          <MonoLabel>Wins</MonoLabel>
-          <span className="font-mono text-sm font-bold tabular-nums text-text-primary">
-            {season.wins.toLocaleString()}
-          </span>
-        </div>
-        <BarTrack value={season.wins} max={maxWins} color={accentColor} />
-      </div>
-
-      <div className="grid grid-cols-3 gap-4 md:min-w-72 md:text-right">
-        <div>
-          <MonoLabel>Win Rate</MonoLabel>
-          <div className="mt-1 font-mono text-sm font-bold tabular-nums text-text-primary">
-            {winRate.toFixed(0)}%
-          </div>
-        </div>
-        <div>
-          <MonoLabel>Podiums</MonoLabel>
-          <div className="mt-1 font-mono text-sm font-bold tabular-nums text-text-primary">
-            {season.podiums.toLocaleString()}
-          </div>
-        </div>
-        <div>
-          <MonoLabel>Pts/Race</MonoLabel>
-          <div className="mt-1 font-mono text-sm font-bold tabular-nums text-text-primary">
-            {season.races > 0 ? (season.points / season.races).toFixed(1) : "0"}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
@@ -204,13 +147,10 @@ export default function ConstructorStatisticsPanel({
   }
 
   const seasons = Object.values(seasonStats).sort((a, b) => a.year - b.year);
-  const peakSeasons = [...seasons]
-    .sort(
+  const bestWinSeason =
+    [...seasons].sort(
       (a, b) => b.wins - a.wins || b.podiums - a.podiums || b.points - a.points,
-    )
-    .slice(0, 10);
-  const maxWins = Math.max(...peakSeasons.map((season) => season.wins), 0);
-  const bestWinSeason = peakSeasons[0] ?? null;
+    )[0] ?? null;
   const bestPointsSeason = [...seasons].sort((a, b) => b.points - a.points)[0];
   const totalWins = races.filter((race) => race.best_position === 1).length;
   const totalPodiums = races.filter(
@@ -277,24 +217,6 @@ export default function ConstructorStatisticsPanel({
           />
         </div>
       </ArchivePanel>
-
-      {peakSeasons.length > 0 && (
-        <ArchivePanel
-          title="Best Seasons by Wins"
-          headerId="constructor-peak-seasons"
-        >
-          <div className="rounded-sm border border-border-primary bg-bg-primary/20">
-            {peakSeasons.map((season) => (
-              <SeasonBarRow
-                key={season.year}
-                season={season}
-                maxWins={maxWins}
-                accentColor={barColor}
-              />
-            ))}
-          </div>
-        </ArchivePanel>
-      )}
 
       <ArchivePanel
         title="Finish Distribution"

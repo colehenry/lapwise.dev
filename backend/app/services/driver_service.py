@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional, List, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, case
@@ -240,9 +241,11 @@ class DriverService:
             if result.points is not None:
                 total_points += result.points
 
-        # Calculate championships
+        # Calculate championships — only count completed seasons
         total_championships = 0
         for year in seasons:
+            if not DriverService._is_season_complete(year):
+                continue
             champion_id = await DriverService._get_season_champion_id(db, year)
             if champion_id and champion_id == driver.id:
                 total_championships += 1
@@ -434,6 +437,11 @@ class DriverService:
         )
         result = await db.execute(query)
         return result.all()
+
+    @staticmethod
+    def _is_season_complete(year: int) -> bool:
+        """Return True only if the season is from a prior calendar year (fully concluded)."""
+        return year < date.today().year
 
     @staticmethod
     async def _get_season_champion_id(db: AsyncSession, year: int) -> Optional[int]:
