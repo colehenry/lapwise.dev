@@ -17,6 +17,7 @@ import { CHART_COLORS, CustomDot } from "@/components/chart-primitives";
 import ClutchIcon from "@/components/ui/ClutchIcon";
 import { useEntityLinkColors } from "@/hooks/useEntityLinkColors";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { constructorHref, driverHref } from "@/lib/entityLinks";
 import type { CircuitInfo } from "@/lib/types";
 
 const QUESTION =
@@ -618,7 +619,12 @@ export default function AIAnalystPreview() {
                                   </td>
                                   <td className="px-3 py-2 font-medium text-text-secondary">
                                     <Link
-                                      href={`/drivers/${row.driverCode}`}
+                                      href={
+                                        driverHref({
+                                          driver_code: row.driverCode,
+                                          full_name: row.driver,
+                                        }) ?? "/drivers"
+                                      }
                                       className="font-semibold no-underline transition-opacity hover:opacity-80 text-text-primary"
                                     >
                                       {row.driver}
@@ -626,9 +632,10 @@ export default function AIAnalystPreview() {
                                   </td>
                                   <td className="px-3 py-2 text-text-muted">
                                     <Link
-                                      href={`/constructors/${encodeURIComponent(
-                                        row.team,
-                                      )}`}
+                                      href={
+                                        constructorHref(row.team) ??
+                                        "/constructors"
+                                      }
                                       className="font-semibold no-underline transition-opacity hover:opacity-80"
                                       style={{
                                         color:

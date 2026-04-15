@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
@@ -9,6 +10,7 @@ import Button from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { apiUrl, extractErrorMessage } from "@/lib/api";
 import { fetchWithAuth } from "@/lib/auth";
+import { circuitHref, constructorHref, driverHref } from "@/lib/entityLinks";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -226,25 +228,51 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between p-3 rounded-sm bg-bg-tertiary border border-border-primary">
             <div>
               <p className="text-xs text-text-muted">Favorite Team</p>
-              <p className="text-sm text-text-primary">
-                {user.favorite_team?.team_name ?? "Not set"}
-              </p>
+              {user.favorite_team ? (
+                <Link
+                  href={
+                    constructorHref(user.favorite_team.team_name) ??
+                    "/constructors"
+                  }
+                  className="text-sm text-text-primary hover:text-purple-300 transition-colors"
+                >
+                  {user.favorite_team.team_name}
+                </Link>
+              ) : (
+                <p className="text-sm text-text-primary">Not set</p>
+              )}
             </div>
           </div>
           <div className="flex items-center justify-between p-3 rounded-sm bg-bg-tertiary border border-border-primary">
             <div>
               <p className="text-xs text-text-muted">Favorite Driver</p>
-              <p className="text-sm text-text-primary">
-                {user.favorite_driver?.full_name ?? "Not set"}
-              </p>
+              {user.favorite_driver ? (
+                <Link
+                  href={driverHref(user.favorite_driver) ?? "/drivers"}
+                  className="text-sm text-text-primary hover:text-purple-300 transition-colors"
+                >
+                  {user.favorite_driver.full_name}
+                </Link>
+              ) : (
+                <p className="text-sm text-text-primary">Not set</p>
+              )}
             </div>
           </div>
           <div className="flex items-center justify-between p-3 rounded-sm bg-bg-tertiary border border-border-primary">
             <div>
               <p className="text-xs text-text-muted">Favorite Circuit</p>
-              <p className="text-sm text-text-primary">
-                {user.favorite_circuit?.name ?? "Not set"}
-              </p>
+              {user.favorite_circuit ? (
+                <Link
+                  href={
+                    circuitHref(user.favorite_circuit.circuit_id) ?? "/circuits"
+                  }
+                  className="text-sm text-text-primary hover:text-purple-300 transition-colors"
+                >
+                  {user.favorite_circuit.name}
+                </Link>
+              ) : (
+                <p className="text-sm text-text-primary">Not set</p>
+              )}
             </div>
           </div>
         </div>

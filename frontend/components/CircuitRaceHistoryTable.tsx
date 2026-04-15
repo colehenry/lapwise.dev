@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { constructorHref, driverHref } from "@/lib/entityLinks";
 import type { CircuitRaceHistoryResponse } from "@/lib/types";
 
 interface CircuitRaceHistoryTableProps {
@@ -88,7 +89,13 @@ export default function CircuitRaceHistoryTable({
               </td>
               <td className="px-3 py-2">
                 <Link
-                  href={`/drivers/${race.winner_slug || race.winner_code}`}
+                  href={
+                    driverHref({
+                      driver_slug: race.winner_slug,
+                      driver_code: race.winner_code,
+                      full_name: race.winner_name,
+                    }) ?? "/drivers"
+                  }
                   className="text-yellow-400 hover:text-yellow-300 transition-colors font-medium"
                 >
                   {race.winner_name}
@@ -103,7 +110,7 @@ export default function CircuitRaceHistoryTable({
                     />
                   )}
                   <Link
-                    href={`/constructors/${race.team_name.replace(/\s+/g, "-")}`}
+                    href={constructorHref(race.team_name) ?? "/constructors"}
                     className="text-text-secondary text-xs hover:text-purple-300 transition-colors"
                   >
                     {race.team_name}

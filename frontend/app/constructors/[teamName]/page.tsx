@@ -22,6 +22,7 @@ import {
   getConstructorLogoUrl,
   getConstructorPhotoUrl,
 } from "@/lib/entityImageOverrides";
+import { constructorHref } from "@/lib/entityLinks";
 import type { ConstructorProfile } from "@/lib/types";
 
 type ConstructorTab = "overview" | "results";
@@ -44,11 +45,12 @@ async function fetchConstructorProfile(
   teamName: string,
   includeSprint: boolean,
 ): Promise<ConstructorProfile> {
+  const encodedTeamName = encodeURIComponent(teamName);
   const params = new URLSearchParams();
   if (!includeSprint) params.set("include_sprint", "false");
   const url = params.toString()
-    ? apiUrl(`/api/constructors/${teamName}?${params}`)
-    : apiUrl(`/api/constructors/${teamName}`);
+    ? apiUrl(`/api/constructors/${encodedTeamName}?${params}`)
+    : apiUrl(`/api/constructors/${encodedTeamName}`);
   const res = await fetch(url, { headers: apiHeaders() });
   if (!res.ok) throw new Error("Failed to fetch constructor profile");
   return res.json();
@@ -58,8 +60,9 @@ export default function ConstructorProfilePage() {
   const params = useParams();
   const router = useRouter();
   const teamName = params.teamName as string;
+  const constructorUrl = constructorHref(teamName) ?? "/constructors";
   const { activeTab, switchTab } = useTabSync<ConstructorTab>(
-    `/constructors/${teamName}`,
+    constructorUrl,
     "overview",
   );
   const [includeSprint, setIncludeSprint] = useState(true);

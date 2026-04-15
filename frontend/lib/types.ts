@@ -392,9 +392,13 @@ export interface ConstructorRaceHistory {
   best_position: number | null;
   total_points: number;
   driver_1_name: string | null;
+  driver_1_code: string | null;
+  driver_1_slug: string | null;
   driver_1_position: number | null;
   driver_1_status: string | null;
   driver_2_name: string | null;
+  driver_2_code: string | null;
+  driver_2_slug: string | null;
   driver_2_position: number | null;
   driver_2_status: string | null;
 }

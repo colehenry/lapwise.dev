@@ -8,6 +8,7 @@ import Skeleton from "@/components/ui/Skeleton";
 import TiltCard from "@/components/ui/TiltCard";
 import { apiHeaders, apiUrl, isValidHeadshotUrl } from "@/lib/api";
 import { fetchPosts } from "@/lib/discussions";
+import { constructorHref, driverHref } from "@/lib/entityLinks";
 import type { PostListResponse, RoundSummary } from "@/lib/types";
 
 export default function HomeDiscussionSection() {
@@ -125,9 +126,12 @@ export default function HomeDiscussionSection() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-text-primary truncate">
+                        <Link
+                          href={driverHref(driver) ?? "/drivers"}
+                          className="text-sm font-bold text-text-primary truncate hover:text-purple-300 transition-colors"
+                        >
                           {driver.full_name}
-                        </h4>
+                        </Link>
                         <span
                           className="text-[10px] font-mono font-bold"
                           style={{
@@ -139,9 +143,14 @@ export default function HomeDiscussionSection() {
                           {driver.driver_code}
                         </span>
                       </div>
-                      <p className="text-[10px] text-text-muted truncate uppercase tracking-wider">
+                      <Link
+                        href={
+                          constructorHref(driver.team_name) ?? "/constructors"
+                        }
+                        className="text-[10px] text-text-muted truncate uppercase tracking-wider hover:text-purple-300 transition-colors"
+                      >
                         {driver.team_name}
-                      </p>
+                      </Link>
                     </div>
                     {driver.fastest_lap && (
                       <div title="Fastest Lap" className="text-purple-400">

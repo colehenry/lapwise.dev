@@ -17,6 +17,7 @@ import {
   isValidHeadshotUrl,
 } from "@/lib/api";
 import { getDriverHeadshotUrl } from "@/lib/entityImageOverrides";
+import { constructorHref, driverHref } from "@/lib/entityLinks";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
 import type { DriverListItem, DriverListResponse } from "@/lib/types";
 
@@ -41,16 +42,13 @@ async function fetchAllDrivers(
 function DriverCard({ driver }: { driver: DriverListItem }) {
   const isActive = driver.latest_season === CURRENT_YEAR;
   const headshotUrl = getDriverHeadshotUrl(driver);
-  const driverSlug =
-    driver.driver_slug ||
-    driver.driver_code ||
-    driver.full_name.toLowerCase().replace(/\s+/g, "-");
-  const constructorSlug = driver.current_team?.replace(/\s+/g, "-");
+  const driverUrl = driverHref(driver);
+  const constructorUrl = constructorHref(driver.current_team);
 
   return (
     <TiltCard>
       <div className="relative border border-border-primary rounded-sm p-4 hover:border-purple-500 transition-all duration-200 bg-bg-tertiary h-full">
-        <Link href={`/drivers/${driverSlug}`} className="block">
+        <Link href={driverUrl ?? "/drivers"} className="block">
           <div className="flex items-center gap-3">
             {/* Headshot */}
             {isValidHeadshotUrl(headshotUrl) ? (
@@ -124,9 +122,9 @@ function DriverCard({ driver }: { driver: DriverListItem }) {
 
         {/* Bottom bar */}
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-border-primary">
-          {driver.current_team && constructorSlug ? (
+          {driver.current_team && constructorUrl ? (
             <Link
-              href={`/constructors/${constructorSlug}`}
+              href={constructorUrl}
               className="text-xs text-text-muted hover:text-purple-300 transition-colors truncate"
             >
               {driver.current_team}

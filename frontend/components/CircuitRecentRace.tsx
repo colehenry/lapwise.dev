@@ -5,6 +5,7 @@ import Link from "next/link";
 import { TrianglePattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { constructorHref, driverHref } from "@/lib/entityLinks";
 import type { CircuitRecentRaceResponse } from "@/lib/types";
 
 function formatLapTime(seconds: number): string {
@@ -82,6 +83,11 @@ export default function CircuitRecentRace({
             const teamColor = entry.team_color
               ? `#${entry.team_color}`
               : "#999";
+            const driverUrl = driverHref({
+              driver_slug: entry.driver_slug,
+              driver_code: entry.driver_code,
+              full_name: entry.driver_name,
+            });
             return (
               <div key={entry.position} className="flex items-center gap-3">
                 <span
@@ -95,9 +101,9 @@ export default function CircuitRecentRace({
                   className="w-2 h-2 rounded-full shrink-0"
                   style={{ backgroundColor: teamColor }}
                 />
-                {entry.driver_slug ? (
+                {driverUrl ? (
                   <Link
-                    href={`/drivers/${entry.driver_slug}`}
+                    href={driverUrl}
                     className="text-sm text-text-secondary hover:text-purple-300 transition-colors font-medium"
                   >
                     {entry.driver_name}
@@ -107,9 +113,12 @@ export default function CircuitRecentRace({
                     {entry.driver_name}
                   </span>
                 )}
-                <span className="text-xs text-text-muted ml-auto">
+                <Link
+                  href={constructorHref(entry.team_name) ?? "/constructors"}
+                  className="text-xs text-text-muted ml-auto hover:text-purple-300 transition-colors"
+                >
                   {entry.team_name}
-                </span>
+                </Link>
               </div>
             );
           })}

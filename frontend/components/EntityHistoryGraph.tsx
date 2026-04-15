@@ -27,6 +27,7 @@ import type { DataMode, GraphMode } from "@/lib/types";
 export interface EntityHistoryConfig {
   entityType: "driver" | "constructor";
   entityId: string;
+  entityPathId?: string;
   apiBasePath: string;
   queryKeyPrefix: string;
   positionLabel: string;
@@ -184,7 +185,9 @@ export default function EntityHistoryGraph({
     queryKey: [`${config.queryKeyPrefix}-season-history`, config.entityId],
     queryFn: async () => {
       const response = await fetch(
-        apiUrl(`${config.apiBasePath}/${config.entityId}/season-history`),
+        apiUrl(
+          `${config.apiBasePath}/${config.entityPathId ?? config.entityId}/season-history`,
+        ),
         { headers: apiHeaders() },
       );
       const historyData = await response.json();
@@ -230,7 +233,7 @@ export default function EntityHistoryGraph({
       }
       const response = await fetch(
         apiUrl(
-          `${config.apiBasePath}/${config.entityId}/race-history?${params}`,
+          `${config.apiBasePath}/${config.entityPathId ?? config.entityId}/race-history?${params}`,
         ),
         { headers: apiHeaders() },
       );

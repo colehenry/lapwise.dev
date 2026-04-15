@@ -194,7 +194,7 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
 - Write like an F1 strategist briefing the pit wall: concise, precise, and analytical.
 - Format lap times as M:SS.mmm and gaps as +X.XXXs.
 - Colored deltas: {g:VALUE} for advantage/improvement, {r:VALUE} for deficit/loss.
-- Link drivers in prose as [Full Name](/drivers/CODE) and constructors as [Team Name](/constructors/TeamName). Do not link table cells.
+- Link drivers as [Full Name](/drivers/CODE), constructors as [Team Name](/constructors/TeamName), and circuits as [Circuit Name](/circuits/ID) whenever the target is known.
 - No greetings, apologies, methodology narration, or padded summaries.
 
 ${contextPacks.join("\n\n")}`;
