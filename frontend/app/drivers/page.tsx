@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -8,6 +8,7 @@ import PageHeader from "@/components/PageHeader";
 import ExpandButton from "@/components/ui/ExpandButton";
 import Skeleton from "@/components/ui/Skeleton";
 import SortPills from "@/components/ui/SortPills";
+import SprintToggle from "@/components/ui/SprintToggle";
 import TiltCard from "@/components/ui/TiltCard";
 import {
   apiHeaders,
@@ -24,10 +25,15 @@ type SortKey = "wins" | "races" | "points" | "alpha";
 const CURRENT_YEAR = new Date().getFullYear();
 const DEFAULT_VISIBLE_COUNT = 30;
 
-async function fetchAllDrivers(): Promise<DriverListResponse> {
-  const res = await fetch(apiUrl("/api/drivers/"), {
-    headers: apiHeaders(),
-  });
+async function fetchAllDrivers(
+  includeSprint: boolean,
+): Promise<DriverListResponse> {
+  const params = new URLSearchParams();
+  if (!includeSprint) params.set("include_sprint", "false");
+  const url = params.toString()
+    ? apiUrl(`/api/drivers/?${params}`)
+    : apiUrl("/api/drivers/");
+  const res = await fetch(url, { headers: apiHeaders() });
   if (!res.ok) throw new Error("Failed to fetch drivers");
   return res.json();
 }
@@ -159,10 +165,12 @@ export default function DriversPage() {
   const [sortKey, setSortKey] = useState<SortKey>("wins");
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [includeSprint, setIncludeSprint] = useState(true);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["drivers-all"],
-    queryFn: fetchAllDrivers,
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["drivers-all", includeSprint],
+    queryFn: () => fetchAllDrivers(includeSprint),
+    placeholderData: keepPreviousData,
   });
 
   const { data: availableYears = [] } = useQuery<number[]>({
@@ -283,8 +291,15 @@ export default function DriversPage() {
 
         {/* Stats bar */}
         {data && (
-          <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-6">
-            {filteredDrivers.length} total drivers
+          <div className="flex items-center justify-between mb-6">
+            <span className="text-[10px] text-text-muted font-mono tracking-widest uppercase">
+              {filteredDrivers.length} total drivers
+            </span>
+            <SprintToggle
+              checked={includeSprint}
+              onChange={setIncludeSprint}
+              isLoading={isFetching}
+            />
           </div>
         )}
 

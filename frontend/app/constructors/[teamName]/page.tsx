@@ -1,9 +1,10 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
 import ArchiveMetricBar from "@/components/archive/ArchiveMetricBar";
 import ArchivePanel from "@/components/archive/ArchivePanel";
@@ -12,6 +13,7 @@ import ConstructorSeasonHistoryGraph from "@/components/ConstructorSeasonHistory
 import ConstructorStatisticsPanel from "@/components/ConstructorStatisticsPanel";
 import PageHeader from "@/components/PageHeader";
 import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
+import SprintToggle from "@/components/ui/SprintToggle";
 import TabBar from "@/components/ui/TabBar";
 import { useTabSync } from "@/hooks/useTabSync";
 import { apiHeaders, apiUrl } from "@/lib/api";
@@ -40,10 +42,14 @@ function getOrdinalSuffix(position: number): string {
 
 async function fetchConstructorProfile(
   teamName: string,
+  includeSprint: boolean,
 ): Promise<ConstructorProfile> {
-  const res = await fetch(apiUrl(`/api/constructors/${teamName}`), {
-    headers: apiHeaders(),
-  });
+  const params = new URLSearchParams();
+  if (!includeSprint) params.set("include_sprint", "false");
+  const url = params.toString()
+    ? apiUrl(`/api/constructors/${teamName}?${params}`)
+    : apiUrl(`/api/constructors/${teamName}`);
+  const res = await fetch(url, { headers: apiHeaders() });
   if (!res.ok) throw new Error("Failed to fetch constructor profile");
   return res.json();
 }
@@ -56,10 +62,12 @@ export default function ConstructorProfilePage() {
     `/constructors/${teamName}`,
     "overview",
   );
+  const [includeSprint, setIncludeSprint] = useState(true);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["constructor-profile", teamName],
-    queryFn: () => fetchConstructorProfile(teamName),
+  const { data, isLoading, isFetching, error } = useQuery({
+    queryKey: ["constructor-profile", teamName, includeSprint],
+    queryFn: () => fetchConstructorProfile(teamName, includeSprint),
+    placeholderData: keepPreviousData,
   });
 
   if (isLoading) {
@@ -137,8 +145,16 @@ export default function ConstructorProfilePage() {
         onBack={() => router.push("/constructors")}
         backLabel="CONSTRUCTORS"
         bottomContent={
-          <div className="flex justify-center">
+          <div className="flex items-center relative">
+            <div className="flex-1" />
             <TabBar tabs={TABS} activeTab={activeTab} onTabChange={switchTab} />
+            <div className="flex-1 flex justify-end border-t border-border-primary/40 mt-1 pt-1.5 mr-2">
+              <SprintToggle
+                checked={includeSprint}
+                onChange={setIncludeSprint}
+                isLoading={isFetching}
+              />
+            </div>
           </div>
         }
       />
@@ -220,7 +236,10 @@ export default function ConstructorProfilePage() {
         )}
 
         {activeTab === "results" && (
-          <ConstructorResultsTable teamName={teamName} />
+          <ConstructorResultsTable
+            teamName={teamName}
+            includeSprint={includeSprint}
+          />
         )}
       </div>
     </div>

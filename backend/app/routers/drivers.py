@@ -23,6 +23,7 @@ router = APIRouter()
 
 @router.get("/", response_model=DriverListResponse)
 async def get_all_drivers(
+    include_sprint: bool = True,
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -32,12 +33,15 @@ async def get_all_drivers(
     Returns all drivers who have participated in at least one race,
     ordered by total wins descending, then by total points descending.
     """
-    return await DriverService.get_all_drivers(db)
+    return await DriverService.get_all_drivers(
+        db, include_sprint=include_sprint
+    )
 
 
 @router.get("/{driver_code}", response_model=DriverProfileResponse)
 async def get_driver_profile(
     driver_code: str,
+    include_sprint: bool = True,
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -53,7 +57,9 @@ async def get_driver_profile(
     Args:
         driver_code: 3-letter driver code (e.g., VER, HAM, LEC)
     """
-    driver_profile = await DriverService.get_driver_profile(db, driver_code)
+    driver_profile = await DriverService.get_driver_profile(
+        db, driver_code, include_sprint=include_sprint
+    )
 
     if not driver_profile:
         raise HTTPException(
@@ -96,6 +102,7 @@ async def get_driver_race_history(
     start_year: Optional[int] = None,
     end_year: Optional[int] = None,
     all: bool = False,
+    include_sprint: bool = True,
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -113,7 +120,12 @@ async def get_driver_race_history(
     """
     try:
         history = await DriverService.get_race_history(
-            db, driver_code, start_year, end_year, fetch_all=all
+            db,
+            driver_code,
+            start_year,
+            end_year,
+            fetch_all=all,
+            include_sprint=include_sprint,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

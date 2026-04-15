@@ -1,9 +1,10 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
 import ArchiveMetricBar from "@/components/archive/ArchiveMetricBar";
 import ArchivePanel from "@/components/archive/ArchivePanel";
@@ -12,6 +13,7 @@ import DriverSeasonHistoryGraph from "@/components/DriverSeasonHistoryGraph";
 import DriverStatisticsPanel from "@/components/DriverStatisticsPanel";
 import PageHeader from "@/components/PageHeader";
 import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
+import SprintToggle from "@/components/ui/SprintToggle";
 import TabBar from "@/components/ui/TabBar";
 import { useTabSync } from "@/hooks/useTabSync";
 import { apiHeaders, apiUrl } from "@/lib/api";
@@ -29,10 +31,16 @@ const TABS: { key: DriverTab; label: string }[] = [
   { key: "results", label: "Results" },
 ];
 
-async function fetchDriverProfile(driverCode: string): Promise<DriverProfile> {
-  const res = await fetch(apiUrl(`/api/drivers/${driverCode}`), {
-    headers: apiHeaders(),
-  });
+async function fetchDriverProfile(
+  driverCode: string,
+  includeSprint: boolean,
+): Promise<DriverProfile> {
+  const params = new URLSearchParams();
+  if (!includeSprint) params.set("include_sprint", "false");
+  const url = params.toString()
+    ? apiUrl(`/api/drivers/${driverCode}?${params}`)
+    : apiUrl(`/api/drivers/${driverCode}`);
+  const res = await fetch(url, { headers: apiHeaders() });
   if (!res.ok) throw new Error("Failed to fetch driver profile");
   return res.json();
 }
@@ -45,10 +53,12 @@ export default function DriverProfilePage() {
     `/drivers/${driverCode}`,
     "overview",
   );
+  const [includeSprint, setIncludeSprint] = useState(true);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["driver-profile", driverCode],
-    queryFn: () => fetchDriverProfile(driverCode),
+  const { data, isLoading, isFetching, error } = useQuery({
+    queryKey: ["driver-profile", driverCode, includeSprint],
+    queryFn: () => fetchDriverProfile(driverCode, includeSprint),
+    placeholderData: keepPreviousData,
   });
 
   if (isLoading) {
@@ -127,8 +137,16 @@ export default function DriverProfilePage() {
         onBack={() => router.push("/drivers")}
         backLabel="DRIVERS"
         bottomContent={
-          <div className="flex justify-center">
+          <div className="flex items-center relative">
+            <div className="flex-1" />
             <TabBar tabs={TABS} activeTab={activeTab} onTabChange={switchTab} />
+            <div className="flex-1 flex justify-end border-t border-border-primary/40 mt-1 pt-1.5 mr-2">
+              <SprintToggle
+                checked={includeSprint}
+                onChange={setIncludeSprint}
+                isLoading={isFetching}
+              />
+            </div>
           </div>
         }
       />
@@ -202,7 +220,10 @@ export default function DriverProfilePage() {
         )}
 
         {activeTab === "results" && (
-          <DriverResultsTable driverCode={driverCode} />
+          <DriverResultsTable
+            driverCode={driverCode}
+            includeSprint={includeSprint}
+          />
         )}
       </div>
     </div>

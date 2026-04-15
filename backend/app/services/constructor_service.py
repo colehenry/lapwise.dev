@@ -19,7 +19,13 @@ class ConstructorService:
     """Service for constructor-related operations"""
 
     @staticmethod
-    async def get_all_constructors(db: AsyncSession) -> ConstructorListResponse:
+    def _session_types(include_sprint: bool) -> List[str]:
+        return ["race", "sprint_race"] if include_sprint else ["race"]
+
+    @staticmethod
+    async def get_all_constructors(
+        db: AsyncSession, include_sprint: bool = True
+    ) -> ConstructorListResponse:
         """
         Get all-time constructor listing with career statistics.
 
@@ -69,7 +75,11 @@ class ConstructorService:
             )
             .join(SessionResult, Team.id == SessionResult.team_id)
             .join(Session, SessionResult.session_id == Session.id)
-            .where(Session.session_type.in_(["race", "sprint_race"]))
+            .where(
+                Session.session_type.in_(
+                    ConstructorService._session_types(include_sprint)
+                )
+            )
             .group_by(func.lower(Team.name))
         ).subquery("stats")
 
@@ -117,7 +127,7 @@ class ConstructorService:
 
     @staticmethod
     async def get_constructor_profile(
-        db: AsyncSession, team_name: str
+        db: AsyncSession, team_name: str, include_sprint: bool = True
     ) -> Optional[ConstructorProfileResponse]:
         """
         Get complete constructor profile with career statistics.
@@ -134,7 +144,9 @@ class ConstructorService:
         team_ids = await ConstructorService._get_all_team_ids(db, team_name_normalized)
 
         # Get all race results
-        race_results = await ConstructorService._get_race_results_by_ids(db, team_ids)
+        race_results = await ConstructorService._get_race_results_by_ids(
+            db, team_ids, include_sprint
+        )
 
         if not race_results:
             return ConstructorProfileResponse(
@@ -268,6 +280,7 @@ class ConstructorService:
         start_year: Optional[int] = None,
         end_year: Optional[int] = None,
         fetch_all: bool = False,
+        include_sprint: bool = True,
     ) -> Optional[ConstructorRaceHistoryResponse]:
         """
         Get constructor's race-by-race results across their career.
@@ -302,7 +315,11 @@ class ConstructorService:
 
         # Get race results
         race_data = await ConstructorService._get_races_in_range(
-            db, list(team_data_map.values()), start_year, end_year
+            db,
+            list(team_data_map.values()),
+            start_year,
+            end_year,
+            include_sprint,
         )
 
         # Group by race
@@ -416,12 +433,18 @@ class ConstructorService:
         return result.all()
 
     @staticmethod
-    async def _get_race_results_by_ids(db: AsyncSession, team_ids: List[int]):
+    async def _get_race_results_by_ids(
+        db: AsyncSession, team_ids: List[int], include_sprint: bool = True
+    ):
         query = (
             select(SessionResult, Session)
             .join(Session, SessionResult.session_id == Session.id)
             .where(SessionResult.team_id.in_(team_ids))
-            .where(Session.session_type.in_(["race", "sprint_race"]))
+            .where(
+                Session.session_type.in_(
+                    ConstructorService._session_types(include_sprint)
+                )
+            )
             .order_by(Session.date.desc())
         )
         result = await db.execute(query)
@@ -484,7 +507,11 @@ class ConstructorService:
 
     @staticmethod
     async def _get_races_in_range(
-        db: AsyncSession, team_ids: List[int], start_year: int, end_year: int
+        db: AsyncSession,
+        team_ids: List[int],
+        start_year: int,
+        end_year: int,
+        include_sprint: bool = True,
     ):
         query = (
             select(
@@ -500,7 +527,11 @@ class ConstructorService:
             .join(SessionResult, Session.id == SessionResult.session_id)
             .join(Driver, SessionResult.driver_id == Driver.id)
             .where(SessionResult.team_id.in_(team_ids))
-            .where(Session.session_type.in_(["race", "sprint_race"]))
+            .where(
+                Session.session_type.in_(
+                    ConstructorService._session_types(include_sprint)
+                )
+            )
             .where(Session.year >= start_year)
             .where(Session.year <= end_year)
             .order_by(Session.date, SessionResult.position)

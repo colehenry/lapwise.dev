@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import Skeleton from "@/components/ui/Skeleton";
@@ -17,18 +17,23 @@ function positionColor(pos: number | null): string {
 
 interface ConstructorResultsTableProps {
   teamName: string;
+  includeSprint?: boolean;
 }
 
 export default function ConstructorResultsTable({
   teamName,
+  includeSprint = true,
 }: ConstructorResultsTableProps) {
   const [selectedYear, setSelectedYear] = useState<number | "all">("all");
 
   const { data, isLoading } = useQuery<ConstructorRaceHistoryResponse>({
-    queryKey: ["constructor-race-history", teamName, "all"],
+    queryKey: ["constructor-race-history", teamName, "all", includeSprint],
+    placeholderData: keepPreviousData,
     queryFn: async () => {
+      const params = new URLSearchParams({ all: "true" });
+      if (!includeSprint) params.set("include_sprint", "false");
       const res = await fetch(
-        apiUrl(`/api/constructors/${teamName}/race-history?all=true`),
+        apiUrl(`/api/constructors/${teamName}/race-history?${params}`),
         { headers: apiHeaders() },
       );
       if (!res.ok) throw new Error("Failed to fetch race history");

@@ -23,6 +23,7 @@ router = APIRouter()
 
 @router.get("/", response_model=ConstructorListResponse)
 async def get_all_constructors(
+    include_sprint: bool = True,
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -32,12 +33,15 @@ async def get_all_constructors(
     Returns all constructors who have participated in at least one race,
     ordered by total wins descending, then by total points descending.
     """
-    return await ConstructorService.get_all_constructors(db)
+    return await ConstructorService.get_all_constructors(
+        db, include_sprint=include_sprint
+    )
 
 
 @router.get("/{team_name}", response_model=ConstructorProfileResponse)
 async def get_constructor_profile(
     team_name: str,
+    include_sprint: bool = True,
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -52,7 +56,9 @@ async def get_constructor_profile(
     Args:
         team_name: Team name (e.g., "Red Bull Racing", "Ferrari")
     """
-    profile = await ConstructorService.get_constructor_profile(db, team_name)
+    profile = await ConstructorService.get_constructor_profile(
+        db, team_name, include_sprint=include_sprint
+    )
 
     if not profile:
         raise HTTPException(
@@ -96,6 +102,7 @@ async def get_constructor_race_history(
     start_year: Optional[int] = None,
     end_year: Optional[int] = None,
     all: bool = False,
+    include_sprint: bool = True,
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -113,7 +120,12 @@ async def get_constructor_race_history(
     """
     try:
         history = await ConstructorService.get_race_history(
-            db, team_name, start_year, end_year, fetch_all=all
+            db,
+            team_name,
+            start_year,
+            end_year,
+            fetch_all=all,
+            include_sprint=include_sprint,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
