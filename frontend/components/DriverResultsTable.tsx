@@ -36,10 +36,12 @@ function deltaColor(delta: string | null): string {
 
 interface DriverResultsTableProps {
   driverCode: string;
+  includeSprint?: boolean;
 }
 
 export default function DriverResultsTable({
   driverCode,
+  includeSprint = true,
 }: DriverResultsTableProps) {
   const [selectedYear, setSelectedYear] = useState<number | "all">("all");
 
@@ -81,10 +83,11 @@ export default function DriverResultsTable({
     );
   }
 
-  const filteredRaces =
-    selectedYear === "all"
-      ? data.races
-      : data.races.filter((r) => r.year === selectedYear);
+  const filteredRaces = data.races.filter(
+    (r) =>
+      (selectedYear === "all" || r.year === selectedYear) &&
+      (includeSprint || r.session_type !== "sprint_race"),
+  );
 
   // Reverse so newest first
   const sortedRaces = [...filteredRaces].reverse();

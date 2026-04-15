@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -8,6 +8,7 @@ import PageHeader from "@/components/PageHeader";
 import ExpandButton from "@/components/ui/ExpandButton";
 import Skeleton from "@/components/ui/Skeleton";
 import SortPills from "@/components/ui/SortPills";
+import SprintToggle from "@/components/ui/SprintToggle";
 import TiltCard from "@/components/ui/TiltCard";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import { getConstructorLogoUrl } from "@/lib/entityImageOverrides";
@@ -18,10 +19,15 @@ type SortKey = "wins" | "races" | "points" | "alpha";
 const CURRENT_YEAR = new Date().getFullYear();
 const DEFAULT_VISIBLE_COUNT = 30;
 
-async function fetchAllConstructors(): Promise<ConstructorListResponse> {
-  const res = await fetch(apiUrl("/api/constructors/"), {
-    headers: apiHeaders(),
-  });
+async function fetchAllConstructors(
+  includeSprint: boolean,
+): Promise<ConstructorListResponse> {
+  const params = new URLSearchParams();
+  if (!includeSprint) params.set("include_sprint", "false");
+  const url = params.toString()
+    ? apiUrl(`/api/constructors/?${params}`)
+    : apiUrl("/api/constructors/");
+  const res = await fetch(url, { headers: apiHeaders() });
   if (!res.ok) throw new Error("Failed to fetch constructors");
   return res.json();
 }
@@ -136,10 +142,12 @@ export default function ConstructorsPage() {
   const [sortKey, setSortKey] = useState<SortKey>("wins");
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [includeSprint, setIncludeSprint] = useState(true);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["constructors-all"],
-    queryFn: fetchAllConstructors,
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["constructors-all", includeSprint],
+    queryFn: () => fetchAllConstructors(includeSprint),
+    placeholderData: keepPreviousData,
   });
 
   const { data: availableYears = [] } = useQuery<number[]>({
@@ -255,8 +263,15 @@ export default function ConstructorsPage() {
 
         {/* Stats bar */}
         {data && (
-          <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-6">
-            {filteredConstructors.length} total constructors
+          <div className="flex items-center justify-between mb-6">
+            <span className="text-[10px] text-text-muted font-mono tracking-widest uppercase">
+              {filteredConstructors.length} total constructors
+            </span>
+            <SprintToggle
+              checked={includeSprint}
+              onChange={setIncludeSprint}
+              isLoading={isFetching}
+            />
           </div>
         )}
 

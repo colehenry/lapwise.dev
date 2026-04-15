@@ -19,12 +19,20 @@ class DriverService:
     """Service for driver-related operations"""
 
     @staticmethod
-    async def get_all_drivers(db: AsyncSession) -> DriverListResponse:
+    def _session_types(include_sprint: bool) -> List[str]:
+        return ["race", "sprint_race"] if include_sprint else ["race"]
+
+    @staticmethod
+    async def get_all_drivers(
+        db: AsyncSession, include_sprint: bool = True
+    ) -> DriverListResponse:
         """
         Get all-time driver listing with career statistics.
 
         Returns all drivers ordered by total wins DESC, total points DESC.
         """
+        session_types = DriverService._session_types(include_sprint)
+
         # Subquery: get the most recent session date per driver (for headshot + latest_season)
         latest_session_sq = (
             select(
@@ -63,7 +71,7 @@ class DriverService:
                 func.count(func.distinct(Session.year)).label("season_count"),
             )
             .join(Session, SessionResult.session_id == Session.id)
-            .where(Session.session_type.in_(["race", "sprint_race"]))
+            .where(Session.session_type.in_(session_types))
             .group_by(SessionResult.driver_id, SessionResult.team_id)
             .subquery()
         )
@@ -125,7 +133,7 @@ class DriverService:
             .join(Session, SessionResult.session_id == Session.id)
             .outerjoin(primary_team_sq, Driver.id == primary_team_sq.c.driver_id)
             .outerjoin(latest_info_sq, Driver.id == latest_info_sq.c.driver_id)
-            .where(Session.session_type.in_(["race", "sprint_race"]))
+            .where(Session.session_type.in_(session_types))
             .group_by(
                 Driver.id,
                 Driver.driver_code,
@@ -171,7 +179,7 @@ class DriverService:
 
     @staticmethod
     async def get_driver_profile(
-        db: AsyncSession, driver_code: str
+        db: AsyncSession, driver_code: str, include_sprint: bool = True
     ) -> Optional[DriverProfileResponse]:
         """
         Get complete driver profile with career statistics.
@@ -179,6 +187,7 @@ class DriverService:
         Args:
             db: Database session
             driver_code: 3-letter driver code (e.g., VER, HAM)
+            include_sprint: Whether to include sprint race results in stats
 
         Returns:
             DriverProfileResponse with stats or None if not found
@@ -189,7 +198,9 @@ class DriverService:
             return None
 
         # Get all race results (not qualifying or practice)
-        results = await DriverService._get_all_race_results(db, driver.id)
+        results = await DriverService._get_all_race_results(
+            db, driver.id, include_sprint
+        )
 
         if not results:
             # Driver exists but has no race results yet
@@ -336,6 +347,7 @@ class DriverService:
         start_year: Optional[int] = None,
         end_year: Optional[int] = None,
         fetch_all: bool = False,
+        include_sprint: bool = True,
     ) -> Optional[DriverRaceHistoryResponse]:
         """
         Get driver's race-by-race results across their career.
@@ -366,7 +378,7 @@ class DriverService:
 
         # Get all race results in the year range
         race_data = await DriverService._get_races_in_range(
-            db, driver.id, start_year, end_year
+            db, driver.id, start_year, end_year, include_sprint
         )
 
         races = [
@@ -426,13 +438,16 @@ class DriverService:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def _get_all_race_results(db: AsyncSession, driver_id: int):
+    async def _get_all_race_results(
+        db: AsyncSession, driver_id: int, include_sprint: bool = True
+    ):
+        session_types = DriverService._session_types(include_sprint)
         query = (
             select(SessionResult, Session, Team)
             .join(Session, SessionResult.session_id == Session.id)
             .join(Team, SessionResult.team_id == Team.id)
             .where(SessionResult.driver_id == driver_id)
-            .where(Session.session_type.in_(["race", "sprint_race"]))
+            .where(Session.session_type.in_(session_types))
             .order_by(Session.date.desc())
         )
         result = await db.execute(query)
@@ -513,8 +528,13 @@ class DriverService:
 
     @staticmethod
     async def _get_races_in_range(
-        db: AsyncSession, driver_id: int, start_year: int, end_year: int
+        db: AsyncSession,
+        driver_id: int,
+        start_year: int,
+        end_year: int,
+        include_sprint: bool = True,
     ):
+        session_types = DriverService._session_types(include_sprint)
         query = (
             select(
                 Session.year,
@@ -533,7 +553,7 @@ class DriverService:
             .join(SessionResult, Session.id == SessionResult.session_id)
             .join(Team, SessionResult.team_id == Team.id)
             .where(SessionResult.driver_id == driver_id)
-            .where(Session.session_type.in_(["race", "sprint_race"]))
+            .where(Session.session_type.in_(session_types))
             .where(Session.year >= start_year)
             .where(Session.year <= end_year)
             .order_by(Session.date)
