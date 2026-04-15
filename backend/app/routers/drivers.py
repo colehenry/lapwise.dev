@@ -15,6 +15,7 @@ from app.schemas.driver import (
     DriverSeasonHistoryResponse,
     DriverRaceHistoryResponse,
     DriverListResponse,
+    DriverSuperlativesResponse,
 )
 from app.security import verify_api_key
 
@@ -33,9 +34,7 @@ async def get_all_drivers(
     Returns all drivers who have participated in at least one race,
     ordered by total wins descending, then by total points descending.
     """
-    return await DriverService.get_all_drivers(
-        db, include_sprint=include_sprint
-    )
+    return await DriverService.get_all_drivers(db, include_sprint=include_sprint)
 
 
 @router.get("/{driver_code}", response_model=DriverProfileResponse)
@@ -94,6 +93,30 @@ async def get_driver_season_history(
         )
 
     return history
+
+
+@router.get("/{driver_code}/superlatives", response_model=DriverSuperlativesResponse)
+async def get_driver_superlatives(
+    driver_code: str,
+    include_sprint: bool = True,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Get notable career stats and records for a driver.
+
+    Returns a list of superlatives — standout stats like all-time records,
+    circuit dominance, and quirky career milestones. The list only includes
+    stats that clear their significance threshold; it may be empty.
+    """
+    result = await DriverService.get_driver_superlatives(
+        db, driver_code, include_sprint=include_sprint
+    )
+    if result is None:
+        raise HTTPException(
+            status_code=404, detail=f"Driver with code '{driver_code}' not found"
+        )
+    return result
 
 
 @router.get("/{driver_code}/race-history", response_model=DriverRaceHistoryResponse)

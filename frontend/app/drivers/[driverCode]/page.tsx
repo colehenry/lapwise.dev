@@ -11,6 +11,7 @@ import ArchivePanel from "@/components/archive/ArchivePanel";
 import DriverResultsTable from "@/components/DriverResultsTable";
 import DriverSeasonHistoryGraph from "@/components/DriverSeasonHistoryGraph";
 import DriverStatisticsPanel from "@/components/DriverStatisticsPanel";
+import DriverSuperlativesCard from "@/components/DriverSuperlativesCard";
 import PageHeader from "@/components/PageHeader";
 import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
 import SprintToggle from "@/components/ui/SprintToggle";
@@ -22,7 +23,7 @@ import {
   getDriverPortraitUrl,
 } from "@/lib/entityImageOverrides";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
-import type { DriverProfile } from "@/lib/types";
+import type { DriverProfile, DriverSuperlativesResponse } from "@/lib/types";
 
 type DriverTab = "overview" | "results";
 
@@ -45,6 +46,19 @@ async function fetchDriverProfile(
   return res.json();
 }
 
+async function fetchSuperlatives(
+  driverCode: string,
+  includeSprint: boolean,
+): Promise<DriverSuperlativesResponse> {
+  const params = includeSprint ? "" : "?include_sprint=false";
+  const res = await fetch(
+    apiUrl(`/api/drivers/${driverCode}/superlatives${params}`),
+    { headers: apiHeaders() },
+  );
+  if (!res.ok) throw new Error("Failed to fetch superlatives");
+  return res.json();
+}
+
 export default function DriverProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -58,6 +72,12 @@ export default function DriverProfilePage() {
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ["driver-profile", driverCode, includeSprint],
     queryFn: () => fetchDriverProfile(driverCode, includeSprint),
+    placeholderData: keepPreviousData,
+  });
+
+  const { data: superlativesData } = useQuery({
+    queryKey: ["driver-superlatives", driverCode, includeSprint],
+    queryFn: () => fetchSuperlatives(driverCode, includeSprint),
     placeholderData: keepPreviousData,
   });
 
@@ -163,6 +183,15 @@ export default function DriverProfilePage() {
               stats={stats}
               headlineStats={headlineStats}
               bannerImageUrl={bannerUrl}
+              aside={
+                superlativesData?.superlatives.length ? (
+                  <DriverSuperlativesCard
+                    driverCode={driverCode}
+                    includeSprint={includeSprint}
+                    variant="inline"
+                  />
+                ) : undefined
+              }
               media={
                 portraitUrl ? (
                   <Image

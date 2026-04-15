@@ -357,6 +357,19 @@ export interface DriverSeasonHistoryResponse {
   seasons: DriverSeasonHistory[];
 }
 
+export interface DriverSuperlative {
+  id: string;
+  value: string;
+  label: string;
+  sublabel: string | null;
+  category: "record" | "circuit" | "fun";
+}
+
+export interface DriverSuperlativesResponse {
+  driver_code: string | null;
+  superlatives: DriverSuperlative[];
+}
+
 // Constructor profile types
 export interface ConstructorProfile {
   team_name: string;
