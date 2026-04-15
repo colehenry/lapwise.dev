@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import ArchivePanel from "@/components/archive/ArchivePanel";
 import MonoLabel from "@/components/ui/MonoLabel";
 import { apiHeaders, apiUrl } from "@/lib/api";
@@ -56,6 +56,7 @@ export default function DriverSuperlativesCard({
   const { data } = useQuery({
     queryKey: ["driver-superlatives", driverCode, includeSprint],
     queryFn: () => fetchSuperlatives(driverCode, includeSprint),
+    placeholderData: keepPreviousData,
   });
 
   if (!data || data.superlatives.length === 0) return null;
@@ -71,7 +72,7 @@ export default function DriverSuperlativesCard({
   if (variant === "inline") {
     return (
       <>
-        <MonoLabel className="block">Superlatives</MonoLabel>
+        <MonoLabel className="block">Highlights</MonoLabel>
         {list}
       </>
     );

@@ -172,7 +172,9 @@ export default function DriverProfilePage() {
       />
 
       {/* Tab Content */}
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div
+        className={`max-w-5xl mx-auto px-6 py-8 transition-opacity duration-150 ${isFetching ? "opacity-50" : ""}`}
+      >
         {activeTab === "overview" && (
           <div className="space-y-6">
             <ArchiveDataHeader

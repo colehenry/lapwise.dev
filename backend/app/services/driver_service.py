@@ -1,7 +1,7 @@
 from datetime import date
-from typing import Optional, List, Tuple
+from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, case
+from sqlalchemy import select, func, case, distinct
 
 from app.models import Driver, SessionResult, Session, Team
 from app.schemas.driver import (
@@ -199,13 +199,30 @@ class DriverService:
         if not driver:
             return None
 
-        # Get all race results (not qualifying or practice)
-        results = await DriverService._get_all_race_results(
-            db, driver.id, include_sprint
-        )
+        session_types = DriverService._session_types(include_sprint)
+        current_year = date.today().year
 
-        if not results:
-            # Driver exists but has no race results yet
+        # Single aggregate query for all career stats
+        stats_query = (
+            select(
+                func.count(SessionResult.id).label("total_races"),
+                func.count(distinct(Session.year)).label("total_seasons"),
+                func.sum(
+                    case((SessionResult.position == 1, 1), else_=0)
+                ).label("total_wins"),
+                func.sum(
+                    case((SessionResult.position.in_([1, 2, 3]), 1), else_=0)
+                ).label("total_podiums"),
+                func.coalesce(func.sum(SessionResult.points), 0).label("total_points"),
+                func.min(SessionResult.position).label("best_finish"),
+            )
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(SessionResult.driver_id == driver.id)
+            .where(Session.session_type.in_(session_types))
+        )
+        stats = (await db.execute(stats_query)).first()
+
+        if not stats or not stats.total_races:
             return DriverProfileResponse(
                 driver_code=driver.driver_code,
                 driver_slug=driver.driver_slug,
@@ -225,50 +242,47 @@ class DriverService:
                 latest_season=None,
             )
 
-        # Calculate statistics
-        seasons = set()
-        total_races = 0
-        total_wins = 0
-        total_podiums = 0
-        total_points = 0.0
-        best_finish = None
+        # Championship count — one query using subqueries instead of a per-season loop
+        dsp_sq = (
+            select(
+                Session.year,
+                SessionResult.driver_id,
+                func.sum(SessionResult.points).label("pts"),
+            )
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.session_type.in_(session_types))
+            .where(SessionResult.points.isnot(None))
+            .where(Session.year < current_year)
+            .group_by(Session.year, SessionResult.driver_id)
+            .subquery()
+        )
+        season_max_sq = (
+            select(dsp_sq.c.year, func.max(dsp_sq.c.pts).label("max_pts"))
+            .group_by(dsp_sq.c.year)
+            .subquery()
+        )
+        total_championships = (
+            await db.execute(
+                select(func.count().label("n"))
+                .select_from(dsp_sq)
+                .join(season_max_sq, dsp_sq.c.year == season_max_sq.c.year)
+                .where(dsp_sq.c.pts == season_max_sq.c.max_pts)
+                .where(dsp_sq.c.driver_id == driver.id)
+            )
+        ).scalar() or 0
 
-        for result, session, team in results:
-            seasons.add(session.year)
-            total_races += 1
-
-            # Count wins (position 1)
-            if result.position == 1:
-                total_wins += 1
-
-            # Count podiums (positions 1, 2, 3)
-            if result.position in [1, 2, 3]:
-                total_podiums += 1
-
-            # Track best finish
-            if result.position is not None:
-                if best_finish is None or result.position < best_finish:
-                    best_finish = result.position
-
-            # Sum points
-            if result.points is not None:
-                total_points += result.points
-
-        # Calculate championships — only count completed seasons
-        total_championships = 0
-        for year in seasons:
-            if not DriverService._is_season_complete(year):
-                continue
-            champion_id = await DriverService._get_season_champion_id(db, year)
-            if champion_id and champion_id == driver.id:
-                total_championships += 1
-
-        # Get current team and headshot (from most recent race)
-        most_recent = results[0]  # Already ordered by date desc
-        current_team_name = most_recent.Team.name
-        current_team_color = most_recent.Team.team_color
-        latest_season = most_recent.Session.year
-        headshot_url = most_recent.SessionResult.headshot_url
+        # Most recent result — current team, headshot, latest season
+        recent = (
+            await db.execute(
+                select(Team.name, Team.team_color, SessionResult.headshot_url, Session.year)
+                .join(Session, SessionResult.session_id == Session.id)
+                .join(Team, SessionResult.team_id == Team.id)
+                .where(SessionResult.driver_id == driver.id)
+                .where(Session.session_type.in_(session_types))
+                .order_by(Session.date.desc())
+                .limit(1)
+            )
+        ).first()
 
         return DriverProfileResponse(
             driver_code=driver.driver_code,
@@ -276,17 +290,17 @@ class DriverService:
             full_name=driver.full_name,
             driver_number=driver.driver_number,
             country_code=driver.country_code,
-            headshot_url=headshot_url,
-            total_seasons=len(seasons),
-            total_races=total_races,
+            headshot_url=recent.headshot_url if recent else None,
+            total_seasons=stats.total_seasons,
+            total_races=stats.total_races,
             total_championships=total_championships,
-            total_wins=total_wins,
-            total_podiums=total_podiums,
-            total_points=total_points,
-            best_finish=best_finish,
-            current_team=current_team_name,
-            current_team_color=current_team_color,
-            latest_season=latest_season,
+            total_wins=stats.total_wins or 0,
+            total_podiums=stats.total_podiums or 0,
+            total_points=float(stats.total_points),
+            best_finish=stats.best_finish,
+            current_team=recent.name if recent else None,
+            current_team_color=recent.team_color if recent else None,
+            latest_season=recent.year if recent else None,
         )
 
     @staticmethod
@@ -311,29 +325,57 @@ class DriverService:
                 seasons=[],
             )
 
-        seasons = []
-        for season_row in season_data:
-            year = season_row.year
+        years = [row.year for row in season_data]
 
-            # Find driver's position in that year's standing
-            standings = await DriverService._get_season_standings(db, year)
-
-            championship_position = None
-            for idx, (d_id, points) in enumerate(standings):
-                if d_id == driver.id:
-                    championship_position = idx + 1
-                    break
-
-            seasons.append(
-                SeasonHistory(
-                    year=year,
-                    championship_position=championship_position,
-                    total_points=float(season_row.total_points),
-                    race_count=int(season_row.race_count or 0),
-                    team_name=season_row.team_name,
-                    team_color=season_row.team_color,
-                )
+        # Single query: championship position for all years via window function
+        all_pts_sq = (
+            select(
+                Session.year,
+                SessionResult.driver_id,
+                func.sum(SessionResult.points).label("pts"),
             )
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.session_type.in_(["race", "sprint_race"]))
+            .where(SessionResult.points.isnot(None))
+            .where(Session.year.in_(years))
+            .group_by(Session.year, SessionResult.driver_id)
+            .subquery()
+        )
+        ranked_sq = (
+            select(
+                all_pts_sq.c.year,
+                all_pts_sq.c.driver_id,
+                func.rank()
+                .over(
+                    partition_by=all_pts_sq.c.year,
+                    order_by=all_pts_sq.c.pts.desc(),
+                )
+                .label("champ_position"),
+            )
+            .subquery()
+        )
+        positions = {
+            row.year: row.champ_position
+            for row in (
+                await db.execute(
+                    select(ranked_sq.c.year, ranked_sq.c.champ_position).where(
+                        ranked_sq.c.driver_id == driver.id
+                    )
+                )
+            ).all()
+        }
+
+        seasons = [
+            SeasonHistory(
+                year=row.year,
+                championship_position=positions.get(row.year),
+                total_points=float(row.total_points),
+                race_count=int(row.race_count or 0),
+                team_name=row.team_name,
+                team_color=row.team_color,
+            )
+            for row in season_data
+        ]
 
         return DriverSeasonHistoryResponse(
             driver_code=driver.driver_code,
@@ -829,44 +871,6 @@ class DriverService:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def _get_all_race_results(
-        db: AsyncSession, driver_id: int, include_sprint: bool = True
-    ):
-        session_types = DriverService._session_types(include_sprint)
-        query = (
-            select(SessionResult, Session, Team)
-            .join(Session, SessionResult.session_id == Session.id)
-            .join(Team, SessionResult.team_id == Team.id)
-            .where(SessionResult.driver_id == driver_id)
-            .where(Session.session_type.in_(session_types))
-            .order_by(Session.date.desc())
-        )
-        result = await db.execute(query)
-        return result.all()
-
-    @staticmethod
-    def _is_season_complete(year: int) -> bool:
-        """Return True only if the season is from a prior calendar year (fully concluded)."""
-        return year < date.today().year
-
-    @staticmethod
-    async def _get_season_champion_id(db: AsyncSession, year: int) -> Optional[int]:
-        standings_query = (
-            select(Driver.id, func.sum(SessionResult.points).label("total_points"))
-            .join(SessionResult, Driver.id == SessionResult.driver_id)
-            .join(Session, SessionResult.session_id == Session.id)
-            .where(Session.year == year)
-            .where(Session.session_type.in_(["race", "sprint_race"]))
-            .where(SessionResult.points.isnot(None))
-            .group_by(Driver.id)
-            .order_by(func.sum(SessionResult.points).desc())
-            .limit(1)
-        )
-        result = await db.execute(standings_query)
-        champion = result.first()
-        return champion.id if champion else None
-
-    @staticmethod
     async def _get_season_aggregated_results(db: AsyncSession, driver_id: int):
         query = (
             select(
@@ -886,23 +890,6 @@ class DriverService:
         )
         result = await db.execute(query)
         return result.all()
-
-    @staticmethod
-    async def _get_season_standings(
-        db: AsyncSession, year: int
-    ) -> List[Tuple[int, float]]:
-        query = (
-            select(Driver.id, func.sum(SessionResult.points).label("total_points"))
-            .join(SessionResult, Driver.id == SessionResult.driver_id)
-            .join(Session, SessionResult.session_id == Session.id)
-            .where(Session.year == year)
-            .where(Session.session_type.in_(["race", "sprint_race"]))
-            .where(SessionResult.points.isnot(None))
-            .group_by(Driver.id)
-            .order_by(func.sum(SessionResult.points).desc())
-        )
-        result = await db.execute(query)
-        return [(row.id, row.total_points) for row in result.all()]
 
     @staticmethod
     async def _get_available_years(db: AsyncSession, driver_id: int) -> List[int]:
