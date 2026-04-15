@@ -320,13 +320,17 @@ export default function DriversPage() {
 
         {/* Grid */}
         {!isLoading && filteredDrivers.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {visibleDrivers.map((driver) => (
-              <DriverCard
-                key={driver.driver_code || driver.full_name}
-                driver={driver}
-              />
-            ))}
+          <div
+            className={`transition-opacity duration-150 ${isFetching ? "opacity-50" : ""}`}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {visibleDrivers.map((driver) => (
+                <DriverCard
+                  key={driver.driver_code || driver.full_name}
+                  driver={driver}
+                />
+              ))}
+            </div>
           </div>
         )}
 

@@ -295,10 +295,14 @@ export default function ConstructorsPage() {
 
         {/* Grid */}
         {!isLoading && filteredConstructors.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {visibleConstructors.map((team) => (
-              <ConstructorCard key={team.team_name} team={team} />
-            ))}
+          <div
+            className={`transition-opacity duration-150 ${isFetching ? "opacity-50" : ""}`}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {visibleConstructors.map((team) => (
+                <ConstructorCard key={team.team_name} team={team} />
+              ))}
+            </div>
           </div>
         )}
 
