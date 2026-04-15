@@ -22,12 +22,11 @@ import {
 } from "@/lib/entityImageOverrides";
 import type { ConstructorProfile } from "@/lib/types";
 
-type ConstructorTab = "overview" | "results" | "statistics";
+type ConstructorTab = "overview" | "results";
 
 const TABS: { key: ConstructorTab; label: string }[] = [
   { key: "overview", label: "Overview" },
   { key: "results", label: "Results" },
-  { key: "statistics", label: "Statistics" },
 ];
 
 function getOrdinalSuffix(position: number): string {
@@ -119,6 +118,14 @@ export default function ConstructorProfilePage() {
       value: `${podiumRate.toFixed(1)}%`,
       progress: podiumRate,
     },
+    {
+      label: "Points per Race",
+      value:
+        data.total_races > 0
+          ? (data.total_points / data.total_races).toFixed(2)
+          : "0",
+      progress: undefined,
+    },
   ];
 
   return (
@@ -190,7 +197,7 @@ export default function ConstructorProfilePage() {
             />
 
             <ArchivePanel title="Constructor Highlights">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 rounded-sm border border-border-primary bg-bg-primary/20 px-4 md:px-5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 rounded-sm border border-border-primary bg-bg-primary/20 px-4 md:px-5">
                 {highlights.map((stat) => (
                   <ArchiveMetricBar
                     key={stat.label}
@@ -204,18 +211,16 @@ export default function ConstructorProfilePage() {
             </ArchivePanel>
 
             <ConstructorSeasonHistoryGraph teamName={teamName} />
+
+            <ConstructorStatisticsPanel
+              teamName={teamName}
+              accentColor={teamColor}
+            />
           </div>
         )}
 
         {activeTab === "results" && (
           <ConstructorResultsTable teamName={teamName} />
-        )}
-
-        {activeTab === "statistics" && (
-          <ConstructorStatisticsPanel
-            teamName={teamName}
-            accentColor={teamColor}
-          />
         )}
       </div>
     </div>

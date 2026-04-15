@@ -22,12 +22,11 @@ import {
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
 import type { DriverProfile } from "@/lib/types";
 
-type DriverTab = "overview" | "results" | "statistics";
+type DriverTab = "overview" | "results";
 
 const TABS: { key: DriverTab; label: string }[] = [
   { key: "overview", label: "Overview" },
   { key: "results", label: "Results" },
-  { key: "statistics", label: "Statistics" },
 ];
 
 async function fetchDriverProfile(driverCode: string): Promise<DriverProfile> {
@@ -197,15 +196,13 @@ export default function DriverProfilePage() {
             </ArchivePanel>
 
             <DriverSeasonHistoryGraph driverCode={driverCode} />
+
+            <DriverStatisticsPanel driverCode={driverCode} />
           </div>
         )}
 
         {activeTab === "results" && (
           <DriverResultsTable driverCode={driverCode} />
-        )}
-
-        {activeTab === "statistics" && (
-          <DriverStatisticsPanel driverCode={driverCode} />
         )}
       </div>
     </div>
