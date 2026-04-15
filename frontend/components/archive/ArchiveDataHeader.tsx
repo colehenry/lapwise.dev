@@ -17,6 +17,7 @@ type ArchiveDataHeaderProps = {
   meta?: ReactNode;
   accentColor?: string | null;
   bannerImageUrl?: string | null;
+  aside?: ReactNode;
 };
 
 function formatStatValue(value: string | number): string | number {
@@ -34,6 +35,7 @@ export default function ArchiveDataHeader({
   meta,
   accentColor,
   bannerImageUrl,
+  aside,
 }: ArchiveDataHeaderProps) {
   const statGridClass =
     stats.length > 4
@@ -44,13 +46,23 @@ export default function ArchiveDataHeader({
           ? "grid-cols-3"
           : "grid-cols-2";
 
+  const gridCols = aside
+    ? "grid-cols-1 lg:grid-cols-[220px_1fr_220px]"
+    : "grid-cols-1 lg:grid-cols-[220px_1fr]";
+
+  const headlineTextSize = aside
+    ? "text-3xl md:text-4xl"
+    : "text-4xl md:text-5xl";
+
+  const statTextSize = aside ? "text-base md:text-lg" : "text-lg md:text-xl";
+
   return (
     <ArchivePanel bodyClassName="p-0">
       <div
         className="h-1 w-full bg-border-secondary"
         style={accentColor ? { backgroundColor: accentColor } : undefined}
       />
-      <div className="relative grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-0 overflow-hidden">
+      <div className={`relative grid ${gridCols} gap-0 overflow-hidden`}>
         {bannerImageUrl && (
           <>
             <div
@@ -66,7 +78,7 @@ export default function ArchiveDataHeader({
           </div>
         </div>
 
-        <div className="relative z-10 min-w-0 p-5 md:p-6 flex flex-col gap-6">
+        <div className="relative z-10 min-w-0 p-5 md:p-6 flex flex-col gap-5">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div className="min-w-0">
               <MonoLabel className="block mb-2">{eyebrow}</MonoLabel>
@@ -87,7 +99,9 @@ export default function ArchiveDataHeader({
               {headlineStats.map((stat) => (
                 <div key={stat.label} className="min-w-0">
                   <MonoLabel className="block mb-2">{stat.label}</MonoLabel>
-                  <div className="text-4xl md:text-5xl font-bold font-mono tabular-nums text-text-primary truncate">
+                  <div
+                    className={`${headlineTextSize} font-bold font-mono tabular-nums text-text-primary truncate`}
+                  >
                     {formatStatValue(stat.value)}
                   </div>
                 </div>
@@ -101,18 +115,26 @@ export default function ArchiveDataHeader({
             {stats.map((stat) => (
               <div
                 key={stat.label}
-                className="min-w-0 border border-border-primary px-3 py-3"
+                className="min-w-0 border border-border-primary px-3 py-2.5"
               >
                 <MonoLabel className="block mb-1 break-words">
                   {stat.label}
                 </MonoLabel>
-                <div className="text-lg md:text-xl font-bold font-mono tabular-nums text-text-primary truncate">
+                <div
+                  className={`${statTextSize} font-bold font-mono tabular-nums text-text-primary truncate`}
+                >
                   {formatStatValue(stat.value)}
                 </div>
               </div>
             ))}
           </div>
         </div>
+
+        {aside && (
+          <div className="relative z-10 border-t lg:border-t-0 lg:border-l border-border-primary p-5 md:p-6 flex flex-col gap-3 lg:max-h-[360px] overflow-y-auto">
+            {aside}
+          </div>
+        )}
       </div>
     </ArchivePanel>
   );

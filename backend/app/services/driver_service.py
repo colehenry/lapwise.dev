@@ -12,6 +12,8 @@ from app.schemas.driver import (
     RaceHistory,
     DriverListItem,
     DriverListResponse,
+    DriverSuperlative,
+    DriverSuperlativesResponse,
 )
 
 
@@ -404,6 +406,395 @@ class DriverService:
             full_name=driver.full_name,
             races=races,
             available_years=available_years,
+        )
+
+    @staticmethod
+    async def get_driver_superlatives(
+        db: AsyncSession, driver_code: str, include_sprint: bool = True
+    ) -> Optional[DriverSuperlativesResponse]:
+        """
+        Compute notable career stats and records for a driver.
+
+        All-time stats use the full 1950+ dataset. include_sprint controls
+        whether sprint race results count toward wins, starts, fastest laps, etc.
+        Only superlatives that clear their threshold are returned — the list
+        may be empty for drivers with no standout stats.
+        """
+        from datetime import date as dt
+
+        driver = await DriverService._get_driver_by_code(db, driver_code)
+        if not driver:
+            return None
+
+        session_types = DriverService._session_types(include_sprint)
+        current_year = dt.today().year
+        items: list[DriverSuperlative] = []
+
+        def add(
+            id_: str,
+            value: str,
+            label: str,
+            category: str,
+            sublabel: Optional[str] = None,
+        ) -> None:
+            items.append(
+                DriverSuperlative(
+                    id=id_,
+                    value=value,
+                    label=label,
+                    category=category,
+                    sublabel=sublabel,
+                )
+            )
+
+        # ── CHAMPIONSHIPS ─────────────────────────────────────────────────
+        # Points per driver per completed season
+        dsp_sq = (
+            select(
+                Session.year,
+                SessionResult.driver_id,
+                func.sum(SessionResult.points).label("pts"),
+            )
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(Session.session_type.in_(session_types))
+            .where(SessionResult.points.isnot(None))
+            .where(Session.year < current_year)
+            .group_by(Session.year, SessionResult.driver_id)
+            .subquery()
+        )
+        season_max_sq = (
+            select(
+                dsp_sq.c.year,
+                func.max(dsp_sq.c.pts).label("max_pts"),
+            )
+            .group_by(dsp_sq.c.year)
+            .subquery()
+        )
+        # Championships per driver (all-time)
+        all_champs_sq = (
+            select(
+                dsp_sq.c.driver_id,
+                func.count().label("n"),
+            )
+            .join(season_max_sq, dsp_sq.c.year == season_max_sq.c.year)
+            .where(dsp_sq.c.pts == season_max_sq.c.max_pts)
+            .group_by(dsp_sq.c.driver_id)
+            .subquery()
+        )
+        champ_count = (
+            await db.execute(
+                select(all_champs_sq.c.n).where(all_champs_sq.c.driver_id == driver.id)
+            )
+        ).scalar() or 0
+        if champ_count > 0:
+            # Only show if no other driver has more
+            champs_rank = (
+                (
+                    await db.execute(
+                        select(func.count().label("n"))
+                        .select_from(all_champs_sq)
+                        .where(all_champs_sq.c.n > champ_count)
+                    )
+                ).scalar()
+                or 0
+            ) + 1
+            if champs_rank == 1:
+                add(
+                    "championships",
+                    f"{champ_count}×",
+                    "world championship" if champ_count == 1 else "world championships",
+                    "record",
+                    "all-time leader" if champ_count > 1 else None,
+                )
+
+        # ── ALL-TIME WINS ─────────────────────────────────────────────────
+        all_wins_sq = (
+            select(
+                SessionResult.driver_id,
+                func.count().label("n"),
+            )
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(SessionResult.position == 1)
+            .where(Session.session_type.in_(session_types))
+            .group_by(SessionResult.driver_id)
+            .subquery()
+        )
+        driver_wins = (
+            await db.execute(
+                select(all_wins_sq.c.n).where(all_wins_sq.c.driver_id == driver.id)
+            )
+        ).scalar() or 0
+        if driver_wins > 0:
+            wins_rank = (
+                (
+                    await db.execute(
+                        select(func.count().label("n"))
+                        .select_from(all_wins_sq)
+                        .where(all_wins_sq.c.n > driver_wins)
+                    )
+                ).scalar()
+                or 0
+            ) + 1
+            if wins_rank == 1:
+                add(
+                    "wins",
+                    str(driver_wins),
+                    "race wins",
+                    "record",
+                    "all-time leader",
+                )
+            elif wins_rank <= 3:
+                add(
+                    "wins",
+                    str(driver_wins),
+                    "race wins",
+                    "record",
+                    f"#{wins_rank} all-time",
+                )
+
+        # ── POLE POSITIONS ────────────────────────────────────────────────
+        # Grid position 1 in a race session = started from pole
+        all_poles_sq = (
+            select(
+                SessionResult.driver_id,
+                func.count().label("n"),
+            )
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(SessionResult.grid_position == 1)
+            .where(Session.session_type.in_(session_types))
+            .group_by(SessionResult.driver_id)
+            .subquery()
+        )
+        driver_poles = (
+            await db.execute(
+                select(all_poles_sq.c.n).where(all_poles_sq.c.driver_id == driver.id)
+            )
+        ).scalar() or 0
+        if driver_poles > 0:
+            poles_rank = (
+                (
+                    await db.execute(
+                        select(func.count().label("n"))
+                        .select_from(all_poles_sq)
+                        .where(all_poles_sq.c.n > driver_poles)
+                    )
+                ).scalar()
+                or 0
+            ) + 1
+            if poles_rank == 1:
+                add(
+                    "poles",
+                    str(driver_poles),
+                    "pole positions",
+                    "record",
+                    "all-time leader",
+                )
+            elif poles_rank <= 3:
+                add(
+                    "poles",
+                    str(driver_poles),
+                    "pole positions",
+                    "record",
+                    f"#{poles_rank} all-time",
+                )
+
+        # ── FASTEST LAPS ──────────────────────────────────────────────────
+        all_fl_sq = (
+            select(
+                SessionResult.driver_id,
+                func.count().label("n"),
+            )
+            .join(Session, SessionResult.session_id == Session.id)
+            .where(SessionResult.fastest_lap.is_(True))
+            .where(Session.session_type.in_(session_types))
+            .group_by(SessionResult.driver_id)
+            .subquery()
+        )
+        driver_fl = (
+            await db.execute(
+                select(all_fl_sq.c.n).where(all_fl_sq.c.driver_id == driver.id)
+            )
+        ).scalar() or 0
+        if driver_fl > 0:
+            fl_rank = (
+                (
+                    await db.execute(
+                        select(func.count().label("n"))
+                        .select_from(all_fl_sq)
+                        .where(all_fl_sq.c.n > driver_fl)
+                    )
+                ).scalar()
+                or 0
+            ) + 1
+            if fl_rank == 1:
+                add(
+                    "fastest_laps",
+                    str(driver_fl),
+                    "fastest laps",
+                    "record",
+                    "all-time leader",
+                )
+            elif fl_rank <= 3:
+                add(
+                    "fastest_laps",
+                    str(driver_fl),
+                    "fastest laps",
+                    "record",
+                    f"#{fl_rank} all-time",
+                )
+
+        # ── RACE STARTS ───────────────────────────────────────────────────
+        driver_starts = (
+            await db.execute(
+                select(func.count().label("n"))
+                .select_from(SessionResult)
+                .join(Session, SessionResult.session_id == Session.id)
+                .where(SessionResult.driver_id == driver.id)
+                .where(Session.session_type.in_(session_types))
+            )
+        ).scalar() or 0
+        if driver_starts > 0:
+            all_starts_sq = (
+                select(
+                    SessionResult.driver_id,
+                    func.count().label("n"),
+                )
+                .join(Session, SessionResult.session_id == Session.id)
+                .where(Session.session_type.in_(session_types))
+                .group_by(SessionResult.driver_id)
+                .subquery()
+            )
+            starts_rank = (
+                (
+                    await db.execute(
+                        select(func.count().label("n"))
+                        .select_from(all_starts_sq)
+                        .where(all_starts_sq.c.n > driver_starts)
+                    )
+                ).scalar()
+                or 0
+            ) + 1
+            if starts_rank == 1:
+                add(
+                    "starts",
+                    str(driver_starts),
+                    "race starts",
+                    "record",
+                    "all-time leader",
+                )
+            elif starts_rank <= 3:
+                add(
+                    "starts",
+                    str(driver_starts),
+                    "race starts",
+                    "record",
+                    f"#{starts_rank} all-time",
+                )
+
+        # ── CIRCUIT DOMINANCE ─────────────────────────────────────────────
+        circuit_row = (
+            await db.execute(
+                select(
+                    Session.event_name,
+                    func.count().label("n"),
+                )
+                .join(SessionResult, Session.id == SessionResult.session_id)
+                .where(SessionResult.driver_id == driver.id)
+                .where(SessionResult.position == 1)
+                .where(Session.session_type.in_(session_types))
+                .group_by(Session.event_name)
+                .order_by(func.count().desc())
+                .limit(1)
+            )
+        ).first()
+        if circuit_row and circuit_row.n >= 2:
+            circuit_label = circuit_row.event_name.replace("Grand Prix", "GP")
+            add(
+                "circuit_wins",
+                str(circuit_row.n),
+                f"wins at {circuit_label}",
+                "circuit",
+            )
+
+        # ── TEAM LOYALTY ──────────────────────────────────────────────────
+        team_row = (
+            await db.execute(
+                select(
+                    Team.name.label("team_name"),
+                    func.count(func.distinct(Session.year)).label("n"),
+                )
+                .join(SessionResult, Team.id == SessionResult.team_id)
+                .join(Session, SessionResult.session_id == Session.id)
+                .where(SessionResult.driver_id == driver.id)
+                .where(Session.session_type.in_(session_types))
+                .group_by(Team.name)
+                .order_by(func.count(func.distinct(Session.year)).desc())
+                .limit(1)
+            )
+        ).first()
+        if team_row and team_row.n >= 7:
+            add(
+                "team_loyalty",
+                str(team_row.n),
+                f"seasons at {team_row.team_name}",
+                "record",
+            )
+
+        # ── CAREER RETIREMENTS ────────────────────────────────────────────
+        retirements = (
+            await db.execute(
+                select(func.count().label("n"))
+                .select_from(SessionResult)
+                .join(Session, SessionResult.session_id == Session.id)
+                .where(SessionResult.driver_id == driver.id)
+                .where(SessionResult.position.is_(None))
+                .where(Session.session_type.in_(session_types))
+            )
+        ).scalar() or 0
+        if retirements > 0:
+            all_ret_sq = (
+                select(
+                    SessionResult.driver_id,
+                    func.sum(
+                        case((SessionResult.position.is_(None), 1), else_=0)
+                    ).label("ret"),
+                )
+                .join(Session, SessionResult.session_id == Session.id)
+                .where(Session.session_type.in_(session_types))
+                .group_by(SessionResult.driver_id)
+                .having(func.count(SessionResult.id) >= 50)
+                .subquery()
+            )
+            ret_rank = (
+                (
+                    await db.execute(
+                        select(func.count().label("n"))
+                        .select_from(all_ret_sq)
+                        .where(all_ret_sq.c.ret > retirements)
+                    )
+                ).scalar()
+                or 0
+            ) + 1
+            if ret_rank == 1:
+                add(
+                    "retirements",
+                    str(retirements),
+                    "retirements",
+                    "fun",
+                    "all-time leader",
+                )
+            elif ret_rank <= 3:
+                add(
+                    "retirements",
+                    str(retirements),
+                    "retirements",
+                    "fun",
+                    f"#{ret_rank} all-time",
+                )
+
+        return DriverSuperlativesResponse(
+            driver_code=driver.driver_code,
+            superlatives=items,
         )
 
     # =========================================================================
