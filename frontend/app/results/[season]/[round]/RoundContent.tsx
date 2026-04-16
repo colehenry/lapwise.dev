@@ -1,27 +1,75 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import CrossSessionComparison from "@/components/CrossSessionComparison";
-import FastestLapTimeline from "@/components/FastestLapTimeline";
 import JumpToRace from "@/components/JumpToRace";
-import LapTimeDistributionChart from "@/components/LapTimeDistributionChart";
-import LongRunPaceChart from "@/components/LongRunPaceChart";
 import { TrianglePattern } from "@/components/Patterns";
-import PitStopDeltaChart from "@/components/PitStopDeltaChart";
-import PracticeSectorHeatmap from "@/components/PracticeSectorHeatmap";
-import QualifyingProgressionChart from "@/components/QualifyingProgressionChart";
-import QualifyingSectorComparison from "@/components/QualifyingSectorComparison";
-import QualifyingSectorHeatmap from "@/components/QualifyingSectorHeatmap";
-import RaceTrackEvolutionChart from "@/components/RaceTrackEvolutionChart";
 import SessionDetail from "@/components/SessionDetail";
 import type { SessionSummary } from "@/components/SessionSummaryCard";
-import TrackEvolutionChart from "@/components/TrackEvolutionChart";
-import TyreDegradationChart from "@/components/TyreDegradationChart";
-import TyreProgrammeChart from "@/components/TyreProgrammeChart";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import type { SessionResultsResponse } from "@/lib/types";
+
+const ChartLoading = () => (
+  <div className="h-64 animate-pulse rounded-sm bg-bg-elevated" />
+);
+
+const CrossSessionComparison = dynamic(
+  () => import("@/components/CrossSessionComparison"),
+  { loading: ChartLoading, ssr: false },
+);
+const FastestLapTimeline = dynamic(
+  () => import("@/components/FastestLapTimeline"),
+  { loading: ChartLoading, ssr: false },
+);
+const LapTimeDistributionChart = dynamic(
+  () => import("@/components/LapTimeDistributionChart"),
+  { loading: ChartLoading, ssr: false },
+);
+const LongRunPaceChart = dynamic(
+  () => import("@/components/LongRunPaceChart"),
+  {
+    loading: ChartLoading,
+    ssr: false,
+  },
+);
+const PitStopDeltaChart = dynamic(
+  () => import("@/components/PitStopDeltaChart"),
+  { loading: ChartLoading, ssr: false },
+);
+const PracticeSectorHeatmap = dynamic(
+  () => import("@/components/PracticeSectorHeatmap"),
+  { loading: ChartLoading, ssr: false },
+);
+const QualifyingProgressionChart = dynamic(
+  () => import("@/components/QualifyingProgressionChart"),
+  { loading: ChartLoading, ssr: false },
+);
+const QualifyingSectorComparison = dynamic(
+  () => import("@/components/QualifyingSectorComparison"),
+  { loading: ChartLoading, ssr: false },
+);
+const QualifyingSectorHeatmap = dynamic(
+  () => import("@/components/QualifyingSectorHeatmap"),
+  { loading: ChartLoading, ssr: false },
+);
+const RaceTrackEvolutionChart = dynamic(
+  () => import("@/components/RaceTrackEvolutionChart"),
+  { loading: ChartLoading, ssr: false },
+);
+const TrackEvolutionChart = dynamic(
+  () => import("@/components/TrackEvolutionChart"),
+  { loading: ChartLoading, ssr: false },
+);
+const TyreDegradationChart = dynamic(
+  () => import("@/components/TyreDegradationChart"),
+  { loading: ChartLoading, ssr: false },
+);
+const TyreProgrammeChart = dynamic(
+  () => import("@/components/TyreProgrammeChart"),
+  { loading: ChartLoading, ssr: false },
+);
 
 type TabType =
   | "race"
@@ -285,35 +333,35 @@ export default function RoundContent() {
     <main className="min-h-screen bg-bg-secondary">
       {/* Sticky Header with Tabs */}
       <div className="sticky top-0 z-40">
-        <div className="px-4">
+        <div className="px-2 md:px-4">
           <div className="mx-auto w-full max-w-full md:max-w-[calc(72rem+40px)]">
-            <div className="bg-bg-secondary/95 backdrop-blur-xl border-x border-b border-border-primary rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)]">
-              <div className="h-16 px-6 flex items-center justify-between border-b border-border-primary/60">
-                <div className="flex-1 flex items-center">
+            <div className="bg-bg-secondary/95 backdrop-blur-xl border-x border-b border-border-primary rounded-b-lg md:rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)]">
+              <div className="min-h-14 px-3 py-2 md:h-16 md:px-6 md:py-0 grid grid-cols-[44px_minmax(0,1fr)_112px] items-center gap-2 md:flex md:items-center md:justify-between border-b border-border-primary/60">
+                <div className="md:flex-1 flex items-center">
                   <button
                     type="button"
                     onClick={() => router.push(`/results/${season}`)}
-                    className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center gap-2"
+                    className="h-10 w-11 md:w-auto bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-0 md:px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center justify-center gap-2"
                   >
                     <span>←</span>
                     <span className="hidden sm:inline">BACK TO {season}</span>
                   </button>
                 </div>
 
-                <div className="flex flex-col items-center">
-                  <span className="text-text-primary font-mono text-sm font-bold leading-none">
+                <div className="min-w-0 flex flex-col items-center text-center">
+                  <span className="text-text-primary font-mono text-sm font-bold leading-none truncate w-full">
                     ROUND {String(raceData.session.round).padStart(2, "0")}
                   </span>
-                  <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
+                  <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold truncate w-full">
                     {raceData.session.event_name.replace("Grand Prix", "GP")}
                   </span>
                 </div>
 
-                <div className="flex-1 flex justify-end">
+                <div className="min-w-0 md:flex-1 flex justify-end">
                   <JumpToRace
                     currentSeason={season}
                     availableSeasons={availableYears}
-                    label="Jump to Different Wknd"
+                    label="Jump"
                     excludeRound={roundNum}
                   />
                 </div>
@@ -406,7 +454,7 @@ export default function RoundContent() {
             />
             {(activeTab === "qualifying" ||
               activeTab === "sprint-qualifying") && (
-              <div className="p-6 space-y-6">
+              <div className="p-3 md:p-6 space-y-4 md:space-y-6">
                 {/* Q1/Q2/Q3 Progression */}
                 <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
                   <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
@@ -415,7 +463,7 @@ export default function RoundContent() {
                       Q1 → Q2 → Q3 Progression
                     </span>
                   </div>
-                  <div className="p-6">
+                  <div className="p-3 md:p-6">
                     <QualifyingProgressionChart
                       qualifyingData={getSessionDetailData()}
                     />
@@ -430,7 +478,7 @@ export default function RoundContent() {
                       Sector Comparison
                     </span>
                   </div>
-                  <div className="p-6">
+                  <div className="p-3 md:p-6">
                     <QualifyingSectorComparison
                       season={seasonNum}
                       round={roundNum}
@@ -446,7 +494,7 @@ export default function RoundContent() {
                       Sector Heatmap — All Drivers
                     </span>
                   </div>
-                  <div className="p-6">
+                  <div className="p-3 md:p-6">
                     <QualifyingSectorHeatmap
                       season={seasonNum}
                       round={roundNum}
@@ -456,7 +504,7 @@ export default function RoundContent() {
               </div>
             )}
             {activeTab === "race" && (
-              <div className="p-6 space-y-6">
+              <div className="p-3 md:p-6 space-y-4 md:space-y-6">
                 {/* Lap Time Distribution */}
                 <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
                   <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
@@ -465,7 +513,7 @@ export default function RoundContent() {
                       Lap Time Distribution
                     </span>
                   </div>
-                  <div className="p-6">
+                  <div className="p-3 md:p-6">
                     <LapTimeDistributionChart
                       season={seasonNum}
                       round={roundNum}
@@ -481,7 +529,7 @@ export default function RoundContent() {
                       Fastest Lap Timeline
                     </span>
                   </div>
-                  <div className="p-6">
+                  <div className="p-3 md:p-6">
                     <FastestLapTimeline season={seasonNum} round={roundNum} />
                   </div>
                 </div>
@@ -494,7 +542,7 @@ export default function RoundContent() {
                       Pit Stop Duration
                     </span>
                   </div>
-                  <div className="p-6">
+                  <div className="p-3 md:p-6">
                     <PitStopDeltaChart season={seasonNum} round={roundNum} />
                   </div>
                 </div>
@@ -507,7 +555,7 @@ export default function RoundContent() {
                       Race Pace Evolution
                     </span>
                   </div>
-                  <div className="p-6">
+                  <div className="p-3 md:p-6">
                     <RaceTrackEvolutionChart
                       season={seasonNum}
                       round={roundNum}
@@ -523,14 +571,14 @@ export default function RoundContent() {
                       Tyre Degradation
                     </span>
                   </div>
-                  <div className="p-6">
+                  <div className="p-3 md:p-6">
                     <TyreDegradationChart season={seasonNum} round={roundNum} />
                   </div>
                 </div>
               </div>
             )}
             {activeTab === "practice" && (
-              <div className="p-6 space-y-6">
+              <div className="p-3 md:p-6 space-y-4 md:space-y-6">
                 {/* Long Run Pace */}
                 <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
                   <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
@@ -539,7 +587,7 @@ export default function RoundContent() {
                       FP{practiceSub} Long Run Pace
                     </span>
                   </div>
-                  <div className="p-6">
+                  <div className="p-3 md:p-6">
                     <LongRunPaceChart
                       season={seasonNum}
                       round={roundNum}
@@ -556,7 +604,7 @@ export default function RoundContent() {
                       FP{practiceSub} Track Evolution
                     </span>
                   </div>
-                  <div className="p-6">
+                  <div className="p-3 md:p-6">
                     <TrackEvolutionChart
                       season={seasonNum}
                       round={roundNum}
@@ -573,7 +621,7 @@ export default function RoundContent() {
                       FP{practiceSub} Sector Analysis
                     </span>
                   </div>
-                  <div className="p-6">
+                  <div className="p-3 md:p-6">
                     <PracticeSectorHeatmap
                       season={seasonNum}
                       round={roundNum}
@@ -590,7 +638,7 @@ export default function RoundContent() {
                       FP{practiceSub} Tyre Programme
                     </span>
                   </div>
-                  <div className="p-6">
+                  <div className="p-3 md:p-6">
                     <TyreProgrammeChart
                       season={seasonNum}
                       round={roundNum}
@@ -609,7 +657,7 @@ export default function RoundContent() {
                           FP1 / FP2 / FP3 Session Comparison
                         </span>
                       </div>
-                      <div className="p-6">
+                      <div className="p-3 md:p-6">
                         <CrossSessionComparison
                           fp1Data={fp1Data}
                           fp2Data={fp2Data}

@@ -1,7 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import {
   CartesianGrid,
   ResponsiveContainer,
@@ -11,21 +10,20 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS } from "@/components/chart-primitives";
-import { apiHeaders, apiUrl } from "@/lib/api";
 import {
-  type DriverLapTimes,
-  driverKey,
-  type LapTimesResponse,
-} from "@/lib/types";
-
-const COMPOUND_COLORS: Record<string, string> = {
-  SOFT: "#e8002d",
-  MEDIUM: "#ffd700",
-  HARD: "#c8c8c8",
-  INTERMEDIATE: "#39b54a",
-  WET: "#0067ff",
-};
+  CHART_AXIS_LABEL_STYLE,
+  CHART_COLORS,
+  CHART_TYPOGRAPHY,
+} from "@/components/chart-primitives";
+import DriverMultiSelect from "@/components/charts/DriverMultiSelect";
+import MobileChartFrame from "@/components/ui/MobileChartFrame";
+import {
+  sortDriversByClassification,
+  useDriverSelection,
+} from "@/hooks/useDriverSelection";
+import { usePracticeLapTimes } from "@/hooks/usePracticeLapTimes";
+import { COMPOUND_COLORS, formatLapTime } from "@/lib/chart-utils";
+import { type DriverLapTimes, driverKey } from "@/lib/types";
 
 interface TrackEvolutionChartProps {
   season: number;
@@ -33,12 +31,6 @@ interface TrackEvolutionChartProps {
   practiceSession: 1 | 2 | 3;
   initialDrivers?: string[];
 }
-
-const formatTime = (s: number) => {
-  const m = Math.floor(s / 60);
-  const rem = s % 60;
-  return `${m}:${rem.toFixed(3).padStart(6, "0")}`;
-};
 
 /** Format session elapsed time as MM:SS for X-axis */
 const formatSessionTime = (s: number) => {
@@ -55,61 +47,14 @@ export default function TrackEvolutionChart({
   practiceSession,
   initialDrivers,
 }: TrackEvolutionChartProps) {
-  const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const initialDriverKey = initialDrivers?.join(",") ?? "";
-
-  const { data, isLoading } = useQuery<LapTimesResponse | null>({
-    queryKey: ["lap-times", season, round, false, practiceSession],
-    queryFn: async () => {
-      const res = await fetch(
-        apiUrl(
-          `/api/results/${season}/${round}/practice/${practiceSession}/lap-times`,
-        ),
-        { cache: "no-store", headers: apiHeaders() },
-      );
-      if (!res.ok) return null;
-      return res.json();
-    },
-    enabled: season >= 2018,
+  const { data, isLoading } = usePracticeLapTimes(
+    season,
+    round,
+    practiceSession,
+  );
+  const { selectedDrivers, toggleDriver } = useDriverSelection(data?.drivers, {
+    initialDrivers,
   });
-
-  useEffect(() => {
-    if (data?.drivers) {
-      const sorted = [...data.drivers].sort(
-        (a, b) => (a.final_position ?? 999) - (b.final_position ?? 999),
-      );
-      const available = new Set(sorted.map((d) => driverKey(d)));
-      const requested = initialDriverKey
-        .split(",")
-        .filter((key) => available.has(key));
-      setSelectedDrivers(
-        requested.length > 0
-          ? requested
-          : sorted.slice(0, 10).map((d) => driverKey(d)),
-      );
-    }
-  }, [data, initialDriverKey]);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const toggleDriver = (key: string) => {
-    setSelectedDrivers((prev) =>
-      prev.includes(key) ? prev.filter((d) => d !== key) : [...prev, key],
-    );
-  };
 
   const {
     lapsByCompound,
@@ -227,9 +172,7 @@ export default function TrackEvolutionChart({
     const allX = filtered.map((l) => l.x);
     const allTimes = filtered.map((l) => l.y);
 
-    const dropdownDrivers = [...data.drivers].sort(
-      (a, b) => (a.final_position ?? 999) - (b.final_position ?? 999),
-    );
+    const dropdownDrivers = sortDriversByClassification(data.drivers);
 
     return {
       lapsByCompound,
@@ -303,136 +246,105 @@ export default function TrackEvolutionChart({
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                 style={{ backgroundColor: COMPOUND_COLORS[c] }}
               />
-              <span className="text-[10px] font-mono text-text-muted uppercase">
-                {c}
-              </span>
+              <span className={CHART_TYPOGRAPHY.keyClassName}>{c}</span>
             </div>
           ))}
           <div className="flex items-center gap-1.5">
             <div className="w-5 h-0.5 flex-shrink-0 bg-white/80 rounded-full" />
-            <span className="text-[10px] font-mono text-text-muted">Trend</span>
+            <span className={CHART_TYPOGRAPHY.keyClassName}>Trend</span>
           </div>
 
-          {/* Driver selector */}
-          <div className="relative flex-shrink-0" ref={dropdownRef}>
-            <button
-              type="button"
-              onClick={() => setShowDropdown((v) => !v)}
-              className="px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-border-primary text-text-secondary hover:border-purple-500 hover:text-purple-300 transition-colors"
-            >
-              Drivers ({selectedDrivers.length})
-            </button>
-            {showDropdown && (
-              <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-10 min-w-[220px] max-h-[280px] overflow-y-auto">
-                {dropdownDrivers.map((driver) => {
-                  const key = driverKey(driver);
-                  const isSelected = selectedDrivers.includes(key);
-                  const color = driver.team_color
-                    ? `#${driver.team_color}`
-                    : "#666";
-                  return (
-                    <label
-                      key={key}
-                      className="flex items-center gap-2 px-3 py-2 hover:bg-bg-elevated cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleDriver(key)}
-                        className="w-4 h-4 accent-purple-500"
-                      />
-                      <span className="text-[10px] font-mono text-text-muted w-5">
-                        {driver.final_position ?? "-"}
-                      </span>
-                      <span
-                        className="text-xs font-bold font-mono"
-                        style={{ color }}
-                      >
-                        {driver.driver_code ?? driver.full_name}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <DriverMultiSelect
+            drivers={dropdownDrivers}
+            selectedDrivers={selectedDrivers}
+            onToggleDriver={toggleDriver}
+          />
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={280}>
-        <ScatterChart margin={{ top: 4, right: 16, left: 16, bottom: 20 }}>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke={CHART_COLORS.borderPrimary}
-          />
-          <XAxis
-            type="number"
-            dataKey="x"
-            domain={[minSessionTime, maxSessionTime]}
-            tick={{ fill: CHART_COLORS.textTertiary, fontSize: 10 }}
-            tickFormatter={formatSessionTime}
-            label={{
-              value: "Session Time",
-              position: "insideBottomRight",
-              offset: -4,
-              style: { fill: CHART_COLORS.textTertiary, fontSize: 10 },
-            }}
-          />
-          <YAxis
-            type="number"
-            dataKey="y"
-            domain={[minTime - pad, maxTime + pad]}
-            tick={{
-              fill: CHART_COLORS.textTertiary,
-              fontSize: 10,
-              fontFamily: "monospace",
-            }}
-            tickFormatter={formatTime}
-            width={72}
-          />
-          <Tooltip
-            cursor={false}
-            content={({ active, payload }) => {
-              if (!active || !payload?.length) return null;
-              const p = payload[0]?.payload as { x: number; y: number };
-              if (!p?.y) return null;
-              return (
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs">
-                  <p className="text-text-muted font-mono mb-0.5">
-                    {formatSessionTime(p.x)}
-                  </p>
-                  <p className="text-text-secondary font-mono">
-                    {formatTime(p.y)}
-                  </p>
-                </div>
-              );
-            }}
-          />
-          {activeCompounds.map((c) => (
-            <Scatter
-              key={c}
-              name={c}
-              data={lapsByCompound[c]}
-              fill={COMPOUND_COLORS[c]}
-              fillOpacity={0.35}
-              r={2.5}
-              isAnimationActive={false}
+      <MobileChartFrame height={280} logicalWidth={820}>
+        <ResponsiveContainer width="100%" height={280}>
+          <ScatterChart margin={{ top: 4, right: 16, left: 16, bottom: 20 }}>
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke={CHART_COLORS.borderPrimary}
             />
-          ))}
-          <Scatter
-            data={movingAvgPoints}
-            fill="transparent"
-            shape={(props: { cx?: number; cy?: number }) => (
-              <circle r={0} cx={props.cx ?? 0} cy={props.cy ?? 0} fill="none" />
-            )}
-            line={{ stroke: "rgba(255,255,255,0.85)", strokeWidth: 2.5 }}
-            lineType="joint"
-            isAnimationActive={false}
-            legendType="none"
-            name="trend"
-          />
-        </ScatterChart>
-      </ResponsiveContainer>
+            <XAxis
+              type="number"
+              dataKey="x"
+              domain={[minSessionTime, maxSessionTime]}
+              tick={{ fill: CHART_COLORS.textTertiary, fontSize: 10 }}
+              tickFormatter={formatSessionTime}
+              label={{
+                value: "Session Time",
+                position: "insideBottomRight",
+                offset: -4,
+                style: CHART_AXIS_LABEL_STYLE,
+              }}
+            />
+            <YAxis
+              type="number"
+              dataKey="y"
+              domain={[minTime - pad, maxTime + pad]}
+              tick={{
+                fill: CHART_COLORS.textTertiary,
+                fontSize: 10,
+                fontFamily: "monospace",
+              }}
+              tickFormatter={formatLapTime}
+              width={72}
+            />
+            <Tooltip
+              cursor={false}
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const p = payload[0]?.payload as { x: number; y: number };
+                if (!p?.y) return null;
+                return (
+                  <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs">
+                    <p
+                      className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-0.5`}
+                    >
+                      {formatSessionTime(p.x)}
+                    </p>
+                    <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
+                      {formatLapTime(p.y)}
+                    </p>
+                  </div>
+                );
+              }}
+            />
+            {activeCompounds.map((c) => (
+              <Scatter
+                key={c}
+                name={c}
+                data={lapsByCompound[c]}
+                fill={COMPOUND_COLORS[c]}
+                fillOpacity={0.35}
+                r={2.5}
+                isAnimationActive={false}
+              />
+            ))}
+            <Scatter
+              data={movingAvgPoints}
+              fill="transparent"
+              shape={(props: { cx?: number; cy?: number }) => (
+                <circle
+                  r={0}
+                  cx={props.cx ?? 0}
+                  cy={props.cy ?? 0}
+                  fill="none"
+                />
+              )}
+              line={{ stroke: "rgba(255,255,255,0.85)", strokeWidth: 2.5 }}
+              lineType="joint"
+              isAnimationActive={false}
+              legendType="none"
+              name="trend"
+            />
+          </ScatterChart>
+        </ResponsiveContainer>
+      </MobileChartFrame>
     </div>
   );
 }

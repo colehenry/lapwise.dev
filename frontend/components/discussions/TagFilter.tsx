@@ -13,7 +13,7 @@ export default function TagFilter({
   onChange,
 }: TagFilterProps) {
   return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-2">
+    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:gap-2 md:pb-2">
       <TagPill label="All" active={!activeTag} onClick={() => onChange(null)} />
       {tags.map((tag) => (
         <TagPill

@@ -15,7 +15,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS } from "@/components/chart-primitives";
+import {
+  CHART_AXIS_LABEL_STYLE,
+  CHART_COLORS,
+  CHART_TYPOGRAPHY,
+} from "@/components/chart-primitives";
+import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type {
   DriverLapTimes,
@@ -300,13 +305,13 @@ const TimelineTooltip = ({
 
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs">
-      <p className="font-bold text-text-primary font-mono">
+      <p className={CHART_TYPOGRAPHY.tooltipTitleClassName}>
         Lap {point.lapNumber}
       </p>
       {point.entries.map((entry) => (
         <p
           key={`${entry.driverCode}-${entry.fastestLapNumber}`}
-          className="font-mono"
+          className={CHART_TYPOGRAPHY.tooltipValueClassName}
           style={{ color: entry.teamColor }}
         >
           {entry.driverCode} · {formatTime(entry.lapTime)}
@@ -331,13 +336,13 @@ const AverageTooltip = ({
 
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs">
-      <p className="font-bold text-text-primary font-mono">
+      <p className={CHART_TYPOGRAPHY.tooltipTitleClassName}>
         Lap {point.lapNumber}
       </p>
-      <p className="font-mono text-text-secondary">
+      <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
         Avg {formatTime(point.averageLapTime)}
       </p>
-      <p className="font-mono text-text-muted">
+      <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
         {removeOutliers ? "Included" : "All"}:{" "}
         {describeSample(point.sampleSize, point.rawSampleSize)}
       </p>
@@ -571,7 +576,7 @@ export default function FastestLapTimeline({
         Fastest lap by driver
       </p>
 
-      <div className="h-full w-full" style={{ height: timelineHeight }}>
+      <MobileChartFrame height={timelineHeight} logicalWidth={860}>
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={TIMELINE_MARGIN}>
             <CartesianGrid
@@ -589,7 +594,7 @@ export default function FastestLapTimeline({
                 position: "insideBottom",
                 offset: -8,
                 textAnchor: "middle",
-                style: { fill: CHART_COLORS.textTertiary, fontSize: 10 },
+                style: CHART_AXIS_LABEL_STYLE,
               }}
             />
             <YAxis type="number" dataKey="y" domain={[0, 1]} hide />
@@ -636,7 +641,7 @@ export default function FastestLapTimeline({
             />
           </ScatterChart>
         </ResponsiveContainer>
-      </div>
+      </MobileChartFrame>
 
       <div className="flex items-center justify-between gap-4">
         <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
@@ -656,7 +661,7 @@ export default function FastestLapTimeline({
         </button>
       </div>
 
-      <div className="h-56 w-full">
+      <MobileChartFrame height={224} logicalWidth={860}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={averageLapPoints} margin={AVG_MARGIN}>
             {/* Track event bands — colored area + boundary lines */}
@@ -745,7 +750,7 @@ export default function FastestLapTimeline({
             />
           </LineChart>
         </ResponsiveContainer>
-      </div>
+      </MobileChartFrame>
     </div>
   );
 }

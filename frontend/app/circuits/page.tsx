@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import PageHeader from "@/components/PageHeader";
+import TrackMapImage from "@/components/TrackMapImage";
 import ExpandButton from "@/components/ui/ExpandButton";
 import Skeleton from "@/components/ui/Skeleton";
 import SortPills from "@/components/ui/SortPills";
@@ -38,12 +38,13 @@ function CircuitCard({ circuit }: { circuit: CircuitInfo }) {
           <div className="flex items-center gap-4">
             {/* Track map */}
             <div className="flex-shrink-0 w-20 h-20 rounded-sm bg-bg-secondary flex items-center justify-center border border-border-primary p-2">
-              <Image
-                src={`/track-maps/${circuit.id}.png`}
-                alt={`${circuit.name} track map`}
+              <TrackMapImage
+                circuitId={circuit.id}
+                circuitName={circuit.name}
                 width={80}
                 height={80}
                 className="object-contain w-full h-full"
+                fallbackClassName="h-full w-full px-2"
               />
             </div>
 
@@ -179,11 +180,12 @@ export default function CircuitsPage() {
             ? "All-Time Track Statistics"
             : `${selectedYear} Season Calendar`
         }
+        compactMobile
       >
         <select
           value={selectedYear}
           onChange={(e) => setSelectedYear(e.target.value)}
-          className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-3 py-1.5 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
+          className="w-28 bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-3 py-2 md:py-1.5 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
         >
           <option value="all">ALL TIME</option>
           {availableYears.map((year) => (
@@ -194,7 +196,7 @@ export default function CircuitsPage() {
         </select>
       </PageHeader>
 
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
+      <div className="max-w-6xl mx-auto px-3 py-3 md:px-8 md:py-6">
         {/* Controls */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <input

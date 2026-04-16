@@ -1,11 +1,15 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
-import type { ConstructorRaceHistoryResponse } from "@/lib/types";
+import { driverHref } from "@/lib/entityLinks";
+import type {
+  ConstructorRaceHistory,
+  ConstructorRaceHistoryResponse,
+} from "@/lib/types";
 
 function positionColor(pos: number | null): string {
   if (!pos) return "text-text-muted";
@@ -17,18 +21,61 @@ function positionColor(pos: number | null): string {
 
 interface ConstructorResultsTableProps {
   teamName: string;
+  includeSprint?: boolean;
+}
+
+function DriverResultCell({
+  race,
+  slot,
+}: {
+  race: ConstructorRaceHistory;
+  slot: 1 | 2;
+}) {
+  const name = slot === 1 ? race.driver_1_name : race.driver_2_name;
+  if (!name) return null;
+
+  const position = slot === 1 ? race.driver_1_position : race.driver_2_position;
+  const status = slot === 1 ? race.driver_1_status : race.driver_2_status;
+  const href = driverHref({
+    driver_slug: slot === 1 ? race.driver_1_slug : race.driver_2_slug,
+    driver_code: slot === 1 ? race.driver_1_code : race.driver_2_code,
+    full_name: name,
+  });
+
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className={`font-mono font-bold ${positionColor(position)}`}>
+        {position ? `P${position}` : status || "-"}
+      </span>
+      {href ? (
+        <Link
+          href={href}
+          className="text-text-secondary text-xs hover:text-purple-300 transition-colors"
+        >
+          {name}
+        </Link>
+      ) : (
+        <span className="text-text-secondary text-xs">{name}</span>
+      )}
+    </span>
+  );
 }
 
 export default function ConstructorResultsTable({
   teamName,
+  includeSprint = true,
 }: ConstructorResultsTableProps) {
   const [selectedYear, setSelectedYear] = useState<number | "all">("all");
 
   const { data, isLoading } = useQuery<ConstructorRaceHistoryResponse>({
-    queryKey: ["constructor-race-history", teamName, "all"],
+    queryKey: ["constructor-race-history", teamName, "all", includeSprint],
+    placeholderData: keepPreviousData,
     queryFn: async () => {
+      const params = new URLSearchParams({ all: "true" });
+      if (!includeSprint) params.set("include_sprint", "false");
+      const encodedTeamName = encodeURIComponent(teamName);
       const res = await fetch(
-        apiUrl(`/api/constructors/${teamName}/race-history?all=true`),
+        apiUrl(`/api/constructors/${encodedTeamName}/race-history?${params}`),
         { headers: apiHeaders() },
       );
       if (!res.ok) throw new Error("Failed to fetch race history");
@@ -87,7 +134,7 @@ export default function ConstructorResultsTable({
               e.target.value === "all" ? "all" : Number(e.target.value),
             )
           }
-          className="bg-bg-tertiary border border-border-primary rounded px-3 py-1.5 text-sm text-text-primary focus:border-purple-500 focus:outline-none"
+          className="bg-bg-tertiary border border-border-primary rounded-sm px-3 py-1.5 text-sm text-text-primary focus:border-purple-500 focus:outline-none"
         >
           <option value="all">All Seasons</option>
           {data.available_years.map((y) => (
@@ -102,10 +149,10 @@ export default function ConstructorResultsTable({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-border-primary">
+      <div className="overflow-x-auto rounded-sm border border-border-primary bg-bg-tertiary">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-bg-tertiary border-b border-border-primary">
+            <tr className="bg-bg-primary border-b border-border-primary">
               <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
                 Year
               </th>
@@ -130,7 +177,7 @@ export default function ConstructorResultsTable({
             {sortedRaces.map((race, idx) => (
               <tr
                 key={`${race.year}-${race.round}-${idx}`}
-                className="border-b border-border-primary/50 hover:bg-bg-tertiary/50 transition-colors"
+                className="border-b border-border-primary/50 hover:bg-bg-elevated/50 transition-colors"
               >
                 <td className="px-3 py-2 text-text-secondary font-mono text-xs">
                   {race.year}
@@ -144,36 +191,10 @@ export default function ConstructorResultsTable({
                   </Link>
                 </td>
                 <td className="px-3 py-2">
-                  {race.driver_1_name && (
-                    <span className="flex items-center gap-1.5">
-                      <span
-                        className={`font-mono font-bold ${positionColor(race.driver_1_position)}`}
-                      >
-                        {race.driver_1_position
-                          ? `P${race.driver_1_position}`
-                          : race.driver_1_status || "-"}
-                      </span>
-                      <span className="text-text-secondary text-xs">
-                        {race.driver_1_name}
-                      </span>
-                    </span>
-                  )}
+                  <DriverResultCell race={race} slot={1} />
                 </td>
                 <td className="px-3 py-2">
-                  {race.driver_2_name && (
-                    <span className="flex items-center gap-1.5">
-                      <span
-                        className={`font-mono font-bold ${positionColor(race.driver_2_position)}`}
-                      >
-                        {race.driver_2_position
-                          ? `P${race.driver_2_position}`
-                          : race.driver_2_status || "-"}
-                      </span>
-                      <span className="text-text-secondary text-xs">
-                        {race.driver_2_name}
-                      </span>
-                    </span>
-                  )}
+                  <DriverResultCell race={race} slot={2} />
                 </td>
                 <td
                   className={`px-3 py-2 text-center font-bold font-mono ${positionColor(race.best_position)}`}

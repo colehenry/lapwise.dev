@@ -1,10 +1,21 @@
 "use client";
 
-import {
-  DiscussionEmbed,
-  type DiscussionEmbedAttrs,
-} from "@/components/discussions/DiscussionEmbeds";
+import dynamic from "next/dynamic";
+import type { DiscussionEmbedAttrs } from "@/components/discussions/DiscussionEmbeds";
 import { markdownToHtml } from "@/lib/markdown";
+
+const DiscussionEmbed = dynamic(
+  () =>
+    import("@/components/discussions/DiscussionEmbeds").then(
+      (mod) => mod.DiscussionEmbed,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="my-6 h-48 animate-pulse rounded-sm border border-border-primary bg-bg-tertiary" />
+    ),
+  },
+);
 
 interface MarkdownContentProps {
   content: string;

@@ -12,7 +12,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS } from "@/components/chart-primitives";
+import {
+  CHART_AXIS_LABEL_STYLE,
+  CHART_COLORS,
+  CHART_TYPOGRAPHY,
+} from "@/components/chart-primitives";
+import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import {
   type DriverLapTimes,
@@ -89,7 +94,7 @@ const DegradationTooltip = ({
 
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
-      <p className="font-bold text-text-primary mb-1 text-sm">
+      <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-1 text-sm`}>
         Tyre Age: {label} {label === 1 ? "lap" : "laps"}
       </p>
       {sample ? (
@@ -99,16 +104,20 @@ const DegradationTooltip = ({
               className="w-2.5 h-2.5 rounded-full"
               style={{ backgroundColor: sample.color }}
             />
-            <span className="text-text-secondary">{sample.compound}</span>
-            <span className="font-mono text-text-primary ml-auto">
+            <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
+              {sample.compound}
+            </span>
+            <span
+              className={`${CHART_TYPOGRAPHY.tooltipValueClassName} ml-auto`}
+            >
               {formatDelta(sample.pace_delta)}
             </span>
           </div>
-          <p className="text-text-muted font-mono">
+          <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
             {sample.driverCode} · stint {sample.stintLabel} · lap{" "}
             {sample.lapNumber}
           </p>
-          <p className="text-text-muted font-mono">
+          <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
             raw {formatLapTime(sample.lap_time)}
           </p>
         </div>
@@ -124,10 +133,12 @@ const DegradationTooltip = ({
                 className="w-2.5 h-2.5 rounded-full"
                 style={{ backgroundColor: entry.color }}
               />
-              <span className="text-text-secondary">
+              <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
                 {entry.name.replace(" fit", "")}
               </span>
-              <span className="font-mono text-text-primary ml-auto">
+              <span
+                className={`${CHART_TYPOGRAPHY.tooltipValueClassName} ml-auto`}
+              >
                 {formatDelta(entry.value)}
               </span>
             </div>
@@ -687,7 +698,7 @@ export default function TyreDegradationChart({
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h3 className="text-sm font-bold text-text-secondary font-mono">
+          <h3 className={CHART_TYPOGRAPHY.titleClassName}>
             {data.event_name.replace("Grand Prix", "GP")} - Tyre Degradation
           </h3>
           <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest mt-1">
@@ -826,73 +837,75 @@ export default function TyreDegradationChart({
       {/* Chart */}
       <div className="relative" style={{ minHeight: "300px" }}>
         {chartData.data.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart
-              data={chartData.data}
-              margin={{ top: 10, right: 20, left: 60, bottom: 30 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke={CHART_COLORS.borderPrimary}
-              />
-              <XAxis
-                dataKey="tyre_life"
-                type="number"
-                allowDecimals={false}
-                stroke={CHART_COLORS.textTertiary}
-                label={{
-                  value: "Tyre Age (laps)",
-                  position: "insideBottom",
-                  offset: -20,
-                  style: { fontWeight: "bold", fill: "white", fontSize: 12 },
-                }}
-                tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
-              />
-              <YAxis
-                stroke={CHART_COLORS.textTertiary}
-                label={{
-                  value: "Pace vs Baseline",
-                  angle: -90,
-                  position: "center",
-                  dx: -45,
-                  style: { fontWeight: "bold", fill: "white", fontSize: 12 },
-                }}
-                tick={<CustomYAxisTick />}
-                domain={yDomain}
-                reversed={true}
-              />
-              <Tooltip content={<DegradationTooltip />} />
-              {chartData.lineKeys.map((compound) => (
-                <Scatter
-                  key={`${compound}-samples`}
-                  name={`${compound} laps`}
-                  data={chartData.samplesByCompound[compound] ?? []}
-                  dataKey="pace_delta"
-                  fill={COMPOUND_COLORS[compound] || "#999"}
-                  opacity={0.18}
-                  isAnimationActive={false}
+          <MobileChartFrame height={300} logicalWidth={860}>
+            <ResponsiveContainer width="100%" height={300}>
+              <ComposedChart
+                data={chartData.data}
+                margin={{ top: 10, right: 20, left: 60, bottom: 30 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={CHART_COLORS.borderPrimary}
                 />
-              ))}
-              {chartData.lineKeys.map((compound) => (
-                <Line
-                  key={`${compound}-fit`}
-                  type="monotone"
-                  dataKey={`${compound}_fit`}
-                  name={`${compound} fit`}
-                  stroke={COMPOUND_COLORS[compound] || "#999"}
-                  strokeWidth={3}
-                  dot={false}
-                  activeDot={{
-                    r: 5,
-                    fill: COMPOUND_COLORS[compound] || "#999",
+                <XAxis
+                  dataKey="tyre_life"
+                  type="number"
+                  allowDecimals={false}
+                  stroke={CHART_COLORS.textTertiary}
+                  label={{
+                    value: "Tyre Age (laps)",
+                    position: "insideBottom",
+                    offset: -20,
+                    style: CHART_AXIS_LABEL_STYLE,
                   }}
-                  connectNulls={false}
-                  isAnimationActive={true}
-                  animationDuration={1200}
+                  tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
                 />
-              ))}
-            </ComposedChart>
-          </ResponsiveContainer>
+                <YAxis
+                  stroke={CHART_COLORS.textTertiary}
+                  label={{
+                    value: "Pace vs Baseline",
+                    angle: -90,
+                    position: "center",
+                    dx: -45,
+                    style: CHART_AXIS_LABEL_STYLE,
+                  }}
+                  tick={<CustomYAxisTick />}
+                  domain={yDomain}
+                  reversed={true}
+                />
+                <Tooltip content={<DegradationTooltip />} />
+                {chartData.lineKeys.map((compound) => (
+                  <Scatter
+                    key={`${compound}-samples`}
+                    name={`${compound} laps`}
+                    data={chartData.samplesByCompound[compound] ?? []}
+                    dataKey="pace_delta"
+                    fill={COMPOUND_COLORS[compound] || "#999"}
+                    opacity={0.18}
+                    isAnimationActive={false}
+                  />
+                ))}
+                {chartData.lineKeys.map((compound) => (
+                  <Line
+                    key={`${compound}-fit`}
+                    type="monotone"
+                    dataKey={`${compound}_fit`}
+                    name={`${compound} fit`}
+                    stroke={COMPOUND_COLORS[compound] || "#999"}
+                    strokeWidth={3}
+                    dot={false}
+                    activeDot={{
+                      r: 5,
+                      fill: COMPOUND_COLORS[compound] || "#999",
+                    }}
+                    connectNulls={false}
+                    isAnimationActive={true}
+                    animationDuration={1200}
+                  />
+                ))}
+              </ComposedChart>
+            </ResponsiveContainer>
+          </MobileChartFrame>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <p className="text-text-muted text-sm font-mono">

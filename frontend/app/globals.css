@@ -247,10 +247,41 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: rgba(160, 32, 240, 0.18);
+  overscroll-behavior-y: none;
 }
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+.mobile-chart-frame {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.mobile-chart-frame__inner {
+  position: absolute;
+  inset: 0 auto auto 0;
+}
+
+@media (min-width: 768px) {
+  .mobile-chart-frame {
+    overflow: visible;
+  }
 }
 
 /* Scrollbar Styling */
@@ -474,8 +505,14 @@ body {
 }
 
 /* AI Chat prose styles */
+.prose-chat {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
 .prose-chat p {
   margin: 0.5rem 0;
+  max-width: 100%;
 }
 .prose-chat p:first-child {
   margin-top: 0;
@@ -490,6 +527,7 @@ body {
   color: var(--text-primary);
   font-weight: 600;
   margin: 1rem 0 0.5rem;
+  overflow-wrap: anywhere;
 }
 .prose-chat h1 {
   font-size: 1.25rem;
@@ -510,6 +548,7 @@ body {
 .prose-chat a {
   color: var(--purple-300);
   text-decoration: none;
+  overflow-wrap: anywhere;
 }
 .prose-chat a:hover {
   color: var(--purple-200);
@@ -523,6 +562,7 @@ body {
   font-family: var(--font-mono);
   font-size: 0.8em;
   color: var(--text-primary);
+  white-space: pre-wrap;
 }
 .prose-chat pre {
   background: var(--background-primary);
@@ -531,6 +571,7 @@ body {
   padding: 0.75rem;
   overflow-x: auto;
   margin: 0.5rem 0;
+  max-width: 100%;
 }
 .prose-chat pre code {
   background: none;
@@ -559,7 +600,8 @@ body {
   color: var(--text-tertiary);
 }
 .prose-chat table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   margin: 0.5rem 0;
   font-size: 0.8rem;
@@ -570,11 +612,13 @@ body {
   font-weight: 600;
   padding: 0.4rem 0.6rem;
   border-bottom: 1px solid var(--border-secondary);
+  white-space: nowrap;
 }
 .prose-chat td {
   padding: 0.35rem 0.6rem;
   border-bottom: 1px solid var(--border-primary);
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 .prose-chat tr:hover td {
   background: var(--background-tertiary);

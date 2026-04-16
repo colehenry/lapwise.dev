@@ -1,33 +1,61 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
+import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
+import ArchiveMetricBar from "@/components/archive/ArchiveMetricBar";
+import ArchivePanel from "@/components/archive/ArchivePanel";
 import DriverResultsTable from "@/components/DriverResultsTable";
 import DriverSeasonHistoryGraph from "@/components/DriverSeasonHistoryGraph";
 import DriverStatisticsPanel from "@/components/DriverStatisticsPanel";
+import DriverSuperlativesCard from "@/components/DriverSuperlativesCard";
 import PageHeader from "@/components/PageHeader";
 import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
+import SprintToggle from "@/components/ui/SprintToggle";
 import TabBar from "@/components/ui/TabBar";
 import { useTabSync } from "@/hooks/useTabSync";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import {
+  getDriverBannerUrl,
+  getDriverPortraitUrl,
+} from "@/lib/entityImageOverrides";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
-import type { DriverProfile } from "@/lib/types";
+import type { DriverProfile, DriverSuperlativesResponse } from "@/lib/types";
 
-type DriverTab = "overview" | "results" | "statistics";
+type DriverTab = "overview" | "results";
 
 const TABS: { key: DriverTab; label: string }[] = [
   { key: "overview", label: "Overview" },
   { key: "results", label: "Results" },
-  { key: "statistics", label: "Statistics" },
 ];
 
-async function fetchDriverProfile(driverCode: string): Promise<DriverProfile> {
-  const res = await fetch(apiUrl(`/api/drivers/${driverCode}`), {
-    headers: apiHeaders(),
-  });
+async function fetchDriverProfile(
+  driverCode: string,
+  includeSprint: boolean,
+): Promise<DriverProfile> {
+  const params = new URLSearchParams();
+  if (!includeSprint) params.set("include_sprint", "false");
+  const url = params.toString()
+    ? apiUrl(`/api/drivers/${driverCode}?${params}`)
+    : apiUrl(`/api/drivers/${driverCode}`);
+  const res = await fetch(url, { headers: apiHeaders() });
   if (!res.ok) throw new Error("Failed to fetch driver profile");
+  return res.json();
+}
+
+async function fetchSuperlatives(
+  driverCode: string,
+  includeSprint: boolean,
+): Promise<DriverSuperlativesResponse> {
+  const params = includeSprint ? "" : "?include_sprint=false";
+  const res = await fetch(
+    apiUrl(`/api/drivers/${driverCode}/superlatives${params}`),
+    { headers: apiHeaders() },
+  );
+  if (!res.ok) throw new Error("Failed to fetch superlatives");
   return res.json();
 }
 
@@ -39,10 +67,18 @@ export default function DriverProfilePage() {
     `/drivers/${driverCode}`,
     "overview",
   );
+  const [includeSprint, setIncludeSprint] = useState(true);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["driver-profile", driverCode],
-    queryFn: () => fetchDriverProfile(driverCode),
+  const { data, isLoading, isFetching, error } = useQuery({
+    queryKey: ["driver-profile", driverCode, includeSprint],
+    queryFn: () => fetchDriverProfile(driverCode, includeSprint),
+    placeholderData: keepPreviousData,
+  });
+
+  const { data: superlativesData } = useQuery({
+    queryKey: ["driver-superlatives", driverCode, includeSprint],
+    queryFn: () => fetchSuperlatives(driverCode, includeSprint),
+    placeholderData: keepPreviousData,
   });
 
   if (isLoading) {
@@ -72,13 +108,44 @@ export default function DriverProfilePage() {
     );
   }
 
-  const stats = [
-    { label: "Seasons", value: data.total_seasons },
-    { label: "Races", value: data.total_races },
+  const headlineStats = [
     { label: "Championships", value: data.total_championships || 0 },
     { label: "Wins", value: data.total_wins },
     { label: "Podiums", value: data.total_podiums },
+  ];
+  const stats = [
+    { label: "Seasons", value: data.total_seasons },
+    { label: "Races", value: data.total_races },
     { label: "Total Points", value: Math.round(data.total_points) },
+  ];
+  const teamColor = data.current_team_color
+    ? `#${data.current_team_color}`
+    : null;
+  const portraitUrl = getDriverPortraitUrl(data);
+  const bannerUrl = getDriverBannerUrl(data);
+  const winRate =
+    data.total_races > 0 ? (data.total_wins / data.total_races) * 100 : 0;
+  const podiumRate =
+    data.total_races > 0 ? (data.total_podiums / data.total_races) * 100 : 0;
+  const highlights = [
+    {
+      label: "Win Rate",
+      value: `${winRate.toFixed(1)}%`,
+      progress: winRate,
+    },
+    {
+      label: "Podium Rate",
+      value: `${podiumRate.toFixed(1)}%`,
+      progress: podiumRate,
+    },
+    {
+      label: "Points per Race",
+      value:
+        data.total_races > 0
+          ? (data.total_points / data.total_races).toFixed(2)
+          : "0",
+      progress: undefined,
+    },
   ];
 
   return (
@@ -90,134 +157,104 @@ export default function DriverProfilePage() {
         onBack={() => router.push("/drivers")}
         backLabel="DRIVERS"
         bottomContent={
-          <div className="flex justify-center">
+          <div className="flex items-center relative">
+            <div className="flex-1" />
             <TabBar tabs={TABS} activeTab={activeTab} onTabChange={switchTab} />
+            <div className="flex-1 flex justify-end border-t border-border-primary/40 mt-1 pt-1.5 mr-2">
+              <SprintToggle
+                checked={includeSprint}
+                onChange={setIncludeSprint}
+                isLoading={isFetching}
+              />
+            </div>
           </div>
         }
       />
 
       {/* Tab Content */}
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div
+        className={`max-w-5xl mx-auto px-6 py-8 transition-opacity duration-150 ${isFetching ? "opacity-50" : ""}`}
+      >
         {activeTab === "overview" && (
-          <div className="space-y-8">
-            {/* Header section - Centered */}
-            <div className="flex flex-col items-center gap-8">
-              {/* Driver Photo & Nationality */}
-              <div className="flex flex-col items-center gap-6 w-full">
-                {data.headshot_url ? (
-                  <div className="relative group flex-shrink-0">
-                    <div className="absolute -inset-1 bg-gradient-to-b from-purple-500/20 to-transparent rounded-sm blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
-                    <div className="relative">
-                      <Image
-                        src={data.headshot_url}
-                        alt={data.full_name}
-                        width={240}
-                        height={240}
-                        className="w-56 h-56 rounded-sm object-cover border border-border-primary bg-bg-tertiary"
-                        style={{
-                          borderBottomColor: data.current_team_color
-                            ? `#${data.current_team_color}`
-                            : "transparent",
-                          borderBottomWidth: data.current_team_color
-                            ? "4px"
-                            : "1px",
-                        }}
-                      />
-                      <div className="absolute top-2 right-2 bg-bg-primary/80 backdrop-blur-sm border border-border-primary px-2 py-1 rounded-sm">
-                        <span className="text-xl font-mono font-bold text-text-primary leading-none">
-                          {data.driver_code}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+          <div className="space-y-6">
+            <ArchiveDataHeader
+              title={data.full_name}
+              eyebrow="Driver Profile"
+              subtitle={`${data.current_team ?? "Independent entry"}${data.driver_number ? ` · #${data.driver_number}` : ""}`}
+              accentColor={teamColor}
+              stats={stats}
+              headlineStats={headlineStats}
+              bannerImageUrl={bannerUrl}
+              aside={
+                superlativesData?.superlatives.length ? (
+                  <DriverSuperlativesCard
+                    driverCode={driverCode}
+                    includeSprint={includeSprint}
+                    variant="inline"
+                  />
+                ) : undefined
+              }
+              media={
+                portraitUrl ? (
+                  <Image
+                    src={portraitUrl}
+                    alt={data.full_name}
+                    width={180}
+                    height={180}
+                    className="h-full max-h-[360px] w-full object-contain object-bottom"
+                  />
                 ) : (
-                  <div className="w-56 h-56 rounded-sm flex items-center justify-center text-5xl font-bold text-text-tertiary border border-border-primary bg-bg-tertiary">
+                  <span className="text-5xl font-bold font-mono text-text-tertiary">
                     {data.driver_code}
-                  </div>
-                )}
-
-                {/* Country Info */}
-                {data.country_code && (
-                  <div className="flex items-center gap-3 bg-bg-tertiary border border-border-primary px-6 py-3 rounded-sm w-fit">
-                    <span className="text-3xl">
+                  </span>
+                )
+              }
+              meta={
+                <div className="flex items-center gap-3 bg-bg-primary border border-border-primary rounded-sm px-3 py-2">
+                  {data.country_code && (
+                    <span className="text-2xl">
                       {getDriverFlagEmoji(data.country_code)}
                     </span>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-text-muted uppercase font-bold tracking-widest leading-none mb-1">
-                        Nationality
-                      </span>
-                      <span className="text-lg font-bold text-text-primary leading-none">
-                        {getCountryName(data.country_code)}
-                      </span>
+                  )}
+                  <div>
+                    <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+                      Nationality
+                    </div>
+                    <div className="text-sm font-semibold text-text-primary">
+                      {data.country_code
+                        ? getCountryName(data.country_code)
+                        : "Unknown"}
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              }
+            />
 
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 w-full">
-                {stats.map((stat) => (
-                  <div
+            <ArchivePanel title="Career Highlights">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 rounded-sm border border-border-primary bg-bg-primary/20 px-4 md:px-5">
+                {highlights.map((stat) => (
+                  <ArchiveMetricBar
                     key={stat.label}
-                    className="bg-bg-tertiary rounded-sm border border-border-primary p-4 flex flex-col items-center text-center"
-                  >
-                    <p className="text-text-muted text-[10px] uppercase font-bold tracking-wider mb-1">
-                      {stat.label}
-                    </p>
-                    <p className="text-text-primary text-2xl font-bold font-mono">
-                      {stat.value}
-                    </p>
-                  </div>
+                    label={stat.label}
+                    value={stat.value}
+                    progress={stat.progress}
+                    accentColor={teamColor}
+                  />
                 ))}
               </div>
-            </div>
+            </ArchivePanel>
 
-            {/* Career Highlights - Restored to left-aligned */}
-            <div className="bg-bg-tertiary rounded-sm p-8 border border-border-primary">
-              <h2 className="text-sm font-bold text-text-secondary font-mono mb-6">
-                Career Highlights
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <p className="text-text-muted text-sm mb-2">Win Rate</p>
-                  <p className="text-text-primary text-2xl font-bold">
-                    {data.total_races > 0
-                      ? `${((data.total_wins / data.total_races) * 100).toFixed(1)}%`
-                      : "0%"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-text-muted text-sm mb-2">Podium Rate</p>
-                  <p className="text-text-primary text-2xl font-bold">
-                    {data.total_races > 0
-                      ? `${((data.total_podiums / data.total_races) * 100).toFixed(1)}%`
-                      : "0%"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-text-muted text-sm mb-2">
-                    Points per Race
-                  </p>
-                  <p className="text-text-primary text-2xl font-bold">
-                    {data.total_races > 0
-                      ? (data.total_points / data.total_races).toFixed(2)
-                      : "0"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Championship History Graph - Restored */}
             <DriverSeasonHistoryGraph driverCode={driverCode} />
+
+            <DriverStatisticsPanel driverCode={driverCode} />
           </div>
         )}
 
         {activeTab === "results" && (
-          <DriverResultsTable driverCode={driverCode} />
-        )}
-
-        {activeTab === "statistics" && (
-          <DriverStatisticsPanel driverCode={driverCode} />
+          <DriverResultsTable
+            driverCode={driverCode}
+            includeSprint={includeSprint}
+          />
         )}
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { CHART_TYPOGRAPHY } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { CircuitTyreStatsResponse } from "@/lib/types";
 
@@ -52,10 +53,10 @@ export default function CircuitTyreStats({ circuitId }: CircuitTyreStatsProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-bold text-text-secondary font-mono">
+        <h3 className={CHART_TYPOGRAPHY.titleClassName}>
           Usage by Tyre Compound
         </h3>
-        <span className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+        <span className={CHART_TYPOGRAPHY.keyClassName}>
           {data.races_with_data} total races
         </span>
       </div>

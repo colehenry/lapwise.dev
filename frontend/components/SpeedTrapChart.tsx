@@ -12,7 +12,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS } from "@/components/chart-primitives";
+import {
+  CHART_AXIS_LABEL_STYLE,
+  CHART_COLORS,
+  CHART_TYPOGRAPHY,
+} from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { LapTimesResponse } from "@/lib/types";
 
@@ -50,12 +54,18 @@ const SpeedTooltip = ({ active, payload }: SpeedTooltipProps) => {
 
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
-      <p className="font-bold text-text-primary text-sm">{data.full_name}</p>
-      <p className="font-mono text-text-secondary text-xs mt-1">
+      <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} text-sm`}>
+        {data.full_name}
+      </p>
+      <p className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-xs mt-1`}>
         {data.max_speed.toFixed(1)} km/h
       </p>
       {data.isFastest && (
-        <p className="text-purple-400 text-xs font-bold mt-1">Fastest</p>
+        <p
+          className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-purple-400 text-xs mt-1`}
+        >
+          Fastest
+        </p>
       )}
     </div>
   );
@@ -167,7 +177,7 @@ export default function SpeedTrapChart({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <h3 className="text-sm font-bold text-text-secondary font-mono">
+        <h3 className={CHART_TYPOGRAPHY.titleClassName}>
           {data.event_name.replace("Grand Prix", "GP")} - Top Speeds
         </h3>
 
@@ -214,7 +224,7 @@ export default function SpeedTrapChart({
               value: "km/h",
               position: "insideBottomRight",
               offset: -5,
-              style: { fill: CHART_COLORS.textTertiary, fontSize: 11 },
+              style: CHART_AXIS_LABEL_STYLE,
             }}
           />
           <YAxis

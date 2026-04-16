@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import TrackMapImage from "@/components/TrackMapImage";
 import Button from "@/components/ui/Button";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl, isValidHeadshotUrl } from "@/lib/api";
@@ -511,12 +512,13 @@ function CircuitCard({
           : "border-border-primary bg-bg-tertiary hover:border-border-secondary"
       }`}
     >
-      {/* biome-ignore lint/performance/noImgElement: static track map */}
-      <img
-        src={`/track-maps/${circuit.id}.png`}
-        alt=""
+      <TrackMapImage
+        circuitId={circuit.id}
+        circuitName={circuit.name}
+        width={48}
+        height={48}
         className="w-12 h-12 object-contain opacity-60 shrink-0"
-        loading="lazy"
+        fallbackClassName="h-12 w-12 shrink-0"
       />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-text-primary truncate">

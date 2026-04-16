@@ -13,7 +13,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS } from "@/components/chart-primitives";
+import {
+  CHART_AXIS_LABEL_STYLE,
+  CHART_COLORS,
+  CHART_TYPOGRAPHY,
+} from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { LapTimesResponse } from "@/lib/types";
 
@@ -444,9 +448,7 @@ export default function PitStopDeltaChart({
                 />
                 <circle cx="7" cy="7" r="3.5" fill="#f59e0b" opacity="0.7" />
               </svg>
-              <span className="text-[10px] font-mono text-text-muted">
-                SC pit
-              </span>
+              <span className={CHART_TYPOGRAPHY.keyClassName}>SC pit</span>
             </div>
             <div className="flex items-center gap-1.5">
               <svg
@@ -467,17 +469,13 @@ export default function PitStopDeltaChart({
                 />
                 <circle cx="7" cy="7" r="3.5" fill="#a78bfa" opacity="0.7" />
               </svg>
-              <span className="text-[10px] font-mono text-text-muted">
-                VSC pit
-              </span>
+              <span className={CHART_TYPOGRAPHY.keyClassName}>VSC pit</span>
             </div>
           </>
         )}
         <div className="flex items-center gap-1.5">
           <div className="w-8 h-0.5 border-t border-dashed border-text-muted/60" />
-          <span className="text-[10px] font-mono text-text-muted">
-            Field avg
-          </span>
+          <span className={CHART_TYPOGRAPHY.keyClassName}>Field avg</span>
         </div>
       </div>
 
@@ -539,9 +537,7 @@ export default function PitStopDeltaChart({
                 value: "Lap",
                 position: "insideBottomRight",
                 offset: -4,
-                fill: CHART_COLORS.textTertiary,
-                fontSize: 10,
-                fontFamily: "monospace",
+                ...CHART_AXIS_LABEL_STYLE,
               }}
             />
             <YAxis
@@ -575,23 +571,23 @@ export default function PitStopDeltaChart({
                 return (
                   <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs space-y-1">
                     <p
-                      className="font-bold font-mono"
+                      className={CHART_TYPOGRAPHY.tooltipTitleClassName}
                       style={{ color: d.teamColor }}
                     >
                       {d.driverCode}
                     </p>
-                    <p className="text-text-secondary font-mono">
+                    <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
                       Lap {d.lap} · {d.duration.toFixed(2)}s
                     </p>
                     {(d.isSc || d.isVsc) && (
                       <p
-                        className="font-mono font-bold"
+                        className={CHART_TYPOGRAPHY.tooltipValueClassName}
                         style={{ color: d.isVsc ? "#a78bfa" : "#f59e0b" }}
                       >
                         {d.isVsc ? "VSC" : "SC"} — neutralised stop
                       </p>
                     )}
-                    <p className="text-text-muted font-mono">
+                    <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
                       vs avg: {d.duration - fieldAvg > 0 ? "+" : ""}
                       {(d.duration - fieldAvg).toFixed(2)}s
                     </p>
@@ -608,9 +604,7 @@ export default function PitStopDeltaChart({
       {/* Per-driver total time lost */}
       {driverTotals.length > 0 && (
         <div className="pt-2 border-t border-border-primary/40 space-y-2">
-          <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
-            Total time lost
-          </p>
+          <p className={CHART_TYPOGRAPHY.keyClassName}>Total time lost</p>
           <div className="flex flex-wrap gap-1.5">
             {driverTotals.map(([code, info]) => (
               <div
@@ -621,10 +615,8 @@ export default function PitStopDeltaChart({
                   className="w-1.5 h-1.5 rounded-full shrink-0"
                   style={{ backgroundColor: info.color }}
                 />
-                <span className="text-[10px] font-mono font-bold text-text-secondary">
-                  {code}
-                </span>
-                <span className="text-[10px] font-mono text-text-muted">
+                <span className={CHART_TYPOGRAPHY.keyClassName}>{code}</span>
+                <span className={CHART_TYPOGRAPHY.keyClassName}>
                   {info.total.toFixed(1)}s
                 </span>
                 {info.count > 1 && (

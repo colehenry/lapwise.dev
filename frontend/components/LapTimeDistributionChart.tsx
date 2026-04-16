@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CHART_COLORS } from "@/components/chart-primitives";
+import { CHART_COLORS, CHART_TYPOGRAPHY } from "@/components/chart-primitives";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import {
@@ -452,7 +452,7 @@ export default function LapTimeDistributionChart({
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: color }}
                     />
-                    <span className="text-xs font-mono text-text-secondary">
+                    <span className={CHART_TYPOGRAPHY.keyClassName}>
                       {driver.driver_code ?? driver.full_name}
                     </span>
                     <span className="ml-auto text-[10px] font-mono text-text-muted">
@@ -744,7 +744,7 @@ export default function LapTimeDistributionChart({
           }}
         >
           <p
-            className="text-[11px] font-bold font-mono mb-1"
+            className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} text-[11px] mb-1`}
             style={{
               color: teamColor(curves[tooltip.rowIdx].driver),
             }}
@@ -753,16 +753,18 @@ export default function LapTimeDistributionChart({
               curves[tooltip.rowIdx].driver.full_name}
           </p>
           {tooltip.snap.lap_number !== null && (
-            <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
+            <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
               Lap {tooltip.snap.lap_number}
             </p>
           )}
-          <p className="text-[13px] font-bold font-mono tabular-nums text-text-primary">
+          <p
+            className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-[13px]`}
+          >
             {formatLapTime(tooltip.snap.lap_time_seconds)}
           </p>
           {tooltip.snap.compound && (
             <p
-              className="text-[10px] font-mono font-bold uppercase tracking-widest mt-0.5"
+              className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-[10px] mt-0.5`}
               style={{
                 color: COMPOUND_COLORS[tooltip.snap.compound] ?? "#999",
               }}

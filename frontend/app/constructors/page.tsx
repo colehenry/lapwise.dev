@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -8,8 +8,11 @@ import PageHeader from "@/components/PageHeader";
 import ExpandButton from "@/components/ui/ExpandButton";
 import Skeleton from "@/components/ui/Skeleton";
 import SortPills from "@/components/ui/SortPills";
+import SprintToggle from "@/components/ui/SprintToggle";
 import TiltCard from "@/components/ui/TiltCard";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
+import { getConstructorLogoUrl } from "@/lib/entityImageOverrides";
+import { constructorHref } from "@/lib/entityLinks";
 import type { ConstructorListItem, ConstructorListResponse } from "@/lib/types";
 
 type SortKey = "wins" | "races" | "points" | "alpha";
@@ -17,18 +20,24 @@ type SortKey = "wins" | "races" | "points" | "alpha";
 const CURRENT_YEAR = new Date().getFullYear();
 const DEFAULT_VISIBLE_COUNT = 30;
 
-async function fetchAllConstructors(): Promise<ConstructorListResponse> {
-  const res = await fetch(apiUrl("/api/constructors/"), {
-    headers: apiHeaders(),
-  });
+async function fetchAllConstructors(
+  includeSprint: boolean,
+): Promise<ConstructorListResponse> {
+  const params = new URLSearchParams();
+  if (!includeSprint) params.set("include_sprint", "false");
+  const url = params.toString()
+    ? apiUrl(`/api/constructors/?${params}`)
+    : apiUrl("/api/constructors/");
+  const res = await fetch(url, { headers: apiHeaders() });
   if (!res.ok) throw new Error("Failed to fetch constructors");
   return res.json();
 }
 
 function ConstructorCard({ team }: { team: ConstructorListItem }) {
-  const teamNameUrl = team.team_name.replace(/ /g, "-");
+  const teamUrl = constructorHref(team.team_name) ?? "/constructors";
   const isActive = team.latest_season === CURRENT_YEAR;
   const teamColor = team.team_color ? `#${team.team_color}` : "#888";
+  const logoUrl = getConstructorLogoUrl(team);
 
   // Generate initials from team name
   const initials = team.team_name
@@ -40,7 +49,7 @@ function ConstructorCard({ team }: { team: ConstructorListItem }) {
 
   return (
     <TiltCard>
-      <Link href={`/constructors/${teamNameUrl}`} className="block h-full">
+      <Link href={teamUrl} className="block h-full">
         <div className="relative border border-border-primary rounded-sm hover:border-purple-500 transition-all duration-200 bg-bg-tertiary h-full overflow-hidden">
           {/* Team color accent bar */}
           <div
@@ -50,18 +59,18 @@ function ConstructorCard({ team }: { team: ConstructorListItem }) {
 
           <div className="flex items-center gap-3 p-4 pl-5">
             {/* Team logo or initials circle */}
-            {team.logo_url ? (
+            {logoUrl ? (
               <div
                 className="w-14 h-14 rounded-sm overflow-hidden border-2 bg-bg-secondary flex-shrink-0"
                 style={{ borderColor: teamColor }}
               >
                 <Image
-                  src={team.logo_url}
+                  src={logoUrl}
                   alt={team.team_name}
                   width={56}
                   height={56}
                   className="w-full h-full object-contain p-1"
-                  unoptimized={team.logo_url.includes("wikimedia.org")}
+                  unoptimized={logoUrl.includes("wikimedia.org")}
                 />
               </div>
             ) : (
@@ -134,10 +143,12 @@ export default function ConstructorsPage() {
   const [sortKey, setSortKey] = useState<SortKey>("wins");
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [includeSprint, setIncludeSprint] = useState(true);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["constructors-all"],
-    queryFn: fetchAllConstructors,
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["constructors-all", includeSprint],
+    queryFn: () => fetchAllConstructors(includeSprint),
+    placeholderData: keepPreviousData,
   });
 
   const { data: availableYears = [] } = useQuery<number[]>({
@@ -218,11 +229,12 @@ export default function ConstructorsPage() {
             ? "All-Time Career Statistics"
             : `${selectedYear} Season Entries`
         }
+        compactMobile
       >
         <select
           value={selectedYear}
           onChange={(e) => setSelectedYear(e.target.value)}
-          className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-3 py-1.5 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
+          className="w-28 bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-3 py-2 md:py-1.5 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
         >
           <option value="all">ALL TIME</option>
           {availableYears.map((year) => (
@@ -233,7 +245,7 @@ export default function ConstructorsPage() {
         </select>
       </PageHeader>
 
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
+      <div className="max-w-6xl mx-auto px-3 py-3 md:px-8 md:py-6">
         {/* Controls */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <input
@@ -252,8 +264,15 @@ export default function ConstructorsPage() {
 
         {/* Stats bar */}
         {data && (
-          <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-6">
-            {filteredConstructors.length} total constructors
+          <div className="flex items-center justify-between mb-6">
+            <span className="text-[10px] text-text-muted font-mono tracking-widest uppercase">
+              {filteredConstructors.length} total constructors
+            </span>
+            <SprintToggle
+              checked={includeSprint}
+              onChange={setIncludeSprint}
+              isLoading={isFetching}
+            />
           </div>
         )}
 
@@ -276,10 +295,14 @@ export default function ConstructorsPage() {
 
         {/* Grid */}
         {!isLoading && filteredConstructors.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {visibleConstructors.map((team) => (
-              <ConstructorCard key={team.team_name} team={team} />
-            ))}
+          <div
+            className={`transition-opacity duration-150 ${isFetching ? "opacity-50" : ""}`}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {visibleConstructors.map((team) => (
+                <ConstructorCard key={team.team_name} team={team} />
+              ))}
+            </div>
           </div>
         )}
 

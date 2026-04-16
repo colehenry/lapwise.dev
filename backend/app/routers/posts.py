@@ -4,11 +4,12 @@ Posts Router
 Endpoints for discussion posts, comments, and votes.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.auth import get_current_active_user, get_current_admin, get_optional_user
+from app.limiter import limiter
 from app.models.user import User
 from app.schemas.post import (
     CreatePostRequest,
@@ -63,8 +64,10 @@ async def list_posts(
 
 
 @router.post("", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
 async def create_post(
     data: CreatePostRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -103,9 +106,11 @@ async def get_post(
 
 
 @router.put("/{post_id}", response_model=PostResponse)
+@limiter.limit("20/minute")
 async def update_post(
     post_id: int,
     data: UpdatePostRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -130,8 +135,10 @@ async def update_post(
 
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("20/minute")
 async def delete_post(
     post_id: int,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -197,9 +204,11 @@ async def list_comments(
     response_model=CommentResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit("12/minute")
 async def create_comment(
     post_id: int,
     data: CreateCommentRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -234,9 +243,11 @@ async def create_comment(
 
 
 @router.put("/comments/{comment_id}", response_model=CommentResponse)
+@limiter.limit("20/minute")
 async def update_comment(
     comment_id: int,
     data: UpdateCommentRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -266,8 +277,10 @@ async def update_comment(
 
 
 @router.delete("/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("20/minute")
 async def delete_comment(
     comment_id: int,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -287,8 +300,10 @@ async def delete_comment(
 
 
 @router.post("/{post_id}/vote")
+@limiter.limit("60/minute")
 async def vote_post(
     post_id: int,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -300,8 +315,10 @@ async def vote_post(
 
 
 @router.post("/comments/{comment_id}/vote")
+@limiter.limit("60/minute")
 async def vote_comment(
     comment_id: int,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):

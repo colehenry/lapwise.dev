@@ -53,36 +53,38 @@ export default function SuggestedQuestions({
   }
 
   return (
-    <div className="flex flex-col items-center px-6 py-10">
+    <div className="flex flex-col items-center px-3 py-4 md:px-6 md:py-10">
       <div className="w-full max-w-3xl text-center">
         {/* Hero icon */}
-        <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-purple-500/20 bg-purple-500/10 text-purple-300 shadow-[0_0_40px_-10px_rgba(160,32,240,0.25)]">
-          <ClutchIcon className="h-6 w-6" />
+        <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-purple-500/20 bg-purple-500/10 text-purple-300 shadow-[0_0_40px_-10px_rgba(160,32,240,0.25)] md:mb-3 md:h-12 md:w-12 md:rounded-2xl">
+          <ClutchIcon className="h-5 w-5 md:h-6 md:w-6" />
         </div>
-        <h2 className="mb-1.5 flex items-center justify-center gap-2 text-xl font-bold tracking-tight text-text-primary">
+        <h2 className="mb-1 flex items-center justify-center gap-2 text-base font-bold tracking-tight text-text-primary md:mb-1.5 md:text-xl">
           Ask <span className="text-purple-300">Clutch</span>
         </h2>
 
         {/* Hero text */}
-        <p className="mx-auto mb-6 max-w-lg text-sm text-text-muted leading-relaxed">
+        <p className="mx-auto mb-3 max-w-lg text-xs text-text-muted leading-relaxed md:mb-6 md:text-sm">
           Dive deeper into race results, driver comparisons, and strategy. Make
           your own custom graphs and analyses.
         </p>
 
         {/* Suggestion cards grid */}
-        <div className="grid gap-2.5 text-left md:grid-cols-2 xl:grid-cols-3">
-          {SUGGESTIONS.map((s) => (
+        <div className="grid grid-cols-1 gap-2 text-left sm:grid-cols-2 md:gap-2.5 xl:grid-cols-3">
+          {SUGGESTIONS.map((s, index) => (
             <button
               key={s.category}
               type="button"
               onClick={() => !disabled && onSelect(s.question)}
               disabled={disabled}
-              className={`group rounded-2xl border border-white/[0.05] bg-white/[0.02] px-4 py-3 transition-all duration-200 ${disabled ? "cursor-not-allowed opacity-50" : `hover:bg-purple-500/[0.04] ${s.borderHover} hover:-translate-y-0.5 hover:shadow-[0_8px_32px_-8px_rgba(160,32,240,0.12)]`}`}
+              className={`group rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2.5 transition-all duration-200 md:rounded-2xl md:px-4 md:py-3 ${index >= 3 ? "hidden md:block" : ""} ${disabled ? "cursor-not-allowed opacity-50" : `hover:bg-purple-500/[0.04] ${s.borderHover} hover:-translate-y-0.5 hover:shadow-[0_8px_32px_-8px_rgba(160,32,240,0.12)]`}`}
             >
-              <div className={`text-sm font-semibold ${s.color} leading-snug`}>
+              <div
+                className={`text-xs font-semibold ${s.color} leading-snug md:text-sm`}
+              >
                 {s.category}
               </div>
-              <div className="mt-1 text-xs leading-relaxed text-text-muted">
+              <div className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-text-muted md:mt-1 md:text-xs md:leading-relaxed">
                 {s.question}
               </div>
             </button>
