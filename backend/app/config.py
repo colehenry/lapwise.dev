@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     secret_key: str
     cors_origins: str = ""
     lapwise_api_key: str
+    trusted_proxy_hosts: str = ""
 
     # Auth / JWT
     access_token_expire_minutes: int = 15
@@ -69,6 +70,16 @@ class Settings(BaseSettings):
             if origin and origin not in deduped:
                 deduped.append(origin)
         return deduped
+
+    def get_trusted_proxy_hosts(self) -> list[str]:
+        """Parse comma-separated proxy hosts allowed to set forwarding headers."""
+        if not self.trusted_proxy_hosts:
+            return []
+        return [
+            host.strip()
+            for host in self.trusted_proxy_hosts.split(",")
+            if host.strip()
+        ]
 
     class Config:
         # Tell Pydantic where to find the .env file

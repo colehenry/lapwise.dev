@@ -34,6 +34,8 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     username: str
     password: str
+    website: str | None = None
+    form_started_at: int | None = None
 
     @field_validator("username")
     @classmethod
