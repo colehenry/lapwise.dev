@@ -90,7 +90,10 @@ function getClientIp(request: NextRequest): string {
   return request.headers.get("x-real-ip")?.trim() || "unknown";
 }
 
-function checkIpRateLimit(ip: string): { allowed: boolean; retryAfter: number } {
+function checkIpRateLimit(ip: string): {
+  allowed: boolean;
+  retryAfter: number;
+} {
   const now = Date.now();
   const existing = aiIpBuckets.get(ip);
 
@@ -428,7 +431,8 @@ async function checkRateLimit(
     return { allowed: false, remaining: 0 };
   }
 
-  const updated = (result[0]?.ai_queries_today as number) ?? AI_TOTAL_QUERY_LIMIT;
+  const updated =
+    (result[0]?.ai_queries_today as number) ?? AI_TOTAL_QUERY_LIMIT;
   return {
     allowed: true,
     remaining: Math.max(0, AI_TOTAL_QUERY_LIMIT - updated),
@@ -458,7 +462,8 @@ export async function POST(request: NextRequest) {
     if (!ipLimit.allowed) {
       return NextResponse.json(
         {
-          error: "Too many AI requests. Please slow down and try again shortly.",
+          error:
+            "Too many AI requests. Please slow down and try again shortly.",
         },
         {
           status: 429,
