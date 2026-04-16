@@ -73,11 +73,7 @@ function checkRestrictedTables(
 }
 
 function normalizeTableName(raw: string): string {
-  return raw
-    .replaceAll('"', "")
-    .split(".")
-    .pop()
-    ?.toLowerCase() ?? "";
+  return raw.replaceAll('"', "").split(".").pop()?.toLowerCase() ?? "";
 }
 
 function extractReferencedTables(sql: string): string[] {
@@ -132,7 +128,10 @@ function validateSQL(sql: string): { valid: boolean; error?: string } {
     return { valid: false, error: "Only SELECT queries are allowed." };
   }
 
-  if (hasUnsafeStatementBoundary(trimmed) || SQL_COMMENT_PATTERN.test(trimmed)) {
+  if (
+    hasUnsafeStatementBoundary(trimmed) ||
+    SQL_COMMENT_PATTERN.test(trimmed)
+  ) {
     return {
       valid: false,
       error: "Query contains unsafe SQL syntax.",
