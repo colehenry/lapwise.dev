@@ -4,12 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { isValidHeadshotUrl } from "@/lib/api";
+import { circuitHref, constructorHref, driverHref } from "@/lib/entityLinks";
 import {
   getCircuitFlagEmoji,
   getDriverFlagEmoji,
   getTeamFlagEmoji,
 } from "@/lib/flags";
-import { circuitHref, constructorHref, driverHref } from "@/lib/entityLinks";
 import type { SessionResultsResponse } from "@/lib/types";
 import LapTimeByLapGraph from "./LapTimeByLapGraph";
 import { GridPattern, TrianglePattern } from "./Patterns";
