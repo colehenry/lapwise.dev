@@ -1,7 +1,7 @@
 from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from app.config import settings
+from app.request_context import get_client_ip
 
 
 def _storage_uri() -> str | None:
@@ -11,6 +11,6 @@ def _storage_uri() -> str | None:
 
 
 limiter = Limiter(
-    key_func=get_remote_address,
+    key_func=get_client_ip,
     storage_uri=_storage_uri(),
 )

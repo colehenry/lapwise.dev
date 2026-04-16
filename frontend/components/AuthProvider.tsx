@@ -28,6 +28,7 @@ interface AuthContextValue {
     email: string,
     username: string,
     password: string,
+    options?: { website?: string; formStartedAt?: number },
   ) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -87,7 +88,12 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(
-    async (email: string, username: string, password: string) => {
+    async (
+      email: string,
+      username: string,
+      password: string,
+      options?: { website?: string; formStartedAt?: number },
+    ) => {
       const res = await fetch(apiUrl("/auth/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -95,6 +101,8 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
           email,
           username,
           password,
+          website: options?.website ?? "",
+          form_started_at: options?.formStartedAt,
         }),
       });
 

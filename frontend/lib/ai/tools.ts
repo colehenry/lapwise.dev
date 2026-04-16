@@ -31,7 +31,10 @@ const ALLOWED_TABLES = [
  * SQL keywords that indicate a write operation — blocked for safety.
  */
 const BLOCKED_SQL_PATTERNS =
-  /\b(INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE|GRANT|REVOKE|CREATE|EXECUTE)\b/i;
+  /\b(INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE|GRANT|REVOKE|CREATE|EXECUTE|COPY|CALL|MERGE|VACUUM|ANALYZE)\b/i;
+
+const SQL_COMMENT_PATTERN = /(--|\/\*|\*\/)/;
+const MAX_SQL_LENGTH = 4000;
 
 /**
  * Tables that must never be queried by the AI agent.
@@ -69,14 +72,71 @@ function checkRestrictedTables(
   return { valid: true };
 }
 
+function normalizeTableName(raw: string): string {
+  return raw
+    .replaceAll('"', "")
+    .split(".")
+    .pop()
+    ?.toLowerCase() ?? "";
+}
+
+function extractReferencedTables(sql: string): string[] {
+  const tables = new Set<string>();
+  const tableRefPattern =
+    /\b(?:FROM|JOIN)\s+("?[a-zA-Z_][\w]*"?(?:\."?[a-zA-Z_][\w]*"?)?)/gi;
+
+  for (const match of sql.matchAll(tableRefPattern)) {
+    const table = normalizeTableName(match[1]);
+    if (table) {
+      tables.add(table);
+    }
+  }
+
+  return [...tables];
+}
+
+function checkAllowedTables(
+  sql: string,
+): { valid: true } | { valid: false; error: string } {
+  const referencedTables = extractReferencedTables(sql);
+  for (const table of referencedTables) {
+    if (!ALLOWED_TABLES.includes(table)) {
+      return {
+        valid: false,
+        error: `Access to table '${table}' is not permitted. Allowed tables: ${ALLOWED_TABLES.join(", ")}`,
+      };
+    }
+  }
+  return { valid: true };
+}
+
+function hasUnsafeStatementBoundary(sql: string): boolean {
+  const withoutTrailingSemicolon = sql.replace(/;\s*$/, "");
+  return withoutTrailingSemicolon.includes(";");
+}
+
 /**
  * Validates a SQL query is read-only and safe to execute.
  */
 function validateSQL(sql: string): { valid: boolean; error?: string } {
   const trimmed = sql.trim();
 
+  if (trimmed.length > MAX_SQL_LENGTH) {
+    return {
+      valid: false,
+      error: `Query is too long. Maximum length is ${MAX_SQL_LENGTH} characters.`,
+    };
+  }
+
   if (!trimmed.toUpperCase().startsWith("SELECT")) {
     return { valid: false, error: "Only SELECT queries are allowed." };
+  }
+
+  if (hasUnsafeStatementBoundary(trimmed) || SQL_COMMENT_PATTERN.test(trimmed)) {
+    return {
+      valid: false,
+      error: "Query contains unsafe SQL syntax.",
+    };
   }
 
   if (BLOCKED_SQL_PATTERNS.test(trimmed)) {
@@ -92,18 +152,43 @@ function validateSQL(sql: string): { valid: boolean; error?: string } {
     return tableCheck;
   }
 
+  const allowlistCheck = checkAllowedTables(trimmed);
+  if (!allowlistCheck.valid) {
+    return allowlistCheck;
+  }
+
   return { valid: true };
 }
 
 /**
- * Injects a LIMIT clause if none is present.
+ * Caps query output even when the generated SQL already has a LIMIT.
  */
 function ensureLimit(sql: string, maxRows = 500): string {
-  if (/\bLIMIT\b/i.test(sql)) {
-    return sql;
-  }
   const cleaned = sql.replace(/;\s*$/, "");
-  return `${cleaned} LIMIT ${maxRows}`;
+  return `SELECT * FROM (${cleaned}) AS ai_limited_query LIMIT ${maxRows}`;
+}
+
+function validateWhereClause(
+  whereClause: string,
+): { valid: true } | { valid: false; error: string } {
+  if (
+    whereClause.length > 1000 ||
+    whereClause.includes(";") ||
+    SQL_COMMENT_PATTERN.test(whereClause)
+  ) {
+    return { valid: false, error: "WHERE clause contains unsafe SQL syntax." };
+  }
+
+  if (BLOCKED_SQL_PATTERNS.test(whereClause)) {
+    return { valid: false, error: "WHERE clause contains blocked keywords." };
+  }
+
+  const tableCheck = checkRestrictedTables(whereClause);
+  if (!tableCheck.valid) {
+    return tableCheck;
+  }
+
+  return { valid: true };
 }
 
 function asNumber(value: unknown): number | null {
@@ -589,14 +674,10 @@ export const getSampleData = tool({
       };
     }
 
-    if (where_clause && BLOCKED_SQL_PATTERNS.test(where_clause)) {
-      return { error: "WHERE clause contains blocked keywords." };
-    }
-
     if (where_clause) {
-      const tableCheck = checkRestrictedTables(where_clause);
-      if (!tableCheck.valid) {
-        return { error: tableCheck.error };
+      const whereCheck = validateWhereClause(where_clause);
+      if (!whereCheck.valid) {
+        return { error: whereCheck.error };
       }
     }
 

@@ -33,6 +33,10 @@ const AI_TOTAL_QUERY_LIMIT = Number.parseInt(
   10,
 );
 const AI_MODEL = process.env.AI_MODEL || "claude-sonnet-4-20250514";
+const AI_IP_RATE_LIMIT_PER_MINUTE = Number.parseInt(
+  process.env.AI_IP_RATE_LIMIT_PER_MINUTE || "6",
+  10,
+);
 
 interface AskRequest {
   question: string;
@@ -63,6 +67,7 @@ interface RequestUser {
 
 const SEED_MODE_HEADER = "x-ai-seed-mode";
 const DUMMY_SEED_CONVERSATION_ID = "seed-suggested-question-cache";
+const aiIpBuckets = new Map<string, { count: number; resetAt: number }>();
 
 function encodeLine(payload: Record<string, unknown>): Uint8Array {
   return new TextEncoder().encode(`${JSON.stringify(payload)}\n`);
@@ -73,6 +78,36 @@ function isSeedModeRequest(request: NextRequest): boolean {
     process.env.NODE_ENV !== "production" &&
     request.headers.get(SEED_MODE_HEADER) === "true"
   );
+}
+
+function getClientIp(request: NextRequest): string {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const first = forwarded.split(",")[0]?.trim();
+    if (first) return first;
+  }
+
+  return request.headers.get("x-real-ip")?.trim() || "unknown";
+}
+
+function checkIpRateLimit(ip: string): { allowed: boolean; retryAfter: number } {
+  const now = Date.now();
+  const existing = aiIpBuckets.get(ip);
+
+  if (!existing || existing.resetAt <= now) {
+    aiIpBuckets.set(ip, { count: 1, resetAt: now + 60_000 });
+    return { allowed: true, retryAfter: 0 };
+  }
+
+  if (existing.count >= AI_IP_RATE_LIMIT_PER_MINUTE) {
+    return {
+      allowed: false,
+      retryAfter: Math.max(1, Math.ceil((existing.resetAt - now) / 1000)),
+    };
+  }
+
+  existing.count += 1;
+  return { allowed: true, retryAfter: 0 };
 }
 
 function summarizeToolOutput(
@@ -381,23 +416,23 @@ async function checkRateLimit(
 
   const sql = getConversationClient();
 
-  // Check current count
   const result = await sql`
-		SELECT ai_queries_today FROM users WHERE id = ${userId}
+		UPDATE users
+		SET ai_queries_today = ai_queries_today + 1
+		WHERE id = ${userId}
+		  AND ai_queries_today < ${AI_TOTAL_QUERY_LIMIT}
+		RETURNING ai_queries_today
 	`;
 
-  const current = (result[0]?.ai_queries_today as number) ?? 0;
-
-  if (current >= AI_TOTAL_QUERY_LIMIT) {
+  if (result.length === 0) {
     return { allowed: false, remaining: 0 };
   }
 
-  // Increment counter
-  await sql`
-		UPDATE users SET ai_queries_today = ai_queries_today + 1 WHERE id = ${userId}
-	`;
-
-  return { allowed: true, remaining: AI_TOTAL_QUERY_LIMIT - current - 1 };
+  const updated = (result[0]?.ai_queries_today as number) ?? AI_TOTAL_QUERY_LIMIT;
+  return {
+    allowed: true,
+    remaining: Math.max(0, AI_TOTAL_QUERY_LIMIT - updated),
+  };
 }
 
 /**
@@ -416,6 +451,22 @@ async function verifyConversationOwnership(
 
 export async function POST(request: NextRequest) {
   const seedMode = isSeedModeRequest(request);
+  const clientIp = getClientIp(request);
+
+  if (!seedMode) {
+    const ipLimit = checkIpRateLimit(clientIp);
+    if (!ipLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: "Too many AI requests. Please slow down and try again shortly.",
+        },
+        {
+          status: 429,
+          headers: { "Retry-After": String(ipLimit.retryAfter) },
+        },
+      );
+    }
+  }
 
   // 1. Authenticate user
   let user: RequestUser | null = null;

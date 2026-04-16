@@ -17,6 +17,8 @@ export default function RegisterPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [website, setWebsite] = useState("");
+  const [formStartedAt] = useState(() => Date.now());
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState<
@@ -90,7 +92,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register(email, username, password);
+      await register(email, username, password, { website, formStartedAt });
       router.push("/verify-email?registered=true");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
@@ -113,6 +115,18 @@ export default function RegisterPage() {
         <OrDivider />
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="hidden" aria-hidden="true">
+            <label htmlFor="website">Website</label>
+            <Input
+              id="website"
+              type="text"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+          </div>
+
           <div>
             <label
               htmlFor="email"
