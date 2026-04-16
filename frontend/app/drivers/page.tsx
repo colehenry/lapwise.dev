@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -8,6 +8,7 @@ import PageHeader from "@/components/PageHeader";
 import ExpandButton from "@/components/ui/ExpandButton";
 import Skeleton from "@/components/ui/Skeleton";
 import SortPills from "@/components/ui/SortPills";
+import SprintToggle from "@/components/ui/SprintToggle";
 import TiltCard from "@/components/ui/TiltCard";
 import {
   apiHeaders,
@@ -15,6 +16,8 @@ import {
   fetchSeasons,
   isValidHeadshotUrl,
 } from "@/lib/api";
+import { getDriverHeadshotUrl } from "@/lib/entityImageOverrides";
+import { constructorHref, driverHref } from "@/lib/entityLinks";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
 import type { DriverListItem, DriverListResponse } from "@/lib/types";
 
@@ -23,29 +26,32 @@ type SortKey = "wins" | "races" | "points" | "alpha";
 const CURRENT_YEAR = new Date().getFullYear();
 const DEFAULT_VISIBLE_COUNT = 30;
 
-async function fetchAllDrivers(): Promise<DriverListResponse> {
-  const res = await fetch(apiUrl("/api/drivers/"), {
-    headers: apiHeaders(),
-  });
+async function fetchAllDrivers(
+  includeSprint: boolean,
+): Promise<DriverListResponse> {
+  const params = new URLSearchParams();
+  if (!includeSprint) params.set("include_sprint", "false");
+  const url = params.toString()
+    ? apiUrl(`/api/drivers/?${params}`)
+    : apiUrl("/api/drivers/");
+  const res = await fetch(url, { headers: apiHeaders() });
   if (!res.ok) throw new Error("Failed to fetch drivers");
   return res.json();
 }
 
 function DriverCard({ driver }: { driver: DriverListItem }) {
   const isActive = driver.latest_season === CURRENT_YEAR;
-  const driverSlug =
-    driver.driver_slug ||
-    driver.driver_code ||
-    driver.full_name.toLowerCase().replace(/\s+/g, "-");
-  const constructorSlug = driver.current_team?.replace(/\s+/g, "-");
+  const headshotUrl = getDriverHeadshotUrl(driver);
+  const driverUrl = driverHref(driver);
+  const constructorUrl = constructorHref(driver.current_team);
 
   return (
     <TiltCard>
       <div className="relative border border-border-primary rounded-sm p-4 hover:border-purple-500 transition-all duration-200 bg-bg-tertiary h-full">
-        <Link href={`/drivers/${driverSlug}`} className="block">
+        <Link href={driverUrl ?? "/drivers"} className="block">
           <div className="flex items-center gap-3">
             {/* Headshot */}
-            {isValidHeadshotUrl(driver.headshot_url) ? (
+            {isValidHeadshotUrl(headshotUrl) ? (
               <div
                 className="w-14 h-14 rounded-sm overflow-hidden border-2 flex-shrink-0 bg-bg-secondary"
                 style={{
@@ -55,11 +61,11 @@ function DriverCard({ driver }: { driver: DriverListItem }) {
                 }}
               >
                 <Image
-                  src={driver.headshot_url}
+                  src={headshotUrl}
                   alt={driver.full_name}
                   width={56}
                   height={56}
-                  unoptimized={driver.headshot_url?.includes("wikimedia.org")}
+                  unoptimized={headshotUrl?.includes("wikimedia.org")}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -116,9 +122,9 @@ function DriverCard({ driver }: { driver: DriverListItem }) {
 
         {/* Bottom bar */}
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-border-primary">
-          {driver.current_team && constructorSlug ? (
+          {driver.current_team && constructorUrl ? (
             <Link
-              href={`/constructors/${constructorSlug}`}
+              href={constructorUrl}
               className="text-xs text-text-muted hover:text-purple-300 transition-colors truncate"
             >
               {driver.current_team}
@@ -157,10 +163,12 @@ export default function DriversPage() {
   const [sortKey, setSortKey] = useState<SortKey>("wins");
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [includeSprint, setIncludeSprint] = useState(true);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["drivers-all"],
-    queryFn: fetchAllDrivers,
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["drivers-all", includeSprint],
+    queryFn: () => fetchAllDrivers(includeSprint),
+    placeholderData: keepPreviousData,
   });
 
   const { data: availableYears = [] } = useQuery<number[]>({
@@ -246,11 +254,12 @@ export default function DriversPage() {
             ? "All-Time Career Statistics"
             : `${selectedYear} Season Entries`
         }
+        compactMobile
       >
         <select
           value={selectedYear}
           onChange={(e) => setSelectedYear(e.target.value)}
-          className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-3 py-1.5 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
+          className="w-28 bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-3 py-2 md:py-1.5 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
         >
           <option value="all">ALL TIME</option>
           {availableYears.map((year) => (
@@ -261,7 +270,7 @@ export default function DriversPage() {
         </select>
       </PageHeader>
 
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
+      <div className="max-w-6xl mx-auto px-3 py-3 md:px-8 md:py-6">
         {/* Controls */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <input
@@ -280,8 +289,15 @@ export default function DriversPage() {
 
         {/* Stats bar */}
         {data && (
-          <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-6">
-            {filteredDrivers.length} total drivers
+          <div className="flex items-center justify-between mb-6">
+            <span className="text-[10px] text-text-muted font-mono tracking-widest uppercase">
+              {filteredDrivers.length} total drivers
+            </span>
+            <SprintToggle
+              checked={includeSprint}
+              onChange={setIncludeSprint}
+              isLoading={isFetching}
+            />
           </div>
         )}
 
@@ -304,13 +320,17 @@ export default function DriversPage() {
 
         {/* Grid */}
         {!isLoading && filteredDrivers.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {visibleDrivers.map((driver) => (
-              <DriverCard
-                key={driver.driver_code || driver.full_name}
-                driver={driver}
-              />
-            ))}
+          <div
+            className={`transition-opacity duration-150 ${isFetching ? "opacity-50" : ""}`}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {visibleDrivers.map((driver) => (
+                <DriverCard
+                  key={driver.driver_code || driver.full_name}
+                  driver={driver}
+                />
+              ))}
+            </div>
           </div>
         )}
 

@@ -8,7 +8,7 @@ import { GridPattern } from "@/components/Patterns";
 import TiltCard from "@/components/ui/TiltCard";
 
 function FeatureIcon({ label }: { label: string }) {
-  const className = "w-7 h-7 text-purple-400";
+  const className = "w-6 h-6 text-purple-400";
 
   if (label === "Drivers") {
     return (
@@ -131,7 +131,7 @@ export default function Home() {
   return (
     <div className="bg-bg-primary">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-bg-secondary min-h-[70vh] flex items-center">
+      <section className="relative overflow-hidden bg-bg-secondary">
         <GridPattern
           id="hero-grid"
           className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.06] pointer-events-none"
@@ -143,13 +143,13 @@ export default function Home() {
           <div className="absolute bottom-1/4 left-1/3 w-48 h-48 bg-red-500 rounded-full blur-[120px] opacity-10" />
         </div>
 
-        <div className="relative z-10 max-w-6xl mx-auto px-6 py-24 w-full">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-12">
+        <div className="relative z-10 max-w-6xl mx-auto px-4 py-10 md:px-6 md:py-16 lg:py-20 w-full">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 lg:gap-12">
             {/* Left Column: Branding & Selector */}
-            <div className="space-y-10">
+            <div className="space-y-6 md:space-y-8 lg:space-y-10">
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                  <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
                   <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
                     Formula 1 Analytics Platform
                   </span>
@@ -161,7 +161,11 @@ export default function Home() {
                 </h1>
               </div>
 
-              <div className="space-y-4 pt-4">
+              <div className="lg:hidden">
+                <TopRightLatestRace />
+              </div>
+
+              <div className="space-y-4 lg:pt-4">
                 <p className="text-[10px] text-text-muted tracking-widest uppercase font-mono font-bold">
                   Jump to Results
                 </p>
@@ -186,29 +190,24 @@ export default function Home() {
       {/* Next Race Banner */}
       <NextRaceBanner />
 
-      {/* Mobile-only Latest Race Card (shows after banner on small screens) */}
-      <div className="lg:hidden px-6 py-8 bg-bg-primary border-b border-border-primary/40">
-        <TopRightLatestRace />
-      </div>
-
       {/* Feature Cards */}
-      <section className="bg-bg-secondary py-20 px-6 border-y border-border-primary/60">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+      <section className="bg-bg-secondary py-14 px-4 md:px-6 border-y border-border-primary/60">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8 flex flex-col items-center text-center">
             <div className="space-y-3">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-purple-500" />
                 <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
                   Database
                 </span>
               </div>
-              <h2 className="text-3xl font-bold text-text-primary tracking-tight">
+              <h2 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">
                 Explore the Archive
               </h2>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="mx-auto grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3 md:gap-4">
             {[
               {
                 label: "Drivers",
@@ -232,17 +231,17 @@ export default function Home() {
                   className="block group bg-bg-tertiary border border-border-primary rounded-sm hover:border-purple-500/70 transition-all duration-150 relative overflow-hidden h-full"
                 >
                   <CrosshairPattern />
-                  <div className="relative z-10 flex flex-col items-center text-center p-8">
-                    <div className="w-14 h-14 rounded-sm bg-purple-500/10 border border-purple-500/25 flex items-center justify-center mb-5 group-hover:bg-purple-500/15 group-hover:border-purple-500/40 transition-all duration-300">
+                  <div className="relative z-10 flex flex-col items-center text-center p-5 md:p-6">
+                    <div className="w-11 h-11 rounded-sm bg-purple-500/10 border border-purple-500/25 flex items-center justify-center mb-4 group-hover:bg-purple-500/15 group-hover:border-purple-500/40 transition-all duration-300">
                       <FeatureIcon label={feature.label} />
                     </div>
-                    <h3 className="text-lg font-bold text-text-primary tracking-tight mb-2">
+                    <h3 className="text-base font-bold text-text-primary tracking-tight mb-1.5">
                       {feature.label}
                     </h3>
-                    <p className="text-sm text-text-secondary leading-relaxed mb-6">
+                    <p className="text-xs text-text-secondary leading-relaxed mb-4">
                       {feature.desc}
                     </p>
-                    <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-purple-400 group-hover:text-purple-300 transition-colors">
+                    <div className="flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest text-purple-400 group-hover:text-purple-300 transition-colors">
                       Explore
                       <svg
                         className="w-3 h-3 group-hover:translate-x-0.5 transition-transform"

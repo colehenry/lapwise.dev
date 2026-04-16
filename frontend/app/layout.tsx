@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
-import { JetBrains_Mono, Outfit } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { JetBrains_Mono, Outfit, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import AppShell from "@/components/AppShell";
 
@@ -15,10 +15,26 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Lapwise - F1 Analytics & Telemetry",
   description:
     "Professional Formula 1 analytics platform with race results, telemetry data, and comprehensive driver statistics.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Lapwise",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0a0a0f",
 };
 
 export default function RootLayout({
@@ -29,7 +45,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`antialiased ${outfit.variable} ${jetbrainsMono.variable}`}
+        className={`antialiased ${outfit.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable}`}
       >
         <AppShell>{children}</AppShell>
       </body>

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { constructorHref, driverHref } from "@/lib/entityLinks";
 import type { CircuitRaceHistoryResponse } from "@/lib/types";
 
 interface CircuitRaceHistoryTableProps {
@@ -51,10 +52,10 @@ export default function CircuitRaceHistoryTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border-primary">
+    <div className="overflow-x-auto rounded-sm border border-border-primary bg-bg-tertiary">
       <table className="w-full text-sm">
         <thead>
-          <tr className="bg-bg-tertiary border-b border-border-primary">
+          <tr className="bg-bg-primary border-b border-border-primary">
             <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
               Year
             </th>
@@ -73,7 +74,7 @@ export default function CircuitRaceHistoryTable({
           {data.races.map((race) => (
             <tr
               key={`${race.year}-${race.round}`}
-              className="border-b border-border-primary/50 hover:bg-bg-tertiary/50 transition-colors"
+              className="border-b border-border-primary/50 hover:bg-bg-elevated/50 transition-colors"
             >
               <td className="px-3 py-2 text-text-secondary font-mono text-xs">
                 {race.year}
@@ -88,7 +89,13 @@ export default function CircuitRaceHistoryTable({
               </td>
               <td className="px-3 py-2">
                 <Link
-                  href={`/drivers/${race.winner_slug || race.winner_code}`}
+                  href={
+                    driverHref({
+                      driver_slug: race.winner_slug,
+                      driver_code: race.winner_code,
+                      full_name: race.winner_name,
+                    }) ?? "/drivers"
+                  }
                   className="text-yellow-400 hover:text-yellow-300 transition-colors font-medium"
                 >
                   {race.winner_name}
@@ -103,7 +110,7 @@ export default function CircuitRaceHistoryTable({
                     />
                   )}
                   <Link
-                    href={`/constructors/${race.team_name.replace(/\s+/g, "-")}`}
+                    href={constructorHref(race.team_name) ?? "/constructors"}
                     className="text-text-secondary text-xs hover:text-purple-300 transition-colors"
                   >
                     {race.team_name}

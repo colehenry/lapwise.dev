@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { CHART_TYPOGRAPHY } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
 
 interface QualifyingSectorHeatmapProps {
@@ -140,22 +141,22 @@ export default function QualifyingSectorHeatmap({
   return (
     <div className="space-y-3">
       {/* Legend */}
-      <div className="flex items-center gap-4 flex-wrap text-[10px] font-mono text-text-muted uppercase tracking-widest">
+      <div className="flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-sm bg-purple-500/25 border border-purple-500/40" />
-          <span>Session fastest</span>
+          <span className={CHART_TYPOGRAPHY.keyClassName}>Session fastest</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-sm bg-green-500/15 border border-green-500/30" />
-          <span>≤ +0.1s</span>
+          <span className={CHART_TYPOGRAPHY.keyClassName}>≤ +0.1s</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-sm bg-yellow-500/10 border border-yellow-500/20" />
-          <span>≤ +0.3s</span>
+          <span className={CHART_TYPOGRAPHY.keyClassName}>≤ +0.3s</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-sm bg-red-500/10 border border-red-500/20" />
-          <span>&gt; +0.6s</span>
+          <span className={CHART_TYPOGRAPHY.keyClassName}>&gt; +0.6s</span>
         </div>
       </div>
 

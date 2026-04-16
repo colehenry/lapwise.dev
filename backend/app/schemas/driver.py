@@ -80,6 +80,7 @@ class SeasonHistory(BaseModel):
     year: int
     championship_position: Optional[int] = None
     total_points: float
+    race_count: int = 0
     team_name: str
     team_color: Optional[str] = None
 
@@ -134,6 +135,33 @@ class DriverRaceHistoryResponse(BaseModel):
     full_name: str
     races: List[RaceHistory]
     available_years: List[int]
+
+    class Config:
+        from_attributes = True
+
+
+class DriverSuperlative(BaseModel):
+    """A single superlative stat for a driver."""
+
+    id: str
+    value: str
+    label: str
+    sublabel: Optional[str] = None
+    category: str  # "record" | "circuit" | "fun"
+
+    class Config:
+        from_attributes = True
+
+
+class DriverSuperlativesResponse(BaseModel):
+    """
+    Driver superlatives — notable career stats and records.
+
+    Used for GET /api/drivers/{driver_code}/superlatives endpoint.
+    """
+
+    driver_code: Optional[str] = None
+    superlatives: List[DriverSuperlative]
 
     class Config:
         from_attributes = True

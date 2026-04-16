@@ -37,9 +37,6 @@ export default function CircuitWeatherProfile({
 
   return (
     <div>
-      <div className="text-xs text-text-muted uppercase tracking-wider mb-3 font-mono font-bold">
-        Weather Profile
-      </div>
       <div className="grid grid-cols-2 gap-3">
         {data.avg_air_temp != null && (
           <div>

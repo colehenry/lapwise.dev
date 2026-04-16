@@ -5,6 +5,7 @@ Authentication endpoints: register, login, refresh, logout, email verification,
 password reset.
 """
 
+import time
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -15,6 +16,7 @@ from app.auth import get_current_active_user
 from app.database import get_db
 from app.limiter import limiter
 from app.models.user import User
+from app.request_context import get_client_ip
 from app.schemas.auth import (
     ChangePasswordRequest,
     DeleteAccountRequest,
@@ -75,10 +77,7 @@ async def _user_profile(user: User, db: AsyncSession) -> UserProfile:
 
 
 def _client_ip(request: Request) -> str:
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "unknown"
+    return get_client_ip(request)
 
 
 # ─── Register ───────────────────────────────────────────────────────
@@ -109,6 +108,20 @@ async def register(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
+    if body.website:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Registration failed",
+        )
+
+    if body.form_started_at is not None:
+        elapsed_ms = int(time.time() * 1000) - body.form_started_at
+        if elapsed_ms < 1500:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Please try submitting the form again.",
+            )
+
     # Check duplicate email
     existing = await UserService.get_user_by_email(db, body.email)
     if existing:

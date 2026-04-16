@@ -296,7 +296,7 @@ export const distDriverKey = (driver: DriverLapDistribution): string =>
 
 // Graph mode types (used by history graphs)
 export type GraphMode = "season" | "race";
-export type DataMode = "position" | "points";
+export type DataMode = "position" | "points" | "points_per_race";
 
 // Driver profile types
 export interface DriverProfile {
@@ -344,6 +344,8 @@ export interface DriverSeasonHistory {
   year: number;
   championship_position: number | null;
   total_points: number;
+  race_count?: number;
+  points_per_race?: number;
   team_name: string;
   team_color: string | null;
 }
@@ -353,6 +355,19 @@ export interface DriverSeasonHistoryResponse {
   driver_slug: string | null;
   full_name: string;
   seasons: DriverSeasonHistory[];
+}
+
+export interface DriverSuperlative {
+  id: string;
+  value: string;
+  label: string;
+  sublabel: string | null;
+  category: "record" | "circuit" | "fun";
+}
+
+export interface DriverSuperlativesResponse {
+  driver_code: string | null;
+  superlatives: DriverSuperlative[];
 }
 
 // Constructor profile types
@@ -377,9 +392,13 @@ export interface ConstructorRaceHistory {
   best_position: number | null;
   total_points: number;
   driver_1_name: string | null;
+  driver_1_code: string | null;
+  driver_1_slug: string | null;
   driver_1_position: number | null;
   driver_1_status: string | null;
   driver_2_name: string | null;
+  driver_2_code: string | null;
+  driver_2_slug: string | null;
   driver_2_position: number | null;
   driver_2_status: string | null;
 }
@@ -756,6 +775,15 @@ export interface ReplayTrack {
   rotation_deg: number;
   corners: ReplayCorner[];
   drs_zones: [number, number][][];
+}
+
+export interface ReplayTrackResponse {
+  season: number;
+  round: number;
+  event_name: string;
+  circuit_id: number;
+  circuit_name: string;
+  track: ReplayTrack;
 }
 
 export interface ReplayData {

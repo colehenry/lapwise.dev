@@ -1,7 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import {
   CartesianGrid,
   ErrorBar,
@@ -12,24 +11,23 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS } from "@/components/chart-primitives";
-import { apiHeaders, apiUrl } from "@/lib/api";
 import {
-  type DriverLapTimes,
-  driverKey,
-  type LapTimesResponse,
-} from "@/lib/types";
-
-const COMPOUND_COLORS: Record<string, string> = {
-  SOFT: "#e8002d",
-  MEDIUM: "#ffd700",
-  HARD: "#c8c8c8",
-  INTERMEDIATE: "#39b54a",
-  WET: "#0067ff",
-};
-
-const getCompoundColor = (c: string | null | undefined) =>
-  COMPOUND_COLORS[c ?? ""] ?? "#888888";
+  CHART_AXIS_LABEL_STYLE,
+  CHART_COLORS,
+  CHART_TYPOGRAPHY,
+} from "@/components/chart-primitives";
+import DriverMultiSelect from "@/components/charts/DriverMultiSelect";
+import {
+  sortDriversByClassification,
+  useDriverSelection,
+} from "@/hooks/useDriverSelection";
+import { usePracticeLapTimes } from "@/hooks/usePracticeLapTimes";
+import {
+  COMPOUND_COLORS,
+  formatLapTime,
+  getCompoundColor,
+} from "@/lib/chart-utils";
+import { driverKey, type LapTimesResponse } from "@/lib/types";
 
 const MIN_STINT_LAPS = 5;
 
@@ -51,12 +49,6 @@ type StintRange = {
   errorX: [number, number];
 };
 
-const formatTime = (s: number) => {
-  const m = Math.floor(s / 60);
-  const rem = s % 60;
-  return `${m}:${rem.toFixed(3).padStart(6, "0")}`;
-};
-
 interface TooltipPayload {
   payload: StintRange;
 }
@@ -73,19 +65,22 @@ const CustomTooltip = ({
   if (!d) return null;
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs space-y-1">
-      <p className="font-bold text-text-primary font-mono">{d.driverCode}</p>
-      <p className="font-mono" style={{ color: getCompoundColor(d.compound) }}>
+      <p className={CHART_TYPOGRAPHY.tooltipTitleClassName}>{d.driverCode}</p>
+      <p
+        className={CHART_TYPOGRAPHY.tooltipValueClassName}
+        style={{ color: getCompoundColor(d.compound) }}
+      >
         {d.compound}
       </p>
       <div className="border-t border-border-primary/50 pt-1 space-y-0.5">
-        <p className="text-text-secondary font-mono">
-          Median&nbsp;&nbsp;{formatTime(d.median)}
+        <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
+          Median&nbsp;&nbsp;{formatLapTime(d.median)}
         </p>
         <p className="text-text-muted font-mono text-[10px]">
-          Min&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{formatTime(d.min)}
+          Min&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{formatLapTime(d.min)}
         </p>
         <p className="text-text-muted font-mono text-[10px]">
-          Max&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{formatTime(d.max)}
+          Max&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{formatLapTime(d.max)}
         </p>
         <p className="text-text-muted font-mono text-[10px]">
           {d.lapCount} laps
@@ -101,70 +96,21 @@ export default function LongRunPaceChart({
   practiceSession,
   initialDrivers,
 }: LongRunPaceChartProps) {
-  const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const initialDriverKey = initialDrivers?.join(",") ?? "";
-
-  const { data, isLoading } = useQuery<LapTimesResponse | null>({
-    queryKey: ["lap-times", season, round, false, practiceSession],
-    queryFn: async () => {
-      const res = await fetch(
-        apiUrl(
-          `/api/results/${season}/${round}/practice/${practiceSession}/lap-times`,
-        ),
-        { cache: "no-store", headers: apiHeaders() },
-      );
-      if (!res.ok) return null;
-      return res.json();
-    },
-    enabled: season >= 2018,
+  const { data, isLoading } = usePracticeLapTimes(
+    season,
+    round,
+    practiceSession,
+  );
+  const { selectedDrivers, toggleDriver } = useDriverSelection(data?.drivers, {
+    initialDrivers,
   });
-
-  // Default to top 10 by session classification on data load
-  useEffect(() => {
-    if (data?.drivers) {
-      const sorted = [...data.drivers].sort(
-        (a, b) => (a.final_position ?? 999) - (b.final_position ?? 999),
-      );
-      const available = new Set(sorted.map((d) => driverKey(d)));
-      const requested = initialDriverKey
-        .split(",")
-        .filter((key) => available.has(key));
-      setSelectedDrivers(
-        requested.length > 0
-          ? requested
-          : sorted.slice(0, 10).map((d) => driverKey(d)),
-      );
-    }
-  }, [data, initialDriverKey]);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const toggleDriver = (key: string) => {
-    setSelectedDrivers((prev) =>
-      prev.includes(key) ? prev.filter((d) => d !== key) : [...prev, key],
-    );
-  };
 
   const { allDriverOrder, rangesByCompound, dropdownDrivers } = useMemo(() => {
     if (!data)
       return {
         allDriverOrder: [] as string[],
         rangesByCompound: {} as Record<string, StintRange[]>,
-        dropdownDrivers: [] as DriverLapTimes[],
+        dropdownDrivers: [] as LapTimesResponse["drivers"],
       };
 
     const driverCompoundTimes = new Map<string, Map<string, number[]>>();
@@ -251,9 +197,7 @@ export default function LongRunPaceChart({
     }
 
     // Dropdown: all drivers sorted by final_position
-    const dropdownDrivers = [...data.drivers].sort(
-      (a, b) => (a.final_position ?? 999) - (b.final_position ?? 999),
-    );
+    const dropdownDrivers = sortDriversByClassification(data.drivers);
 
     return { allDriverOrder, rangesByCompound, dropdownDrivers };
   }, [data]);
@@ -334,62 +278,18 @@ export default function LongRunPaceChart({
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                 style={{ backgroundColor: COMPOUND_COLORS[c] }}
               />
-              <span className="text-[10px] font-mono text-text-muted uppercase">
-                {c}
-              </span>
+              <span className={CHART_TYPOGRAPHY.keyClassName}>{c}</span>
             </div>
           ))}
 
-          {/* Driver selector */}
-          <div className="relative flex-shrink-0" ref={dropdownRef}>
-            <button
-              type="button"
-              onClick={() => setShowDropdown((v) => !v)}
-              className="px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-border-primary text-text-secondary hover:border-purple-500 hover:text-purple-300 transition-colors"
-            >
-              Drivers ({selectedDrivers.length})
-            </button>
-            {showDropdown && (
-              <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-10 min-w-[220px] max-h-[280px] overflow-y-auto">
-                {dropdownDrivers.map((driver) => {
-                  const key = driverKey(driver);
-                  const isSelected = selectedDrivers.includes(key);
-                  const hasStint = allDriverOrder.includes(key);
-                  const color = driver.team_color
-                    ? `#${driver.team_color}`
-                    : "#666";
-                  return (
-                    <label
-                      key={key}
-                      className={`flex items-center gap-2 px-3 py-2 hover:bg-bg-elevated cursor-pointer ${!hasStint ? "opacity-40" : ""}`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        disabled={!hasStint}
-                        onChange={() => hasStint && toggleDriver(key)}
-                        className="w-4 h-4 accent-purple-500"
-                      />
-                      <span className="text-[10px] font-mono text-text-muted w-5">
-                        {driver.final_position ?? "-"}
-                      </span>
-                      <span
-                        className="text-xs font-bold font-mono"
-                        style={{ color }}
-                      >
-                        {driver.driver_code ?? driver.full_name}
-                      </span>
-                      {!hasStint && (
-                        <span className="text-[9px] font-mono text-text-muted ml-auto">
-                          no data
-                        </span>
-                      )}
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <DriverMultiSelect
+            drivers={dropdownDrivers}
+            selectedDrivers={selectedDrivers}
+            onToggleDriver={toggleDriver}
+            isDriverDisabled={(driver) =>
+              !allDriverOrder.includes(driverKey(driver))
+            }
+          />
         </div>
       </div>
 
@@ -416,12 +316,12 @@ export default function LongRunPaceChart({
                 fontSize: 10,
                 fontFamily: "monospace",
               }}
-              tickFormatter={formatTime}
+              tickFormatter={formatLapTime}
               label={{
                 value: "Lap Time",
                 position: "insideBottomRight",
                 offset: -4,
-                style: { fill: CHART_COLORS.textTertiary, fontSize: 10 },
+                style: CHART_AXIS_LABEL_STYLE,
               }}
             />
             <YAxis

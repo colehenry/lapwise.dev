@@ -8,6 +8,7 @@ CLAUDE.md
 # Personal learning docs (not for public repo)
 docs/*
 !docs/images/
+!docs/miami-gp-launch-readiness-plan.md
 
 # ============================================================================
 # Python (Backend)

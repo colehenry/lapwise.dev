@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { isValidHeadshotUrl } from "@/lib/api";
+import { circuitHref, constructorHref, driverHref } from "@/lib/entityLinks";
 import {
   getCircuitFlagEmoji,
   getDriverFlagEmoji,
@@ -90,6 +91,7 @@ export default function SessionDetail({
     session.circuit.location,
   );
   const compactLocation = dedupeCommaSeparated(session.circuit.location);
+  const sessionCircuitHref = circuitHref(session.circuit.id);
 
   return (
     <main className={hideHeader ? "" : "min-h-screen bg-bg-secondary"}>
@@ -149,10 +151,10 @@ export default function SessionDetail({
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-3 md:p-6">
         {/* ── Session Header Card ── */}
-        <div className="mb-6 bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden flex flex-col md:flex-row">
-          <div className="flex-1 p-6 relative">
+        <div className="mb-4 md:mb-6 bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden flex flex-col md:flex-row">
+          <div className="flex-1 p-4 md:p-6 relative">
             <GridPattern id="session-grid" />
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-2">
@@ -208,9 +210,18 @@ export default function SessionDetail({
               </div>
 
               <div className="flex flex-col gap-1">
-                <p className="text-text-secondary font-medium">
-                  {circuitSummary}
-                </p>
+                {sessionCircuitHref ? (
+                  <Link
+                    href={sessionCircuitHref}
+                    className="inline-flex text-text-secondary font-medium transition-colors hover:text-purple-300"
+                  >
+                    {circuitSummary}
+                  </Link>
+                ) : (
+                  <p className="text-text-secondary font-medium">
+                    {circuitSummary}
+                  </p>
+                )}
                 <p className="text-xs text-text-muted font-mono uppercase tracking-widest">
                   {new Date(session.date).toLocaleDateString("en-US", {
                     weekday: "long",
@@ -374,7 +385,7 @@ export default function SessionDetail({
                         )}
                         <div className="flex flex-col">
                           <Link
-                            href={`/drivers/${result.driver.driver_slug || result.driver.driver_code}`}
+                            href={driverHref(result.driver) ?? "/drivers"}
                             className="font-semibold text-text-primary text-sm hover:text-purple-300 transition-colors duration-150 flex items-center gap-1.5"
                           >
                             {result.driver.country_code && (
@@ -393,7 +404,10 @@ export default function SessionDetail({
                             )}
                           </Link>
                           <Link
-                            href={`/constructors/${result.team.name.replace(/\s+/g, "-")}`}
+                            href={
+                              constructorHref(result.team.name) ??
+                              "/constructors"
+                            }
                             className="text-[10px] font-mono text-text-muted md:hidden hover:text-purple-300 transition-colors duration-150"
                           >
                             {result.team.name}
@@ -405,7 +419,9 @@ export default function SessionDetail({
                     {/* Constructor */}
                     <td className="px-4 py-3 hidden md:table-cell">
                       <Link
-                        href={`/constructors/${result.team.name.replace(/ /g, "-")}`}
+                        href={
+                          constructorHref(result.team.name) ?? "/constructors"
+                        }
                         className="text-xs font-medium hover:text-purple-300 transition-colors duration-150 flex items-center gap-2"
                         style={{
                           color: result.team.team_color

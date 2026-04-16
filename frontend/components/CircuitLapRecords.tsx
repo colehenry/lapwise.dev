@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { constructorHref, driverHref } from "@/lib/entityLinks";
 import type { CircuitLapRecordsResponse, LapRecordEntry } from "@/lib/types";
 
 function formatLapTime(seconds: number): string {
@@ -20,6 +21,11 @@ function RecordRow({
   label: string;
 }) {
   const teamColor = record.team_color ? `#${record.team_color}` : "#a020f0";
+  const driverUrl = driverHref({
+    driver_slug: record.driver_slug,
+    driver_code: record.driver_code,
+    full_name: record.driver_name,
+  });
 
   return (
     <div>
@@ -36,9 +42,9 @@ function RecordRow({
           className="w-2 h-2 rounded-full inline-block shrink-0"
           style={{ backgroundColor: teamColor }}
         />
-        {record.driver_slug ? (
+        {driverUrl ? (
           <Link
-            href={`/drivers/${record.driver_slug}`}
+            href={driverUrl}
             className="text-text-secondary hover:text-purple-300 transition-colors"
           >
             {record.driver_name}
@@ -48,7 +54,12 @@ function RecordRow({
         )}
         <span className="text-text-muted">({record.year})</span>
       </div>
-      <div className="text-xs text-text-muted mt-0.5">{record.team_name}</div>
+      <Link
+        href={constructorHref(record.team_name) ?? "/constructors"}
+        className="mt-0.5 inline-flex text-xs text-text-muted hover:text-purple-300 transition-colors"
+      >
+        {record.team_name}
+      </Link>
     </div>
   );
 }

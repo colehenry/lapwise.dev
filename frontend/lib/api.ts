@@ -10,6 +10,7 @@ import type {
   ReplayData,
   ReplayListResponse,
   ReplaySeasonsResponse,
+  ReplayTrackResponse,
   StandingsResponse,
 } from "@/lib/types";
 
@@ -133,6 +134,20 @@ export async function fetchReplayData(
   if (!res.ok) throw new Error("Failed to fetch replay data");
   const buffer = await res.arrayBuffer();
   return decode(new Uint8Array(buffer)) as ReplayData;
+}
+
+/**
+ * Fetches lightweight replay-backed track geometry for a circuit.
+ */
+export async function fetchReplayTrackGeometry(
+  circuitId: number,
+): Promise<ReplayTrackResponse | null> {
+  const res = await fetch(apiUrl(`/api/replay/track/${circuitId}`), {
+    headers: apiHeaders(),
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("Failed to fetch replay track geometry");
+  return res.json();
 }
 
 export function isValidHeadshotUrl(

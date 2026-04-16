@@ -11,7 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.security import verify_api_key
 from app.services.replay_service import ReplayService
-from app.schemas.replay import ReplayListResponse, ReplaySeasonsResponse
+from app.schemas.replay import (
+    ReplayListResponse,
+    ReplaySeasonsResponse,
+    ReplayTrackResponse,
+)
 
 router = APIRouter()
 
@@ -35,6 +39,22 @@ async def get_available_replays(
     """Get list of races with available replay data for a season."""
     replays = await ReplayService.get_available_replays(db, season)
     return ReplayListResponse(season=season, replays=replays)
+
+
+@router.get("/track/{circuit_id}", response_model=ReplayTrackResponse)
+async def get_replay_track_geometry(
+    circuit_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(verify_api_key),
+):
+    """Get latest static replay track geometry for a circuit."""
+    data = await ReplayService.get_latest_track_geometry(db, circuit_id)
+    if data is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No replay track geometry found for circuit {circuit_id}",
+        )
+    return data
 
 
 @router.get("/{season}/{round}")

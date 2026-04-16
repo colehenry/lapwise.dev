@@ -11,7 +11,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS, CustomDot } from "@/components/chart-primitives";
+import {
+  CHART_COLORS,
+  CHART_TYPOGRAPHY,
+  CustomDot,
+} from "@/components/chart-primitives";
+import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import { apiHeaders, apiUrl } from "@/lib/api";
 
 // Type definitions
@@ -138,7 +143,9 @@ const CustomTooltip = ({
 
   return (
     <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
-      <p className="font-bold text-white mb-2">{displayName}</p>
+      <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-2`}>
+        {displayName}
+      </p>
       {filteredPayload.map((entry: TooltipPayloadEntry) => {
         const value = entry.value;
         const isQualy = pointsType === "qualifying";
@@ -154,7 +161,9 @@ const CustomTooltip = ({
               className="w-3 h-3 rounded-full"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="font-bold text-white text-sm">
+            <span
+              className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-sm`}
+            >
               {entry.name}: {labelStr}
             </span>
           </div>
@@ -409,21 +418,24 @@ export default function PointsByRoundGraph({
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-bold text-text-secondary font-mono">
+    <div className="min-w-0 overflow-hidden">
+      <div className="mb-4 flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <h3 className={`${CHART_TYPOGRAPHY.titleClassName} min-w-0`}>
           {season} {mode === "drivers" ? "Drivers'" : "Constructors'"}
           {isQualy ? " Qualifying Positions" : " Total Points"} by Round
         </h3>
 
         {/* Filter Buttons */}
-        <div className="flex gap-2 relative" ref={dropdownRef}>
+        <div
+          className="relative grid min-w-0 grid-cols-[minmax(0,1fr)_112px] gap-2 md:flex md:w-auto"
+          ref={dropdownRef}
+        >
           {/* Mode Selector */}
-          <div className="flex items-center gap-1">
+          <div className="grid min-w-0 grid-cols-2 gap-1 md:flex md:items-center">
             <button
               type="button"
               onClick={() => setMode("drivers")}
-              className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
+              className={`px-2 py-2 md:px-4 md:py-1.5 rounded-sm text-[10px] md:text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                 mode === "drivers"
                   ? "bg-purple-500/20 border border-purple-500 text-purple-300"
                   : "border border-transparent text-text-muted hover:text-text-secondary"
@@ -434,7 +446,7 @@ export default function PointsByRoundGraph({
             <button
               type="button"
               onClick={() => setMode("constructors")}
-              className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
+              className={`px-2 py-2 md:px-4 md:py-1.5 rounded-sm text-[10px] md:text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                 mode === "constructors"
                   ? "bg-purple-500/20 border border-purple-500 text-purple-300"
                   : "border border-transparent text-text-muted hover:text-text-secondary"
@@ -448,14 +460,14 @@ export default function PointsByRoundGraph({
           <button
             type="button"
             onClick={() => setShowDropdown(!showDropdown)}
-            className="px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-border-secondary text-text-secondary hover:border-purple-500 hover:text-purple-300 transition-colors duration-150"
+            className="px-2 py-2 md:px-4 md:py-1.5 rounded-sm text-[10px] md:text-xs font-bold font-mono uppercase tracking-widest border border-border-secondary text-text-secondary hover:border-purple-500 hover:text-purple-300 transition-colors duration-150"
           >
             Select ({selectedEntities.length})
           </button>
 
           {/* Dropdown Menu */}
           {showDropdown && (
-            <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-10 min-w-[250px] max-h-[300px] overflow-y-auto">
+            <div className="fixed inset-x-3 top-28 z-50 max-h-[55vh] overflow-y-auto rounded-sm border border-border-primary bg-bg-tertiary shadow-xl md:absolute md:inset-x-auto md:right-0 md:top-full md:mt-1 md:max-h-[300px] md:min-w-[250px]">
               {entities.map((entity) => {
                 const key =
                   mode === "drivers"
@@ -498,12 +510,12 @@ export default function PointsByRoundGraph({
         </div>
       </div>
 
-      <div className="flex flex-row">
+      <div className="flex min-w-0 flex-row">
         {/* Y-Axis Label - Congruent with X-Axis Label */}
         {chartData.length > 0 && (
           <div className="flex items-center justify-center w-4 shrink-0">
             <div className="-rotate-90 whitespace-nowrap">
-              <span className="text-[11px] font-bold text-text-muted font-mono uppercase tracking-[0.2em]">
+              <span className={CHART_TYPOGRAPHY.axisLabelClassName}>
                 {isQualy ? "Position" : "Total Points"}
               </span>
             </div>
@@ -511,8 +523,8 @@ export default function PointsByRoundGraph({
         )}
 
         {/* Chart Area */}
-        <div className="flex-grow">
-          <div className="relative h-[400px]">
+        <div className="min-w-0 flex-grow">
+          <MobileChartFrame height={400} logicalWidth={900}>
             {chartData.length > 0 ? (
               <>
                 <ResponsiveContainer width="100%" height="100%">
@@ -659,7 +671,7 @@ export default function PointsByRoundGraph({
 
                 {/* Custom Legend - Positioned in top-left */}
                 <div className="absolute top-8 left-25 bg-bg-primary/90 border border-border-primary rounded-sm p-3 backdrop-blur-sm pointer-events-none">
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1.5">
                     {entities
                       .filter((entity) => {
                         const key =
@@ -685,7 +697,7 @@ export default function PointsByRoundGraph({
                               className="w-3 h-3 rounded-full"
                               style={{ backgroundColor: color }}
                             />
-                            <span className="text-xs font-bold text-text-primary font-mono">
+                            <span className={CHART_TYPOGRAPHY.keyClassName}>
                               {name}
                             </span>
                           </div>
@@ -703,16 +715,17 @@ export default function PointsByRoundGraph({
                 </p>
               </div>
             )}
-          </div>
+          </MobileChartFrame>
         </div>
       </div>
 
-      {/* X-Axis Label - Centered relative to the whole component */}
+      {/* X-Axis Label - Centered under the plot area, not the y-axis label. */}
       {chartData.length > 0 && (
-        <div className="text-center mt-2">
-          <span className="text-[11px] font-bold text-text-muted font-mono uppercase tracking-[0.2em]">
-            Round
-          </span>
+        <div className="mt-2 flex flex-row">
+          <div className="w-4 shrink-0" />
+          <div className="flex-grow text-center">
+            <span className={CHART_TYPOGRAPHY.axisLabelClassName}>Round</span>
+          </div>
         </div>
       )}
     </div>

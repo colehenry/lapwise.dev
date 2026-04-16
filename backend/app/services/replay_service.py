@@ -4,11 +4,14 @@ Replay Service
 Business logic for fetching replay data.
 """
 
-from sqlalchemy.ext.asyncio import AsyncSession
+import gzip
+
+import msgpack
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import ReplayData, Session, Circuit
-from app.schemas.replay import ReplayListItem
+from app.schemas.replay import ReplayListItem, ReplayTrackResponse
 
 
 class ReplayService:
@@ -81,3 +84,42 @@ class ReplayService:
         )
         row = result.scalar_one_or_none()
         return row
+
+    @staticmethod
+    async def get_latest_track_geometry(
+        db: AsyncSession, circuit_id: int
+    ) -> ReplayTrackResponse | None:
+        """Get latest replay-backed track geometry for a circuit."""
+        result = await db.execute(
+            select(
+                ReplayData.data,
+                Session.year,
+                Session.round,
+                Session.event_name,
+                Circuit.id,
+                Circuit.name,
+            )
+            .join(Session, Session.id == ReplayData.session_id)
+            .join(Circuit, Circuit.id == Session.circuit_id)
+            .where(Session.circuit_id == circuit_id)
+            .where(Session.session_type == "race")
+            .order_by(Session.year.desc(), Session.round.desc())
+            .limit(1)
+        )
+        row = result.first()
+        if row is None:
+            return None
+
+        payload = msgpack.unpackb(gzip.decompress(row[0]), raw=False)
+        track = payload.get("track")
+        if not track or not track.get("polyline"):
+            return None
+
+        return ReplayTrackResponse(
+            season=row[1],
+            round=row[2],
+            event_name=row[3],
+            circuit_id=row[4],
+            circuit_name=row[5],
+            track=track,
+        )

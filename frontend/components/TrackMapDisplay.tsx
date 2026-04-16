@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import TrackMapImage from "@/components/TrackMapImage";
 
 /** Subtle dot grid SVG pattern */
 function DotGridPattern({ id = "dot-grid" }: { id?: string }) {
@@ -40,19 +40,20 @@ export function TrackMapCompact({
 }: TrackMapCompactProps) {
   return (
     <div
-      className="flex-shrink-0 rounded-sm w-44 h-24 relative flex items-center justify-center overflow-hidden"
+      className="pointer-events-none absolute right-2 top-2 z-0 flex h-20 w-32 items-center justify-center overflow-hidden rounded-sm opacity-65 md:pointer-events-auto md:static md:relative md:flex-shrink-0 md:w-44 md:h-24 md:opacity-100"
       style={{
         background:
           "radial-gradient(ellipse at center, rgba(160, 32, 240, 0.12) 0%, rgba(160, 32, 240, 0.04) 50%, transparent 80%)",
       }}
     >
       <DotGridPattern id={patternId} />
-      <Image
-        src={`/track-maps/${circuitId}.png`}
-        alt={`${circuitName} track map`}
+      <TrackMapImage
+        circuitId={circuitId}
+        circuitName={circuitName}
         width={160}
         height={88}
         className="object-contain w-full h-full relative z-10 opacity-90"
+        fallbackClassName="relative z-10 h-full w-full px-3"
         style={{
           filter:
             "drop-shadow(0 0 8px rgba(160, 32, 240, 0.35)) drop-shadow(0 0 20px rgba(160, 32, 240, 0.15))",
@@ -114,12 +115,13 @@ export function TrackMapFull({
 
       {/* Track image with glow */}
       {circuitId && (
-        <Image
-          src={`/track-maps/${circuitId}.png`}
-          alt={`${circuitName} track map`}
+        <TrackMapImage
+          circuitId={circuitId}
+          circuitName={circuitName}
           width={240}
           height={150}
           className="object-contain relative z-10 opacity-90 p-4"
+          fallbackClassName="relative z-10 h-full w-full px-4"
           style={{
             filter:
               "drop-shadow(0 0 10px rgba(160, 32, 240, 0.4)) drop-shadow(0 0 25px rgba(160, 32, 240, 0.15))",

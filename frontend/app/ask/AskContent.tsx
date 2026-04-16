@@ -364,7 +364,7 @@ export default function AskContent() {
 
   return (
     <div className="min-h-screen bg-bg-secondary">
-      <PageHeader title="Clutch">
+      <PageHeader title="Clutch" compactMobile>
         {remaining !== null && (
           <span className="hidden sm:block rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-text-muted">
             {remaining}/{TOTAL_LIMIT}
@@ -378,9 +378,10 @@ export default function AskContent() {
         <button
           type="button"
           onClick={handleNewConversation}
-          className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-4 py-2 font-mono text-xs font-bold text-text-secondary transition-all hover:border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-300"
+          className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 font-mono text-[11px] font-bold text-text-secondary transition-all hover:border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-300 sm:px-4 sm:text-xs"
         >
-          + New Chat
+          <span className="sm:hidden">New</span>
+          <span className="hidden sm:inline">+ New Chat</span>
         </button>
         <button
           type="button"
@@ -408,8 +409,8 @@ export default function AskContent() {
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-[radial-gradient(circle,rgba(160,32,240,0.06)_0%,transparent_70%)]" />
       </div>
 
-      <div className="relative max-w-6xl mx-auto px-4 md:px-8 py-6">
-        <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] shadow-[0_16px_64px_-16px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+      <div className="relative max-w-6xl mx-auto px-3 py-3 md:px-8 md:py-6">
+        <div className="relative overflow-hidden rounded-lg border border-white/[0.06] bg-white/[0.02] shadow-[0_16px_64px_-16px_rgba(0,0,0,0.5)] backdrop-blur-xl md:rounded-2xl">
           {/* Main chat area */}
           <div
             className={`grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] ${
@@ -420,7 +421,7 @@ export default function AskContent() {
               {!hasMessages ? (
                 <SuggestedQuestions onSelect={handleSend} disabled={isAsking} />
               ) : (
-                <div className="px-3 py-6 md:px-4">
+                <div className="min-w-0 overflow-x-hidden px-3 py-6 md:px-4">
                   {messages.map((msg) => (
                     <ChatMessage
                       key={msg.id}
@@ -453,7 +454,7 @@ export default function AskContent() {
               )}
             </div>
 
-            <div className="shrink-0 border-t border-white/[0.06] bg-bg-secondary px-4 py-4 md:px-6">
+            <div className="shrink-0 border-t border-white/[0.06] bg-bg-secondary px-3 py-3 md:px-6 md:py-4">
               <ChatInput
                 onSend={handleSend}
                 onAbort={handleAbort}

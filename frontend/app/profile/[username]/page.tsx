@@ -8,10 +8,12 @@ import { useAuth } from "@/components/AuthProvider";
 import PostCard from "@/components/discussions/PostCard";
 import UserAvatar from "@/components/discussions/UserAvatar";
 import FavoritesPicker from "@/components/favorites/FavoritesPicker";
+import TrackMapImage from "@/components/TrackMapImage";
 import Button from "@/components/ui/Button";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl, isValidHeadshotUrl } from "@/lib/api";
 import { fetchWithAuth } from "@/lib/auth";
+import { circuitHref, constructorHref, driverHref } from "@/lib/entityLinks";
 import type {
   PostListItem,
   PostListResponse,
@@ -170,7 +172,10 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {profile.favorite_team && (
               <Link
-                href={`/constructors/${encodeURIComponent(profile.favorite_team.team_name)}`}
+                href={
+                  constructorHref(profile.favorite_team.team_name) ??
+                  "/constructors"
+                }
                 className="flex items-center gap-3 p-3 rounded-sm bg-bg-tertiary border border-border-primary hover:border-purple-500/50 transition-colors"
               >
                 <div
@@ -202,7 +207,7 @@ export default function ProfilePage() {
 
             {profile.favorite_driver && (
               <Link
-                href={`/drivers/${profile.favorite_driver.driver_slug}`}
+                href={driverHref(profile.favorite_driver) ?? "/drivers"}
                 className="flex items-center gap-3 p-3 rounded-sm bg-bg-tertiary border border-border-primary hover:border-purple-500/50 transition-colors"
               >
                 {isValidHeadshotUrl(profile.favorite_driver.headshot_url) ? (
@@ -233,15 +238,19 @@ export default function ProfilePage() {
 
             {profile.favorite_circuit && (
               <Link
-                href={`/circuits/${profile.favorite_circuit.circuit_id}`}
+                href={
+                  circuitHref(profile.favorite_circuit.circuit_id) ??
+                  "/circuits"
+                }
                 className="flex items-center gap-3 p-3 rounded-sm bg-bg-tertiary border border-border-primary hover:border-purple-500/50 transition-colors"
               >
-                {/* biome-ignore lint/performance/noImgElement: static track map */}
-                <img
-                  src={`/track-maps/${profile.favorite_circuit.circuit_id}.png`}
-                  alt=""
+                <TrackMapImage
+                  circuitId={profile.favorite_circuit.circuit_id}
+                  circuitName={profile.favorite_circuit.name}
+                  width={40}
+                  height={40}
                   className="w-10 h-10 object-contain opacity-60 shrink-0"
-                  loading="lazy"
+                  fallbackClassName="h-10 w-10 shrink-0"
                 />
                 <div className="min-w-0">
                   <p className="text-xs text-text-muted">Circuit</p>

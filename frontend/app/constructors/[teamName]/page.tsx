@@ -1,25 +1,35 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
+import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
+import ArchiveMetricBar from "@/components/archive/ArchiveMetricBar";
+import ArchivePanel from "@/components/archive/ArchivePanel";
 import ConstructorResultsTable from "@/components/ConstructorResultsTable";
 import ConstructorSeasonHistoryGraph from "@/components/ConstructorSeasonHistoryGraph";
 import ConstructorStatisticsPanel from "@/components/ConstructorStatisticsPanel";
 import PageHeader from "@/components/PageHeader";
 import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
+import SprintToggle from "@/components/ui/SprintToggle";
 import TabBar from "@/components/ui/TabBar";
 import { useTabSync } from "@/hooks/useTabSync";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import {
+  getConstructorBannerUrl,
+  getConstructorLogoUrl,
+  getConstructorPhotoUrl,
+} from "@/lib/entityImageOverrides";
+import { constructorHref } from "@/lib/entityLinks";
 import type { ConstructorProfile } from "@/lib/types";
 
-type ConstructorTab = "overview" | "results" | "statistics";
+type ConstructorTab = "overview" | "results";
 
 const TABS: { key: ConstructorTab; label: string }[] = [
   { key: "overview", label: "Overview" },
   { key: "results", label: "Results" },
-  { key: "statistics", label: "Statistics" },
 ];
 
 function getOrdinalSuffix(position: number): string {
@@ -33,10 +43,15 @@ function getOrdinalSuffix(position: number): string {
 
 async function fetchConstructorProfile(
   teamName: string,
+  includeSprint: boolean,
 ): Promise<ConstructorProfile> {
-  const res = await fetch(apiUrl(`/api/constructors/${teamName}`), {
-    headers: apiHeaders(),
-  });
+  const encodedTeamName = encodeURIComponent(teamName);
+  const params = new URLSearchParams();
+  if (!includeSprint) params.set("include_sprint", "false");
+  const url = params.toString()
+    ? apiUrl(`/api/constructors/${encodedTeamName}?${params}`)
+    : apiUrl(`/api/constructors/${encodedTeamName}`);
+  const res = await fetch(url, { headers: apiHeaders() });
   if (!res.ok) throw new Error("Failed to fetch constructor profile");
   return res.json();
 }
@@ -45,14 +60,17 @@ export default function ConstructorProfilePage() {
   const params = useParams();
   const router = useRouter();
   const teamName = params.teamName as string;
+  const constructorUrl = constructorHref(teamName) ?? "/constructors";
   const { activeTab, switchTab } = useTabSync<ConstructorTab>(
-    `/constructors/${teamName}`,
+    constructorUrl,
     "overview",
   );
+  const [includeSprint, setIncludeSprint] = useState(true);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["constructor-profile", teamName],
-    queryFn: () => fetchConstructorProfile(teamName),
+  const { data, isLoading, isFetching, error } = useQuery({
+    queryKey: ["constructor-profile", teamName, includeSprint],
+    queryFn: () => fetchConstructorProfile(teamName, includeSprint),
+    placeholderData: keepPreviousData,
   });
 
   if (isLoading) {
@@ -82,13 +100,43 @@ export default function ConstructorProfilePage() {
     );
   }
 
-  const stats = [
-    { label: "Seasons", value: data.total_seasons },
-    { label: "Races", value: data.total_races },
+  const headlineStats = [
     { label: "Championships", value: data.total_championships || 0 },
     { label: "Wins", value: data.total_wins },
     { label: "Podiums", value: data.total_podiums },
+  ];
+  const stats = [
+    { label: "Seasons", value: data.total_seasons },
+    { label: "Races", value: data.total_races },
     { label: "Total Points", value: Math.round(data.total_points) },
+  ];
+  const teamColor = data.team_color ? `#${data.team_color}` : null;
+  const logoUrl = getConstructorLogoUrl(data);
+  const photoUrl = getConstructorPhotoUrl(data);
+  const bannerUrl = getConstructorBannerUrl(data);
+  const winRate =
+    data.total_races > 0 ? (data.total_wins / data.total_races) * 100 : 0;
+  const podiumRate =
+    data.total_races > 0 ? (data.total_podiums / data.total_races) * 100 : 0;
+  const highlights = [
+    {
+      label: "Win Rate",
+      value: `${winRate.toFixed(1)}%`,
+      progress: winRate,
+    },
+    {
+      label: "Podium Rate",
+      value: `${podiumRate.toFixed(1)}%`,
+      progress: podiumRate,
+    },
+    {
+      label: "Points per Race",
+      value:
+        data.total_races > 0
+          ? (data.total_points / data.total_races).toFixed(2)
+          : "0",
+      progress: undefined,
+    },
   ];
 
   return (
@@ -100,124 +148,103 @@ export default function ConstructorProfilePage() {
         onBack={() => router.push("/constructors")}
         backLabel="CONSTRUCTORS"
         bottomContent={
-          <div className="flex justify-center">
+          <div className="flex items-center relative">
+            <div className="flex-1" />
             <TabBar tabs={TABS} activeTab={activeTab} onTabChange={switchTab} />
+            <div className="flex-1 flex justify-end border-t border-border-primary/40 mt-1 pt-1.5 mr-2">
+              <SprintToggle
+                checked={includeSprint}
+                onChange={setIncludeSprint}
+                isLoading={isFetching}
+              />
+            </div>
           </div>
         }
       />
 
       {/* Tab Content */}
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div
+        className={`max-w-5xl mx-auto px-6 py-8 transition-opacity duration-150 ${isFetching ? "opacity-50" : ""}`}
+      >
         {activeTab === "overview" && (
-          <div className="space-y-8">
-            {/* Header section - Centered */}
-            <div className="flex flex-col items-center gap-8">
-              {/* Constructor Logo */}
-              {data.logo_url ? (
-                <div className="relative group flex-shrink-0">
-                  <div className="absolute -inset-1 bg-gradient-to-b from-purple-500/20 to-transparent rounded-sm blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
-                  <div
-                    className="relative w-56 h-56 rounded-sm overflow-hidden border border-border-primary bg-bg-tertiary flex items-center justify-center p-8"
-                    style={{
-                      borderBottomColor: data.team_color
-                        ? `#${data.team_color}`
-                        : "transparent",
-                      borderBottomWidth: data.team_color ? "4px" : "1px",
-                    }}
-                  >
-                    <Image
-                      src={data.logo_url}
-                      alt={data.team_name}
-                      width={180}
-                      height={180}
-                      className="w-full h-full object-contain"
-                      unoptimized={data.logo_url.includes("wikimedia.org")}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className="w-56 h-56 rounded-sm flex items-center justify-center border border-border-primary bg-bg-tertiary"
-                  style={{
-                    borderBottomColor: data.team_color
-                      ? `#${data.team_color}`
-                      : "transparent",
-                    borderBottomWidth: data.team_color ? "4px" : "1px",
-                  }}
-                >
+          <div className="space-y-6">
+            <ArchiveDataHeader
+              title={data.team_name}
+              eyebrow="Constructor Profile"
+              subtitle={`${data.latest_season ? `Active in ${data.latest_season}` : "Historical constructor"}${data.best_finish ? ` · Best finish ${getOrdinalSuffix(data.best_finish)}` : ""}`}
+              accentColor={teamColor}
+              stats={stats}
+              headlineStats={headlineStats}
+              bannerImageUrl={bannerUrl}
+              media={
+                photoUrl ? (
+                  <Image
+                    src={photoUrl}
+                    alt={`${data.team_name} car`}
+                    width={320}
+                    height={180}
+                    className="h-full w-full scale-125 rotate-[-90deg] object-contain"
+                  />
+                ) : logoUrl ? (
+                  <Image
+                    src={logoUrl}
+                    alt={data.team_name}
+                    width={180}
+                    height={180}
+                    className="h-full w-full object-contain p-7"
+                    unoptimized={logoUrl.includes("wikimedia.org")}
+                  />
+                ) : (
                   <span className="text-text-primary font-bold text-5xl text-center px-4">
                     {data.team_name
                       .split(" ")
                       .map((word) => word[0])
                       .join("")}
                   </span>
-                </div>
-              )}
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 w-full">
-                {stats.map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="bg-bg-tertiary rounded-sm border border-border-primary p-4 flex flex-col items-center text-center"
-                  >
-                    <p className="text-text-muted text-[10px] uppercase font-bold tracking-wider mb-1">
-                      {stat.label}
-                    </p>
-                    <p className="text-text-primary text-2xl font-bold font-mono tabular-nums">
-                      {stat.value}
-                    </p>
+                )
+              }
+              meta={
+                data.best_finish ? (
+                  <div className="bg-bg-primary border border-border-primary rounded-sm px-3 py-2">
+                    <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+                      Best Finish
+                    </div>
+                    <div className="text-sm font-semibold text-text-primary">
+                      {getOrdinalSuffix(data.best_finish)}
+                    </div>
                   </div>
+                ) : null
+              }
+            />
+
+            <ArchivePanel title="Constructor Highlights">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 rounded-sm border border-border-primary bg-bg-primary/20 px-4 md:px-5">
+                {highlights.map((stat) => (
+                  <ArchiveMetricBar
+                    key={stat.label}
+                    label={stat.label}
+                    value={stat.value}
+                    progress={stat.progress}
+                    accentColor={teamColor}
+                  />
                 ))}
               </div>
-            </div>
+            </ArchivePanel>
 
-            {/* Team Highlights - Restored to left-aligned */}
-            <div className="bg-bg-tertiary rounded-sm border border-border-primary p-8">
-              <h2 className="text-sm font-bold text-text-secondary font-mono mb-6">
-                Constructor Highlights
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <p className="text-text-muted text-sm mb-2">Win Rate</p>
-                  <p className="text-text-primary text-2xl font-bold">
-                    {data.total_races > 0
-                      ? `${((data.total_wins / data.total_races) * 100).toFixed(1)}%`
-                      : "0%"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-text-muted text-sm mb-2">Podium Rate</p>
-                  <p className="text-text-primary text-2xl font-bold">
-                    {data.total_races > 0
-                      ? `${((data.total_podiums / data.total_races) * 100).toFixed(1)}%`
-                      : "0%"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-text-muted text-sm mb-2">
-                    Points per Race
-                  </p>
-                  <p className="text-text-primary text-2xl font-bold">
-                    {data.total_races > 0
-                      ? (data.total_points / data.total_races).toFixed(2)
-                      : "0"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Championship History Graph - Restored */}
             <ConstructorSeasonHistoryGraph teamName={teamName} />
+
+            <ConstructorStatisticsPanel
+              teamName={teamName}
+              accentColor={teamColor}
+            />
           </div>
         )}
 
         {activeTab === "results" && (
-          <ConstructorResultsTable teamName={teamName} />
-        )}
-
-        {activeTab === "statistics" && (
-          <ConstructorStatisticsPanel teamName={teamName} />
+          <ConstructorResultsTable
+            teamName={teamName}
+            includeSprint={includeSprint}
+          />
         )}
       </div>
     </div>
