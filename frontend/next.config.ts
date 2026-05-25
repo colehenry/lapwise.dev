@@ -1,4 +1,5 @@
 import path from "node:path";
+import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const isProd = process.env.NODE_ENV === "production";
@@ -13,7 +14,7 @@ const csp: Record<string, string[]> = {
   "font-src": ["'self'", "data:"],
   "style-src": ["'self'", "'unsafe-inline'"],
   "script-src": ["'self'", "'unsafe-inline'"],
-  "connect-src": ["'self'", "https://api.lapwise.dev", "https://lapwise.dev"],
+  "connect-src": ["'self'", "https://api.lapwise.dev", "https://lapwise.dev", "https://*.sentry.io", "https://o*.ingest.sentry.io"],
 };
 
 // Next.js requires 'unsafe-eval' in development for Fast Refresh (HMR) and source maps.
@@ -94,4 +95,14 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
+  disableLogger: true,
+  automaticVercelMonitors: false,
+});

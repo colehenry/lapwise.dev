@@ -42,6 +42,9 @@
   msgpack>=1.0.7
   scipy>=1.11.0
 
+  # Error monitoring
+  sentry-sdk[fastapi]==2.22.0
+
   # AI
   anthropic>=0.39.0
   youtube-transcript-api>=0.6.0
