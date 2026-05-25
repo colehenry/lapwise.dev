@@ -107,9 +107,24 @@ export default function RegisterPage() {
         <h1 className="text-2xl font-bold text-text-primary mb-1">
           Join <span className="text-purple-500">Lapwise</span>
         </h1>
-        <p className="text-text-muted text-sm mb-8">
-          Create an account to join the discussion.
+        <p className="text-text-muted text-sm mb-3">
+          Join Lapwise to discuss races, ask Clutch, and track your favorites.
         </p>
+        <ul className="flex flex-col gap-1 mb-6">
+          {[
+            "Discussions & community",
+            "Clutch AI — ask anything about F1 data",
+            "Favorite driver, team & circuit",
+          ].map((item) => (
+            <li
+              key={item}
+              className="flex items-center gap-2 text-[11px] font-mono text-text-muted"
+            >
+              <span className="w-1 h-1 rounded-full bg-purple-500 flex-shrink-0" />
+              {item}
+            </li>
+          ))}
+        </ul>
 
         <GoogleButton />
         <OrDivider />

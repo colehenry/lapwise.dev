@@ -151,7 +151,7 @@ export default function Home() {
                 <div className="flex items-center gap-3">
                   <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
                   <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                    Formula 1 Analytics Platform
+                    Formula 1 Data · Replay · AI Analysis
                   </span>
                 </div>
 
@@ -159,6 +159,10 @@ export default function Home() {
                   <span className="text-purple-400">Lap</span>
                   <span className="text-text-primary">wise</span>
                 </h1>
+
+                <p className="text-xs text-text-muted tracking-widest uppercase font-medium">
+                  Charts, telemetry, replay, and analysis for every race
+                </p>
               </div>
 
               <div className="lg:hidden">
