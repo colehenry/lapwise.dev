@@ -37,10 +37,15 @@ def get_client_ip(request: Request) -> str:
 
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
-        for candidate in forwarded.split(","):
-            candidate = candidate.strip()
-            if candidate:
-                return candidate
+        candidates = [
+            candidate.strip()
+            for candidate in forwarded.split(",")
+            if candidate.strip()
+        ]
+        if candidates:
+            # Use the nearest upstream value, not the leftmost value. Clients
+            # can prepend spoofed entries, while trusted proxies append.
+            return candidates[-1]
 
     real_ip = request.headers.get("x-real-ip")
     if real_ip:

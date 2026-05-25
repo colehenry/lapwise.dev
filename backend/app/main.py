@@ -1,3 +1,4 @@
+import sentry_sdk
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -6,6 +7,14 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings
 from app.limiter import limiter
+
+if settings.sentry_dsn:
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=settings.sentry_environment,
+        traces_sample_rate=0.1,
+        send_default_pii=False,
+    )
 
 # Create the FastAPI application
 app = FastAPI(
