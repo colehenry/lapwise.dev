@@ -398,6 +398,7 @@ export default function DiscussionDetailPage() {
               comments={commentsData?.comments ?? []}
               onRefresh={refreshAll}
               isLocked={post.is_locked}
+              isAdmin={isAdmin}
             />
           )}
         </div>

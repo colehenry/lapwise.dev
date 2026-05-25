@@ -160,6 +160,55 @@ class CommentService:
         return {"comments": items, "next_cursor": next_cursor}
 
     @staticmethod
+    async def get_admin_comments(
+        db: AsyncSession, post_id: int, include_deleted: bool = True
+    ) -> list:
+        query = (
+            select(Comment)
+            .options(selectinload(Comment.author))
+            .where(Comment.post_id == post_id, Comment.parent_comment_id.is_(None))
+            .order_by(Comment.created_at)
+        )
+        if not include_deleted:
+            query = query.where(Comment.deleted_at.is_(None))
+
+        result = await db.execute(query)
+        comments = list(result.scalars().unique().all())
+
+        items = []
+        for c in comments:
+            items.append(
+                {
+                    "id": c.id,
+                    "post_id": c.post_id,
+                    "parent_comment_id": c.parent_comment_id,
+                    "body": c.body,
+                    "vote_count": c.vote_count,
+                    "author": c.author,
+                    "deleted_at": c.deleted_at,
+                    "created_at": c.created_at,
+                    "updated_at": c.updated_at,
+                }
+            )
+        return items
+
+    @staticmethod
+    async def restore_comment(db: AsyncSession, comment_id: int) -> Comment | None:
+        result = await db.execute(select(Comment).where(Comment.id == comment_id))
+        comment = result.scalar_one_or_none()
+        if not comment:
+            return None
+        comment.deleted_at = None
+
+        post_result = await db.execute(select(Post).where(Post.id == comment.post_id))
+        post = post_result.scalar_one_or_none()
+        if post:
+            post.comment_count = post.comment_count + 1
+
+        await db.commit()
+        return comment
+
+    @staticmethod
     async def update_comment(
         db: AsyncSession, comment_id: int, user_id: int, is_admin: bool, body: str
     ) -> Comment | None:

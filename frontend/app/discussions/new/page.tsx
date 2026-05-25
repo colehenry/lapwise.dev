@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
@@ -47,7 +48,13 @@ export default function NewDiscussionPage() {
             Start a Discussion
           </h1>
           <p className="text-text-tertiary mt-3">
-            Bring your race observations to the community.
+            Bring your race observations to the community.{" "}
+            <Link
+              href="/rules"
+              className="text-purple-400 hover:text-purple-300 underline underline-offset-2 text-sm"
+            >
+              Community rules
+            </Link>
           </p>
         </div>
       </div>
