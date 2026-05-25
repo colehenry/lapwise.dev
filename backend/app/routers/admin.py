@@ -4,7 +4,10 @@ Admin Router
 Endpoints for administrative tasks (user management, dashboard stats).
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from datetime import datetime, timedelta, timezone
+from typing import Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -16,27 +19,40 @@ from app.schemas.admin import (
     AdminUserListResponse,
     AdminUserUpdateRoleRequest,
     AdminUserUpdateStatusRequest,
-    LoginHistoryResponse,
 )
 from app.services.user_service import UserService
 from app.services.post_service import PostService
 
 router = APIRouter()
 
+PERIOD_HOURS: dict[str, int | None] = {
+    "all": None,
+    "month": 24 * 30,
+    "week": 24 * 7,
+    "24h": 24,
+}
+
+
+def _since(period: str) -> datetime | None:
+    hours = PERIOD_HOURS.get(period)
+    if hours is None:
+        return None
+    return datetime.now(timezone.utc) - timedelta(hours=hours)
+
 
 @router.get("/dashboard", response_model=AdminDashboardStats)
 async def get_dashboard_stats(
+    period: Literal["all", "month", "week", "24h"] = Query("all"),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_admin),
 ):
-    """
-    Get high-level statistics for the admin dashboard.
-    """
-    user_count = await UserService.count_users(db)
-    post_count = await PostService.count_posts(db)
+    since = _since(period)
+    user_count = await UserService.count_users(db, since=since)
+    active_users = await UserService.count_active_users(db, since=since)
+    post_count = await PostService.count_posts(db, since=since)
+    total_ai_queries = await UserService.sum_ai_queries(db)
     recent_activity_raw = await UserService.get_recent_login_activity(db, limit=10)
 
-    # Format activity for the response
     recent_activity = []
     for item in recent_activity_raw:
         activity = {
@@ -52,7 +68,9 @@ async def get_dashboard_stats(
 
     return {
         "user_count": user_count,
+        "active_users": active_users,
         "post_count": post_count,
+        "total_ai_queries": total_ai_queries,
         "recent_activity": recent_activity,
     }
 

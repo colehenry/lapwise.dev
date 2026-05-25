@@ -612,9 +612,13 @@ export interface AdminActivity {
   created_at: string;
 }
 
+export type AdminDashboardPeriod = "all" | "month" | "week" | "24h";
+
 export interface AdminDashboardStats {
   user_count: number;
+  active_users: number;
   post_count: number;
+  total_ai_queries: number;
   recent_activity: AdminActivity[];
 }
 

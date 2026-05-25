@@ -207,9 +207,9 @@ class DriverService:
             select(
                 func.count(SessionResult.id).label("total_races"),
                 func.count(distinct(Session.year)).label("total_seasons"),
-                func.sum(
-                    case((SessionResult.position == 1, 1), else_=0)
-                ).label("total_wins"),
+                func.sum(case((SessionResult.position == 1, 1), else_=0)).label(
+                    "total_wins"
+                ),
                 func.sum(
                     case((SessionResult.position.in_([1, 2, 3]), 1), else_=0)
                 ).label("total_podiums"),
@@ -274,7 +274,9 @@ class DriverService:
         # Most recent result — current team, headshot, latest season
         recent = (
             await db.execute(
-                select(Team.name, Team.team_color, SessionResult.headshot_url, Session.year)
+                select(
+                    Team.name, Team.team_color, SessionResult.headshot_url, Session.year
+                )
                 .join(Session, SessionResult.session_id == Session.id)
                 .join(Team, SessionResult.team_id == Team.id)
                 .where(SessionResult.driver_id == driver.id)
@@ -341,19 +343,16 @@ class DriverService:
             .group_by(Session.year, SessionResult.driver_id)
             .subquery()
         )
-        ranked_sq = (
-            select(
-                all_pts_sq.c.year,
-                all_pts_sq.c.driver_id,
-                func.rank()
-                .over(
-                    partition_by=all_pts_sq.c.year,
-                    order_by=all_pts_sq.c.pts.desc(),
-                )
-                .label("champ_position"),
+        ranked_sq = select(
+            all_pts_sq.c.year,
+            all_pts_sq.c.driver_id,
+            func.rank()
+            .over(
+                partition_by=all_pts_sq.c.year,
+                order_by=all_pts_sq.c.pts.desc(),
             )
-            .subquery()
-        )
+            .label("champ_position"),
+        ).subquery()
         positions = {
             row.year: row.champ_position
             for row in (

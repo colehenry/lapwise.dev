@@ -194,10 +194,12 @@ class PostService:
         return {"posts": items, "next_cursor": next_cursor}
 
     @staticmethod
-    async def count_posts(db: AsyncSession) -> int:
+    async def count_posts(db: AsyncSession, since: datetime | None = None) -> int:
         from sqlalchemy import func
 
         stmt = select(func.count()).select_from(Post).where(Post.deleted_at.is_(None))
+        if since:
+            stmt = stmt.where(Post.created_at >= since)
         result = await db.execute(stmt)
         return result.scalar() or 0
 

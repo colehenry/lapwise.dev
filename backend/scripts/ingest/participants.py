@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy import select
 from app.models import Driver, Team
-from .team_colors import enrich_team_color
+from .team_colors import enrich_team_color, normalize_team_name
 from .utils import safe_int
 
 
@@ -125,7 +125,7 @@ def ingest_team(db, team_data, year):
 
     Returns: team_id
     """
-    team_name = _nan_to_none(team_data.get("TeamName")) or "Unknown"
+    team_name = normalize_team_name(_nan_to_none(team_data.get("TeamName")) or "Unknown")
 
     team_color = enrich_team_color(team_data, year)
 
