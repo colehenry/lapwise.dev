@@ -32,6 +32,7 @@ export default function AdminLayout({
   const navItems = [
     { href: "/admin", label: "Dashboard" },
     { href: "/admin/users", label: "Users" },
+    { href: "/admin/posts", label: "Posts" },
     { href: "/admin/tags", label: "Tags" },
   ];
 
@@ -52,7 +53,10 @@ export default function AdminLayout({
           </div>
           <nav className="flex items-center gap-1 mt-4">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive =
+                item.href === "/admin"
+                  ? pathname === "/admin"
+                  : pathname.startsWith(item.href);
               return (
                 <Link
                   key={item.href}

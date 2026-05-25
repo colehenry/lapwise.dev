@@ -49,6 +49,12 @@ export default function Footer() {
               About
             </Link>
             <Link
+              href="/rules"
+              className="text-text-muted hover:text-purple-300 text-xs tracking-wide transition-colors duration-150"
+            >
+              Rules
+            </Link>
+            <Link
               href="/terms"
               className="text-text-muted hover:text-purple-300 text-xs tracking-wide transition-colors duration-150"
             >

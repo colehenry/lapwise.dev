@@ -629,6 +629,41 @@ export interface AdminUserListResponse {
   size: number;
 }
 
+export interface AdminPostListItem {
+  id: number;
+  title: string;
+  body: string;
+  post_type: string;
+  is_pinned: boolean;
+  is_locked: boolean;
+  vote_count: number;
+  comment_count: number;
+  author: DiscussionAuthor;
+  tags: DiscussionTag[];
+  deleted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminPostListResponse {
+  posts: AdminPostListItem[];
+  total: number;
+  page: number;
+  size: number;
+}
+
+export interface AdminCommentListItem {
+  id: number;
+  post_id: number;
+  parent_comment_id: number | null;
+  body: string;
+  vote_count: number;
+  author: DiscussionAuthor;
+  deleted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface DiscussionTag {
   id: number;
   name: string;

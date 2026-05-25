@@ -1,8 +1,10 @@
 import { apiUrl } from "./api";
 import { fetchWithAuth } from "./auth";
 import type {
+  AdminCommentListItem,
   AdminDashboardPeriod,
   AdminDashboardStats,
+  AdminPostListResponse,
   AdminUserListResponse,
   DiscussionTag,
   UserProfile,
@@ -67,6 +69,65 @@ export async function updateUserStatus(
   });
   if (!res.ok) throw new Error("Failed to update user status");
   return res.json();
+}
+
+export async function fetchAdminPosts(
+  page = 1,
+  size = 20,
+  query?: string,
+  status: "all" | "active" | "removed" = "all",
+): Promise<AdminPostListResponse> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    size: size.toString(),
+    status,
+  });
+  if (query) params.append("query", query);
+  const res = await fetchWithAuth(apiUrl(`/api/admin/posts?${params}`));
+  if (!res.ok) throw new Error("Failed to fetch admin posts");
+  return res.json();
+}
+
+export async function adminDeletePost(postId: number): Promise<void> {
+  const res = await fetchWithAuth(apiUrl(`/api/admin/posts/${postId}`), {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete post");
+}
+
+export async function adminRestorePost(postId: number): Promise<void> {
+  const res = await fetchWithAuth(
+    apiUrl(`/api/admin/posts/${postId}/restore`),
+    {
+      method: "PUT",
+    },
+  );
+  if (!res.ok) throw new Error("Failed to restore post");
+}
+
+export async function fetchAdminPostComments(
+  postId: number,
+): Promise<AdminCommentListItem[]> {
+  const res = await fetchWithAuth(
+    apiUrl(`/api/admin/posts/${postId}/comments`),
+  );
+  if (!res.ok) throw new Error("Failed to fetch comments");
+  return res.json();
+}
+
+export async function adminDeleteComment(commentId: number): Promise<void> {
+  const res = await fetchWithAuth(apiUrl(`/api/admin/comments/${commentId}`), {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete comment");
+}
+
+export async function adminRestoreComment(commentId: number): Promise<void> {
+  const res = await fetchWithAuth(
+    apiUrl(`/api/admin/comments/${commentId}/restore`),
+    { method: "PUT" },
+  );
+  if (!res.ok) throw new Error("Failed to restore comment");
 }
 
 /**
