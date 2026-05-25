@@ -80,9 +80,7 @@ class Settings(BaseSettings):
         if not self.trusted_proxy_hosts:
             return []
         return [
-            host.strip()
-            for host in self.trusted_proxy_hosts.split(",")
-            if host.strip()
+            host.strip() for host in self.trusted_proxy_hosts.split(",") if host.strip()
         ]
 
     class Config:

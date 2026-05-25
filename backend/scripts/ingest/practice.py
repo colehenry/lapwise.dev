@@ -61,9 +61,7 @@ def ingest_practice_results(db: SQLAlchemySession, fastf1_session, session_id, y
         lap_info = best_laps.get(driver_num, {})
 
         # Use derived position/time from laps, fall back to results DataFrame
-        position = lap_info.get("position") or safe_int(
-            driver_result.get("Position")
-        )
+        position = lap_info.get("position") or safe_int(driver_result.get("Position"))
         time_seconds = lap_info.get("time_seconds") or timedelta_to_seconds(
             driver_result.get("Time")
         )

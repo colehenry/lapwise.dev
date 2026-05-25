@@ -48,6 +48,18 @@ export default function Footer() {
             >
               About
             </Link>
+            <Link
+              href="/terms"
+              className="text-text-muted hover:text-purple-300 text-xs tracking-wide transition-colors duration-150"
+            >
+              Terms
+            </Link>
+            <Link
+              href="/privacy"
+              className="text-text-muted hover:text-purple-300 text-xs tracking-wide transition-colors duration-150"
+            >
+              Privacy
+            </Link>
             <a
               href="https://github.com/colehenry/lapwise.dev"
               target="_blank"

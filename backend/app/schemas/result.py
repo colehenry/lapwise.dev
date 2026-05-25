@@ -394,7 +394,9 @@ class LapData(BaseModel):
     deleted: Optional[bool] = None  # Lap time deleted by FIA
 
     # Session timing
-    lap_start_time_seconds: Optional[float] = None  # Session elapsed time when lap began
+    lap_start_time_seconds: Optional[
+        float
+    ] = None  # Session elapsed time when lap began
 
     class Config:
         from_attributes = True

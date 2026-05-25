@@ -12,7 +12,9 @@ from app.schemas.auth import UserProfile
 
 class AdminDashboardStats(BaseModel):
     user_count: int
+    active_users: int
     post_count: int
+    total_ai_queries: int
     recent_activity: list[dict]
 
 

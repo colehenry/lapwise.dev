@@ -96,7 +96,11 @@ class UserService:
         return list(result.scalars().all())
 
     @staticmethod
-    async def count_users(db: AsyncSession, query: str | None = None) -> int:
+    async def count_users(
+        db: AsyncSession,
+        query: str | None = None,
+        since: datetime | None = None,
+    ) -> int:
         stmt = select(func.count()).select_from(User)
         if query:
             stmt = stmt.where(
@@ -105,6 +109,22 @@ class UserService:
                     User.email.ilike(f"%{query}%"),
                 )
             )
+        if since:
+            stmt = stmt.where(User.created_at >= since)
+        result = await db.execute(stmt)
+        return result.scalar() or 0
+
+    @staticmethod
+    async def count_active_users(
+        db: AsyncSession, since: datetime | None = None
+    ) -> int:
+        from app.models.login_history import LoginHistory
+
+        stmt = select(func.count(func.distinct(LoginHistory.user_id))).where(
+            LoginHistory.success.is_(True)
+        )
+        if since:
+            stmt = stmt.where(LoginHistory.created_at >= since)
         result = await db.execute(stmt)
         return result.scalar() or 0
 
@@ -121,6 +141,12 @@ class UserService:
         result = await db.execute(stmt)
         history = result.scalars().all()
         return history
+
+    @staticmethod
+    async def sum_ai_queries(db: AsyncSession) -> int:
+        stmt = select(func.sum(User.ai_queries_used))
+        result = await db.execute(stmt)
+        return result.scalar() or 0
 
     @staticmethod
     async def update_user_role(

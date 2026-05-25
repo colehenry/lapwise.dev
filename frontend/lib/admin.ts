@@ -1,17 +1,19 @@
 import { apiUrl } from "./api";
 import { fetchWithAuth } from "./auth";
 import type {
+  AdminDashboardPeriod,
   AdminDashboardStats,
   AdminUserListResponse,
   DiscussionTag,
   UserProfile,
 } from "./types";
 
-/**
- * Fetches admin dashboard statistics.
- */
-export async function fetchAdminDashboardStats(): Promise<AdminDashboardStats> {
-  const res = await fetchWithAuth(apiUrl("/api/admin/dashboard"));
+export async function fetchAdminDashboardStats(
+  period: AdminDashboardPeriod = "all",
+): Promise<AdminDashboardStats> {
+  const res = await fetchWithAuth(
+    apiUrl(`/api/admin/dashboard?period=${period}`),
+  );
   if (!res.ok) throw new Error("Failed to fetch admin stats");
   return res.json();
 }
