@@ -14,7 +14,13 @@ const csp: Record<string, string[]> = {
   "font-src": ["'self'", "data:"],
   "style-src": ["'self'", "'unsafe-inline'"],
   "script-src": ["'self'", "'unsafe-inline'"],
-  "connect-src": ["'self'", "https://api.lapwise.dev", "https://lapwise.dev", "https://*.sentry.io", "https://o*.ingest.sentry.io"],
+  "connect-src": [
+    "'self'",
+    "https://api.lapwise.dev",
+    "https://lapwise.dev",
+    "https://*.sentry.io",
+    "https://o*.ingest.sentry.io",
+  ],
 };
 
 // Next.js requires 'unsafe-eval' in development for Fast Refresh (HMR) and source maps.
