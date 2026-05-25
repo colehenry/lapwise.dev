@@ -62,7 +62,7 @@ export default function TrackCanvas({
 }: TrackCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const trackPathRef = useRef<Path2D | null>(null);
   const hoveredDriverRef = useRef<string | null>(null);
 
@@ -195,6 +195,7 @@ export default function TrackCanvas({
     if (!ctx) return;
 
     const { width, height } = dimensions;
+    if (width === 0 || height === 0) return;
     const dpr = window.devicePixelRatio || 1;
 
     canvas.width = width * dpr;

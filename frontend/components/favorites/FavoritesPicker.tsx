@@ -56,6 +56,15 @@ export default function FavoritesPicker({
     initialCircuitId,
   );
 
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset search when step changes
   useEffect(() => {
     setSearch("");

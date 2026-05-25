@@ -616,7 +616,7 @@ export default function LiveReplayPreview() {
   const noOp = useCallback(() => {}, []);
 
   return (
-    <section className="border-b border-border-primary/40 bg-bg-primary px-6 py-10">
+    <section className="overflow-hidden border-b border-border-primary/40 bg-bg-primary px-6 py-10">
       <div className="mx-auto max-w-4xl">
         {/* Section label */}
         <div className="mb-5 flex items-center gap-3">

@@ -257,6 +257,8 @@ body {
 
 html {
   color-scheme: dark;
+  /* clip (not hidden) avoids creating a scroll container, so vertical scrolling is unaffected on iOS */
+  overflow-x: clip;
 }
 
 button,

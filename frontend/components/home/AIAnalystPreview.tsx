@@ -494,7 +494,7 @@ export default function AIAnalystPreview() {
   ].sort((a, b) => b.text.length - a.text.length);
 
   return (
-    <section className="border-b border-border-primary/40 bg-bg-primary px-6 py-10">
+    <section className="overflow-hidden border-b border-border-primary/40 bg-bg-primary px-6 py-10">
       <div className="mx-auto max-w-4xl">
         {/* Section label */}
         <div className="mb-5 flex items-center gap-3">

@@ -5,7 +5,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-bg-secondary border-t border-border-primary">
+    <footer className="overflow-hidden bg-bg-secondary border-t border-border-primary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:py-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Brand */}
@@ -29,7 +29,7 @@ export default function Footer() {
           </div>
 
           {/* Links */}
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:gap-x-6 md:gap-y-0">
             <Link
               href="/results"
               className="text-text-muted hover:text-purple-300 text-xs tracking-wide transition-colors duration-150"
@@ -47,24 +47,6 @@ export default function Footer() {
               className="text-text-muted hover:text-purple-300 text-xs tracking-wide transition-colors duration-150"
             >
               About
-            </Link>
-            <Link
-              href="/rules"
-              className="text-text-muted hover:text-purple-300 text-xs tracking-wide transition-colors duration-150"
-            >
-              Rules
-            </Link>
-            <Link
-              href="/terms"
-              className="text-text-muted hover:text-purple-300 text-xs tracking-wide transition-colors duration-150"
-            >
-              Terms
-            </Link>
-            <Link
-              href="/privacy"
-              className="text-text-muted hover:text-purple-300 text-xs tracking-wide transition-colors duration-150"
-            >
-              Privacy
             </Link>
             <a
               href="https://github.com/colehenry/lapwise.dev"
@@ -95,11 +77,18 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-4 text-center">
+        <div className="mt-4 text-center space-y-1.5">
           <p className="text-text-muted text-[10px] tracking-wide">
             Not affiliated with Formula 1, FIA, or any F1 constructors. All
             trademarks are property of their respective owners.
           </p>
+          <div className="flex items-center justify-center gap-3 text-[10px] text-text-muted tracking-wide">
+            <Link href="/rules" className="hover:text-purple-300 transition-colors duration-150">Rules</Link>
+            <span aria-hidden="true">·</span>
+            <Link href="/terms" className="hover:text-purple-300 transition-colors duration-150">Terms</Link>
+            <span aria-hidden="true">·</span>
+            <Link href="/privacy" className="hover:text-purple-300 transition-colors duration-150">Privacy</Link>
+          </div>
         </div>
       </div>
     </footer>

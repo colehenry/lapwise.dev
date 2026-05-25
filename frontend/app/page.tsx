@@ -165,13 +165,30 @@ export default function Home() {
                 </p>
               </div>
 
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: "Latest Race", href: "/results" },
+                  { label: "Ask Clutch", href: "/ask" },
+                  { label: "Replay", href: "/replay" },
+                  { label: "Discuss", href: "/discussions" },
+                ].map((action) => (
+                  <Link
+                    key={action.href}
+                    href={action.href}
+                    className="px-3 py-1.5 rounded-sm border border-border-primary text-xs text-text-muted hover:text-text-primary hover:border-purple-500/40 transition-colors font-medium"
+                  >
+                    {action.label}
+                  </Link>
+                ))}
+              </div>
+
               <div className="lg:hidden">
                 <TopRightLatestRace />
               </div>
 
               <div className="space-y-4 lg:pt-4">
                 <p className="text-[10px] text-text-muted tracking-widest uppercase font-mono font-bold">
-                  Jump to Results
+                  Explore the archive
                 </p>
                 <SeasonRoundSelector />
               </div>
@@ -195,7 +212,7 @@ export default function Home() {
       <NextRaceBanner />
 
       {/* Feature Cards */}
-      <section className="bg-bg-secondary py-14 px-4 md:px-6 border-y border-border-primary/60">
+      <section className="overflow-hidden bg-bg-secondary py-14 px-4 md:px-6 border-y border-border-primary/60">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8 flex flex-col items-center text-center">
             <div className="space-y-3">

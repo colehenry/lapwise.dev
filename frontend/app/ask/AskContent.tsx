@@ -73,6 +73,17 @@ export default function AskContent() {
 
   const abortRef = useRef<AbortController | null>(null);
 
+  // Lock background scroll on mobile so nav/footer don't drift behind the fixed chat panel.
+  useEffect(() => {
+    if (typeof window === "undefined" || window.innerWidth >= 768) return;
+    const html = document.documentElement;
+    const prev = html.style.overflow;
+    html.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = prev;
+    };
+  }, []);
+
   const { data: conversations = [] } = useQuery({
     queryKey: ["ai-conversations"],
     queryFn: listConversations,
@@ -363,7 +374,10 @@ export default function AskContent() {
   const hasMessages = messages.length > 0;
 
   return (
-    <div className="min-h-screen bg-bg-secondary">
+    // Mobile: fixed panel sized from nav bottom (top-14) to dock top (bottom-[3.5rem+safe-area]).
+    // 3.5rem matches actual dock height (min-h-12 + p-1 + pb-safe).
+    // background scroll lock (useEffect above) prevents nav/footer ghosting behind panel.
+    <div className="fixed inset-x-0 top-14 bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))] flex flex-col overflow-hidden bg-bg-secondary md:static md:inset-auto md:flex-none md:overflow-visible md:min-h-screen">
       <PageHeader title="Clutch" compactMobile>
         {remaining !== null && (
           <span className="hidden sm:block rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-text-muted">
@@ -409,19 +423,21 @@ export default function AskContent() {
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-[radial-gradient(circle,rgba(160,32,240,0.06)_0%,transparent_70%)]" />
       </div>
 
-      <div className="relative max-w-6xl mx-auto px-3 py-3 md:px-8 md:py-6">
-        <div className="relative overflow-hidden rounded-lg border border-white/[0.06] bg-white/[0.02] shadow-[0_16px_64px_-16px_rgba(0,0,0,0.5)] backdrop-blur-xl md:rounded-2xl">
+      {/* Chat card — flex-1 on mobile fills remaining height; desktop keeps card layout */}
+      <div className="relative flex flex-1 flex-col overflow-hidden md:block md:flex-none md:max-w-6xl md:mx-auto md:px-8 md:py-6">
+        <div className="relative flex flex-1 flex-col overflow-hidden md:block md:flex-none md:rounded-2xl md:border md:border-white/[0.06] md:bg-white/[0.02] md:shadow-[0_16px_64px_-16px_rgba(0,0,0,0.5)] md:backdrop-blur-xl">
           {/* Main chat area */}
           <div
-            className={`grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] ${
-              sidebarOpen ? "pr-72" : ""
+            className={`flex flex-1 flex-col overflow-hidden md:grid md:min-h-0 md:min-w-0 md:grid-rows-[minmax(0,1fr)_auto] ${
+              sidebarOpen ? "md:pr-72" : ""
             }`}
           >
-            <div className="min-h-0">
+            {/* Messages / suggestions — scrollable on mobile */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden md:min-h-0">
               {!hasMessages ? (
                 <SuggestedQuestions onSelect={handleSend} disabled={isAsking} />
               ) : (
-                <div className="min-w-0 overflow-x-hidden px-3 py-6 md:px-4">
+                <div className="min-w-0 px-3 py-4 md:px-4 md:py-6">
                   {messages.map((msg) => (
                     <ChatMessage
                       key={msg.id}
@@ -454,6 +470,7 @@ export default function AskContent() {
               )}
             </div>
 
+            {/* Input — pinned at bottom on mobile */}
             <div className="shrink-0 border-t border-white/[0.06] bg-bg-secondary px-3 py-3 md:px-6 md:py-4">
               <ChatInput
                 onSend={handleSend}
