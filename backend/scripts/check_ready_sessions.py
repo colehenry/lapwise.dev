@@ -29,8 +29,8 @@ MIN_DELAY_HOURS = 1
 MAX_DELAY_HOURS = 3
 
 # FastF1 session columns map to session types
-# Session1=FP1, Session2=FP2, Session3=FP3 or SprintQualifying,
-# Session4=Qualifying or Sprint, Session5=Race
+# Standard: S1=FP1, S2=FP2, S3=FP3, S4=Qualifying, S5=Race
+# Sprint:   S1=FP1, S2=SprintQualifying, S3=Sprint, S4=Qualifying, S5=Race
 SESSION_MAP_STANDARD = {
     "Session1DateUtc": "fp1",
     "Session2DateUtc": "fp2",
@@ -41,9 +41,9 @@ SESSION_MAP_STANDARD = {
 
 SESSION_MAP_SPRINT = {
     "Session1DateUtc": "fp1",
-    "Session2DateUtc": "fp2",
-    "Session3DateUtc": "sprint_qualifying",
-    "Session4DateUtc": "sprint_race",
+    "Session2DateUtc": "sprint_qualifying",
+    "Session3DateUtc": "sprint_race",
+    "Session4DateUtc": "qualifying",
     "Session5DateUtc": "race",
 }
 
@@ -68,6 +68,31 @@ def set_output(key, value):
     print(f"  Output: {key}={value}")
 
 
+def is_race_weekend(schedule, now):
+    """Return True if we're within the active window of any race weekend.
+
+    A race weekend is considered active from Thursday (3 days before race day)
+    through 4 hours after the race ends on Sunday.
+    """
+    for _, event in schedule.iterrows():
+        race_col = "Session5DateUtc"
+        race_date = event.get(race_col)
+        if race_date is None or str(race_date) == "NaT":
+            continue
+        if hasattr(race_date, "to_pydatetime"):
+            race_date = race_date.to_pydatetime()
+        if race_date.tzinfo is None:
+            race_date = race_date.replace(tzinfo=timezone.utc)
+
+        race_duration = SESSION_DURATIONS["race"]
+        weekend_start = race_date - timedelta(days=3)
+        weekend_end = race_date + timedelta(hours=race_duration + 4)
+
+        if weekend_start <= now <= weekend_end:
+            return True
+    return False
+
+
 def main():
     now = datetime.now(timezone.utc)
     year = now.year
@@ -85,6 +110,12 @@ def main():
         schedule = schedule[schedule["EventFormat"] != "testing"]
     except Exception as e:
         print(f"Failed to load schedule: {e}")
+        set_output("should_ingest", "false")
+        sys.exit(0)
+
+    # Exit early if not a race weekend — avoids unnecessary DB queries on off-weeks
+    if not is_race_weekend(schedule, now):
+        print("Not a race weekend. Nothing to ingest.")
         set_output("should_ingest", "false")
         sys.exit(0)
 

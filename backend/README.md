@@ -153,7 +153,7 @@ docker run -p 8000:8000 \
 - [ ] Use a strong `SECRET_KEY` (generate with: `openssl rand -hex 32`)
 - [ ] Configure `CORS_ORIGINS` with actual frontend URL
 - [ ] Configure `RATE_LIMIT_STORAGE_URL` with shared production storage
-- [ ] Configure `TRUSTED_PROXY_HOSTS` only for known load balancer/proxy peers
+- [ ] Configure `TRUSTED_PROXY_HOSTS` only for known load balancer/proxy peers, and verify spoofed `X-Forwarded-For` values are not recorded
 - [ ] Treat `LAPWISE_API_KEY` as a public traffic key, not a secret
 - [ ] Use managed PostgreSQL (e.g., Neon, Railway, Supabase)
 - [ ] Set up health check monitoring at `/health`

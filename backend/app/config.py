@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     google_client_secret: str = ""
     oauth_redirect_base_url: str = "http://localhost:8000"
 
+    # Error monitoring
+    sentry_dsn: str | None = None
+    sentry_environment: str = "production"
+
     # AI
     ai_daily_query_limit: int = 20
     ai_db_url: str | None = None  # Read-only connection for AI queries

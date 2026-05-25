@@ -37,7 +37,7 @@ class User(Base):
     last_login_at = Column(DateTime(timezone=True), nullable=True)
 
     # AI rate limiting
-    ai_queries_today = Column(Integer, default=0, nullable=False, server_default="0")
+    ai_queries_used = Column(Integer, default=0, nullable=False, server_default="0")
     ai_queries_reset_at = Column(DateTime(timezone=True), nullable=True)
 
     # Favorites (all optional)
