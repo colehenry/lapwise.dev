@@ -421,10 +421,10 @@ async function checkRateLimit(
 
   const result = await sql`
 		UPDATE users
-		SET ai_queries_today = ai_queries_today + 1
+		SET ai_queries_used = ai_queries_used + 1
 		WHERE id = ${userId}
-		  AND ai_queries_today < ${AI_TOTAL_QUERY_LIMIT}
-		RETURNING ai_queries_today
+		  AND ai_queries_used < ${AI_TOTAL_QUERY_LIMIT}
+		RETURNING ai_queries_used
 	`;
 
   if (result.length === 0) {
@@ -432,7 +432,7 @@ async function checkRateLimit(
   }
 
   const updated =
-    (result[0]?.ai_queries_today as number) ?? AI_TOTAL_QUERY_LIMIT;
+    (result[0]?.ai_queries_used as number) ?? AI_TOTAL_QUERY_LIMIT;
   return {
     allowed: true,
     remaining: Math.max(0, AI_TOTAL_QUERY_LIMIT - updated),
