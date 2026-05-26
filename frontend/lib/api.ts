@@ -91,10 +91,6 @@ export async function fetchStandings(
 }
 
 /**
- * Returns true if the headshot URL is a valid, loadable image URL.
- * Filters out null, "None", "nan", and non-http values.
- */
-/**
  * Fetches seasons that have replay data available
  */
 export async function fetchReplaySeasons(): Promise<number[]> {
