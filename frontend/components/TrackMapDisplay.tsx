@@ -1,5 +1,6 @@
 "use client";
 
+import { useTheme } from "@/components/ThemeProvider";
 import TrackMapImage from "@/components/TrackMapImage";
 
 /** Subtle dot grid SVG pattern */
@@ -38,13 +39,19 @@ export function TrackMapCompact({
   circuitName,
   patternId,
 }: TrackMapCompactProps) {
+  const { theme } = useTheme();
+
   return (
     <div
       className="pointer-events-none absolute right-2 top-2 z-0 flex h-20 w-32 items-center justify-center overflow-hidden rounded-sm opacity-65 md:pointer-events-auto md:static md:relative md:flex-shrink-0 md:w-44 md:h-24 md:opacity-100"
-      style={{
-        background:
-          "radial-gradient(ellipse at center, rgba(160, 32, 240, 0.12) 0%, rgba(160, 32, 240, 0.04) 50%, transparent 80%)",
-      }}
+      style={
+        theme === "dark"
+          ? {
+              background:
+                "radial-gradient(ellipse at center, rgba(160, 32, 240, 0.12) 0%, rgba(160, 32, 240, 0.04) 50%, transparent 80%)",
+            }
+          : undefined
+      }
     >
       <DotGridPattern id={patternId} />
       <TrackMapImage
@@ -54,10 +61,14 @@ export function TrackMapCompact({
         height={88}
         className="object-contain w-full h-full relative z-10 opacity-90"
         fallbackClassName="relative z-10 h-full w-full px-3"
-        style={{
-          filter:
-            "drop-shadow(0 0 8px rgba(160, 32, 240, 0.35)) drop-shadow(0 0 20px rgba(160, 32, 240, 0.15))",
-        }}
+        style={
+          theme === "dark"
+            ? {
+                filter:
+                  "drop-shadow(0 0 8px rgba(160, 32, 240, 0.35)) drop-shadow(0 0 20px rgba(160, 32, 240, 0.15))",
+              }
+            : undefined
+        }
       />
     </div>
   );
@@ -77,13 +88,22 @@ export function TrackMapFull({
   location,
   trackLengthKm,
 }: TrackMapFullProps) {
+  const { theme } = useTheme();
+
   return (
     <div
       className="w-full md:w-72 border-t md:border-t-0 md:border-l border-border-primary relative flex items-center justify-center overflow-hidden min-h-[180px]"
-      style={{
-        background:
-          "radial-gradient(ellipse at center, rgba(160, 32, 240, 0.10) 0%, rgba(160, 32, 240, 0.03) 50%, rgba(10, 10, 15, 0.8) 100%)",
-      }}
+      style={
+        theme === "dark"
+          ? {
+              background:
+                "radial-gradient(ellipse at center, rgba(160, 32, 240, 0.10) 0%, rgba(160, 32, 240, 0.03) 50%, rgba(10, 10, 15, 0.8) 100%)",
+            }
+          : {
+              background:
+                "radial-gradient(ellipse at center, rgba(160, 32, 240, 0.08) 0%, rgba(160, 32, 240, 0.03) 38%, rgba(255, 255, 255, 0.98) 100%)",
+            }
+      }
     >
       <DotGridPattern id="session-track-dots" />
 
@@ -122,10 +142,14 @@ export function TrackMapFull({
           height={150}
           className="object-contain relative z-10 opacity-90 p-4"
           fallbackClassName="relative z-10 h-full w-full px-4"
-          style={{
-            filter:
-              "drop-shadow(0 0 10px rgba(160, 32, 240, 0.4)) drop-shadow(0 0 25px rgba(160, 32, 240, 0.15))",
-          }}
+          style={
+            theme === "dark"
+              ? {
+                  filter:
+                    "drop-shadow(0 0 10px rgba(160, 32, 240, 0.4)) drop-shadow(0 0 25px rgba(160, 32, 240, 0.15))",
+                }
+              : undefined
+          }
         />
       )}
     </div>

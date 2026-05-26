@@ -205,7 +205,7 @@ export default function TopRightLatestRace() {
               circuitName={data.circuit_name}
               width={200}
               height={200}
-              className="object-contain opacity-80 mix-blend-lighten scale-[1.25]"
+              className="object-contain opacity-85 scale-[1.25]"
               fallbackClassName="h-full w-full px-3"
             />
           </div>

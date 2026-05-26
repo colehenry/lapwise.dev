@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Outfit, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import AppShell from "@/components/AppShell";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { getThemeInitScript } from "@/lib/theme";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -43,11 +45,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
       <body
         className={`antialiased ${outfit.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable}`}
       >
-        <AppShell>{children}</AppShell>
+        <script dangerouslySetInnerHTML={{ __html: getThemeInitScript() }} />
+        <ThemeProvider>
+          <AppShell>{children}</AppShell>
+        </ThemeProvider>
       </body>
     </html>
   );

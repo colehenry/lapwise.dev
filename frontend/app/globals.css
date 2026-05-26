@@ -61,6 +61,39 @@
   --shadow-purple: 0 0 20px rgba(160, 32, 240, 0.3);
   --shadow-red: 0 0 20px rgba(225, 6, 0, 0.3);
   --overlay: rgba(0, 0, 0, 0.7);
+  --glass-surface: rgba(21, 21, 30, 0.86);
+  --glass-surface-soft: rgba(255, 255, 255, 0.03);
+  --glass-surface-strong: rgba(21, 21, 30, 0.95);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-border-strong: rgba(255, 255, 255, 0.08);
+  --shadow-floating: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --shadow-floating-soft: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-tooltip: 0 8px 24px rgba(0, 0, 0, 0.35);
+
+  /* Chart surfaces */
+  --chart-grid: #2a2a35;
+  --chart-axis: #999999;
+  --chart-tooltip-bg: #1e1e28;
+  --chart-tooltip-border: #2a2a35;
+  --chart-annotation: #666666;
+  --chart-neutral-stroke: #999999;
+
+  /* Replay canvas surfaces */
+  --canvas-bg-start: #080809;
+  --canvas-bg-end: #040404;
+  --canvas-grid: rgba(255, 255, 255, 0.02);
+  --canvas-track: rgba(255, 255, 255, 0.12);
+  --canvas-track-glow: rgba(255, 255, 255, 0.04);
+  --canvas-start-finish: rgba(255, 255, 255, 0.5);
+  --canvas-drs-active: rgba(0, 220, 80, 0.35);
+  --canvas-drs-inactive: rgba(0, 220, 80, 0.1);
+  --canvas-corner-label: rgba(255, 255, 255, 0.35);
+  --message-user-bg: rgba(255, 255, 255, 0.05);
+  --message-user-border: rgba(255, 255, 255, 0.08);
+  --message-assistant-bg: rgba(255, 255, 255, 0.03);
+  --message-assistant-border: rgba(255, 255, 255, 0.06);
+  --message-query-bg: rgba(10, 10, 15, 0.72);
+  --message-query-border: rgba(255, 255, 255, 0.08);
 
   /* Typography */
   --font-sans: var(--font-outfit, "Segoe UI", "Helvetica Neue", sans-serif);
@@ -114,6 +147,61 @@
   --z-modal: 1300;
   --z-popover: 1400;
   --z-tooltip: 1500;
+}
+
+[data-theme="light"] {
+  --background-primary: #f6f7fb;
+  --background-secondary: #eef0f7;
+  --background-tertiary: #ffffff;
+  --background-elevated: #e6e9f3;
+
+  --text-primary: #161a23;
+  --text-secondary: #2a3040;
+  --text-tertiary: #596274;
+  --text-muted: #778195;
+
+  --border-primary: #d7ddea;
+  --border-secondary: #c8d0e0;
+  --divider: #e8ebf3;
+
+  --shadow-sm: 0 1px 2px 0 rgba(20, 18, 28, 0.08);
+  --shadow-md: 0 8px 18px -10px rgba(20, 18, 28, 0.16);
+  --shadow-lg: 0 16px 28px -14px rgba(20, 18, 28, 0.18);
+  --shadow-xl: 0 28px 44px -18px rgba(20, 18, 28, 0.2);
+  --shadow-purple: 0 0 18px rgba(160, 32, 240, 0.12);
+  --shadow-red: 0 0 18px rgba(225, 6, 0, 0.12);
+  --overlay: rgba(34, 40, 58, 0.14);
+  --glass-surface: rgba(248, 249, 253, 0.84);
+  --glass-surface-soft: rgba(255, 255, 255, 0.78);
+  --glass-surface-strong: rgba(250, 251, 255, 0.94);
+  --glass-border: rgba(89, 98, 116, 0.16);
+  --glass-border-strong: rgba(89, 98, 116, 0.22);
+  --shadow-floating: 0 18px 42px rgba(22, 26, 35, 0.14);
+  --shadow-floating-soft: 0 12px 28px rgba(22, 26, 35, 0.1);
+  --shadow-tooltip: 0 12px 24px rgba(22, 26, 35, 0.1);
+
+  --chart-grid: #d7ddea;
+  --chart-axis: #596274;
+  --chart-tooltip-bg: #f9faff;
+  --chart-tooltip-border: #d7ddea;
+  --chart-annotation: #778195;
+  --chart-neutral-stroke: #8992a5;
+
+  --canvas-bg-start: #fbfbff;
+  --canvas-bg-end: #eceff8;
+  --canvas-grid: rgba(42, 48, 64, 0.04);
+  --canvas-track: rgba(42, 48, 64, 0.18);
+  --canvas-track-glow: rgba(42, 48, 64, 0.06);
+  --canvas-start-finish: rgba(42, 48, 64, 0.38);
+  --canvas-drs-active: rgba(0, 168, 107, 0.32);
+  --canvas-drs-inactive: rgba(0, 168, 107, 0.14);
+  --canvas-corner-label: rgba(42, 48, 64, 0.38);
+  --message-user-bg: rgba(160, 32, 240, 0.08);
+  --message-user-border: rgba(160, 32, 240, 0.16);
+  --message-assistant-bg: rgba(232, 236, 245, 0.92);
+  --message-assistant-border: rgba(137, 146, 165, 0.22);
+  --message-query-bg: rgba(240, 243, 249, 0.98);
+  --message-query-border: rgba(137, 146, 165, 0.22);
 }
 
 @theme inline {
@@ -249,6 +337,9 @@ body {
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: rgba(160, 32, 240, 0.18);
   overscroll-behavior-y: none;
+  transition:
+    background-color var(--transition-base),
+    color var(--transition-base);
 }
 
 * {
@@ -256,9 +347,17 @@ body {
 }
 
 html {
-  color-scheme: dark;
   /* clip (not hidden) avoids creating a scroll container, so vertical scrolling is unaffected on iOS */
   overflow-x: clip;
+  background: var(--background-primary);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
 }
 
 button,
@@ -402,6 +501,31 @@ textarea {
 
 .shadow-red {
   box-shadow: var(--shadow-red);
+}
+
+.theme-glass-panel {
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-floating);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.theme-glass-panel-soft {
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-floating-soft);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.theme-glass-card {
+  background: var(--glass-surface-soft);
+  border: 1px solid var(--glass-border);
+}
+
+.theme-overlay {
+  background: var(--overlay);
 }
 
 .markdown-content {

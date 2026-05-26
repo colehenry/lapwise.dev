@@ -116,7 +116,7 @@ export default function LatestRaceWeekend() {
                   circuitName={data.circuit_name}
                   width={140}
                   height={80}
-                  className="object-contain relative z-10 opacity-80 mix-blend-lighten mb-3"
+                  className="object-contain relative z-10 opacity-85 mb-3"
                   fallbackClassName="relative z-10 mb-3 h-20 w-full px-3"
                 />
                 <span className="relative z-10 text-[10px] tracking-widest text-purple-300 font-bold uppercase font-mono group-hover:text-purple-200 transition-colors duration-150 flex items-center gap-1">

@@ -5,13 +5,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import PageHeader from "@/components/PageHeader";
+import { useTheme } from "@/components/ThemeProvider";
 import ExpandButton from "@/components/ui/ExpandButton";
 import Skeleton from "@/components/ui/Skeleton";
 import SortPills from "@/components/ui/SortPills";
 import SprintToggle from "@/components/ui/SprintToggle";
 import TiltCard from "@/components/ui/TiltCard";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
-import { getConstructorLogoUrl } from "@/lib/entityImageOverrides";
+import {
+  getConstructorLogoUrl,
+  shouldInvertConstructorLogoOnLight,
+} from "@/lib/entityImageOverrides";
 import { constructorHref } from "@/lib/entityLinks";
 import type { ConstructorListItem, ConstructorListResponse } from "@/lib/types";
 
@@ -34,10 +38,13 @@ async function fetchAllConstructors(
 }
 
 function ConstructorCard({ team }: { team: ConstructorListItem }) {
+  const { theme } = useTheme();
   const teamUrl = constructorHref(team.team_name) ?? "/constructors";
   const isActive = team.latest_season === CURRENT_YEAR;
   const teamColor = team.team_color ? `#${team.team_color}` : "#888";
   const logoUrl = getConstructorLogoUrl(team);
+  const invertLogo =
+    theme === "light" && shouldInvertConstructorLogoOnLight(team);
 
   // Generate initials from team name
   const initials = team.team_name
@@ -70,6 +77,7 @@ function ConstructorCard({ team }: { team: ConstructorListItem }) {
                   width={56}
                   height={56}
                   className="w-full h-full object-contain p-1"
+                  style={invertLogo ? { filter: "invert(1)" } : undefined}
                   unoptimized={logoUrl.includes("wikimedia.org")}
                 />
               </div>

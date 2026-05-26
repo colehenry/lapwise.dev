@@ -20,14 +20,14 @@ import type { ChartConfig, StepType, ThinkingStep } from "@/lib/chat";
 const AIChart = dynamic(() => import("./AIChart"), {
   ssr: false,
   loading: () => (
-    <div className="h-[340px] rounded-sm border border-white/[0.06] bg-white/[0.02]" />
+    <div className="h-[340px] rounded-sm border border-[var(--glass-border)] bg-[var(--glass-surface)]" />
   ),
 });
 
 const AIDataTable = dynamic(() => import("./AIDataTable"), {
   ssr: false,
   loading: () => (
-    <div className="h-28 rounded-xl border border-white/[0.06] bg-white/[0.02]" />
+    <div className="h-28 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface)]" />
   ),
 });
 
@@ -293,7 +293,7 @@ export default function ChatMessage({
       <div className="flex min-w-0 max-w-full gap-3 py-3">
         <AIAnalystAvatar size={avatarSize} />
         <div className="min-w-0 flex-1 pt-0.5">
-          <div className="max-w-full rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+          <div className="w-full max-w-full rounded-2xl border border-[var(--message-assistant-border)] bg-[var(--message-assistant-bg)] px-4 py-3">
             <div className="flex items-center gap-2 text-xs text-text-muted">
               <svg
                 className="animate-spin h-3.5 w-3.5"
@@ -344,11 +344,11 @@ export default function ChatMessage({
         className={`min-w-0 flex-1 overflow-hidden ${isUser ? "text-right" : ""}`}
       >
         {isUser ? (
-          <div className="inline-block max-w-[min(90%,calc(100vw-2rem))] whitespace-pre-wrap break-words rounded-xl border border-white/[0.06] bg-white/[0.04] px-3 py-2 text-left text-xs leading-relaxed text-text-primary md:max-w-[85%] md:rounded-2xl md:px-4 md:py-2.5 md:text-sm">
+          <div className="inline-block w-fit max-w-[min(90%,calc(100vw-2rem))] whitespace-pre-wrap break-words rounded-xl border border-[var(--message-user-border)] bg-[var(--message-user-bg)] px-3 py-2 text-left text-xs leading-relaxed text-text-primary md:max-w-[85%] md:rounded-2xl md:px-4 md:py-2.5 md:text-sm">
             {content}
           </div>
         ) : (
-          <div className="min-w-0 max-w-full space-y-2 overflow-hidden rounded-xl border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 md:rounded-2xl md:px-5 md:py-3">
+          <div className="w-full min-w-0 max-w-full space-y-2 overflow-hidden rounded-xl border border-[var(--message-assistant-border)] bg-[var(--message-assistant-bg)] px-3 py-2.5 md:rounded-2xl md:px-5 md:py-3">
             {steps && steps.length > 0 && (
               <ThinkingSteps steps={steps} isStreaming={isStreaming} />
             )}
@@ -549,7 +549,7 @@ export default function ChatMessage({
                     {queries.map((sql) => (
                       <pre
                         key={sql}
-                        className="bg-bg-primary border border-white/[0.06] rounded-lg p-3 text-xs text-text-tertiary font-mono whitespace-pre-wrap break-words"
+                        className="rounded-lg border border-[var(--message-query-border)] bg-[var(--message-query-bg)] p-3 text-xs text-text-tertiary font-mono whitespace-pre-wrap break-words"
                       >
                         {sql}
                       </pre>

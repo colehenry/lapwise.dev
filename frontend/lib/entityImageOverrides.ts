@@ -116,6 +116,21 @@ const CONSTRUCTOR_IMAGE_OVERRIDES: Record<string, EntityImageOverride> = {
   williams: teamImages("williams"),
 };
 
+const CONSTRUCTOR_LOGO_INVERT_ON_LIGHT = new Set<string>([
+  "alpine",
+  "astonmartin",
+  "audi",
+  "cadillac",
+  "haas",
+  "haasf1team",
+  "mclaren",
+  "mercedes",
+  "racingbulls",
+  "redbull",
+  "redbullracing",
+  "williams",
+]);
+
 export function getDriverImageOverride(
   driver: DriverImageInput,
 ): EntityImageOverride | null {
@@ -157,6 +172,14 @@ export function getConstructorLogoUrl(
   team: ConstructorImageInput,
 ): string | null {
   return getConstructorImageOverride(team)?.logoUrl ?? team.logo_url ?? null;
+}
+
+export function shouldInvertConstructorLogoOnLight(
+  team: ConstructorImageInput,
+): boolean {
+  return CONSTRUCTOR_LOGO_INVERT_ON_LIGHT.has(
+    normalizeEntityKey(team.team_name),
+  );
 }
 
 export function getConstructorPhotoUrl(

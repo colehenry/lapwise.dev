@@ -380,19 +380,19 @@ export default function AskContent() {
     <div className="fixed inset-x-0 top-14 bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))] flex flex-col overflow-hidden bg-bg-secondary md:static md:inset-auto md:flex-none md:overflow-visible md:min-h-screen">
       <PageHeader title="Clutch" compactMobile>
         {remaining !== null && (
-          <span className="hidden sm:block rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-text-muted">
+          <span className="hidden sm:block rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-text-muted">
             {remaining}/{TOTAL_LIMIT}
           </span>
         )}
         {remaining === null && user.role === "admin" && (
-          <span className="hidden sm:block rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-text-muted">
+          <span className="hidden sm:block rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-text-muted">
             Unlimited
           </span>
         )}
         <button
           type="button"
           onClick={handleNewConversation}
-          className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 font-mono text-[11px] font-bold text-text-secondary transition-all hover:border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-300 sm:px-4 sm:text-xs"
+          className="rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-2 font-mono text-[11px] font-bold text-text-secondary transition-all hover:border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-300 sm:px-4 sm:text-xs"
         >
           <span className="sm:hidden">New</span>
           <span className="hidden sm:inline">+ New Chat</span>
@@ -403,7 +403,7 @@ export default function AskContent() {
           className={`rounded-lg border p-2 font-mono text-xs font-bold transition-all ${
             sidebarOpen
               ? "border-purple-500/30 bg-purple-500/10 text-purple-300"
-              : "border-white/[0.06] bg-white/[0.03] text-text-muted hover:border-purple-500/30 hover:text-purple-300"
+              : "border-[var(--glass-border)] bg-[var(--glass-surface-soft)] text-text-muted hover:border-purple-500/30 hover:text-purple-300"
           }`}
           title="Chat history"
         >
@@ -425,7 +425,7 @@ export default function AskContent() {
 
       {/* Chat card — flex-1 on mobile fills remaining height; desktop keeps card layout */}
       <div className="relative flex flex-1 flex-col overflow-hidden md:block md:flex-none md:max-w-6xl md:mx-auto md:px-8 md:py-6">
-        <div className="relative flex flex-1 flex-col overflow-hidden md:block md:flex-none md:rounded-2xl md:border md:border-white/[0.06] md:bg-white/[0.02] md:shadow-[0_16px_64px_-16px_rgba(0,0,0,0.5)] md:backdrop-blur-xl">
+        <div className="relative flex flex-1 flex-col overflow-hidden md:block md:flex-none md:rounded-2xl md:border md:border-[var(--glass-border)] md:bg-[var(--glass-surface)] md:shadow-[0_16px_64px_-16px_rgba(0,0,0,0.5)] md:backdrop-blur-xl">
           {/* Main chat area */}
           <div
             className={`flex flex-1 flex-col overflow-hidden md:grid md:min-h-0 md:min-w-0 md:grid-rows-[minmax(0,1fr)_auto] ${
@@ -433,7 +433,7 @@ export default function AskContent() {
             }`}
           >
             {/* Messages / suggestions — scrollable on mobile */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden md:min-h-0">
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden md:min-h-0">
               {!hasMessages ? (
                 <SuggestedQuestions onSelect={handleSend} disabled={isAsking} />
               ) : (
@@ -471,7 +471,7 @@ export default function AskContent() {
             </div>
 
             {/* Input — pinned at bottom on mobile */}
-            <div className="shrink-0 border-t border-white/[0.06] bg-bg-secondary px-3 py-3 md:px-6 md:py-4">
+            <div className="shrink-0 border-t border-[var(--glass-border)] bg-bg-secondary px-3 py-3 md:px-6 md:py-4">
               <ChatInput
                 onSend={handleSend}
                 onAbort={handleAbort}

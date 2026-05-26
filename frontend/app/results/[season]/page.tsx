@@ -9,6 +9,7 @@ import JumpToRace from "@/components/JumpToRace";
 import PageHeader from "@/components/PageHeader";
 import { GridPattern, TrianglePattern } from "@/components/Patterns";
 import PointsByRoundGraph from "@/components/PointsByRoundGraph";
+import { useTheme } from "@/components/ThemeProvider";
 import TeammateHeadToHead from "@/components/TeammateHeadToHead";
 import { TrackMapCompact } from "@/components/TrackMapDisplay";
 import TiltCard from "@/components/ui/TiltCard";
@@ -18,6 +19,7 @@ import {
   fetchSeasons,
   isValidHeadshotUrl,
 } from "@/lib/api";
+import { resolveReadableAccentColor } from "@/lib/color-utils";
 import { constructorHref, driverHref } from "@/lib/entityLinks";
 import type {
   ConstructorQualifyingStanding,
@@ -175,6 +177,7 @@ function MedalsWithBreakdown({
 }
 
 export default function ResultsPage() {
+  const { theme } = useTheme();
   const params = useParams();
   const router = useRouter();
   const season = params.season as string;
@@ -502,6 +505,12 @@ export default function ResultsPage() {
                             width={40}
                             height={40}
                             className="w-full h-full object-contain p-1"
+                            style={
+                              theme === "light" &&
+                              !team.team_name.toLowerCase().includes("ferrari")
+                                ? { filter: "invert(1)" }
+                                : undefined
+                            }
                             unoptimized={team.logo_url.includes(
                               "wikimedia.org",
                             )}
@@ -514,9 +523,12 @@ export default function ResultsPage() {
                         <div
                           className="font-semibold text-sm"
                           style={{
-                            color: team.team_color
-                              ? `#${team.team_color}`
-                              : "#fff",
+                            color:
+                              resolveReadableAccentColor(
+                                team.team_color,
+                                theme,
+                                "var(--text-primary)",
+                              ) ?? "var(--text-primary)",
                           }}
                         >
                           <Link

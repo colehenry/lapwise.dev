@@ -54,7 +54,7 @@ export default function ChatInput({
 
   if (compact) {
     return (
-      <div className="border-t border-white/[0.06] bg-bg-primary/90 px-3 py-2.5">
+      <div className="border-t border-[var(--glass-border)] bg-bg-primary/90 px-3 py-2.5">
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <textarea
             ref={textareaRef}
@@ -65,7 +65,7 @@ export default function ChatInput({
             rows={1}
             maxLength={2000}
             disabled={isLoading}
-            className="flex-1 resize-none rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-purple-500/40 focus:outline-none focus:ring-1 focus:ring-purple-500/20 disabled:opacity-50"
+            className="flex-1 resize-none rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-purple-500/40 focus:outline-none focus:ring-1 focus:ring-purple-500/20 disabled:opacity-50"
           />
           {isLoading && onAbort ? (
             <button
@@ -99,12 +99,14 @@ export default function ChatInput({
   return (
     <div
       className={
-        shellless ? "" : "border-t border-white/[0.06] px-4 py-4 md:px-6"
+        shellless
+          ? ""
+          : "border-t border-[var(--glass-border)] px-4 py-4 md:px-6"
       }
     >
       <form
         onSubmit={handleSubmit}
-        className="chat-input-glass mx-auto flex max-w-4xl items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-2 backdrop-blur-xl transition-all duration-200 focus-within:border-purple-500/30 focus-within:shadow-[0_0_40px_-10px_rgba(160,32,240,0.15)]"
+        className="chat-input-glass mx-auto flex max-w-4xl items-center gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-surface)] px-4 py-2 backdrop-blur-xl transition-all duration-200 focus-within:border-purple-500/30 focus-within:shadow-[0_0_40px_-10px_rgba(160,32,240,0.15)]"
       >
         <textarea
           ref={textareaRef}

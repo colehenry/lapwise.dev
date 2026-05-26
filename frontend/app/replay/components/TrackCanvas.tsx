@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getCanvasTheme } from "@/components/chart-primitives";
 import { isValidHeadshotUrl } from "@/lib/api";
 import type {
   ReplayCorner,
@@ -37,15 +38,8 @@ const PADDING = 20;
 const DRIVER_RADIUS = 6;
 const SELECTED_RADIUS = 9;
 const TRACK_WIDTH = 8;
-const TRACK_COLOR = "rgba(255, 255, 255, 0.12)";
-const TRACK_GLOW_COLOR = "rgba(255, 255, 255, 0.04)";
-const SF_LINE_COLOR = "rgba(255, 255, 255, 0.5)";
-const DRS_ZONE_COLOR_ACTIVE = "rgba(0, 220, 80, 0.35)";
-const DRS_ZONE_COLOR_INACTIVE = "rgba(0, 220, 80, 0.10)";
-const CORNER_LABEL_COLOR = "rgba(255, 255, 255, 0.35)";
 const CORNER_LABEL_FONT_SIZE = 9;
 const GRID_SPACING = 40;
-const GRID_COLOR = "rgba(255, 255, 255, 0.02)";
 
 export default function TrackCanvas({
   track,
@@ -203,14 +197,15 @@ export default function TrackCanvas({
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     // Background gradient
+    const canvasTheme = getCanvasTheme(containerRef.current);
     const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
-    bgGrad.addColorStop(0, "#080809");
-    bgGrad.addColorStop(1, "#040404");
+    bgGrad.addColorStop(0, canvasTheme.backgroundStart);
+    bgGrad.addColorStop(1, canvasTheme.backgroundEnd);
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, width, height);
 
     // Subtle grid pattern
-    ctx.strokeStyle = GRID_COLOR;
+    ctx.strokeStyle = canvasTheme.grid;
     ctx.lineWidth = 1;
     for (let gx = 0; gx < width; gx += GRID_SPACING) {
       ctx.beginPath();
@@ -235,7 +230,7 @@ export default function TrackCanvas({
     // Draw track polyline with outer glow
     if (trackPathRef.current) {
       // Outer glow layer
-      ctx.strokeStyle = TRACK_GLOW_COLOR;
+      ctx.strokeStyle = canvasTheme.trackGlow;
       ctx.lineWidth = (TRACK_WIDTH + 12) / scale;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
@@ -249,7 +244,7 @@ export default function TrackCanvas({
       }
 
       // Main track line
-      ctx.strokeStyle = TRACK_COLOR;
+      ctx.strokeStyle = canvasTheme.track;
       ctx.lineWidth = TRACK_WIDTH / scale;
       ctx.stroke(trackPathRef.current);
     }
@@ -257,8 +252,8 @@ export default function TrackCanvas({
     // Draw DRS zones (hidden for 2026+ seasons — DRS removed from F1)
     if (hasDrs && track.drs_zones?.length > 0) {
       const zoneColor = drsEnabled
-        ? DRS_ZONE_COLOR_ACTIVE
-        : DRS_ZONE_COLOR_INACTIVE;
+        ? canvasTheme.drsActive
+        : canvasTheme.drsInactive;
       ctx.strokeStyle = zoneColor;
       ctx.lineWidth = (TRACK_WIDTH + 4) / scale;
       ctx.lineCap = "round";
@@ -290,7 +285,7 @@ export default function TrackCanvas({
         const halfWidth = 12 / scale;
 
         // Draw checkered-style S/F line
-        ctx.strokeStyle = SF_LINE_COLOR;
+        ctx.strokeStyle = canvasTheme.startFinish;
         ctx.lineWidth = 3 / scale;
         ctx.setLineDash([3 / scale, 3 / scale]);
         ctx.beginPath();
@@ -303,7 +298,7 @@ export default function TrackCanvas({
 
     // Draw corner labels
     if (showCorners && track.corners?.length > 0) {
-      drawCornerLabels(ctx, track.corners, scale);
+      drawCornerLabels(ctx, track.corners, scale, canvasTheme.cornerLabel);
     }
 
     // Draw drivers
@@ -553,9 +548,10 @@ function drawCornerLabels(
   ctx: CanvasRenderingContext2D,
   corners: ReplayCorner[],
   scale: number,
+  labelColor: string,
 ) {
   ctx.font = `bold ${CORNER_LABEL_FONT_SIZE / scale}px monospace`;
-  ctx.fillStyle = CORNER_LABEL_COLOR;
+  ctx.fillStyle = labelColor;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 

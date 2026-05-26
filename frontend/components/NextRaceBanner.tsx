@@ -158,7 +158,7 @@ export default function NextRaceBanner() {
                           circuitName={event.circuit_name || "Circuit"}
                           width={120}
                           height={120}
-                          className="object-contain relative z-10 opacity-60 mix-blend-lighten max-h-14 md:max-h-16"
+                          className="object-contain relative z-10 opacity-75 max-h-14 md:max-h-16"
                           fallbackClassName="relative z-10 px-3"
                         />
                       </div>
