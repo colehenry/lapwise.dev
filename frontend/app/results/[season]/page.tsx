@@ -9,8 +9,8 @@ import JumpToRace from "@/components/JumpToRace";
 import PageHeader from "@/components/PageHeader";
 import { GridPattern, TrianglePattern } from "@/components/Patterns";
 import PointsByRoundGraph from "@/components/PointsByRoundGraph";
-import { useTheme } from "@/components/ThemeProvider";
 import TeammateHeadToHead from "@/components/TeammateHeadToHead";
+import { useTheme } from "@/components/ThemeProvider";
 import { TrackMapCompact } from "@/components/TrackMapDisplay";
 import TiltCard from "@/components/ui/TiltCard";
 import {
