@@ -5,7 +5,8 @@ Business logic for discussion posts.
 """
 
 from datetime import datetime, timezone
-from sqlalchemy import select, desc
+
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -284,7 +285,9 @@ class PostService:
                 {
                     "id": post.id,
                     "title": post.title,
-                    "body": post.body[:200] + "..." if len(post.body) > 200 else post.body,
+                    "body": post.body[:200] + "..."
+                    if len(post.body) > 200
+                    else post.body,
                     "post_type": post.post_type.value,
                     "is_pinned": post.is_pinned,
                     "is_locked": post.is_locked,

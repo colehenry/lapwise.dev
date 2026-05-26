@@ -4,7 +4,7 @@ PostTag Association Table
 Many-to-many relationship between posts and tags.
 """
 
-from sqlalchemy import Column, Integer, ForeignKey, Table
+from sqlalchemy import Column, ForeignKey, Integer, Table
 
 from app.database import Base
 

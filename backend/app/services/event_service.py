@@ -1,7 +1,8 @@
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+
 import fastf1
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Circuit
 from app.schemas.event import UpcomingEventResponse

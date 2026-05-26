@@ -8,12 +8,12 @@ supports all session types (race, sprint_race, qualifying, sprint_qualifying).
 
 from sqlalchemy import (
     Column,
-    Integer,
-    String,
     Date,
     ForeignKey,
-    UniqueConstraint,
     Index,
+    Integer,
+    String,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 

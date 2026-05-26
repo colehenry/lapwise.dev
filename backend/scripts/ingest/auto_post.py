@@ -334,12 +334,9 @@ def _build_links(season, round_num, session_type):
     if session_type in ("race", "sprint_race"):
         return f"- [Race Results & Charts]({base})"
     elif session_type in ("qualifying", "sprint_qualifying"):
-        return (
-            f"- [Sector Comparison]({base}?tab=qualifying)\n"
-            f"- [Full Results]({base})"
-        )
+        return f"- [Sector Comparison]({base}?tab=qualifying)\n- [Full Results]({base})"
     elif session_type in ("fp1", "fp2", "fp3"):
-        return f"- [Practice Data]({base}?tab=practice)\n" f"- [Full Results]({base})"
+        return f"- [Practice Data]({base}?tab=practice)\n- [Full Results]({base})"
     return f"- [Full Results]({base})"
 
 

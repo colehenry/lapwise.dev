@@ -2,8 +2,9 @@
 Tag Schemas
 """
 
-from pydantic import BaseModel, field_validator
 import re
+
+from pydantic import BaseModel, field_validator
 
 
 class CreateTagRequest(BaseModel):

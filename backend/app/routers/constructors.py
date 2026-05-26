@@ -4,19 +4,20 @@ Constructors Router
 API endpoints for constructor/team profiles and statistics.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_db
-from app.services.constructor_service import ConstructorService
 from app.schemas.constructor import (
-    ConstructorProfileResponse,
-    ConstructorSeasonHistoryResponse,
-    ConstructorRaceHistoryResponse,
     ConstructorListResponse,
+    ConstructorProfileResponse,
+    ConstructorRaceHistoryResponse,
+    ConstructorSeasonHistoryResponse,
 )
 from app.security import verify_api_key
+from app.services.constructor_service import ConstructorService
 
 router = APIRouter()
 

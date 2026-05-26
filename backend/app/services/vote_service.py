@@ -7,9 +7,9 @@ Business logic for upvoting posts and comments.
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.vote import Vote
-from app.models.post import Post
 from app.models.comment import Comment
+from app.models.post import Post
+from app.models.vote import Vote
 
 
 class VoteService:

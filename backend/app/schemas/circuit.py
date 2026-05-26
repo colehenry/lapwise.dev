@@ -4,8 +4,9 @@ Circuit Schemas
 Pydantic models for circuit/track API responses.
 """
 
+from typing import List, Optional
+
 from pydantic import BaseModel
-from typing import Optional, List
 
 
 class CircuitResponse(BaseModel):

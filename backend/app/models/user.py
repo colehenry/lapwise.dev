@@ -5,9 +5,10 @@ Represents an authenticated user of the lapwise.dev platform.
 """
 
 import enum
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum, ForeignKey
-from sqlalchemy.sql import func
+
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 from app.database import Base
 

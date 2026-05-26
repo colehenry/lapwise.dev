@@ -8,9 +8,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.services.event_service import EventService
 from app.schemas.event import UpcomingEventResponse
 from app.security import verify_api_key
+from app.services.event_service import EventService
 
 router = APIRouter()
 

@@ -20,9 +20,9 @@ def explore_event_schedule(year: int = 2024):
 
     This shows us what events/races happened and what sessions are available.
     """
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"EXPLORING {year} RACE CALENDAR")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Get the event schedule (this is fast, no heavy downloads)
     schedule = fastf1.get_event_schedule(year)
@@ -48,9 +48,9 @@ def explore_race_results(year: int = 2024, round_number: int = 2):
     This is the KEY function - it shows us what data we get about drivers,
     teams, and race results.
     """
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"EXPLORING RACE RESULTS: {year} Round {round_number}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Step 1: Get the session (specifying year, round, and session type)
     print("Step 1: Getting session object...")
@@ -106,9 +106,9 @@ def explore_laps_data(year: int = 2024, round_number: int = 2):
 
     This shows us lap-by-lap data for all drivers.
     """
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"EXPLORING LAP DATA: {year} Round {round_number}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     session = fastf1.get_session(year, round_number, "Race")
     print("Loading session data...")

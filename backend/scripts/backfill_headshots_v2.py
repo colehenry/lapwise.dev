@@ -2,6 +2,7 @@
 Second pass: backfill remaining driver headshots using Wikipedia search API
 for drivers whose names didn't directly match Wikipedia article titles.
 """
+
 import asyncio
 import sys
 
@@ -185,7 +186,7 @@ async def main():
                 if progress % 50 == 0 or progress >= len(drivers):
                     print(f"\n  Progress: {progress}/{len(drivers)}, {found} found\n")
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Done! Found headshots for {found}/{len(drivers)} drivers")
         print(f"Sources: {sources}")
         print(f"Still missing: {len(not_found)} drivers")

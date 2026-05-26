@@ -5,7 +5,7 @@ Represents a Formula 1 racing circuit/track.
 Circuits can host multiple races across different seasons.
 """
 
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Float, Integer, String
 from sqlalchemy.orm import relationship
 
 from app.database import Base

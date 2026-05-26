@@ -9,13 +9,13 @@ from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.security import verify_api_key
-from app.services.replay_service import ReplayService
 from app.schemas.replay import (
     ReplayListResponse,
     ReplaySeasonsResponse,
     ReplayTrackResponse,
 )
+from app.security import verify_api_key
+from app.services.replay_service import ReplayService
 
 router = APIRouter()
 

@@ -4,8 +4,9 @@ Event Schemas
 Pydantic models for F1 event and calendar API responses.
 """
 
-from pydantic import BaseModel
 from typing import Optional
+
+from pydantic import BaseModel
 
 
 class UpcomingEventResponse(BaseModel):

@@ -5,11 +5,11 @@ Business logic and database query layer for the application.
 Separates data access logic from API routing logic.
 """
 
-from .results_service import ResultsService
-from .driver_service import DriverService
-from .constructor_service import ConstructorService
 from .circuit_service import CircuitService
+from .constructor_service import ConstructorService
+from .driver_service import DriverService
 from .event_service import EventService
+from .results_service import ResultsService
 
 __all__ = [
     "ResultsService",
