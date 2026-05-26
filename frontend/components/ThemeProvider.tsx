@@ -9,11 +9,11 @@ import {
   useState,
 } from "react";
 import {
+  type AppTheme,
   DEFAULT_THEME,
   isAppTheme,
   THEME_META_COLORS,
   THEME_STORAGE_KEY,
-  type AppTheme,
 } from "@/lib/theme";
 
 interface ThemeContextValue {

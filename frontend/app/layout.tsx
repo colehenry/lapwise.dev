@@ -49,6 +49,7 @@ export default function RootLayout({
       <body
         className={`antialiased ${outfit.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable}`}
       >
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: inline theme-init script must run before first paint to prevent a flash of the wrong theme */}
         <script dangerouslySetInnerHTML={{ __html: getThemeInitScript() }} />
         <ThemeProvider>
           <AppShell>{children}</AppShell>

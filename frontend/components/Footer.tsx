@@ -83,11 +83,26 @@ export default function Footer() {
             trademarks are property of their respective owners.
           </p>
           <div className="flex items-center justify-center gap-3 text-[10px] text-text-muted tracking-wide">
-            <Link href="/rules" className="hover:text-purple-300 transition-colors duration-150">Rules</Link>
+            <Link
+              href="/rules"
+              className="hover:text-purple-300 transition-colors duration-150"
+            >
+              Rules
+            </Link>
             <span aria-hidden="true">·</span>
-            <Link href="/terms" className="hover:text-purple-300 transition-colors duration-150">Terms</Link>
+            <Link
+              href="/terms"
+              className="hover:text-purple-300 transition-colors duration-150"
+            >
+              Terms
+            </Link>
             <span aria-hidden="true">·</span>
-            <Link href="/privacy" className="hover:text-purple-300 transition-colors duration-150">Privacy</Link>
+            <Link
+              href="/privacy"
+              className="hover:text-purple-300 transition-colors duration-150"
+            >
+              Privacy
+            </Link>
           </div>
         </div>
       </div>

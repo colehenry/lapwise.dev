@@ -336,6 +336,7 @@ function UserMenuDropdown({
                 aria-hidden="true"
               />
 
+              {/* biome-ignore lint/a11y/useSemanticElements: segmented light/dark toggle; role=radio on buttons is the accessible pattern for this styled control */}
               <button
                 type="button"
                 role="radio"
@@ -363,6 +364,7 @@ function UserMenuDropdown({
                 </svg>
               </button>
 
+              {/* biome-ignore lint/a11y/useSemanticElements: segmented light/dark toggle; role=radio on buttons is the accessible pattern for this styled control */}
               <button
                 type="button"
                 role="radio"
