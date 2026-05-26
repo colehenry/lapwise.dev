@@ -59,7 +59,7 @@ async function fetchConstructorProfile(
 export default function ConstructorProfilePage() {
   const params = useParams();
   const router = useRouter();
-  const teamName = params.teamName as string;
+  const teamName = decodeURIComponent(params.teamName as string);
   const constructorUrl = constructorHref(teamName) ?? "/constructors";
   const { activeTab, switchTab } = useTabSync<ConstructorTab>(
     constructorUrl,
