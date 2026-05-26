@@ -4,8 +4,9 @@ Summary Schemas
 Pydantic models for session summary API responses.
 """
 
-from pydantic import BaseModel
 from datetime import datetime
+
+from pydantic import BaseModel
 
 
 class KeyFact(BaseModel):

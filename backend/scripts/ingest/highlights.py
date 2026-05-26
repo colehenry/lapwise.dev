@@ -100,8 +100,7 @@ def find_highlights_video_id(event_name, year, session_type="race"):
                     return video_id
 
         print(
-            "    No highlights found for:"
-            f" {year} {event_name_clean} [{session_type}]"
+            f"    No highlights found for: {year} {event_name_clean} [{session_type}]"
         )
         return None
 
@@ -109,7 +108,7 @@ def find_highlights_video_id(event_name, year, session_type="race"):
         print(f"    Timeout searching for: {year} {event_name_clean} [{session_type}]")
         return None
     except FileNotFoundError:
-        print("    ERROR: yt-dlp not installed. " "Run: pip install yt-dlp")
+        print("    ERROR: yt-dlp not installed. Run: pip install yt-dlp")
         return None
 
 
@@ -147,7 +146,7 @@ def ingest_highlights(db_session, season, round_num=None, overwrite=False):
         label = f"R{sess.round:02d} [{sess.session_type}]"
 
         if sess.highlights_video_id and not overwrite:
-            print(f"  {label} {sess.event_name}" " — already has video, skipping")
+            print(f"  {label} {sess.event_name} — already has video, skipping")
             skipped += 1
             continue
 

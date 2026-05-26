@@ -5,18 +5,19 @@ Represents a discussion post on the platform.
 """
 
 import enum
+
 from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    Text,
     Boolean,
+    Column,
     DateTime,
     Enum,
     ForeignKey,
+    Integer,
+    String,
+    Text,
 )
-from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 from app.database import Base
 

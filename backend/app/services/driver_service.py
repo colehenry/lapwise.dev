@@ -1,19 +1,20 @@
 from datetime import date
-from typing import Optional, List
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, case, distinct
+from typing import List, Optional
 
-from app.models import Driver, SessionResult, Session, Team
+from sqlalchemy import case, distinct, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models import Driver, Session, SessionResult, Team
 from app.schemas.driver import (
-    DriverProfileResponse,
-    DriverSeasonHistoryResponse,
-    SeasonHistory,
-    DriverRaceHistoryResponse,
-    RaceHistory,
     DriverListItem,
     DriverListResponse,
+    DriverProfileResponse,
+    DriverRaceHistoryResponse,
+    DriverSeasonHistoryResponse,
     DriverSuperlative,
     DriverSuperlativesResponse,
+    RaceHistory,
+    SeasonHistory,
 )
 
 

@@ -8,21 +8,21 @@ import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select, or_, func
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.user import User
-from app.models.driver import Driver
-from app.models.team import Team
-from app.schemas.auth import (
-    FavoriteDriverResponse,
-    FavoriteTeamResponse,
-    FavoriteCircuitResponse,
-)
 from app.models.circuit import Circuit
+from app.models.driver import Driver
 from app.models.email_verification_token import EmailVerificationToken
 from app.models.password_reset_token import PasswordResetToken
+from app.models.team import Team
+from app.models.user import User
+from app.schemas.auth import (
+    FavoriteCircuitResponse,
+    FavoriteDriverResponse,
+    FavoriteTeamResponse,
+)
 from app.services.auth_service import AuthService
 
 

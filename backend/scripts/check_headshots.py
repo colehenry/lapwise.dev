@@ -1,4 +1,5 @@
 """Check headshot coverage stats."""
+
 import asyncio
 import sys
 
@@ -29,7 +30,7 @@ async def check():
         print(f"Total drivers with results: {total}")
         print(f"With headshot: {with_photo}")
         print(f"Without headshot: {total - with_photo}")
-        print(f"Coverage: {with_photo/total*100:.1f}%")
+        print(f"Coverage: {with_photo / total * 100:.1f}%")
 
         # Show remaining without
         r = await db.execute(

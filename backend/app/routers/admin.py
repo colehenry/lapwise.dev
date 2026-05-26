@@ -10,22 +10,22 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
 from app.auth import get_current_admin
+from app.database import get_db
 from app.models.user import User
-from app.schemas.auth import UserProfile
 from app.schemas.admin import (
+    AdminCommentListItem,
     AdminDashboardStats,
+    AdminPostListItem,
+    AdminPostListResponse,
     AdminUserListResponse,
     AdminUserUpdateRoleRequest,
     AdminUserUpdateStatusRequest,
-    AdminPostListItem,
-    AdminPostListResponse,
-    AdminCommentListItem,
 )
-from app.services.user_service import UserService
-from app.services.post_service import PostService
+from app.schemas.auth import UserProfile
 from app.services.comment_service import CommentService
+from app.services.post_service import PostService
+from app.services.user_service import UserService
 
 router = APIRouter()
 
@@ -145,7 +145,9 @@ async def admin_delete_post(
     db: AsyncSession = Depends(get_db),
     current_admin: User = Depends(get_current_admin),
 ):
-    deleted = await PostService.delete_post(db, post_id, current_admin.id, is_admin=True)
+    deleted = await PostService.delete_post(
+        db, post_id, current_admin.id, is_admin=True
+    )
     if not deleted:
         raise HTTPException(status_code=404, detail="Post not found")
 

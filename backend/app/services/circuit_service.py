@@ -1,26 +1,27 @@
 from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, case
 
-from app.models import Circuit, Session, SessionResult, Driver, Team
+from sqlalchemy import and_, case, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models import Circuit, Driver, Session, SessionResult, Team
 from app.models.lap import Lap
 from app.models.weather import Weather
 from app.schemas.circuit import (
-    CircuitResponse,
+    CircuitLapRecordsResponse,
+    CircuitLapTimeTrendResponse,
     CircuitListResponse,
-    CircuitRaceResult,
     CircuitRaceHistoryResponse,
+    CircuitRaceResult,
+    CircuitRecentRaceResponse,
+    CircuitResponse,
     CircuitStatDriver,
     CircuitStatisticsResponse,
-    LapRecordEntry,
-    CircuitLapRecordsResponse,
-    RecentRacePodiumEntry,
-    CircuitRecentRaceResponse,
-    LapTimeTrendEntry,
-    CircuitLapTimeTrendResponse,
+    CircuitTyreStatsResponse,
     CircuitWeatherProfileResponse,
     CompoundUsageEntry,
-    CircuitTyreStatsResponse,
+    LapRecordEntry,
+    LapTimeTrendEntry,
+    RecentRacePodiumEntry,
 )
 
 

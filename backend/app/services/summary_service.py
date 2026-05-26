@@ -7,21 +7,22 @@ Designed for sync usage in ingestion scripts.
 
 import json
 import math
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DBSession
 
+from app.config import settings
 from app.models import (
+    Driver,
+    Lap,
+    RaceControlMessage,
     Session,
     SessionResult,
-    Driver,
-    Team,
-    Lap,
-    Weather,
-    TrackStatus,
-    RaceControlMessage,
     SessionSummary,
+    Team,
+    TrackStatus,
+    Weather,
 )
-from app.config import settings
 
 MODEL_ID = "claude-haiku-4-5-20251001"
 
@@ -539,7 +540,7 @@ Race Dynamics Evidence (use this to fact-check the narrative):
 
     @staticmethod
     def _compress_driver_segments(
-        lap_driver_pairs: list[tuple[int, int]]
+        lap_driver_pairs: list[tuple[int, int]],
     ) -> list[tuple[int, int, int]]:
         segments: list[tuple[int, int, int]] = []
         current_start = None

@@ -6,7 +6,9 @@ Pydantic models for admin panel request/response validation.
 
 from datetime import datetime
 from typing import Optional
+
 from pydantic import BaseModel
+
 from app.schemas.auth import UserProfile
 from app.schemas.post import PostAuthor, TagResponse
 

@@ -5,9 +5,10 @@ Pydantic models for API request/response validation for session results.
 These schemas define what data the API endpoints will return to the frontend.
 """
 
-from pydantic import BaseModel
 from datetime import date
-from typing import Optional, List, Dict
+from typing import Dict, List, Optional
+
+from pydantic import BaseModel
 
 
 class CircuitInfo(BaseModel):
@@ -394,9 +395,9 @@ class LapData(BaseModel):
     deleted: Optional[bool] = None  # Lap time deleted by FIA
 
     # Session timing
-    lap_start_time_seconds: Optional[
-        float
-    ] = None  # Session elapsed time when lap began
+    lap_start_time_seconds: Optional[float] = (
+        None  # Session elapsed time when lap began
+    )
 
     class Config:
         from_attributes = True

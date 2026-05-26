@@ -23,7 +23,9 @@ ALIASES_TO_MERGE = [
 async def main():
     async with AsyncSessionLocal() as db:
         # Find all years that have teams
-        years_result = await db.execute(select(Team.year).distinct().order_by(Team.year))
+        years_result = await db.execute(
+            select(Team.year).distinct().order_by(Team.year)
+        )
         years = [r[0] for r in years_result]
 
         total_merged = 0
@@ -43,7 +45,9 @@ async def main():
                 canonical_team = canonical_result.scalar_one_or_none()
                 if not canonical_team:
                     # No canonical counterpart — rename the alias row instead
-                    print(f"  {year}: renaming '{alias_name}' → '{canonical_name}' (no canonical found)")
+                    print(
+                        f"  {year}: renaming '{alias_name}' → '{canonical_name}' (no canonical found)"
+                    )
                     alias_team.name = canonical_name
                     await db.commit()
                     total_merged += 1

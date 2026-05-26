@@ -4,20 +4,21 @@ Drivers Router
 API endpoints for driver profiles and statistics.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_db
-from app.services.driver_service import DriverService
 from app.schemas.driver import (
-    DriverProfileResponse,
-    DriverSeasonHistoryResponse,
-    DriverRaceHistoryResponse,
     DriverListResponse,
+    DriverProfileResponse,
+    DriverRaceHistoryResponse,
+    DriverSeasonHistoryResponse,
     DriverSuperlativesResponse,
 )
 from app.security import verify_api_key
+from app.services.driver_service import DriverService
 
 router = APIRouter()
 

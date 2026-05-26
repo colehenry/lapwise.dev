@@ -6,7 +6,7 @@ Teams can change names, colors, and identities between years
 (e.g., Racing Point → Aston Martin in 2021).
 """
 
-from sqlalchemy import Column, Integer, String, UniqueConstraint, Index
+from sqlalchemy import Column, Index, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.database import Base

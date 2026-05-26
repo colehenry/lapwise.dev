@@ -6,15 +6,15 @@ Contains sector times, speed traps, tyre info, and track status per lap.
 """
 
 from sqlalchemy import (
+    Boolean,
     Column,
+    Computed,
+    Float,
+    ForeignKey,
+    Index,
     Integer,
     String,
-    Float,
-    Boolean,
-    ForeignKey,
     UniqueConstraint,
-    Index,
-    Computed,
 )
 from sqlalchemy.orm import relationship
 

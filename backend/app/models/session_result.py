@@ -7,14 +7,14 @@ with nullable fields for session-specific data.
 """
 
 from sqlalchemy import (
+    Boolean,
     Column,
+    Float,
+    ForeignKey,
+    Index,
     Integer,
     String,
-    Float,
-    Boolean,
-    ForeignKey,
     UniqueConstraint,
-    Index,
 )
 from sqlalchemy.orm import relationship
 
