@@ -11,6 +11,7 @@ import ArchivePanel from "@/components/archive/ArchivePanel";
 import ConstructorResultsTable from "@/components/ConstructorResultsTable";
 import ConstructorSeasonHistoryGraph from "@/components/ConstructorSeasonHistoryGraph";
 import ConstructorStatisticsPanel from "@/components/ConstructorStatisticsPanel";
+import { useTheme } from "@/components/ThemeProvider";
 import PageHeader from "@/components/PageHeader";
 import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
 import SprintToggle from "@/components/ui/SprintToggle";
@@ -21,6 +22,7 @@ import {
   getConstructorBannerUrl,
   getConstructorLogoUrl,
   getConstructorPhotoUrl,
+  shouldInvertConstructorLogoOnLight,
 } from "@/lib/entityImageOverrides";
 import { constructorHref } from "@/lib/entityLinks";
 import type { ConstructorProfile } from "@/lib/types";
@@ -57,6 +59,7 @@ async function fetchConstructorProfile(
 }
 
 export default function ConstructorProfilePage() {
+  const { theme } = useTheme();
   const params = useParams();
   const router = useRouter();
   const teamName = decodeURIComponent(params.teamName as string);
@@ -114,6 +117,8 @@ export default function ConstructorProfilePage() {
   const logoUrl = getConstructorLogoUrl(data);
   const photoUrl = getConstructorPhotoUrl(data);
   const bannerUrl = getConstructorBannerUrl(data);
+  const invertLogoOnLight =
+    theme === "light" && shouldInvertConstructorLogoOnLight(data);
   const winRate =
     data.total_races > 0 ? (data.total_wins / data.total_races) * 100 : 0;
   const podiumRate =
@@ -191,7 +196,9 @@ export default function ConstructorProfilePage() {
                     alt={data.team_name}
                     width={180}
                     height={180}
-                    className="h-full w-full object-contain p-7"
+                    className={`h-full w-full object-contain p-7 ${
+                      invertLogoOnLight ? "invert" : ""
+                    }`}
                     unoptimized={logoUrl.includes("wikimedia.org")}
                   />
                 ) : (

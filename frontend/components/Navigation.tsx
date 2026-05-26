@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import { useTheme } from "@/components/ThemeProvider";
 import ClutchIcon from "@/components/ui/ClutchIcon";
 
 interface NavLink {
@@ -192,7 +193,7 @@ function DataArchiveTopBarDropdown({
 }) {
   return (
     <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2 w-44 z-50">
-      <div className="bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden animate-scaleIn">
+      <div className="theme-glass-panel overflow-hidden rounded-2xl animate-scaleIn">
         {archiveLinks.map((link) => {
           const active = isActive(link.href);
           return (
@@ -225,7 +226,7 @@ function DataArchiveDockSubmenu({
 }) {
   return (
     <div className="absolute left-full top-0 pl-2 w-44 z-50">
-      <div className="bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden animate-scaleIn">
+      <div className="theme-glass-panel overflow-hidden rounded-2xl animate-scaleIn">
         <div className="px-3 py-2 border-b border-border-primary">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
             Data Archive
@@ -268,14 +269,15 @@ function UserMenuDropdown({
   onClose: () => void;
   onLogout: () => void;
 }) {
+  const { theme, setTheme } = useTheme();
   const positionClass =
     position === "top-bar"
-      ? "absolute right-0 top-full pt-2 w-48"
-      : "absolute left-full top-0 pl-2 w-48";
+      ? "absolute right-0 top-full pt-2 w-56"
+      : "absolute left-full top-0 pl-2 w-56";
 
   return (
     <div className={positionClass}>
-      <div className="bg-bg-secondary/95 backdrop-blur-xl border border-border-primary rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)] overflow-hidden animate-scaleIn">
+      <div className="theme-glass-panel overflow-hidden rounded-2xl animate-scaleIn">
         <div className="px-3 py-2.5 border-b border-border-primary">
           <p className="text-sm font-medium text-text-primary truncate">
             @{user.username}
@@ -310,6 +312,80 @@ function UserMenuDropdown({
               Admin
             </Link>
           )}
+        </div>
+        <div className="border-y border-border-primary px-3 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+                Appearance
+              </span>
+              <p className="mt-0.5 text-[10px] text-text-tertiary">
+                {theme === "dark" ? "Dark mode" : "Light mode"}
+              </p>
+            </div>
+
+            <div
+              role="radiogroup"
+              aria-label="Select appearance"
+              className="relative flex h-10 w-[88px] items-center rounded-full border border-border-primary bg-bg-primary/70 p-1"
+            >
+              <div
+                className={`absolute top-1 h-8 w-8 rounded-full border border-purple-500/20 bg-purple-500/12 shadow-[0_4px_12px_rgba(160,32,240,0.14)] transition-transform duration-300 ease-out ${
+                  theme === "light" ? "translate-x-0" : "translate-x-10"
+                }`}
+                aria-hidden="true"
+              />
+
+              <button
+                type="button"
+                role="radio"
+                aria-checked={theme === "light"}
+                aria-label="Use light mode"
+                onClick={() => setTheme("light")}
+                className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+                  theme === "light"
+                    ? "text-purple-300"
+                    : "text-text-muted hover:text-text-primary"
+                }`}
+              >
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="10" cy="10" r="3.2" />
+                  <path d="M10 1.8v2.1M10 16.1v2.1M18.2 10h-2.1M3.9 10H1.8M15.8 4.2l-1.5 1.5M5.7 14.3l-1.5 1.5M15.8 15.8l-1.5-1.5M5.7 5.7L4.2 4.2" />
+                </svg>
+              </button>
+
+              <button
+                type="button"
+                role="radio"
+                aria-checked={theme === "dark"}
+                aria-label="Use dark mode"
+                onClick={() => setTheme("dark")}
+                className={`relative z-10 ml-auto flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+                  theme === "dark"
+                    ? "text-purple-300"
+                    : "text-text-muted hover:text-text-primary"
+                }`}
+              >
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d="M13.95 13.95A6.5 6.5 0 0 1 6.05 6.05a.55.55 0 0 0-.9-.57A7.7 7.7 0 1 0 14.52 14.85a.55.55 0 0 0-.57-.9Z" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
         <div className="border-t border-border-primary py-1">
           <button
@@ -628,7 +704,7 @@ export default function Navigation() {
         style={{
           left: "min(60px, max(12px, calc((100vw - (72rem + 40px)) / 4 - 34px)))",
         }}
-        className={`fixed top-3 z-[1200] hidden md:flex flex-col items-center gap-2.5 p-2.5 rounded-3xl bg-bg-secondary/90 backdrop-blur-xl border border-border-primary shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(160,32,240,0.06)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+        className={`theme-glass-panel-soft fixed top-3 z-[1200] hidden md:flex flex-col items-center gap-2.5 p-2.5 rounded-3xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
           scrolled
             ? "opacity-100 translate-x-0 scale-100 delay-300"
             : "opacity-0 -translate-x-4 scale-95 pointer-events-none delay-0"
@@ -649,7 +725,7 @@ export default function Navigation() {
               className="object-cover w-full h-full"
             />
           </div>
-          <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
+          <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted whitespace-nowrap">
             Home
           </span>
         </Link>
@@ -671,7 +747,7 @@ export default function Navigation() {
               }`}
             >
               <NavIcon link={link} active={active} scrolled={true} />
-              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
+              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted whitespace-nowrap">
                 {link.label}
               </span>
             </Link>
@@ -696,7 +772,7 @@ export default function Navigation() {
           >
             <DatabaseIcon active={isArchiveActive} scrolled={true} />
             {!archiveOpen && (
-              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
+              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted whitespace-nowrap">
                 Data Archive
               </span>
             )}
@@ -722,7 +798,7 @@ export default function Navigation() {
               }`}
             >
               <NavIcon link={link} active={active} scrolled={true} />
-              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
+              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted whitespace-nowrap">
                 {link.label}
               </span>
             </Link>
@@ -755,7 +831,7 @@ export default function Navigation() {
                 d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
               />
             </svg>
-            <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
+            <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted whitespace-nowrap">
               Log in
             </span>
           </Link>
@@ -787,7 +863,7 @@ export default function Navigation() {
                   initial
                 )}
               </div>
-              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 bg-bg-secondary/95 border border-border-primary rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted shadow-[0_8px_24px_rgba(0,0,0,0.35)] whitespace-nowrap">
+              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted whitespace-nowrap">
                 Profile
               </span>
             </button>
@@ -875,11 +951,11 @@ export default function Navigation() {
       {mobileOpen && (
         <>
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1210] md:hidden"
+            className="fixed inset-0 theme-overlay backdrop-blur-sm z-[1210] md:hidden"
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
-          <div className="fixed inset-x-3 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-[1220] max-h-[calc(100dvh-7rem)] overflow-y-auto overscroll-contain rounded-lg border border-border-primary bg-bg-secondary/95 shadow-[0_16px_48px_rgba(0,0,0,0.5)] backdrop-blur-xl md:hidden animate-slideUp">
+          <div className="theme-glass-panel fixed inset-x-3 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-[1220] max-h-[calc(100dvh-7rem)] overflow-y-auto overscroll-contain rounded-lg md:hidden animate-slideUp">
             <div className="px-4 pb-2 pt-3">
               <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border-secondary" />
               <div className="mb-2 flex items-center justify-between">

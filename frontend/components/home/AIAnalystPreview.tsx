@@ -541,7 +541,7 @@ export default function AIAnalystPreview() {
           <div className="space-y-4 px-5 py-5">
             {/* User message */}
             <div className="flex justify-end">
-              <div className="max-w-[85%] rounded-2xl border border-white/[0.06] bg-white/[0.04] px-4 py-2.5 text-sm text-text-primary">
+              <div className="max-w-[85%] rounded-2xl border border-[var(--message-user-border)] bg-[var(--message-user-bg)] px-4 py-2.5 text-sm text-text-primary">
                 {renderEntityText(QUESTION, entities, {
                   useColor: false,
                   linkClassName:
@@ -557,7 +557,7 @@ export default function AIAnalystPreview() {
                   <ClutchIcon className="h-4 w-4" />
                 </div>
 
-                <div className="min-w-0 flex-1 rounded-2xl border border-white/[0.04] bg-white/[0.02] px-4 py-3">
+                <div className="min-w-0 flex-1 rounded-2xl border border-[var(--message-assistant-border)] bg-[var(--message-assistant-bg)] px-4 py-3">
                   {phase === "thinking" ? (
                     <div className="flex items-center gap-2 text-xs text-text-muted">
                       <svg

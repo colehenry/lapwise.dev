@@ -3,7 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useTheme } from "@/components/ThemeProvider";
 import { isValidHeadshotUrl } from "@/lib/api";
+import { resolveReadableAccentColor } from "@/lib/color-utils";
 import { circuitHref, constructorHref, driverHref } from "@/lib/entityLinks";
 import {
   getCircuitFlagEmoji,
@@ -79,6 +81,7 @@ export default function SessionDetail({
   hideHeader = false,
   summary,
 }: SessionDetailProps) {
+  const { theme } = useTheme();
   const [expandedResults, setExpandedResults] = useState<boolean>(false);
   const isQualifying = sessionType === "qualifying";
   const isPractice = sessionType === "practice";
@@ -430,9 +433,12 @@ export default function SessionDetail({
                         }
                         className="text-xs font-medium hover:text-purple-300 transition-colors duration-150 flex items-center gap-2"
                         style={{
-                          color: result.team.team_color
-                            ? `#${result.team.team_color}`
-                            : "inherit",
+                          color:
+                            resolveReadableAccentColor(
+                              result.team.team_color,
+                              theme,
+                              "var(--text-primary)",
+                            ) ?? "inherit",
                         }}
                       >
                         {isValidHeadshotUrl(result.team.logo_url) && (
