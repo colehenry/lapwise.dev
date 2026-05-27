@@ -345,10 +345,6 @@ export async function routeAIRequest(
     );
     return decision;
   } catch (error) {
-    console.warn(
-      "Groq AI router unavailable; using deterministic route.",
-      error,
-    );
     const fallback = buildDecision(
       deterministic.intent,
       deterministic.confidence,
