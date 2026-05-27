@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { extname, join } from "node:path";
-
-const ENFORCE = process.env.GUARDRAILS_ENFORCE === "1";
 
 const SKIP_DIRS = new Set([
   "node_modules",
@@ -99,27 +97,39 @@ const consoleHits = grepCount(
   /console\.(log|warn|error)\(/,
 );
 
-function section(title, items, sample = 5) {
+const checks = [
+  { label: "print() in backend/app", items: printHits, enforce: true },
+  { label: "console.* in frontend source", items: consoleHits, enforce: true },
+  { label: "file-size caps exceeded", items: violations, enforce: false },
+  { label: "file-size targets (soft)", items: warnings, enforce: false },
+  { label: "hardcoded hex outside approved files", items: hexHits, enforce: false },
+];
+
+function section(label, items, enforce, sample = 5) {
+  const tag = enforce ? "[enforced]" : "[report]  ";
   if (items.length === 0) {
-    console.log(`  ok  ${title}`);
+    console.log(`  ok  ${tag} ${label}`);
     return;
   }
-  console.log(`  !!  ${title}: ${items.length}`);
-  for (const item of items.slice(0, sample)) console.log(`        ${item}`);
-  if (items.length > sample) console.log(`        … ${items.length - sample} more`);
+  console.log(`  !!  ${tag} ${label}: ${items.length}`);
+  for (const item of items.slice(0, sample)) console.log(`           ${item}`);
+  if (items.length > sample) {
+    console.log(`           … ${items.length - sample} more`);
+  }
 }
 
 console.log("\nGuardrails report\n");
-section("file-size caps exceeded", violations);
-section("file-size targets (soft)", warnings);
-section("hardcoded hex outside approved files", hexHits);
-section("print() in backend/app", printHits);
-section("console.* in frontend source", consoleHits);
+for (const c of checks) section(c.label, c.items, c.enforce);
 
-const hardCount = violations.length + hexHits.length + printHits.length + consoleHits.length;
-console.log(`\n${hardCount} item(s) to bring into compliance.\n`);
+const enforcedFailures = checks
+  .filter((c) => c.enforce)
+  .reduce((n, c) => n + c.items.length, 0);
+const reportOnly = checks
+  .filter((c) => !c.enforce)
+  .reduce((n, c) => n + c.items.length, 0);
 
-if (ENFORCE && hardCount > 0) {
-  console.log("GUARDRAILS_ENFORCE=1 and violations present — failing.\n");
-  process.exit(1);
-}
+console.log(
+  `\n${enforcedFailures} enforced violation(s); ${reportOnly} report-only item(s) to clean up.\n`,
+);
+
+if (enforcedFailures > 0) process.exit(1);

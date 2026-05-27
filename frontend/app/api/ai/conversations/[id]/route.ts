@@ -6,6 +6,7 @@
  * DELETE /api/ai/conversations/[id] — delete conversation
  */
 
+import * as Sentry from "@sentry/nextjs";
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAIUser } from "@/lib/ai/auth";
 import { getConversationClient } from "@/lib/ai/db";
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       messages,
     });
   } catch (error) {
-    console.error("Failed to get conversation:", error);
+    Sentry.captureException(error);
     return NextResponse.json(
       { error: "Failed to load conversation." },
       { status: 500 },
@@ -108,7 +109,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ conversation: result[0] });
   } catch (error) {
-    console.error("Failed to rename conversation:", error);
+    Sentry.captureException(error);
     return NextResponse.json(
       { error: "Failed to rename conversation." },
       { status: 500 },
@@ -147,7 +148,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ deleted: true });
   } catch (error) {
-    console.error("Failed to delete conversation:", error);
+    Sentry.captureException(error);
     return NextResponse.json(
       { error: "Failed to delete conversation." },
       { status: 500 },

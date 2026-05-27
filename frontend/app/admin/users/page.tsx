@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { format } from "date-fns";
 import { useCallback, useEffect, useState } from "react";
 import { GridPattern } from "@/components/Patterns";
@@ -35,7 +36,7 @@ export default function AdminUsersPage() {
         setPage(data.page);
       } catch (err) {
         setError("Failed to load users");
-        console.error(err);
+        Sentry.captureException(err);
       } finally {
         setLoading(false);
       }

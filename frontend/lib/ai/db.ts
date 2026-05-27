@@ -14,10 +14,6 @@ const AI_DB_QUERY_TIMEOUT_MS = Number.parseInt(
   10,
 );
 
-if (!AI_DB_URL) {
-  console.warn("AI_DB_URL is not set — AI queries will fail at runtime");
-}
-
 function getAISql() {
   if (!AI_DB_URL) {
     throw new Error("AI_DB_URL environment variable is not configured");
