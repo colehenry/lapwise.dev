@@ -3,14 +3,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { CHART_TYPOGRAPHY } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { COMPOUND_COLORS as COMPOUND } from "@/lib/palette";
 import type { CircuitTyreStatsResponse } from "@/lib/types";
 
 const COMPOUND_COLORS: Record<string, { bar: string; text: string }> = {
-  SOFT: { bar: "#ef4444", text: "text-red-400" },
-  MEDIUM: { bar: "#eab308", text: "text-yellow-400" },
-  HARD: { bar: "#d1d5db", text: "text-text-secondary" },
-  INTERMEDIATE: { bar: "#22c55e", text: "text-green-400" },
-  WET: { bar: "#3b82f6", text: "text-blue-400" },
+  SOFT: { bar: COMPOUND.SOFT, text: "text-red-400" },
+  MEDIUM: { bar: COMPOUND.MEDIUM, text: "text-yellow-400" },
+  HARD: { bar: COMPOUND.HARD, text: "text-text-secondary" },
+  INTERMEDIATE: { bar: COMPOUND.INTERMEDIATE, text: "text-green-400" },
+  WET: { bar: COMPOUND.WET, text: "text-blue-400" },
 };
 
 interface CircuitTyreStatsProps {
@@ -64,7 +65,7 @@ export default function CircuitTyreStats({ circuitId }: CircuitTyreStatsProps) {
       <div className="space-y-3">
         {data.compounds.map((compound) => {
           const colors = COMPOUND_COLORS[compound.compound] || {
-            bar: "#666",
+            bar: "var(--delta-neutral)",
             text: "text-text-muted",
           };
           const widthPercent =

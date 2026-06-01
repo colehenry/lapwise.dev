@@ -62,20 +62,13 @@ interface LapTimeByLapGraphProps {
   embedded?: boolean;
 }
 
-// Compound colors for tyre-colored styling
-const COMPOUND_COLORS: Record<string, string> = {
-  SOFT: "#ef4444",
-  MEDIUM: "#eab308",
-  HARD: "#e5e7eb",
-  INTERMEDIATE: "#22c55e",
-  WET: "#3b82f6",
-};
+import { COMPOUND_COLORS, POSITION_COLORS, STATUS_COLORS } from "@/lib/palette";
 
 // Track-wide event display config (keyed by OutlierReason)
 const TRACK_EVENT_COLORS: Record<string, { color: string; label: string }> = {
-  safety_car: { color: "#eab308", label: "SC" },
-  red_flag: { color: "#ef4444", label: "RED FLAG" },
-  vsc: { color: "#f97316", label: "VSC" },
+  safety_car: { color: STATUS_COLORS.safetyCar, label: "SC" },
+  red_flag: { color: STATUS_COLORS.red, label: "RED FLAG" },
+  vsc: { color: STATUS_COLORS.virtualSafetyCar, label: "VSC" },
 };
 
 // Visual event range derived from actual outlier data
@@ -88,22 +81,22 @@ type VisualEventRange = {
 // Outlier reason display config (used in tooltip badges)
 const OUTLIER_LABELS: Record<OutlierReason, { label: string; color: string }> =
   {
-    pit: { label: "PIT", color: "#f97316" },
-    safety_car: { label: "SC", color: "#eab308" },
-    vsc: { label: "VSC", color: "#f97316" },
-    red_flag: { label: "RED", color: "#ef4444" },
-    lap1: { label: "L1", color: "#8b5cf6" },
-    slow: { label: "SLOW", color: "#6b7280" },
+    pit: { label: "PIT", color: STATUS_COLORS.pit },
+    safety_car: { label: "SC", color: STATUS_COLORS.safetyCar },
+    vsc: { label: "VSC", color: STATUS_COLORS.virtualSafetyCar },
+    red_flag: { label: "RED", color: STATUS_COLORS.red },
+    lap1: { label: "L1", color: "var(--series-1)" },
+    slow: { label: "SLOW", color: POSITION_COLORS.outPoints },
   };
 
 // Bridge line colors keyed by OutlierReason
 const BRIDGE_LINE_COLORS: Record<string, string> = {
-  safety_car: "#eab308",
-  red_flag: "#ef4444",
-  vsc: "#f97316",
-  pit: "#60a5fa",
-  lap1: "#8b5cf6",
-  slow: "#6b7280",
+  safety_car: STATUS_COLORS.safetyCar,
+  red_flag: STATUS_COLORS.red,
+  vsc: STATUS_COLORS.virtualSafetyCar,
+  pit: STATUS_COLORS.pit,
+  lap1: "var(--series-1)",
+  slow: POSITION_COLORS.outPoints,
 };
 
 // Helper to format seconds to MM:SS.mmm
@@ -499,7 +492,9 @@ const CustomTooltip = ({
                   <span className="text-text-muted">Tyre:</span>{" "}
                   <span
                     style={{
-                      color: COMPOUND_COLORS[lapData.compound] || "#999",
+                      color:
+                        COMPOUND_COLORS[lapData.compound] ||
+                        "var(--delta-neutral)",
                     }}
                     className="font-semibold"
                   >
@@ -514,7 +509,7 @@ const CustomTooltip = ({
                   <span className="text-text-muted">Pit stop:</span>{" "}
                   <span
                     className={CHART_TYPOGRAPHY.tooltipValueClassName}
-                    style={{ color: "#fb923c" }}
+                    style={{ color: STATUS_COLORS.safetyCar }}
                   >
                     {lapData.pit_duration_seconds.toFixed(1)}s
                   </span>

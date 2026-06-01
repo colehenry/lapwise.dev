@@ -247,7 +247,7 @@ export default function SpeedTrapChart({
                 key={entry.driver_code}
                 fill={entry.team_color}
                 fillOpacity={entry.isFastest ? 1 : 0.6}
-                stroke={entry.isFastest ? "#a855f7" : "none"}
+                stroke={entry.isFastest ? "var(--series-1)" : "none"}
                 strokeWidth={entry.isFastest ? 2 : 0}
               />
             ))}

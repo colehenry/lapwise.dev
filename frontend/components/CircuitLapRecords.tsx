@@ -26,10 +26,10 @@ function RecordRow({
 }) {
   const teamColor =
     resolveReadableAccentColor(
-      record.team_color ? `#${record.team_color}` : "#a020f0",
+      record.team_color ? `#${record.team_color}` : "var(--purple-500)",
       theme,
-      "#475569",
-    ) ?? "#475569";
+      "var(--delta-neutral)",
+    ) ?? "var(--delta-neutral)";
   const driverUrl = driverHref({
     driver_slug: record.driver_slug,
     driver_code: record.driver_code,

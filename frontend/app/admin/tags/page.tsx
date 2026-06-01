@@ -9,6 +9,7 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
 import { createTag, deleteTag, updateTag } from "@/lib/admin";
 import { fetchTags } from "@/lib/discussions";
+import { DEFAULT_TAG_COLOR } from "@/lib/palette";
 import type { DiscussionTag } from "@/lib/types";
 
 export default function AdminTagsPage() {
@@ -20,7 +21,7 @@ export default function AdminTagsPage() {
 
   const [isEditing, setIsEditing] = useState<number | null>(null);
   const [name, setName] = useState("");
-  const [color, setColor] = useState("#8b5cf6");
+  const [color, setColor] = useState(DEFAULT_TAG_COLOR);
   const [category, setCategory] = useState("");
 
   const loadTags = useCallback(async () => {
@@ -42,7 +43,7 @@ export default function AdminTagsPage() {
   const resetForm = () => {
     setIsEditing(null);
     setName("");
-    setColor("#8b5cf6");
+    setColor(DEFAULT_TAG_COLOR);
     setCategory("");
   };
 

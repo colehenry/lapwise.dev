@@ -3,6 +3,7 @@ import { JetBrains_Mono, Outfit, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import AppShell from "@/components/AppShell";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { BG_THEME_COLOR } from "@/lib/palette";
 import { getThemeInitScript } from "@/lib/theme";
 
 const outfit = Outfit({
@@ -36,7 +37,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a0f",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: BG_THEME_COLOR.dark },
+    { media: "(prefers-color-scheme: light)", color: BG_THEME_COLOR.light },
+  ],
 };
 
 export default function RootLayout({

@@ -194,7 +194,8 @@ export default function TyreProgrammeChart({
           </span>
           <div className="w-px h-3 bg-border-primary flex-shrink-0" />
           {compoundPace.map((cp) => {
-            const color = COMPOUND_COLORS[cp.compound] ?? "#888";
+            const color =
+              COMPOUND_COLORS[cp.compound] ?? "var(--delta-neutral)";
             return (
               <div key={cp.compound} className="flex items-center gap-1.5">
                 <div
@@ -223,7 +224,9 @@ export default function TyreProgrammeChart({
             <div key={c} className="flex items-center gap-1.5">
               <div
                 className="w-3 h-3 rounded-sm flex-shrink-0"
-                style={{ backgroundColor: COMPOUND_COLORS[c] ?? "#888" }}
+                style={{
+                  backgroundColor: COMPOUND_COLORS[c] ?? "var(--delta-neutral)",
+                }}
               />
               <span className={CHART_TYPOGRAPHY.keyClassName}>{c}</span>
             </div>
@@ -252,7 +255,8 @@ export default function TyreProgrammeChart({
             <div className="flex-1 flex items-center h-7 rounded-sm overflow-hidden bg-bg-primary/40 border border-border-primary/40">
               {prog.compounds.map((seg) => {
                 const pct = maxLaps > 0 ? (seg.laps / maxLaps) * 100 : 0;
-                const color = COMPOUND_COLORS[seg.compound] ?? "#888";
+                const color =
+                  COMPOUND_COLORS[seg.compound] ?? "var(--delta-neutral)";
                 return (
                   <div
                     key={seg.compound}

@@ -95,6 +95,43 @@
   --message-query-bg: rgba(10, 10, 15, 0.72);
   --message-query-border: rgba(255, 255, 255, 0.08);
 
+  /* Tyre compounds */
+  --compound-supersoft: #a855f7;
+  --compound-soft: #e8002d;
+  --compound-medium: #ffd700;
+  --compound-hard: #c8c8c8;
+  --compound-inter: #39b54a;
+  --compound-wet: #3399ff;
+
+  /* Finishing positions */
+  --pos-gold: #ffd700;
+  --pos-silver: #c8c8c8;
+  --pos-bronze: #d97706;
+  --pos-points: var(--purple-500);
+  --pos-outpoints: #6b7280;
+
+  /* Trend / delta */
+  --delta-faster: #22c55e;
+  --delta-slower: #ef4444;
+  --delta-neutral: #94a3b8;
+
+  /* Race control / track status */
+  --status-yellow: #eab308;
+  --status-sc: #f59e0b;
+  --status-vsc: #a78bfa;
+  --status-red: #ef4444;
+  --status-pit: #60a5fa;
+
+  /* Categorical chart series */
+  --series-1: #a855f7;
+  --series-2: #3b82f6;
+  --series-3: #f97316;
+  --series-4: #06b6d4;
+  --series-5: #ec4899;
+  --series-6: #22c55e;
+  --series-7: #facc15;
+  --series-8: #94a3b8;
+
   /* Typography */
   --font-sans: var(--font-outfit, "Segoe UI", "Helvetica Neue", sans-serif);
   --font-mono: var(--font-jetbrains, "Monaco", "Courier New", monospace);
@@ -202,6 +239,20 @@
   --message-assistant-border: rgba(137, 146, 165, 0.22);
   --message-query-bg: rgba(240, 243, 249, 0.98);
   --message-query-border: rgba(137, 146, 165, 0.22);
+
+  /* Data-viz palettes — light-mode contrast adjustments */
+  --compound-supersoft: #9333ea;
+  --compound-medium: #e0a800;
+  --compound-hard: #6b7280;
+  --pos-gold: #d4a000;
+  --pos-silver: #94a3b8;
+  --pos-outpoints: #94a3b8;
+  --delta-faster: #16a34a;
+  --delta-slower: #dc2626;
+  --status-yellow: #ca8a04;
+  --status-red: #dc2626;
+  --series-7: #ca8a04;
+  --series-8: #64748b;
 }
 
 @theme inline {
