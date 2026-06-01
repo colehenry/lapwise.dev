@@ -24,16 +24,7 @@ import {
 import Card from "@/components/ui/Card";
 import type { ChartConfig } from "@/lib/chat";
 
-const DEFAULT_COLORS = [
-  "#a020f0",
-  "#e10600",
-  "#0090ff",
-  "#00d084",
-  "#ff6b00",
-  "#ffd700",
-  "#ff69b4",
-  "#00ced1",
-];
+import { SERIES_COLORS as DEFAULT_COLORS } from "@/lib/palette";
 
 interface AIChartProps {
   config: ChartConfig;

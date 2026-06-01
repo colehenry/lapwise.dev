@@ -5,6 +5,7 @@ import ArchivePanel from "@/components/archive/ArchivePanel";
 import MonoLabel from "@/components/ui/MonoLabel";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { POSITION_COLORS } from "@/lib/palette";
 import type { ConstructorRaceHistoryResponse } from "@/lib/types";
 
 interface ConstructorStatisticsPanelProps {
@@ -125,7 +126,7 @@ export default function ConstructorStatisticsPanel({
   }
 
   const races = raceData?.races ?? [];
-  const barColor = accentColor ?? "#e10600";
+  const barColor = accentColor ?? "var(--red-500)";
   const seasonStats: Record<number, SeasonStat> = {};
 
   for (const race of races) {
@@ -159,11 +160,11 @@ export default function ConstructorStatisticsPanel({
   ).length;
 
   const distribution: DistributionStat[] = [
-    { label: "P1", count: 0, color: "#facc15" },
-    { label: "P2", count: 0, color: "#d1d5db" },
-    { label: "P3", count: 0, color: "#d97706" },
+    { label: "P1", count: 0, color: POSITION_COLORS.gold },
+    { label: "P2", count: 0, color: POSITION_COLORS.silver },
+    { label: "P3", count: 0, color: POSITION_COLORS.bronze },
     { label: "P4-10", count: 0, color: barColor },
-    { label: "P11+", count: 0, color: "#6b7280" },
+    { label: "P11+", count: 0, color: POSITION_COLORS.outPoints },
   ];
 
   for (const race of races) {

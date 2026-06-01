@@ -12,6 +12,7 @@ import {
   fetchReplaySeasons,
   isValidHeadshotUrl,
 } from "@/lib/api";
+import { resolveToken } from "@/lib/palette";
 import type { ReplayData, ReplayDriverFrame, ReplayFrame } from "@/lib/types";
 
 const PLAYBACK_SPEED = 2;
@@ -401,7 +402,7 @@ function LeaderTelemetry({
     ctx.fill();
 
     // Throttle line
-    ctx.strokeStyle = "#22c55e";
+    ctx.strokeStyle = resolveToken("--delta-faster");
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let i = 0; i < drawUpTo; i++) {
@@ -426,7 +427,7 @@ function LeaderTelemetry({
     ctx.fill();
 
     // Brake line
-    ctx.strokeStyle = "#ef4444";
+    ctx.strokeStyle = resolveToken("--delta-slower");
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let i = 0; i < drawUpTo; i++) {
@@ -451,7 +452,7 @@ function LeaderTelemetry({
     ctx.fill();
 
     // Speed line
-    ctx.strokeStyle = "#60a5fa";
+    ctx.strokeStyle = resolveToken("--status-pit");
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let i = 0; i < drawUpTo; i++) {

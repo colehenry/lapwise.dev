@@ -36,3 +36,14 @@ export function resolveReadableAccentColor(
 
   return normalized;
 }
+
+export function darken(hex: string, amount: number): string {
+  const normalized = normalizeHexColor(hex);
+  if (!normalized) return hex;
+  const factor = Math.max(0, Math.min(1, 1 - amount));
+  const r = Math.round(Number.parseInt(normalized.slice(1, 3), 16) * factor);
+  const g = Math.round(Number.parseInt(normalized.slice(3, 5), 16) * factor);
+  const b = Math.round(Number.parseInt(normalized.slice(5, 7), 16) * factor);
+  const toHex = (n: number) => n.toString(16).padStart(2, "0");
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}

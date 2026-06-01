@@ -33,10 +33,10 @@ interface QualifyingSectorComparisonProps {
 
 // F1 timing colors
 const SECTOR_COLORS = {
-  purple: "#a855f7", // Overall fastest in session
-  green: "#22c55e", // Faster than opponent
-  yellow: "#eab308", // Slower than opponent
-  neutral: "#666666",
+  purple: "var(--series-1)",
+  green: "var(--delta-faster)",
+  yellow: "var(--status-yellow)",
+  neutral: "var(--delta-neutral)",
 } as const;
 
 // Format seconds to readable time

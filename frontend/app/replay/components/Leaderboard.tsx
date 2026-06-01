@@ -24,12 +24,14 @@ interface LeaderboardProps {
   onSelectDriver: (code: string | null) => void;
 }
 
+import { COMPOUND_COLORS as COMPOUND } from "@/lib/palette";
+
 const COMPOUND_COLORS: Record<number, string> = {
-  0: "#FF3333",
-  1: "#FFD700",
-  2: "#FFFFFF",
-  3: "#33CC33",
-  4: "#3399FF",
+  0: COMPOUND.SOFT,
+  1: COMPOUND.MEDIUM,
+  2: COMPOUND.HARD,
+  3: COMPOUND.INTERMEDIATE,
+  4: COMPOUND.WET,
 };
 
 const COMPOUND_LABELS: Record<number, string> = {
@@ -385,7 +387,8 @@ export default function Leaderboard({
                 <span
                   className="inline-block w-2 h-2 rounded-full"
                   style={{
-                    backgroundColor: COMPOUND_COLORS[compound] ?? "#999",
+                    backgroundColor:
+                      COMPOUND_COLORS[compound] ?? "var(--delta-neutral)",
                   }}
                 />
                 <span className="text-[10px] font-mono text-text-muted">

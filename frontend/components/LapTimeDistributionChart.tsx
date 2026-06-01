@@ -27,14 +27,8 @@ const X_AXIS_H = 30;
 const KDE_GRID_PTS = 200;
 const SVG_VIEWBOX_W = 1000;
 
-// ── Compound colours ──────────────────────────────────────────────────────────
-const COMPOUND_COLORS: Record<string, string> = {
-  SOFT: "#ef4444",
-  MEDIUM: "#eab308",
-  HARD: "#e5e7eb",
-  INTERMEDIATE: "#22c55e",
-  WET: "#3b82f6",
-};
+import { COMPOUND_COLORS } from "@/lib/palette";
+
 const COMPOUND_ORDER = ["SOFT", "MEDIUM", "HARD", "INTERMEDIATE", "WET"];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -367,8 +361,8 @@ export default function LapTimeDistributionChart({
                 setSelectedCompound(selectedCompound === c ? null : c)
               }
               style={{
-                borderColor: COMPOUND_COLORS[c] ?? "#999",
-                color: COMPOUND_COLORS[c] ?? "#999",
+                borderColor: COMPOUND_COLORS[c] ?? "var(--delta-neutral)",
+                color: COMPOUND_COLORS[c] ?? "var(--delta-neutral)",
               }}
               className={`px-3 py-1 rounded-sm text-[10px] font-bold font-mono uppercase tracking-widest border transition-colors duration-150 ${
                 selectedCompound === c
@@ -766,7 +760,9 @@ export default function LapTimeDistributionChart({
             <p
               className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-[10px] mt-0.5`}
               style={{
-                color: COMPOUND_COLORS[tooltip.snap.compound] ?? "#999",
+                color:
+                  COMPOUND_COLORS[tooltip.snap.compound] ??
+                  "var(--delta-neutral)",
               }}
             >
               {tooltip.snap.compound === "INTERMEDIATE"

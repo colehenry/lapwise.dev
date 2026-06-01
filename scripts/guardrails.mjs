@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 import { readdirSync, readFileSync } from "node:fs";
-import { extname, join } from "node:path";
+import { dirname, extname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+// Resolve scan paths from the repo root, not the caller's working directory.
+process.chdir(join(dirname(fileURLToPath(import.meta.url)), ".."));
 
 const SKIP_DIRS = new Set([
   "node_modules",

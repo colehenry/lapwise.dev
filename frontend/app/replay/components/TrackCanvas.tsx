@@ -636,11 +636,11 @@ function drawSafetyCar(
   if (!leaderFound) return;
 
   const scColors: Record<number, string> = {
-    1: "#FFA500", // SC = orange
-    2: "#FFD700", // VSC = gold
-    3: "#FF0000", // Red flag = red
+    1: resolveToken("--status-sc"),
+    2: resolveToken("--status-vsc"),
+    3: resolveToken("--status-red"),
   };
-  const scColor = scColors[frame.sc] ?? "#FFA500";
+  const scColor = scColors[frame.sc] ?? resolveToken("--status-sc");
   const radius = 8 / scale;
 
   // Pulsing effect via simple alpha
@@ -664,12 +664,14 @@ function drawSafetyCar(
   ctx.globalAlpha = 1;
 }
 
+import { COMPOUND_COLORS as COMPOUND, resolveToken } from "@/lib/palette";
+
 const COMPOUND_COLORS: Record<number, string> = {
-  0: "#FF3333",
-  1: "#FFD700",
-  2: "#FFFFFF",
-  3: "#33CC33",
-  4: "#3399FF",
+  0: COMPOUND.SOFT,
+  1: COMPOUND.MEDIUM,
+  2: COMPOUND.HARD,
+  3: COMPOUND.INTERMEDIATE,
+  4: COMPOUND.WET,
 };
 
 const COMPOUND_LABELS: Record<number, string> = {
@@ -764,7 +766,10 @@ export function DriverTooltip({
         <span className="flex items-center gap-1">
           <span
             className="inline-block w-2 h-2 rounded-full"
-            style={{ backgroundColor: COMPOUND_COLORS[compound] ?? "#999" }}
+            style={{
+              backgroundColor:
+                COMPOUND_COLORS[compound] ?? "var(--delta-neutral)",
+            }}
           />
           <span className="text-text-primary">
             {COMPOUND_LABELS[compound] ?? "?"} ({tyreLife}L)

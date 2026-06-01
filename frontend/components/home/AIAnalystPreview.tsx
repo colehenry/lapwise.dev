@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CartesianGrid,
   Line,
@@ -16,7 +16,9 @@ import {
 import { CHART_COLORS, CustomDot } from "@/components/chart-primitives";
 import ClutchIcon from "@/components/ui/ClutchIcon";
 import { useEntityLinkColors } from "@/hooks/useEntityLinkColors";
+import { useTeamColors } from "@/hooks/useTeamColors";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { darken } from "@/lib/color-utils";
 import { constructorHref, driverHref } from "@/lib/entityLinks";
 import type { CircuitInfo } from "@/lib/types";
 
@@ -68,7 +70,6 @@ const OUTRO_TEXT =
   "**Piastri's lead peaked at 34 points** after Zandvoort (R15), where Norris retired. The comeback started when Verstappen won **Italy and Baku** back-to-back while Piastri scored zero in Azerbaijan — the lead was suddenly just 25 points. Norris swept **Mexico City** (R20) to overtake Piastri by a single point, and sealed the title with a **2-point margin over Verstappen** — the closest finish in a decade.";
 
 // Real 2025 points after each Grand Prix — source: /api/results/2025/points-progression
-// NOR: #FF8000 (McLaren), VER: #3671C6 (Red Bull), PIA: #B25A00 (McLaren teammate, darkened 30%)
 const CHART_DATA = [
   { round: "1", event_name: "Australian GP", NOR: 25, VER: 18, PIA: 2 },
   { round: "2", event_name: "Chinese GP", NOR: 44, VER: 36, PIA: 34 },
@@ -97,21 +98,23 @@ const CHART_DATA = [
 ];
 
 const DRIVERS = [
-  { key: "NOR", name: "Norris", color: "#FF8000" },
-  { key: "VER", name: "Verstappen", color: "#3671C6" },
-  { key: "PIA", name: "Piastri", color: "#B25A00" },
+  { key: "NOR", name: "Norris" },
+  { key: "VER", name: "Verstappen" },
+  { key: "PIA", name: "Piastri" },
 ];
+
+const DRIVER_TEAMS: Record<string, string> = {
+  NOR: "McLaren",
+  VER: "Red Bull Racing",
+  PIA: "McLaren",
+};
 
 function getDriverColor(
   code: string | undefined,
   driverColors: Map<string, string>,
 ) {
   if (!code) return null;
-  return (
-    driverColors.get(code) ??
-    DRIVERS.find((driver) => driver.key === code)?.color ??
-    null
-  );
+  return driverColors.get(code) ?? null;
 }
 
 function getTeamColor(
@@ -303,6 +306,23 @@ function PreviewTooltip({
 
 function ChampionshipChart({ onReady }: { onReady?: () => void }) {
   const completedRef = useRef(0);
+  const teamColors = useTeamColors();
+  const driverColorMap = useMemo(() => {
+    const colors: Record<string, string> = {};
+    const teamCount: Record<string, number> = {};
+    for (const d of DRIVERS) {
+      const team = DRIVER_TEAMS[d.key];
+      const base = teamColors.get(team);
+      if (!base) {
+        colors[d.key] = "var(--series-1)";
+        continue;
+      }
+      const seen = teamCount[team] ?? 0;
+      colors[d.key] = seen === 0 ? base : darken(base, 0.3);
+      teamCount[team] = seen + 1;
+    }
+    return colors;
+  }, [teamColors]);
 
   function handleAnimationEnd() {
     completedRef.current += 1;
@@ -376,10 +396,14 @@ function ChampionshipChart({ onReady }: { onReady?: () => void }) {
                 type="linear"
                 dataKey={d.key}
                 name={d.name}
-                stroke={d.color}
+                stroke={driverColorMap[d.key]}
                 strokeWidth={2}
                 dot={<CustomDot />}
-                activeDot={{ r: 6, fill: d.color, stroke: d.color }}
+                activeDot={{
+                  r: 6,
+                  fill: driverColorMap[d.key],
+                  stroke: driverColorMap[d.key],
+                }}
                 filter={`url(#preview-glow-${d.key})`}
                 isAnimationActive={true}
                 connectNulls={false}
@@ -396,7 +420,7 @@ function ChampionshipChart({ onReady }: { onReady?: () => void }) {
               <div key={d.key} className="flex items-center gap-2">
                 <div
                   className="h-2.5 w-2.5 rounded-full"
-                  style={{ backgroundColor: d.color }}
+                  style={{ backgroundColor: driverColorMap[d.key] }}
                 />
                 <span className="font-mono text-[10px] font-bold text-text-primary">
                   {d.name}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { STATUS_COLORS } from "@/lib/palette";
 
 interface LapBoundary {
   lap: number;
@@ -38,11 +39,11 @@ interface PlaybackTimelineProps {
 }
 
 const EVENT_COLORS: Record<string, string> = {
-  sc: "#f59e0b",
-  vsc: "#eab308",
-  red_flag: "#ef4444",
-  weather: "#06b6d4",
-  drs: "#22c55e",
+  sc: STATUS_COLORS.safetyCar,
+  vsc: STATUS_COLORS.virtualSafetyCar,
+  red_flag: STATUS_COLORS.red,
+  weather: "var(--series-4)",
+  drs: "var(--delta-faster)",
 };
 
 /** Compact controls for the track card header bar */

@@ -89,8 +89,8 @@ export default function CircuitRecentRace({
               resolveReadableAccentColor(
                 entry.team_color ? `#${entry.team_color}` : "#999",
                 theme,
-                "#475569",
-              ) ?? "#475569";
+                "var(--delta-neutral)",
+              ) ?? "var(--delta-neutral)";
             const driverUrl = driverHref({
               driver_slug: entry.driver_slug,
               driver_code: entry.driver_code,
