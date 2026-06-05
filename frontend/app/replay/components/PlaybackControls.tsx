@@ -206,7 +206,7 @@ export function PlaybackTimeline({
         {/* Event markers — short colored ticks from top */}
         {timelineEvents.map((ev, i) => {
           const pct = (ev.frameIndex / Math.max(totalFrames - 1, 1)) * 100;
-          const color = EVENT_COLORS[ev.type] ?? "#999";
+          const color = EVENT_COLORS[ev.type] ?? "var(--delta-neutral)";
           const isHovered = hoveredEvent === i;
           return (
             <button

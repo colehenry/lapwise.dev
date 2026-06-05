@@ -41,7 +41,9 @@ function ConstructorCard({ team }: { team: ConstructorListItem }) {
   const { theme } = useTheme();
   const teamUrl = constructorHref(team.team_name) ?? "/constructors";
   const isActive = team.latest_season === CURRENT_YEAR;
-  const teamColor = team.team_color ? `#${team.team_color}` : "#888";
+  const teamColor = team.team_color
+    ? `#${team.team_color}`
+    : "var(--delta-neutral)";
   const logoUrl = getConstructorLogoUrl(team);
   const invertLogo =
     theme === "light" && shouldInvertConstructorLogoOnLight(team);

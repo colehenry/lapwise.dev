@@ -336,7 +336,9 @@ export default function Leaderboard({
               <div
                 className="w-1 h-5 rounded-full shrink-0"
                 style={{
-                  backgroundColor: info ? `#${info.color}` : "#999",
+                  backgroundColor: info
+                    ? `#${info.color}`
+                    : "var(--delta-neutral)",
                 }}
               />
 

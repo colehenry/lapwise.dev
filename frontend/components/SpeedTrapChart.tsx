@@ -114,7 +114,9 @@ export default function SpeedTrapChart({
         speeds.push({
           driver_code: driver.driver_code ?? driver.full_name,
           full_name: driver.full_name,
-          team_color: driver.team_color ? `#${driver.team_color}` : "#666",
+          team_color: driver.team_color
+            ? `#${driver.team_color}`
+            : "var(--delta-neutral)",
           max_speed: maxSpeed,
           isFastest: false,
         });

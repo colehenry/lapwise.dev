@@ -235,7 +235,9 @@ function MiniLeaderboard({
             )}
             <span
               className="font-mono font-bold tracking-wide"
-              style={{ color: info ? `#${info.color}` : "#ccc" }}
+              style={{
+                color: info ? `#${info.color}` : "var(--delta-neutral)",
+              }}
             >
               {code}
             </span>
@@ -473,7 +475,9 @@ function LeaderTelemetry({
         <div
           className="h-2.5 w-1 rounded-full"
           style={{
-            backgroundColor: leaderInfo ? `#${leaderInfo.color}` : "#666",
+            backgroundColor: leaderInfo
+              ? `#${leaderInfo.color}`
+              : "var(--delta-neutral)",
           }}
         />
         <span className="font-mono text-[10px] font-bold text-text-primary tracking-wide">

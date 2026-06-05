@@ -87,7 +87,9 @@ export default function CircuitRecentRace({
           {data.podium.map((entry) => {
             const teamColor =
               resolveReadableAccentColor(
-                entry.team_color ? `#${entry.team_color}` : "#999",
+                entry.team_color
+                  ? `#${entry.team_color}`
+                  : "var(--delta-neutral)",
                 theme,
                 "var(--delta-neutral)",
               ) ?? "var(--delta-neutral)";

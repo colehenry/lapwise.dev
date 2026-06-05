@@ -369,7 +369,9 @@ const getFastestLapEntry = (driver: DriverLapTimes): TimelineEntry | null => {
     driverCode: driver.driver_code ?? driver.full_name,
     fastestLapNumber: bestLapNumber,
     lapTime: bestLapTime,
-    teamColor: driver.team_color ? `#${driver.team_color}` : "#666",
+    teamColor: driver.team_color
+      ? `#${driver.team_color}`
+      : "var(--delta-neutral)",
   };
 };
 

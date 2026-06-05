@@ -411,7 +411,7 @@ export default function ResultsPage() {
                         style={{
                           color: driver.team_color
                             ? `#${driver.team_color}`
-                            : "#999",
+                            : "var(--delta-neutral)",
                         }}
                       >
                         <Link
@@ -780,7 +780,7 @@ export default function ResultsPage() {
                                     style={{
                                       color: driver.team_color
                                         ? `#${driver.team_color}`
-                                        : "#fff",
+                                        : "var(--text-primary)",
                                     }}
                                   >
                                     {driver.driver_code}

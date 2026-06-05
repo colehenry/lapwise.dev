@@ -219,7 +219,7 @@ export default function QualifyingSectorComparison({
     );
     const teamColor = selectedDriver?.team_color
       ? `#${selectedDriver.team_color}`
-      : "#666";
+      : "var(--delta-neutral)";
 
     return (
       <div className="relative" ref={dropdownRef}>
@@ -278,7 +278,7 @@ export default function QualifyingSectorComparison({
               .map((driver) => {
                 const color = driver.team_color
                   ? `#${driver.team_color}`
-                  : "#666";
+                  : "var(--delta-neutral)";
                 return (
                   <button
                     key={driver.driver_code}
@@ -701,7 +701,7 @@ export default function QualifyingSectorComparison({
                         style={{
                           color: driver1.team_color
                             ? `#${driver1.team_color}`
-                            : "#ccc",
+                            : "var(--delta-neutral)",
                         }}
                       >
                         {driver1.driver_code}
@@ -712,7 +712,7 @@ export default function QualifyingSectorComparison({
                         style={{
                           color: driver2.team_color
                             ? `#${driver2.team_color}`
-                            : "#ccc",
+                            : "var(--delta-neutral)",
                         }}
                       >
                         {driver2.driver_code}
@@ -780,7 +780,7 @@ export default function QualifyingSectorComparison({
                     style={{
                       color: driver1.team_color
                         ? `#${driver1.team_color}`
-                        : "#ccc",
+                        : "var(--delta-neutral)",
                     }}
                   >
                     {driver1.driver_code}
@@ -791,7 +791,7 @@ export default function QualifyingSectorComparison({
                     style={{
                       color: driver2.team_color
                         ? `#${driver2.team_color}`
-                        : "#ccc",
+                        : "var(--delta-neutral)",
                     }}
                   >
                     {driver2.driver_code}

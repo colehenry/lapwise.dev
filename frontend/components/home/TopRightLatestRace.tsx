@@ -127,7 +127,7 @@ export default function TopRightLatestRace() {
                       style={{
                         color: driver.team_color
                           ? `#${driver.team_color}`
-                          : "#fff",
+                          : "var(--text-primary)",
                         borderColor: driver.team_color
                           ? `#${driver.team_color}40`
                           : "transparent",

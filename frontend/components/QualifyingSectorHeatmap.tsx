@@ -216,7 +216,7 @@ export default function QualifyingSectorHeatmap({
               const code = driver.driver_code ?? driver.full_name;
               const color = driver.team_color
                 ? `#${driver.team_color}`
-                : "#666";
+                : "var(--delta-neutral)";
               const d1 =
                 driver.best_sector1 != null && bestS1 != null
                   ? driver.best_sector1 - bestS1

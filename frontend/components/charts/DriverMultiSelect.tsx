@@ -41,7 +41,9 @@ export default function DriverMultiSelect({
             const key = driverKey(driver);
             const isSelected = selectedDrivers.includes(key);
             const isDisabled = isDriverDisabled?.(driver) ?? false;
-            const color = driver.team_color ? `#${driver.team_color}` : "#666";
+            const color = driver.team_color
+              ? `#${driver.team_color}`
+              : "var(--delta-neutral)";
 
             return (
               <label

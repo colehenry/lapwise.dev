@@ -225,7 +225,9 @@ export default function PitStopDeltaChart({
       let pendingPitInStatus: string | null = null;
 
       const driverCode = driver.driver_code ?? driver.full_name;
-      const teamColor = driver.team_color ? `#${driver.team_color}` : "#666";
+      const teamColor = driver.team_color
+        ? `#${driver.team_color}`
+        : "var(--delta-neutral)";
 
       for (const lap of driver.laps) {
         if (lap.track_status && lap.lap_number != null) {

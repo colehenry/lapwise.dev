@@ -329,7 +329,7 @@ export default function TrackCanvas({
         const hData = frame.d[highlightedDriver];
         const hColor = drivers[highlightedDriver]
           ? `#${drivers[highlightedDriver].color}`
-          : "#fff";
+          : resolveToken("--text-primary");
         // Pulsing ring
         const ringRadius = 14 / scale;
         ctx.strokeStyle = hColor;
@@ -576,7 +576,7 @@ function drawDriver(
   pulseProgress?: number,
 ) {
   const [x, y] = data;
-  const color = info ? `#${info.color}` : "#999";
+  const color = info ? `#${info.color}` : resolveToken("--delta-neutral");
   const radius = (isHighlighted ? SELECTED_RADIUS : DRIVER_RADIUS) / scale;
 
   // Pulse ring on position change
@@ -607,7 +607,7 @@ function drawDriver(
   // Label for highlighted drivers
   if (isHighlighted) {
     ctx.font = `bold ${11 / scale}px monospace`;
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = resolveToken("--text-primary");
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
     ctx.fillText(code, x, y - radius - 3 / scale);
@@ -651,7 +651,7 @@ function drawSafetyCar(
   ctx.fill();
 
   ctx.font = `bold ${9 / scale}px monospace`;
-  ctx.fillStyle = "#000";
+  ctx.fillStyle = resolveToken("--text-primary");
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   const scLabels: Record<number, string> = { 1: "SC", 2: "VSC", 3: "RED" };

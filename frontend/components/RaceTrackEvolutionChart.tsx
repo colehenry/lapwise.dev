@@ -343,7 +343,7 @@ export default function RaceTrackEvolutionChart({
                   const isSelected = selectedDrivers.includes(key);
                   const color = driver.team_color
                     ? `#${driver.team_color}`
-                    : "#666";
+                    : "var(--delta-neutral)";
                   return (
                     <label
                       key={key}

@@ -766,7 +766,7 @@ export default function TyreDegradationChart({
                       style={{
                         color: driver.team_color
                           ? `#${driver.team_color}`
-                          : "#999",
+                          : "var(--delta-neutral)",
                       }}
                     >
                       {driver.full_name}
