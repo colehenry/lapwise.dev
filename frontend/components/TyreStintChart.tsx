@@ -264,7 +264,7 @@ export default function TyreStintChart({
                 const isSelected = selectedDrivers.includes(dk);
                 const teamColor = driver.team_color
                   ? `#${driver.team_color}`
-                  : "#999";
+                  : "var(--delta-neutral)";
 
                 return (
                   <label
@@ -301,7 +301,7 @@ export default function TyreStintChart({
             const stints = computeStints(driver.laps);
             const teamColor = driver.team_color
               ? `#${driver.team_color}`
-              : "#999";
+              : "var(--delta-neutral)";
 
             return (
               <div key={driverKey(driver)} className="flex items-center gap-2">
@@ -321,7 +321,8 @@ export default function TyreStintChart({
                     const widthPercent =
                       maxLap > 0 ? (stint.lapCount / maxLap) * 100 : 0;
                     const barColor =
-                      COMPOUND_BAR_COLORS[stint.compound] || "#666";
+                      COMPOUND_BAR_COLORS[stint.compound] ||
+                      "var(--delta-neutral)";
 
                     return (
                       <div

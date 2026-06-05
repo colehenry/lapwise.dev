@@ -89,7 +89,7 @@ function grepCount(dirs, exts, regex, { exclude } = {}) {
 const hexHits = grepCount(
   ["frontend/components", "frontend/app"],
   [".ts", ".tsx"],
-  /#[0-9a-fA-F]{6}\b/,
+  /#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?\b/,
   { exclude: HEX_ALLOWED },
 );
 
@@ -106,7 +106,7 @@ const checks = [
   { label: "console.* in frontend source", items: consoleHits, enforce: true },
   { label: "file-size caps exceeded", items: violations, enforce: false },
   { label: "file-size targets (soft)", items: warnings, enforce: false },
-  { label: "hardcoded hex outside approved files", items: hexHits, enforce: false },
+  { label: "hardcoded hex outside approved files", items: hexHits, enforce: true },
 ];
 
 function section(label, items, enforce, sample = 5) {

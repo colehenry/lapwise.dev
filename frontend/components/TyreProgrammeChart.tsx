@@ -104,7 +104,9 @@ export default function TyreProgrammeChart({
 
         programmes.push({
           driverCode: driverKey(driver),
-          teamColor: driver.team_color ? `#${driver.team_color}` : "#666",
+          teamColor: driver.team_color
+            ? `#${driver.team_color}`
+            : "var(--delta-neutral)",
           compounds: orderedCompounds,
           totalLaps,
         });

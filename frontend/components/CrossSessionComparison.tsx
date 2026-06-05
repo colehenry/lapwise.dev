@@ -78,7 +78,7 @@ export default function CrossSessionComparison({
           driverTimes[code] = {
             teamColor: result.team.team_color
               ? `#${result.team.team_color}`
-              : "#666",
+              : "var(--delta-neutral)",
           };
         }
         if (result.time_seconds != null) {
