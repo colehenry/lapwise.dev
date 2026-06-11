@@ -35,9 +35,11 @@ def ingest_circuit(db, event):
     # 3. If a country has exactly one circuit and nothing matched, it must be the
     #    same venue under a different label (micro-states, single-venue countries).
     if circuit is None and country:
-        all_in_country = db.execute(
-            select(Circuit).where(Circuit.country == country)
-        ).scalars().all()
+        all_in_country = (
+            db.execute(select(Circuit).where(Circuit.country == country))
+            .scalars()
+            .all()
+        )
         if len(all_in_country) == 1:
             circuit = all_in_country[0]
 
