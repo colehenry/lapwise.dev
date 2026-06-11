@@ -198,7 +198,7 @@ def session_exists(event, session_type_name):
         except Exception:
             return True
 
-    # FP3 does not exist at sprint weekends (replaced by sprint qualifying)
+    # FP3 does not exist at sprint weekends (all sprint formats)
     if session_type_name == "fp3":
         try:
             event_format = event.get("EventFormat", "")
@@ -210,5 +210,13 @@ def session_exists(event, session_type_name):
         except Exception:
             return True
 
-    # FP1, FP2, race, and qualifying exist at all events
+    # FP2 does not exist in 2023+ sprint formats; 2022 "sprint" format kept FP2 as Session3
+    if session_type_name == "fp2":
+        try:
+            event_format = event.get("EventFormat", "")
+            return event_format not in ("sprint_qualifying", "sprint_shootout")
+        except Exception:
+            return True
+
+    # FP1, race, and qualifying exist at all events
     return True
