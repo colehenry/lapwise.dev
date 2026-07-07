@@ -4,8 +4,9 @@ Driver Schemas
 Pydantic models for driver profile and statistics API responses.
 """
 
+from typing import List, Optional
+
 from pydantic import BaseModel
-from typing import Optional, List
 
 
 class DriverListItem(BaseModel):

@@ -12,12 +12,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_active_user
-
+from app.config import settings
 from app.database import get_db
 from app.limiter import limiter
 from app.models.user import User
 from app.request_context import get_client_ip
 from app.schemas.auth import (
+    RESERVED_USERNAMES,
+    USERNAME_REGEX,
     ChangePasswordRequest,
     DeleteAccountRequest,
     ForgotPasswordRequest,
@@ -30,13 +32,10 @@ from app.schemas.auth import (
     SessionsResponse,
     TokenRefreshResponse,
     UpdateProfileRequest,
-    UserProfile,
     UsernameAvailabilityResponse,
-    RESERVED_USERNAMES,
-    USERNAME_REGEX,
+    UserProfile,
 )
 from app.services.auth_service import AuthService
-from app.config import settings
 from app.services.email_service import EmailService
 from app.services.user_service import UserService
 
@@ -459,8 +458,9 @@ async def update_me(
     if "favorite_driver_slug" in filtered:
         slug = filtered.pop("favorite_driver_slug")
         if slug:
+            from sqlalchemy import or_, select
+
             from app.models.driver import Driver
-            from sqlalchemy import select, or_
 
             result = await db.execute(
                 select(Driver).where(

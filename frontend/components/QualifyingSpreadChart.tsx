@@ -183,7 +183,7 @@ export default function QualifyingSpreadChart({
         driverName: result.driver.full_name,
         teamColor: result.team.team_color
           ? `#${result.team.team_color}`
-          : "#a855f5",
+          : "var(--series-1)",
         bestTime: best.time,
         bestRound: best.round,
         gap,
@@ -247,7 +247,7 @@ export default function QualifyingSpreadChart({
                 const isSelected = selectedDrivers.includes(driverKey);
                 const teamColor = result.team.team_color
                   ? `#${result.team.team_color}`
-                  : "#a855f5";
+                  : "var(--series-1)";
 
                 return (
                   <label
@@ -336,7 +336,7 @@ export default function QualifyingSpreadChart({
                 x2="100"
                 y1={BASELINE_Y}
                 y2={BASELINE_Y}
-                stroke="var(--color-border-secondary, #3a3a45)"
+                stroke="var(--color-border-secondary)"
                 strokeWidth="0.4"
               />
               {[0, 0.25, 0.5, 0.75, 1].map((tick) => (
@@ -346,7 +346,7 @@ export default function QualifyingSpreadChart({
                   x2={tick * 100}
                   y1="20"
                   y2={CHART_HEIGHT - 20}
-                  stroke="var(--color-border-primary, #2a2a35)"
+                  stroke="var(--color-border-primary)"
                   strokeWidth="0.25"
                 />
               ))}

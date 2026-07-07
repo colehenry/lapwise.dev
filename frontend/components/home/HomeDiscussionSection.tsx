@@ -137,7 +137,7 @@ export default function HomeDiscussionSection() {
                           style={{
                             color: driver.team_color
                               ? `#${driver.team_color}`
-                              : "#fff",
+                              : "var(--text-primary)",
                           }}
                         >
                           {driver.driver_code}

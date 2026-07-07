@@ -26,7 +26,9 @@ from app.models import Session, SessionResult
 
 # How long after a session ends before we check for data
 MIN_DELAY_HOURS = 1
-MAX_DELAY_HOURS = 3
+MAX_DELAY_HOURS = (
+    72  # catch sessions FastF1 published late (practice can take hours/days)
+)
 
 # FastF1 session columns map to session types
 # Standard: S1=FP1, S2=FP2, S3=FP3, S4=Qualifying, S5=Race
@@ -86,7 +88,9 @@ def is_race_weekend(schedule, now):
 
         race_duration = SESSION_DURATIONS["race"]
         weekend_start = race_date - timedelta(days=3)
-        weekend_end = race_date + timedelta(hours=race_duration + 4)
+        weekend_end = race_date + timedelta(
+            hours=race_duration + 72
+        )  # 72h trailing window for late/missed sessions
 
         if weekend_start <= now <= weekend_end:
             return True

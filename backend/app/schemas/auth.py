@@ -5,10 +5,10 @@ Pydantic models for authentication request/response validation.
 """
 
 import re
-from pydantic import BaseModel, EmailStr, field_validator
-from typing import Optional
 from datetime import datetime
+from typing import Optional
 
+from pydantic import BaseModel, EmailStr, field_validator
 
 RESERVED_USERNAMES = {
     "admin",

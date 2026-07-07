@@ -5,6 +5,7 @@ Business logic for tag management.
 """
 
 import re
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

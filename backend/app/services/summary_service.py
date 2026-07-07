@@ -6,24 +6,28 @@ Designed for sync usage in ingestion scripts.
 """
 
 import json
+import logging
 import math
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DBSession
 
+from app.config import settings
 from app.models import (
+    Driver,
+    Lap,
+    RaceControlMessage,
     Session,
     SessionResult,
-    Driver,
-    Team,
-    Lap,
-    Weather,
-    TrackStatus,
-    RaceControlMessage,
     SessionSummary,
+    Team,
+    TrackStatus,
+    Weather,
 )
-from app.config import settings
 
 MODEL_ID = "claude-haiku-4-5-20251001"
+
+logger = logging.getLogger(__name__)
 
 
 class SummaryService:
@@ -41,7 +45,7 @@ class SummaryService:
             select(SessionSummary).where(SessionSummary.session_id == session_id)
         ).scalar_one_or_none()
         if existing:
-            print(f"  ✓ Summary already exists for session {session_id}")
+            logger.info("Summary already exists for session %s", session_id)
             return existing
 
         # Load session data
@@ -49,7 +53,7 @@ class SummaryService:
             select(Session).where(Session.id == session_id)
         ).scalar_one_or_none()
         if not session:
-            print(f"  ✗ Session {session_id} not found")
+            logger.warning("Session %s not found", session_id)
             return None
 
         # Load results with driver/team info
@@ -62,7 +66,7 @@ class SummaryService:
         ).all()
 
         if not results:
-            print(f"  ✗ No results for session {session_id}")
+            logger.warning("No results for session %s", session_id)
             return None
 
         # Load weather data
@@ -143,8 +147,10 @@ class SummaryService:
         db.commit()
         db.refresh(summary)
 
-        print(
-            f"  ✓ Generated summary for {session.event_name} [{session.session_type}]"
+        logger.info(
+            "Generated summary for %s [%s]",
+            session.event_name,
+            session.session_type,
         )
         return summary
 
@@ -539,7 +545,7 @@ Race Dynamics Evidence (use this to fact-check the narrative):
 
     @staticmethod
     def _compress_driver_segments(
-        lap_driver_pairs: list[tuple[int, int]]
+        lap_driver_pairs: list[tuple[int, int]],
     ) -> list[tuple[int, int, int]]:
         segments: list[tuple[int, int, int]] = []
         current_start = None
@@ -582,7 +588,7 @@ Race Dynamics Evidence (use this to fact-check the narrative):
     def _call_claude(prompt: str) -> dict | None:
         """Call Claude Haiku and parse the JSON response."""
         if not settings.anthropic_api_key:
-            print("  ✗ ANTHROPIC_API_KEY not set, skipping summary generation")
+            logger.warning("ANTHROPIC_API_KEY not set, skipping summary generation")
             return None
 
         try:
@@ -615,10 +621,10 @@ Race Dynamics Evidence (use this to fact-check the narrative):
                     return parsed
             except Exception:
                 pass
-            print("  ✗ Failed to parse Claude response as JSON")
+            logger.error("Failed to parse Claude response as JSON")
             return None
         except Exception as e:
-            print(f"  ✗ Claude API error: {e}")
+            logger.error("Claude API error: %s", e)
             return None
 
     @staticmethod
@@ -631,5 +637,5 @@ Race Dynamics Evidence (use this to fact-check the narrative):
             text = " ".join(snippet.text for snippet in fetched)
             return text
         except Exception as e:
-            print(f"  ℹ️  Could not fetch transcript for {video_id}: {e}")
+            logger.info("Could not fetch transcript for %s: %s", video_id, e)
             return None

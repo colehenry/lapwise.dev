@@ -5,58 +5,59 @@ Business logic for fetching and processing season results data.
 Extracted from season_results.py router for better separation of concerns.
 """
 
-from typing import List, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, case
-from sqlalchemy.orm import selectinload
 import math
+from typing import List, Optional
+
+from sqlalchemy import case, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models import (
+    Circuit,
+    Driver,
+    Lap,
+    RaceControlMessage,
     Session,
     SessionResult,
-    Driver,
     Team,
-    Circuit,
-    Lap,
     TrackStatus,
     Weather,
-    RaceControlMessage,
 )
 from app.schemas.result import (
-    StandingsResponse,
-    DriverStanding,
-    ConstructorStanding,
-    DriverProgressionData,
-    ConstructorProgressionData,
-    PointsProgressionRound,
-    PointsProgressionResponse,
-    SeasonRoundsResponse,
-    RoundSummary,
-    RoundPodiumDriver,
-    LapData,
-    DriverLapTimesData,
-    LapTimesResponse,
-    TrackStatusEvent,
-    RaceControlEvent,
-    SessionResultsResponse,
-    SessionInfo,
     CircuitInfo,
-    SessionResultDetail,
-    DriverInfo,
-    TeamInfo,
-    QualifyingStandingsResponse,
-    DriverQualifyingStanding,
+    ConstructorProgressionData,
     ConstructorQualifyingStanding,
+    ConstructorStanding,
+    DistributionLap,
+    DriverInfo,
+    DriverLapDistribution,
+    DriverLapTimesData,
+    DriverProgressionData,
+    DriverQualifyingStanding,
+    DriverStanding,
+    LapData,
+    LapDistributionResponse,
+    LapTimesResponse,
+    PointsProgressionResponse,
+    PointsProgressionRound,
     QualifyingSectorComparison,
     QualifyingSectorResponse,
+    QualifyingStandingsResponse,
+    RaceControlEvent,
+    RoundPodiumDriver,
+    RoundSummary,
+    SeasonRoundsResponse,
+    SessionInfo,
+    SessionResultDetail,
+    SessionResultsResponse,
+    StandingsResponse,
+    TeamInfo,
+    TeammateDriverInfo,
+    TeammateH2HResponse,
+    TeammateH2HTeam,
+    TrackStatusEvent,
     WeatherDataPoint,
     WeatherResponse,
-    DistributionLap,
-    DriverLapDistribution,
-    LapDistributionResponse,
-    TeammateDriverInfo,
-    TeammateH2HTeam,
-    TeammateH2HResponse,
 )
 
 

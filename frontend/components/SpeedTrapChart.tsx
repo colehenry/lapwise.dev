@@ -114,7 +114,9 @@ export default function SpeedTrapChart({
         speeds.push({
           driver_code: driver.driver_code ?? driver.full_name,
           full_name: driver.full_name,
-          team_color: driver.team_color ? `#${driver.team_color}` : "#666",
+          team_color: driver.team_color
+            ? `#${driver.team_color}`
+            : "var(--delta-neutral)",
           max_speed: maxSpeed,
           isFastest: false,
         });
@@ -247,7 +249,7 @@ export default function SpeedTrapChart({
                 key={entry.driver_code}
                 fill={entry.team_color}
                 fillOpacity={entry.isFastest ? 1 : 0.6}
-                stroke={entry.isFastest ? "#a855f7" : "none"}
+                stroke={entry.isFastest ? "var(--series-1)" : "none"}
                 strokeWidth={entry.isFastest ? 2 : 0}
               />
             ))}

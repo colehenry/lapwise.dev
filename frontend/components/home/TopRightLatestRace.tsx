@@ -127,7 +127,7 @@ export default function TopRightLatestRace() {
                       style={{
                         color: driver.team_color
                           ? `#${driver.team_color}`
-                          : "#fff",
+                          : "var(--text-primary)",
                         borderColor: driver.team_color
                           ? `#${driver.team_color}40`
                           : "transparent",
@@ -205,7 +205,7 @@ export default function TopRightLatestRace() {
               circuitName={data.circuit_name}
               width={200}
               height={200}
-              className="object-contain opacity-80 mix-blend-lighten scale-[1.25]"
+              className="object-contain opacity-85 scale-[1.25]"
               fallbackClassName="h-full w-full px-3"
             />
           </div>

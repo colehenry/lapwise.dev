@@ -1,19 +1,20 @@
 from datetime import date
-from typing import Optional, List, Dict, Tuple
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, case
+from typing import Dict, List, Optional, Tuple
 
-from app.models import Team, SessionResult, Session, Driver
-from app.services.results_service import _make_slug
+from sqlalchemy import case, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models import Driver, Session, SessionResult, Team
 from app.schemas.constructor import (
-    ConstructorProfileResponse,
-    ConstructorSeasonHistoryResponse,
-    ConstructorSeasonHistory,
-    ConstructorRaceHistoryResponse,
-    ConstructorRaceHistory,
     ConstructorListItem,
     ConstructorListResponse,
+    ConstructorProfileResponse,
+    ConstructorRaceHistory,
+    ConstructorRaceHistoryResponse,
+    ConstructorSeasonHistory,
+    ConstructorSeasonHistoryResponse,
 )
+from app.services.results_service import _make_slug
 
 
 class ConstructorService:

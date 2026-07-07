@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { STATUS_COLORS } from "@/lib/palette";
 
 interface LapBoundary {
   lap: number;
@@ -38,11 +39,11 @@ interface PlaybackTimelineProps {
 }
 
 const EVENT_COLORS: Record<string, string> = {
-  sc: "#f59e0b",
-  vsc: "#eab308",
-  red_flag: "#ef4444",
-  weather: "#06b6d4",
-  drs: "#22c55e",
+  sc: STATUS_COLORS.safetyCar,
+  vsc: STATUS_COLORS.virtualSafetyCar,
+  red_flag: STATUS_COLORS.red,
+  weather: "var(--series-4)",
+  drs: "var(--delta-faster)",
 };
 
 /** Compact controls for the track card header bar */
@@ -205,7 +206,7 @@ export function PlaybackTimeline({
         {/* Event markers — short colored ticks from top */}
         {timelineEvents.map((ev, i) => {
           const pct = (ev.frameIndex / Math.max(totalFrames - 1, 1)) * 100;
-          const color = EVENT_COLORS[ev.type] ?? "#999";
+          const color = EVENT_COLORS[ev.type] ?? "var(--delta-neutral)";
           const isHovered = hoveredEvent === i;
           return (
             <button

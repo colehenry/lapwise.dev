@@ -5,7 +5,7 @@ Represents track condition changes during a session.
 Tracks safety car deployments, yellow flags, red flags, etc.
 """
 
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Index, Text
+from sqlalchemy import Column, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.database import Base

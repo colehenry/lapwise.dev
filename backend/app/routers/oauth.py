@@ -38,9 +38,9 @@ from app.routers.auth import (
     _user_profile,
 )
 from app.schemas.auth import (
-    LoginResponse,
     RESERVED_USERNAMES,
     USERNAME_REGEX,
+    LoginResponse,
 )
 from app.services.auth_service import AuthService
 from app.services.oauth_service import OAuthService
@@ -402,7 +402,7 @@ async def unlink_provider(
     if user.hashed_password is None and len(accounts) == 1:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=("Set a password before disconnecting your only " "sign-in method"),
+            detail=("Set a password before disconnecting your only sign-in method"),
         )
     await OAuthService.unlink_account(db, user.id, provider)
     return {"message": "Disconnected"}

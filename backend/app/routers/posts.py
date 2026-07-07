@@ -7,24 +7,24 @@ Endpoints for discussion posts, comments, and votes.
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
 from app.auth import get_current_active_user, get_current_admin, get_optional_user
+from app.database import get_db
 from app.limiter import limiter
 from app.models.user import User
-from app.schemas.post import (
-    CreatePostRequest,
-    UpdatePostRequest,
-    PostResponse,
-    PostListResponse,
-)
 from app.schemas.comment import (
+    CommentListResponse,
+    CommentResponse,
     CreateCommentRequest,
     UpdateCommentRequest,
-    CommentResponse,
-    CommentListResponse,
 )
-from app.services.post_service import PostService
+from app.schemas.post import (
+    CreatePostRequest,
+    PostListResponse,
+    PostResponse,
+    UpdatePostRequest,
+)
 from app.services.comment_service import CommentService
+from app.services.post_service import PostService
 from app.services.vote_service import VoteService
 
 router = APIRouter()
@@ -42,9 +42,7 @@ async def list_posts(
     post_type: str | None = Query(None),
     search: str | None = Query(None, max_length=200),
     author_id: int | None = Query(None, description="Filter by author user ID"),
-    author_username: str | None = Query(
-        None, description="Filter by author username"
-    ),
+    author_username: str | None = Query(None, description="Filter by author username"),
     db: AsyncSession = Depends(get_db),
     current_user: User | None = Depends(get_optional_user),
 ):

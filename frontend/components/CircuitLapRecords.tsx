@@ -2,8 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useTheme } from "@/components/ThemeProvider";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { resolveReadableAccentColor } from "@/lib/color-utils";
 import { constructorHref, driverHref } from "@/lib/entityLinks";
 import type { CircuitLapRecordsResponse, LapRecordEntry } from "@/lib/types";
 
@@ -16,11 +18,18 @@ function formatLapTime(seconds: number): string {
 function RecordRow({
   record,
   label,
+  theme,
 }: {
   record: LapRecordEntry;
   label: string;
+  theme: "dark" | "light";
 }) {
-  const teamColor = record.team_color ? `#${record.team_color}` : "#a020f0";
+  const teamColor =
+    resolveReadableAccentColor(
+      record.team_color ? `#${record.team_color}` : "var(--purple-500)",
+      theme,
+      "var(--delta-neutral)",
+    ) ?? "var(--delta-neutral)";
   const driverUrl = driverHref({
     driver_slug: record.driver_slug,
     driver_code: record.driver_code,
@@ -33,7 +42,7 @@ function RecordRow({
         {label}
       </div>
       <div className="flex items-baseline gap-2 mb-1">
-        <span className="text-2xl font-bold text-white font-mono">
+        <span className="text-2xl font-bold text-text-primary font-mono">
           {formatLapTime(record.time_seconds)}
         </span>
       </div>
@@ -71,6 +80,7 @@ interface CircuitLapRecordsProps {
 export default function CircuitLapRecords({
   circuitId,
 }: CircuitLapRecordsProps) {
+  const { theme } = useTheme();
   const { data, isLoading } = useQuery<CircuitLapRecordsResponse | null>({
     queryKey: ["circuit-lap-records", circuitId],
     queryFn: async () => {
@@ -101,12 +111,17 @@ export default function CircuitLapRecords({
   return (
     <div className="space-y-6">
       {data.fastest_race_lap && (
-        <RecordRow record={data.fastest_race_lap} label="Fastest Race Lap" />
+        <RecordRow
+          record={data.fastest_race_lap}
+          label="Fastest Race Lap"
+          theme={theme}
+        />
       )}
       {data.fastest_qualifying_lap && (
         <RecordRow
           record={data.fastest_qualifying_lap}
           label="Qualifying Record"
+          theme={theme}
         />
       )}
     </div>

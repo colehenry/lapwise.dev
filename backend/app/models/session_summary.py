@@ -6,11 +6,11 @@ Stores AI-generated summaries for F1 sessions (race, qualifying, practice, sprin
 
 from sqlalchemy import (
     Column,
+    DateTime,
+    ForeignKey,
     Integer,
     String,
     Text,
-    DateTime,
-    ForeignKey,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func

@@ -4,11 +4,12 @@ AI Message Model
 Represents a single message in an AI conversation (user, assistant, system, or tool).
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
 import uuid
+
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 from app.database import Base
 

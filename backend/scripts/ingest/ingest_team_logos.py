@@ -1,6 +1,7 @@
 """
 Ingest F1 team (constructor) logos from Wikipedia.
 """
+
 import asyncio
 import sys
 import os
@@ -233,7 +234,7 @@ async def main():
             progress = min(i + batch_size, len(teams))
             print(f"Progress: {progress}/{len(teams)}, {found} found")
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Done! Found logos for {found}/{len(teams)} teams")
         print(f"Sources: {sources}")
 

@@ -164,9 +164,7 @@ def main():
                         )
 
                         if has_results:
-                            print(
-                                f"  ⏭️  Skipping {session_type} (already has results)"
-                            )
+                            print(f"  ⏭️  Skipping {session_type} (already has results)")
                             continue
                         else:
                             print(

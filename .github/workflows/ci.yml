@@ -82,6 +82,11 @@ jobs:
       - name: Check installed packages
         run: pip check
 
+      - name: Lint and format check
+        run: |
+          ruff check app/
+          ruff format --check .
+
       - name: Run migrations
         run: alembic upgrade head
 
@@ -95,5 +100,5 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Report large files
-        run: npm run report:file-sizes
+      - name: Guardrails report
+        run: npm run guardrails

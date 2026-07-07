@@ -17,8 +17,10 @@ import {
   CHART_TYPOGRAPHY,
   CustomXAxisTickRace,
   RangeSelector,
+  resolveChartSeriesColor,
 } from "@/components/chart-primitives";
 import { TrianglePattern } from "@/components/Patterns";
+import { useTheme } from "@/components/ThemeProvider";
 import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
@@ -171,6 +173,7 @@ export default function EntityHistoryGraph({
 }: {
   config: EntityHistoryConfig;
 }) {
+  const { theme } = useTheme();
   const [graphMode, setGraphMode] = useState<GraphMode>("season");
   const [dataMode, setDataMode] = useState<DataMode>(
     config.defaultDataMode ?? "position",
@@ -536,11 +539,10 @@ export default function EntityHistoryGraph({
                           (entry: SeasonEntry, index: number) => (
                             <Cell
                               key={`bar-${entry.year}-${index}`}
-                              fill={
-                                entry.team_color
-                                  ? `#${entry.team_color}`
-                                  : CHART_COLORS.purple
-                              }
+                              fill={resolveChartSeriesColor(
+                                entry.team_color,
+                                theme,
+                              )}
                             />
                           ),
                         )}
@@ -615,11 +617,12 @@ export default function EntityHistoryGraph({
                           (entry: Record<string, unknown>, index: number) => (
                             <Cell
                               key={`race-bar-${String(entry.year ?? "unknown")}-${String(entry.round ?? index)}-${String(entry.session_type ?? "race")}-${index}`}
-                              fill={
-                                entry.team_color
-                                  ? `#${entry.team_color}`
-                                  : CHART_COLORS.purple
-                              }
+                              fill={resolveChartSeriesColor(
+                                typeof entry.team_color === "string"
+                                  ? entry.team_color
+                                  : null,
+                                theme,
+                              )}
                             />
                           ),
                         )}

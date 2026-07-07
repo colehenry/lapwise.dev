@@ -11,6 +11,7 @@
 
 import crypto from "node:crypto";
 import { anthropic } from "@ai-sdk/anthropic";
+import * as Sentry from "@sentry/nextjs";
 import { generateText, stepCountIs, streamText } from "ai";
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAIUser } from "@/lib/ai/auth";
@@ -241,8 +242,8 @@ async function writeCachedResponse(
         follow_ups_json = EXCLUDED.follow_ups_json,
         cached_at      = NOW()
     `;
-  } catch (error) {
-    console.error("Failed to write AI response cache:", error);
+  } catch {
+    // best-effort cache write; failures are non-fatal
   }
 }
 
@@ -346,7 +347,7 @@ async function saveMessage(
 			WHERE id = ${conversationId}::uuid
 		`;
   } catch (error) {
-    console.error("Failed to save AI message:", error);
+    Sentry.captureException(error);
   }
 }
 
@@ -802,7 +803,7 @@ export async function POST(request: NextRequest) {
             }),
           );
         } catch (error) {
-          console.error("AI stream error:", error);
+          Sentry.captureException(error);
           const message =
             error instanceof Error
               ? error.message
@@ -827,7 +828,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("AI agent error:", error);
+    Sentry.captureException(error);
     const message =
       error instanceof Error ? error.message : "An unexpected error occurred";
     return NextResponse.json(

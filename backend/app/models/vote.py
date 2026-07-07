@@ -6,15 +6,15 @@ Uses partial unique indexes to enforce one vote per user per target.
 """
 
 from sqlalchemy import (
+    CheckConstraint,
     Column,
-    Integer,
     DateTime,
     ForeignKey,
+    Integer,
     UniqueConstraint,
-    CheckConstraint,
 )
-from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 from app.database import Base
 

@@ -184,9 +184,9 @@ export default function ChatWidget() {
   }
 
   return (
-    <div className="chat-widget-panel fixed bottom-6 right-6 z-50 flex h-[min(600px,calc(100vh-6rem))] w-[min(420px,calc(100vw-3rem))] flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] shadow-[0_16px_48px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+    <div className="chat-widget-panel theme-glass-panel fixed bottom-6 right-6 z-50 flex h-[600px] w-[420px] max-h-[calc(100vh-6rem)] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3 shrink-0">
+      <div className="flex items-center justify-between border-b border-[var(--glass-border)] px-4 py-3 shrink-0">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10 text-purple-300">
             <ClutchIcon className="h-4 w-4" />
@@ -218,7 +218,7 @@ export default function ChatWidget() {
             <button
               type="button"
               onClick={handleNewChat}
-              className="rounded-lg p-1.5 text-text-muted transition-all hover:bg-white/[0.04] hover:text-text-secondary"
+              className="rounded-lg p-1.5 text-text-muted transition-all hover:bg-[var(--glass-surface-soft)] hover:text-text-secondary"
               title="New chat"
             >
               <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -232,7 +232,7 @@ export default function ChatWidget() {
             type="button"
             onClick={handleExpand}
             disabled={isAsking}
-            className="rounded-lg p-1.5 text-text-muted transition-all hover:bg-white/[0.04] hover:text-text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-lg p-1.5 text-text-muted transition-all hover:bg-[var(--glass-surface-soft)] hover:text-text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
             title="Open full page"
           >
             <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -248,7 +248,7 @@ export default function ChatWidget() {
           <button
             type="button"
             onClick={() => setIsOpen(false)}
-            className="rounded-lg p-1.5 text-text-muted transition-all hover:bg-white/[0.04] hover:text-text-secondary"
+            className="rounded-lg p-1.5 text-text-muted transition-all hover:bg-[var(--glass-surface-soft)] hover:text-text-secondary"
             title="Minimize"
           >
             <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -260,11 +260,11 @@ export default function ChatWidget() {
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
         {messages.length === 0 ? (
           <SuggestedQuestions onSelect={handleSend} compact />
         ) : (
-          <div className="px-3 py-3">
+          <div className="h-full px-3 py-3">
             {messages.map((msg) => (
               <ChatMessage
                 key={msg.id}

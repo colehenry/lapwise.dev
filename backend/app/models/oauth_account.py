@@ -5,9 +5,9 @@ Links a user to an external OAuth identity (Google, etc.). A single user can
 have multiple OAuth accounts (one per provider).
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, UniqueConstraint
-from sqlalchemy.sql import func
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 from app.database import Base
 

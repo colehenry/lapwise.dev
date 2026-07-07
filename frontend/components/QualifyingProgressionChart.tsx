@@ -46,7 +46,9 @@ export default function QualifyingProgressionChart({
     const drivers: DriverSlopeData[] = qualifyingData.results.map((r) => ({
       code: r.driver.driver_code ?? r.driver.full_name,
       fullName: r.driver.full_name,
-      teamColor: r.team.team_color ? `#${r.team.team_color}` : "#666",
+      teamColor: r.team.team_color
+        ? `#${r.team.team_color}`
+        : "var(--delta-neutral)",
       Q1: r.q1_time_seconds ?? undefined,
       Q2: r.q2_time_seconds ?? undefined,
       Q3: r.q3_time_seconds ?? undefined,

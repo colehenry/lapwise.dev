@@ -5,6 +5,7 @@ Backfill driver headshots from multiple sources:
 
 Uses Jolpica API Wikipedia URLs when available, falls back to name-based lookup.
 """
+
 import asyncio
 import sys
 import urllib.parse
@@ -243,7 +244,7 @@ async def main():
                         f"\n  Progress: {progress}/{len(drivers)} checked, {found} found\n"
                     )
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Done! Found headshots for {found}/{len(drivers)} drivers")
         print(f"Sources: {sources}")
         print(f"Still missing: {len(not_found)} drivers")

@@ -34,13 +34,7 @@ interface TyreDegradationChartProps {
   initialDrivers?: string[];
 }
 
-const COMPOUND_COLORS: Record<string, string> = {
-  SOFT: "#ef4444",
-  MEDIUM: "#eab308",
-  HARD: "#e5e7eb",
-  INTERMEDIATE: "#22c55e",
-  WET: "#3b82f6",
-};
+import { COMPOUND_COLORS } from "@/lib/palette";
 
 const MIN_CLEAN_BASELINE_LAPS = 2;
 const MIN_COMPOUND_SAMPLES = 6;
@@ -541,7 +535,7 @@ export default function TyreDegradationChart({
             lap_time: lap.lap_time_seconds,
             pace_delta: lap.lap_time_seconds - baseline,
             compound: lap.compound,
-            color: COMPOUND_COLORS[lap.compound] || "#999",
+            color: COMPOUND_COLORS[lap.compound] || "var(--delta-neutral)",
             driverCode: driverKey(driver),
             stintLabel,
             lapNumber: lap.lap_number,
@@ -586,7 +580,7 @@ export default function TyreDegradationChart({
 
     const summaries = lineKeys.map((compound): CompoundSummary => {
       const fitted = fittedByCompound.get(compound) ?? [];
-      const color = COMPOUND_COLORS[compound] || "#999";
+      const color = COMPOUND_COLORS[compound] || "var(--delta-neutral)";
       const sampleCount = samplesByCompound[compound]?.length ?? 0;
       if (fitted.length === 0) {
         return {
@@ -727,7 +721,7 @@ export default function TyreDegradationChart({
                     : "border-transparent opacity-40"
                 }`}
                 style={{
-                  color: COMPOUND_COLORS[compound] || "#999",
+                  color: COMPOUND_COLORS[compound] || "var(--delta-neutral)",
                 }}
               >
                 {compound}
@@ -772,7 +766,7 @@ export default function TyreDegradationChart({
                       style={{
                         color: driver.team_color
                           ? `#${driver.team_color}`
-                          : "#999",
+                          : "var(--delta-neutral)",
                       }}
                     >
                       {driver.full_name}
@@ -880,7 +874,7 @@ export default function TyreDegradationChart({
                     name={`${compound} laps`}
                     data={chartData.samplesByCompound[compound] ?? []}
                     dataKey="pace_delta"
-                    fill={COMPOUND_COLORS[compound] || "#999"}
+                    fill={COMPOUND_COLORS[compound] || "var(--delta-neutral)"}
                     opacity={0.18}
                     isAnimationActive={false}
                   />
@@ -891,12 +885,12 @@ export default function TyreDegradationChart({
                     type="monotone"
                     dataKey={`${compound}_fit`}
                     name={`${compound} fit`}
-                    stroke={COMPOUND_COLORS[compound] || "#999"}
+                    stroke={COMPOUND_COLORS[compound] || "var(--delta-neutral)"}
                     strokeWidth={3}
                     dot={false}
                     activeDot={{
                       r: 5,
-                      fill: COMPOUND_COLORS[compound] || "#999",
+                      fill: COMPOUND_COLORS[compound] || "var(--delta-neutral)",
                     }}
                     connectNulls={false}
                     isAnimationActive={true}

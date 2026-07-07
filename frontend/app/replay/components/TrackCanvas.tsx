@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getCanvasTheme } from "@/components/chart-primitives";
 import { isValidHeadshotUrl } from "@/lib/api";
 import type {
   ReplayCorner,
@@ -37,15 +38,8 @@ const PADDING = 20;
 const DRIVER_RADIUS = 6;
 const SELECTED_RADIUS = 9;
 const TRACK_WIDTH = 8;
-const TRACK_COLOR = "rgba(255, 255, 255, 0.12)";
-const TRACK_GLOW_COLOR = "rgba(255, 255, 255, 0.04)";
-const SF_LINE_COLOR = "rgba(255, 255, 255, 0.5)";
-const DRS_ZONE_COLOR_ACTIVE = "rgba(0, 220, 80, 0.35)";
-const DRS_ZONE_COLOR_INACTIVE = "rgba(0, 220, 80, 0.10)";
-const CORNER_LABEL_COLOR = "rgba(255, 255, 255, 0.35)";
 const CORNER_LABEL_FONT_SIZE = 9;
 const GRID_SPACING = 40;
-const GRID_COLOR = "rgba(255, 255, 255, 0.02)";
 
 export default function TrackCanvas({
   track,
@@ -62,7 +56,7 @@ export default function TrackCanvas({
 }: TrackCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const trackPathRef = useRef<Path2D | null>(null);
   const hoveredDriverRef = useRef<string | null>(null);
 
@@ -195,6 +189,7 @@ export default function TrackCanvas({
     if (!ctx) return;
 
     const { width, height } = dimensions;
+    if (width === 0 || height === 0) return;
     const dpr = window.devicePixelRatio || 1;
 
     canvas.width = width * dpr;
@@ -202,14 +197,15 @@ export default function TrackCanvas({
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     // Background gradient
+    const canvasTheme = getCanvasTheme(containerRef.current);
     const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
-    bgGrad.addColorStop(0, "#080809");
-    bgGrad.addColorStop(1, "#040404");
+    bgGrad.addColorStop(0, canvasTheme.backgroundStart);
+    bgGrad.addColorStop(1, canvasTheme.backgroundEnd);
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, width, height);
 
     // Subtle grid pattern
-    ctx.strokeStyle = GRID_COLOR;
+    ctx.strokeStyle = canvasTheme.grid;
     ctx.lineWidth = 1;
     for (let gx = 0; gx < width; gx += GRID_SPACING) {
       ctx.beginPath();
@@ -234,7 +230,7 @@ export default function TrackCanvas({
     // Draw track polyline with outer glow
     if (trackPathRef.current) {
       // Outer glow layer
-      ctx.strokeStyle = TRACK_GLOW_COLOR;
+      ctx.strokeStyle = canvasTheme.trackGlow;
       ctx.lineWidth = (TRACK_WIDTH + 12) / scale;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
@@ -248,7 +244,7 @@ export default function TrackCanvas({
       }
 
       // Main track line
-      ctx.strokeStyle = TRACK_COLOR;
+      ctx.strokeStyle = canvasTheme.track;
       ctx.lineWidth = TRACK_WIDTH / scale;
       ctx.stroke(trackPathRef.current);
     }
@@ -256,8 +252,8 @@ export default function TrackCanvas({
     // Draw DRS zones (hidden for 2026+ seasons — DRS removed from F1)
     if (hasDrs && track.drs_zones?.length > 0) {
       const zoneColor = drsEnabled
-        ? DRS_ZONE_COLOR_ACTIVE
-        : DRS_ZONE_COLOR_INACTIVE;
+        ? canvasTheme.drsActive
+        : canvasTheme.drsInactive;
       ctx.strokeStyle = zoneColor;
       ctx.lineWidth = (TRACK_WIDTH + 4) / scale;
       ctx.lineCap = "round";
@@ -289,7 +285,7 @@ export default function TrackCanvas({
         const halfWidth = 12 / scale;
 
         // Draw checkered-style S/F line
-        ctx.strokeStyle = SF_LINE_COLOR;
+        ctx.strokeStyle = canvasTheme.startFinish;
         ctx.lineWidth = 3 / scale;
         ctx.setLineDash([3 / scale, 3 / scale]);
         ctx.beginPath();
@@ -302,7 +298,7 @@ export default function TrackCanvas({
 
     // Draw corner labels
     if (showCorners && track.corners?.length > 0) {
-      drawCornerLabels(ctx, track.corners, scale);
+      drawCornerLabels(ctx, track.corners, scale, canvasTheme.cornerLabel);
     }
 
     // Draw drivers
@@ -333,7 +329,7 @@ export default function TrackCanvas({
         const hData = frame.d[highlightedDriver];
         const hColor = drivers[highlightedDriver]
           ? `#${drivers[highlightedDriver].color}`
-          : "#fff";
+          : resolveToken("--text-primary");
         // Pulsing ring
         const ringRadius = 14 / scale;
         ctx.strokeStyle = hColor;
@@ -552,9 +548,10 @@ function drawCornerLabels(
   ctx: CanvasRenderingContext2D,
   corners: ReplayCorner[],
   scale: number,
+  labelColor: string,
 ) {
   ctx.font = `bold ${CORNER_LABEL_FONT_SIZE / scale}px monospace`;
-  ctx.fillStyle = CORNER_LABEL_COLOR;
+  ctx.fillStyle = labelColor;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
@@ -579,7 +576,7 @@ function drawDriver(
   pulseProgress?: number,
 ) {
   const [x, y] = data;
-  const color = info ? `#${info.color}` : "#999";
+  const color = info ? `#${info.color}` : resolveToken("--delta-neutral");
   const radius = (isHighlighted ? SELECTED_RADIUS : DRIVER_RADIUS) / scale;
 
   // Pulse ring on position change
@@ -610,7 +607,7 @@ function drawDriver(
   // Label for highlighted drivers
   if (isHighlighted) {
     ctx.font = `bold ${11 / scale}px monospace`;
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = resolveToken("--text-primary");
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
     ctx.fillText(code, x, y - radius - 3 / scale);
@@ -639,11 +636,11 @@ function drawSafetyCar(
   if (!leaderFound) return;
 
   const scColors: Record<number, string> = {
-    1: "#FFA500", // SC = orange
-    2: "#FFD700", // VSC = gold
-    3: "#FF0000", // Red flag = red
+    1: resolveToken("--status-sc"),
+    2: resolveToken("--status-vsc"),
+    3: resolveToken("--status-red"),
   };
-  const scColor = scColors[frame.sc] ?? "#FFA500";
+  const scColor = scColors[frame.sc] ?? resolveToken("--status-sc");
   const radius = 8 / scale;
 
   // Pulsing effect via simple alpha
@@ -654,7 +651,7 @@ function drawSafetyCar(
   ctx.fill();
 
   ctx.font = `bold ${9 / scale}px monospace`;
-  ctx.fillStyle = "#000";
+  ctx.fillStyle = resolveToken("--text-primary");
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   const scLabels: Record<number, string> = { 1: "SC", 2: "VSC", 3: "RED" };
@@ -667,12 +664,14 @@ function drawSafetyCar(
   ctx.globalAlpha = 1;
 }
 
+import { COMPOUND_COLORS as COMPOUND, resolveToken } from "@/lib/palette";
+
 const COMPOUND_COLORS: Record<number, string> = {
-  0: "#FF3333",
-  1: "#FFD700",
-  2: "#FFFFFF",
-  3: "#33CC33",
-  4: "#3399FF",
+  0: COMPOUND.SOFT,
+  1: COMPOUND.MEDIUM,
+  2: COMPOUND.HARD,
+  3: COMPOUND.INTERMEDIATE,
+  4: COMPOUND.WET,
 };
 
 const COMPOUND_LABELS: Record<number, string> = {
@@ -767,7 +766,10 @@ export function DriverTooltip({
         <span className="flex items-center gap-1">
           <span
             className="inline-block w-2 h-2 rounded-full"
-            style={{ backgroundColor: COMPOUND_COLORS[compound] ?? "#999" }}
+            style={{
+              backgroundColor:
+                COMPOUND_COLORS[compound] ?? "var(--delta-neutral)",
+            }}
           />
           <span className="text-text-primary">
             {COMPOUND_LABELS[compound] ?? "?"} ({tyreLife}L)

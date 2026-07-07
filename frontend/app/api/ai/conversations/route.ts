@@ -4,6 +4,7 @@
  * GET /api/ai/conversations — list user's conversations
  */
 
+import * as Sentry from "@sentry/nextjs";
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAIUser } from "@/lib/ai/auth";
 import { getConversationClient } from "@/lib/ai/db";
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ conversations });
   } catch (error) {
-    console.error("Failed to list conversations:", error);
+    Sentry.captureException(error);
     return NextResponse.json(
       { error: "Failed to load conversations." },
       { status: 500 },

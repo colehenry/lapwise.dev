@@ -5,7 +5,8 @@ Business logic for discussion posts.
 """
 
 from datetime import datetime, timezone
-from sqlalchemy import select, desc
+
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -194,10 +195,12 @@ class PostService:
         return {"posts": items, "next_cursor": next_cursor}
 
     @staticmethod
-    async def count_posts(db: AsyncSession) -> int:
+    async def count_posts(db: AsyncSession, since: datetime | None = None) -> int:
         from sqlalchemy import func
 
         stmt = select(func.count()).select_from(Post).where(Post.deleted_at.is_(None))
+        if since:
+            stmt = stmt.where(Post.created_at >= since)
         result = await db.execute(stmt)
         return result.scalar() or 0
 
@@ -243,6 +246,72 @@ class PostService:
         post.deleted_at = datetime.now(timezone.utc)
         await db.commit()
         return True
+
+    @staticmethod
+    async def get_admin_posts(
+        db: AsyncSession,
+        skip: int = 0,
+        limit: int = 20,
+        query: str | None = None,
+        status: str = "all",
+    ) -> dict:
+        from sqlalchemy import func
+
+        base = select(Post).options(selectinload(Post.author), selectinload(Post.tags))
+
+        if status == "active":
+            base = base.where(Post.deleted_at.is_(None))
+        elif status == "removed":
+            base = base.where(Post.deleted_at.isnot(None))
+
+        if query:
+            term = f"%{query}%"
+            base = base.where(Post.title.ilike(term) | Post.body.ilike(term))
+
+        count_stmt = select(func.count()).select_from(
+            base.with_only_columns(Post.id).subquery()
+        )
+        total_result = await db.execute(count_stmt)
+        total = total_result.scalar() or 0
+
+        result = await db.execute(
+            base.order_by(desc(Post.created_at)).offset(skip).limit(limit)
+        )
+        posts = list(result.scalars().unique().all())
+
+        items = []
+        for post in posts:
+            items.append(
+                {
+                    "id": post.id,
+                    "title": post.title,
+                    "body": post.body[:200] + "..."
+                    if len(post.body) > 200
+                    else post.body,
+                    "post_type": post.post_type.value,
+                    "is_pinned": post.is_pinned,
+                    "is_locked": post.is_locked,
+                    "vote_count": post.vote_count,
+                    "comment_count": post.comment_count,
+                    "author": post.author,
+                    "tags": post.tags,
+                    "deleted_at": post.deleted_at,
+                    "created_at": post.created_at,
+                    "updated_at": post.updated_at,
+                }
+            )
+
+        return {"posts": items, "total": total}
+
+    @staticmethod
+    async def restore_post(db: AsyncSession, post_id: int) -> Post | None:
+        result = await db.execute(select(Post).where(Post.id == post_id))
+        post = result.scalar_one_or_none()
+        if not post:
+            return None
+        post.deleted_at = None
+        await db.commit()
+        return post
 
     @staticmethod
     async def pin_post(db: AsyncSession, post_id: int) -> Post | None:

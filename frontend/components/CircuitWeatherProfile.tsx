@@ -99,7 +99,8 @@ export default function CircuitWeatherProfile({
             className="h-full rounded-full transition-all duration-500"
             style={{
               width: `${wetPercent}%`,
-              backgroundColor: wetPercent > 30 ? "#3b82f6" : "#666",
+              backgroundColor:
+                wetPercent > 30 ? "var(--series-2)" : "var(--delta-neutral)",
             }}
           />
         </div>

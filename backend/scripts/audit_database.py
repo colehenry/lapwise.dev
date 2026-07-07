@@ -579,9 +579,9 @@ def main():
         print("❌ No seasons found in database!")
         return
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"🔍 F1 DATABASE AUDIT")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     print(f"Auditing {len(seasons)} season(s): {seasons}")
 
     # Run audits for each season

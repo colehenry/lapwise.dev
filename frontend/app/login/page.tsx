@@ -69,6 +69,12 @@ function LoginForm() {
           Welcome back. Enter your credentials below.
         </p>
 
+        {redirect && redirect !== "/" && (
+          <p className="text-[11px] font-mono text-text-muted border border-border-primary rounded-sm px-3 py-2 mb-4">
+            Log in to continue
+          </p>
+        )}
+
         {oauthError && (
           <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-sm px-3 py-2 mb-4">
             {oauthErrorMessage(oauthError)}

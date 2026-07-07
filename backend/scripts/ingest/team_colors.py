@@ -187,6 +187,55 @@ HISTORICAL_TEAM_COLORS = {
 }
 
 
+# Maps variant team names (from FastF1, Jolpica, etc.) to the canonical name
+# stored in the DB. Keys are lowercase for case-insensitive matching.
+TEAM_NAME_ALIASES: dict[str, str] = {
+    # Red Bull
+    "red bull": "Red Bull Racing",
+    # Alpine
+    "alpine f1 team": "Alpine",
+    # Racing Bulls (formerly Toro Rosso → AlphaTauri → RB → Racing Bulls)
+    "rb f1 team": "Racing Bulls",
+    "rb": "Racing Bulls",
+    # Cadillac
+    "cadillac f1 team": "Cadillac",
+    # Sauber / Kick Sauber (pre-2026 canonical name is "Sauber")
+    "kick sauber": "Sauber",
+    "stake f1 team kick sauber": "Sauber",
+}
+
+# Year-range aliases: (year_min, year_max, {lowercase_alias: canonical}).
+# year_min/year_max are inclusive; None means unbounded.
+# Checked before TEAM_NAME_ALIASES so era-specific rules take priority.
+TEAM_NAME_ALIASES_BY_YEAR: list[tuple[int | None, int | None, dict[str, str]]] = [
+    # Sauber rebranded to Audi from 2026 onwards.
+    (
+        2026,
+        None,
+        {
+            "sauber": "Audi",
+            "audi": "Audi",
+            "audi f1 team": "Audi",
+        },
+    ),
+]
+
+
+def normalize_team_name(name: str, year: int | None = None) -> str:
+    """Return canonical team name, resolving known aliases."""
+    if not name:
+        return name
+    key = name.lower().strip()
+    if year is not None:
+        for year_min, year_max, aliases in TEAM_NAME_ALIASES_BY_YEAR:
+            in_range = (year_min is None or year >= year_min) and (
+                year_max is None or year <= year_max
+            )
+            if in_range and key in aliases:
+                return aliases[key]
+    return TEAM_NAME_ALIASES.get(key, name)
+
+
 def get_historical_team_color(team_name: str) -> str | None:
     """
     Get historical team color by name (case-insensitive).

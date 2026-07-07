@@ -17,19 +17,14 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  CHART_AXIS_LABEL_STYLE,
+  CHART_COLORS,
+} from "@/components/chart-primitives";
 import Card from "@/components/ui/Card";
 import type { ChartConfig } from "@/lib/chat";
 
-const DEFAULT_COLORS = [
-  "#a020f0",
-  "#e10600",
-  "#0090ff",
-  "#00d084",
-  "#ff6b00",
-  "#ffd700",
-  "#ff69b4",
-  "#00ced1",
-];
+import { SERIES_COLORS as DEFAULT_COLORS } from "@/lib/palette";
 
 interface AIChartProps {
   config: ChartConfig;
@@ -59,37 +54,40 @@ export default function AIChart({ config }: AIChartProps) {
       <ResponsiveContainer width="100%" height={280}>
         {chartType === "line" ? (
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2a2a35" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke={CHART_COLORS.borderPrimary}
+            />
             <XAxis
               dataKey={xKey}
-              tick={{ fill: "#999", fontSize: 11 }}
+              tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
               label={{
                 value: xLabel,
                 position: "insideBottom",
                 offset: -5,
-                fill: "#999",
-                fontSize: 11,
+                style: CHART_AXIS_LABEL_STYLE,
               }}
             />
             <YAxis
-              tick={{ fill: "#999", fontSize: 11 }}
+              tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
               label={{
                 value: yLabel,
                 angle: -90,
                 position: "insideLeft",
-                fill: "#999",
-                fontSize: 11,
+                style: CHART_AXIS_LABEL_STYLE,
               }}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "#1e1e28",
-                border: "1px solid #2a2a35",
+                backgroundColor: CHART_COLORS.tooltipBg,
+                border: `1px solid ${CHART_COLORS.tooltipBorder}`,
                 borderRadius: "6px",
                 fontSize: "12px",
               }}
             />
-            {yKeys.length > 1 && <Legend />}
+            {yKeys.length > 1 && (
+              <Legend wrapperStyle={{ color: CHART_COLORS.textTertiary }} />
+            )}
             {yKeys.map((key, i) => (
               <Line
                 key={key}
@@ -105,32 +103,33 @@ export default function AIChart({ config }: AIChartProps) {
           </LineChart>
         ) : chartType === "scatter" ? (
           <ScatterChart>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2a2a35" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke={CHART_COLORS.borderPrimary}
+            />
             <XAxis
               dataKey={xKey}
-              tick={{ fill: "#999", fontSize: 11 }}
+              tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
               label={{
                 value: xLabel,
                 position: "insideBottom",
                 offset: -5,
-                fill: "#999",
-                fontSize: 11,
+                style: CHART_AXIS_LABEL_STYLE,
               }}
             />
             <YAxis
-              tick={{ fill: "#999", fontSize: 11 }}
+              tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
               label={{
                 value: yLabel,
                 angle: -90,
                 position: "insideLeft",
-                fill: "#999",
-                fontSize: 11,
+                style: CHART_AXIS_LABEL_STYLE,
               }}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "#1e1e28",
-                border: "1px solid #2a2a35",
+                backgroundColor: CHART_COLORS.tooltipBg,
+                border: `1px solid ${CHART_COLORS.tooltipBorder}`,
                 borderRadius: "6px",
                 fontSize: "12px",
               }}
@@ -160,8 +159,8 @@ export default function AIChart({ config }: AIChartProps) {
             </Pie>
             <Tooltip
               contentStyle={{
-                backgroundColor: "#1e1e28",
-                border: "1px solid #2a2a35",
+                backgroundColor: CHART_COLORS.tooltipBg,
+                border: `1px solid ${CHART_COLORS.tooltipBorder}`,
                 borderRadius: "6px",
                 fontSize: "12px",
               }}
@@ -170,37 +169,40 @@ export default function AIChart({ config }: AIChartProps) {
         ) : (
           /* bar and stacked_bar */
           <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2a2a35" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke={CHART_COLORS.borderPrimary}
+            />
             <XAxis
               dataKey={xKey}
-              tick={{ fill: "#999", fontSize: 11 }}
+              tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
               label={{
                 value: xLabel,
                 position: "insideBottom",
                 offset: -5,
-                fill: "#999",
-                fontSize: 11,
+                style: CHART_AXIS_LABEL_STYLE,
               }}
             />
             <YAxis
-              tick={{ fill: "#999", fontSize: 11 }}
+              tick={{ fill: CHART_COLORS.textTertiary, fontSize: 11 }}
               label={{
                 value: yLabel,
                 angle: -90,
                 position: "insideLeft",
-                fill: "#999",
-                fontSize: 11,
+                style: CHART_AXIS_LABEL_STYLE,
               }}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "#1e1e28",
-                border: "1px solid #2a2a35",
+                backgroundColor: CHART_COLORS.tooltipBg,
+                border: `1px solid ${CHART_COLORS.tooltipBorder}`,
                 borderRadius: "6px",
                 fontSize: "12px",
               }}
             />
-            {yKeys.length > 1 && <Legend />}
+            {yKeys.length > 1 && (
+              <Legend wrapperStyle={{ color: CHART_COLORS.textTertiary }} />
+            )}
             {yKeys.map((key, i) => (
               <Bar
                 key={key}

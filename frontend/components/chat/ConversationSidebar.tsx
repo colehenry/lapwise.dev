@@ -67,7 +67,7 @@ export default function ConversationSidebar({
 
   return (
     <div
-      className={`absolute inset-y-0 right-0 z-10 min-h-0 overflow-hidden border-l border-white/[0.06] bg-bg-secondary/95 backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+      className={`theme-glass-panel absolute inset-y-0 right-0 z-10 min-h-0 overflow-hidden border-l transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
         isOpen
           ? "w-72 translate-x-0 opacity-100"
           : "w-72 translate-x-full border-l-0 opacity-0 pointer-events-none"
@@ -75,7 +75,7 @@ export default function ConversationSidebar({
     >
       <div className="flex h-full min-h-0 w-72 flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3.5">
+        <div className="flex items-center justify-between border-b border-[var(--glass-border)] px-4 py-3.5">
           <h3 className="text-[11px] font-mono font-bold uppercase tracking-[0.1em] text-text-secondary">
             History
           </h3>
@@ -86,7 +86,7 @@ export default function ConversationSidebar({
                 onNew();
                 onClose();
               }}
-              className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.1em] text-text-muted transition-all hover:border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-300"
+              className="theme-glass-card rounded-lg px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.1em] text-text-muted transition-all hover:border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-300"
             >
               + New Chat
             </button>
@@ -111,7 +111,7 @@ export default function ConversationSidebar({
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.03]">
+              <div className="theme-glass-card mb-3 flex h-10 w-10 items-center justify-center rounded-2xl">
                 <svg
                   className="h-5 w-5 text-text-muted"
                   viewBox="0 0 20 20"
@@ -166,7 +166,7 @@ export default function ConversationSidebar({
                         className={`w-full rounded-xl px-3 py-2.5 text-left transition-all duration-200 ${
                           activeId === conv.id || pendingId === conv.id
                             ? "border border-purple-500/20 bg-purple-500/[0.08] text-purple-200"
-                            : "border border-transparent text-text-secondary hover:bg-white/[0.03] hover:text-text-primary"
+                            : "border border-transparent text-text-secondary hover:bg-[var(--glass-surface-soft)] hover:text-text-primary"
                         }`}
                       >
                         <div className="flex items-center gap-1.5 pr-14">

@@ -1,10 +1,14 @@
+import logging
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+
 import fastf1
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Circuit
 from app.schemas.event import UpcomingEventResponse
+
+logger = logging.getLogger(__name__)
 
 
 class EventService:
@@ -55,7 +59,7 @@ class EventService:
 
         except Exception as e:
             # Log error ideally
-            print(f"Failed to fetch event schedule: {str(e)}")
+            logger.warning("Failed to fetch event schedule: %s", e)
             # For service pattern we might want to raise or return empty list
             # Return empty list to avoid crashing app if FastF1 fails
             return []

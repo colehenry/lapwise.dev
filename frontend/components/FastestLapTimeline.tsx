@@ -22,6 +22,7 @@ import {
 } from "@/components/chart-primitives";
 import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { STATUS_COLORS } from "@/lib/palette";
 import type {
   DriverLapTimes,
   LapTimesResponse,
@@ -71,9 +72,9 @@ type EventBand = {
 };
 
 const AVG_EVENT_COLORS: Record<string, { color: string; label: string }> = {
-  "4": { color: "#eab308", label: "SC" },
-  "5": { color: "#ef4444", label: "RED FLAG" },
-  "6": { color: "#f97316", label: "VSC" },
+  "4": { color: STATUS_COLORS.safetyCar, label: "SC" },
+  "5": { color: STATUS_COLORS.red, label: "RED FLAG" },
+  "6": { color: STATUS_COLORS.virtualSafetyCar, label: "VSC" },
 };
 
 // Convert track status events to lap-based event bands for the average chart.
@@ -368,7 +369,9 @@ const getFastestLapEntry = (driver: DriverLapTimes): TimelineEntry | null => {
     driverCode: driver.driver_code ?? driver.full_name,
     fastestLapNumber: bestLapNumber,
     lapTime: bestLapTime,
-    teamColor: driver.team_color ? `#${driver.team_color}` : "#666",
+    teamColor: driver.team_color
+      ? `#${driver.team_color}`
+      : "var(--delta-neutral)",
   };
 };
 
