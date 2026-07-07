@@ -71,7 +71,10 @@ def main():
         sys.exit(1)
 
     ingest_mode = "override" if force else "append"
-    print(f"🚀 Ingesting {year} R{round_num} {session_type}" + (" (force override)" if force else ""))
+    print(
+        f"🚀 Ingesting {year} R{round_num} {session_type}"
+        + (" (force override)" if force else "")
+    )
 
     enable_cache()
     db = get_db_session()
