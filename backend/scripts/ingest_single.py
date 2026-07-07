@@ -11,6 +11,7 @@ Usage:
     PYTHONPATH=$PWD python scripts/ingest_single.py 2026 5 race
     PYTHONPATH=$PWD python scripts/ingest_single.py 2026 5 fp1
     PYTHONPATH=$PWD python scripts/ingest_single.py 2026 5 qualifying
+    PYTHONPATH=$PWD python scripts/ingest_single.py 2026 6 race --force  # force re-ingest
 """
 
 import sys
@@ -62,13 +63,15 @@ def main():
     year = int(sys.argv[1])
     round_num = int(sys.argv[2])
     session_type = sys.argv[3]
+    force = "--force" in sys.argv
 
     fastf1_name = FASTF1_NAMES.get(session_type)
     if not fastf1_name:
         print(f"Unknown session type: {session_type}")
         sys.exit(1)
 
-    print(f"🚀 Ingesting {year} R{round_num} {session_type}")
+    ingest_mode = "override" if force else "append"
+    print(f"🚀 Ingesting {year} R{round_num} {session_type}" + (" (force override)" if force else ""))
 
     enable_cache()
     db = get_db_session()
@@ -97,9 +100,9 @@ def main():
         # 1. Ingest circuit
         circuit_id = ingest_circuit(db, event)
 
-        # 2. Ingest session metadata (append mode)
+        # 2. Ingest session metadata
         session_id, should_process = ingest_session_metadata(
-            db, event, circuit_id, year, session_type, event_date, mode="append"
+            db, event, circuit_id, year, session_type, event_date, mode=ingest_mode
         )
 
         if not should_process:
