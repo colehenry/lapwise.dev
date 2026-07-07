@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Outfit, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import AppShell from "@/components/AppShell";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { BG_THEME_COLOR } from "@/lib/palette";
+import { getThemeInitScript } from "@/lib/theme";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -34,7 +37,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a0f",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: BG_THEME_COLOR.dark },
+    { media: "(prefers-color-scheme: light)", color: BG_THEME_COLOR.light },
+  ],
 };
 
 export default function RootLayout({
@@ -43,11 +49,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
       <body
         className={`antialiased ${outfit.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable}`}
       >
-        <AppShell>{children}</AppShell>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: inline theme-init script must run before first paint to prevent a flash of the wrong theme */}
+        <script dangerouslySetInnerHTML={{ __html: getThemeInitScript() }} />
+        <ThemeProvider>
+          <AppShell>{children}</AppShell>
+        </ThemeProvider>
       </body>
     </html>
   );

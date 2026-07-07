@@ -12,16 +12,7 @@ interface DriverStatisticsPanelProps {
   driverCode: string;
 }
 
-const STATUS_COLORS = [
-  "#22c55e",
-  "#a855f7",
-  "#ef4444",
-  "#f97316",
-  "#06b6d4",
-  "#facc15",
-  "#ec4899",
-  "#94a3b8",
-];
+import { POSITION_COLORS, SERIES_COLORS } from "@/lib/palette";
 
 export default function DriverStatisticsPanel({
   driverCode,
@@ -84,12 +75,12 @@ export default function DriverStatisticsPanel({
   }));
 
   const distColors: Record<string, string> = {
-    P1: "#facc15",
-    P2: "#d1d5db",
-    P3: "#d97706",
-    "P4-10": "#a855f7",
-    "P11+": "#6b7280",
-    DNF: "#ef4444",
+    P1: POSITION_COLORS.gold,
+    P2: POSITION_COLORS.silver,
+    P3: POSITION_COLORS.bronze,
+    "P4-10": POSITION_COLORS.points,
+    "P11+": POSITION_COLORS.outPoints,
+    DNF: "var(--delta-slower)",
   };
 
   const statusData = Object.entries(statusBreakdown)
@@ -98,7 +89,7 @@ export default function DriverStatisticsPanel({
   const statusSegments = statusData.map(([status, count], index) => ({
     status,
     count,
-    color: STATUS_COLORS[index] ?? "#94a3b8",
+    color: SERIES_COLORS[index] ?? "var(--delta-neutral)",
     pct: races.length > 0 ? (count / races.length) * 100 : 0,
   }));
   const primaryStatus = statusSegments[0] ?? null;
@@ -126,7 +117,8 @@ export default function DriverStatisticsPanel({
                     className="h-full rounded-sm transition-all duration-500"
                     style={{
                       width: `${Math.max(pct, 1)}%`,
-                      backgroundColor: distColors[d.label] || "#6b7280",
+                      backgroundColor:
+                        distColors[d.label] || "var(--pos-outpoints)",
                     }}
                   />
                 </div>

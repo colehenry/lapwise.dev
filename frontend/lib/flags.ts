@@ -142,7 +142,6 @@ export function getDriverFlagEmoji(countryCode: string | null): string {
 
   const alpha2 = COUNTRY_CODE_MAP[countryCode.toUpperCase()];
   if (!alpha2) {
-    console.warn(`Unknown country code: ${countryCode}`);
     return "";
   }
 
@@ -159,7 +158,6 @@ export function getTeamFlagEmoji(teamName: string | null): string {
 
   const alpha2 = TEAM_COUNTRY_MAP[teamName];
   if (!alpha2) {
-    console.warn(`Unknown team: ${teamName}`);
     return "";
   }
 
@@ -176,7 +174,6 @@ export function getCircuitFlagEmoji(countryName: string | null): string {
 
   const alpha2 = CIRCUIT_COUNTRY_MAP[countryName];
   if (!alpha2) {
-    console.warn(`Unknown circuit country: ${countryName}`);
     return "";
   }
 

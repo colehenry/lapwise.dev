@@ -5,7 +5,7 @@ Represents race control communications including penalties, investigations,
 flags, and other official race events.
 """
 
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Index, Text
+from sqlalchemy import Column, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.database import Base

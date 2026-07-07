@@ -7,16 +7,16 @@ Endpoints for tag management.
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
 from app.auth import get_current_admin
-from app.security import verify_api_key
+from app.database import get_db
 from app.models.user import User
 from app.schemas.tag import (
     CreateTagRequest,
-    UpdateTagRequest,
-    TagResponse,
     TagListResponse,
+    TagResponse,
+    UpdateTagRequest,
 )
+from app.security import verify_api_key
 from app.services.tag_service import TagService
 
 router = APIRouter()

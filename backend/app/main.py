@@ -83,18 +83,18 @@ async def health_check():
 
 
 from app.routers import (
-    season_results,
-    drivers,
-    constructors,
-    events,
-    circuits,
+    admin,
     auth,
+    circuits,
+    constructors,
+    drivers,
+    events,
     oauth,
     posts,
+    replay,
+    season_results,
     tags,
     users,
-    admin,
-    replay,
 )
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])

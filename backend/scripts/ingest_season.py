@@ -219,7 +219,9 @@ def main():
                     is_practice = session_type in ["fp1", "fp2", "fp3"]
                     print(f"  📥 Loading FastF1 data for {fastf1_name}...")
                     fastf1_session = load_session_with_retry(
-                        season_year, round_num, fastf1_name,
+                        season_year,
+                        round_num,
+                        fastf1_name,
                         practice=is_practice,
                     )
 

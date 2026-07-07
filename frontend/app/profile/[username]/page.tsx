@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -83,7 +84,7 @@ export default function ProfilePage() {
         await refreshUser();
         setShowPicker(false);
       } catch (err) {
-        console.error("Failed to save favorites:", err);
+        Sentry.captureException(err);
       } finally {
         setIsSaving(false);
       }

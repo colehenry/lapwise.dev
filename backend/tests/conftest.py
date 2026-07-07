@@ -45,7 +45,9 @@ def _cleanup():
     conn = _get_sync_conn()
     cur = conn.cursor()
     email_placeholders = ",".join(["%s"] * len(TEST_EMAILS))
-    fk_where = f"user_id IN (SELECT id FROM users WHERE email IN ({email_placeholders}))"
+    fk_where = (
+        f"user_id IN (SELECT id FROM users WHERE email IN ({email_placeholders}))"
+    )
     cur.execute(
         f"DELETE FROM login_history WHERE ip_address = 'testclient' OR {fk_where}",
         TEST_EMAILS,

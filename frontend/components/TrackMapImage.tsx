@@ -1,4 +1,7 @@
+"use client";
+
 import Image, { type ImageProps } from "next/image";
+import { useTheme } from "@/components/ThemeProvider";
 import { getStaticTrackMapUrl, hasStaticTrackMap } from "@/lib/trackMapAssets";
 
 type TrackMapImageProps = Omit<ImageProps, "src" | "alt"> & {
@@ -13,6 +16,8 @@ export default function TrackMapImage({
   fallbackClassName = "",
   ...imageProps
 }: TrackMapImageProps) {
+  const { theme } = useTheme();
+
   if (typeof circuitId !== "number" || !hasStaticTrackMap(circuitId)) {
     const fallback = (
       <div
@@ -29,11 +34,20 @@ export default function TrackMapImage({
     );
   }
 
+  const mergedFilter =
+    theme === "light"
+      ? ["invert(1)", imageProps.style?.filter].filter(Boolean).join(" ")
+      : imageProps.style?.filter;
+
   return (
     <Image
       {...imageProps}
       src={getStaticTrackMapUrl(circuitId)}
       alt={`${circuitName} track map`}
+      style={{
+        ...imageProps.style,
+        filter: mergedFilter,
+      }}
     />
   );
 }

@@ -8,7 +8,11 @@ const csp: Record<string, string[]> = {
   "default-src": ["'self'"],
   "base-uri": ["'self'"],
   "form-action": ["'self'"],
-  "frame-ancestors": ["'none'"],
+  "frame-ancestors": [
+    "'self'",
+    "https://colehenry.dev",
+    "https://www.colehenry.dev",
+  ],
   "object-src": ["'none'"],
   "img-src": ["'self'", "data:", "https:"],
   "font-src": ["'self'", "data:"],
@@ -43,10 +47,6 @@ const securityHeaders = [
   {
     key: "Content-Security-Policy",
     value: contentSecurityPolicy,
-  },
-  {
-    key: "X-Frame-Options",
-    value: "DENY",
   },
   {
     key: "X-Content-Type-Options",
@@ -109,6 +109,10 @@ export default withSentryConfig(nextConfig, {
   sourcemaps: {
     deleteSourcemapsAfterUpload: true,
   },
-  disableLogger: true,
-  automaticVercelMonitors: false,
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+    automaticVercelMonitors: false,
+  },
 });

@@ -233,7 +233,7 @@ export default function WeatherChart({ season, round }: WeatherChartProps) {
             type="monotone"
             dataKey="air_temp"
             name="Air Temp"
-            stroke="#f97316"
+            stroke="var(--series-3)"
             strokeWidth={2}
             dot={false}
             isAnimationActive={true}
@@ -244,7 +244,7 @@ export default function WeatherChart({ season, round }: WeatherChartProps) {
             type="monotone"
             dataKey="track_temp"
             name="Track Temp"
-            stroke="#ef4444"
+            stroke="var(--delta-slower)"
             strokeWidth={2}
             dot={false}
             isAnimationActive={true}

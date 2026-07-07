@@ -10,29 +10,30 @@ import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_db
 from app.models import Session, SessionSummary
-from app.services.results_service import ResultsService, _make_slug
-from app.security import verify_api_key
 from app.schemas.result import (
-    StandingsResponse,
+    LapDistributionResponse,
+    LapTimesResponse,
+    PointsProgressionResponse,
+    QualifyingSectorResponse,
     QualifyingStandingsResponse,
-    SeasonRoundsResponse,
     RoundPodiumDriver,
     RoundSummary,
+    SeasonRoundsResponse,
     SessionResultsResponse,
-    PointsProgressionResponse,
-    LapTimesResponse,
-    QualifyingSectorResponse,
-    WeatherResponse,
-    LapDistributionResponse,
+    StandingsResponse,
     TeammateH2HResponse,
+    WeatherResponse,
 )
 from app.schemas.summary import (
+    KeyFact,
     RoundSummariesResponse,
     SessionSummaryResponse,
-    KeyFact,
 )
+from app.security import verify_api_key
+from app.services.results_service import ResultsService, _make_slug
 
 router = APIRouter()
 
@@ -431,7 +432,7 @@ async def get_qualifying_lap_times(
     if not lap_times:
         raise HTTPException(
             status_code=404,
-            detail=(f"No qualifying lap data for " f"season {season}, round {round}"),
+            detail=(f"No qualifying lap data for season {season}, round {round}"),
         )
 
     return lap_times
@@ -457,9 +458,7 @@ async def get_qualifying_sectors(
     if not sectors:
         raise HTTPException(
             status_code=404,
-            detail=(
-                f"No qualifying sector data for " f"season {season}, round {round}"
-            ),
+            detail=(f"No qualifying sector data for season {season}, round {round}"),
         )
 
     return sectors
@@ -535,7 +534,7 @@ async def get_weather_data(
     if not weather:
         raise HTTPException(
             status_code=404,
-            detail=(f"No weather data for " f"season {season}, round {round}"),
+            detail=(f"No weather data for season {season}, round {round}"),
         )
 
     return weather

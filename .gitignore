@@ -4,6 +4,7 @@
 .claude/
 .python-version
 CLAUDE.md
+CONVENTIONS.md
 
 # Personal learning docs (not for public repo)
 docs/*

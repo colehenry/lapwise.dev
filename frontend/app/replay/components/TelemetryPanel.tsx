@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TrianglePattern } from "@/components/Patterns";
+import { resolveToken } from "@/lib/palette";
 import type { ReplayData } from "@/lib/types";
 
 interface TelemetryPanelProps {
@@ -257,7 +258,7 @@ function drawTraces(
     ctx.stroke();
 
     // Brake fill (below center)
-    const bFillColor = hexToRgba("#ef4444", 0.2 * opacity);
+    const bFillColor = hexToRgba(resolveToken("--delta-slower"), 0.2 * opacity);
     ctx.fillStyle = bFillColor;
     ctx.beginPath();
     ctx.moveTo(CHART_PADDING_LEFT, tbY0 + tbH / 2);
@@ -310,7 +311,10 @@ function drawTraces(
         if (lapData.drs[i]) {
           const x = CHART_PADDING_LEFT + i * sampleScale * xScale;
           const blockW = Math.max(sampleScale * xScale, 1);
-          ctx.fillStyle = hexToRgba("#22c55e", 0.6 * opacity);
+          ctx.fillStyle = hexToRgba(
+            resolveToken("--delta-faster"),
+            0.6 * opacity,
+          );
           ctx.fillRect(x, drsY0, blockW, drsH);
         }
       }
@@ -553,10 +557,14 @@ export default function TelemetryPanel({
 
   // Get current driver info
   const driverInfo = selectedDriver ? replayData.drivers[selectedDriver] : null;
-  const driverColor = driverInfo ? `#${driverInfo.color}` : "#a855f7";
+  const driverColor = driverInfo
+    ? `#${driverInfo.color}`
+    : resolveToken("--series-1");
 
   const compareInfo = compareDriver ? replayData.drivers[compareDriver] : null;
-  const compareColor = compareInfo ? `#${compareInfo.color}` : "#60a5fa";
+  const compareColor = compareInfo
+    ? `#${compareInfo.color}`
+    : resolveToken("--status-pit");
 
   // Get current lap from frame
   const currentFrame = replayData.frames[frameIndex];

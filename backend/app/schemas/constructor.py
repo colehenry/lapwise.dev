@@ -4,8 +4,9 @@ Constructor Schemas
 Pydantic models for constructor profile and statistics API responses.
 """
 
+from typing import List, Optional
+
 from pydantic import BaseModel
-from typing import Optional, List
 
 
 class ConstructorListItem(BaseModel):

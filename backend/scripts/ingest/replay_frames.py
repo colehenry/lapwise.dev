@@ -241,7 +241,7 @@ def extract_driver_telemetry(fastf1_session, track_rotation_rad, norm_params):
                 drivers_data[driver_code] = combined
 
         except Exception as e:
-            print(f"    ⚠️  Could not extract telemetry for " f"{driver_code}: {e}")
+            print(f"    ⚠️  Could not extract telemetry for {driver_code}: {e}")
             continue
 
     return drivers_data
@@ -732,7 +732,7 @@ def generate_replay_data(fastf1_session, session_id, season, round_num, event_na
     t_min = min(df["t"].min() for df in drivers_data.values())
     t_max = max(df["t"].max() for df in drivers_data.values())
     duration_min = (t_max - t_min) / 60
-    print(f"    Time range: {t_min:.1f}s - {t_max:.1f}s" f" ({duration_min:.1f} min)")
+    print(f"    Time range: {t_min:.1f}s - {t_max:.1f}s ({duration_min:.1f} min)")
 
     # Step 5: Interpolate to 25 FPS
     timeline, interpolated = interpolate_frames(drivers_data, t_min, t_max)

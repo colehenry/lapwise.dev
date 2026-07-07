@@ -74,7 +74,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Not cached." }, { status: 404 });
     }
 
-    console.error("Cache lookup failed:", error);
     return NextResponse.json({ error: "Cache unavailable." }, { status: 503 });
   }
 }

@@ -3,8 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { TrianglePattern } from "@/components/Patterns";
+import { useTheme } from "@/components/ThemeProvider";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { resolveReadableAccentColor } from "@/lib/color-utils";
 import { constructorHref, driverHref } from "@/lib/entityLinks";
 import type { CircuitRecentRaceResponse } from "@/lib/types";
 
@@ -21,6 +23,7 @@ interface CircuitRecentRaceProps {
 export default function CircuitRecentRace({
   circuitId,
 }: CircuitRecentRaceProps) {
+  const { theme } = useTheme();
   const { data, isLoading } = useQuery<CircuitRecentRaceResponse | null>({
     queryKey: ["circuit-recent-race", circuitId],
     queryFn: async () => {
@@ -64,7 +67,9 @@ export default function CircuitRecentRace({
         {/* Event header */}
         <div className="flex items-baseline justify-between mb-4">
           <div>
-            <h3 className="text-lg font-bold text-white">{data.event_name}</h3>
+            <h3 className="text-lg font-bold text-text-primary">
+              {data.event_name}
+            </h3>
             <span className="text-xs text-text-muted font-mono">
               {data.year} Round {data.round}
             </span>
@@ -80,9 +85,14 @@ export default function CircuitRecentRace({
         {/* Podium */}
         <div className="space-y-2 mb-4">
           {data.podium.map((entry) => {
-            const teamColor = entry.team_color
-              ? `#${entry.team_color}`
-              : "#999";
+            const teamColor =
+              resolveReadableAccentColor(
+                entry.team_color
+                  ? `#${entry.team_color}`
+                  : "var(--delta-neutral)",
+                theme,
+                "var(--delta-neutral)",
+              ) ?? "var(--delta-neutral)";
             const driverUrl = driverHref({
               driver_slug: entry.driver_slug,
               driver_code: entry.driver_code,

@@ -7,7 +7,7 @@ import CommentEditor from "@/components/discussions/CommentEditor";
 import MarkdownContent from "@/components/discussions/MarkdownContent";
 import UserAvatar from "@/components/discussions/UserAvatar";
 import VoteButton from "@/components/discussions/VoteButton";
-import { createComment } from "@/lib/discussions";
+import { createComment, deleteComment } from "@/lib/discussions";
 import { formatRelativeTime } from "@/lib/time";
 import type { CommentResponse } from "@/lib/types";
 
@@ -16,6 +16,7 @@ interface CommentThreadProps {
   comments: CommentResponse[];
   onRefresh: () => void;
   isLocked?: boolean;
+  isAdmin?: boolean;
 }
 
 function CommentNode({
@@ -24,19 +25,25 @@ function CommentNode({
   postId,
   onRefresh,
   isLocked = false,
+  isAdmin = false,
 }: {
   comment: CommentResponse;
   depth: number;
   postId: number;
   onRefresh: () => void;
   isLocked?: boolean;
+  isAdmin?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showReply, setShowReply] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const isOwnComment = user?.id === comment.author.id;
+  const canDelete = isAdmin || isOwnComment;
 
   const hasReplies = comment.replies && comment.replies.length > 0;
   const isEdited = comment.updated_at !== comment.created_at;
@@ -175,6 +182,25 @@ function CommentNode({
                 Reply
               </button>
             )}
+            {canDelete && (
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={async () => {
+                  if (deleting) return;
+                  setDeleting(true);
+                  try {
+                    await deleteComment(comment.id);
+                    onRefresh();
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
+                className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border border-red-500/30 rounded-sm text-red-400/70 hover:text-red-400 hover:border-red-500/50 transition-colors disabled:opacity-40"
+              >
+                {deleting ? "..." : "Delete"}
+              </button>
+            )}
           </div>
 
           {showReply && (
@@ -201,6 +227,7 @@ function CommentNode({
               postId={postId}
               onRefresh={onRefresh}
               isLocked={isLocked}
+              isAdmin={isAdmin}
             />
           ))}
         </div>
@@ -214,6 +241,7 @@ export default function CommentThread({
   comments,
   onRefresh,
   isLocked = false,
+  isAdmin = false,
 }: CommentThreadProps) {
   if (!comments.length) {
     return (
@@ -233,6 +261,7 @@ export default function CommentThread({
           postId={postId}
           onRefresh={onRefresh}
           isLocked={isLocked}
+          isAdmin={isAdmin}
         />
       ))}
     </div>

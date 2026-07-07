@@ -16,17 +16,11 @@ import {
   CHART_COLORS,
   CHART_TYPOGRAPHY,
 } from "@/components/chart-primitives";
+import { useTheme } from "@/components/ThemeProvider";
 import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { COMPOUND_COLORS } from "@/lib/palette";
 import { driverKey, type LapTimesResponse } from "@/lib/types";
-
-const COMPOUND_COLORS: Record<string, string> = {
-  SOFT: "#e8002d",
-  MEDIUM: "#ffd700",
-  HARD: "#c8c8c8",
-  INTERMEDIATE: "#39b54a",
-  WET: "#0067ff",
-};
 
 interface RaceTrackEvolutionChartProps {
   season: number;
@@ -45,6 +39,7 @@ export default function RaceTrackEvolutionChart({
   season,
   round,
 }: RaceTrackEvolutionChartProps) {
+  const { theme } = useTheme();
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
   const [selectedCompounds, setSelectedCompounds] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -271,6 +266,8 @@ export default function RaceTrackEvolutionChart({
 
   const pad = (maxTime - minTime) * 0.08;
   const absImprovement = Math.abs(improvement);
+  const trendLineColor =
+    theme === "light" ? "rgba(17, 24, 39, 0.88)" : "rgba(255, 255, 255, 0.85)";
 
   return (
     <div className="space-y-4">
@@ -323,7 +320,10 @@ export default function RaceTrackEvolutionChart({
             );
           })}
           <div className="flex items-center gap-1.5">
-            <div className="w-5 h-0.5 flex-shrink-0 bg-white/80 rounded-full" />
+            <div
+              className="w-5 h-0.5 flex-shrink-0 rounded-full"
+              style={{ backgroundColor: trendLineColor }}
+            />
             <span className={CHART_TYPOGRAPHY.keyClassName}>Trend</span>
           </div>
 
@@ -343,7 +343,7 @@ export default function RaceTrackEvolutionChart({
                   const isSelected = selectedDrivers.includes(key);
                   const color = driver.team_color
                     ? `#${driver.team_color}`
-                    : "#666";
+                    : "var(--delta-neutral)";
                   return (
                     <label
                       key={key}
@@ -448,7 +448,7 @@ export default function RaceTrackEvolutionChart({
                   fill="none"
                 />
               )}
-              line={{ stroke: "rgba(255,255,255,0.85)", strokeWidth: 2.5 }}
+              line={{ stroke: trendLineColor, strokeWidth: 2.5 }}
               lineType="joint"
               isAnimationActive={false}
               legendType="none"

@@ -10,7 +10,7 @@ import msgpack
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import ReplayData, Session, Circuit
+from app.models import Circuit, ReplayData, Session
 from app.schemas.replay import ReplayListItem, ReplayTrackResponse
 
 

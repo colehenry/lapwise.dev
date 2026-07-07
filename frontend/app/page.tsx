@@ -151,7 +151,7 @@ export default function Home() {
                 <div className="flex items-center gap-3">
                   <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
                   <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                    Formula 1 Analytics Platform
+                    Formula 1 Data · Replay · AI Analysis
                   </span>
                 </div>
 
@@ -159,6 +159,27 @@ export default function Home() {
                   <span className="text-purple-400">Lap</span>
                   <span className="text-text-primary">wise</span>
                 </h1>
+
+                <p className="text-xs text-text-muted tracking-widest uppercase font-medium">
+                  Charts, telemetry, replay, and analysis for every race
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: "Latest Race", href: "/results" },
+                  { label: "Ask Clutch", href: "/ask" },
+                  { label: "Replay", href: "/replay" },
+                  { label: "Discuss", href: "/discussions" },
+                ].map((action) => (
+                  <Link
+                    key={action.href}
+                    href={action.href}
+                    className="px-3 py-1.5 rounded-sm border border-border-primary text-xs text-text-muted hover:text-text-primary hover:border-purple-500/40 transition-colors font-medium"
+                  >
+                    {action.label}
+                  </Link>
+                ))}
               </div>
 
               <div className="lg:hidden">
@@ -167,7 +188,7 @@ export default function Home() {
 
               <div className="space-y-4 lg:pt-4">
                 <p className="text-[10px] text-text-muted tracking-widest uppercase font-mono font-bold">
-                  Jump to Results
+                  Explore the archive
                 </p>
                 <SeasonRoundSelector />
               </div>
@@ -191,7 +212,7 @@ export default function Home() {
       <NextRaceBanner />
 
       {/* Feature Cards */}
-      <section className="bg-bg-secondary py-14 px-4 md:px-6 border-y border-border-primary/60">
+      <section className="overflow-hidden bg-bg-secondary py-14 px-4 md:px-6 border-y border-border-primary/60">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8 flex flex-col items-center text-center">
             <div className="space-y-3">

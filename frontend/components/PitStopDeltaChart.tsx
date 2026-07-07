@@ -19,6 +19,7 @@ import {
   CHART_TYPOGRAPHY,
 } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { STATUS_COLORS } from "@/lib/palette";
 import type { LapTimesResponse } from "@/lib/types";
 
 interface PitStopDeltaChartProps {
@@ -129,7 +130,11 @@ function PitDot(props: {
           cy={cy}
           r={10}
           fill="none"
-          stroke={payload.isVsc ? "#a78bfa" : "#f59e0b"}
+          stroke={
+            payload.isVsc
+              ? STATUS_COLORS.virtualSafetyCar
+              : STATUS_COLORS.safetyCar
+          }
           strokeWidth={2}
           strokeDasharray={payload.isVsc ? "3 2" : undefined}
           opacity={0.9}
@@ -220,7 +225,9 @@ export default function PitStopDeltaChart({
       let pendingPitInStatus: string | null = null;
 
       const driverCode = driver.driver_code ?? driver.full_name;
-      const teamColor = driver.team_color ? `#${driver.team_color}` : "#666";
+      const teamColor = driver.team_color
+        ? `#${driver.team_color}`
+        : "var(--delta-neutral)";
 
       for (const lap of driver.laps) {
         if (lap.track_status && lap.lap_number != null) {
@@ -443,10 +450,16 @@ export default function PitStopDeltaChart({
                   cy="7"
                   r="6"
                   fill="none"
-                  stroke="#f59e0b"
+                  stroke={STATUS_COLORS.safetyCar}
                   strokeWidth="2"
                 />
-                <circle cx="7" cy="7" r="3.5" fill="#f59e0b" opacity="0.7" />
+                <circle
+                  cx="7"
+                  cy="7"
+                  r="3.5"
+                  fill={STATUS_COLORS.safetyCar}
+                  opacity="0.7"
+                />
               </svg>
               <span className={CHART_TYPOGRAPHY.keyClassName}>SC pit</span>
             </div>
@@ -463,11 +476,17 @@ export default function PitStopDeltaChart({
                   cy="7"
                   r="6"
                   fill="none"
-                  stroke="#a78bfa"
+                  stroke={STATUS_COLORS.virtualSafetyCar}
                   strokeWidth="2"
                   strokeDasharray="3 2"
                 />
-                <circle cx="7" cy="7" r="3.5" fill="#a78bfa" opacity="0.7" />
+                <circle
+                  cx="7"
+                  cy="7"
+                  r="3.5"
+                  fill={STATUS_COLORS.virtualSafetyCar}
+                  opacity="0.7"
+                />
               </svg>
               <span className={CHART_TYPOGRAPHY.keyClassName}>VSC pit</span>
             </div>
@@ -517,7 +536,11 @@ export default function PitStopDeltaChart({
                   key={`sc-band-${range.type}-${range.start}`}
                   x1={range.start - 0.5}
                   x2={range.end + 0.5}
-                  fill={range.type === "SC" ? "#f59e0b" : "#a78bfa"}
+                  fill={
+                    range.type === "SC"
+                      ? STATUS_COLORS.safetyCar
+                      : STATUS_COLORS.virtualSafetyCar
+                  }
                   fillOpacity={0.07}
                   stroke="none"
                 />
@@ -582,7 +605,11 @@ export default function PitStopDeltaChart({
                     {(d.isSc || d.isVsc) && (
                       <p
                         className={CHART_TYPOGRAPHY.tooltipValueClassName}
-                        style={{ color: d.isVsc ? "#a78bfa" : "#f59e0b" }}
+                        style={{
+                          color: d.isVsc
+                            ? STATUS_COLORS.virtualSafetyCar
+                            : STATUS_COLORS.safetyCar,
+                        }}
                       >
                         {d.isVsc ? "VSC" : "SC"} — neutralised stop
                       </p>

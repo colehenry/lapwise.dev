@@ -21,9 +21,9 @@ interface CrossSessionComparisonProps {
 }
 
 const SESSION_COLORS = {
-  FP1: "#6366f1",
-  FP2: "#a855f7",
-  FP3: "#ec4899",
+  FP1: "var(--series-2)",
+  FP2: "var(--series-1)",
+  FP3: "var(--series-5)",
 };
 
 const SESSION_OPACITY = { FP1: 0.65, FP2: 0.8, FP3: 1.0 };
@@ -78,7 +78,7 @@ export default function CrossSessionComparison({
           driverTimes[code] = {
             teamColor: result.team.team_color
               ? `#${result.team.team_color}`
-              : "#666",
+              : "var(--delta-neutral)",
           };
         }
         if (result.time_seconds != null) {

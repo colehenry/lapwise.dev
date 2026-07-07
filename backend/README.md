@@ -124,10 +124,10 @@ pytest --cov=app tests/
 
 ```bash
 # Format code
-black .
+ruff format .
 
 # Lint code
-flake8
+ruff check app/
 ```
 
 ## Deployment

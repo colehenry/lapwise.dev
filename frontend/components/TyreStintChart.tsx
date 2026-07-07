@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
+import { useTheme } from "@/components/ThemeProvider";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import { driverKey, type LapData, type LapTimesResponse } from "@/lib/types";
 
@@ -47,12 +48,14 @@ const COMPOUND_COLORS: Record<
   },
 };
 
+import { COMPOUND_COLORS as COMPOUND } from "@/lib/palette";
+
 const COMPOUND_BAR_COLORS: Record<string, string> = {
-  SOFT: "#ef4444",
-  MEDIUM: "#eab308",
-  HARD: "#d1d5db",
-  INTERMEDIATE: "#22c55e",
-  WET: "#3b82f6",
+  SOFT: COMPOUND.SOFT,
+  MEDIUM: COMPOUND.MEDIUM,
+  HARD: COMPOUND.HARD,
+  INTERMEDIATE: COMPOUND.INTERMEDIATE,
+  WET: COMPOUND.WET,
 };
 
 function computeStints(laps: LapData[]): Stint[] {
@@ -100,6 +103,7 @@ export default function TyreStintChart({
   isSprint = false,
   initialDrivers,
 }: TyreStintChartProps) {
+  const { theme } = useTheme();
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -260,7 +264,7 @@ export default function TyreStintChart({
                 const isSelected = selectedDrivers.includes(dk);
                 const teamColor = driver.team_color
                   ? `#${driver.team_color}`
-                  : "#999";
+                  : "var(--delta-neutral)";
 
                 return (
                   <label
@@ -297,7 +301,7 @@ export default function TyreStintChart({
             const stints = computeStints(driver.laps);
             const teamColor = driver.team_color
               ? `#${driver.team_color}`
-              : "#999";
+              : "var(--delta-neutral)";
 
             return (
               <div key={driverKey(driver)} className="flex items-center gap-2">
@@ -317,7 +321,8 @@ export default function TyreStintChart({
                     const widthPercent =
                       maxLap > 0 ? (stint.lapCount / maxLap) * 100 : 0;
                     const barColor =
-                      COMPOUND_BAR_COLORS[stint.compound] || "#666";
+                      COMPOUND_BAR_COLORS[stint.compound] ||
+                      "var(--delta-neutral)";
 
                     return (
                       <div
@@ -325,8 +330,11 @@ export default function TyreStintChart({
                         className="relative h-full flex items-center justify-center group"
                         style={{
                           width: `${widthPercent}%`,
-                          backgroundColor: `${barColor}22`,
-                          borderRight: `2px solid ${barColor}`,
+                          backgroundColor: barColor,
+                          borderRight:
+                            theme === "dark"
+                              ? "1px solid rgba(0, 0, 0, 0.35)"
+                              : "1px solid rgba(255, 255, 255, 0.5)",
                         }}
                         title={`${stint.compound} | Laps ${stint.startLap}-${stint.endLap} (${stint.lapCount} laps)`}
                       >
@@ -334,7 +342,7 @@ export default function TyreStintChart({
                         {widthPercent > 8 && (
                           <span
                             className="text-[10px] font-mono font-bold truncate px-1"
-                            style={{ color: barColor }}
+                            style={{ color: "rgba(0, 0, 0, 0.88)" }}
                           >
                             {stint.compound.charAt(0)}
                             {stint.lapCount}
@@ -348,7 +356,7 @@ export default function TyreStintChart({
                               <span className="text-text-muted">Compound:</span>{" "}
                               <span
                                 className="font-bold"
-                                style={{ color: barColor }}
+                                style={{ color: "rgba(0, 0, 0, 0.88)" }}
                               >
                                 {stint.compound}
                               </span>

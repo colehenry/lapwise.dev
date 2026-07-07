@@ -139,6 +139,18 @@ export async function fetchComments(params: {
   return parseJson<CommentListResponse>(res);
 }
 
+export async function deleteComment(commentId: number): Promise<void> {
+  const res = await fetchWithAuth(apiUrl(`/api/posts/comments/${commentId}`), {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const detail =
+      typeof err?.detail === "string" ? err.detail : "Request failed";
+    throw new Error(detail);
+  }
+}
+
 export async function createComment(data: {
   postId: number;
   body: string;

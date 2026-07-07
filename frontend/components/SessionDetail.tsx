@@ -3,7 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useTheme } from "@/components/ThemeProvider";
 import { isValidHeadshotUrl } from "@/lib/api";
+import { resolveReadableAccentColor } from "@/lib/color-utils";
 import { circuitHref, constructorHref, driverHref } from "@/lib/entityLinks";
 import {
   getCircuitFlagEmoji,
@@ -79,6 +81,7 @@ export default function SessionDetail({
   hideHeader = false,
   summary,
 }: SessionDetailProps) {
+  const { theme } = useTheme();
   const [expandedResults, setExpandedResults] = useState<boolean>(false);
   const isQualifying = sessionType === "qualifying";
   const isPractice = sessionType === "practice";
@@ -157,57 +160,63 @@ export default function SessionDetail({
           <div className="flex-1 p-4 md:p-6 relative">
             <GridPattern id="session-grid" />
             <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-2xl md:text-3xl font-bold text-text-primary inline-flex items-center gap-2">
-                  {session.circuit.country && (
-                    <span className="text-2xl" aria-hidden="true">
-                      {getCircuitFlagEmoji(session.circuit.country)}
-                    </span>
-                  )}
+              {/* Title row */}
+              <div className="flex items-start gap-2 mb-2">
+                {session.circuit.country && (
+                  <span className="text-xl mt-0.5 shrink-0" aria-hidden="true">
+                    {getCircuitFlagEmoji(session.circuit.country)}
+                  </span>
+                )}
+                <h1 className="text-xl md:text-3xl font-bold text-text-primary leading-tight">
                   {session.event_name}
                 </h1>
                 {isSprint && (
-                  <span className="bg-red-500/20 border border-red-500 text-red-400 text-[10px] tracking-widest uppercase font-bold font-mono px-3 py-1 rounded-sm">
+                  <span className="mt-1 shrink-0 bg-red-500/20 border border-red-500 text-red-400 text-[10px] tracking-widest uppercase font-bold font-mono px-2 py-0.5 rounded-sm">
                     Sprint
                   </span>
                 )}
-                {session.highlights_video_id && (
-                  <a
-                    href={`https://www.youtube.com/watch?v=${session.highlights_video_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[10px] tracking-widest uppercase font-bold font-mono text-red-400 hover:text-red-300 transition-colors duration-150 px-2 py-1 border border-red-500/30 rounded-sm hover:border-red-500/60"
-                  >
-                    <svg
-                      className="w-3 h-3"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
-                      <title>YouTube</title>
-                      <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.546 12 3.546 12 3.546s-7.505 0-9.377.504A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.504 9.376.504 9.376.504s7.505 0 9.377-.504a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                    </svg>
-                    Highlights
-                  </a>
-                )}
-                {session.year >= 2018 && (
-                  <Link
-                    href={`/replay?season=${session.year}&round=${session.round}`}
-                    className="inline-flex items-center gap-1 text-[10px] tracking-widest uppercase font-bold font-mono text-purple-400 hover:text-purple-300 transition-colors duration-150 px-2 py-1 border border-purple-500/30 rounded-sm hover:border-purple-500/60"
-                  >
-                    <svg
-                      className="w-3 h-3"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
-                      <title>Race Replay</title>
-                      <path d="M8 5.14v14.72a1 1 0 0 0 1.5.86l11-7.36a1 1 0 0 0 0-1.72l-11-7.36A1 1 0 0 0 8 5.14z" />
-                    </svg>
-                    Race Replay
-                  </Link>
-                )}
               </div>
+              {/* Action buttons row — separate from title so they don't wrap into it */}
+              {(session.highlights_video_id || session.year >= 2018) && (
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  {session.highlights_video_id && (
+                    <a
+                      href={`https://www.youtube.com/watch?v=${session.highlights_video_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[10px] tracking-widest uppercase font-bold font-mono text-red-400 hover:text-red-300 transition-colors duration-150 px-2 py-1 border border-red-500/30 rounded-sm hover:border-red-500/60"
+                    >
+                      <svg
+                        className="w-3 h-3"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <title>YouTube</title>
+                        <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.546 12 3.546 12 3.546s-7.505 0-9.377.504A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.504 9.376.504 9.376.504s7.505 0 9.377-.504a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                      </svg>
+                      Highlights
+                    </a>
+                  )}
+                  {session.year >= 2018 && (
+                    <Link
+                      href={`/replay?season=${session.year}&round=${session.round}`}
+                      className="inline-flex items-center gap-1 text-[10px] tracking-widest uppercase font-bold font-mono text-purple-400 hover:text-purple-300 transition-colors duration-150 px-2 py-1 border border-purple-500/30 rounded-sm hover:border-purple-500/60"
+                    >
+                      <svg
+                        className="w-3 h-3"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <title>Race Replay</title>
+                        <path d="M8 5.14v14.72a1 1 0 0 0 1.5.86l11-7.36a1 1 0 0 0 0-1.72l-11-7.36A1 1 0 0 0 8 5.14z" />
+                      </svg>
+                      Race Replay
+                    </Link>
+                  )}
+                </div>
+              )}
 
               <div className="flex flex-col gap-1">
                 {sessionCircuitHref ? (
@@ -424,9 +433,12 @@ export default function SessionDetail({
                         }
                         className="text-xs font-medium hover:text-purple-300 transition-colors duration-150 flex items-center gap-2"
                         style={{
-                          color: result.team.team_color
-                            ? `#${result.team.team_color}`
-                            : "inherit",
+                          color:
+                            resolveReadableAccentColor(
+                              result.team.team_color,
+                              theme,
+                              "var(--text-primary)",
+                            ) ?? "inherit",
                         }}
                       >
                         {isValidHeadshotUrl(result.team.logo_url) && (

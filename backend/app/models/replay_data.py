@@ -8,12 +8,12 @@ as MessagePack + gzip (~500KB-2MB per race).
 
 from sqlalchemy import (
     Column,
-    Integer,
+    DateTime,
     Float,
     ForeignKey,
     Index,
+    Integer,
     LargeBinary,
-    DateTime,
     func,
 )
 from sqlalchemy.orm import relationship

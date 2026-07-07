@@ -57,7 +57,7 @@ function DriverCard({ driver }: { driver: DriverListItem }) {
                 style={{
                   borderColor: driver.current_team_color
                     ? `#${driver.current_team_color}`
-                    : "#888",
+                    : "var(--delta-neutral)",
                 }}
               >
                 <Image
@@ -75,7 +75,7 @@ function DriverCard({ driver }: { driver: DriverListItem }) {
                 style={{
                   borderColor: driver.current_team_color
                     ? `#${driver.current_team_color}`
-                    : "#888",
+                    : "var(--delta-neutral)",
                 }}
               >
                 {driver.driver_code || "---"}

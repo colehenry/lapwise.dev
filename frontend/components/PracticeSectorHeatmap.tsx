@@ -148,7 +148,9 @@ export default function PracticeSectorHeatmap({
 
       driverSectors.push({
         driverCode: driverKey(driver),
-        teamColor: driver.team_color ? `#${driver.team_color}` : "#666",
+        teamColor: driver.team_color
+          ? `#${driver.team_color}`
+          : "var(--delta-neutral)",
         finalPosition: driver.final_position ?? null,
         bestS1,
         bestS2,

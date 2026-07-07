@@ -1,15 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { resolveReadableAccentColor } from "@/lib/color-utils";
+import type { AppTheme } from "@/lib/theme";
 
 // Design system color constants — matches tokens in globals.css
 export const CHART_COLORS = {
-  bgTertiary: "#1e1e28", // bg-bg-tertiary
-  borderPrimary: "#2a2a35", // border-border-primary
-  textTertiary: "#999999", // text-text-tertiary
-  textMuted: "#666666", // text-text-muted
-  purple: "#a020f0", // purple-500
-  purpleHover: "#8a1ad0", // purple-700 hover
+  bgPrimary: "var(--background-primary)",
+  bgTertiary: "var(--background-tertiary)",
+  borderPrimary: "var(--chart-grid)",
+  textTertiary: "var(--chart-axis)",
+  textMuted: "var(--chart-annotation)",
+  neutralStroke: "var(--chart-neutral-stroke)",
+  tooltipBg: "var(--chart-tooltip-bg)",
+  tooltipBorder: "var(--chart-tooltip-border)",
+  purple: "var(--purple-500)",
+  purpleHover: "var(--purple-700)",
 } as const;
 
 export const CHART_TYPOGRAPHY = {
@@ -31,6 +37,30 @@ export const CHART_AXIS_LABEL_STYLE = {
   fontFamily: "var(--font-jetbrains)",
   fontWeight: 700,
 } as const;
+
+export function getCanvasTheme(target: HTMLElement | null) {
+  const style = getComputedStyle(target ?? document.documentElement);
+
+  return {
+    backgroundStart: style.getPropertyValue("--canvas-bg-start").trim(),
+    backgroundEnd: style.getPropertyValue("--canvas-bg-end").trim(),
+    grid: style.getPropertyValue("--canvas-grid").trim(),
+    track: style.getPropertyValue("--canvas-track").trim(),
+    trackGlow: style.getPropertyValue("--canvas-track-glow").trim(),
+    startFinish: style.getPropertyValue("--canvas-start-finish").trim(),
+    drsActive: style.getPropertyValue("--canvas-drs-active").trim(),
+    drsInactive: style.getPropertyValue("--canvas-drs-inactive").trim(),
+    cornerLabel: style.getPropertyValue("--canvas-corner-label").trim(),
+  };
+}
+
+export function resolveChartSeriesColor(
+  color: string | null | undefined,
+  theme: AppTheme,
+  fallback: string = CHART_COLORS.purple,
+): string {
+  return resolveReadableAccentColor(color, theme, "#334155") ?? fallback;
+}
 
 export interface RangeSelectorProps {
   availableYears: number[];
@@ -65,9 +95,11 @@ export function RangeSelector({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 theme-overlay flex items-center justify-center z-50">
       <div className="bg-bg-tertiary border border-border-primary rounded-sm p-6 max-w-md w-full mx-4">
-        <h3 className="text-xl font-bold text-white mb-4">Select Year Range</h3>
+        <h3 className="text-xl font-bold text-text-primary mb-4">
+          Select Year Range
+        </h3>
         <p className="text-sm text-text-tertiary mb-4">Maximum 5 years</p>
 
         <div className="space-y-4">
@@ -85,7 +117,7 @@ export function RangeSelector({
                 setStartYear(Number(e.target.value));
                 setError("");
               }}
-              className="w-full px-3 py-2 bg-bg-elevated border border-border-primary rounded text-white"
+              className="w-full px-3 py-2 bg-bg-elevated border border-border-primary rounded text-text-primary"
             >
               {availableYears.map((year) => (
                 <option key={year} value={year}>
@@ -109,7 +141,7 @@ export function RangeSelector({
                 setEndYear(Number(e.target.value));
                 setError("");
               }}
-              className="w-full px-3 py-2 bg-bg-elevated border border-border-primary rounded text-white"
+              className="w-full px-3 py-2 bg-bg-elevated border border-border-primary rounded text-text-primary"
             >
               {availableYears.map((year) => (
                 <option key={year} value={year}>

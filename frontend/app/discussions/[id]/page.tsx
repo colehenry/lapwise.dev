@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -101,7 +102,7 @@ export default function DiscussionDetailPage() {
       setShowCommentEditor(false);
       await refreshAll();
     } catch (err) {
-      console.error("Failed to create comment:", err);
+      Sentry.captureException(err);
     }
   };
 
@@ -116,7 +117,7 @@ export default function DiscussionDetailPage() {
       await refetchPost();
       queryClient.invalidateQueries({ queryKey: ["discussion-posts"] });
     } catch (err) {
-      console.error("Failed to toggle pin:", err);
+      Sentry.captureException(err);
     }
   };
 
@@ -125,7 +126,7 @@ export default function DiscussionDetailPage() {
       await toggleLock(postId);
       await refetchPost();
     } catch (err) {
-      console.error("Failed to toggle lock:", err);
+      Sentry.captureException(err);
     }
   };
 
@@ -135,7 +136,7 @@ export default function DiscussionDetailPage() {
       await deletePost(postId);
       router.push("/discussions");
     } catch (err) {
-      console.error("Failed to delete post:", err);
+      Sentry.captureException(err);
     }
   };
 
@@ -398,6 +399,7 @@ export default function DiscussionDetailPage() {
               comments={commentsData?.comments ?? []}
               onRefresh={refreshAll}
               isLocked={post.is_locked}
+              isAdmin={isAdmin}
             />
           )}
         </div>

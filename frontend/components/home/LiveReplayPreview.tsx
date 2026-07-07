@@ -12,6 +12,7 @@ import {
   fetchReplaySeasons,
   isValidHeadshotUrl,
 } from "@/lib/api";
+import { resolveToken } from "@/lib/palette";
 import type { ReplayData, ReplayDriverFrame, ReplayFrame } from "@/lib/types";
 
 const PLAYBACK_SPEED = 2;
@@ -234,7 +235,9 @@ function MiniLeaderboard({
             )}
             <span
               className="font-mono font-bold tracking-wide"
-              style={{ color: info ? `#${info.color}` : "#ccc" }}
+              style={{
+                color: info ? `#${info.color}` : "var(--delta-neutral)",
+              }}
             >
               {code}
             </span>
@@ -401,7 +404,7 @@ function LeaderTelemetry({
     ctx.fill();
 
     // Throttle line
-    ctx.strokeStyle = "#22c55e";
+    ctx.strokeStyle = resolveToken("--delta-faster");
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let i = 0; i < drawUpTo; i++) {
@@ -426,7 +429,7 @@ function LeaderTelemetry({
     ctx.fill();
 
     // Brake line
-    ctx.strokeStyle = "#ef4444";
+    ctx.strokeStyle = resolveToken("--delta-slower");
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let i = 0; i < drawUpTo; i++) {
@@ -451,7 +454,7 @@ function LeaderTelemetry({
     ctx.fill();
 
     // Speed line
-    ctx.strokeStyle = "#60a5fa";
+    ctx.strokeStyle = resolveToken("--status-pit");
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let i = 0; i < drawUpTo; i++) {
@@ -472,7 +475,9 @@ function LeaderTelemetry({
         <div
           className="h-2.5 w-1 rounded-full"
           style={{
-            backgroundColor: leaderInfo ? `#${leaderInfo.color}` : "#666",
+            backgroundColor: leaderInfo
+              ? `#${leaderInfo.color}`
+              : "var(--delta-neutral)",
           }}
         />
         <span className="font-mono text-[10px] font-bold text-text-primary tracking-wide">
@@ -616,7 +621,7 @@ export default function LiveReplayPreview() {
   const noOp = useCallback(() => {}, []);
 
   return (
-    <section className="border-b border-border-primary/40 bg-bg-primary px-6 py-10">
+    <section className="overflow-hidden border-b border-border-primary/40 bg-bg-primary px-6 py-10">
       <div className="mx-auto max-w-4xl">
         {/* Section label */}
         <div className="mb-5 flex items-center gap-3">

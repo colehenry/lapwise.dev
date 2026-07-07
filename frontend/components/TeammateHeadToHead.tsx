@@ -193,7 +193,7 @@ export default function TeammateHeadToHead({
               {sorted.map((team) => {
                 const color = team.team_color
                   ? `#${team.team_color}`
-                  : "#a855f7";
+                  : "var(--series-1)";
                 const checked = selectedTeams.includes(team.team_name);
                 return (
                   <label
@@ -230,7 +230,9 @@ export default function TeammateHeadToHead({
       {/* Team cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {displayed.map((team) => {
-          const color = team.team_color ? `#${team.team_color}` : "#a855f7";
+          const color = team.team_color
+            ? `#${team.team_color}`
+            : "var(--series-1)";
           const winsLabel = mode === "qualifying" ? "Q" : "W";
 
           // Winner (more wins) always on left

@@ -23,6 +23,8 @@ function isAdminRoute(pathname: string): boolean {
 
 export function middleware(request: NextRequest): NextResponse {
   const pathname = normalizePathname(request.nextUrl.pathname);
+  // lw_logged_in is a UX-only cookie — real auth is enforced by the backend via JWT.
+  // This middleware only prevents obvious wrong-page landings; it is not a security gate.
   const loggedInCookie = request.cookies.get("lw_logged_in")?.value;
   const hasLoggedIn = Boolean(loggedInCookie);
 

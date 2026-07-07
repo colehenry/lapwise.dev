@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { useTheme } from "@/components/ThemeProvider";
 import TrackMapImage from "@/components/TrackMapImage";
 import Button from "@/components/ui/Button";
 import Skeleton from "@/components/ui/Skeleton";
@@ -55,6 +56,31 @@ export default function FavoritesPicker({
   const [selectedCircuitId, setSelectedCircuitId] = useState<number | null>(
     initialCircuitId,
   );
+
+  useEffect(() => {
+    if (!open) return;
+    const scrollY = window.scrollY;
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevBodyPosition = document.body.style.position;
+    const prevBodyTop = document.body.style.top;
+    const prevBodyWidth = document.body.style.width;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+
+    return () => {
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+      document.body.style.position = prevBodyPosition;
+      document.body.style.top = prevBodyTop;
+      document.body.style.width = prevBodyWidth;
+      window.scrollTo(0, scrollY);
+    };
+  }, [open]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset search when step changes
   useEffect(() => {
@@ -403,6 +429,7 @@ function TeamCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const { theme } = useTheme();
   const borderColor = team.team_color
     ? `#${team.team_color}`
     : "var(--border-primary)";
@@ -430,6 +457,12 @@ function TeamCard({
           className="w-10 h-10 object-contain"
           loading="lazy"
           referrerPolicy="no-referrer"
+          style={
+            theme === "light" &&
+            !team.team_name.toLowerCase().includes("ferrari")
+              ? { filter: "invert(1)" }
+              : undefined
+          }
         />
       )}
       <span className="text-sm font-medium text-text-primary text-center leading-tight">

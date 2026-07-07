@@ -79,7 +79,7 @@ def main():
     if not sessions:
         print(f"❌ No race sessions found for {args.season}")
         if args.round:
-            print("   (Did you ingest season data first?" " Run ingest_season.py)")
+            print("   (Did you ingest season data first? Run ingest_season.py)")
         sys.exit(1)
 
     print(f"📊 Found {len(sessions)} race session(s)\n")
@@ -173,7 +173,7 @@ def main():
                     stored = True
                     break
                 except Exception as db_err:
-                    print(f"  ⚠️  DB insert failed " f"(attempt {attempt}/3): {db_err}")
+                    print(f"  ⚠️  DB insert failed (attempt {attempt}/3): {db_err}")
                     try:
                         db.rollback()
                     except Exception:

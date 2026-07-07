@@ -15,7 +15,9 @@ import {
   CHART_COLORS,
   CHART_TYPOGRAPHY,
   CustomDot,
+  resolveChartSeriesColor,
 } from "@/components/chart-primitives";
+import { useTheme } from "@/components/ThemeProvider";
 import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import { apiHeaders, apiUrl } from "@/lib/api";
 
@@ -179,6 +181,7 @@ export default function PointsByRoundGraph({
   initialMode = "drivers",
   initialEntities,
 }: PointsByRoundGraphProps) {
+  const { theme } = useTheme();
   const [mode, setMode] = useState<"drivers" | "constructors">(initialMode);
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
@@ -345,9 +348,11 @@ export default function PointsByRoundGraph({
     entity: DriverProgression | ConstructorProgression,
   ) => {
     if (mode === "constructors") {
-      return entity.team_color
-        ? `#${entity.team_color}`
-        : CHART_COLORS.textTertiary;
+      return resolveChartSeriesColor(
+        entity.team_color,
+        theme,
+        CHART_COLORS.textTertiary,
+      );
     }
 
     const drivers = data?.drivers || [];
@@ -369,7 +374,11 @@ export default function PointsByRoundGraph({
     }
 
     return driverEntity.team_color
-      ? `#${driverEntity.team_color}`
+      ? resolveChartSeriesColor(
+          driverEntity.team_color,
+          theme,
+          CHART_COLORS.textTertiary,
+        )
       : CHART_COLORS.textTertiary;
   };
 

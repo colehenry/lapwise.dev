@@ -66,11 +66,11 @@ def backfill_team_colors(start_year=None, end_year=None):
         # Commit changes
         db.commit()
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"✨ Backfill complete!")
         print(f"  Updated: {updated}")
         print(f"  Not found: {not_found}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
     except Exception as e:
         print(f"❌ Error: {e}")

@@ -5,6 +5,6 @@
     "check": "npm run check:frontend && npm run check:backend",
     "check:frontend": "npm --prefix frontend run lint && npm --prefix frontend run build",
     "check:backend": "cd backend && ./venv/bin/python -m pytest tests -q",
-    "report:file-sizes": "find frontend/app frontend/components -name '*.tsx' -type f -exec wc -l {} + | sort -nr | awk '$2 != \"total\" && $1 > 500 { print \"WARN frontend >500 lines: \"$0 }'; find backend/app/services -name '*.py' -type f -exec wc -l {} + | sort -nr | awk '$2 != \"total\" && $1 > 800 { print \"WARN backend service >800 lines: \"$0 }'"
+    "guardrails": "node scripts/guardrails.mjs"
   }
 }

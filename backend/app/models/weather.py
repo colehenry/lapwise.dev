@@ -5,7 +5,7 @@ Represents time-series weather data for a session.
 Weather is sampled approximately once per minute during a session.
 """
 
-from sqlalchemy import Column, Integer, Float, Boolean, ForeignKey, Index
+from sqlalchemy import Boolean, Column, Float, ForeignKey, Index, Integer
 from sqlalchemy.orm import relationship
 
 from app.database import Base

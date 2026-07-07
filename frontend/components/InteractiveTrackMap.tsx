@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { type RefObject, useEffect, useMemo, useRef } from "react";
+import { useTheme } from "@/components/ThemeProvider";
 import TrackMapImage from "@/components/TrackMapImage";
 import { fetchReplayTrackGeometry } from "@/lib/api";
 import type { ReplayTrack } from "@/lib/types";
@@ -37,11 +38,28 @@ interface InteractiveTrackMapProps {
 }
 
 const TRACK_WIDTH = 8;
-const TRACK_COLOR = "rgba(255, 255, 255, 0.88)";
-const TRACK_GLOW_COLOR = "rgba(255, 255, 255, 0.10)";
-const SF_LINE_COLOR = "rgba(255, 255, 255, 0.72)";
-const CORNER_LABEL_COLOR = "rgba(196, 184, 214, 0.9)";
-const CORNER_LABEL_SHADOW_COLOR = "rgba(8, 8, 14, 0.72)";
+
+function getTrackPalette(theme: "dark" | "light") {
+  if (theme === "dark") {
+    return {
+      trackColor: "rgba(255, 255, 255, 0.88)",
+      trackGlowColor: "rgba(255, 255, 255, 0.10)",
+      shadowColor: "rgba(255, 255, 255, 0.22)",
+      sfLineColor: "rgba(255, 255, 255, 0.72)",
+      cornerLabelColor: "rgba(196, 184, 214, 0.9)",
+      cornerLabelShadowColor: "rgba(8, 8, 14, 0.72)",
+    };
+  }
+
+  return {
+    trackColor: "rgba(61, 72, 92, 0.9)",
+    trackGlowColor: "rgba(83, 93, 117, 0.08)",
+    shadowColor: "rgba(83, 93, 117, 0.12)",
+    sfLineColor: "rgba(71, 85, 105, 0.75)",
+    cornerLabelColor: "rgba(82, 89, 112, 0.94)",
+    cornerLabelShadowColor: "rgba(244, 246, 250, 0.98)",
+  };
+}
 
 export default function InteractiveTrackMap({
   circuitId,
@@ -49,7 +67,9 @@ export default function InteractiveTrackMap({
   trackLengthKm,
   location,
 }: InteractiveTrackMapProps) {
+  const { theme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const palette = useMemo(() => getTrackPalette(theme), [theme]);
   const { data } = useQuery({
     queryKey: ["replay-track-geometry", circuitId],
     queryFn: () => fetchReplayTrackGeometry(circuitId),
@@ -62,35 +82,63 @@ export default function InteractiveTrackMap({
   return (
     <div
       className="bg-bg-tertiary rounded-sm border border-border-primary relative overflow-hidden min-h-[350px] md:min-h-[400px]"
-      style={{
-        background:
-          "radial-gradient(ellipse at center, rgba(160, 32, 240, 0.08) 0%, rgba(160, 32, 240, 0.02) 50%, transparent 80%)",
-      }}
+      style={
+        theme === "dark"
+          ? {
+              background:
+                "radial-gradient(ellipse at center, rgba(160, 32, 240, 0.08) 0%, rgba(160, 32, 240, 0.02) 50%, transparent 80%)",
+            }
+          : undefined
+      }
     >
       <DotGridPattern id={`circuit-detail-dots-${circuitId}`} />
 
       {trackLengthKm && (
         <div className="absolute top-4 left-5 z-20 flex items-center gap-1.5">
-          <span className="text-[9px] font-mono font-bold tracking-widest text-purple-400/80 uppercase">
+          <span
+            className={`text-[9px] font-mono font-bold tracking-widest uppercase ${
+              theme === "dark" ? "text-purple-400/80" : "text-text-tertiary"
+            }`}
+          >
             {trackLengthKm.toFixed(3)} km
           </span>
-          <div className="h-px w-6 bg-purple-500/30" />
+          <div
+            className={`h-px w-6 ${
+              theme === "dark" ? "bg-purple-500/30" : "bg-border-secondary"
+            }`}
+          />
         </div>
       )}
 
       {location && (
         <div className="absolute bottom-4 right-5 z-20 flex items-center gap-1.5">
-          <div className="h-px w-6 bg-purple-500/30" />
-          <span className="text-[9px] font-mono font-bold tracking-widest text-purple-400/80 uppercase">
+          <div
+            className={`h-px w-6 ${
+              theme === "dark" ? "bg-purple-500/30" : "bg-border-secondary"
+            }`}
+          />
+          <span
+            className={`text-[9px] font-mono font-bold tracking-widest uppercase ${
+              theme === "dark" ? "text-purple-400/80" : "text-text-tertiary"
+            }`}
+          >
             {location}
           </span>
         </div>
       )}
 
       {track ? (
-        <ReplayTrackCanvas track={track} canvasRef={canvasRef} />
+        <ReplayTrackCanvas
+          track={track}
+          canvasRef={canvasRef}
+          palette={palette}
+        />
       ) : (
-        <StaticTrackFallback circuitId={circuitId} circuitName={circuitName} />
+        <StaticTrackFallback
+          circuitId={circuitId}
+          circuitName={circuitName}
+          theme={theme}
+        />
       )}
     </div>
   );
@@ -99,9 +147,11 @@ export default function InteractiveTrackMap({
 function ReplayTrackCanvas({
   track,
   canvasRef,
+  palette,
 }: {
   track: ReplayTrack;
   canvasRef: RefObject<HTMLCanvasElement | null>;
+  palette: ReturnType<typeof getTrackPalette>;
 }) {
   const bounds = useMemo(() => {
     if (!track.polyline.length) return null;
@@ -164,22 +214,28 @@ function ReplayTrackCanvas({
 
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.strokeStyle = TRACK_GLOW_COLOR;
+    ctx.strokeStyle = palette.trackGlowColor;
     ctx.lineWidth = (TRACK_WIDTH + 12) / scale;
-    ctx.shadowColor = "rgba(255, 255, 255, 0.22)";
+    ctx.shadowColor = palette.shadowColor;
     ctx.shadowBlur = 22 / scale;
     ctx.stroke(path);
 
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = TRACK_COLOR;
+    ctx.strokeStyle = palette.trackColor;
     ctx.lineWidth = TRACK_WIDTH / scale;
     ctx.stroke(path);
 
-    drawStartFinishLine(ctx, track.polyline, scale);
-    drawCornerLabels(ctx, track, scale);
+    drawStartFinishLine(ctx, track.polyline, scale, palette.sfLineColor);
+    drawCornerLabels(
+      ctx,
+      track,
+      scale,
+      palette.cornerLabelColor,
+      palette.cornerLabelShadowColor,
+    );
 
     ctx.restore();
-  }, [bounds, canvasRef, track]);
+  }, [bounds, canvasRef, palette, track]);
 
   return (
     <canvas
@@ -194,6 +250,7 @@ function drawStartFinishLine(
   ctx: CanvasRenderingContext2D,
   polyline: [number, number][],
   scale: number,
+  color: string,
 ) {
   const start = polyline[0];
   const next = polyline[1];
@@ -206,7 +263,7 @@ function drawStartFinishLine(
   const py = dx / len;
   const halfWidth = 14 / scale;
 
-  ctx.strokeStyle = SF_LINE_COLOR;
+  ctx.strokeStyle = color;
   ctx.lineWidth = 3 / scale;
   ctx.setLineDash([3 / scale, 3 / scale]);
   ctx.beginPath();
@@ -220,15 +277,19 @@ function drawCornerLabels(
   ctx: CanvasRenderingContext2D,
   track: ReplayTrack,
   scale: number,
+  labelColor: string,
+  shadowColor: string,
 ) {
   if (!track.corners?.length) return;
 
-  ctx.fillStyle = CORNER_LABEL_COLOR;
-  ctx.shadowColor = CORNER_LABEL_SHADOW_COLOR;
-  ctx.shadowBlur = 3 / scale;
-  ctx.shadowOffsetX = 0.75 / scale;
-  ctx.shadowOffsetY = 0.75 / scale;
-  ctx.font = `${9 / scale}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+  ctx.strokeStyle = shadowColor;
+  ctx.lineWidth = 2 / scale;
+  ctx.fillStyle = labelColor;
+  ctx.shadowColor = shadowColor;
+  ctx.shadowBlur = 0.75 / scale;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.font = `600 ${8.5 / scale}px ui-sans-serif, Inter, system-ui, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
@@ -236,6 +297,7 @@ function drawCornerLabels(
     const label = corner.letter
       ? `${corner.number}${corner.letter}`
       : String(corner.number);
+    ctx.strokeText(label, corner.x, corner.y);
     ctx.fillText(label, corner.x, corner.y);
   }
 
@@ -248,9 +310,11 @@ function drawCornerLabels(
 function StaticTrackFallback({
   circuitId,
   circuitName,
+  theme,
 }: {
   circuitId: number;
   circuitName: string;
+  theme: "dark" | "light";
 }) {
   return (
     <div className="relative z-10 h-[350px] md:h-[400px] w-full">
@@ -261,10 +325,14 @@ function StaticTrackFallback({
         className="object-contain p-8"
         fallbackClassName="h-full w-full px-4"
         draggable={false}
-        style={{
-          filter:
-            "drop-shadow(0 0 12px rgba(160, 32, 240, 0.35)) drop-shadow(0 0 30px rgba(160, 32, 240, 0.12))",
-        }}
+        style={
+          theme === "dark"
+            ? {
+                filter:
+                  "drop-shadow(0 0 12px rgba(160, 32, 240, 0.35)) drop-shadow(0 0 30px rgba(160, 32, 240, 0.12))",
+              }
+            : undefined
+        }
       />
     </div>
   );
