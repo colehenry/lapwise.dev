@@ -11,18 +11,20 @@ from app.database import AsyncSessionLocal
 from app.models import Team, SessionResult
 
 
-# (alias_name, canonical_name) pairs to merge, per year
+# (alias_name, canonical_name, year_min, year_max)
+# year_min/year_max are inclusive; None means unbounded.
 ALIASES_TO_MERGE = [
-    ("Red Bull", "Red Bull Racing"),
-    ("Alpine F1 Team", "Alpine"),
-    ("RB F1 Team", "Racing Bulls"),
-    ("Cadillac F1 Team", "Cadillac"),
+    ("Red Bull", "Red Bull Racing", None, None),
+    ("Alpine F1 Team", "Alpine", None, None),
+    ("RB F1 Team", "Racing Bulls", None, None),
+    ("Cadillac F1 Team", "Cadillac", None, None),
+    # Sauber rebranded to Audi for 2026+
+    ("Sauber", "Audi", 2026, None),
 ]
 
 
 async def main():
     async with AsyncSessionLocal() as db:
-        # Find all years that have teams
         years_result = await db.execute(
             select(Team.year).distinct().order_by(Team.year)
         )
@@ -31,7 +33,13 @@ async def main():
         total_merged = 0
 
         for year in years:
-            for alias_name, canonical_name in ALIASES_TO_MERGE:
+            for alias_name, canonical_name, year_min, year_max in ALIASES_TO_MERGE:
+                in_range = (year_min is None or year >= year_min) and (
+                    year_max is None or year <= year_max
+                )
+                if not in_range:
+                    continue
+
                 alias_result = await db.execute(
                     select(Team).where(Team.year == year, Team.name == alias_name)
                 )
