@@ -209,11 +209,15 @@ TEAM_NAME_ALIASES: dict[str, str] = {
 # Checked before TEAM_NAME_ALIASES so era-specific rules take priority.
 TEAM_NAME_ALIASES_BY_YEAR: list[tuple[int | None, int | None, dict[str, str]]] = [
     # Sauber rebranded to Audi from 2026 onwards.
-    (2026, None, {
-        "sauber": "Audi",
-        "audi": "Audi",
-        "audi f1 team": "Audi",
-    }),
+    (
+        2026,
+        None,
+        {
+            "sauber": "Audi",
+            "audi": "Audi",
+            "audi f1 team": "Audi",
+        },
+    ),
 ]
 
 
