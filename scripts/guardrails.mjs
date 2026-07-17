@@ -1,10 +1,13 @@
 #!/usr/bin/env node
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // Resolve scan paths from the repo root, not the caller's working directory.
 process.chdir(join(dirname(fileURLToPath(import.meta.url)), ".."));
+
+const BASELINE_PATH = "scripts/guardrails-baseline.json";
+const UPDATE_BASELINE = process.argv.includes("--update-baseline");
 
 const SKIP_DIRS = new Set([
   "node_modules",
@@ -55,18 +58,69 @@ function lineCount(file) {
 
 const violations = [];
 const warnings = [];
+const overCap = []; // { file, lines, cap } — structured, drives the ratchet
 
 for (const rule of SIZE_CAPS) {
   for (const dir of rule.dirs) {
     for (const file of walk(dir)) {
       if (!rule.ext.includes(extname(file))) continue;
+      const rel = file.replace(/\\/g, "/");
       const lines = lineCount(file);
       if (lines > rule.cap) {
-        violations.push(`${file} — ${lines} lines (cap ${rule.cap})`);
+        violations.push(`${rel} — ${lines} lines (cap ${rule.cap})`);
+        overCap.push({ file: rel, lines, cap: rule.cap });
       } else if (rule.warn && lines > rule.warn) {
-        warnings.push(`${file} — ${lines} lines (target ${rule.warn})`);
+        warnings.push(`${rel} — ${lines} lines (target ${rule.warn})`);
       }
     }
+  }
+}
+
+// --- File-size ratchet ---------------------------------------------------
+// Baseline records the line count of every file currently over its cap. CI
+// fails only when a *new* over-cap file appears or an existing one *grows*
+// past its baseline — the 29 existing offenders stay report-only until they
+// are chipped down. A file that shrinks below its baseline (or under the cap)
+// is a report-only nudge to re-run with --update-baseline and lock the win in.
+const baseline = existsSync(BASELINE_PATH)
+  ? (JSON.parse(readFileSync(BASELINE_PATH, "utf8")).sizeCaps ?? {})
+  : {};
+
+if (UPDATE_BASELINE) {
+  const sizeCaps = Object.fromEntries(
+    overCap
+      .sort((a, b) => a.file.localeCompare(b.file))
+      .map((v) => [v.file, v.lines]),
+  );
+  const payload = {
+    note: "Baseline for the guardrails file-size ratchet. Regenerate with `npm run guardrails:update`. Numbers should only ever go down.",
+    sizeCaps,
+  };
+  writeFileSync(BASELINE_PATH, `${JSON.stringify(payload, null, 2)}\n`);
+  console.log(`Wrote ${BASELINE_PATH}: ${overCap.length} over-cap file(s).`);
+  process.exit(0);
+}
+
+const ratchetFailures = [];
+const improvements = [];
+for (const v of overCap) {
+  const base = baseline[v.file];
+  if (base === undefined) {
+    ratchetFailures.push(
+      `${v.file} — NEW over-cap file at ${v.lines} lines (cap ${v.cap})`,
+    );
+  } else if (v.lines > base) {
+    ratchetFailures.push(
+      `${v.file} — grew to ${v.lines} lines (baseline ${base}, cap ${v.cap})`,
+    );
+  } else if (v.lines < base) {
+    improvements.push(`${v.file} — down to ${v.lines} lines (baseline ${base})`);
+  }
+}
+const currentOverCap = new Set(overCap.map((v) => v.file));
+for (const file of Object.keys(baseline)) {
+  if (!currentOverCap.has(file)) {
+    improvements.push(`${file} — now under cap (baseline ${baseline[file]})`);
   }
 }
 
@@ -104,9 +158,11 @@ const consoleHits = grepCount(
 const checks = [
   { label: "print() in backend/app", items: printHits, enforce: true },
   { label: "console.* in frontend source", items: consoleHits, enforce: true },
-  { label: "file-size caps exceeded", items: violations, enforce: false },
-  { label: "file-size targets (soft)", items: warnings, enforce: false },
   { label: "hardcoded hex outside approved files", items: hexHits, enforce: true },
+  { label: "file-size ratchet (new or grown over-cap files)", items: ratchetFailures, enforce: true },
+  { label: "file-size caps exceeded (existing debt)", items: violations, enforce: false },
+  { label: "file-size targets (soft)", items: warnings, enforce: false },
+  { label: "file-size wins — run `npm run guardrails:update`", items: improvements, enforce: false },
 ];
 
 function section(label, items, enforce, sample = 5) {

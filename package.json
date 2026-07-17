@@ -5,6 +5,7 @@
     "check": "npm run check:frontend && npm run check:backend",
     "check:frontend": "npm --prefix frontend run lint && npm --prefix frontend run build",
     "check:backend": "cd backend && ./venv/bin/python -m pytest tests -q",
-    "guardrails": "node scripts/guardrails.mjs"
+    "guardrails": "node scripts/guardrails.mjs",
+    "guardrails:update": "node scripts/guardrails.mjs --update-baseline"
   }
 }
