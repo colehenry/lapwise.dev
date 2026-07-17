@@ -76,7 +76,7 @@ function normalizeTableName(raw: string): string {
   return raw.replaceAll('"', "").split(".").pop()?.toLowerCase() ?? "";
 }
 
-function extractReferencedTables(sql: string): string[] {
+export function extractReferencedTables(sql: string): string[] {
   const tables = new Set<string>();
   const tableRefPattern =
     /\b(?:FROM|JOIN)\s+("?[a-zA-Z_][\w]*"?(?:\."?[a-zA-Z_][\w]*"?)?)/gi;
@@ -114,7 +114,7 @@ function hasUnsafeStatementBoundary(sql: string): boolean {
 /**
  * Validates a SQL query is read-only and safe to execute.
  */
-function validateSQL(sql: string): { valid: boolean; error?: string } {
+export function validateSQL(sql: string): { valid: boolean; error?: string } {
   const trimmed = sql.trim();
 
   if (trimmed.length > MAX_SQL_LENGTH) {
@@ -162,12 +162,12 @@ function validateSQL(sql: string): { valid: boolean; error?: string } {
 /**
  * Caps query output even when the generated SQL already has a LIMIT.
  */
-function ensureLimit(sql: string, maxRows = 500): string {
+export function ensureLimit(sql: string, maxRows = 500): string {
   const cleaned = sql.replace(/;\s*$/, "");
   return `SELECT * FROM (${cleaned}) AS ai_limited_query LIMIT ${maxRows}`;
 }
 
-function validateWhereClause(
+export function validateWhereClause(
   whereClause: string,
 ): { valid: true } | { valid: false; error: string } {
   if (
@@ -178,13 +178,21 @@ function validateWhereClause(
     return { valid: false, error: "WHERE clause contains unsafe SQL syntax." };
   }
 
-  if (BLOCKED_SQL_PATTERNS.test(whereClause)) {
+  if (
+    BLOCKED_SQL_PATTERNS.test(whereClause) ||
+    /\bUNION\b/i.test(whereClause)
+  ) {
     return { valid: false, error: "WHERE clause contains blocked keywords." };
   }
 
   const tableCheck = checkRestrictedTables(whereClause);
   if (!tableCheck.valid) {
     return tableCheck;
+  }
+
+  const allowlistCheck = checkAllowedTables(whereClause);
+  if (!allowlistCheck.valid) {
+    return allowlistCheck;
   }
 
   return { valid: true };
