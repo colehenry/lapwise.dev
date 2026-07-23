@@ -17,6 +17,7 @@ Usage:
 import sys
 import os
 import fastf1
+from sqlalchemy import func, select
 from scripts.ingest import (
     get_db_session,
     load_session_with_retry,
@@ -33,6 +34,7 @@ from scripts.ingest import (
 from scripts.ingest.highlights import ingest_highlights
 from scripts.ingest.auto_post import create_auto_post
 from app.services.summary_service import SummaryService
+from app.models import Lap, SessionResult
 
 # FastF1 session name mapping
 FASTF1_NAMES = {
@@ -50,6 +52,28 @@ def enable_cache():
     cache_dir = os.path.abspath(os.path.join(os.getcwd(), ".fastf1_cache"))
     os.makedirs(cache_dir, exist_ok=True)
     fastf1.Cache.enable_cache(cache_dir)
+
+
+def ensure_session_complete(db, session_id, year, session_type):
+    """Fail the job when a modern session has no classification or lap data."""
+    result_count = db.execute(
+        select(func.count()).where(SessionResult.session_id == session_id)
+    ).scalar()
+    lap_count = db.execute(
+        select(func.count()).where(Lap.session_id == session_id)
+    ).scalar()
+
+    missing = []
+    if not result_count:
+        missing.append("results")
+    if year >= 2018 and not lap_count:
+        missing.append("laps")
+
+    if missing:
+        raise RuntimeError(
+            f"Incomplete {year} {session_type}: missing {', '.join(missing)} "
+            f"(results={result_count or 0}, laps={lap_count or 0})"
+        )
 
 
 def main():
@@ -145,6 +169,10 @@ def main():
         elif year >= 1996:
             ingest_lap_data(db, fastf1_session, session_id)
             ingest_weather_data(db, fastf1_session, session_id)
+
+        # A results-only session looks successful but leaves every telemetry
+        # visualization empty. Make it retryable instead of silently complete.
+        ensure_session_complete(db, session_id, year, session_type)
 
         # 6. Ingest highlights for this round
         print("  🎬 Searching for highlights...")

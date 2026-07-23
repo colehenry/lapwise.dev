@@ -22,12 +22,12 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select, func
 from scripts.ingest.utils import get_db_session
-from app.models import Session, SessionResult
+from app.models import Lap, Session, SessionResult
 
 # How long after a session ends before we check for data
 MIN_DELAY_HOURS = 1
 MAX_DELAY_HOURS = (
-    72  # catch sessions FastF1 published late (practice can take hours/days)
+    168  # keep retrying published-but-incomplete sessions for one full week
 )
 
 # FastF1 session columns map to session types
@@ -89,8 +89,8 @@ def is_race_weekend(schedule, now):
         race_duration = SESSION_DURATIONS["race"]
         weekend_start = race_date - timedelta(days=3)
         weekend_end = race_date + timedelta(
-            hours=race_duration + 72
-        )  # 72h trailing window for late/missed sessions
+            hours=race_duration + MAX_DELAY_HOURS
+        )
 
         if weekend_start <= now <= weekend_end:
             return True
@@ -158,8 +158,10 @@ def main():
                 if time_since_end < MIN_DELAY_HOURS or time_since_end > MAX_DELAY_HOURS:
                     continue
 
-                # Check if already ingested
-                existing = db.execute(
+                # A modern session is complete only when both the classification
+                # and lap-level timing data are present. Results alone cannot
+                # power the race-page graphs, sector comparison, or heatmaps.
+                result_count = db.execute(
                     select(func.count())
                     .select_from(SessionResult)
                     .join(Session, SessionResult.session_id == Session.id)
@@ -169,17 +171,32 @@ def main():
                         Session.session_type == session_type,
                     )
                 ).scalar()
+                lap_count = db.execute(
+                    select(func.count())
+                    .select_from(Lap)
+                    .join(Session, Lap.session_id == Session.id)
+                    .where(
+                        Session.year == year,
+                        Session.round == round_num,
+                        Session.session_type == session_type,
+                    )
+                ).scalar()
 
-                if existing and existing > 0:
+                is_complete = result_count and result_count > 0
+                if year >= 2018:
+                    is_complete = is_complete and lap_count and lap_count > 0
+
+                if is_complete:
                     print(
                         f"  ✓ Already ingested: R{round_num} {session_type} "
-                        f"({existing} results)"
+                        f"({result_count} results, {lap_count} laps)"
                     )
                     continue
 
                 print(
                     f"  → Ready: R{round_num} {session_type} "
-                    f"(ended {time_since_end:.1f}h ago)"
+                    f"(ended {time_since_end:.1f}h ago; "
+                    f"results={result_count or 0}, laps={lap_count or 0})"
                 )
                 sessions_to_ingest.append(
                     (year, round_num, session_type, time_since_end)

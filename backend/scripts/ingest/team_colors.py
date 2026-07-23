@@ -220,11 +220,48 @@ TEAM_NAME_ALIASES_BY_YEAR: list[tuple[int | None, int | None, dict[str, str]]] =
     ),
 ]
 
+# FastF1 exposes TeamId alongside TeamName. TeamName is a display label and has
+# changed mid-season (for example, "Red Bull" / "Red Bull Racing"), whereas
+# TeamId is the stable source identity we should use for live ingestion.
+# Keep this scoped to the 2026 grid so historical constructor names remain
+# untouched.
+TEAM_ID_ALIASES_BY_YEAR: list[tuple[int | None, int | None, dict[str, str]]] = [
+    (
+        2026,
+        None,
+        {
+            "alpine": "Alpine",
+            "aston_martin": "Aston Martin",
+            "audi": "Audi",
+            "cadillac": "Cadillac",
+            "ferrari": "Ferrari",
+            "haas": "Haas F1 Team",
+            "mclaren": "McLaren",
+            "mercedes": "Mercedes",
+            "rb": "Racing Bulls",
+            "red_bull": "Red Bull Racing",
+            "williams": "Williams",
+        },
+    ),
+]
 
-def normalize_team_name(name: str, year: int | None = None) -> str:
-    """Return canonical team name, resolving known aliases."""
+
+def normalize_team_name(
+    name: str, year: int | None = None, team_id: str | None = None
+) -> str:
+    """Return a canonical team name, preferring FastF1's stable TeamId."""
     if not name:
         return name
+
+    team_id_key = team_id.lower().strip() if team_id else None
+    if year is not None and team_id_key:
+        for year_min, year_max, aliases in TEAM_ID_ALIASES_BY_YEAR:
+            in_range = (year_min is None or year >= year_min) and (
+                year_max is None or year <= year_max
+            )
+            if in_range and team_id_key in aliases:
+                return aliases[team_id_key]
+
     key = name.lower().strip()
     if year is not None:
         for year_min, year_max, aliases in TEAM_NAME_ALIASES_BY_YEAR:
