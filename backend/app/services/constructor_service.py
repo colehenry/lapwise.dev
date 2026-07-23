@@ -14,7 +14,7 @@ from app.schemas.constructor import (
     ConstructorSeasonHistory,
     ConstructorSeasonHistoryResponse,
 )
-from app.services.results_service import _make_slug
+from app.services.results.common import _make_slug
 
 
 class ConstructorService:
