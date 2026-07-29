@@ -94,6 +94,12 @@ export interface RoundSummary {
   podium: PodiumDriver[];
 }
 
+/** `/api/results/{season}` — one entry per session, so sprint weekends repeat a round. */
+export interface SeasonRoundsResponse {
+  year: number;
+  rounds: RoundSummary[];
+}
+
 export interface DriverListItem {
   driver_code: string | null;
   driver_slug: string | null;
