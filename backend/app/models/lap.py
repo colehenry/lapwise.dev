@@ -101,6 +101,11 @@ class Lap(Base):
     deleted = Column(Boolean, nullable=True)  # Was this lap time deleted by FIA?
     deleted_reason = Column(String(100), nullable=True)  # Reason for deletion
 
+    # Provenance
+    source = Column(
+        String(20), nullable=False, server_default="fastf1", default="fastf1"
+    )  # fastf1 (2018+, full detail) or jolpica (1996-2017, timing only)
+
     # Relationships
     session = relationship("Session", back_populates="laps")
     driver = relationship("Driver", back_populates="laps")
