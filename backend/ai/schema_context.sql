@@ -236,6 +236,9 @@ CREATE VIEW v_constructor_standings AS
     -- year, championship_position, team_name, team_color,
     -- points, wins, podiums, finishes
 
+-- Both views: points include sprint_race points (2021+).
+-- wins, podiums, finishes and races_entered count grands prix only — a sprint win is not a win.
+
 -- =============================================================================
 -- KEY RELATIONSHIPS (for JOINs)
 -- =============================================================================
