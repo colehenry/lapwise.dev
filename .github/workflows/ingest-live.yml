@@ -36,7 +36,8 @@ on:
 jobs:
   check-and-ingest:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # Covers the ingest retry window plus replay generation for race sessions.
+    timeout-minutes: 90
 
     steps:
       - name: Checkout code
@@ -131,3 +132,21 @@ jobs:
           echo "Manual ingestion: ${{ inputs.year }} R${{ inputs.round }} ${{ inputs.session_type }}"
           PYTHONPATH=$PWD python scripts/ingest_single.py \
             ${{ inputs.year }} ${{ inputs.round }} ${{ inputs.session_type }} ${{ inputs.force && '--force' || '' }}
+
+      # ── Replay frames (races only) ──
+      # Runs in the same job so it reuses the telemetry the ingest step just
+      # cached. Without this a race has no replay until someone runs the script
+      # by hand.
+      - name: Generate replay data
+        if: >-
+          ${{ (!inputs.year && steps.check.outputs.should_ingest == 'true'
+               && steps.check.outputs.session_type == 'race')
+              || (inputs.year && inputs.session_type == 'race') }}
+        working-directory: ./backend
+        env:
+          REPLAY_YEAR: ${{ inputs.year || steps.check.outputs.year }}
+          REPLAY_ROUND: ${{ inputs.round || steps.check.outputs.round }}
+        run: |
+          echo "Generating replay for $REPLAY_YEAR R$REPLAY_ROUND"
+          PYTHONPATH=$PWD python scripts/ingest_replays.py \
+            $REPLAY_YEAR $REPLAY_ROUND ${{ inputs.force && '--force' || '' }}

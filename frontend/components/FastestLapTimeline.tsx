@@ -534,8 +534,7 @@ export default function FastestLapTimeline({
   }, [data, removeOutliers]);
 
   const eventBands = useMemo(() => {
-    if (!data || !data.track_status_events?.length || totalLaps === 0)
-      return [];
+    if (!data?.track_status_events?.length || totalLaps === 0) return [];
     return computeEventBands(data.track_status_events, data.drivers, totalLaps);
   }, [data, totalLaps]);
 
