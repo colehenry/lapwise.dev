@@ -154,7 +154,7 @@ export default function TopRightLatestRace() {
 
             <div className="relative">
               <Link
-                href="/discussions"
+                href={`/results/${currentYear}/${data.round}#comments`}
                 className="text-[10px] font-bold text-text-muted uppercase tracking-widest hover:text-purple-400 transition-colors flex items-center gap-2 group/link whitespace-nowrap"
                 onMouseEnter={() => setShowDiscussionTooltip(true)}
                 onMouseLeave={() => setShowDiscussionTooltip(false)}

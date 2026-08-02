@@ -1,13 +1,12 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import { voteComment, votePost } from "@/lib/discussions";
+import { voteComment } from "@/lib/comments";
 
 interface VoteButtonProps {
-  postId?: number;
-  commentId?: number;
+  commentId: number;
   initialCount: number;
   initialVoted: boolean;
   size?: "sm" | "md";
@@ -15,7 +14,6 @@ interface VoteButtonProps {
 }
 
 export default function VoteButton({
-  postId,
   commentId,
   initialCount,
   initialVoted,
@@ -35,11 +33,6 @@ export default function VoteButton({
     setVoted(initialVoted);
   }, [initialCount, initialVoted]);
 
-  const actionLabel = useMemo(() => {
-    if (commentId) return "Vote on comment";
-    return "Vote on post";
-  }, [commentId]);
-
   const handleVote = async () => {
     if (isLoading || isSubmitting) return;
 
@@ -47,8 +40,6 @@ export default function VoteButton({
       router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
       return;
     }
-
-    if (!postId && !commentId) return;
 
     const nextVoted = !voted;
     const nextCount = nextVoted ? count + 1 : count - 1;
@@ -58,15 +49,7 @@ export default function VoteButton({
     setIsSubmitting(true);
 
     try {
-      let result: { voted: boolean; new_count: number } | null = null;
-      if (postId) {
-        result = await votePost(postId);
-      } else if (commentId) {
-        result = await voteComment(commentId);
-      }
-
-      if (!result) return;
-
+      const result = await voteComment(commentId);
       setVoted(result.voted);
       setCount(result.new_count);
       onChange?.(result.new_count, result.voted);
@@ -88,8 +71,8 @@ export default function VoteButton({
       type="button"
       onClick={handleVote}
       aria-pressed={voted}
-      aria-label={actionLabel}
-      title={isAuthenticated ? actionLabel : "Log in to vote"}
+      aria-label="Vote on comment"
+      title={isAuthenticated ? "Vote on comment" : "Log in to vote"}
       className={`inline-flex items-center gap-1 rounded-sm border font-mono tracking-wider transition-colors duration-150 ${sizeStyles[size]} ${
         voted
           ? "bg-purple-500/20 border-purple-500 text-purple-200"

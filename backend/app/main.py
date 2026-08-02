@@ -86,14 +86,13 @@ from app.routers import (
     admin,
     auth,
     circuits,
+    comments,
     constructors,
     drivers,
     events,
     oauth,
-    posts,
     replay,
     season_results,
-    tags,
     users,
 )
 
@@ -108,6 +107,5 @@ app.include_router(
 )
 app.include_router(events.router, prefix="/api/events", tags=["events"])
 app.include_router(circuits.router, prefix="/api/circuits", tags=["circuits"])
-app.include_router(posts.router, prefix="/api/posts", tags=["posts"])
-app.include_router(tags.router, prefix="/api/tags", tags=["tags"])
+app.include_router(comments.router, prefix="/api/comments", tags=["comments"])
 app.include_router(replay.router, prefix="/api/replay", tags=["replay"])

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import MarkdownContent from "@/components/discussions/MarkdownContent";
+import MarkdownContent from "@/components/comments/MarkdownContent";
 import Button from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
 import MonoLabel from "@/components/ui/MonoLabel";

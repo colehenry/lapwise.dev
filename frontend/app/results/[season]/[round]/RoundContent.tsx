@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import RaceComments from "@/components/comments/RaceComments";
 import JumpToRace from "@/components/JumpToRace";
 import { TrianglePattern } from "@/components/Patterns";
 import SessionDetail from "@/components/SessionDetail";
@@ -659,6 +660,12 @@ export default function RoundContent() {
             )}
           </>
         )}
+
+        <RaceComments
+          season={seasonNum}
+          round={roundNum}
+          eventName={raceData.session.event_name}
+        />
       </div>
     </main>
   );

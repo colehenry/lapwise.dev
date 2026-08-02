@@ -8,7 +8,7 @@ const authRoutes = new Set([
   "/reset-password",
 ]);
 
-const protectedRoutes = new Set(["/settings", "/discussions/new"]);
+const protectedRoutes = new Set(["/settings"]);
 
 function normalizePathname(pathname: string): string {
   if (pathname !== "/" && pathname.endsWith("/")) {

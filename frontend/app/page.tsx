@@ -170,7 +170,6 @@ export default function Home() {
                   { label: "Latest Race", href: "/results" },
                   { label: "Ask Clutch", href: "/ask" },
                   { label: "Replay", href: "/replay" },
-                  { label: "Discuss", href: "/discussions" },
                 ].map((action) => (
                   <Link
                     key={action.href}

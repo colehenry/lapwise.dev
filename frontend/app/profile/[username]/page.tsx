@@ -1,13 +1,12 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import PostCard from "@/components/discussions/PostCard";
-import UserAvatar from "@/components/discussions/UserAvatar";
+import UserAvatar from "@/components/comments/UserAvatar";
 import FavoritesPicker from "@/components/favorites/FavoritesPicker";
 import TrackMapImage from "@/components/TrackMapImage";
 import Button from "@/components/ui/Button";
@@ -15,11 +14,7 @@ import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl, isValidHeadshotUrl } from "@/lib/api";
 import { fetchWithAuth } from "@/lib/auth";
 import { circuitHref, constructorHref, driverHref } from "@/lib/entityLinks";
-import type {
-  PostListItem,
-  PostListResponse,
-  UserPublicProfile,
-} from "@/lib/types";
+import type { UserCommentListItem, UserPublicProfile } from "@/lib/types";
 
 export default function ProfilePage() {
   const params = useParams();
@@ -38,34 +33,22 @@ export default function ProfilePage() {
     },
   });
 
-  const {
-    data: postsData,
-    isLoading: postsLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery<PostListResponse>({
-    queryKey: ["user-posts", profile?.username],
-    queryFn: async ({ pageParam }) => {
-      const params = new URLSearchParams({
-        author_username: profile?.username ?? username,
-        sort: "new",
-        limit: "10",
-      });
-      if (pageParam) params.set("cursor", pageParam as string);
-      const res = await fetch(apiUrl(`/api/posts?${params}`), {
-        headers: apiHeaders(),
-      });
-      if (!res.ok) throw new Error("Failed to fetch posts");
+  const { data: comments = [], isLoading: commentsLoading } = useQuery<
+    UserCommentListItem[]
+  >({
+    queryKey: ["user-comments", profile?.username],
+    queryFn: async () => {
+      const res = await fetch(
+        apiUrl(`/api/comments/users/${profile?.username ?? username}`),
+        {
+          headers: apiHeaders(),
+        },
+      );
+      if (!res.ok) throw new Error("Failed to fetch comments");
       return res.json();
     },
-    initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.next_cursor,
     enabled: !!profile?.username,
   });
-
-  const allPosts =
-    postsData?.pages.flatMap((page) => page.posts as PostListItem[]) ?? [];
 
   const handleSaveFavorites = useCallback(
     async (favorites: {
@@ -285,51 +268,55 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Posts */}
+      {/* Comments */}
       <section>
         <h2 className="text-sm font-semibold text-text-secondary mb-3">
-          Posts
-          {allPosts.length > 0 && (
+          Comments
+          {comments.length > 0 && (
             <span className="ml-2 text-text-muted font-normal">
-              ({allPosts.length}
-              {hasNextPage ? "+" : ""})
+              ({comments.length})
             </span>
           )}
         </h2>
-        {postsLoading ? (
+        {commentsLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton
-                key={`post-skel-${
+                key={`comment-skel-${
                   // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
                   i
                 }`}
                 variant="rectangular"
                 width="100%"
-                height="100px"
+                height="80px"
               />
             ))}
           </div>
-        ) : allPosts.length > 0 ? (
+        ) : comments.length > 0 ? (
           <div className="space-y-3">
-            {allPosts.map((post) => (
-              <PostCard key={post.id} post={post} />
+            {comments.map((comment) => (
+              <Link
+                key={comment.id}
+                href={`/results/${comment.year}/${comment.round}#comments`}
+                className="block border border-border-primary rounded-sm bg-bg-tertiary p-4 hover:border-purple-500/50 transition-colors"
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-purple-400">
+                    {comment.year} R{String(comment.round).padStart(2, "0")}
+                  </span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+                    {comment.vote_count}{" "}
+                    {comment.vote_count === 1 ? "vote" : "votes"}
+                  </span>
+                </div>
+                <p className="text-sm text-text-secondary line-clamp-3">
+                  {comment.body}
+                </p>
+              </Link>
             ))}
-            {hasNextPage && (
-              <div className="text-center pt-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => fetchNextPage()}
-                  isLoading={isFetchingNextPage}
-                >
-                  Load more
-                </Button>
-              </div>
-            )}
           </div>
         ) : (
-          <p className="text-text-muted text-sm py-4">No posts yet.</p>
+          <p className="text-text-muted text-sm py-4">No comments yet.</p>
         )}
       </section>
 

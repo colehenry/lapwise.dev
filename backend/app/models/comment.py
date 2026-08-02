@@ -1,7 +1,7 @@
 """
 Comment Model
 
-Represents a comment on a discussion post, with optional threading.
+Represents a comment on a race thread, with optional threading.
 """
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, Text
@@ -15,8 +15,11 @@ class Comment(Base):
     __tablename__ = "comments"
 
     id = Column(Integer, primary_key=True, index=True)
-    post_id = Column(
-        Integer, ForeignKey("posts.id", ondelete="CASCADE"), nullable=False, index=True
+    thread_id = Column(
+        Integer,
+        ForeignKey("race_threads.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     parent_comment_id = Column(
@@ -30,7 +33,7 @@ class Comment(Base):
     )
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
-    post = relationship("Post", back_populates="comments")
+    thread = relationship("RaceThread", back_populates="comments")
     author = relationship("User")
     replies = relationship(
         "Comment", back_populates="parent", cascade="all, delete-orphan"
@@ -39,4 +42,4 @@ class Comment(Base):
     votes = relationship("Vote", back_populates="comment")
 
     def __repr__(self):
-        return f"<Comment {self.id} on Post {self.post_id}>"
+        return f"<Comment {self.id} on Thread {self.thread_id}>"

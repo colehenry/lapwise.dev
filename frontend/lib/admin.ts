@@ -1,12 +1,10 @@
 import { apiUrl } from "./api";
 import { fetchWithAuth } from "./auth";
 import type {
-  AdminCommentListItem,
+  AdminCommentListResponse,
   AdminDashboardPeriod,
   AdminDashboardStats,
-  AdminPostListResponse,
   AdminUserListResponse,
-  DiscussionTag,
   UserProfile,
 } from "./types";
 
@@ -71,47 +69,14 @@ export async function updateUserStatus(
   return res.json();
 }
 
-export async function fetchAdminPosts(
-  page = 1,
-  size = 20,
-  query?: string,
-  status: "all" | "active" | "removed" = "all",
-): Promise<AdminPostListResponse> {
-  const params = new URLSearchParams({
-    page: page.toString(),
-    size: size.toString(),
-    status,
-  });
-  if (query) params.append("query", query);
-  const res = await fetchWithAuth(apiUrl(`/api/admin/posts?${params}`));
-  if (!res.ok) throw new Error("Failed to fetch admin posts");
-  return res.json();
-}
-
-export async function adminDeletePost(postId: number): Promise<void> {
-  const res = await fetchWithAuth(apiUrl(`/api/admin/posts/${postId}`), {
-    method: "DELETE",
-  });
-  if (!res.ok) throw new Error("Failed to delete post");
-}
-
-export async function adminRestorePost(postId: number): Promise<void> {
-  const res = await fetchWithAuth(
-    apiUrl(`/api/admin/posts/${postId}/restore`),
-    {
-      method: "PUT",
-    },
-  );
-  if (!res.ok) throw new Error("Failed to restore post");
-}
-
-export async function fetchAdminPostComments(
-  postId: number,
-): Promise<AdminCommentListItem[]> {
-  const res = await fetchWithAuth(
-    apiUrl(`/api/admin/posts/${postId}/comments`),
-  );
-  if (!res.ok) throw new Error("Failed to fetch comments");
+export async function fetchAdminComments(
+  cursor?: string | null,
+  limit = 50,
+): Promise<AdminCommentListResponse> {
+  const params = new URLSearchParams({ limit: limit.toString() });
+  if (cursor) params.append("cursor", cursor);
+  const res = await fetchWithAuth(apiUrl(`/api/admin/comments?${params}`));
+  if (!res.ok) throw new Error("Failed to fetch admin comments");
   return res.json();
 }
 
@@ -130,49 +95,18 @@ export async function adminRestoreComment(commentId: number): Promise<void> {
   if (!res.ok) throw new Error("Failed to restore comment");
 }
 
-/**
- * Creates a new discussion tag.
- */
-export async function createTag(data: {
-  name: string;
-  color: string;
-  category?: string;
-}): Promise<DiscussionTag> {
-  const res = await fetchWithAuth(apiUrl("/api/tags"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error("Failed to create tag");
-  return res.json();
-}
-
-/**
- * Updates an existing tag.
- */
-export async function updateTag(
-  tagId: number,
-  data: {
-    name?: string;
-    color?: string;
-    category?: string;
-  },
-): Promise<DiscussionTag> {
-  const res = await fetchWithAuth(apiUrl(`/api/tags/${tagId}`), {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error("Failed to update tag");
-  return res.json();
-}
-
-/**
- * Deletes a tag.
- */
-export async function deleteTag(tagId: number): Promise<void> {
-  const res = await fetchWithAuth(apiUrl(`/api/tags/${tagId}`), {
-    method: "DELETE",
-  });
-  if (!res.ok) throw new Error("Failed to delete tag");
+export async function adminSetThreadLock(
+  year: number,
+  round: number,
+  isLocked: boolean,
+): Promise<void> {
+  const res = await fetchWithAuth(
+    apiUrl(`/api/admin/races/${year}/${round}/lock`),
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_locked: isLocked }),
+    },
+  );
+  if (!res.ok) throw new Error("Failed to update thread lock");
 }

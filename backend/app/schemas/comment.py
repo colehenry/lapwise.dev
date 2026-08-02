@@ -6,7 +6,14 @@ from datetime import datetime
 
 from pydantic import BaseModel, field_validator
 
-from app.schemas.post import PostAuthor
+
+class CommentAuthor(BaseModel):
+    id: int
+    username: str
+    avatar_url: str | None
+    role: str
+
+    model_config = {"from_attributes": True}
 
 
 class CreateCommentRequest(BaseModel):
@@ -40,11 +47,11 @@ class UpdateCommentRequest(BaseModel):
 
 class CommentResponse(BaseModel):
     id: int
-    post_id: int
+    thread_id: int
     parent_comment_id: int | None
     body: str
     vote_count: int
-    author: PostAuthor
+    author: CommentAuthor
     user_voted: bool = False
     replies: list["CommentResponse"] = []
     created_at: datetime
@@ -53,6 +60,21 @@ class CommentResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class CommentListResponse(BaseModel):
+class RaceCommentsResponse(BaseModel):
     comments: list[CommentResponse]
     next_cursor: str | None = None
+    comment_count: int = 0
+    is_locked: bool = False
+
+
+class UserCommentListItem(BaseModel):
+    id: int
+    body: str
+    vote_count: int
+    year: int
+    round: int
+    created_at: datetime
+
+
+class ThreadLockRequest(BaseModel):
+    is_locked: bool
