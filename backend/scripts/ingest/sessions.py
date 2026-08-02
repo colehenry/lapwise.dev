@@ -1,5 +1,5 @@
 from sqlalchemy import select, delete as sql_delete, func
-from app.models import Session, SessionResult, Lap, Weather, TrackStatus
+from app.models import Session, SessionResult, Lap, PitStop, Weather, TrackStatus
 
 
 def ingest_session_metadata(
@@ -65,6 +65,9 @@ def ingest_session_metadata(
             )
         )
         db.execute(sql_delete(Lap).where(Lap.session_id == existing_session.id))
+        db.execute(
+            sql_delete(PitStop).where(PitStop.session_id == existing_session.id)
+        )
         db.execute(sql_delete(Weather).where(Weather.session_id == existing_session.id))
         db.execute(
             sql_delete(TrackStatus).where(TrackStatus.session_id == existing_session.id)

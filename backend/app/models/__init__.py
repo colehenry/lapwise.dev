@@ -22,6 +22,7 @@ from app.models.lap import Lap
 from app.models.login_history import LoginHistory
 from app.models.oauth_account import OAuthAccount
 from app.models.password_reset_token import PasswordResetToken
+from app.models.pit_stop import PitStop
 from app.models.post import Post, PostType
 from app.models.post_tag import post_tags  # noqa: F401
 from app.models.race_control_message import RaceControlMessage
@@ -45,6 +46,7 @@ __all__ = [
     "Session",
     "SessionResult",
     "Lap",
+    "PitStop",
     "Weather",
     "TrackStatus",
     "RaceControlMessage",

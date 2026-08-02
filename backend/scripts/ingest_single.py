@@ -28,6 +28,7 @@ from scripts.ingest import (
     ingest_qualifying_results,
     ingest_practice_results,
     ingest_lap_data,
+    ingest_pit_stops,
     ingest_weather_data,
     ingest_track_status,
 )
@@ -164,6 +165,7 @@ def main():
                 ingest_lap_data(db, fastf1_session, session_id)
         elif year >= 2018:
             ingest_lap_data(db, fastf1_session, session_id)
+            ingest_pit_stops(db, session_id)
             ingest_weather_data(db, fastf1_session, session_id)
             ingest_track_status(db, fastf1_session, session_id)
         elif year >= 1996:
