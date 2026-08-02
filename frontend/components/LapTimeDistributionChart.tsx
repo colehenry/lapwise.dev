@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CHART_COLORS, CHART_TYPOGRAPHY } from "@/components/chart-primitives";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { formatLapTime } from "@/lib/chart-utils";
 import { DATA_FROM } from "@/lib/data-coverage";
 import {
   type DistributionLap,
@@ -33,12 +34,6 @@ import { COMPOUND_COLORS } from "@/lib/palette";
 const COMPOUND_ORDER = ["SOFT", "MEDIUM", "HARD", "INTERMEDIATE", "WET"];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const formatLapTime = (s: number): string => {
-  const m = Math.floor(s / 60);
-  const rem = s % 60;
-  return `${m}:${rem.toFixed(3).padStart(6, "0")}`;
-};
-
 const formatAxisTick = (s: number): string => {
   const m = Math.floor(s / 60);
   const rem = Math.floor(s % 60);

@@ -88,9 +88,7 @@ def is_race_weekend(schedule, now):
 
         race_duration = SESSION_DURATIONS["race"]
         weekend_start = race_date - timedelta(days=3)
-        weekend_end = race_date + timedelta(
-            hours=race_duration + MAX_DELAY_HOURS
-        )
+        weekend_end = race_date + timedelta(hours=race_duration + MAX_DELAY_HOURS)
 
         if weekend_start <= now <= weekend_end:
             return True

@@ -34,6 +34,7 @@ from scripts.ingest import (
     ingest_pit_stops,
     ingest_weather_data,
     ingest_track_status,
+    ingest_race_control_messages,
 )
 from scripts.ingest.highlights import ingest_highlights
 from app.models import Session, SessionResult
@@ -206,6 +207,7 @@ def main():
                         ingest_pit_stops(db, session_id)
                         ingest_weather_data(db, fastf1_session, session_id)
                         ingest_track_status(db, fastf1_session, session_id)
+                        ingest_race_control_messages(db, fastf1_session, session_id)
                     elif season_year >= 1996:
                         ingest_lap_data(db, fastf1_session, session_id)
                         ingest_weather_data(db, fastf1_session, session_id)
