@@ -1,6 +1,6 @@
 from sqlalchemy import select
 from app.models import RaceControlMessage
-from .utils import timedelta_to_seconds, safe_int
+from .utils import datetime_or_timedelta_to_seconds, safe_int
 
 
 def ingest_race_control_messages(db, fastf1_session, session_id):
@@ -20,6 +20,7 @@ def ingest_race_control_messages(db, fastf1_session, session_id):
 
         print(f"  📢 Processing {len(rcm_data)} race control messages...")
 
+        # sessions.py clears race control before re-ingestion; this is a safety net only
         existing_count = (
             db.execute(
                 select(RaceControlMessage).where(
@@ -37,9 +38,16 @@ def ingest_race_control_messages(db, fastf1_session, session_id):
             )
             return
 
+        # FastF1 timestamps race control messages as wall-clock datetimes, unlike
+        # the timedelta columns on laps and weather. t0_date anchors them to
+        # session time and is only set once lap data is loaded.
+        session_start = fastf1_session.t0_date
+
         new_messages = 0
         for idx, row in rcm_data.iterrows():
-            session_time = timedelta_to_seconds(row.get("Time"))
+            session_time = datetime_or_timedelta_to_seconds(
+                row.get("Time"), session_start
+            )
             if session_time is None:
                 continue
 

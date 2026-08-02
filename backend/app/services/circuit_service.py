@@ -156,7 +156,7 @@ class CircuitService:
         result = await db.execute(query)
         rows = result.all()
 
-        from app.services.results_service import _make_slug
+        from app.services.results.common import _make_slug
 
         races = [
             CircuitRaceResult(
@@ -197,7 +197,7 @@ class CircuitService:
             Session.session_type == "race",
         )
 
-        from app.services.results_service import _make_slug
+        from app.services.results.common import _make_slug
 
         # Most wins (P1)
         wins_query = (
@@ -328,7 +328,7 @@ class CircuitService:
         if not circuit_row:
             return None
 
-        from app.services.results_service import _make_slug
+        from app.services.results.common import _make_slug
 
         # Fastest race lap from laps table
         race_lap_query = (
@@ -435,7 +435,7 @@ class CircuitService:
         if not circuit_row:
             return None
 
-        from app.services.results_service import _make_slug
+        from app.services.results.common import _make_slug
 
         # Find most recent race session at this circuit
         session_query = (

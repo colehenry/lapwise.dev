@@ -128,13 +128,7 @@ export default function NextRaceBanner() {
               const year = new Date(event.event_date).getFullYear();
               const lastYear = year - 1;
 
-              // Map circuit IDs to correct track map files
-              const TRACK_MAP_OVERRIDES: Record<number, number> = {
-                83: 8, // Monaco duplicate circuit ID → correct track map
-              };
-              const trackMapId = event.circuit_id
-                ? (TRACK_MAP_OVERRIDES[event.circuit_id] ?? event.circuit_id)
-                : null;
+              const trackMapId = event.circuit_id ?? null;
               const isNewCircuit =
                 event.event_name.includes("Madrid") || trackMapId === null;
               const showLastYearLink =

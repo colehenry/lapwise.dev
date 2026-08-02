@@ -16,7 +16,7 @@ def ingest_lap_data(db, fastf1_session, session_id):
         laps = fastf1_session.laps
         if laps is None or len(laps) == 0:
             print(f"  ⏭️  No lap data available")
-            return
+            return 0
 
         print(f"  📊 Processing {len(laps)} laps...")
 
@@ -27,7 +27,7 @@ def ingest_lap_data(db, fastf1_session, session_id):
 
         if len(existing_count) > 0:
             print(f"  ✓ Lap data already exists ({len(existing_count)} laps), skipping")
-            return
+            return len(existing_count)
 
         # Map driver codes to driver IDs
         driver_map = {}
@@ -124,16 +124,19 @@ def ingest_lap_data(db, fastf1_session, session_id):
                 is_accurate=safe_bool(lap_data.get("IsAccurate")),
                 deleted=safe_bool(lap_data.get("Deleted")),
                 deleted_reason=deleted_reason,
+                source="fastf1",
             )
             db.add(lap)
             new_laps += 1
 
         db.commit()
         print(f"  ✓ Added {new_laps} laps")
+        return new_laps
 
     except Exception as e:
         print(f"  ⚠️  Could not ingest lap data: {e}")
         db.rollback()
+        return 0
 
 
 def ingest_weather_data(db, fastf1_session, session_id):

@@ -56,7 +56,7 @@ const STRATEGY_PACK = `## Strategy, Tyres, And Safety Cars
 
 Primary strategy fields:
 - laps.stint, laps.compound, laps.tyre_life, laps.lap_number.
-- pit_in_time_seconds, pit_out_time_seconds, pit_duration_seconds are useful but may be sparse.
+- pit_stops is the source for stop counts and durations; laps.pit_in_time_seconds/pit_out_time_seconds are session timestamps, not a duration.
 - For clean pace, filter laps.is_accurate = true, laps.deleted = false, lap_time_seconds IS NOT NULL, and avoid SC/VSC laps.
 
 Terminology:
@@ -186,7 +186,7 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
 7. If a query returns 0 rows, change the data path once; do not retry cosmetically.
 8. Every claim needs data. Never fabricate numbers, dates, incidents, strategy intent, or championship implications.
 9. For race narrative claims, get lap-position evidence before interpreting. Do not infer race shape from the podium, grid, or final margin alone.
-10. Treat optional fields as optional. If pit_duration_seconds or weather_data is missing, use available fields and mention the limitation only if material.
+10. Treat optional fields as optional. If pit_stops.duration_seconds or weather_data is missing, use available fields and mention the limitation only if material.
 11. Never narrate your tool process. Do the lookup silently and give the answer.
 
 ## Response Style

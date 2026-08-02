@@ -9,6 +9,7 @@ import { TrianglePattern } from "@/components/Patterns";
 import SessionDetail from "@/components/SessionDetail";
 import type { SessionSummary } from "@/components/SessionSummaryCard";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
+import { DATA_FROM } from "@/lib/data-coverage";
 import type { SessionResultsResponse } from "@/lib/types";
 
 const ChartLoading = () => (
@@ -112,6 +113,38 @@ async function fetchSession(
   });
   if (!res.ok) return null;
   return res.json();
+}
+
+/**
+ * A titled chart panel. Renders nothing when the season predates the data the
+ * chart needs, so eras without that data show no empty placeholder.
+ */
+function ChartPanel({
+  title,
+  patternId,
+  availableFrom,
+  season,
+  children,
+}: {
+  title: React.ReactNode;
+  patternId: string;
+  availableFrom: number;
+  season: number;
+  children: React.ReactNode;
+}) {
+  if (season < availableFrom) return null;
+
+  return (
+    <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+      <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+        <TrianglePattern id={patternId} />
+        <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+          {title}
+        </span>
+      </div>
+      <div className="p-3 md:p-6">{children}</div>
+    </div>
+  );
 }
 
 export default function RoundContent() {
@@ -470,182 +503,138 @@ export default function RoundContent() {
                   </div>
                 </div>
 
-                {/* Sector Comparison (existing 2-driver) */}
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                    <TrianglePattern id="qualifying-tab-sector-triangles" />
-                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                      Sector Comparison
-                    </span>
-                  </div>
-                  <div className="p-3 md:p-6">
-                    <QualifyingSectorComparison
-                      season={seasonNum}
-                      round={roundNum}
-                    />
-                  </div>
-                </div>
+                <ChartPanel
+                  title="Sector Comparison"
+                  patternId="qualifying-tab-sector-triangles"
+                  availableFrom={DATA_FROM.telemetry}
+                  season={seasonNum}
+                >
+                  <QualifyingSectorComparison
+                    season={seasonNum}
+                    round={roundNum}
+                  />
+                </ChartPanel>
 
-                {/* Sector Heatmap (all drivers) */}
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                    <TrianglePattern id="quali-heat-triangles" />
-                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                      Sector Heatmap — All Drivers
-                    </span>
-                  </div>
-                  <div className="p-3 md:p-6">
-                    <QualifyingSectorHeatmap
-                      season={seasonNum}
-                      round={roundNum}
-                    />
-                  </div>
-                </div>
+                <ChartPanel
+                  title="Sector Heatmap — All Drivers"
+                  patternId="quali-heat-triangles"
+                  availableFrom={DATA_FROM.telemetry}
+                  season={seasonNum}
+                >
+                  <QualifyingSectorHeatmap
+                    season={seasonNum}
+                    round={roundNum}
+                  />
+                </ChartPanel>
               </div>
             )}
             {activeTab === "race" && (
               <div className="p-3 md:p-6 space-y-4 md:space-y-6">
-                {/* Lap Time Distribution */}
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                    <TrianglePattern id="lap-dist-triangles" />
-                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                      Lap Time Distribution
-                    </span>
-                  </div>
-                  <div className="p-3 md:p-6">
-                    <LapTimeDistributionChart
-                      season={seasonNum}
-                      round={roundNum}
-                    />
-                  </div>
-                </div>
+                <ChartPanel
+                  title="Lap Time Distribution"
+                  patternId="lap-dist-triangles"
+                  availableFrom={DATA_FROM.laps}
+                  season={seasonNum}
+                >
+                  <LapTimeDistributionChart
+                    season={seasonNum}
+                    round={roundNum}
+                  />
+                </ChartPanel>
 
-                {/* Fastest Lap Timeline */}
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                    <TrianglePattern id="fastest-lap-triangles" />
-                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                      Fastest Lap Timeline
-                    </span>
-                  </div>
-                  <div className="p-3 md:p-6">
-                    <FastestLapTimeline season={seasonNum} round={roundNum} />
-                  </div>
-                </div>
+                <ChartPanel
+                  title="Fastest Lap Timeline"
+                  patternId="fastest-lap-triangles"
+                  availableFrom={DATA_FROM.laps}
+                  season={seasonNum}
+                >
+                  <FastestLapTimeline season={seasonNum} round={roundNum} />
+                </ChartPanel>
 
-                {/* Pit Stop Delta */}
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                    <TrianglePattern id="pit-stop-triangles" />
-                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                      Pit Stop Duration
-                    </span>
-                  </div>
-                  <div className="p-3 md:p-6">
-                    <PitStopDeltaChart season={seasonNum} round={roundNum} />
-                  </div>
-                </div>
+                <ChartPanel
+                  title="Pit Stop Duration"
+                  patternId="pit-stop-triangles"
+                  availableFrom={DATA_FROM.pitStops}
+                  season={seasonNum}
+                >
+                  <PitStopDeltaChart season={seasonNum} round={roundNum} />
+                </ChartPanel>
 
-                {/* Race Pace Evolution */}
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                    <TrianglePattern id="race-track-evo-triangles" />
-                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                      Race Pace Evolution
-                    </span>
-                  </div>
-                  <div className="p-3 md:p-6">
-                    <RaceTrackEvolutionChart
-                      season={seasonNum}
-                      round={roundNum}
-                    />
-                  </div>
-                </div>
+                <ChartPanel
+                  title="Race Pace Evolution"
+                  patternId="race-track-evo-triangles"
+                  availableFrom={DATA_FROM.telemetry}
+                  season={seasonNum}
+                >
+                  <RaceTrackEvolutionChart
+                    season={seasonNum}
+                    round={roundNum}
+                  />
+                </ChartPanel>
 
-                {/* Tyre Degradation */}
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                    <TrianglePattern id="tyre-deg-triangles" />
-                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                      Tyre Degradation
-                    </span>
-                  </div>
-                  <div className="p-3 md:p-6">
-                    <TyreDegradationChart season={seasonNum} round={roundNum} />
-                  </div>
-                </div>
+                <ChartPanel
+                  title="Tyre Degradation"
+                  patternId="tyre-deg-triangles"
+                  availableFrom={DATA_FROM.telemetry}
+                  season={seasonNum}
+                >
+                  <TyreDegradationChart season={seasonNum} round={roundNum} />
+                </ChartPanel>
               </div>
             )}
             {activeTab === "practice" && (
               <div className="p-3 md:p-6 space-y-4 md:space-y-6">
-                {/* Long Run Pace */}
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                    <TrianglePattern id="long-run-triangles" />
-                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                      FP{practiceSub} Long Run Pace
-                    </span>
-                  </div>
-                  <div className="p-3 md:p-6">
-                    <LongRunPaceChart
-                      season={seasonNum}
-                      round={roundNum}
-                      practiceSession={practiceSub}
-                    />
-                  </div>
-                </div>
+                <ChartPanel
+                  title={`FP${practiceSub} Long Run Pace`}
+                  patternId="long-run-triangles"
+                  availableFrom={DATA_FROM.telemetry}
+                  season={seasonNum}
+                >
+                  <LongRunPaceChart
+                    season={seasonNum}
+                    round={roundNum}
+                    practiceSession={practiceSub}
+                  />
+                </ChartPanel>
 
-                {/* Track Evolution */}
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                    <TrianglePattern id="track-evo-triangles" />
-                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                      FP{practiceSub} Track Evolution
-                    </span>
-                  </div>
-                  <div className="p-3 md:p-6">
-                    <TrackEvolutionChart
-                      season={seasonNum}
-                      round={roundNum}
-                      practiceSession={practiceSub}
-                    />
-                  </div>
-                </div>
+                <ChartPanel
+                  title={`FP${practiceSub} Track Evolution`}
+                  patternId="track-evo-triangles"
+                  availableFrom={DATA_FROM.telemetry}
+                  season={seasonNum}
+                >
+                  <TrackEvolutionChart
+                    season={seasonNum}
+                    round={roundNum}
+                    practiceSession={practiceSub}
+                  />
+                </ChartPanel>
 
-                {/* Sector Heatmap */}
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                    <TrianglePattern id="sector-heat-triangles" />
-                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                      FP{practiceSub} Sector Analysis
-                    </span>
-                  </div>
-                  <div className="p-3 md:p-6">
-                    <PracticeSectorHeatmap
-                      season={seasonNum}
-                      round={roundNum}
-                      practiceSession={practiceSub}
-                    />
-                  </div>
-                </div>
+                <ChartPanel
+                  title={`FP${practiceSub} Sector Analysis`}
+                  patternId="sector-heat-triangles"
+                  availableFrom={DATA_FROM.telemetry}
+                  season={seasonNum}
+                >
+                  <PracticeSectorHeatmap
+                    season={seasonNum}
+                    round={roundNum}
+                    practiceSession={practiceSub}
+                  />
+                </ChartPanel>
 
-                {/* Tyre Programme */}
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                    <TrianglePattern id="tyre-prog-triangles" />
-                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                      FP{practiceSub} Tyre Programme
-                    </span>
-                  </div>
-                  <div className="p-3 md:p-6">
-                    <TyreProgrammeChart
-                      season={seasonNum}
-                      round={roundNum}
-                      practiceSession={practiceSub}
-                    />
-                  </div>
-                </div>
+                <ChartPanel
+                  title={`FP${practiceSub} Tyre Programme`}
+                  patternId="tyre-prog-triangles"
+                  availableFrom={DATA_FROM.telemetry}
+                  season={seasonNum}
+                >
+                  <TyreProgrammeChart
+                    season={seasonNum}
+                    round={roundNum}
+                    practiceSession={practiceSub}
+                  />
+                </ChartPanel>
 
                 {/* Cross-Session Comparison (only when multiple FP sessions exist) */}
                 {(fp1Data || fp2Data || fp3Data) &&

@@ -8,7 +8,6 @@ Contains sector times, speed traps, tyre info, and track status per lap.
 from sqlalchemy import (
     Boolean,
     Column,
-    Computed,
     Float,
     ForeignKey,
     Index,
@@ -71,9 +70,6 @@ class Lap(Base):
     # Pit stop data
     pit_in_time_seconds = Column(Float, nullable=True)  # Session time when entered pits
     pit_out_time_seconds = Column(Float, nullable=True)  # Session time when exited pits
-    pit_duration_seconds = Column(
-        Float, Computed("(pit_out_time_seconds - pit_in_time_seconds)"), nullable=True
-    )  # Auto-calculated by DB
     stint = Column(Integer, nullable=True)  # Stint number (1, 2, 3, ...)
 
     # Speed traps (km/h)
@@ -100,6 +96,11 @@ class Lap(Base):
     # FIA deletions (track limits violations)
     deleted = Column(Boolean, nullable=True)  # Was this lap time deleted by FIA?
     deleted_reason = Column(String(100), nullable=True)  # Reason for deletion
+
+    # Provenance
+    source = Column(
+        String(20), nullable=False, server_default="fastf1", default="fastf1"
+    )  # fastf1 (2018+, full detail) or jolpica (1996-2017, timing only)
 
     # Relationships
     session = relationship("Session", back_populates="laps")

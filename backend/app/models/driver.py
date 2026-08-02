@@ -39,6 +39,7 @@ class Driver(Base):
     # It allows you to do: driver.session_results to get all results for this driver
     session_results = relationship("SessionResult", back_populates="driver")
     laps = relationship("Lap", back_populates="driver")
+    pit_stops = relationship("PitStop", back_populates="driver")
 
     @property
     def driver_slug(self) -> str:

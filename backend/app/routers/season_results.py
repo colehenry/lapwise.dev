@@ -33,7 +33,16 @@ from app.schemas.summary import (
     SessionSummaryResponse,
 )
 from app.security import verify_api_key
-from app.services.results_service import ResultsService, _make_slug
+from app.services.results import (
+    LapsService,
+    PracticeService,
+    ProgressionService,
+    QualifyingSessionsService,
+    QualifyingStandingsService,
+    SessionDataService,
+    StandingsService,
+    _make_slug,
+)
 
 router = APIRouter()
 
@@ -47,7 +56,7 @@ async def get_available_seasons(
 
     Returns a list of years in descending order (newest first).
     """
-    seasons = await ResultsService.get_available_seasons(db)
+    seasons = await SessionDataService.get_available_seasons(db)
 
     if not seasons:
         raise HTTPException(status_code=404, detail="No seasons found")
@@ -66,13 +75,13 @@ async def get_latest_race(
     Used for the homepage to display a quick preview of the most recent race.
     """
     # Get the most recent race session
-    latest_session = await ResultsService.get_latest_race_session(db)
+    latest_session = await SessionDataService.get_latest_race_session(db)
 
     if not latest_session:
         raise HTTPException(status_code=404, detail="No race results found")
 
     # Get top 3 finishers for this race
-    rows = await ResultsService.get_podium_results(db, latest_session.id)
+    rows = await SessionDataService.get_podium_results(db, latest_session.id)
 
     if not rows:
         raise HTTPException(
@@ -122,7 +131,7 @@ async def get_season_standings(
     Calculates total points by summing all session results
     (races, sprints, etc.) for each driver and team.
     """
-    standings = await ResultsService.get_season_standings(db, season)
+    standings = await StandingsService.get_season_standings(db, season)
 
     if not standings:
         raise HTTPException(
@@ -146,7 +155,7 @@ async def get_season_qualifying_standings(
     Calculates total qualifying points (P1=20, P2=19, etc.) for each driver and team.
     Used for the /results/[season] page in qualifying view mode.
     """
-    standings = await ResultsService.get_qualifying_standings(db, season)
+    standings = await QualifyingStandingsService.get_qualifying_standings(db, season)
 
     if not standings:
         raise HTTPException(
@@ -185,7 +194,7 @@ async def get_points_progression(
             status_code=400, detail="points_type must be either 'race' or 'qualifying'"
         )
 
-    progression = await ResultsService.get_points_progression(
+    progression = await ProgressionService.get_points_progression(
         db, season, mode, points_type
     )
 
@@ -210,7 +219,7 @@ async def get_teammate_h2h(
     mode=race (default): finishing position in race/sprint sessions.
     mode=qualifying: qualifying position in quali/sprint-quali sessions.
     """
-    h2h = await ResultsService.get_teammate_h2h(db, season, mode=mode)
+    h2h = await StandingsService.get_teammate_h2h(db, season, mode=mode)
 
     if not h2h:
         raise HTTPException(
@@ -233,7 +242,7 @@ async def get_season_qualifying_rounds(
     Returns qualifying sessions (both regular and sprint qualifying) showing top 3.
     Used for the /results/[season] page in qualifying view mode.
     """
-    rounds = await ResultsService.get_season_qualifying_rounds(db, season)
+    rounds = await QualifyingStandingsService.get_season_qualifying_rounds(db, season)
 
     if not rounds:
         raise HTTPException(
@@ -255,7 +264,7 @@ async def get_season_rounds(
     Returns race sessions (not qualifying) showing podium finishers.
     Used for the main /results/[season] page to display all races.
     """
-    rounds = await ResultsService.get_season_rounds(db, season)
+    rounds = await SessionDataService.get_season_rounds(db, season)
 
     if not rounds:
         raise HTTPException(
@@ -326,7 +335,7 @@ async def get_practice_lap_times(
     if session_num not in (1, 2, 3):
         raise HTTPException(status_code=400, detail="session_num must be 1, 2, or 3")
 
-    lap_times = await ResultsService.get_practice_lap_times(
+    lap_times = await PracticeService.get_practice_lap_times(
         db, season, round, session_num
     )
     if not lap_times:
@@ -352,7 +361,7 @@ async def get_practice_details(
     if session_num not in (1, 2, 3):
         raise HTTPException(status_code=400, detail="session_num must be 1, 2, or 3")
 
-    details = await ResultsService.get_practice_details(db, season, round, session_num)
+    details = await PracticeService.get_practice_details(db, season, round, session_num)
     if not details:
         raise HTTPException(
             status_code=404,
@@ -374,7 +383,7 @@ async def get_sprint_lap_times(
     Returns all laps (including pit in/out laps and deleted laps) with timing,
     tyre, and track status information. Used for lap time visualization graphs.
     """
-    lap_times = await ResultsService.get_sprint_lap_times(db, season, round)
+    lap_times = await LapsService.get_sprint_lap_times(db, season, round)
 
     if not lap_times:
         # Try checking if session exists but no laps, or if session missing
@@ -401,7 +410,7 @@ async def get_sprint_details(
     Returns all drivers and their complete sprint session data.
     Used for the /results/[season]/[round]/sprint detail page.
     """
-    results = await ResultsService.get_sprint_details(db, season, round)
+    results = await LapsService.get_sprint_details(db, season, round)
 
     if not results:
         raise HTTPException(
@@ -427,7 +436,9 @@ async def get_qualifying_lap_times(
 
     Returns all qualifying laps with sector times, speeds, and tyre data.
     """
-    lap_times = await ResultsService.get_qualifying_lap_times(db, season, round)
+    lap_times = await QualifyingSessionsService.get_qualifying_lap_times(
+        db, season, round
+    )
 
     if not lap_times:
         raise HTTPException(
@@ -453,7 +464,9 @@ async def get_qualifying_sectors(
 
     Returns aggregated best S1/S2/S3 and lap time per driver.
     """
-    sectors = await ResultsService.get_qualifying_sector_comparison(db, season, round)
+    sectors = await QualifyingSessionsService.get_qualifying_sector_comparison(
+        db, season, round
+    )
 
     if not sectors:
         raise HTTPException(
@@ -477,7 +490,7 @@ async def get_qualifying_details(
     Returns all drivers and their qualifying session data (Q1/Q2/Q3 times).
     Used for the /results/[season]/[round] page in qualifying view mode.
     """
-    results = await ResultsService.get_qualifying_details(db, season, round)
+    results = await QualifyingSessionsService.get_qualifying_details(db, season, round)
 
     if not results:
         raise HTTPException(
@@ -503,7 +516,9 @@ async def get_sprint_qualifying_details(
     Returns all drivers and their sprint qualifying session data (Q1/Q2/Q3 times).
     Used for the /results/[season]/[round]/sprint page in qualifying view mode.
     """
-    results = await ResultsService.get_sprint_qualifying_details(db, season, round)
+    results = await QualifyingSessionsService.get_sprint_qualifying_details(
+        db, season, round
+    )
 
     if not results:
         raise HTTPException(
@@ -529,7 +544,7 @@ async def get_weather_data(
 
     Returns time-series weather data (temp, humidity, rainfall).
     """
-    weather = await ResultsService.get_weather_data(db, season, round)
+    weather = await SessionDataService.get_weather_data(db, season, round)
 
     if not weather:
         raise HTTPException(
@@ -555,15 +570,10 @@ async def get_lap_time_distribution(
 
     Returns valid lap times with compound info per driver, for rendering
     a ridge/density plot showing the distribution of lap times.
-    Only available for seasons 2018+ (FastF1 data required).
+    Compound is NULL before 2018; lap times run back to 1996.
     """
-    if season < 2018:
-        raise HTTPException(
-            status_code=404,
-            detail="Lap time distribution data not available before 2018",
-        )
 
-    distribution = await ResultsService.get_lap_distribution(db, season, round)
+    distribution = await SessionDataService.get_lap_distribution(db, season, round)
 
     if not distribution:
         raise HTTPException(
@@ -587,7 +597,7 @@ async def get_round_details(
     Returns all drivers and their complete session data.
     Used for the /results/[season]/[round] detail page.
     """
-    results = await ResultsService.get_round_details(db, season, round)
+    results = await SessionDataService.get_round_details(db, season, round)
 
     if not results:
         raise HTTPException(
@@ -611,7 +621,7 @@ async def get_lap_times(
     Returns all laps (including pit in/out laps and deleted laps) with timing,
     tyre, and track status information. Used for lap time visualization graphs.
     """
-    lap_times = await ResultsService.get_lap_times(db, season, round)
+    lap_times = await LapsService.get_lap_times(db, season, round)
 
     if not lap_times:
         raise HTTPException(
