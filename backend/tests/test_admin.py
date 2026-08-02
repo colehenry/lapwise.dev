@@ -8,7 +8,7 @@ async def test_admin_dashboard_stats(client: AsyncClient, admin_headers):
     assert response.status_code == 200
     data = response.json()
     assert "user_count" in data
-    assert "post_count" in data
+    assert "comment_count" in data
     assert "recent_activity" in data
     assert isinstance(data["recent_activity"], list)
 

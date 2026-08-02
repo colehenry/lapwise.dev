@@ -86,11 +86,6 @@ const navLinksAfter: NavLink[] = [
     icon: "M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z",
   },
   {
-    href: "/discussions",
-    label: "Discuss",
-    icon: "M7 8h10M7 12h6m-6 8l-4-4H3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9l-4 4z",
-  },
-  {
     href: "/ask",
     label: "Ask",
     renderIcon: (active: boolean, scrolled: boolean) => (
@@ -885,13 +880,8 @@ export default function Navigation() {
 
       {/* Mobile app dock */}
       <div className="fixed inset-x-0 bottom-0 z-[1200] md:hidden">
-        <div className="grid grid-cols-5 gap-1 border-t border-border-primary bg-bg-secondary/95 p-1 shadow-[0_-12px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl pb-[calc(0.25rem+env(safe-area-inset-bottom))]">
-          {[
-            ...navLinksBefore,
-            navLinksAfter[0],
-            navLinksAfter[2],
-            navLinksAfter[1],
-          ].map((link) => {
+        <div className="grid grid-cols-4 gap-1 border-t border-border-primary bg-bg-secondary/95 p-1 shadow-[0_-12px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl pb-[calc(0.25rem+env(safe-area-inset-bottom))]">
+          {[...navLinksBefore, ...navLinksAfter].map((link) => {
             const active = isActive(link.href);
             const mobileLabel = link.href === "/results" ? "Races" : link.label;
             return (

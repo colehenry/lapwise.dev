@@ -40,14 +40,8 @@ class SessionSummary(Base):
     model_used = Column(String(50), nullable=False)
     tokens_used = Column(Integer, nullable=True)
     generated_at = Column(DateTime(timezone=True), server_default=func.now())
-    post_id = Column(
-        Integer,
-        ForeignKey("posts.id", ondelete="SET NULL"),
-        nullable=True,
-    )
 
     session = relationship("Session", backref="summary")
-    post = relationship("Post")
 
     def __repr__(self):
         return f"<SessionSummary session_id={self.session_id}>"

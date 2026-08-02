@@ -3,16 +3,17 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import CommentEditor from "@/components/discussions/CommentEditor";
-import MarkdownContent from "@/components/discussions/MarkdownContent";
-import UserAvatar from "@/components/discussions/UserAvatar";
-import VoteButton from "@/components/discussions/VoteButton";
-import { createComment, deleteComment } from "@/lib/discussions";
+import CommentEditor from "@/components/comments/CommentEditor";
+import MarkdownContent from "@/components/comments/MarkdownContent";
+import UserAvatar from "@/components/comments/UserAvatar";
+import VoteButton from "@/components/comments/VoteButton";
+import { createComment, deleteComment } from "@/lib/comments";
 import { formatRelativeTime } from "@/lib/time";
 import type { CommentResponse } from "@/lib/types";
 
 interface CommentThreadProps {
-  postId: number;
+  season: number;
+  round: number;
   comments: CommentResponse[];
   onRefresh: () => void;
   isLocked?: boolean;
@@ -22,14 +23,16 @@ interface CommentThreadProps {
 function CommentNode({
   comment,
   depth,
-  postId,
+  season,
+  round,
   onRefresh,
   isLocked = false,
   isAdmin = false,
 }: {
   comment: CommentResponse;
   depth: number;
-  postId: number;
+  season: number;
+  round: number;
   onRefresh: () => void;
   isLocked?: boolean;
   isAdmin?: boolean;
@@ -57,7 +60,8 @@ function CommentNode({
     }
 
     await createComment({
-      postId,
+      season,
+      round,
       body,
       parent_comment_id: comment.id,
     });
@@ -224,7 +228,8 @@ function CommentNode({
               key={reply.id}
               comment={reply}
               depth={depth + 1}
-              postId={postId}
+              season={season}
+              round={round}
               onRefresh={onRefresh}
               isLocked={isLocked}
               isAdmin={isAdmin}
@@ -237,7 +242,8 @@ function CommentNode({
 }
 
 export default function CommentThread({
-  postId,
+  season,
+  round,
   comments,
   onRefresh,
   isLocked = false,
@@ -246,7 +252,7 @@ export default function CommentThread({
   if (!comments.length) {
     return (
       <div className="border border-dashed border-border-primary rounded-sm p-4 text-sm text-text-muted">
-        No comments yet. Be the first to join the discussion.
+        No comments yet. Be the first to weigh in on this race.
       </div>
     );
   }
@@ -258,7 +264,8 @@ export default function CommentThread({
           key={comment.id}
           comment={comment}
           depth={0}
-          postId={postId}
+          season={season}
+          round={round}
           onRefresh={onRefresh}
           isLocked={isLocked}
           isAdmin={isAdmin}

@@ -12,7 +12,7 @@ import {
 } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import UserAvatar from "@/components/discussions/UserAvatar";
+import UserAvatar from "@/components/comments/UserAvatar";
 import ClutchIcon from "@/components/ui/ClutchIcon";
 import { useEntityLinkColors } from "@/hooks/useEntityLinkColors";
 import type { ChartConfig, StepType, ThinkingStep } from "@/lib/chat";

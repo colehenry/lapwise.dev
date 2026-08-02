@@ -94,7 +94,7 @@ export default function AdminDashboard() {
       {/* Stat cards */}
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {["users", "active", "posts", "ai"].map((k) => (
+          {["users", "active", "comments", "ai"].map((k) => (
             <div
               key={k}
               className="bg-bg-tertiary border border-border-primary rounded-sm p-4 h-24 animate-pulse"
@@ -117,8 +117,8 @@ export default function AdminDashboard() {
             note="unique logins"
           />
           <StatCard
-            label={periodLabel(period, "Total Posts", "New Posts")}
-            value={stats.post_count}
+            label={periodLabel(period, "Total Comments", "New Comments")}
+            value={stats.comment_count}
           />
           <StatCard
             label="AI Queries"

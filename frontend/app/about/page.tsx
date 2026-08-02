@@ -4,7 +4,7 @@ import PageHeader from "@/components/PageHeader";
 export const metadata = {
   title: "About Lapwise",
   description:
-    "A guide to what you can do on Lapwise: 76 years of F1 race results, driver and constructor profiles, telemetry, discussions, AI analysis, and race replays.",
+    "A guide to what you can do on Lapwise: 76 years of F1 race results, driver and constructor profiles, telemetry, race comments, AI analysis, and race replays.",
 };
 
 interface Feature {
@@ -68,11 +68,11 @@ const features: Feature[] = [
   },
   {
     label: "08",
-    title: "Community Discussions",
+    title: "Race Comments",
     description:
-      "A threaded forum with voting, tagging, and markdown support for talking through race weekends, driver moves, and everything in between.",
-    href: "/discussions",
-    hrefLabel: "Discussions",
+      "Every race weekend has its own comment thread on the round page, with replies, voting, and markdown support.",
+    href: "/results",
+    hrefLabel: "Results",
   },
 ];
 

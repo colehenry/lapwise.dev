@@ -112,7 +112,7 @@ export default function RegisterPage() {
         </p>
         <ul className="flex flex-col gap-1 mb-6">
           {[
-            "Discussions & community",
+            "Race comments & community",
             "Clutch AI — ask anything about F1 data",
             "Favorite driver, team & circuit",
           ].map((item) => (

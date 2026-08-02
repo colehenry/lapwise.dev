@@ -596,7 +596,7 @@ export type AdminDashboardPeriod = "all" | "month" | "week" | "24h";
 export interface AdminDashboardStats {
   user_count: number;
   active_users: number;
-  post_count: number;
+  comment_count: number;
   total_ai_queries: number;
   recent_activity: AdminActivity[];
 }
@@ -608,97 +608,58 @@ export interface AdminUserListResponse {
   size: number;
 }
 
-export interface AdminPostListItem {
-  id: number;
-  title: string;
-  body: string;
-  post_type: string;
-  is_pinned: boolean;
-  is_locked: boolean;
-  vote_count: number;
-  comment_count: number;
-  author: DiscussionAuthor;
-  tags: DiscussionTag[];
-  deleted_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface AdminPostListResponse {
-  posts: AdminPostListItem[];
-  total: number;
-  page: number;
-  size: number;
-}
-
 export interface AdminCommentListItem {
   id: number;
-  post_id: number;
   parent_comment_id: number | null;
   body: string;
   vote_count: number;
-  author: DiscussionAuthor;
+  author: CommentAuthor;
+  year: number;
+  round: number;
   deleted_at: string | null;
   created_at: string;
   updated_at: string;
 }
 
-export interface DiscussionTag {
-  id: number;
-  name: string;
-  slug: string;
-  color: string;
-  category: string | null;
+export interface AdminCommentListResponse {
+  comments: AdminCommentListItem[];
+  next_cursor: string | null;
 }
 
-export interface DiscussionAuthor {
+export interface CommentAuthor {
   id: number;
   username: string;
   avatar_url: string | null;
   role: string;
 }
 
-export interface PostListItem {
-  id: number;
-  title: string;
-  body: string;
-  post_type: string;
-  is_pinned: boolean;
-  is_locked: boolean;
-  vote_count: number;
-  comment_count: number;
-  author: DiscussionAuthor;
-  tags: DiscussionTag[];
-  user_voted: boolean;
-  created_at: string;
-}
-
-export interface PostListResponse {
-  posts: PostListItem[];
-  next_cursor: string | null;
-}
-
-export interface PostResponse extends PostListItem {
-  body: string;
-  updated_at: string;
-}
-
 export interface CommentResponse {
   id: number;
-  post_id: number;
+  thread_id: number;
   parent_comment_id: number | null;
   body: string;
   vote_count: number;
-  author: DiscussionAuthor;
+  author: CommentAuthor;
   user_voted: boolean;
   replies: CommentResponse[];
   created_at: string;
   updated_at: string;
 }
 
-export interface CommentListResponse {
+export interface RaceCommentsResponse {
   comments: CommentResponse[];
   next_cursor: string | null;
+  comment_count: number;
+  is_locked: boolean;
+}
+
+export interface UserCommentListItem {
+  id: number;
+  body: string;
+  vote_count: number;
+  year: number;
+  round: number;
+  created_at: string;
 }
 
 // ─── Replay Types ─────────────────────────────────────────────
