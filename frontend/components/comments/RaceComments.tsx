@@ -73,7 +73,7 @@ export default function RaceComments({
           ) : isAuthenticated ? (
             <CommentEditor
               onSubmit={handleSubmit}
-              placeholder={`What did you make of the ${eventName.replace("Grand Prix", "GP")}?`}
+              placeholder={`What did you think about the ${eventName.replace("Grand Prix", "GP")}?`}
             />
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-3 border border-border-primary rounded-sm bg-bg-secondary/60 px-4 py-3">
