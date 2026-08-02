@@ -245,10 +245,11 @@ def main():
 
                     # Ingest Telemetry (availability depends on era)
                     # Practice: lap data only (skip weather/track status)
-                    # 2018+:      Full telemetry from F1 Live Timing API
-                    # 1996-2017:  Basic lap times + weather from Jolpica
-                    # 1951-1995:  Weather only from Jolpica
-                    # pre-1951:   No telemetry available
+                    # 2018+:     Full telemetry from F1 Live Timing API
+                    # pre-2018:  These branches write nothing. They pass the
+                    #            FastF1 session, whose .laps and .weather_data
+                    #            only exist from 2018. Historic laps and pit
+                    #            stops come from backfill_jolpica_history.py.
                     if is_practice:
                         if season_year >= 2018:
                             ingest_lap_data(db, fastf1_session, session_id)

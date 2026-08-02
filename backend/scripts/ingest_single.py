@@ -160,7 +160,9 @@ def main():
         elif session_type in ("fp1", "fp2", "fp3"):
             ingest_practice_results(db, fastf1_session, session_id, year)
 
-        # 5. Ingest telemetry (era-dependent)
+        # 5. Ingest telemetry. The pre-2018 branch writes nothing: FastF1 only
+        # exposes .laps and .weather_data from 2018. Historic laps and pit stops
+        # come from backfill_jolpica_history.py.
         if is_practice:
             if year >= 2018:
                 ingest_lap_data(db, fastf1_session, session_id)
