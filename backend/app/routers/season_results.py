@@ -570,13 +570,8 @@ async def get_lap_time_distribution(
 
     Returns valid lap times with compound info per driver, for rendering
     a ridge/density plot showing the distribution of lap times.
-    Only available for seasons 2018+ (FastF1 data required).
+    Compound is NULL before 2018; lap times run back to 1996.
     """
-    if season < 2018:
-        raise HTTPException(
-            status_code=404,
-            detail="Lap time distribution data not available before 2018",
-        )
 
     distribution = await SessionDataService.get_lap_distribution(db, season, round)
 

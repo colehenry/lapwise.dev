@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CHART_COLORS, CHART_TYPOGRAPHY } from "@/components/chart-primitives";
 import Skeleton from "@/components/ui/Skeleton";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { DATA_FROM } from "@/lib/data-coverage";
 import {
   type DistributionLap,
   type DriverLapDistribution,
@@ -141,7 +142,7 @@ export default function LapTimeDistributionChart({
       if (!res.ok) return null;
       return res.json();
     },
-    enabled: season >= 2018,
+    enabled: season >= DATA_FROM.laps,
   });
 
   useEffect(() => {
@@ -310,10 +311,10 @@ export default function LapTimeDistributionChart({
   const handleMouseLeave = useCallback(() => setTooltip(null), []);
 
   // ── Early returns ─────────────────────────────────────────────────────────
-  if (season < 2018) {
+  if (season < DATA_FROM.laps) {
     return (
       <p className="text-sm text-text-muted font-mono text-center py-8">
-        Lap time data not available before 2018
+        Lap time data not available before {DATA_FROM.laps}
       </p>
     );
   }

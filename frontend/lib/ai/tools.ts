@@ -367,7 +367,7 @@ export const getRaceDynamics = tool({
 
       const laps = await executeAIParamQuery(
         `SELECT l.lap_number, l.position, l.compound, l.stint,
-                l.pit_in_time_seconds, l.pit_out_time_seconds, l.pit_duration_seconds,
+                l.pit_in_time_seconds, l.pit_out_time_seconds,
                 l.track_status, d.id AS driver_id, d.full_name, d.driver_code
          FROM laps l
          JOIN drivers d ON l.driver_id = d.id
@@ -543,9 +543,7 @@ export const getRaceDynamics = tool({
           const outLap = asNumber(lap.lap_number);
           const pitInTime = asNumber(pendingPitIn?.pit_in_time_seconds);
           const durationSeconds =
-            pitInTime !== null
-              ? pitOut - pitInTime
-              : asNumber(lap.pit_duration_seconds);
+            pitInTime !== null ? pitOut - pitInTime : null;
           const lapRange =
             inLap !== null && outLap !== null && inLap !== outLap
               ? `L${inLap}-L${outLap}`
