@@ -9,7 +9,6 @@ interface VoteButtonProps {
   commentId: number;
   initialCount: number;
   initialVoted: boolean;
-  size?: "sm" | "md";
   onChange?: (count: number, voted: boolean) => void;
 }
 
@@ -17,7 +16,6 @@ export default function VoteButton({
   commentId,
   initialCount,
   initialVoted,
-  size = "md",
   onChange,
 }: VoteButtonProps) {
   const router = useRouter();
@@ -27,6 +25,7 @@ export default function VoteButton({
   const [count, setCount] = useState(initialCount);
   const [voted, setVoted] = useState(initialVoted);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     setCount(initialCount);
@@ -47,6 +46,7 @@ export default function VoteButton({
     setVoted(nextVoted);
     setCount(nextCount);
     setIsSubmitting(true);
+    setFailed(false);
 
     try {
       const result = await voteComment(commentId);
@@ -56,33 +56,37 @@ export default function VoteButton({
     } catch {
       setVoted(voted);
       setCount(count);
+      setFailed(true);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const sizeStyles = {
-    sm: "px-2.5 py-1 text-xs",
-    md: "px-3 py-1.5 text-sm",
-  };
+  const label = failed
+    ? "Vote failed. Click to try again."
+    : isAuthenticated
+      ? "Vote on comment"
+      : "Log in to vote";
 
   return (
     <button
       type="button"
       onClick={handleVote}
       aria-pressed={voted}
-      aria-label="Vote on comment"
-      title={isAuthenticated ? "Vote on comment" : "Log in to vote"}
-      className={`inline-flex items-center gap-1 rounded-sm border font-mono tracking-wider transition-colors duration-150 ${sizeStyles[size]} ${
-        voted
-          ? "bg-purple-500/20 border-purple-500 text-purple-200"
-          : "border-border-primary text-text-muted hover:text-text-primary hover:bg-bg-elevated"
+      aria-label={label}
+      title={label}
+      className={`inline-flex items-center gap-1 font-mono text-[11px] tracking-wider transition-colors ${
+        failed
+          ? "text-red-400"
+          : voted
+            ? "text-purple-400"
+            : "text-text-muted hover:text-text-primary"
       }`}
       disabled={isSubmitting}
     >
       <svg
-        className={`w-3.5 h-3.5 ${voted ? "text-purple-300" : "text-text-muted"}`}
-        fill="none"
+        className="h-3.5 w-3.5"
+        fill={voted ? "currentColor" : "none"}
         stroke="currentColor"
         viewBox="0 0 24 24"
         aria-hidden="true"
@@ -92,7 +96,7 @@ export default function VoteButton({
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={2}
-          d="M5 15l7-7 7 7"
+          d="M12 5l7 8h-4v6h-6v-6H5l7-8z"
         />
       </svg>
       <span className="tabular-nums">{count}</span>

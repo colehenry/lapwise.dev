@@ -661,11 +661,7 @@ export default function RoundContent() {
           </>
         )}
 
-        <RaceComments
-          season={seasonNum}
-          round={roundNum}
-          eventName={raceData.session.event_name}
-        />
+        <RaceComments season={seasonNum} round={roundNum} />
       </div>
     </main>
   );
