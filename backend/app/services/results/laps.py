@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 from app.models import (
     Driver,
     Lap,
+    PitStop,
     Session,
     SessionResult,
     Team,
@@ -34,6 +35,24 @@ from app.services.results.session_data import SessionDataService
 
 class LapsService:
     """Laps service: race and sprint lap-by-lap time series."""
+
+    @staticmethod
+    async def _pit_durations(db: AsyncSession, session_id: int) -> dict:
+        """
+        Map (driver_id, entry lap) -> pit lane time for a session.
+
+        Sourced from `pit_stops` because a stop spans two lap rows: FastF1 puts
+        PitInTime on the in-lap and PitOutTime on the out-lap.
+        """
+        rows = await db.execute(
+            select(
+                PitStop.driver_id, PitStop.lap_number, PitStop.duration_seconds
+            ).where(PitStop.session_id == session_id)
+        )
+        return {
+            (driver_id, lap_number): sanitize_float(duration)
+            for driver_id, lap_number, duration in rows.all()
+        }
 
     @staticmethod
     async def get_sprint_lap_times(
@@ -80,9 +99,9 @@ class LapsService:
                 Lap.sector1_time_seconds,
                 Lap.sector2_time_seconds,
                 Lap.sector3_time_seconds,
+                Lap.driver_id,
                 Lap.pit_in_time_seconds,
                 Lap.pit_out_time_seconds,
-                Lap.pit_duration_seconds,
                 Lap.position,
                 Lap.speed_st,
                 Lap.speed_i1,
@@ -124,6 +143,8 @@ class LapsService:
 
         total_laps = max(row.lap_number for row in lap_rows) if lap_rows else None
 
+        pit_durations = await LapsService._pit_durations(db, session.id)
+
         drivers_dict = {}
         for row in lap_rows:
             driver_code = row.driver_code
@@ -152,7 +173,9 @@ class LapsService:
                     sector3_time_seconds=sanitize_float(row.sector3_time_seconds),
                     pit_in_time_seconds=sanitize_float(row.pit_in_time_seconds),
                     pit_out_time_seconds=sanitize_float(row.pit_out_time_seconds),
-                    pit_duration_seconds=sanitize_float(row.pit_duration_seconds),
+                    pit_duration_seconds=pit_durations.get(
+                        (row.driver_id, row.lap_number)
+                    ),
                     position=row.position,
                     speed_st=sanitize_float(row.speed_st),
                     speed_i1=sanitize_float(row.speed_i1),
@@ -309,9 +332,9 @@ class LapsService:
                 Lap.sector1_time_seconds,
                 Lap.sector2_time_seconds,
                 Lap.sector3_time_seconds,
+                Lap.driver_id,
                 Lap.pit_in_time_seconds,
                 Lap.pit_out_time_seconds,
-                Lap.pit_duration_seconds,
                 Lap.position,
                 Lap.speed_st,
                 Lap.speed_i1,
@@ -355,6 +378,8 @@ class LapsService:
         total_laps = max(row.lap_number for row in lap_rows) if lap_rows else None
 
         # Group laps by driver
+        pit_durations = await LapsService._pit_durations(db, session.id)
+
         drivers_dict = {}
         for row in lap_rows:
             driver_code = row.driver_code
@@ -383,7 +408,9 @@ class LapsService:
                     sector3_time_seconds=sanitize_float(row.sector3_time_seconds),
                     pit_in_time_seconds=sanitize_float(row.pit_in_time_seconds),
                     pit_out_time_seconds=sanitize_float(row.pit_out_time_seconds),
-                    pit_duration_seconds=sanitize_float(row.pit_duration_seconds),
+                    pit_duration_seconds=pit_durations.get(
+                        (row.driver_id, row.lap_number)
+                    ),
                     position=row.position,
                     speed_st=sanitize_float(row.speed_st),
                     speed_i1=sanitize_float(row.speed_i1),

@@ -69,7 +69,6 @@ class QualifyingSessionsService:
                 Lap.sector3_time_seconds,
                 Lap.pit_in_time_seconds,
                 Lap.pit_out_time_seconds,
-                Lap.pit_duration_seconds,
                 Lap.position,
                 Lap.speed_st,
                 Lap.speed_i1,
@@ -130,7 +129,7 @@ class QualifyingSessionsService:
                     sector3_time_seconds=sanitize_float(row.sector3_time_seconds),
                     pit_in_time_seconds=sanitize_float(row.pit_in_time_seconds),
                     pit_out_time_seconds=sanitize_float(row.pit_out_time_seconds),
-                    pit_duration_seconds=sanitize_float(row.pit_duration_seconds),
+                    pit_duration_seconds=None,  # Garage runs are not pit stops
                     position=row.position,
                     speed_st=sanitize_float(row.speed_st),
                     speed_i1=sanitize_float(row.speed_i1),

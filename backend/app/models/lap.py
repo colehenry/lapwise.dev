@@ -8,7 +8,6 @@ Contains sector times, speed traps, tyre info, and track status per lap.
 from sqlalchemy import (
     Boolean,
     Column,
-    Computed,
     Float,
     ForeignKey,
     Index,
@@ -71,9 +70,6 @@ class Lap(Base):
     # Pit stop data
     pit_in_time_seconds = Column(Float, nullable=True)  # Session time when entered pits
     pit_out_time_seconds = Column(Float, nullable=True)  # Session time when exited pits
-    pit_duration_seconds = Column(
-        Float, Computed("(pit_out_time_seconds - pit_in_time_seconds)"), nullable=True
-    )  # Auto-calculated by DB
     stint = Column(Integer, nullable=True)  # Stint number (1, 2, 3, ...)
 
     # Speed traps (km/h)

@@ -217,6 +217,8 @@ export type LapData = {
   sector3_time_seconds: number | null;
   pit_in_time_seconds: number | null;
   pit_out_time_seconds: number | null;
+  // Pit lane time for a stop entered on this lap, from the pit_stops table.
+  // Null on every lap that is not a pit entry.
   pit_duration_seconds: number | null;
   position: number | null;
   speed_st: number | null;

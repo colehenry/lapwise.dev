@@ -22,6 +22,7 @@ import {
 } from "@/components/chart-primitives";
 import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { DATA_FROM } from "@/lib/data-coverage";
 import { STATUS_COLORS } from "@/lib/palette";
 import type {
   DriverLapTimes,
@@ -395,7 +396,7 @@ export default function FastestLapTimeline({
       if (!res.ok) return null;
       return res.json();
     },
-    enabled: season >= 2018,
+    enabled: season >= DATA_FROM.laps,
   });
 
   const {
@@ -538,11 +539,11 @@ export default function FastestLapTimeline({
     return computeEventBands(data.track_status_events, data.drivers, totalLaps);
   }, [data, totalLaps]);
 
-  if (season < 2018) {
+  if (season < DATA_FROM.laps) {
     return (
       <div className="flex items-center justify-center py-12">
         <p className="text-text-muted text-sm font-mono">
-          Telemetry data available from 2018 onwards.
+          Lap time data available from {DATA_FROM.laps} onwards.
         </p>
       </div>
     );

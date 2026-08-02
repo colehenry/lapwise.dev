@@ -276,16 +276,15 @@ ORDER BY lap_number;
 ```sql
 -- Average pit stop duration by team for a season
 SELECT t.name, COUNT(*) as stops,
-       ROUND(AVG(l.pit_duration_seconds)::numeric, 2) as avg_pit_seconds,
-       ROUND(MIN(l.pit_duration_seconds)::numeric, 2) as fastest_pit
-FROM laps l
-JOIN sessions s ON l.session_id = s.id
-JOIN session_results sr ON sr.session_id = s.id AND sr.driver_id = l.driver_id
+       ROUND(AVG(p.duration_seconds)::numeric, 2) as avg_pit_seconds,
+       ROUND(MIN(p.duration_seconds)::numeric, 2) as fastest_pit
+FROM pit_stops p
+JOIN sessions s ON p.session_id = s.id
+JOIN session_results sr ON sr.session_id = s.id AND sr.driver_id = p.driver_id
 JOIN teams t ON sr.team_id = t.id
 WHERE s.year = 2024 AND s.session_type = 'race'
-  AND l.pit_duration_seconds IS NOT NULL
-  AND l.pit_duration_seconds > 0
-  AND l.pit_duration_seconds < 60  -- exclude drive-through penalties / red flag stops
+  AND p.duration_seconds IS NOT NULL
+  AND p.duration_seconds < 60  -- exclude drive-through penalties / red flag stops
 GROUP BY t.name
 ORDER BY avg_pit_seconds;
 ```
