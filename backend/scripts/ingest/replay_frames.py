@@ -11,7 +11,7 @@ import msgpack
 import numpy as np
 import pandas as pd
 
-from .utils import timedelta_to_seconds
+from .utils import datetime_or_timedelta_to_seconds, timedelta_to_seconds
 from .team_colors import enrich_team_color
 
 # Constants
@@ -484,9 +484,13 @@ def build_race_control_messages(fastf1_session):
     if rcm is None or len(rcm) == 0:
         return []
 
+    # Race control timestamps are wall-clock datetimes; t0_date anchors them to
+    # session time the way the timedelta columns already are.
+    session_start = fastf1_session.t0_date
+
     messages = []
     for _, row in rcm.iterrows():
-        t = timedelta_to_seconds(row.get("Time"))
+        t = datetime_or_timedelta_to_seconds(row.get("Time"), session_start)
         if t is None:
             continue
 

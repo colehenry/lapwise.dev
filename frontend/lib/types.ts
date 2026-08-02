@@ -217,6 +217,8 @@ export type LapData = {
   sector3_time_seconds: number | null;
   pit_in_time_seconds: number | null;
   pit_out_time_seconds: number | null;
+  // Pit lane time for a stop entered on this lap, from the pit_stops table.
+  // Null on every lap that is not a pit entry.
   pit_duration_seconds: number | null;
   position: number | null;
   speed_st: number | null;
@@ -350,13 +352,6 @@ export interface DriverSeasonHistory {
   team_color: string | null;
 }
 
-export interface DriverSeasonHistoryResponse {
-  driver_code: string | null;
-  driver_slug: string | null;
-  full_name: string;
-  seasons: DriverSeasonHistory[];
-}
-
 export interface DriverSuperlative {
   id: string;
   value: string;
@@ -414,11 +409,6 @@ export interface ConstructorSeasonHistory {
   championship_position: number | null;
   total_points: number;
   team_color: string | null;
-}
-
-export interface ConstructorSeasonHistoryResponse {
-  team_name: string;
-  seasons: ConstructorSeasonHistory[];
 }
 
 // Circuit detail types
@@ -587,17 +577,6 @@ export interface UserPublicProfile {
   favorite_driver: FavoriteDriver | null;
   favorite_team: FavoriteTeam | null;
   favorite_circuit: FavoriteCircuit | null;
-}
-
-export interface LoginResponse {
-  access_token: string;
-  token_type: string;
-  user: UserProfile;
-}
-
-export interface TokenRefreshResponse {
-  access_token: string;
-  token_type: string;
 }
 
 // ─── Admin Types ────────────────────────────────────────────────────

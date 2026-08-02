@@ -20,6 +20,7 @@ import {
 } from "@/components/chart-primitives";
 import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { DATA_FROM } from "@/lib/data-coverage";
 import {
   type DriverLapTimes,
   driverKey,
@@ -722,11 +723,8 @@ function detectOutlierLaps(
   let personalBest = Infinity;
   for (const lap of sorted) {
     if (lap.lap_time_seconds == null || outliers.has(lap.lap_number)) continue;
-    let normTime = lap.lap_time_seconds;
-    if (lap.pit_duration_seconds != null && lap.pit_duration_seconds > 0) {
-      normTime -= lap.pit_duration_seconds;
-    }
-    if (normTime < personalBest) personalBest = normTime;
+    if (lap.lap_time_seconds < personalBest)
+      personalBest = lap.lap_time_seconds;
   }
 
   if (personalBest !== Infinity) {
@@ -797,7 +795,7 @@ export default function LapTimeByLapGraph({
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: season >= 2018,
+    enabled: season >= DATA_FROM.laps,
   });
 
   // Auto-select top 3 finishers when data loads
@@ -1263,7 +1261,7 @@ export default function LapTimeByLapGraph({
   }
 
   if (!data || !data.drivers) {
-    const isPre2018 = season < 2018;
+    const beforeCoverage = season < DATA_FROM.laps;
     return (
       <div>
         <div className="h-8 mb-4 flex items-center">
@@ -1273,16 +1271,10 @@ export default function LapTimeByLapGraph({
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center max-w-md">
               <p className="text-text-muted mb-2">
-                {isPre2018
-                  ? "Lap timing data is not available for races before 2018."
+                {beforeCoverage
+                  ? `Lap timing data is not available for races before ${DATA_FROM.laps}.`
                   : "Lap time data not available for this session."}
               </p>
-              {isPre2018 && (
-                <p className="text-sm text-text-muted">
-                  Historical telemetry data (lap times, weather, track status)
-                  is only available from the 2018 season onwards.
-                </p>
-              )}
             </div>
           </div>
         </div>

@@ -126,7 +126,9 @@ def ingest_team(db, team_data, year):
     Returns: team_id
     """
     team_name = normalize_team_name(
-        _nan_to_none(team_data.get("TeamName")) or "Unknown", year=year
+        _nan_to_none(team_data.get("TeamName")) or "Unknown",
+        year=year,
+        team_id=_nan_to_none(team_data.get("TeamId")),
     )
 
     team_color = enrich_team_color(team_data, year)

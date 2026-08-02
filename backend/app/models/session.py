@@ -65,6 +65,9 @@ class Session(Base):
         "SessionResult", back_populates="session", cascade="all, delete-orphan"
     )
     laps = relationship("Lap", back_populates="session", cascade="all, delete-orphan")
+    pit_stops = relationship(
+        "PitStop", back_populates="session", cascade="all, delete-orphan"
+    )
     weather_data = relationship(
         "Weather", back_populates="session", cascade="all, delete-orphan"
     )

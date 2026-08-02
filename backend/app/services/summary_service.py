@@ -477,11 +477,7 @@ Be specific with driver names, lap times, lap numbers, positions, pit stops, and
                 duration = (
                     f", {duration_seconds:.1f}s"
                     if SummaryService._is_finite_number(duration_seconds)
-                    else (
-                        f", {lap.pit_duration_seconds:.1f}s"
-                        if SummaryService._is_finite_number(lap.pit_duration_seconds)
-                        else ""
-                    )
+                    else ""
                 )
                 neutralized = (
                     " under SC/VSC"

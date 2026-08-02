@@ -19,6 +19,7 @@ import {
   CHART_TYPOGRAPHY,
 } from "@/components/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { DATA_FROM } from "@/lib/data-coverage";
 import { STATUS_COLORS } from "@/lib/palette";
 import type { LapTimesResponse } from "@/lib/types";
 
@@ -46,10 +47,6 @@ const isValidPitDuration = (
   Number.isFinite(duration) &&
   duration > 10 &&
   duration < 120;
-
-const isValidSessionTimestamp = (
-  value: number | null | undefined,
-): value is number => value != null && Number.isFinite(value);
 
 const SC_STATUS = "4";
 const VSC_STATUS = "6";
@@ -209,7 +206,8 @@ export default function PitStopDeltaChart({
       if (!res.ok) return null;
       return res.json();
     },
-    enabled: season >= 2018,
+    // Jolpica supplies pit stops from 2011; FastF1 covers 2018 on.
+    enabled: season >= DATA_FROM.pitStops,
   });
 
   // Parse all pit stops and SC lap ranges from raw API data
@@ -220,10 +218,6 @@ export default function PitStopDeltaChart({
     const lapStatusMap = new Map<number, string>();
 
     for (const driver of data.drivers) {
-      let pendingPitInTime: number | null = null;
-      let pendingPitInLap: number | null = null;
-      let pendingPitInStatus: string | null = null;
-
       const driverCode = driver.driver_code ?? driver.full_name;
       const teamColor = driver.team_color
         ? `#${driver.team_color}`
@@ -237,33 +231,6 @@ export default function PitStopDeltaChart({
           ) {
             lapStatusMap.set(lap.lap_number, lap.track_status);
           }
-        }
-
-        if (
-          pendingPitInTime != null &&
-          isValidSessionTimestamp(lap.pit_out_time_seconds)
-        ) {
-          const duration = lap.pit_out_time_seconds - pendingPitInTime;
-          if (isValidPitDuration(duration)) {
-            allStops.push({
-              lap: pendingPitInLap ?? lap.lap_number,
-              duration,
-              driverCode,
-              teamColor,
-              isSc: pendingPitInStatus === SC_STATUS,
-              isVsc: pendingPitInStatus === VSC_STATUS,
-            });
-          }
-          pendingPitInTime = null;
-          pendingPitInLap = null;
-          pendingPitInStatus = null;
-          continue;
-        }
-
-        if (pendingPitInTime == null && lap.pit_in_time_seconds != null) {
-          pendingPitInTime = lap.pit_in_time_seconds;
-          pendingPitInLap = lap.lap_number;
-          pendingPitInStatus = lap.track_status;
         }
 
         if (isValidPitDuration(lap.pit_duration_seconds)) {
@@ -329,11 +296,11 @@ export default function PitStopDeltaChart({
       return { stops, fieldAvg, domainMin, domainMax, outliersRemoved };
     }, [allStops, excludeNeutralised, removeOutliers]);
 
-  if (season < 2018) {
+  if (season < DATA_FROM.pitStops) {
     return (
       <div className="flex items-center justify-center py-12">
         <p className="text-text-muted text-sm font-mono">
-          Telemetry data available from 2018 onwards.
+          Pit stop data available from 2011 onwards.
         </p>
       </div>
     );

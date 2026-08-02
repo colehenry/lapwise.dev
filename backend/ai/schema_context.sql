@@ -27,7 +27,7 @@
 --  10. If an event lookup returns 0 rows, first run a broader discovery query for that year/session_type
 --      to inspect actual event_name and circuit values before concluding the event is missing.
 --  11. For race strategy analysis, prefer laps.stint + laps.compound + lap_number as the primary source.
---      pit_duration_seconds and weather_data are useful supporting fields but may be sparse or missing.
+--      pit_stops.duration_seconds and weather_data are useful supporting fields but may be sparse.
 --  12. If a supporting table/field returns 0 rows, pivot to another data source instead of repeating
 --      near-identical queries with formatting-only changes.
 --  13. For race narrative claims ("led from pole to flag", "dominated", "recovered", "benefited from SC"),
@@ -133,7 +133,6 @@ CREATE TABLE laps (
     -- Pit stop data
     pit_in_time_seconds             FLOAT,          -- Session time when car entered pit lane
     pit_out_time_seconds            FLOAT,          -- Session time when car exited pit lane
-    pit_duration_seconds            FLOAT,          -- COMPUTED: pit_out - pit_in (total pit lane time)
     stint                           INTEGER,        -- Stint number: 1, 2, 3... (increments after each pit stop)
 
     -- Speed traps (all in km/h)
@@ -157,7 +156,32 @@ CREATE TABLE laps (
     deleted                         BOOLEAN,        -- Was this lap time deleted?
     deleted_reason                  VARCHAR(100),   -- Reason for deletion
 
+    -- Provenance
+    source                          VARCHAR(20) NOT NULL, -- 'fastf1' (2018+, full detail) or
+                                                    -- 'jolpica' (1996-2017: driver, lap number,
+                                                    -- position and lap time only; all other
+                                                    -- columns NULL)
+
     UNIQUE (session_id, driver_id, lap_number)
+);
+
+-- PIT STOPS: One row per stop. USE THIS FOR ANY PIT STOP QUESTION.
+-- ~12.8K rows. Races and sprint races only, 2011 onward.
+-- A stop spans two lap rows in `laps` (pit_in on the in-lap, pit_out on the
+-- out-lap), so never try to derive a duration from the laps table.
+CREATE TABLE pit_stops (
+    id                      SERIAL PRIMARY KEY,
+    session_id              INTEGER NOT NULL REFERENCES sessions(id),
+    driver_id               INTEGER NOT NULL REFERENCES drivers(id),
+    lap_number              INTEGER NOT NULL,       -- Lap the driver entered the pits on
+    stop_number             INTEGER NOT NULL,       -- 1, 2, 3... within the session
+    duration_seconds        FLOAT,                  -- Pit LANE time (entry to exit), ~24s typical,
+                                                    -- NOT stationary time. NULL when the driver
+                                                    -- entered the pits and never rejoined.
+    local_time              TIME,                   -- Local time of day (2011-2017 only)
+    source                  VARCHAR(20) NOT NULL,   -- 'fastf1' (2018+) or 'jolpica' (2011-2017)
+
+    UNIQUE (session_id, driver_id, stop_number)
 );
 
 -- WEATHER: Per-minute weather samples during each session.
@@ -235,6 +259,9 @@ CREATE VIEW v_driver_standings AS
 CREATE VIEW v_constructor_standings AS
     -- year, championship_position, team_name, team_color,
     -- points, wins, podiums, finishes
+
+-- Both views: points include sprint_race points (2021+).
+-- wins, podiums, finishes and races_entered count grands prix only — a sprint win is not a win.
 
 -- =============================================================================
 -- KEY RELATIONSHIPS (for JOINs)

@@ -1,5 +1,13 @@
 from sqlalchemy import select, delete as sql_delete, func
-from app.models import Session, SessionResult, Lap, Weather, TrackStatus
+from app.models import (
+    Session,
+    SessionResult,
+    Lap,
+    PitStop,
+    Weather,
+    TrackStatus,
+    RaceControlMessage,
+)
 
 
 def ingest_session_metadata(
@@ -35,12 +43,28 @@ def ingest_session_metadata(
                     SessionResult.session_id == existing_session.id
                 )
             ).scalar()
-            if result_count and result_count > 0:
+            lap_count = db.execute(
+                select(func.count()).where(Lap.session_id == existing_session.id)
+            ).scalar()
+
+            # Since 2018, charts and sector comparisons depend on FastF1 lap
+            # data. Results-only sessions are partial ingestions, not complete
+            # sessions, and must be retried on the next pipeline run.
+            is_complete = result_count and result_count > 0
+            if year >= 2018:
+                is_complete = is_complete and lap_count and lap_count > 0
+
+            if is_complete:
                 print(
                     f"  ✓ Already ingested: {year} R{round_num} {session_type} "
-                    f"({result_count} results) — skipping"
+                    f"({result_count} results, {lap_count} laps) — skipping"
                 )
                 return existing_session.id, False
+
+            print(
+                f"  ↻ Found incomplete {year} R{round_num} {session_type} "
+                f"({result_count or 0} results, {lap_count or 0} laps)"
+            )
 
         # Wipe all child data so this run produces a clean, correct dataset
         db.execute(
@@ -49,9 +73,15 @@ def ingest_session_metadata(
             )
         )
         db.execute(sql_delete(Lap).where(Lap.session_id == existing_session.id))
+        db.execute(sql_delete(PitStop).where(PitStop.session_id == existing_session.id))
         db.execute(sql_delete(Weather).where(Weather.session_id == existing_session.id))
         db.execute(
             sql_delete(TrackStatus).where(TrackStatus.session_id == existing_session.id)
+        )
+        db.execute(
+            sql_delete(RaceControlMessage).where(
+                RaceControlMessage.session_id == existing_session.id
+            )
         )
         db.commit()
         print(

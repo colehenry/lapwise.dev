@@ -157,7 +157,7 @@ class DriverService:
         result = await db.execute(query)
         rows = result.all()
 
-        from app.services.results_service import _make_slug
+        from app.services.results.common import _make_slug
 
         drivers = [
             DriverListItem(
