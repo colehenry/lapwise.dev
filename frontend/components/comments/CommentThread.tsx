@@ -7,33 +7,30 @@ import CommentEditor from "@/components/comments/CommentEditor";
 import MarkdownContent from "@/components/comments/MarkdownContent";
 import UserAvatar from "@/components/comments/UserAvatar";
 import VoteButton from "@/components/comments/VoteButton";
-import { createComment, deleteComment } from "@/lib/comments";
 import { formatRelativeTime } from "@/lib/time";
 import type { CommentResponse } from "@/lib/types";
 
 interface CommentThreadProps {
-  season: number;
-  round: number;
   comments: CommentResponse[];
-  onRefresh: () => void;
+  onReply: (body: string, parentId: number) => Promise<void>;
+  onDelete: (commentId: number) => Promise<void>;
   isLocked?: boolean;
   isAdmin?: boolean;
 }
 
+const ACTION_CLASS =
+  "font-mono text-[11px] uppercase tracking-wider text-text-muted transition-colors hover:text-text-primary disabled:opacity-40";
+
 function CommentNode({
   comment,
-  depth,
-  season,
-  round,
-  onRefresh,
+  onReply,
+  onDelete,
   isLocked = false,
   isAdmin = false,
 }: {
   comment: CommentResponse;
-  depth: number;
-  season: number;
-  round: number;
-  onRefresh: () => void;
+  onReply: (body: string, parentId: number) => Promise<void>;
+  onDelete: (commentId: number) => Promise<void>;
   isLocked?: boolean;
   isAdmin?: boolean;
 }) {
@@ -44,229 +41,190 @@ function CommentNode({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showReply, setShowReply] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
 
-  const isOwnComment = user?.id === comment.author.id;
-  const canDelete = isAdmin || isOwnComment;
-
-  const hasReplies = comment.replies && comment.replies.length > 0;
+  const canDelete = isAdmin || user?.id === comment.author.id;
+  const replies = comment.replies ?? [];
   const isEdited = comment.updated_at !== comment.created_at;
 
-  const handleReply = async (body: string) => {
-    if (isLoading) return;
-
+  const requireAuth = () => {
+    if (isLoading) {
+      throw new Error("Still checking your session. Try again in a moment.");
+    }
     if (!isAuthenticated) {
       router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
-      return;
+      throw new Error("Log in to reply.");
     }
-
-    await createComment({
-      season,
-      round,
-      body,
-      parent_comment_id: comment.id,
-    });
-    setShowReply(false);
-    onRefresh();
   };
 
-  if (isCollapsed) {
-    return (
-      <div className={depth > 0 ? "ml-3" : ""}>
-        <div className="flex items-center gap-2 border border-border-primary rounded-sm bg-bg-tertiary/60 px-3 py-2">
-          <button
-            type="button"
-            onClick={() => setIsCollapsed(false)}
-            className="w-5 h-5 flex items-center justify-center rounded-sm border border-border-primary text-text-muted hover:text-text-primary hover:border-purple-500/50 transition-colors"
-            aria-label="Expand comment"
-          >
-            <svg
-              className="w-3 h-3"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <title>Expand</title>
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 5v14m-7-7h14"
-              />
-            </svg>
-          </button>
-          <UserAvatar
-            username={comment.author.username}
-            avatarUrl={comment.author.avatar_url}
-            size="sm"
-          />
-          <span className="text-xs font-mono uppercase tracking-wider text-text-muted">
-            {comment.author.username}
-          </span>
-          <span className="text-[10px] font-mono text-text-muted">
-            • {formatRelativeTime(comment.created_at)}
-          </span>
-          {hasReplies && (
-            <span className="text-[10px] font-mono text-text-muted">
-              • {comment.replies.length}{" "}
-              {comment.replies.length === 1 ? "reply" : "replies"}
-            </span>
-          )}
-        </div>
-      </div>
-    );
-  }
+  const handleReply = async (body: string) => {
+    requireAuth();
+    await onReply(body, comment.id);
+    setShowReply(false);
+  };
+
+  const handleDelete = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    setError("");
+    try {
+      await onDelete(comment.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete comment");
+      setDeleting(false);
+    }
+  };
 
   return (
-    <div className={depth > 0 ? "ml-3" : ""}>
-      <div className="flex">
-        {/* Clickable collapse rail */}
-        <button
-          type="button"
-          onClick={() => setIsCollapsed(true)}
-          className="group flex-shrink-0 w-5 flex flex-col items-center pt-1 cursor-pointer bg-transparent border-none p-0"
-          aria-label="Collapse comment"
+    <article className="group grid grid-cols-[16px_28px_minmax(0,1fr)] gap-x-2 py-4">
+      <button
+        type="button"
+        onClick={() => setIsCollapsed((prev) => !prev)}
+        aria-expanded={!isCollapsed}
+        aria-label={isCollapsed ? "Expand comment" : "Collapse comment"}
+        title={isCollapsed ? "Expand" : "Collapse"}
+        className={`col-start-1 row-start-1 flex h-7 w-4 items-center justify-center text-text-muted transition-all hover:text-text-primary focus-visible:opacity-100 ${
+          isCollapsed
+            ? "opacity-100"
+            : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+        }`}
+      >
+        <svg
+          className={`h-3 w-3 transition-transform duration-150 ${
+            isCollapsed ? "-rotate-90" : ""
+          }`}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          aria-hidden="true"
         >
-          <div className="w-px flex-1 bg-border-primary group-hover:bg-purple-500 transition-colors" />
-        </button>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2.5}
+            d="M6 9l6 6 6-6"
+          />
+        </svg>
+      </button>
 
-        {/* Comment content */}
-        <div className="flex-1 min-w-0 border border-border-primary rounded-sm bg-bg-tertiary p-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <UserAvatar
-                username={comment.author.username}
-                avatarUrl={comment.author.avatar_url}
-                size="sm"
-              />
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono uppercase tracking-wider text-text-secondary">
-                    {comment.author.username}
-                  </span>
-                  {comment.author.role !== "user" && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full border border-border-secondary text-text-tertiary uppercase tracking-widest font-mono">
-                      {comment.author.role}
-                    </span>
-                  )}
-                </div>
-                <div className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
-                  {formatRelativeTime(comment.created_at)}
-                  {isEdited && " • edited"}
-                </div>
-              </div>
-            </div>
-          </div>
+      <div className="col-start-2 row-start-1">
+        <UserAvatar
+          username={comment.author.username}
+          avatarUrl={comment.author.avatar_url}
+          size="sm"
+        />
+      </div>
 
-          <div className="mt-3 text-sm">
-            <MarkdownContent content={comment.body} />
-          </div>
+      <div className="col-start-3 row-start-1 flex min-w-0 flex-wrap items-baseline gap-x-2 self-center">
+        <span className="text-sm font-medium text-text-primary">
+          {comment.author.username}
+        </span>
+        {comment.author.role !== "user" && (
+          <span className="font-mono text-[10px] uppercase tracking-widest text-purple-400">
+            {comment.author.role}
+          </span>
+        )}
+        <span className="text-xs text-text-muted">
+          {formatRelativeTime(comment.created_at)}
+          {isEdited && " · edited"}
+        </span>
+        {isCollapsed && replies.length > 0 && (
+          <span className="text-xs text-text-muted">
+            · {replies.length} {replies.length === 1 ? "reply" : "replies"}
+          </span>
+        )}
+      </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+      {!isCollapsed && (
+        <div className="col-start-3 row-start-2 min-w-0">
+          <MarkdownContent
+            content={comment.body}
+            className="comment-body mt-2"
+          />
+
+          <div className="mt-2.5 flex flex-wrap items-center gap-5">
             <VoteButton
               commentId={comment.id}
               initialCount={comment.vote_count}
               initialVoted={comment.user_voted}
-              size="sm"
             />
             {!isLocked && (
               <button
                 type="button"
-                onClick={() => {
-                  if (!isAuthenticated && !isLoading) {
-                    router.push(
-                      `/login?redirect=${encodeURIComponent(pathname)}`,
-                    );
-                    return;
-                  }
-                  setShowReply((prev) => !prev);
-                }}
-                className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border border-border-primary rounded-sm text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-colors"
+                onClick={() => setShowReply((prev) => !prev)}
+                className={ACTION_CLASS}
               >
-                Reply
+                {showReply ? "Cancel" : "Reply"}
               </button>
             )}
             {canDelete && (
               <button
                 type="button"
                 disabled={deleting}
-                onClick={async () => {
-                  if (deleting) return;
-                  setDeleting(true);
-                  try {
-                    await deleteComment(comment.id);
-                    onRefresh();
-                  } finally {
-                    setDeleting(false);
-                  }
-                }}
-                className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border border-red-500/30 rounded-sm text-red-400/70 hover:text-red-400 hover:border-red-500/50 transition-colors disabled:opacity-40"
+                onClick={handleDelete}
+                className={`${ACTION_CLASS} hover:text-red-400`}
               >
-                {deleting ? "..." : "Delete"}
+                {deleting ? "Deleting" : "Delete"}
               </button>
             )}
           </div>
+
+          {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
 
           {showReply && (
             <div className="mt-3">
               <CommentEditor
                 onSubmit={handleReply}
-                onCancel={() => setShowReply(false)}
                 submitLabel="Reply"
-                placeholder="Reply to this comment..."
+                placeholder={`Reply to ${comment.author.username}`}
+                autoFocus
               />
             </div>
           )}
-        </div>
-      </div>
 
-      {/* Replies nested under the rail */}
-      {hasReplies && (
-        <div className="mt-3 space-y-3 ml-5">
-          {comment.replies.map((reply) => (
-            <CommentNode
-              key={reply.id}
-              comment={reply}
-              depth={depth + 1}
-              season={season}
-              round={round}
-              onRefresh={onRefresh}
-              isLocked={isLocked}
-              isAdmin={isAdmin}
-            />
-          ))}
+          {replies.length > 0 && (
+            <div className="mt-1 border-l border-border-primary pl-3">
+              {replies.map((reply) => (
+                <CommentNode
+                  key={reply.id}
+                  comment={reply}
+                  onReply={onReply}
+                  onDelete={onDelete}
+                  isLocked={isLocked}
+                  isAdmin={isAdmin}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
-    </div>
+    </article>
   );
 }
 
 export default function CommentThread({
-  season,
-  round,
   comments,
-  onRefresh,
+  onReply,
+  onDelete,
   isLocked = false,
   isAdmin = false,
 }: CommentThreadProps) {
   if (!comments.length) {
     return (
-      <div className="border border-dashed border-border-primary rounded-sm p-4 text-sm text-text-muted">
+      <p className="py-6 text-sm text-text-muted">
         No comments yet. Be the first to weigh in on this race.
-      </div>
+      </p>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="divide-y divide-border-primary/60">
       {comments.map((comment) => (
         <CommentNode
           key={comment.id}
           comment={comment}
-          depth={0}
-          season={season}
-          round={round}
-          onRefresh={onRefresh}
+          onReply={onReply}
+          onDelete={onDelete}
           isLocked={isLocked}
           isAdmin={isAdmin}
         />
