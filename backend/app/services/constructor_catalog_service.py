@@ -9,10 +9,12 @@ from app.schemas.constructor import ConstructorListItem, ConstructorListResponse
 
 
 class ConstructorCatalogService:
+    """Live constructor career totals. The archive endpoint reads the
+    aggregate table built from this computation."""
+
     @staticmethod
-    async def get_all(
-        db: AsyncSession, include_sprint: bool
-    ) -> ConstructorListResponse:
+    def career_query(include_sprint: bool):
+        """Career totals per canonical constructor, keyed by canonical id."""
         session_types = ("race", "sprint_race") if include_sprint else ("race",)
         wins = func.sum(case((SessionResult.position == 1, 1), else_=0))
         points = func.coalesce(func.sum(SessionResult.points), 0)
@@ -34,52 +36,78 @@ class ConstructorCatalogService:
             )
             .subquery()
         )
-        rows = (
-            await db.execute(
-                select(
-                    Constructor.id,
-                    Constructor.slug,
-                    Constructor.canonical_name,
-                    func.count(SessionResult.id),
-                    wins,
-                    func.sum(case((SessionResult.position.in_([1, 2, 3]), 1), else_=0)),
-                    points,
-                    func.min(Session.year),
-                    func.max(Session.year),
-                    branding.c.name,
-                    branding.c.team_color,
-                    branding.c.logo_url,
-                )
-                .join(Team, Team.constructor_id == Constructor.id)
-                .join(SessionResult, SessionResult.team_id == Team.id)
-                .join(Session, Session.id == SessionResult.session_id)
-                .outerjoin(branding, branding.c.constructor_id == Constructor.id)
-                .where(Session.session_type.in_(session_types))
-                .group_by(
-                    Constructor.id,
-                    branding.c.name,
-                    branding.c.team_color,
-                    branding.c.logo_url,
-                )
-                # Slug breaks ties so the listing is stable between requests.
-                .order_by(wins.desc(), points.desc(), Constructor.slug)
+        query = (
+            select(
+                Constructor.id.label("constructor_id"),
+                Constructor.slug.label("constructor_slug"),
+                func.coalesce(branding.c.name, Constructor.canonical_name).label(
+                    "team_name"
+                ),
+                branding.c.team_color.label("team_color"),
+                branding.c.logo_url.label("logo_url"),
+                func.count(SessionResult.id).label("total_races"),
+                wins.label("total_wins"),
+                func.sum(
+                    case((SessionResult.position.in_([1, 2, 3]), 1), else_=0)
+                ).label("total_podiums"),
+                points.label("total_points"),
+                func.min(Session.year).label("first_season"),
+                func.max(Session.year).label("latest_season"),
             )
+            .join(Team, Team.constructor_id == Constructor.id)
+            .join(SessionResult, SessionResult.team_id == Team.id)
+            .join(Session, Session.id == SessionResult.session_id)
+            .outerjoin(branding, branding.c.constructor_id == Constructor.id)
+            .where(Session.session_type.in_(session_types))
+            .group_by(
+                Constructor.id,
+                branding.c.name,
+                branding.c.team_color,
+                branding.c.logo_url,
+            )
+            # Slug breaks ties so the listing is stable between requests.
+            .order_by(wins.desc(), points.desc(), Constructor.slug)
+        )
+        return query
+
+    @staticmethod
+    async def compute_rows(db: AsyncSession, include_sprint: bool) -> list[dict]:
+        rows = (
+            await db.execute(ConstructorCatalogService.career_query(include_sprint))
         ).all()
+        return [
+            {
+                "constructor_id": row.constructor_id,
+                "team_name": row.team_name,
+                "constructor_slug": row.constructor_slug,
+                "team_color": row.team_color,
+                "logo_url": row.logo_url,
+                "total_races": int(row.total_races),
+                "total_wins": int(row.total_wins or 0),
+                "total_podiums": int(row.total_podiums or 0),
+                "total_points": float(row.total_points),
+                "first_season": row.first_season,
+                "latest_season": row.latest_season,
+            }
+            for row in rows
+        ]
+
+    @staticmethod
+    def to_response(rows: list[dict]) -> ConstructorListResponse:
+        constructors = [
+            ConstructorListItem(
+                **{key: row[key] for key in row if key != "constructor_id"}
+            )
+            for row in rows
+        ]
         return ConstructorListResponse(
-            constructors=[
-                ConstructorListItem(
-                    team_name=row[9] if row[9] is not None else row[2],
-                    constructor_slug=row[1],
-                    team_color=row[10],
-                    logo_url=row[11],
-                    total_races=int(row[3]),
-                    total_wins=int(row[4] or 0),
-                    total_podiums=int(row[5] or 0),
-                    total_points=float(row[6]),
-                    first_season=row[7],
-                    latest_season=row[8],
-                )
-                for row in rows
-            ],
-            total=len(rows),
+            constructors=constructors, total=len(constructors)
+        )
+
+    @staticmethod
+    async def compute_all(
+        db: AsyncSession, include_sprint: bool = True
+    ) -> ConstructorListResponse:
+        return ConstructorCatalogService.to_response(
+            await ConstructorCatalogService.compute_rows(db, include_sprint)
         )
