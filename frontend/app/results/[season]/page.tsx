@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ChampionshipPanelHeader from "@/components/ChampionshipPanelHeader";
 import ClassificationBadge from "@/components/ClassificationBadge";
+import DriverHeadshot from "@/components/DriverHeadshot";
 import JumpToRace from "@/components/JumpToRace";
 import PageHeader from "@/components/PageHeader";
 import { TrianglePattern } from "@/components/Patterns";
@@ -46,7 +47,6 @@ type RoundsData = {
   year: number;
   rounds: RoundSummary[];
 };
-
 export default function ResultsPage() {
   const { theme } = useTheme();
   const params = useParams();
@@ -267,26 +267,11 @@ export default function ResultsPage() {
                     </div>
 
                     {/* Driver Photo */}
-                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-sm border border-border-secondary bg-bg-secondary">
-                      {isValidHeadshotUrl(driver.headshot_url) ? (
-                        <Image
-                          src={driver.headshot_url}
-                          alt={driver.full_name}
-                          fill
-                          sizes="40px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[10px] font-bold font-mono text-text-muted">
-                          {driver.driver_code ??
-                            driver.full_name
-                              .split(" ")
-                              .map((name) => name[0])
-                              .join("")
-                              .slice(0, 3)}
-                        </div>
-                      )}
-                    </div>
+                    <DriverHeadshot
+                      src={driver.headshot_url}
+                      fullName={driver.full_name}
+                      code={driver.driver_code}
+                    />
 
                     {/* Driver Info */}
                     <div className="flex-1 flex flex-col justify-center">
@@ -686,26 +671,11 @@ export default function ResultsPage() {
                                     </span>
                                   </div>
 
-                                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-sm border border-border-secondary bg-bg-secondary">
-                                    {isValidHeadshotUrl(driver.headshot_url) ? (
-                                      <Image
-                                        src={driver.headshot_url}
-                                        alt={driver.full_name}
-                                        fill
-                                        sizes="40px"
-                                        className="object-cover"
-                                      />
-                                    ) : (
-                                      <div className="flex h-full w-full items-center justify-center text-[10px] font-bold font-mono text-text-muted">
-                                        {driver.driver_code ??
-                                          driver.full_name
-                                            .split(" ")
-                                            .map((name) => name[0])
-                                            .join("")
-                                            .slice(0, 3)}
-                                      </div>
-                                    )}
-                                  </div>
+                                  <DriverHeadshot
+                                    src={driver.headshot_url}
+                                    fullName={driver.full_name}
+                                    code={driver.driver_code}
+                                  />
                                 </div>
 
                                 <div className="flex min-w-0 items-center justify-center">

@@ -8,7 +8,6 @@ import {
   LineChart,
   ReferenceArea,
   ReferenceLine,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -19,7 +18,9 @@ import {
   CHART_TYPOGRAPHY,
 } from "@/components/chart-primitives";
 import MobileChartFrame from "@/components/ui/MobileChartFrame";
+import StableResponsiveContainer from "@/components/ui/StableResponsiveContainer";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { maxLapNumber } from "@/lib/chart-utils";
 import { DATA_FROM } from "@/lib/data-coverage";
 import {
   type DriverLapTimes,
@@ -107,12 +108,6 @@ const formatLapTime = (seconds: number | null): string => {
   const secs = seconds % 60;
   return `${mins}:${secs.toFixed(3).padStart(6, "0")}`;
 };
-
-const maxLapNumber = (drivers: DriverLapTimes[]): number =>
-  Math.max(
-    0,
-    ...drivers.flatMap((driver) => driver.laps.map((lap) => lap.lap_number)),
-  );
 
 interface LapTimeAxisTickProps {
   x?: number;
@@ -1472,11 +1467,7 @@ export default function LapTimeByLapGraph({
       <MobileChartFrame height={420} logicalWidth={920} className="-ml-2">
         {chartData.length > 0 ? (
           <>
-            <ResponsiveContainer
-              width="100%"
-              height={420}
-              initialDimension={{ width: 860, height: 420 }}
-            >
+            <StableResponsiveContainer height={420}>
               <LineChart
                 data={chartData}
                 margin={{ top: 10, right: 16, left: 20, bottom: 30 }}
@@ -1633,7 +1624,7 @@ export default function LapTimeByLapGraph({
                       />
                     ))}
               </LineChart>
-            </ResponsiveContainer>
+            </StableResponsiveContainer>
 
             {/* Driver Legend — bottom right, above axis labels */}
             <div className="absolute bottom-12 right-5 bg-bg-primary/80 border border-border-primary rounded-sm px-2 py-1.5 backdrop-blur-sm pointer-events-none">

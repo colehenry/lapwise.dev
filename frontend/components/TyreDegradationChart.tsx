@@ -6,7 +6,6 @@ import {
   CartesianGrid,
   ComposedChart,
   Line,
-  ResponsiveContainer,
   Scatter,
   Tooltip,
   XAxis,
@@ -18,6 +17,7 @@ import {
   CHART_TYPOGRAPHY,
 } from "@/components/chart-primitives";
 import MobileChartFrame from "@/components/ui/MobileChartFrame";
+import StableResponsiveContainer from "@/components/ui/StableResponsiveContainer";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import {
   type DriverLapTimes,
@@ -832,11 +832,7 @@ export default function TyreDegradationChart({
       <div className="relative" style={{ minHeight: "300px" }}>
         {chartData.data.length > 0 ? (
           <MobileChartFrame height={300} logicalWidth={860}>
-            <ResponsiveContainer
-              width="100%"
-              height={300}
-              initialDimension={{ width: 860, height: 300 }}
-            >
+            <StableResponsiveContainer height={300}>
               <ComposedChart
                 data={chartData.data}
                 margin={{ top: 10, right: 20, left: 60, bottom: 30 }}
@@ -902,7 +898,7 @@ export default function TyreDegradationChart({
                   />
                 ))}
               </ComposedChart>
-            </ResponsiveContainer>
+            </StableResponsiveContainer>
           </MobileChartFrame>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">

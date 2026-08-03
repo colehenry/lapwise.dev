@@ -13,6 +13,7 @@ import {
   getTeamFlagEmoji,
 } from "@/lib/flags";
 import type { SessionResultsResponse } from "@/lib/types";
+import DriverHeadshot from "./DriverHeadshot";
 import LapTimeByLapGraph from "./LapTimeByLapGraph";
 import { GridPattern, TrianglePattern } from "./Patterns";
 import QualifyingSpreadChart from "./QualifyingSpreadChart";
@@ -385,26 +386,13 @@ export default function SessionDetail({
                     {/* Driver */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="relative hidden h-9 w-9 shrink-0 overflow-hidden rounded-sm border border-border-secondary bg-bg-secondary sm:block">
-                          {isValidHeadshotUrl(result.headshot_url) ? (
-                            <Image
-                              src={result.headshot_url || ""}
-                              alt={result.driver.full_name}
-                              fill
-                              sizes="36px"
-                              className="object-cover"
-                            />
-                          ) : (
-                            <span className="flex h-full w-full items-center justify-center text-[10px] font-bold font-mono text-text-muted">
-                              {result.driver.driver_code ??
-                                result.driver.full_name
-                                  .split(" ")
-                                  .map((name) => name[0])
-                                  .join("")
-                                  .slice(0, 3)}
-                            </span>
-                          )}
-                        </div>
+                        <DriverHeadshot
+                          src={result.headshot_url}
+                          fullName={result.driver.full_name}
+                          code={result.driver.driver_code}
+                          size={36}
+                          className="hidden sm:block"
+                        />
                         <div className="flex flex-col">
                           <Link
                             href={driverHref(result.driver) ?? "/drivers"}

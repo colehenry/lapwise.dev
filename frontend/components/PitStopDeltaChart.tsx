@@ -6,7 +6,6 @@ import {
   CartesianGrid,
   ReferenceArea,
   ReferenceLine,
-  ResponsiveContainer,
   Scatter,
   ScatterChart,
   Tooltip,
@@ -18,6 +17,7 @@ import {
   CHART_COLORS,
   CHART_TYPOGRAPHY,
 } from "@/components/chart-primitives";
+import StableResponsiveContainer from "@/components/ui/StableResponsiveContainer";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import { DATA_FROM } from "@/lib/data-coverage";
 import { STATUS_COLORS } from "@/lib/palette";
@@ -489,11 +489,7 @@ export default function PitStopDeltaChart({
           </p>
         </div>
       ) : (
-        <ResponsiveContainer
-          width="100%"
-          height={300}
-          initialDimension={{ width: 860, height: 300 }}
-        >
+        <StableResponsiveContainer height={300}>
           <ScatterChart margin={{ top: 16, right: 16, left: 0, bottom: 4 }}>
             <CartesianGrid
               strokeDasharray="3 3"
@@ -596,7 +592,7 @@ export default function PitStopDeltaChart({
 
             <Scatter data={stops} shape={PitDot} />
           </ScatterChart>
-        </ResponsiveContainer>
+        </StableResponsiveContainer>
       )}
 
       {/* Per-driver total time lost */}

@@ -6,7 +6,6 @@ import {
   CartesianGrid,
   Line,
   LineChart,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -25,49 +24,17 @@ import {
 } from "@/components/PointsProgressionLabels";
 import { useTheme } from "@/components/ThemeProvider";
 import MobileChartFrame from "@/components/ui/MobileChartFrame";
+import StableResponsiveContainer from "@/components/ui/StableResponsiveContainer";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import {
+  type ConstructorProgression,
+  type DriverProgression,
+  driverSeriesKey,
+  type ProgressionChartPoint,
+  type ProgressionResponse,
+} from "@/lib/pointsProgression";
 
-// Type definitions
-type ProgressionRound = {
-  round: string; // Round identifier: "21" for race, "21-sprint" for sprint, "21-sq" for sprint qualifying
-  cumulative_points: number;
-  position?: number | null;
-  event_name: string | null;
-};
-
-type DriverProgression = {
-  driver_code: string | null;
-  driver_slug: string | null;
-  full_name: string;
-  team_name?: string | null;
-  team_color: string | null;
-  final_position: number;
-  progression: ProgressionRound[];
-};
-
-const driverSeriesKey = (driver: DriverProgression) =>
-  driver.driver_slug ?? driver.driver_code ?? driver.full_name;
-
-type ConstructorProgression = {
-  team_name: string;
-  team_color: string | null;
-  final_position: number;
-  progression: ProgressionRound[];
-  all_positions?: number[][] | null;
-};
-
-type ProgressionResponse = {
-  year: number;
-  type: "drivers" | "constructors";
-  drivers?: DriverProgression[];
-  constructors?: ConstructorProgression[];
-};
-
-type ChartDataPoint = {
-  round: string;
-  event_name?: string | null;
-  [key: string]: number | string | null | undefined;
-};
+type ChartDataPoint = ProgressionChartPoint;
 
 interface PointsByRoundGraphProps {
   season: string;
@@ -542,12 +509,12 @@ export default function PointsByRoundGraph({
           <MobileChartFrame height={400} logicalWidth={900}>
             {chartData.length > 0 ? (
               <>
-                <ResponsiveContainer
-                  width="100%"
+                <StableResponsiveContainer
                   height="100%"
+                  initialWidth={900}
+                  initialHeight={400}
                   minWidth={0}
                   minHeight={0}
-                  initialDimension={{ width: 900, height: 400 }}
                 >
                   <LineChart
                     data={chartData}
@@ -689,7 +656,7 @@ export default function PointsByRoundGraph({
                         }
                       })}
                   </LineChart>
-                </ResponsiveContainer>
+                </StableResponsiveContainer>
 
                 {/* Custom Legend - Positioned in top-left */}
                 <div className="absolute top-8 left-25 bg-bg-primary/90 border border-border-primary rounded-sm p-3 backdrop-blur-sm pointer-events-none">
