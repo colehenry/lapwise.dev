@@ -26,6 +26,19 @@ export class BinaryBody {
   constructor(readonly bytes: Uint8Array) {}
 }
 
+/** A client seeded the way a server-prefetched page hydrates one. */
+export function hydratedQueryClient(
+  entries: { queryKey: readonly unknown[]; data: unknown }[],
+): QueryClient {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: 5 * 60 * 1000 } },
+  });
+  for (const entry of entries) {
+    client.setQueryData(entry.queryKey, entry.data);
+  }
+  return client;
+}
+
 export function msgpackBody(value: unknown): BinaryBody {
   return new BinaryBody(encode(value));
 }
@@ -79,12 +92,17 @@ export function installFetchRecorder(
   };
 }
 
-export function renderWithQueryClient(ui: ReactElement) {
-  const client = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false, gcTime: 0, staleTime: 0 },
-    },
-  });
+export function renderWithQueryClient(
+  ui: ReactElement,
+  existing?: QueryClient,
+) {
+  const client =
+    existing ??
+    new QueryClient({
+      defaultOptions: {
+        queries: { retry: false, gcTime: 0, staleTime: 0 },
+      },
+    });
   const result = render(
     <ThemeProvider>
       <QueryClientProvider client={client}>{ui}</QueryClientProvider>

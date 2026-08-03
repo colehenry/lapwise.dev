@@ -13,6 +13,7 @@ import { seasonsQuery } from "@/lib/queries/seasons";
 import * as fixtures from "./fixtures";
 import {
   flushRequests,
+  hydratedQueryClient,
   installFetchRecorder,
   renderWithQueryClient,
 } from "./requestRecorder";
@@ -77,5 +78,29 @@ describe("archive list consumers", () => {
     expect(recorder.countMatching("/api/constructors/")).toBe(1);
     expect(recorder.countMatching("/api/circuits/")).toBe(1);
     expect(recorder.countMatching("/api/results/seasons")).toBe(1);
+  });
+});
+
+describe("server-prefetched archive route", () => {
+  it("does not refetch a list the server already hydrated", async () => {
+    const recorder = installFetchRecorder({
+      "/api/drivers/": { drivers: [], total: 0 },
+      "/api/results/seasons": [SEASON],
+    });
+    const client = hydratedQueryClient([
+      { queryKey: driversQuery().queryKey, data: { drivers: [], total: 0 } },
+      { queryKey: seasonsQuery().queryKey, data: [SEASON] },
+    ]);
+
+    function ArchiveConsumer() {
+      useQuery(driversQuery());
+      useQuery(seasonsQuery());
+      return null;
+    }
+
+    renderWithQueryClient(<ArchiveConsumer />, client);
+    await flushRequests();
+
+    expect(recorder.paths()).toEqual([]);
   });
 });
