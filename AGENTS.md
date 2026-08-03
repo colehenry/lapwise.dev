@@ -2,7 +2,8 @@
 
 - Preserve unrelated working-tree changes. Do not commit, push, merge, or
   rewrite history unless explicitly asked.
-- Branch flow: `feature/*` → `dev` → `main`. Never merge red CI.
+- Direct commits and pushes to `dev` are allowed. Production changes reach
+  `main` only through a PR with green CI; never push directly to `main`.
 - Frontend: routes in `frontend/app`, shared UI in `frontend/components`, and
   reusable data logic in `frontend/lib` or `frontend/hooks`. Reuse UI/chart
   primitives and semantic color tokens.
