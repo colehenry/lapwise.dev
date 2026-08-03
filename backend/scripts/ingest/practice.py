@@ -6,12 +6,17 @@ Derives positions from best lap times since FastF1 doesn't populate
 Position/Time fields for practice sessions.
 """
 
-import pandas as pd
 from sqlalchemy import select
-from app.models import SessionResult
-from .utils import timedelta_to_seconds, safe_int
-from .participants import ingest_driver, ingest_team
 from sqlalchemy.orm import Session as SQLAlchemySession
+
+from app.models import SessionResult
+
+from .participants import (
+    apply_participant_identity_override,
+    ingest_driver,
+    ingest_team,
+)
+from .utils import safe_int, timedelta_to_seconds
 
 
 def ingest_practice_results(db: SQLAlchemySession, fastf1_session, session_id, year):
@@ -41,8 +46,15 @@ def ingest_practice_results(db: SQLAlchemySession, fastf1_session, session_id, y
         print(f"  ⚠️  Could not derive positions from laps: {e}")
 
     new_results = 0
+    round_num = safe_int(fastf1_session.event.get("RoundNumber"))
     for idx, driver_result in results.iterrows():
-        driver_id = ingest_driver(db, driver_result)
+        driver_result = apply_participant_identity_override(
+            driver_result,
+            year=year,
+            round_num=round_num,
+            session_type="fp1",
+        )
+        driver_id = ingest_driver(db, driver_result, year)
         team_id = ingest_team(db, driver_result, year)
 
         existing_result = db.execute(

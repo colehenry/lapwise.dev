@@ -23,6 +23,8 @@ from app.schemas.circuit import (
     LapTimeTrendEntry,
     RecentRacePodiumEntry,
 )
+from app.services.circuit_catalog_service import CircuitCatalogService
+from app.services.circuit_identity_service import CircuitIdentityService, CircuitTarget
 
 
 class CircuitService:
@@ -30,101 +32,33 @@ class CircuitService:
 
     @staticmethod
     async def get_all_circuits(db: AsyncSession) -> CircuitListResponse:
-        """
-        Get all F1 circuits with statistics.
-        """
-        # Get all circuits with race count and date info
-        circuits_query = (
-            select(
-                Circuit.id,
-                Circuit.name,
-                Circuit.location,
-                Circuit.country,
-                Circuit.track_length_km,
-                Circuit.latitude,
-                Circuit.longitude,
-                func.count(Session.id).label("total_races"),
-                func.min(Session.year).label("first_year"),
-                func.max(Session.year).label("most_recent_year"),
-                func.max(Session.date).label("most_recent_date"),
-            )
-            .join(Session, Circuit.id == Session.circuit_id)
-            .where(Session.session_type == "race")
-            .group_by(Circuit.id)
-            .order_by(func.max(Session.date).desc())
-        )
-
-        results = await db.execute(circuits_query)
-        circuits_data = results.all()
-
-        circuits = [
-            CircuitResponse(
-                id=row.id,
-                name=row.name,
-                location=row.location,
-                country=row.country,
-                track_length_km=row.track_length_km,
-                latitude=row.latitude,
-                longitude=row.longitude,
-                total_races=row.total_races,
-                first_year=row.first_year,
-                most_recent_year=row.most_recent_year,
-            )
-            for row in circuits_data
-        ]
-
-        return CircuitListResponse(circuits=circuits, total=len(circuits))
+        return await CircuitCatalogService.get_all(db)
 
     @staticmethod
     async def get_circuit_by_id(
-        db: AsyncSession, circuit_id: int
+        db: AsyncSession, circuit_id: int | str
     ) -> Optional[CircuitResponse]:
         """
         Get detailed information for a specific circuit.
         """
-        circuit_query = (
-            select(
-                Circuit.id,
-                Circuit.name,
-                Circuit.location,
-                Circuit.country,
-                Circuit.track_length_km,
-                Circuit.latitude,
-                Circuit.longitude,
-                func.count(Session.id).label("total_races"),
-                func.min(Session.year).label("first_year"),
-                func.max(Session.year).label("most_recent_year"),
-            )
-            .join(Session, Circuit.id == Session.circuit_id)
-            .where(Circuit.id == circuit_id)
-            .where(Session.session_type == "race")
-            .group_by(Circuit.id)
-        )
+        return await CircuitCatalogService.get_one(db, circuit_id)
 
-        result = await db.execute(circuit_query)
-        circuit_data = result.first()
-
-        if not circuit_data:
-            return None
-
-        return CircuitResponse(
-            id=circuit_data.id,
-            name=circuit_data.name,
-            location=circuit_data.location,
-            country=circuit_data.country,
-            track_length_km=circuit_data.track_length_km,
-            latitude=circuit_data.latitude,
-            longitude=circuit_data.longitude,
-            total_races=circuit_data.total_races,
-            first_year=circuit_data.first_year,
-            most_recent_year=circuit_data.most_recent_year,
-        )
+    @staticmethod
+    async def _resolve_target(
+        db: AsyncSession, identifier: int | str
+    ) -> CircuitTarget | None:
+        return await CircuitIdentityService.resolve(db, identifier)
 
     @staticmethod
     async def get_circuit_race_history(
-        db: AsyncSession, circuit_id: int
+        db: AsyncSession, circuit_id: int | str
     ) -> Optional[CircuitRaceHistoryResponse]:
         """Get race winners at this circuit across all years."""
+        target = await CircuitService._resolve_target(db, circuit_id)
+        if not target:
+            return None
+        circuit_id = target.layout_id
+        layout_ids = target.layout_ids
         # Get circuit name
         circuit = await db.execute(
             select(Circuit.id, Circuit.name).where(Circuit.id == circuit_id)
@@ -148,7 +82,7 @@ class CircuitService:
             .join(SessionResult, Session.id == SessionResult.session_id)
             .join(Driver, SessionResult.driver_id == Driver.id)
             .join(Team, SessionResult.team_id == Team.id)
-            .where(Session.circuit_id == circuit_id)
+            .where(Session.circuit_id.in_(layout_ids))
             .where(Session.session_type == "race")
             .where(SessionResult.position == 1)
             .order_by(Session.year.desc())
@@ -174,15 +108,21 @@ class CircuitService:
 
         return CircuitRaceHistoryResponse(
             circuit_id=circuit_row.id,
-            circuit_name=circuit_row.name,
+            circuit_name=target.venue_name,
+            venue_slug=target.venue_slug,
             races=races,
         )
 
     @staticmethod
     async def get_circuit_statistics(
-        db: AsyncSession, circuit_id: int
+        db: AsyncSession, circuit_id: int | str
     ) -> Optional[CircuitStatisticsResponse]:
         """Get aggregated statistics for a circuit."""
+        target = await CircuitService._resolve_target(db, circuit_id)
+        if not target:
+            return None
+        circuit_id = target.layout_id
+        layout_ids = target.layout_ids
         # Get circuit name
         circuit = await db.execute(
             select(Circuit.id, Circuit.name).where(Circuit.id == circuit_id)
@@ -193,7 +133,7 @@ class CircuitService:
 
         # Base filter for races at this circuit
         base_filter = and_(
-            Session.circuit_id == circuit_id,
+            Session.circuit_id.in_(layout_ids),
             Session.session_type == "race",
         )
 
@@ -318,8 +258,13 @@ class CircuitService:
 
     @staticmethod
     async def get_lap_records(
-        db: AsyncSession, circuit_id: int
+        db: AsyncSession, circuit_id: int | str
     ) -> Optional[CircuitLapRecordsResponse]:
+        target = await CircuitService._resolve_target(db, circuit_id)
+        if not target:
+            return None
+        circuit_id = target.layout_id
+        layout_ids = target.layout_ids
         """Get fastest race lap and qualifying lap records at a circuit."""
         circuit = await db.execute(
             select(Circuit.id, Circuit.name).where(Circuit.id == circuit_id)
@@ -351,7 +296,7 @@ class CircuitService:
                 ),
             )
             .join(Team, SessionResult.team_id == Team.id)
-            .where(Session.circuit_id == circuit_id)
+            .where(Session.circuit_id.in_(layout_ids))
             .where(Session.session_type == "race")
             .where(Lap.lap_time_seconds.isnot(None))
             .where(Lap.lap_time_seconds > 0)
@@ -394,7 +339,7 @@ class CircuitService:
             .join(Session, SessionResult.session_id == Session.id)
             .join(Driver, SessionResult.driver_id == Driver.id)
             .join(Team, SessionResult.team_id == Team.id)
-            .where(Session.circuit_id == circuit_id)
+            .where(Session.circuit_id.in_(layout_ids))
             .where(Session.session_type == "qualifying")
             .where(q_best.isnot(None))
             .where(q_best > 0)
@@ -425,8 +370,13 @@ class CircuitService:
 
     @staticmethod
     async def get_recent_race(
-        db: AsyncSession, circuit_id: int
+        db: AsyncSession, circuit_id: int | str
     ) -> Optional[CircuitRecentRaceResponse]:
+        target = await CircuitService._resolve_target(db, circuit_id)
+        if not target:
+            return None
+        circuit_id = target.layout_id
+        layout_ids = target.layout_ids
         """Get the most recent race at a circuit with podium and conditions."""
         circuit = await db.execute(
             select(Circuit.id, Circuit.name).where(Circuit.id == circuit_id)
@@ -440,7 +390,7 @@ class CircuitService:
         # Find most recent race session at this circuit
         session_query = (
             select(Session)
-            .where(Session.circuit_id == circuit_id)
+            .where(Session.circuit_id.in_(layout_ids))
             .where(Session.session_type == "race")
             .order_by(Session.date.desc())
             .limit(1)
@@ -533,8 +483,13 @@ class CircuitService:
 
     @staticmethod
     async def get_lap_time_trend(
-        db: AsyncSession, circuit_id: int
+        db: AsyncSession, circuit_id: int | str
     ) -> Optional[CircuitLapTimeTrendResponse]:
+        target = await CircuitService._resolve_target(db, circuit_id)
+        if not target:
+            return None
+        circuit_id = target.layout_id
+        layout_ids = target.layout_ids
         """Get fastest lap per year at a circuit (from laps table)."""
         circuit = await db.execute(
             select(Circuit.id, Circuit.name).where(Circuit.id == circuit_id)
@@ -551,7 +506,7 @@ class CircuitService:
                 func.min(Lap.lap_time_seconds).label("min_time"),
             )
             .join(Lap, Lap.session_id == Session.id)
-            .where(Session.circuit_id == circuit_id)
+            .where(Session.circuit_id.in_(layout_ids))
             .where(Session.session_type == "race")
             .where(Lap.lap_time_seconds.isnot(None))
             .where(Lap.lap_time_seconds > 0)
@@ -615,8 +570,13 @@ class CircuitService:
 
     @staticmethod
     async def get_weather_profile(
-        db: AsyncSession, circuit_id: int
+        db: AsyncSession, circuit_id: int | str
     ) -> Optional[CircuitWeatherProfileResponse]:
+        target = await CircuitService._resolve_target(db, circuit_id)
+        if not target:
+            return None
+        circuit_id = target.layout_id
+        layout_ids = target.layout_ids
         """Get aggregated weather profile across all races at a circuit."""
         circuit = await db.execute(
             select(Circuit.id, Circuit.name).where(Circuit.id == circuit_id)
@@ -628,7 +588,7 @@ class CircuitService:
         # Get all race session IDs at this circuit
         race_sessions = (
             select(Session.id)
-            .where(Session.circuit_id == circuit_id)
+            .where(Session.circuit_id.in_(layout_ids))
             .where(Session.session_type == "race")
             .subquery()
         )
@@ -656,7 +616,7 @@ class CircuitService:
         # Total races at this circuit
         total_query = (
             select(func.count(Session.id))
-            .where(Session.circuit_id == circuit_id)
+            .where(Session.circuit_id.in_(layout_ids))
             .where(Session.session_type == "race")
         )
         total_result = await db.execute(total_query)
@@ -684,8 +644,13 @@ class CircuitService:
 
     @staticmethod
     async def get_tyre_stats(
-        db: AsyncSession, circuit_id: int
+        db: AsyncSession, circuit_id: int | str
     ) -> Optional[CircuitTyreStatsResponse]:
+        target = await CircuitService._resolve_target(db, circuit_id)
+        if not target:
+            return None
+        circuit_id = target.layout_id
+        layout_ids = target.layout_ids
         """Get tyre compound usage breakdown at a circuit."""
         circuit = await db.execute(
             select(Circuit.id, Circuit.name).where(Circuit.id == circuit_id)
@@ -697,7 +662,7 @@ class CircuitService:
         # Get race session IDs at this circuit
         race_sessions = (
             select(Session.id)
-            .where(Session.circuit_id == circuit_id)
+            .where(Session.circuit_id.in_(layout_ids))
             .where(Session.session_type == "race")
             .subquery()
         )

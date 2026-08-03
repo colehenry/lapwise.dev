@@ -24,10 +24,11 @@ class Driver(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     # Core driver information
+    slug = Column(String, nullable=False, unique=True, index=True)
     full_name = Column(String, nullable=False)
-    driver_code = Column(
-        String(3), nullable=True, unique=True
-    )  # VER, HAM, LEC, etc. (null for pre-2003 drivers without official codes)
+    # Deprecated preferred/latest display code. Identity and season codes live in
+    # driver_external_ids and driver_seasons respectively.
+    driver_code = Column(String(3), nullable=True)
     jolpica_id = Column(
         String, nullable=True, unique=True, index=True
     )  # Jolpica/Ergast stable ID e.g. "fangio", "hamilton"
@@ -40,13 +41,17 @@ class Driver(Base):
     session_results = relationship("SessionResult", back_populates="driver")
     laps = relationship("Lap", back_populates="driver")
     pit_stops = relationship("PitStop", back_populates="driver")
+    external_ids = relationship(
+        "DriverExternalId", back_populates="driver", cascade="all, delete-orphan"
+    )
+    seasons = relationship(
+        "DriverSeason", back_populates="driver", cascade="all, delete-orphan"
+    )
 
     @property
     def driver_slug(self) -> str:
         """URL-safe slug: jolpica_id if available, else slugified full_name."""
-        if self.jolpica_id:
-            return self.jolpica_id.replace("_", "-")
-        return self.full_name.lower().replace(" ", "-")
+        return self.slug
 
     def __repr__(self):
         """String representation for debugging"""

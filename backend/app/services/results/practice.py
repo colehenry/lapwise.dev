@@ -7,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models import (
+    Circuit,
+    Constructor,
     Driver,
     Lap,
     Session,
@@ -45,7 +47,7 @@ class PracticeService:
         session_type = f"fp{practice_num}"
         session_query = (
             select(Session)
-            .options(selectinload(Session.circuit))
+            .options(selectinload(Session.circuit).selectinload(Circuit.venue))
             .where(Session.year == season)
             .where(Session.round == round_num)
             .where(Session.session_type == session_type)
@@ -62,10 +64,12 @@ class PracticeService:
                 SessionResult,
                 Driver,
                 Team,
+                Constructor.slug.label("constructor_slug"),
                 headshot_fallback_expr().label("headshot_url"),
             )
             .join(Driver, SessionResult.driver_id == Driver.id)
             .join(Team, SessionResult.team_id == Team.id)
+            .join(Constructor, Constructor.id == Team.constructor_id)
             .where(SessionResult.session_id == session.id)
             .order_by(SessionResult.position)
         )
@@ -84,6 +88,7 @@ class PracticeService:
             date=session.date,
             circuit=CircuitInfo(
                 id=circuit.id,
+                venue_slug=circuit.venue.slug,
                 name=circuit.name,
                 location=circuit.location,
                 country=circuit.country,
@@ -107,7 +112,9 @@ class PracticeService:
                 ),
                 team=TeamInfo(
                     name=result.Team.name,
+                    constructor_slug=result.constructor_slug,
                     team_color=result.Team.team_color,
+                    logo_url=result.Team.logo_url,
                 ),
                 time_seconds=sanitize_float(result.SessionResult.time_seconds),
             )
@@ -148,6 +155,7 @@ class PracticeService:
                 Lap.sector1_time_seconds,
                 Lap.sector2_time_seconds,
                 Lap.sector3_time_seconds,
+                Lap.driver_id,
                 Lap.pit_in_time_seconds,
                 Lap.pit_out_time_seconds,
                 Lap.position,
@@ -189,7 +197,7 @@ class PracticeService:
 
         drivers_dict = {}
         for row in lap_rows:
-            key = row.driver_code
+            key = row.driver_id
             if key not in drivers_dict:
                 drivers_dict[key] = DriverLapTimesData(
                     driver_code=row.driver_code,

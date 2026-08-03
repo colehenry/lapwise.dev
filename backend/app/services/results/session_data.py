@@ -8,6 +8,8 @@ from sqlalchemy.orm import selectinload
 
 from app.models import (
     Circuit,
+    CircuitVenue,
+    Constructor,
     Driver,
     Lap,
     RaceControlMessage,
@@ -82,6 +84,7 @@ class SessionDataService:
                 Session.session_type,
                 Circuit.name.label("circuit_name"),
                 Circuit.id.label("circuit_id"),
+                CircuitVenue.slug.label("venue_slug"),
                 Circuit.location.label("circuit_location"),
                 Circuit.country.label("circuit_country"),
                 SessionResult.position,
@@ -100,6 +103,7 @@ class SessionDataService:
             .join(Driver, SessionResult.driver_id == Driver.id)
             .join(Team, SessionResult.team_id == Team.id)
             .join(Circuit, Session.circuit_id == Circuit.id)
+            .join(CircuitVenue, CircuitVenue.id == Circuit.venue_id)
             .where(Session.id == session_id)
             .where(SessionResult.position.between(1, 3))
             .order_by(SessionResult.position)
@@ -123,6 +127,7 @@ class SessionDataService:
                 Session.session_type,
                 Circuit.name.label("circuit_name"),
                 Circuit.id.label("circuit_id"),
+                CircuitVenue.slug.label("venue_slug"),
                 Circuit.track_length_km,
                 SessionResult.position,
                 Driver.full_name,
@@ -139,6 +144,7 @@ class SessionDataService:
             .join(Driver, SessionResult.driver_id == Driver.id)
             .join(Team, SessionResult.team_id == Team.id)
             .join(Circuit, Session.circuit_id == Circuit.id)
+            .join(CircuitVenue, CircuitVenue.id == Circuit.venue_id)
             .where(Session.year == season)
             .where(Session.session_type.in_(["race", "sprint_race"]))
             .where(SessionResult.position.between(1, 3))
@@ -165,6 +171,7 @@ class SessionDataService:
                     "date": row.date,
                     "circuit_name": row.circuit_name,
                     "circuit_id": row.circuit_id,
+                    "venue_slug": row.venue_slug,
                     "track_length_km": row.track_length_km,
                     "session_type": row.session_type,
                     "podium": [],
@@ -195,7 +202,7 @@ class SessionDataService:
         """
         session_query = (
             select(Session)
-            .options(selectinload(Session.circuit))
+            .options(selectinload(Session.circuit).selectinload(Circuit.venue))
             .where(Session.year == season)
             .where(Session.round == round_num)
             .where(Session.session_type == "race")
@@ -213,10 +220,12 @@ class SessionDataService:
                 SessionResult,
                 Driver,
                 Team,
+                Constructor.slug.label("constructor_slug"),
                 headshot_fallback_expr().label("headshot_url"),
             )
             .join(Driver, SessionResult.driver_id == Driver.id)
             .join(Team, SessionResult.team_id == Team.id)
+            .join(Constructor, Constructor.id == Team.constructor_id)
             .where(SessionResult.session_id == session.id)
             .order_by(SessionResult.position)
         )
@@ -235,6 +244,7 @@ class SessionDataService:
             date=session.date,
             circuit=CircuitInfo(
                 id=circuit.id,
+                venue_slug=circuit.venue.slug,
                 name=circuit.name,
                 location=circuit.location,
                 country=circuit.country,
@@ -258,7 +268,9 @@ class SessionDataService:
                 ),
                 team=TeamInfo(
                     name=result.Team.name,
+                    constructor_slug=result.constructor_slug,
                     team_color=result.Team.team_color,
+                    logo_url=result.Team.logo_url,
                 ),
                 grid_position=result.SessionResult.grid_position,
                 points=sanitize_float(result.SessionResult.points),
@@ -433,6 +445,7 @@ class SessionDataService:
                 Lap.lap_number,
                 Lap.lap_time_seconds,
                 Lap.compound,
+                Lap.driver_id,
                 Driver.driver_code,
                 Driver.jolpica_id,
                 Driver.full_name,
@@ -459,7 +472,7 @@ class SessionDataService:
 
         drivers_dict: dict = {}
         for row in lap_rows:
-            key = row.driver_code or row.full_name
+            key = row.driver_id
             if key not in drivers_dict:
                 drivers_dict[key] = {
                     "driver_code": row.driver_code,

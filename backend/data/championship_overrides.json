@@ -1,0 +1,41 @@
+{
+  "standing_overrides": [
+    {
+      "year": 2018,
+      "entrant_type": "constructor",
+      "source_url": "https://www.formula1.com/en/results/2018/team",
+      "entries": [
+        { "external_id": "mercedes", "position": 1, "points": "655", "wins": 11 },
+        { "external_id": "ferrari", "position": 2, "points": "571", "wins": 6 },
+        { "external_id": "red_bull", "position": 3, "points": "419", "wins": 4 },
+        { "external_id": "renault", "position": 4, "points": "122", "wins": 0 },
+        { "external_id": "haas", "position": 5, "points": "93", "wins": 0 },
+        { "external_id": "mclaren", "position": 6, "points": "62", "wins": 0 },
+        { "external_id": "racing_point", "position": 7, "points": "52", "wins": 0 },
+        { "external_id": "sauber", "position": 8, "points": "48", "wins": 0 },
+        { "external_id": "toro_rosso", "position": 9, "points": "33", "wins": 0 },
+        { "external_id": "williams", "position": 10, "points": "7", "wins": 0 }
+      ]
+    }
+  ],
+  "classification_exceptions": [
+    {
+      "year": 1997,
+      "entrant_type": "driver",
+      "external_id": "michael_schumacher",
+      "status": "disqualified",
+      "points_scored": "78",
+      "explanation": "Michael Schumacher was disqualified from the 1997 Drivers' Championship, while his race results and 78 on-track points remained in the record.",
+      "source_url": "https://www.formula1.com/en/results/1997/drivers"
+    },
+    {
+      "year": 2018,
+      "entrant_type": "constructor",
+      "external_id": "force_india",
+      "status": "excluded",
+      "points_scored": "59",
+      "explanation": "The original Force India entrant was excluded from the 2018 Constructors' Championship after entering administration. Racing Point competed as a separate constructor from Belgium onward and was classified with 52 points.",
+      "source_url": "https://www.formula1.com/en/results/2018/team"
+    }
+  ]
+}

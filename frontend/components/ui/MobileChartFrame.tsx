@@ -61,7 +61,7 @@ export default function MobileChartFrame({
           transformOrigin: "top left",
         }}
       >
-        {children}
+        {containerWidth > 0 ? children : null}
       </div>
     </div>
   );

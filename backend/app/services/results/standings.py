@@ -19,6 +19,7 @@ from app.schemas.result import (
     TeammateH2HResponse,
     TeammateH2HTeam,
 )
+from app.services.canonical_standings_service import CanonicalStandingsService
 from app.services.results.common import (
     _make_slug,
     headshot_fallback_expr,
@@ -35,6 +36,9 @@ class StandingsService:
         """
         Get driver and constructor championship standings for a season.
         """
+        return await CanonicalStandingsService.get_season_standings(db, season)
+
+        # Compatibility implementation retained temporarily for one release.
         # Check if season exists
         season_check = await db.execute(
             select(Session.id).where(Session.year == season).limit(1)

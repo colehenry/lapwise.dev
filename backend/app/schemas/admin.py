@@ -10,52 +10,33 @@ from typing import Optional
 from pydantic import BaseModel
 
 from app.schemas.auth import UserProfile
-from app.schemas.post import PostAuthor, TagResponse
-
-
-class AdminPostListItem(BaseModel):
-    id: int
-    title: str
-    body: str
-    post_type: str
-    is_pinned: bool
-    is_locked: bool
-    vote_count: int
-    comment_count: int
-    author: PostAuthor
-    tags: list[TagResponse]
-    deleted_at: Optional[datetime] = None
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = {"from_attributes": True}
-
-
-class AdminPostListResponse(BaseModel):
-    posts: list[AdminPostListItem]
-    total: int
-    page: int
-    size: int
+from app.schemas.comment import CommentAuthor
 
 
 class AdminCommentListItem(BaseModel):
     id: int
-    post_id: int
     parent_comment_id: Optional[int] = None
     body: str
     vote_count: int
-    author: PostAuthor
+    author: CommentAuthor
+    year: int
+    round: int
     deleted_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class AdminCommentListResponse(BaseModel):
+    comments: list[AdminCommentListItem]
+    next_cursor: Optional[str] = None
 
 
 class AdminDashboardStats(BaseModel):
     user_count: int
     active_users: int
-    post_count: int
+    comment_count: int
     total_ai_queries: int
     recent_activity: list[dict]
 

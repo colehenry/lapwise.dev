@@ -595,6 +595,37 @@ textarea {
   color: var(--text-tertiary);
 }
 
+/* Comment bodies read as prose, not as chrome: larger text, primary colour,
+   and no leading or trailing margin fighting the surrounding layout. */
+.markdown-content.comment-body {
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.markdown-content.comment-body > :first-child {
+  margin-top: 0;
+}
+
+.markdown-content.comment-body > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content.comment-body p {
+  margin: 0.6rem 0;
+}
+
+.markdown-content.comment-body h1,
+.markdown-content.comment-body h2,
+.markdown-content.comment-body h3,
+.markdown-content.comment-body h4,
+.markdown-content.comment-body h5,
+.markdown-content.comment-body h6 {
+  margin: 0.9rem 0 0.4rem;
+  font-size: 1rem;
+}
+
 /* AI Chat prose styles */
 .prose-chat {
   max-width: 100%;

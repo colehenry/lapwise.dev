@@ -46,7 +46,7 @@ async def get_all_circuits(
 
 @router.get("/{circuit_id}", response_model=CircuitResponse)
 async def get_circuit_by_id(
-    circuit_id: int,
+    circuit_id: str,
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -68,7 +68,7 @@ async def get_circuit_by_id(
 
 @router.get("/{circuit_id}/race-history", response_model=CircuitRaceHistoryResponse)
 async def get_circuit_race_history(
-    circuit_id: int,
+    circuit_id: str,
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -90,7 +90,7 @@ async def get_circuit_race_history(
 
 @router.get("/{circuit_id}/statistics", response_model=CircuitStatisticsResponse)
 async def get_circuit_statistics(
-    circuit_id: int,
+    circuit_id: str,
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -114,7 +114,7 @@ async def get_circuit_statistics(
 
 @router.get("/{circuit_id}/lap-records", response_model=CircuitLapRecordsResponse)
 async def get_circuit_lap_records(
-    circuit_id: int,
+    circuit_id: str,
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -129,7 +129,7 @@ async def get_circuit_lap_records(
 
 @router.get("/{circuit_id}/recent-race", response_model=CircuitRecentRaceResponse)
 async def get_circuit_recent_race(
-    circuit_id: int,
+    circuit_id: str,
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -147,7 +147,7 @@ async def get_circuit_recent_race(
     response_model=CircuitLapTimeTrendResponse,
 )
 async def get_circuit_lap_time_trend(
-    circuit_id: int,
+    circuit_id: str,
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -165,7 +165,7 @@ async def get_circuit_lap_time_trend(
     response_model=CircuitWeatherProfileResponse,
 )
 async def get_circuit_weather_profile(
-    circuit_id: int,
+    circuit_id: str,
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
@@ -180,7 +180,7 @@ async def get_circuit_weather_profile(
 
 @router.get("/{circuit_id}/tyre-stats", response_model=CircuitTyreStatsResponse)
 async def get_circuit_tyre_stats(
-    circuit_id: int,
+    circuit_id: str,
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):

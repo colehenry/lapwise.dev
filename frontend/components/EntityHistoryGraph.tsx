@@ -19,6 +19,9 @@ import {
   RangeSelector,
   resolveChartSeriesColor,
 } from "@/components/chart-primitives";
+import EntityHistorySeasonTooltip, {
+  type SeasonEntry,
+} from "@/components/EntityHistorySeasonTooltip";
 import { TrianglePattern } from "@/components/Patterns";
 import { useTheme } from "@/components/ThemeProvider";
 import MobileChartFrame from "@/components/ui/MobileChartFrame";
@@ -41,131 +44,6 @@ export interface EntityHistoryConfig {
   showPointsPerRaceToggle?: boolean;
   // biome-ignore lint/suspicious/noExplicitAny: render prop data shape varies by entity type
   renderRaceTooltip: (data: any) => ReactNode;
-}
-
-interface SeasonEntry {
-  year: number | string;
-  team_name?: string;
-  team_color?: string;
-  championship_position?: number;
-  total_points: number;
-  race_count?: number;
-  points_per_race?: number;
-  prevPosition?: number;
-  prevPoints?: number;
-  prevPointsPerRace?: number;
-}
-
-function SeasonTooltipContent({
-  data,
-  showTeam,
-}: {
-  data: SeasonEntry;
-  showTeam: boolean;
-}) {
-  let positionChange = null;
-  let pointsChange = null;
-  let pointsPerRaceChange = null;
-
-  if (data.prevPosition !== undefined && data.championship_position) {
-    positionChange = data.prevPosition - data.championship_position;
-  }
-
-  if (data.prevPoints !== undefined) {
-    pointsChange = data.total_points - data.prevPoints;
-  }
-
-  if (
-    data.points_per_race !== undefined &&
-    data.prevPointsPerRace !== undefined
-  ) {
-    pointsPerRaceChange = data.points_per_race - data.prevPointsPerRace;
-  }
-
-  return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm p-3 shadow-xl">
-      <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-2`}>
-        {data.year}
-      </p>
-      <div className="space-y-1">
-        {showTeam && (
-          <p className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-sm`}>
-            Team: {data.team_name}
-          </p>
-        )}
-        <p className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-sm`}>
-          Position:{" "}
-          {data.championship_position
-            ? `P${data.championship_position}`
-            : "N/A"}
-          {positionChange !== null && (
-            <span
-              className={`ml-2 font-semibold ${
-                positionChange > 0
-                  ? "text-green-400"
-                  : positionChange < 0
-                    ? "text-red-400"
-                    : "text-blue-400"
-              }`}
-            >
-              {positionChange > 0
-                ? `+${positionChange}`
-                : positionChange < 0
-                  ? positionChange
-                  : "—"}
-            </span>
-          )}
-        </p>
-        <p className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-sm`}>
-          Points: {Math.round(data.total_points)}
-          {pointsChange !== null && (
-            <span
-              className={`ml-2 font-semibold ${
-                pointsChange > 0
-                  ? "text-green-400"
-                  : pointsChange < 0
-                    ? "text-red-400"
-                    : "text-blue-400"
-              }`}
-            >
-              {pointsChange > 0
-                ? `+${Math.round(pointsChange)}`
-                : pointsChange < 0
-                  ? Math.round(pointsChange)
-                  : "—"}
-            </span>
-          )}
-        </p>
-        {data.points_per_race !== undefined && (
-          <p className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-sm`}>
-            Points/Race: {data.points_per_race.toFixed(2)}
-            {pointsPerRaceChange !== null && (
-              <span
-                className={`ml-2 font-semibold ${
-                  pointsPerRaceChange > 0
-                    ? "text-green-400"
-                    : pointsPerRaceChange < 0
-                      ? "text-red-400"
-                      : "text-blue-400"
-                }`}
-              >
-                {pointsPerRaceChange > 0
-                  ? `+${pointsPerRaceChange.toFixed(2)}`
-                  : pointsPerRaceChange < 0
-                    ? pointsPerRaceChange.toFixed(2)
-                    : "—"}
-              </span>
-            )}
-          </p>
-        )}
-        {data.race_count !== undefined && (
-          <p className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-sm`}>
-            Starts: {data.race_count}
-          </p>
-        )}
-      </div>
-    </div>
-  );
 }
 
 export default function EntityHistoryGraph({
@@ -279,7 +157,7 @@ export default function EntityHistoryGraph({
 
     if (graphMode === "season") {
       return (
-        <SeasonTooltipContent
+        <EntityHistorySeasonTooltip
           data={data as SeasonEntry}
           showTeam={config.showTeamInSeasonTooltip}
         />
