@@ -1,38 +1,11 @@
 // Shared API type definitions — canonical source of truth for API response types
 
-export interface DriverStanding {
-  position: number;
-  driver_code: string | null;
-  driver_slug: string | null;
-  full_name: string;
-  country_code: string | null;
-  team_name: string;
-  team_color: string | null;
-  total_points: number;
-  headshot_url: string | null;
-  wins: number;
-  p2s: number;
-  p3s: number;
-  position_counts: Record<string, number>;
-}
-
-export interface ConstructorStanding {
-  position: number;
-  team_name: string;
-  team_color: string | null;
-  logo_url: string | null;
-  total_points: number;
-  wins: number;
-  p2s: number;
-  p3s: number;
-  position_counts: Record<string, number>;
-}
-
-export interface StandingsResponse {
-  year: number;
-  drivers: DriverStanding[];
-  constructors: ConstructorStanding[];
-}
+export type {
+  ChampionshipScoringInfo,
+  ConstructorStanding,
+  DriverStanding,
+  StandingsResponse,
+} from "./championshipTypes";
 
 export interface DriverQualifyingStanding {
   position: number;
@@ -87,6 +60,7 @@ export interface RoundSummary {
   date: string;
   circuit_name: string;
   circuit_id: number;
+  venue_slug?: string | null;
   circuit_location?: string | null;
   circuit_country?: string | null;
   track_length_km: number | null;
@@ -117,6 +91,7 @@ export interface DriverListResponse {
 
 export interface ConstructorListItem {
   team_name: string;
+  constructor_slug: string | null;
   team_color: string | null;
   logo_url: string | null;
   total_wins: number;
@@ -134,6 +109,8 @@ export interface ConstructorListResponse {
 
 export interface CircuitInfo {
   id: number;
+  venue_slug: string;
+  layout_slug: string | null;
   name: string;
   location: string;
   country: string;
@@ -155,6 +132,7 @@ export type DriverInfo = {
 
 export type TeamInfo = {
   name: string;
+  constructor_slug: string | null;
   team_color: string | null;
   logo_url: string | null;
 };
@@ -162,6 +140,7 @@ export type TeamInfo = {
 // Session-level circuit (subset of CircuitInfo, used by session results)
 export type SessionCircuitInfo = {
   id: number;
+  venue_slug: string | null;
   name: string;
   location: string;
   country: string;
@@ -346,6 +325,10 @@ export interface DriverSeasonHistory {
   year: number;
   championship_position: number | null;
   total_points: number;
+  championship_points: number | null;
+  points_scored: number;
+  classification_status: string;
+  scoring_explanation: string | null;
   race_count?: number;
   points_per_race?: number;
   team_name: string;
@@ -368,6 +351,7 @@ export interface DriverSuperlativesResponse {
 // Constructor profile types
 export interface ConstructorProfile {
   team_name: string;
+  constructor_slug: string | null;
   team_color: string | null;
   logo_url: string | null;
   total_seasons: number;
@@ -408,6 +392,10 @@ export interface ConstructorSeasonHistory {
   year: number;
   championship_position: number | null;
   total_points: number;
+  championship_points: number | null;
+  points_scored: number;
+  classification_status: string;
+  scoring_explanation: string | null;
   team_color: string | null;
 }
 
@@ -539,12 +527,14 @@ export interface FavoriteDriver {
 
 export interface FavoriteTeam {
   team_name: string;
+  constructor_slug: string | null;
   team_color: string | null;
   logo_url: string | null;
 }
 
 export interface FavoriteCircuit {
   circuit_id: number;
+  venue_slug: string | null;
   name: string;
   location: string;
   country: string;
@@ -596,7 +586,7 @@ export type AdminDashboardPeriod = "all" | "month" | "week" | "24h";
 export interface AdminDashboardStats {
   user_count: number;
   active_users: number;
-  post_count: number;
+  comment_count: number;
   total_ai_queries: number;
   recent_activity: AdminActivity[];
 }
@@ -608,97 +598,58 @@ export interface AdminUserListResponse {
   size: number;
 }
 
-export interface AdminPostListItem {
-  id: number;
-  title: string;
-  body: string;
-  post_type: string;
-  is_pinned: boolean;
-  is_locked: boolean;
-  vote_count: number;
-  comment_count: number;
-  author: DiscussionAuthor;
-  tags: DiscussionTag[];
-  deleted_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface AdminPostListResponse {
-  posts: AdminPostListItem[];
-  total: number;
-  page: number;
-  size: number;
-}
-
 export interface AdminCommentListItem {
   id: number;
-  post_id: number;
   parent_comment_id: number | null;
   body: string;
   vote_count: number;
-  author: DiscussionAuthor;
+  author: CommentAuthor;
+  year: number;
+  round: number;
   deleted_at: string | null;
   created_at: string;
   updated_at: string;
 }
 
-export interface DiscussionTag {
-  id: number;
-  name: string;
-  slug: string;
-  color: string;
-  category: string | null;
+export interface AdminCommentListResponse {
+  comments: AdminCommentListItem[];
+  next_cursor: string | null;
 }
 
-export interface DiscussionAuthor {
+export interface CommentAuthor {
   id: number;
   username: string;
   avatar_url: string | null;
   role: string;
 }
 
-export interface PostListItem {
-  id: number;
-  title: string;
-  body: string;
-  post_type: string;
-  is_pinned: boolean;
-  is_locked: boolean;
-  vote_count: number;
-  comment_count: number;
-  author: DiscussionAuthor;
-  tags: DiscussionTag[];
-  user_voted: boolean;
-  created_at: string;
-}
-
-export interface PostListResponse {
-  posts: PostListItem[];
-  next_cursor: string | null;
-}
-
-export interface PostResponse extends PostListItem {
-  body: string;
-  updated_at: string;
-}
-
 export interface CommentResponse {
   id: number;
-  post_id: number;
+  thread_id: number;
   parent_comment_id: number | null;
   body: string;
   vote_count: number;
-  author: DiscussionAuthor;
+  author: CommentAuthor;
   user_voted: boolean;
   replies: CommentResponse[];
   created_at: string;
   updated_at: string;
 }
 
-export interface CommentListResponse {
+export interface RaceCommentsResponse {
   comments: CommentResponse[];
   next_cursor: string | null;
+  comment_count: number;
+  is_locked: boolean;
+}
+
+export interface UserCommentListItem {
+  id: number;
+  body: string;
+  vote_count: number;
+  year: number;
+  round: number;
+  created_at: string;
 }
 
 // ─── Replay Types ─────────────────────────────────────────────

@@ -9,29 +9,42 @@ Usage:
     from app.models import Lap, Weather, TrackStatus, RaceControlMessage
     from app.models import User, RefreshToken, EmailVerificationToken
     from app.models import PasswordResetToken, LoginHistory
-    from app.models import Tag, Post, PostType, Comment, Vote
+    from app.models import RaceThread, Comment, Vote
 """
 
 from app.models.ai_conversation import AIConversation
 from app.models.ai_message import AIMessage
+from app.models.championship import (
+    ChampionshipClassificationException,
+    ChampionshipScoringContext,
+    ConstructorChampionshipStanding,
+    DriverChampionshipStanding,
+)
 from app.models.circuit import Circuit
 from app.models.comment import Comment
 from app.models.driver import Driver
 from app.models.email_verification_token import EmailVerificationToken
+from app.models.identity import (
+    CircuitVenue,
+    CircuitVenueExternalId,
+    Constructor,
+    ConstructorExternalId,
+    DriverExternalId,
+    DriverSeason,
+    IngestIdentityIssue,
+)
 from app.models.lap import Lap
 from app.models.login_history import LoginHistory
 from app.models.oauth_account import OAuthAccount
 from app.models.password_reset_token import PasswordResetToken
 from app.models.pit_stop import PitStop
-from app.models.post import Post, PostType
-from app.models.post_tag import post_tags  # noqa: F401
 from app.models.race_control_message import RaceControlMessage
+from app.models.race_thread import RaceThread
 from app.models.refresh_token import RefreshToken
 from app.models.replay_data import ReplayData
 from app.models.session import Session
 from app.models.session_result import SessionResult
 from app.models.session_summary import SessionSummary
-from app.models.tag import Tag
 from app.models.team import Team
 from app.models.track_status import TrackStatus
 from app.models.user import User, UserRole
@@ -41,8 +54,19 @@ from app.models.weather import Weather
 # Export all models
 __all__ = [
     "Driver",
+    "DriverExternalId",
+    "DriverSeason",
+    "Constructor",
+    "ConstructorExternalId",
     "Team",
     "Circuit",
+    "CircuitVenue",
+    "CircuitVenueExternalId",
+    "IngestIdentityIssue",
+    "DriverChampionshipStanding",
+    "ConstructorChampionshipStanding",
+    "ChampionshipScoringContext",
+    "ChampionshipClassificationException",
     "Session",
     "SessionResult",
     "Lap",
@@ -57,9 +81,7 @@ __all__ = [
     "PasswordResetToken",
     "LoginHistory",
     "OAuthAccount",
-    "Tag",
-    "Post",
-    "PostType",
+    "RaceThread",
     "Comment",
     "Vote",
     "AIConversation",

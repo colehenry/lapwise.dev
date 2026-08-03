@@ -34,8 +34,8 @@ export default function PrivacyPage() {
           display name. We do not receive your Google password.
         </p>
         <p className="mt-3">
-          Community content you post (discussions, comments) is stored and
-          publicly visible.
+          Community content you post (race comments) is stored and publicly
+          visible.
         </p>
       </Section>
 

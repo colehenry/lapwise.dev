@@ -15,6 +15,7 @@ class CircuitInfo(BaseModel):
     """Circuit metadata embedded in session response"""
 
     id: int  # Circuit ID used to construct track map URL
+    venue_slug: Optional[str] = None
     name: str
     location: str
     country: str
@@ -61,6 +62,7 @@ class TeamInfo(BaseModel):
     """Team metadata embedded in result"""
 
     name: str
+    constructor_slug: Optional[str] = None
     team_color: Optional[str] = None  # Hex without #
     logo_url: Optional[str] = None
 
@@ -125,7 +127,7 @@ class SessionResultsResponse(BaseModel):
 class DriverStanding(BaseModel):
     """Individual driver's championship standing for a season"""
 
-    position: int  # Championship position (1st, 2nd, 3rd, etc.)
+    position: Optional[int] = None
     driver_code: Optional[str] = None
     driver_slug: Optional[str] = None
     full_name: str
@@ -133,6 +135,11 @@ class DriverStanding(BaseModel):
     team_name: str
     team_color: Optional[str] = None
     total_points: float
+    championship_points: Optional[float] = None
+    points_scored: float
+    classification_status: str = "classified"
+    scoring_explanation: Optional[str] = None
+    scoring_explanation_url: Optional[str] = None
     headshot_url: Optional[str] = None
     wins: int = 0
     p2s: int = 0
@@ -146,11 +153,17 @@ class DriverStanding(BaseModel):
 class ConstructorStanding(BaseModel):
     """Individual constructor's championship standing for a season"""
 
-    position: int  # Championship position (1st, 2nd, 3rd, etc.)
+    position: Optional[int] = None
     team_name: str
+    constructor_slug: Optional[str] = None
     team_color: Optional[str] = None
     logo_url: Optional[str] = None
     total_points: float
+    championship_points: Optional[float] = None
+    points_scored: float
+    classification_status: str = "classified"
+    scoring_explanation: Optional[str] = None
+    scoring_explanation_url: Optional[str] = None
     wins: int = 0
     p2s: int = 0
     p3s: int = 0
@@ -158,6 +171,15 @@ class ConstructorStanding(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ChampionshipScoringInfo(BaseModel):
+    kind: str = "standard"
+    short_label: Optional[str] = None
+    explanation: Optional[str] = None
+    source_url: Optional[str] = None
+    comparison_mode: str = "none"
+    has_discrepancy: bool = False
 
 
 class StandingsResponse(BaseModel):
@@ -170,6 +192,8 @@ class StandingsResponse(BaseModel):
     year: int
     drivers: List[DriverStanding]
     constructors: List[ConstructorStanding]
+    driver_scoring: ChampionshipScoringInfo
+    constructor_scoring: ChampionshipScoringInfo
 
     class Config:
         from_attributes = True
@@ -270,6 +294,7 @@ class RoundSummary(BaseModel):
     date: date
     circuit_name: str
     circuit_id: int  # For track map URL
+    venue_slug: Optional[str] = None
     circuit_location: Optional[str] = None
     circuit_country: Optional[str] = None
     track_length_km: Optional[float] = None

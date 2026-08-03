@@ -1,85 +1,17 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import dynamic from "next/dynamic";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import RaceComments from "@/components/comments/RaceComments";
 import JumpToRace from "@/components/JumpToRace";
-import { TrianglePattern } from "@/components/Patterns";
 import SessionDetail from "@/components/SessionDetail";
 import type { SessionSummary } from "@/components/SessionSummaryCard";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
-import { DATA_FROM } from "@/lib/data-coverage";
 import type { SessionResultsResponse } from "@/lib/types";
+import RoundAnalysisCharts, { type RoundTab } from "./RoundAnalysisCharts";
 
-const ChartLoading = () => (
-  <div className="h-64 animate-pulse rounded-sm bg-bg-elevated" />
-);
-
-const CrossSessionComparison = dynamic(
-  () => import("@/components/CrossSessionComparison"),
-  { loading: ChartLoading, ssr: false },
-);
-const FastestLapTimeline = dynamic(
-  () => import("@/components/FastestLapTimeline"),
-  { loading: ChartLoading, ssr: false },
-);
-const LapTimeDistributionChart = dynamic(
-  () => import("@/components/LapTimeDistributionChart"),
-  { loading: ChartLoading, ssr: false },
-);
-const LongRunPaceChart = dynamic(
-  () => import("@/components/LongRunPaceChart"),
-  {
-    loading: ChartLoading,
-    ssr: false,
-  },
-);
-const PitStopDeltaChart = dynamic(
-  () => import("@/components/PitStopDeltaChart"),
-  { loading: ChartLoading, ssr: false },
-);
-const PracticeSectorHeatmap = dynamic(
-  () => import("@/components/PracticeSectorHeatmap"),
-  { loading: ChartLoading, ssr: false },
-);
-const QualifyingProgressionChart = dynamic(
-  () => import("@/components/QualifyingProgressionChart"),
-  { loading: ChartLoading, ssr: false },
-);
-const QualifyingSectorComparison = dynamic(
-  () => import("@/components/QualifyingSectorComparison"),
-  { loading: ChartLoading, ssr: false },
-);
-const QualifyingSectorHeatmap = dynamic(
-  () => import("@/components/QualifyingSectorHeatmap"),
-  { loading: ChartLoading, ssr: false },
-);
-const RaceTrackEvolutionChart = dynamic(
-  () => import("@/components/RaceTrackEvolutionChart"),
-  { loading: ChartLoading, ssr: false },
-);
-const TrackEvolutionChart = dynamic(
-  () => import("@/components/TrackEvolutionChart"),
-  { loading: ChartLoading, ssr: false },
-);
-const TyreDegradationChart = dynamic(
-  () => import("@/components/TyreDegradationChart"),
-  { loading: ChartLoading, ssr: false },
-);
-const TyreProgrammeChart = dynamic(
-  () => import("@/components/TyreProgrammeChart"),
-  { loading: ChartLoading, ssr: false },
-);
-
-type TabType =
-  | "race"
-  | "qualifying"
-  | "sprint"
-  | "sprint-qualifying"
-  | "practice";
-
-const TAB_LABELS: Record<TabType, string> = {
+const TAB_LABELS: Record<RoundTab, string> = {
   race: "Race",
   qualifying: "Qualifying",
   sprint: "Sprint",
@@ -87,7 +19,7 @@ const TAB_LABELS: Record<TabType, string> = {
   practice: "Practice",
 };
 
-const VALID_TABS = new Set<TabType>([
+const VALID_TABS = new Set<RoundTab>([
   "race",
   "qualifying",
   "sprint",
@@ -95,8 +27,8 @@ const VALID_TABS = new Set<TabType>([
   "practice",
 ]);
 
-function parseTab(tab: string | null): TabType {
-  return tab && VALID_TABS.has(tab as TabType) ? (tab as TabType) : "race";
+function parseTab(tab: string | null): RoundTab {
+  return tab && VALID_TABS.has(tab as RoundTab) ? (tab as RoundTab) : "race";
 }
 
 async function fetchSession(
@@ -115,38 +47,6 @@ async function fetchSession(
   return res.json();
 }
 
-/**
- * A titled chart panel. Renders nothing when the season predates the data the
- * chart needs, so eras without that data show no empty placeholder.
- */
-function ChartPanel({
-  title,
-  patternId,
-  availableFrom,
-  season,
-  children,
-}: {
-  title: React.ReactNode;
-  patternId: string;
-  availableFrom: number;
-  season: number;
-  children: React.ReactNode;
-}) {
-  if (season < availableFrom) return null;
-
-  return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-      <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-        <TrianglePattern id={patternId} />
-        <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-          {title}
-        </span>
-      </div>
-      <div className="p-3 md:p-6">{children}</div>
-    </div>
-  );
-}
-
 export default function RoundContent() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -159,7 +59,7 @@ export default function RoundContent() {
   // Parse initial tab from URL
   const rawUrlTab = searchParams.get("tab");
   const urlTab = parseTab(rawUrlTab);
-  const [activeTab, setActiveTab] = useState<TabType>(urlTab);
+  const [activeTab, setActiveTab] = useState<RoundTab>(urlTab);
 
   // Scroll to top on page load
   useEffect(() => {
@@ -173,7 +73,7 @@ export default function RoundContent() {
 
   // Collapse legacy/deleted tab URLs like ?tab=strategy back to the race tab.
   useEffect(() => {
-    if (rawUrlTab && !VALID_TABS.has(rawUrlTab as TabType)) {
+    if (rawUrlTab && !VALID_TABS.has(rawUrlTab as RoundTab)) {
       router.replace(`/results/${season}/${round}`, { scroll: false });
     }
   }, [rawUrlTab, router, season, round]);
@@ -260,7 +160,7 @@ export default function RoundContent() {
   }, [fp1Data, fp2Data, fp3Data]);
 
   // Update URL when tab changes
-  const switchTab = (tab: TabType) => {
+  const switchTab = (tab: RoundTab) => {
     setActiveTab(tab);
     const url =
       tab === "race"
@@ -270,7 +170,7 @@ export default function RoundContent() {
   };
 
   // Available tabs (conditional on data)
-  const availableTabs: TabType[] = ["race", "qualifying"];
+  const availableTabs: RoundTab[] = ["race", "qualifying"];
   if (hasSprint) {
     availableTabs.push("sprint");
     if (sprintQualData) availableTabs.push("sprint-qualifying");
@@ -485,180 +385,20 @@ export default function RoundContent() {
               hideHeader={true}
               summary={activeSummary}
             />
-            {(activeTab === "qualifying" ||
-              activeTab === "sprint-qualifying") && (
-              <div className="p-3 md:p-6 space-y-4 md:space-y-6">
-                {/* Q1/Q2/Q3 Progression */}
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-                  <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                    <TrianglePattern id="quali-prog-triangles" />
-                    <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                      Q1 → Q2 → Q3 Progression
-                    </span>
-                  </div>
-                  <div className="p-3 md:p-6">
-                    <QualifyingProgressionChart
-                      qualifyingData={getSessionDetailData()}
-                    />
-                  </div>
-                </div>
-
-                <ChartPanel
-                  title="Sector Comparison"
-                  patternId="qualifying-tab-sector-triangles"
-                  availableFrom={DATA_FROM.telemetry}
-                  season={seasonNum}
-                >
-                  <QualifyingSectorComparison
-                    season={seasonNum}
-                    round={roundNum}
-                  />
-                </ChartPanel>
-
-                <ChartPanel
-                  title="Sector Heatmap — All Drivers"
-                  patternId="quali-heat-triangles"
-                  availableFrom={DATA_FROM.telemetry}
-                  season={seasonNum}
-                >
-                  <QualifyingSectorHeatmap
-                    season={seasonNum}
-                    round={roundNum}
-                  />
-                </ChartPanel>
-              </div>
-            )}
-            {activeTab === "race" && (
-              <div className="p-3 md:p-6 space-y-4 md:space-y-6">
-                <ChartPanel
-                  title="Lap Time Distribution"
-                  patternId="lap-dist-triangles"
-                  availableFrom={DATA_FROM.laps}
-                  season={seasonNum}
-                >
-                  <LapTimeDistributionChart
-                    season={seasonNum}
-                    round={roundNum}
-                  />
-                </ChartPanel>
-
-                <ChartPanel
-                  title="Fastest Lap Timeline"
-                  patternId="fastest-lap-triangles"
-                  availableFrom={DATA_FROM.laps}
-                  season={seasonNum}
-                >
-                  <FastestLapTimeline season={seasonNum} round={roundNum} />
-                </ChartPanel>
-
-                <ChartPanel
-                  title="Pit Stop Duration"
-                  patternId="pit-stop-triangles"
-                  availableFrom={DATA_FROM.pitStops}
-                  season={seasonNum}
-                >
-                  <PitStopDeltaChart season={seasonNum} round={roundNum} />
-                </ChartPanel>
-
-                <ChartPanel
-                  title="Race Pace Evolution"
-                  patternId="race-track-evo-triangles"
-                  availableFrom={DATA_FROM.telemetry}
-                  season={seasonNum}
-                >
-                  <RaceTrackEvolutionChart
-                    season={seasonNum}
-                    round={roundNum}
-                  />
-                </ChartPanel>
-
-                <ChartPanel
-                  title="Tyre Degradation"
-                  patternId="tyre-deg-triangles"
-                  availableFrom={DATA_FROM.telemetry}
-                  season={seasonNum}
-                >
-                  <TyreDegradationChart season={seasonNum} round={roundNum} />
-                </ChartPanel>
-              </div>
-            )}
-            {activeTab === "practice" && (
-              <div className="p-3 md:p-6 space-y-4 md:space-y-6">
-                <ChartPanel
-                  title={`FP${practiceSub} Long Run Pace`}
-                  patternId="long-run-triangles"
-                  availableFrom={DATA_FROM.telemetry}
-                  season={seasonNum}
-                >
-                  <LongRunPaceChart
-                    season={seasonNum}
-                    round={roundNum}
-                    practiceSession={practiceSub}
-                  />
-                </ChartPanel>
-
-                <ChartPanel
-                  title={`FP${practiceSub} Track Evolution`}
-                  patternId="track-evo-triangles"
-                  availableFrom={DATA_FROM.telemetry}
-                  season={seasonNum}
-                >
-                  <TrackEvolutionChart
-                    season={seasonNum}
-                    round={roundNum}
-                    practiceSession={practiceSub}
-                  />
-                </ChartPanel>
-
-                <ChartPanel
-                  title={`FP${practiceSub} Sector Analysis`}
-                  patternId="sector-heat-triangles"
-                  availableFrom={DATA_FROM.telemetry}
-                  season={seasonNum}
-                >
-                  <PracticeSectorHeatmap
-                    season={seasonNum}
-                    round={roundNum}
-                    practiceSession={practiceSub}
-                  />
-                </ChartPanel>
-
-                <ChartPanel
-                  title={`FP${practiceSub} Tyre Programme`}
-                  patternId="tyre-prog-triangles"
-                  availableFrom={DATA_FROM.telemetry}
-                  season={seasonNum}
-                >
-                  <TyreProgrammeChart
-                    season={seasonNum}
-                    round={roundNum}
-                    practiceSession={practiceSub}
-                  />
-                </ChartPanel>
-
-                {/* Cross-Session Comparison (only when multiple FP sessions exist) */}
-                {(fp1Data || fp2Data || fp3Data) &&
-                  [fp1Data, fp2Data, fp3Data].filter(Boolean).length >= 2 && (
-                    <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-                      <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-                        <TrianglePattern id="cross-session-triangles" />
-                        <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                          FP1 / FP2 / FP3 Session Comparison
-                        </span>
-                      </div>
-                      <div className="p-3 md:p-6">
-                        <CrossSessionComparison
-                          fp1Data={fp1Data}
-                          fp2Data={fp2Data}
-                          fp3Data={fp3Data}
-                        />
-                      </div>
-                    </div>
-                  )}
-              </div>
-            )}
+            <RoundAnalysisCharts
+              activeTab={activeTab}
+              season={seasonNum}
+              round={roundNum}
+              practiceSession={practiceSub}
+              sessionData={getSessionDetailData()}
+              fp1Data={fp1Data}
+              fp2Data={fp2Data}
+              fp3Data={fp3Data}
+            />
           </>
         )}
+
+        <RaceComments season={seasonNum} round={roundNum} />
       </div>
     </main>
   );

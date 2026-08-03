@@ -5,14 +5,26 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import ChampionshipPanelHeader from "@/components/ChampionshipPanelHeader";
+import ClassificationBadge from "@/components/ClassificationBadge";
+import DriverHeadshot from "@/components/DriverHeadshot";
 import JumpToRace from "@/components/JumpToRace";
 import PageHeader from "@/components/PageHeader";
-import { GridPattern, TrianglePattern } from "@/components/Patterns";
+import { TrianglePattern } from "@/components/Patterns";
 import PointsByRoundGraph from "@/components/PointsByRoundGraph";
+import {
+  MedalsWithBreakdown,
+  QualifyingPointsInfo,
+} from "@/components/StandingsPointsDisplay";
 import TeammateHeadToHead from "@/components/TeammateHeadToHead";
 import { useTheme } from "@/components/ThemeProvider";
 import { TrackMapCompact } from "@/components/TrackMapDisplay";
 import TiltCard from "@/components/ui/TiltCard";
+import {
+  displayedPoints,
+  displayedPosition,
+  useChampionshipDisplay,
+} from "@/hooks/useChampionshipDisplay";
 import {
   apiHeaders,
   apiUrl,
@@ -35,147 +47,6 @@ type RoundsData = {
   year: number;
   rounds: RoundSummary[];
 };
-
-function QualifyingPointsInfo({ formulaBase }: { formulaBase: number }) {
-  const maxPoints = formulaBase - 1;
-  return (
-    <div className="absolute top-3 right-3 z-30 group">
-      <button
-        type="button"
-        aria-label="How qualifying points are calculated"
-        className="w-4 h-4 rounded-full border border-border-secondary bg-bg-primary text-text-muted hover:text-purple-300 hover:border-purple-500 flex items-center justify-center text-[9px] font-bold font-mono transition-colors duration-150"
-      >
-        ?
-      </button>
-      <div className="hidden group-hover:block group-focus-within:block absolute right-0 top-full mt-2 w-56 bg-bg-primary border border-border-secondary rounded-sm p-3 shadow-lg z-30">
-        <p className="text-[10px] text-text-secondary leading-relaxed normal-case tracking-normal font-sans">
-          Unofficial <span className="font-mono text-purple-300">Lapwise</span>{" "}
-          metric for one-lap pace. Each qualifying awards{" "}
-          <span className="font-mono text-purple-300">
-            {formulaBase}−position
-          </span>{" "}
-          points (P1 = {maxPoints}, P{maxPoints} = 1). Scales to grid size so
-          every driver scores. Does not affect the championship.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-type MedalsProps = {
-  p1: number;
-  p2: number;
-  p3: number;
-  total: number;
-  name: string;
-  positionCounts: Record<string, number>;
-  mode: "race" | "qualifying";
-};
-
-function MedalsWithBreakdown({
-  p1,
-  p2,
-  p3,
-  total,
-  name,
-  positionCounts,
-  mode,
-}: MedalsProps) {
-  // For qualifying, hide medals a driver never earned. For race, always show
-  // the 1/2/3 pane when non-zero (race P1-P3 are podium positions).
-  const medals = [
-    { count: p1, icon: "🥇", label: "P1s" },
-    { count: p2, icon: "🥈", label: "P2s" },
-    { count: p3, icon: "🥉", label: "P3s" },
-  ].filter((m) => m.count > 0);
-
-  const [tooltipPos, setTooltipPos] = useState<{
-    top: number;
-    right: number;
-  } | null>(null);
-
-  const sorted = Object.entries(positionCounts)
-    .map(([pos, count]) => ({ pos: Number(pos), count }))
-    .filter((e) => e.count > 0)
-    .sort((a, b) => a.pos - b.pos);
-
-  const showTooltip = (el: HTMLElement) => {
-    const rect = el.getBoundingClientRect();
-    setTooltipPos({
-      top: rect.bottom + 8,
-      right: window.innerWidth - rect.right,
-    });
-  };
-
-  const tooltipLabel =
-    mode === "race" ? "race finishes" : "qualifying positions";
-
-  return (
-    <div className="flex items-center gap-3">
-      {medals.map((m) => (
-        <div key={m.label} className="flex flex-col items-center">
-          <span className="text-xs" title={m.label}>
-            {m.icon}
-          </span>
-          <span className="text-xs font-bold text-text-primary">{m.count}</span>
-        </div>
-      ))}
-      <div className="relative">
-        <button
-          type="button"
-          aria-label={`${name} ${tooltipLabel} breakdown`}
-          onMouseEnter={(e) => showTooltip(e.currentTarget)}
-          onMouseLeave={() => setTooltipPos(null)}
-          onFocus={(e) => showTooltip(e.currentTarget)}
-          onBlur={() => setTooltipPos(null)}
-          className="flex items-baseline gap-1 cursor-help"
-        >
-          <span className="text-[9px] text-text-muted tracking-widest font-mono">
-            PTS
-          </span>
-          <span className="text-lg font-bold text-text-primary font-mono">
-            {total}
-          </span>
-        </button>
-        {tooltipPos && (
-          <div
-            className="fixed w-36 bg-bg-primary border border-border-secondary rounded-sm p-2 shadow-lg z-50 pointer-events-none"
-            style={{ top: tooltipPos.top, right: tooltipPos.right }}
-          >
-            <p className="text-[10px] font-bold text-text-primary mb-1.5 truncate">
-              {name}
-            </p>
-            {sorted.length === 0 ? (
-              <p className="text-[10px] text-text-muted">No results</p>
-            ) : (
-              <div className="flex flex-col gap-0.5">
-                {sorted.map(({ pos, count }) => {
-                  const medal =
-                    pos === 1 ? "🥇" : pos === 2 ? "🥈" : pos === 3 ? "🥉" : "";
-                  return (
-                    <div
-                      key={pos}
-                      className="flex items-center justify-between text-[10px] text-text-secondary font-mono"
-                    >
-                      <span className="flex items-center gap-1">
-                        {medal && <span>{medal}</span>}
-                        <span>P{pos}</span>
-                      </span>
-                      <span className="text-text-primary font-bold">
-                        {count}x
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export default function ResultsPage() {
   const { theme } = useTheme();
   const params = useParams();
@@ -248,6 +119,8 @@ export default function ResultsPage() {
 
   const isLoading = standingsLoading || roundsLoading;
 
+  const championshipDisplay = useChampionshipDisplay(standings);
+
   const handleYearChange = (newYear: string) => {
     router.push(`/results/${newYear}`);
   };
@@ -271,7 +144,7 @@ export default function ResultsPage() {
     if (!standings?.drivers) return [];
     return standings.drivers
       .filter((driver) => driver.team_name === teamName)
-      .sort((a, b) => a.position - b.position);
+      .sort((a, b) => (a.position ?? 10_000) - (b.position ?? 10_000));
   };
 
   const getTeamQualifyingDrivers = (teamName: string) => {
@@ -358,15 +231,15 @@ export default function ResultsPage() {
                   formulaBase={qualifyingStandings?.formula_base ?? 21}
                 />
               )}
-              {/* Header band with Pattern A */}
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center gap-2 overflow-hidden">
-                <GridPattern id="driver-grid" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-nowrap">
-                  {sessionType === "race"
-                    ? "Driver Championship"
-                    : "Best Qualifiers (Driver)"}
-                </span>
-              </div>
+              <ChampionshipPanelHeader
+                patternId="driver-grid"
+                raceTitle="Driver Championship"
+                qualifyingTitle="Best Qualifiers (Driver)"
+                sessionType={sessionType}
+                scoring={standings?.driver_scoring}
+                mode={championshipDisplay.drivers.mode}
+                onModeChange={championshipDisplay.drivers.setMode}
+              />
               <div
                 className="overflow-y-auto"
                 style={{
@@ -375,7 +248,7 @@ export default function ResultsPage() {
                 }}
               >
                 {(sessionType === "race"
-                  ? standings?.drivers
+                  ? championshipDisplay.drivers.rows
                   : qualifyingStandings?.drivers
                 )?.map((driver, idx) => (
                   <div
@@ -384,19 +257,21 @@ export default function ResultsPage() {
                   >
                     {/* Position */}
                     <div className="text-lg font-bold text-text-muted w-8 font-mono">
-                      {driver.position}
+                      {sessionType === "race"
+                        ? displayedPosition(
+                            driver as DriverStanding,
+                            idx,
+                            championshipDisplay.drivers.mode,
+                          )
+                        : driver.position}
                     </div>
 
                     {/* Driver Photo */}
-                    {isValidHeadshotUrl(driver.headshot_url) && (
-                      <Image
-                        src={driver.headshot_url}
-                        alt={driver.full_name}
-                        width={40}
-                        height={40}
-                        className="rounded-sm object-cover border border-border-secondary"
-                      />
-                    )}
+                    <DriverHeadshot
+                      src={driver.headshot_url}
+                      fullName={driver.full_name}
+                      code={driver.driver_code}
+                    />
 
                     {/* Driver Info */}
                     <div className="flex-1 flex flex-col justify-center">
@@ -423,6 +298,13 @@ export default function ResultsPage() {
                           {driver.team_name}
                         </Link>
                       </div>
+                      {sessionType === "race" && (
+                        <ClassificationBadge
+                          status={
+                            (driver as DriverStanding).classification_status
+                          }
+                        />
+                      )}
                     </div>
 
                     {/* Results / Points */}
@@ -447,7 +329,10 @@ export default function ResultsPage() {
                         p1={(driver as DriverStanding).wins}
                         p2={(driver as DriverStanding).p2s}
                         p3={(driver as DriverStanding).p3s}
-                        total={(driver as DriverStanding).total_points}
+                        total={displayedPoints(
+                          driver as DriverStanding,
+                          championshipDisplay.drivers.mode,
+                        )}
                         name={driver.full_name}
                         positionCounts={
                           (driver as DriverStanding).position_counts
@@ -466,15 +351,15 @@ export default function ResultsPage() {
                   formulaBase={qualifyingStandings?.formula_base ?? 21}
                 />
               )}
-              {/* Header band with Pattern A */}
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center gap-2 overflow-hidden">
-                <GridPattern id="constructor-grid" />
-                <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-nowrap">
-                  {sessionType === "race"
-                    ? "Constructor Championship"
-                    : "Best Qualifiers (Constructor)"}
-                </span>
-              </div>
+              <ChampionshipPanelHeader
+                patternId="constructor-grid"
+                raceTitle="Constructor Championship"
+                qualifyingTitle="Best Qualifiers (Constructor)"
+                sessionType={sessionType}
+                scoring={standings?.constructor_scoring}
+                mode={championshipDisplay.constructors.mode}
+                onModeChange={championshipDisplay.constructors.setMode}
+              />
               <div
                 className="overflow-y-auto"
                 style={{
@@ -483,7 +368,7 @@ export default function ResultsPage() {
                 }}
               >
                 {(sessionType === "race"
-                  ? standings?.constructors
+                  ? championshipDisplay.constructors.rows
                   : qualifyingStandings?.constructors
                 )?.map((team, idx) => (
                   <div
@@ -493,7 +378,13 @@ export default function ResultsPage() {
                     <div className="flex items-center gap-2">
                       {/* Position */}
                       <div className="text-lg font-bold text-text-muted w-8 font-mono">
-                        {team.position}
+                        {sessionType === "race"
+                          ? displayedPosition(
+                              team as ConstructorStanding,
+                              idx,
+                              championshipDisplay.constructors.mode,
+                            )
+                          : team.position}
                       </div>
 
                       {/* Team Logo */}
@@ -532,20 +423,31 @@ export default function ResultsPage() {
                           }}
                         >
                           <Link
-                            href={
-                              constructorHref(team.team_name) ?? "/constructors"
-                            }
+                            href={constructorHref(team) ?? "/constructors"}
                             className="hover:text-purple-300 transition-colors duration-150"
                           >
                             {team.team_name}
                           </Link>
                         </div>
+                        {sessionType === "race" && (
+                          <ClassificationBadge
+                            status={
+                              (team as ConstructorStanding)
+                                .classification_status
+                            }
+                          />
+                        )}
                         <div className="text-xs text-text-muted">
                           {(sessionType === "race"
                             ? getTeamDrivers(team.team_name)
                             : getTeamQualifyingDrivers(team.team_name)
                           ).map((driver, driverIdx, arr) => (
-                            <span key={driver.driver_code}>
+                            <span
+                              key={
+                                driver.driver_slug ??
+                                `${driver.full_name}-${driver.team_name}`
+                              }
+                            >
                               <Link
                                 href={driverHref(driver) ?? "/drivers"}
                                 className="hover:text-purple-300 transition-colors duration-150"
@@ -585,7 +487,10 @@ export default function ResultsPage() {
                           p1={(team as ConstructorStanding).wins}
                           p2={(team as ConstructorStanding).p2s}
                           p3={(team as ConstructorStanding).p3s}
-                          total={(team as ConstructorStanding).total_points}
+                          total={displayedPoints(
+                            team as ConstructorStanding,
+                            championshipDisplay.constructors.mode,
+                          )}
                           name={team.team_name}
                           positionCounts={
                             (team as ConstructorStanding).position_counts
@@ -750,7 +655,10 @@ export default function ResultsPage() {
 
                             return (
                               <div
-                                key={driver.driver_code}
+                                key={
+                                  driver.driver_slug ??
+                                  `${driver.full_name}-${idx}`
+                                }
                                 className="flex min-w-0 flex-col items-center justify-center gap-1.5 text-center md:flex-row md:gap-1 md:text-left"
                               >
                                 <div className="relative flex w-full items-center justify-center md:w-auto md:gap-1">
@@ -763,15 +671,11 @@ export default function ResultsPage() {
                                     </span>
                                   </div>
 
-                                  {isValidHeadshotUrl(driver.headshot_url) && (
-                                    <Image
-                                      src={driver.headshot_url}
-                                      alt={driver.full_name}
-                                      width={42}
-                                      height={42}
-                                      className="h-10 w-10 rounded-sm object-cover border border-border-secondary flex-shrink-0 md:h-8 md:w-8"
-                                    />
-                                  )}
+                                  <DriverHeadshot
+                                    src={driver.headshot_url}
+                                    fullName={driver.full_name}
+                                    code={driver.driver_code}
+                                  />
                                 </div>
 
                                 <div className="flex min-w-0 items-center justify-center">

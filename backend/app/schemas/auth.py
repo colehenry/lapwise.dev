@@ -81,12 +81,14 @@ class FavoriteDriverResponse(BaseModel):
 
 class FavoriteTeamResponse(BaseModel):
     team_name: str
+    constructor_slug: str | None = None
     team_color: str | None = None
     logo_url: str | None = None
 
 
 class FavoriteCircuitResponse(BaseModel):
     circuit_id: int
+    venue_slug: str | None = None
     name: str
     location: str
     country: str

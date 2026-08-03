@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+# local design-review tooling
+/.impeccable/
+
 # next.js
 /.next/
 /out/

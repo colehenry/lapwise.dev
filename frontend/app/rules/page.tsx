@@ -61,7 +61,7 @@ export default function RulesPage() {
 
         <Rule number={2} title="No spam, self-promotion, or off-topic posts">
           Don't post to promote an unrelated account, product, or community.
-          Keep discussions about F1. Repeated off-topic posts will be removed.
+          Keep comments about F1. Repeated off-topic comments will be removed.
         </Rule>
 
         <Rule number={3} title="No harassment or personal attacks">

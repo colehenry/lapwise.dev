@@ -1,45 +1,78 @@
 """
 Comment Service
 
-Business logic for post comments.
+Business logic for race thread comments.
 """
 
 from datetime import datetime, timezone
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.comment import Comment
-from app.models.post import Post
+from app.models.race_thread import RaceThread
+from app.models.session import Session
+from app.models.user import User
 from app.models.vote import Vote
 
 
 class CommentService:
     @staticmethod
+    async def get_thread(
+        db: AsyncSession, year: int, round_num: int
+    ) -> RaceThread | None:
+        result = await db.execute(
+            select(RaceThread).where(
+                RaceThread.year == year, RaceThread.round == round_num
+            )
+        )
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_or_create_thread(
+        db: AsyncSession, year: int, round_num: int
+    ) -> RaceThread:
+        """
+        Threads are created on first comment. The round must exist in `sessions`
+        so a comment cannot open a thread on a race that was never run.
+        """
+        thread = await CommentService.get_thread(db, year, round_num)
+        if thread:
+            return thread
+
+        round_exists = await db.execute(
+            select(Session.id)
+            .where(Session.year == year, Session.round == round_num)
+            .limit(1)
+        )
+        if not round_exists.scalar_one_or_none():
+            raise ValueError("Race not found")
+
+        thread = RaceThread(year=year, round=round_num)
+        db.add(thread)
+        await db.commit()
+        await db.refresh(thread)
+        return thread
+
+    @staticmethod
     async def create_comment(
         db: AsyncSession,
-        post_id: int,
+        year: int,
+        round_num: int,
         author_id: int,
         body: str,
         parent_comment_id: int | None = None,
     ) -> Comment:
-        # Verify post exists and isn't locked
-        post_result = await db.execute(
-            select(Post).where(Post.id == post_id, Post.deleted_at.is_(None))
-        )
-        post = post_result.scalar_one_or_none()
-        if not post:
-            raise ValueError("Post not found")
-        if post.is_locked:
-            raise PermissionError("Post is locked")
+        thread = await CommentService.get_or_create_thread(db, year, round_num)
+        if thread.is_locked:
+            raise PermissionError("Thread is locked")
 
-        # Verify parent comment exists if provided
         if parent_comment_id:
             parent_result = await db.execute(
                 select(Comment).where(
                     Comment.id == parent_comment_id,
-                    Comment.post_id == post_id,
+                    Comment.thread_id == thread.id,
                     Comment.deleted_at.is_(None),
                 )
             )
@@ -47,15 +80,13 @@ class CommentService:
                 raise ValueError("Parent comment not found")
 
         comment = Comment(
-            post_id=post_id,
+            thread_id=thread.id,
             author_id=author_id,
             body=body,
             parent_comment_id=parent_comment_id,
         )
         db.add(comment)
-
-        # Increment post comment count
-        post.comment_count = post.comment_count + 1
+        thread.comment_count = thread.comment_count + 1
 
         await db.commit()
         await db.refresh(comment, ["author"])
@@ -64,13 +95,22 @@ class CommentService:
     @staticmethod
     async def get_comments(
         db: AsyncSession,
-        post_id: int,
+        year: int,
+        round_num: int,
         cursor: str | None = None,
         limit: int = 50,
         sort: str = "new",
         current_user_id: int | None = None,
     ) -> dict:
-        # Get top-level comments with their replies
+        thread = await CommentService.get_thread(db, year, round_num)
+        if not thread:
+            return {
+                "comments": [],
+                "next_cursor": None,
+                "comment_count": 0,
+                "is_locked": False,
+            }
+
         query = (
             select(Comment)
             .options(
@@ -78,7 +118,7 @@ class CommentService:
                 selectinload(Comment.replies).selectinload(Comment.author),
             )
             .where(
-                Comment.post_id == post_id,
+                Comment.thread_id == thread.id,
                 Comment.parent_comment_id.is_(None),
                 Comment.deleted_at.is_(None),
             )
@@ -130,7 +170,7 @@ class CommentService:
                     replies.append(
                         {
                             "id": r.id,
-                            "post_id": r.post_id,
+                            "thread_id": r.thread_id,
                             "parent_comment_id": r.parent_comment_id,
                             "body": r.body,
                             "vote_count": r.vote_count,
@@ -144,7 +184,7 @@ class CommentService:
 
             return {
                 "id": c.id,
-                "post_id": c.post_id,
+                "thread_id": c.thread_id,
                 "parent_comment_id": c.parent_comment_id,
                 "body": c.body,
                 "vote_count": c.vote_count,
@@ -158,40 +198,97 @@ class CommentService:
         items = [serialize_comment(c) for c in comments]
         next_cursor = str(comments[-1].id) if has_more and comments else None
 
-        return {"comments": items, "next_cursor": next_cursor}
+        return {
+            "comments": items,
+            "next_cursor": next_cursor,
+            "comment_count": thread.comment_count,
+            "is_locked": thread.is_locked,
+        }
+
+    @staticmethod
+    async def get_user_comments(
+        db: AsyncSession, username: str, limit: int = 50
+    ) -> list:
+        """Recent comments by one author, for public profiles."""
+        result = await db.execute(
+            select(Comment, RaceThread)
+            .join(RaceThread, Comment.thread_id == RaceThread.id)
+            .join(User, Comment.author_id == User.id)
+            .where(User.username == username, Comment.deleted_at.is_(None))
+            .order_by(desc(Comment.created_at))
+            .limit(limit)
+        )
+
+        items = []
+        for comment, thread in result.all():
+            items.append(
+                {
+                    "id": comment.id,
+                    "body": comment.body,
+                    "vote_count": comment.vote_count,
+                    "year": thread.year,
+                    "round": thread.round,
+                    "created_at": comment.created_at,
+                }
+            )
+        return items
+
+    @staticmethod
+    async def count_comments(db: AsyncSession, since: datetime | None = None) -> int:
+        query = select(func.count(Comment.id)).where(Comment.deleted_at.is_(None))
+        if since:
+            query = query.where(Comment.created_at >= since)
+        result = await db.execute(query)
+        return result.scalar() or 0
 
     @staticmethod
     async def get_admin_comments(
-        db: AsyncSession, post_id: int, include_deleted: bool = True
-    ) -> list:
+        db: AsyncSession,
+        cursor: str | None = None,
+        limit: int = 50,
+        include_deleted: bool = True,
+    ) -> dict:
         query = (
-            select(Comment)
+            select(Comment, RaceThread)
+            .join(RaceThread, Comment.thread_id == RaceThread.id)
             .options(selectinload(Comment.author))
-            .where(Comment.post_id == post_id, Comment.parent_comment_id.is_(None))
-            .order_by(Comment.created_at)
+            .order_by(desc(Comment.created_at))
         )
         if not include_deleted:
             query = query.where(Comment.deleted_at.is_(None))
 
-        result = await db.execute(query)
-        comments = list(result.scalars().unique().all())
+        if cursor:
+            try:
+                query = query.where(Comment.id < int(cursor))
+            except ValueError:
+                pass
+
+        result = await db.execute(query.limit(limit + 1))
+        rows = list(result.unique().all())
+
+        has_more = len(rows) > limit
+        if has_more:
+            rows = rows[:limit]
 
         items = []
-        for c in comments:
+        for comment, thread in rows:
             items.append(
                 {
-                    "id": c.id,
-                    "post_id": c.post_id,
-                    "parent_comment_id": c.parent_comment_id,
-                    "body": c.body,
-                    "vote_count": c.vote_count,
-                    "author": c.author,
-                    "deleted_at": c.deleted_at,
-                    "created_at": c.created_at,
-                    "updated_at": c.updated_at,
+                    "id": comment.id,
+                    "parent_comment_id": comment.parent_comment_id,
+                    "body": comment.body,
+                    "vote_count": comment.vote_count,
+                    "author": comment.author,
+                    "year": thread.year,
+                    "round": thread.round,
+                    "deleted_at": comment.deleted_at,
+                    "created_at": comment.created_at,
+                    "updated_at": comment.updated_at,
                 }
             )
-        return items
+
+        next_cursor = str(rows[-1][0].id) if has_more and rows else None
+        return {"comments": items, "next_cursor": next_cursor}
 
     @staticmethod
     async def restore_comment(db: AsyncSession, comment_id: int) -> Comment | None:
@@ -201,10 +298,12 @@ class CommentService:
             return None
         comment.deleted_at = None
 
-        post_result = await db.execute(select(Post).where(Post.id == comment.post_id))
-        post = post_result.scalar_one_or_none()
-        if post:
-            post.comment_count = post.comment_count + 1
+        thread_result = await db.execute(
+            select(RaceThread).where(RaceThread.id == comment.thread_id)
+        )
+        thread = thread_result.scalar_one_or_none()
+        if thread:
+            thread.comment_count = thread.comment_count + 1
 
         await db.commit()
         return comment
@@ -246,11 +345,24 @@ class CommentService:
 
         comment.deleted_at = datetime.now(timezone.utc)
 
-        # Decrement post comment count
-        post_result = await db.execute(select(Post).where(Post.id == comment.post_id))
-        post = post_result.scalar_one_or_none()
-        if post and post.comment_count > 0:
-            post.comment_count = post.comment_count - 1
+        thread_result = await db.execute(
+            select(RaceThread).where(RaceThread.id == comment.thread_id)
+        )
+        thread = thread_result.scalar_one_or_none()
+        if thread and thread.comment_count > 0:
+            thread.comment_count = thread.comment_count - 1
 
         await db.commit()
         return True
+
+    @staticmethod
+    async def set_thread_lock(
+        db: AsyncSession, year: int, round_num: int, is_locked: bool
+    ) -> RaceThread | None:
+        thread = await CommentService.get_thread(db, year, round_num)
+        if not thread:
+            return None
+        thread.is_locked = is_locked
+        await db.commit()
+        await db.refresh(thread)
+        return thread

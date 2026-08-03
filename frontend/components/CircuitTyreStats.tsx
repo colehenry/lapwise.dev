@@ -7,6 +7,7 @@ import { COMPOUND_COLORS as COMPOUND } from "@/lib/palette";
 import type { CircuitTyreStatsResponse } from "@/lib/types";
 
 const COMPOUND_COLORS: Record<string, { bar: string; text: string }> = {
+  SUPERSOFT: { bar: COMPOUND.SUPERSOFT, text: "text-purple-400" },
   SOFT: { bar: COMPOUND.SOFT, text: "text-red-400" },
   MEDIUM: { bar: COMPOUND.MEDIUM, text: "text-yellow-400" },
   HARD: { bar: COMPOUND.HARD, text: "text-text-secondary" },
@@ -101,7 +102,8 @@ export default function CircuitTyreStats({ circuitId }: CircuitTyreStatsProps) {
                   className="h-full rounded-full transition-all duration-700"
                   style={{
                     width: `${widthPercent}%`,
-                    backgroundColor: `${colors.bar}88`,
+                    backgroundColor: colors.bar,
+                    opacity: 0.72,
                   }}
                 />
               </div>

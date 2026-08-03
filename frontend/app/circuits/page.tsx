@@ -33,7 +33,7 @@ async function fetchCircuits(): Promise<CircuitsResponse> {
 function CircuitCard({ circuit }: { circuit: CircuitInfo }) {
   return (
     <TiltCard>
-      <Link href={`/circuits/${circuit.id}`} className="block h-full">
+      <Link href={`/circuits/${circuit.venue_slug}`} className="block h-full">
         <div className="relative border border-border-primary rounded-sm p-4 hover:border-purple-500 transition-all duration-200 bg-bg-tertiary h-full">
           <div className="flex items-center gap-4">
             {/* Track map */}

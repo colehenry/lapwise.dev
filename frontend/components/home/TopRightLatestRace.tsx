@@ -93,7 +93,7 @@ export default function TopRightLatestRace() {
             <div className="space-y-2.5 mb-5 md:space-y-3 md:mb-8">
               {data.podium.map((driver, idx) => (
                 <div
-                  key={driver.driver_code}
+                  key={driver.driver_slug ?? `${driver.full_name}-${idx}`}
                   className="flex items-center gap-3"
                 >
                   <span className="w-4 text-[10px] font-bold text-text-muted font-mono shrink-0">
@@ -154,7 +154,7 @@ export default function TopRightLatestRace() {
 
             <div className="relative">
               <Link
-                href="/discussions"
+                href={`/results/${currentYear}/${data.round}#comments`}
                 className="text-[10px] font-bold text-text-muted uppercase tracking-widest hover:text-purple-400 transition-colors flex items-center gap-2 group/link whitespace-nowrap"
                 onMouseEnter={() => setShowDiscussionTooltip(true)}
                 onMouseLeave={() => setShowDiscussionTooltip(false)}

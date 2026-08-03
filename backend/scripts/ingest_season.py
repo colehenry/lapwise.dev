@@ -158,7 +158,7 @@ def main():
 
             # 1. Ingest Circuit (once per event)
             try:
-                circuit_id = ingest_circuit(db, event)
+                circuit_id = ingest_circuit(db, event, season_year, round_num)
             except Exception as e:
                 print(f"❌ Failed to ingest circuit for {event_name}: {e}")
                 if strict_mode:
@@ -270,6 +270,7 @@ def main():
                         print(f"  ℹ️  No telemetry available for {season_year}")
 
                 except Exception as e:
+                    db.rollback()
                     print(f"  ❌ Failed to ingest {session_type} for {event_name}: {e}")
                     import traceback
 

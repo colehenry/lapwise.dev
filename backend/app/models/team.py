@@ -6,7 +6,7 @@ Teams can change names, colors, and identities between years
 (e.g., Racing Point → Aston Martin in 2021).
 """
 
-from sqlalchemy import Column, Index, Integer, String, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Index, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -28,17 +28,23 @@ class Team(Base):
     # Year identification (NEW - teams change per year)
     year = Column(Integer, nullable=False, index=True)
 
+    constructor_id = Column(
+        Integer, ForeignKey("constructors.id", ondelete="RESTRICT"), nullable=False
+    )
+
     # Team information
     name = Column(String, nullable=False)  # "Red Bull Racing"
+    source_name = Column(String, nullable=True)
     team_color = Column(String(6), nullable=True)  # Hex without #: "3671C6"
     logo_url = Column(String, nullable=True)  # Wikipedia or other logo URL
 
     # Relationships
     session_results = relationship("SessionResult", back_populates="team")
+    constructor = relationship("Constructor", back_populates="teams")
 
     # Constraints
     __table_args__ = (
-        UniqueConstraint("year", "name", name="uq_team_year_name"),
+        UniqueConstraint("year", "constructor_id", name="uq_team_year_constructor"),
         Index("idx_team_year", "year"),
     )
 

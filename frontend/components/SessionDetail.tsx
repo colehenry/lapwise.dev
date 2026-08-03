@@ -13,6 +13,7 @@ import {
   getTeamFlagEmoji,
 } from "@/lib/flags";
 import type { SessionResultsResponse } from "@/lib/types";
+import DriverHeadshot from "./DriverHeadshot";
 import LapTimeByLapGraph from "./LapTimeByLapGraph";
 import { GridPattern, TrianglePattern } from "./Patterns";
 import QualifyingSpreadChart from "./QualifyingSpreadChart";
@@ -94,7 +95,9 @@ export default function SessionDetail({
     session.circuit.location,
   );
   const compactLocation = dedupeCommaSeparated(session.circuit.location);
-  const sessionCircuitHref = circuitHref(session.circuit.id);
+  const sessionCircuitHref = circuitHref(
+    session.circuit.venue_slug ?? session.circuit.id,
+  );
 
   return (
     <main className={hideHeader ? "" : "min-h-screen bg-bg-secondary"}>
@@ -383,15 +386,13 @@ export default function SessionDetail({
                     {/* Driver */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        {isValidHeadshotUrl(result.headshot_url) && (
-                          <Image
-                            src={result.headshot_url || ""}
-                            alt={result.driver.full_name}
-                            width={36}
-                            height={36}
-                            className="rounded-sm object-cover border border-border-secondary hidden sm:block"
-                          />
-                        )}
+                        <DriverHeadshot
+                          src={result.headshot_url}
+                          fullName={result.driver.full_name}
+                          code={result.driver.driver_code}
+                          size={36}
+                          className="hidden sm:block"
+                        />
                         <div className="flex flex-col">
                           <Link
                             href={driverHref(result.driver) ?? "/drivers"}
@@ -414,8 +415,7 @@ export default function SessionDetail({
                           </Link>
                           <Link
                             href={
-                              constructorHref(result.team.name) ??
-                              "/constructors"
+                              constructorHref(result.team) ?? "/constructors"
                             }
                             className="text-[10px] font-mono text-text-muted md:hidden hover:text-purple-300 transition-colors duration-150"
                           >
@@ -428,9 +428,7 @@ export default function SessionDetail({
                     {/* Constructor */}
                     <td className="px-4 py-3 hidden md:table-cell">
                       <Link
-                        href={
-                          constructorHref(result.team.name) ?? "/constructors"
-                        }
+                        href={constructorHref(result.team) ?? "/constructors"}
                         className="text-xs font-medium hover:text-purple-300 transition-colors duration-150 flex items-center gap-2"
                         style={{
                           color:

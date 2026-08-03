@@ -14,17 +14,15 @@ from app.auth import get_current_admin
 from app.database import get_db
 from app.models.user import User
 from app.schemas.admin import (
-    AdminCommentListItem,
+    AdminCommentListResponse,
     AdminDashboardStats,
-    AdminPostListItem,
-    AdminPostListResponse,
     AdminUserListResponse,
     AdminUserUpdateRoleRequest,
     AdminUserUpdateStatusRequest,
 )
 from app.schemas.auth import UserProfile
+from app.schemas.comment import ThreadLockRequest
 from app.services.comment_service import CommentService
-from app.services.post_service import PostService
 from app.services.user_service import UserService
 
 router = APIRouter()
@@ -53,7 +51,7 @@ async def get_dashboard_stats(
     since = _since(period)
     user_count = await UserService.count_users(db, since=since)
     active_users = await UserService.count_active_users(db, since=since)
-    post_count = await PostService.count_posts(db, since=since)
+    comment_count = await CommentService.count_comments(db, since=since)
     total_ai_queries = await UserService.sum_ai_queries(db)
     recent_activity_raw = await UserService.get_recent_login_activity(db, limit=10)
 
@@ -73,7 +71,7 @@ async def get_dashboard_stats(
     return {
         "user_count": user_count,
         "active_users": active_users,
-        "post_count": post_count,
+        "comment_count": comment_count,
         "total_ai_queries": total_ai_queries,
         "recent_activity": recent_activity,
     }
@@ -122,56 +120,31 @@ async def update_user_role(
     return UserProfile.model_validate(user)
 
 
-@router.get("/posts", response_model=AdminPostListResponse)
-async def list_posts_admin(
-    page: int = Query(1, ge=1),
-    size: int = Query(20, ge=1, le=100),
-    query: str | None = None,
-    status: str = Query("all", pattern="^(all|active|removed)$"),
+@router.get("/comments", response_model=AdminCommentListResponse)
+async def list_comments_admin(
+    cursor: str | None = Query(None),
+    limit: int = Query(50, ge=1, le=100),
+    include_deleted: bool = Query(True),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_admin),
 ):
-    skip = (page - 1) * size
-    result = await PostService.get_admin_posts(
-        db, skip=skip, limit=size, query=query, status=status
+    return await CommentService.get_admin_comments(
+        db, cursor=cursor, limit=limit, include_deleted=include_deleted
     )
-    posts = [AdminPostListItem.model_validate(p) for p in result["posts"]]
-    return {"posts": posts, "total": result["total"], "page": page, "size": size}
 
 
-@router.delete("/posts/{post_id}", status_code=204)
-async def admin_delete_post(
-    post_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_admin: User = Depends(get_current_admin),
-):
-    deleted = await PostService.delete_post(
-        db, post_id, current_admin.id, is_admin=True
-    )
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Post not found")
-
-
-@router.put("/posts/{post_id}/restore")
-async def admin_restore_post(
-    post_id: int,
+@router.put("/races/{year}/{round_num}/lock")
+async def admin_lock_thread(
+    year: int,
+    round_num: int,
+    data: ThreadLockRequest,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_admin),
 ):
-    post = await PostService.restore_post(db, post_id)
-    if not post:
-        raise HTTPException(status_code=404, detail="Post not found")
-    return {"id": post.id, "deleted_at": post.deleted_at}
-
-
-@router.get("/posts/{post_id}/comments", response_model=list[AdminCommentListItem])
-async def list_post_comments_admin(
-    post_id: int,
-    db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_admin),
-):
-    items = await CommentService.get_admin_comments(db, post_id, include_deleted=True)
-    return [AdminCommentListItem.model_validate(c) for c in items]
+    thread = await CommentService.set_thread_lock(db, year, round_num, data.is_locked)
+    if not thread:
+        raise HTTPException(status_code=404, detail="Thread not found")
+    return {"year": thread.year, "round": thread.round, "is_locked": thread.is_locked}
 
 
 @router.delete("/comments/{comment_id}", status_code=204)

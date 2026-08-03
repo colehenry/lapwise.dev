@@ -1,8 +1,8 @@
 """
 Single-Session Ingestion Pipeline
 
-Ingests data for one specific session, generates AI summary, and creates
-an automated discussion post. Designed for the automated GitHub Actions pipeline.
+Ingests data for one specific session and generates its AI summary.
+Designed for the automated GitHub Actions pipeline.
 
 Uses append-only mode: skips sessions that already have results.
 On retry (session exists but no results), wipes and re-ingests.
@@ -34,7 +34,6 @@ from scripts.ingest import (
     ingest_race_control_messages,
 )
 from scripts.ingest.highlights import ingest_highlights
-from scripts.ingest.auto_post import create_auto_post
 from app.services.summary_service import SummaryService
 from app.models import Lap, SessionResult
 
@@ -127,7 +126,7 @@ def main():
             sys.exit(0)
 
         # 1. Ingest circuit
-        circuit_id = ingest_circuit(db, event)
+        circuit_id = ingest_circuit(db, event, year, round_num)
 
         # 2. Ingest session metadata
         session_id, should_process = ingest_session_metadata(
@@ -136,8 +135,8 @@ def main():
 
         if not should_process:
             print("✅ Session already fully ingested, skipping.")
-            # Still try summary + post if missing
-            _generate_summary_and_post(db, session_id)
+            # Still try the summary if missing
+            _generate_summary(db, session_id)
             db.close()
             return
 
@@ -184,8 +183,8 @@ def main():
         print("  🎬 Searching for highlights...")
         ingest_highlights(db, year, round_num=round_num)
 
-        # 7. Generate summary + auto-post
-        _generate_summary_and_post(db, session_id)
+        # 7. Generate AI summary
+        _generate_summary(db, session_id)
 
         print("\n✨ Pipeline complete!")
 
@@ -199,17 +198,12 @@ def main():
         db.close()
 
 
-def _generate_summary_and_post(db, session_id):
-    """Generate AI summary and create auto-post if not already done."""
+def _generate_summary(db, session_id):
+    """Generate the AI session summary shown on the round page."""
     print("  🤖 Generating AI summary...")
     summary = SummaryService.generate_summary(db, session_id)
 
-    if summary and not summary.post_id:
-        print("  📝 Creating discussion post...")
-        create_auto_post(db, session_id, summary)
-    elif summary and summary.post_id:
-        print(f"  ✓ Post already exists (post_id={summary.post_id})")
-    else:
+    if not summary:
         print("  ℹ️  No summary generated (API key may not be set)")
 
 
