@@ -73,7 +73,9 @@ def make_payload(n_frames: int = 100) -> dict:
             for code in DRIVERS
         },
         "frames": frames,
-        "race_control": [{"t": 0.0, "category": None, "message": "x", "driver_number": None}],
+        "race_control": [
+            {"t": 0.0, "category": None, "message": "x", "driver_number": None}
+        ],
     }
 
 
