@@ -832,7 +832,11 @@ export default function TyreDegradationChart({
       <div className="relative" style={{ minHeight: "300px" }}>
         {chartData.data.length > 0 ? (
           <MobileChartFrame height={300} logicalWidth={860}>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer
+              width="100%"
+              height={300}
+              initialDimension={{ width: 860, height: 300 }}
+            >
               <ComposedChart
                 data={chartData.data}
                 margin={{ top: 10, right: 20, left: 60, bottom: 30 }}

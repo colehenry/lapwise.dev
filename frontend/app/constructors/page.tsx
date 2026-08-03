@@ -39,7 +39,7 @@ async function fetchAllConstructors(
 
 function ConstructorCard({ team }: { team: ConstructorListItem }) {
   const { theme } = useTheme();
-  const teamUrl = constructorHref(team.team_name) ?? "/constructors";
+  const teamUrl = constructorHref(team) ?? "/constructors";
   const isActive = team.latest_season === CURRENT_YEAR;
   const teamColor = team.team_color
     ? `#${team.team_color}`

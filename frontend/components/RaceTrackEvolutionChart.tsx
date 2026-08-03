@@ -374,7 +374,11 @@ export default function RaceTrackEvolutionChart({
       </div>
 
       <MobileChartFrame height={280} logicalWidth={820}>
-        <ResponsiveContainer width="100%" height={280}>
+        <ResponsiveContainer
+          width="100%"
+          height={280}
+          initialDimension={{ width: 820, height: 280 }}
+        >
           <ScatterChart margin={{ top: 4, right: 16, left: 16, bottom: 20 }}>
             <CartesianGrid
               strokeDasharray="3 3"

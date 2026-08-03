@@ -15,6 +15,7 @@ from sqlalchemy.orm import selectinload
 from app.models.circuit import Circuit
 from app.models.driver import Driver
 from app.models.email_verification_token import EmailVerificationToken
+from app.models.identity import CircuitVenue, Constructor, ConstructorExternalId
 from app.models.password_reset_token import PasswordResetToken
 from app.models.team import Team
 from app.models.user import User
@@ -261,9 +262,29 @@ class UserService:
                 .limit(1)
             )
             t = team.scalar_one_or_none()
+            if not t:
+                t = await db.scalar(
+                    select(Team)
+                    .join(Constructor, Constructor.id == Team.constructor_id)
+                    .join(
+                        ConstructorExternalId,
+                        ConstructorExternalId.constructor_id == Constructor.id,
+                    )
+                    .where(
+                        ConstructorExternalId.source == "legacy-name",
+                        ConstructorExternalId.external_id
+                        == user.favorite_team_name.lower(),
+                    )
+                    .order_by(Team.year.desc())
+                    .limit(1)
+                )
             if t:
+                constructor_slug = await db.scalar(
+                    select(Constructor.slug).where(Constructor.id == t.constructor_id)
+                )
                 result["favorite_team"] = FavoriteTeamResponse(
                     team_name=t.name,
+                    constructor_slug=constructor_slug,
                     team_color=t.team_color,
                     logo_url=t.logo_url,
                 )
@@ -274,8 +295,12 @@ class UserService:
             )
             c = circuit.scalar_one_or_none()
             if c:
+                venue_slug = await db.scalar(
+                    select(CircuitVenue.slug).where(CircuitVenue.id == c.venue_id)
+                )
                 result["favorite_circuit"] = FavoriteCircuitResponse(
                     circuit_id=c.id,
+                    venue_slug=venue_slug,
                     name=c.name,
                     location=c.location,
                     country=c.country,

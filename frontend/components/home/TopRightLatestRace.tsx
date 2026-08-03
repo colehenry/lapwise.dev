@@ -93,7 +93,7 @@ export default function TopRightLatestRace() {
             <div className="space-y-2.5 mb-5 md:space-y-3 md:mb-8">
               {data.podium.map((driver, idx) => (
                 <div
-                  key={driver.driver_code}
+                  key={driver.driver_slug ?? `${driver.full_name}-${idx}`}
                   className="flex items-center gap-3"
                 >
                   <span className="w-4 text-[10px] font-bold text-text-muted font-mono shrink-0">

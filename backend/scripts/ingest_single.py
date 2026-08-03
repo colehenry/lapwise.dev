@@ -126,7 +126,7 @@ def main():
             sys.exit(0)
 
         # 1. Ingest circuit
-        circuit_id = ingest_circuit(db, event)
+        circuit_id = ingest_circuit(db, event, year, round_num)
 
         # 2. Ingest session metadata
         session_id, should_process = ingest_session_metadata(

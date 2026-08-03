@@ -230,10 +230,7 @@ export default function SettingsPage() {
               <p className="text-xs text-text-muted">Favorite Team</p>
               {user.favorite_team ? (
                 <Link
-                  href={
-                    constructorHref(user.favorite_team.team_name) ??
-                    "/constructors"
-                  }
+                  href={constructorHref(user.favorite_team) ?? "/constructors"}
                   className="text-sm text-text-primary hover:text-purple-300 transition-colors"
                 >
                   {user.favorite_team.team_name}
@@ -264,7 +261,10 @@ export default function SettingsPage() {
               {user.favorite_circuit ? (
                 <Link
                   href={
-                    circuitHref(user.favorite_circuit.circuit_id) ?? "/circuits"
+                    circuitHref(
+                      user.favorite_circuit.venue_slug ??
+                        user.favorite_circuit.circuit_id,
+                    ) ?? "/circuits"
                   }
                   className="text-sm text-text-primary hover:text-purple-300 transition-colors"
                 >

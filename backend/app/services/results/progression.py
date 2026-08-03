@@ -1,5 +1,6 @@
 """Progression service: cumulative points progression across a season."""
 
+from datetime import date
 from typing import Optional
 
 from sqlalchemy import case, func, select
@@ -7,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import (
     Circuit,
+    ConstructorChampionshipStanding,
     Driver,
+    DriverChampionshipStanding,
     Session,
     SessionResult,
     Team,
@@ -18,9 +21,7 @@ from app.schemas.result import (
     PointsProgressionResponse,
     PointsProgressionRound,
 )
-from app.services.results.common import (
-    _make_slug,
-)
+from app.services.championship_errors import MissingCanonicalStandingsError
 
 
 class ProgressionService:
@@ -77,6 +78,7 @@ class ProgressionService:
             select(
                 Driver.id.label("driver_id"),
                 Driver.driver_code,
+                Driver.slug,
                 Driver.jolpica_id,
                 Driver.full_name,
                 Team.name.label("team_name"),
@@ -133,7 +135,7 @@ class ProgressionService:
             if key not in drivers_dict:
                 drivers_dict[key] = {
                     "driver_code": row.driver_code or row.full_name,
-                    "driver_slug": _make_slug(row.jolpica_id, row.full_name),
+                    "driver_slug": row.slug,
                     "full_name": row.full_name,
                     "team_name": row.team_name,
                     "team_color": row.team_color,
@@ -182,18 +184,17 @@ class ProgressionService:
 
             driver_data["progression"] = progression
             del driver_data["sessions_data"]
-            del driver_data["final_score"]
 
-        # Sort
         sorted_drivers = sorted(
-            drivers_dict.values(),
-            key=lambda d: d["progression"][-1].cumulative_points,
+            drivers_dict.items(),
+            key=lambda item: item[1]["final_score"],
             reverse=True,
         )
-        for idx, driver_data in enumerate(sorted_drivers):
+        for idx, (_, driver_data) in enumerate(sorted_drivers):
             driver_data["final_position"] = idx + 1
+            del driver_data["final_score"]
 
-        drivers = [DriverProgressionData(**data) for data in drivers_dict.values()]
+        drivers = [DriverProgressionData(**data) for _, data in sorted_drivers]
 
         return PointsProgressionResponse(
             year=season, type="drivers", drivers=drivers, constructors=None
@@ -223,6 +224,7 @@ class ProgressionService:
 
         query = (
             select(
+                Team.id.label("team_id"),
                 Team.name.label("team_name"),
                 Team.team_color,
                 Session.round,
@@ -265,7 +267,7 @@ class ProgressionService:
 
         teams_dict = {}
         for row in rows:
-            key = row.team_name
+            key = row.team_id
             if key not in teams_dict:
                 teams_dict[key] = {
                     "team_name": row.team_name,
@@ -319,16 +321,14 @@ class ProgressionService:
             del team_data["sessions_data"]
 
         sorted_teams = sorted(
-            teams_dict.values(),
-            key=lambda t: t["progression"][-1].cumulative_points,
+            teams_dict.items(),
+            key=lambda item: item[1]["progression"][-1].cumulative_points,
             reverse=True,
         )
-        for idx, team_data in enumerate(sorted_teams):
+        for idx, (_, team_data) in enumerate(sorted_teams):
             team_data["final_position"] = idx + 1
 
-        constructors = [
-            ConstructorProgressionData(**data) for data in teams_dict.values()
-        ]
+        constructors = [ConstructorProgressionData(**data) for _, data in sorted_teams]
 
         return PointsProgressionResponse(
             year=season, type="constructors", drivers=None, constructors=constructors
@@ -342,6 +342,7 @@ class ProgressionService:
             select(
                 Driver.id.label("driver_id"),
                 Driver.driver_code,
+                Driver.slug,
                 Driver.jolpica_id,
                 Driver.full_name,
                 Team.team_color,
@@ -380,7 +381,6 @@ class ProgressionService:
         if not rows:
             return None
 
-        # Get all sessions
         sessions_query = (
             select(Session.round, Session.event_name, Session.session_type)
             .where(Session.year == season)
@@ -393,14 +393,13 @@ class ProgressionService:
             for row in sessions_result.all()
         ]
 
-        # Group by driver ID (integer PK) — driver_code may be NULL for pre-2003 drivers
         drivers_dict = {}
         for row in rows:
             key = row.driver_id
             if key not in drivers_dict:
                 drivers_dict[key] = {
                     "driver_code": row.driver_code or row.full_name,
-                    "driver_slug": _make_slug(row.jolpica_id, row.full_name),
+                    "driver_slug": row.slug,
                     "full_name": row.full_name,
                     "team_color": row.team_color,
                     "sessions_data": {},
@@ -411,7 +410,6 @@ class ProgressionService:
                 row.cumulative_points
             )
 
-        # Build progression
         for driver_data in drivers_dict.values():
             progression = [
                 PointsProgressionRound(
@@ -443,16 +441,33 @@ class ProgressionService:
             driver_data["progression"] = progression
             del driver_data["sessions_data"]
 
-        # Sort
+        official_rows = (
+            await db.execute(
+                select(
+                    DriverChampionshipStanding.driver_id,
+                    DriverChampionshipStanding.position,
+                    DriverChampionshipStanding.is_final,
+                ).where(DriverChampionshipStanding.year == season)
+            )
+        ).all()
+        if season < date.today().year and not any(
+            row.is_final for row in official_rows
+        ):
+            raise MissingCanonicalStandingsError(
+                f"Completed driver season {season} is missing final standings"
+            )
+        official_positions = {row.driver_id: row.position for row in official_rows}
         sorted_drivers = sorted(
-            drivers_dict.values(),
-            key=lambda d: d["progression"][-1].cumulative_points,
-            reverse=True,
+            drivers_dict.items(),
+            key=lambda item: (
+                official_positions.get(item[0], 10_000),
+                -item[1]["progression"][-1].cumulative_points,
+            ),
         )
-        for idx, driver_data in enumerate(sorted_drivers):
-            driver_data["final_position"] = idx + 1
+        for idx, (driver_id, driver_data) in enumerate(sorted_drivers):
+            driver_data["final_position"] = official_positions.get(driver_id, idx + 1)
 
-        drivers = [DriverProgressionData(**data) for data in drivers_dict.values()]
+        drivers = [DriverProgressionData(**data) for _, data in sorted_drivers]
 
         return PointsProgressionResponse(
             year=season, type="drivers", drivers=drivers, constructors=None
@@ -464,6 +479,7 @@ class ProgressionService:
     ) -> Optional[PointsProgressionResponse]:
         query = (
             select(
+                Team.id.label("team_id"),
                 Team.name.label("team_name"),
                 Team.team_color,
                 Session.round,
@@ -506,7 +522,7 @@ class ProgressionService:
 
         teams_dict = {}
         for row in rows:
-            key = row.team_name
+            key = row.team_id
             if key not in teams_dict:
                 teams_dict[key] = {
                     "team_name": row.team_name,
@@ -550,17 +566,33 @@ class ProgressionService:
             team_data["progression"] = progression
             del team_data["sessions_data"]
 
+        official_rows = (
+            await db.execute(
+                select(
+                    ConstructorChampionshipStanding.team_id,
+                    ConstructorChampionshipStanding.position,
+                    ConstructorChampionshipStanding.is_final,
+                ).where(ConstructorChampionshipStanding.year == season)
+            )
+        ).all()
+        if 1958 <= season < date.today().year and not any(
+            row.is_final for row in official_rows
+        ):
+            raise MissingCanonicalStandingsError(
+                f"Completed constructor season {season} is missing final standings"
+            )
+        official_positions = {row.team_id: row.position for row in official_rows}
         sorted_teams = sorted(
-            teams_dict.values(),
-            key=lambda t: t["progression"][-1].cumulative_points,
-            reverse=True,
+            teams_dict.items(),
+            key=lambda item: (
+                official_positions.get(item[0], 10_000),
+                -item[1]["progression"][-1].cumulative_points,
+            ),
         )
-        for idx, team_data in enumerate(sorted_teams):
-            team_data["final_position"] = idx + 1
+        for idx, (team_id, team_data) in enumerate(sorted_teams):
+            team_data["final_position"] = official_positions.get(team_id, idx + 1)
 
-        constructors = [
-            ConstructorProgressionData(**data) for data in teams_dict.values()
-        ]
+        constructors = [ConstructorProgressionData(**data) for _, data in sorted_teams]
 
         return PointsProgressionResponse(
             year=season, type="constructors", drivers=None, constructors=constructors

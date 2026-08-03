@@ -1,6 +1,8 @@
 from sqlalchemy import select
-from app.models import Lap, Weather, TrackStatus, Driver
-from .utils import timedelta_to_seconds, safe_int, safe_float, safe_bool
+
+from app.models import DriverSeason, Lap, Session, SessionResult, TrackStatus, Weather
+
+from .utils import safe_bool, safe_float, safe_int, timedelta_to_seconds
 
 
 def ingest_lap_data(db, fastf1_session, session_id):
@@ -15,7 +17,7 @@ def ingest_lap_data(db, fastf1_session, session_id):
     try:
         laps = fastf1_session.laps
         if laps is None or len(laps) == 0:
-            print(f"  ⏭️  No lap data available")
+            print("  ⏭️  No lap data available")
             return 0
 
         print(f"  📊 Processing {len(laps)} laps...")
@@ -29,15 +31,19 @@ def ingest_lap_data(db, fastf1_session, session_id):
             print(f"  ✓ Lap data already exists ({len(existing_count)} laps), skipping")
             return len(existing_count)
 
-        # Map driver codes to driver IDs
-        driver_map = {}
-        for driver_code in laps["Driver"].unique():
-            if driver_code and str(driver_code) != "nan":
-                driver = db.execute(
-                    select(Driver).where(Driver.driver_code == driver_code)
-                ).scalar_one_or_none()
-                if driver:
-                    driver_map[driver_code] = driver.id
+        # Abbreviations are only unique within a season/session. Resolve through
+        # participants already written for this exact session, never globally.
+        participant_rows = db.execute(
+            select(DriverSeason.driver_code, SessionResult.driver_id)
+            .join(Session, Session.year == DriverSeason.year)
+            .join(
+                SessionResult,
+                (SessionResult.session_id == Session.id)
+                & (SessionResult.driver_id == DriverSeason.driver_id),
+            )
+            .where(Session.id == session_id)
+        ).all()
+        driver_map = {row.driver_code: row.driver_id for row in participant_rows}
 
         new_laps = 0
         for idx, lap_data in laps.iterrows():
@@ -151,7 +157,7 @@ def ingest_weather_data(db, fastf1_session, session_id):
     try:
         weather_data = fastf1_session.weather_data
         if weather_data is None or len(weather_data) == 0:
-            print(f"  ⏭️  No weather data available")
+            print("  ⏭️  No weather data available")
             return
 
         print(f"  🌤️  Processing {len(weather_data)} weather readings...")
@@ -210,7 +216,7 @@ def ingest_track_status(db, fastf1_session, session_id):
     try:
         track_status_data = fastf1_session.track_status
         if track_status_data is None or len(track_status_data) == 0:
-            print(f"  ⏭️  No track status data available")
+            print("  ⏭️  No track status data available")
             return
 
         print(f"  🚦 Processing {len(track_status_data)} track status changes...")

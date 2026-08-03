@@ -156,10 +156,7 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {profile.favorite_team && (
               <Link
-                href={
-                  constructorHref(profile.favorite_team.team_name) ??
-                  "/constructors"
-                }
+                href={constructorHref(profile.favorite_team) ?? "/constructors"}
                 className="flex items-center gap-3 p-3 rounded-sm bg-bg-tertiary border border-border-primary hover:border-purple-500/50 transition-colors"
               >
                 <div
@@ -223,8 +220,10 @@ export default function ProfilePage() {
             {profile.favorite_circuit && (
               <Link
                 href={
-                  circuitHref(profile.favorite_circuit.circuit_id) ??
-                  "/circuits"
+                  circuitHref(
+                    profile.favorite_circuit.venue_slug ??
+                      profile.favorite_circuit.circuit_id,
+                  ) ?? "/circuits"
                 }
                 className="flex items-center gap-3 p-3 rounded-sm bg-bg-tertiary border border-border-primary hover:border-purple-500/50 transition-colors"
               >

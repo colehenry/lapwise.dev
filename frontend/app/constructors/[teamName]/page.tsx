@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
 import ArchiveMetricBar from "@/components/archive/ArchiveMetricBar";
 import ArchivePanel from "@/components/archive/ArchivePanel";
@@ -75,6 +75,14 @@ export default function ConstructorProfilePage() {
     queryFn: () => fetchConstructorProfile(teamName, includeSprint),
     placeholderData: keepPreviousData,
   });
+
+  useEffect(() => {
+    if (data?.constructor_slug && teamName !== data.constructor_slug) {
+      router.replace(
+        `/constructors/${data.constructor_slug}${window.location.search}`,
+      );
+    }
+  }, [data?.constructor_slug, router, teamName]);
 
   if (isLoading) {
     return <ProfileSkeleton />;

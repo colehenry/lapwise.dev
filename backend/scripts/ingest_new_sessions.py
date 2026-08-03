@@ -115,7 +115,7 @@ def main():
 
             # 1. Ingest Circuit
             try:
-                circuit_id = ingest_circuit(db, event)
+                circuit_id = ingest_circuit(db, event, season_year, round_num)
             except Exception as e:
                 print(f"❌ Failed to ingest circuit for {event_name}: {e}")
                 failures.append((round_num, event_name, "circuit", str(e)))
@@ -213,6 +213,7 @@ def main():
                         ingest_weather_data(db, fastf1_session, session_id)
 
                 except Exception as e:
+                    db.rollback()
                     print(f"  ❌ Failed to ingest {session_type}: {e}")
                     failures.append((round_num, event_name, session_type, str(e)))
                     if strict_mode:

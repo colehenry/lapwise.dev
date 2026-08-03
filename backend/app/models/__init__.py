@@ -14,10 +14,25 @@ Usage:
 
 from app.models.ai_conversation import AIConversation
 from app.models.ai_message import AIMessage
+from app.models.championship import (
+    ChampionshipClassificationException,
+    ChampionshipScoringContext,
+    ConstructorChampionshipStanding,
+    DriverChampionshipStanding,
+)
 from app.models.circuit import Circuit
 from app.models.comment import Comment
 from app.models.driver import Driver
 from app.models.email_verification_token import EmailVerificationToken
+from app.models.identity import (
+    CircuitVenue,
+    CircuitVenueExternalId,
+    Constructor,
+    ConstructorExternalId,
+    DriverExternalId,
+    DriverSeason,
+    IngestIdentityIssue,
+)
 from app.models.lap import Lap
 from app.models.login_history import LoginHistory
 from app.models.oauth_account import OAuthAccount
@@ -39,8 +54,19 @@ from app.models.weather import Weather
 # Export all models
 __all__ = [
     "Driver",
+    "DriverExternalId",
+    "DriverSeason",
+    "Constructor",
+    "ConstructorExternalId",
     "Team",
     "Circuit",
+    "CircuitVenue",
+    "CircuitVenueExternalId",
+    "IngestIdentityIssue",
+    "DriverChampionshipStanding",
+    "ConstructorChampionshipStanding",
+    "ChampionshipScoringContext",
+    "ChampionshipClassificationException",
     "Session",
     "SessionResult",
     "Lap",

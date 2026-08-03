@@ -102,7 +102,7 @@ def main():
 
             # 1. Ingest Circuit
             try:
-                circuit_id = ingest_circuit(db, event)
+                circuit_id = ingest_circuit(db, event, TEST_YEAR, round_num)
                 print(f"  ✓ Circuit ingested")
             except Exception as e:
                 print(f"  ❌ Circuit failed: {e}")

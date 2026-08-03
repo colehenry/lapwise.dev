@@ -580,7 +580,11 @@ export default function FastestLapTimeline({
       </p>
 
       <MobileChartFrame height={timelineHeight} logicalWidth={860}>
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          initialDimension={{ width: 860, height: timelineHeight }}
+        >
           <ScatterChart margin={TIMELINE_MARGIN}>
             <CartesianGrid
               strokeDasharray="3 3"
@@ -665,7 +669,11 @@ export default function FastestLapTimeline({
       </div>
 
       <MobileChartFrame height={224} logicalWidth={860}>
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          initialDimension={{ width: 860, height: 224 }}
+        >
           <LineChart data={averageLapPoints} margin={AVG_MARGIN}>
             {/* Track event bands — colored area + boundary lines */}
             {eventBands.flatMap((band, bandIndex) => {

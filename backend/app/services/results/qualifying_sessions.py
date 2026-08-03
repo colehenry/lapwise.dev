@@ -7,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models import (
+    Circuit,
+    Constructor,
     Driver,
     Lap,
     Session,
@@ -67,6 +69,7 @@ class QualifyingSessionsService:
                 Lap.sector1_time_seconds,
                 Lap.sector2_time_seconds,
                 Lap.sector3_time_seconds,
+                Lap.driver_id,
                 Lap.pit_in_time_seconds,
                 Lap.pit_out_time_seconds,
                 Lap.position,
@@ -103,11 +106,11 @@ class QualifyingSessionsService:
 
         drivers_dict = {}
         for row in lap_rows:
-            driver_code = row.driver_code
+            driver_id = row.driver_id
 
-            if driver_code not in drivers_dict:
-                drivers_dict[driver_code] = {
-                    "driver_code": driver_code,
+            if driver_id not in drivers_dict:
+                drivers_dict[driver_id] = {
+                    "driver_code": row.driver_code,
                     "driver_slug": _make_slug(row.jolpica_id, row.full_name),
                     "full_name": row.full_name,
                     "country_code": row.country_code,
@@ -116,7 +119,7 @@ class QualifyingSessionsService:
                     "laps": [],
                 }
 
-            drivers_dict[driver_code]["laps"].append(
+            drivers_dict[driver_id]["laps"].append(
                 LapData(
                     lap_number=row.lap_number,
                     lap_time_seconds=sanitize_float(row.lap_time_seconds),
@@ -243,7 +246,7 @@ class QualifyingSessionsService:
         """
         session_query = (
             select(Session)
-            .options(selectinload(Session.circuit))
+            .options(selectinload(Session.circuit).selectinload(Circuit.venue))
             .where(Session.year == season)
             .where(Session.round == round_num)
             .where(Session.session_type == "qualifying")
@@ -261,10 +264,12 @@ class QualifyingSessionsService:
                 SessionResult,
                 Driver,
                 Team,
+                Constructor.slug.label("constructor_slug"),
                 headshot_fallback_expr().label("headshot_url"),
             )
             .join(Driver, SessionResult.driver_id == Driver.id)
             .join(Team, SessionResult.team_id == Team.id)
+            .join(Constructor, Constructor.id == Team.constructor_id)
             .where(SessionResult.session_id == session.id)
             .order_by(SessionResult.position)
         )
@@ -283,6 +288,7 @@ class QualifyingSessionsService:
             date=session.date,
             circuit=CircuitInfo(
                 id=circuit.id,
+                venue_slug=circuit.venue.slug,
                 name=circuit.name,
                 location=circuit.location,
                 country=circuit.country,
@@ -306,7 +312,9 @@ class QualifyingSessionsService:
                 ),
                 team=TeamInfo(
                     name=result.Team.name,
+                    constructor_slug=result.constructor_slug,
                     team_color=result.Team.team_color,
+                    logo_url=result.Team.logo_url,
                 ),
                 grid_position=result.SessionResult.grid_position,
                 points=sanitize_float(result.SessionResult.points),
@@ -331,7 +339,7 @@ class QualifyingSessionsService:
         """
         session_query = (
             select(Session)
-            .options(selectinload(Session.circuit))
+            .options(selectinload(Session.circuit).selectinload(Circuit.venue))
             .where(Session.year == season)
             .where(Session.round == round_num)
             .where(Session.session_type == "sprint_qualifying")
@@ -349,10 +357,12 @@ class QualifyingSessionsService:
                 SessionResult,
                 Driver,
                 Team,
+                Constructor.slug.label("constructor_slug"),
                 headshot_fallback_expr().label("headshot_url"),
             )
             .join(Driver, SessionResult.driver_id == Driver.id)
             .join(Team, SessionResult.team_id == Team.id)
+            .join(Constructor, Constructor.id == Team.constructor_id)
             .where(SessionResult.session_id == session.id)
             .order_by(SessionResult.position)
         )
@@ -371,6 +381,7 @@ class QualifyingSessionsService:
             date=session.date,
             circuit=CircuitInfo(
                 id=circuit.id,
+                venue_slug=circuit.venue.slug,
                 name=circuit.name,
                 location=circuit.location,
                 country=circuit.country,
@@ -394,7 +405,9 @@ class QualifyingSessionsService:
                 ),
                 team=TeamInfo(
                     name=result.Team.name,
+                    constructor_slug=result.constructor_slug,
                     team_color=result.Team.team_color,
+                    logo_url=result.Team.logo_url,
                 ),
                 grid_position=result.SessionResult.grid_position,
                 points=sanitize_float(result.SessionResult.points),

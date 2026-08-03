@@ -28,9 +28,10 @@ const CORE_SCHEMA_PACK = `## Core Data Model
 
 Use these tables first:
 - sessions: id, year, round, session_type ('race', 'sprint_race', 'qualifying', 'sprint_qualifying'), event_name, date, circuit_id, highlights_video_id.
-- circuits: id, name, location, country.
-- drivers: id, full_name, driver_code, jolpica_id, driver_number, country_code.
-- teams: id, year, name, team_color. Teams are year-partitioned; join by team_id from session_results.
+- circuit_venues: id, slug, canonical_name, location, country. circuits are layouts with venue_id and layout_slug.
+- drivers: id, slug, full_name, deprecated driver_code, jolpica_id, driver_number, country_code. Use driver_seasons for a year-specific code.
+- constructors: id, slug, canonical_name, lineage_id. Lineage is metadata and never combines statistics.
+- teams: id, year, constructor_id, name, source_name, team_color. Teams are constructor-season rows; join by team_id from session_results.
 - session_results: session_id, driver_id, team_id, position, status, grid_position, points, laps_completed, time_seconds, fastest_lap, q1_time_seconds, q2_time_seconds, q3_time_seconds.
 
 Session resolution:
@@ -73,8 +74,13 @@ Pole claims should use qualifying position, not race grid if penalties may apply
 
 const STANDINGS_PACK = `## Standings And Points
 
-Use v_driver_standings and v_constructor_standings for season standings when possible.
-Use session_results.points for race/sprint points by session.
+Use v_driver_standings and v_constructor_standings for every season standings, champion, or title question.
+The views expose championship_position, championship_points, points_scored, classification_status, explanation, explanation_source_url, and standings_source.
+- championship_points and championship_position are the official classification; points_scored is the sum earned on track.
+- Excluded/disqualified entrants have no official position or championship points. Describe the explanation and never crown them from points_scored.
+- For completed seasons, standings_source must be 'official'. If it is 'missing_official', say canonical standings are unavailable rather than ranking summed points.
+- 'computed_provisional' is allowed only for the active season.
+Use session_results.points only for points earned in an individual race/sprint or explicitly requested on-track totals.
 Modern fastest lap bonus exists from 2019 onward only if the driver finishes in the top 10; confirm via points/fastest_lap rather than assuming.`;
 
 const WEATHER_PACK = `## Weather Context
@@ -194,7 +200,7 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
 - Write like an F1 strategist briefing the pit wall: concise, precise, and analytical.
 - Format lap times as M:SS.mmm and gaps as +X.XXXs.
 - Colored deltas: {g:VALUE} for advantage/improvement, {r:VALUE} for deficit/loss.
-- Link drivers as [Full Name](/drivers/CODE), constructors as [Team Name](/constructors/TeamName), and circuits as [Circuit Name](/circuits/ID) whenever the target is known.
+- Link drivers with driver_slug, constructors with constructor_slug, and circuits with the canonical venue slug whenever the query exposes it. Legacy codes, names, and numeric circuit IDs are compatibility fallbacks only.
 - No greetings, apologies, methodology narration, or padded summaries.
 
 ${contextPacks.join("\n\n")}`;

@@ -4,7 +4,15 @@ from typing import List, Optional
 from sqlalchemy import case, distinct, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Driver, Session, SessionResult, Team
+from app.models import (
+    ChampionshipClassificationException,
+    ChampionshipScoringContext,
+    Driver,
+    DriverChampionshipStanding,
+    Session,
+    SessionResult,
+    Team,
+)
 from app.schemas.driver import (
     DriverListItem,
     DriverListResponse,
@@ -16,6 +24,7 @@ from app.schemas.driver import (
     RaceHistory,
     SeasonHistory,
 )
+from app.services.driver_identity_service import DriverIdentityService
 
 
 class DriverService:
@@ -36,7 +45,6 @@ class DriverService:
         """
         session_types = DriverService._session_types(include_sprint)
 
-        # Subquery: get the most recent session date per driver (for headshot + latest_season)
         latest_session_sq = (
             select(
                 SessionResult.driver_id,
@@ -48,7 +56,6 @@ class DriverService:
             .subquery()
         )
 
-        # Subquery: get headshot and latest_season from most recent race
         latest_info_sq = (
             select(
                 SessionResult.driver_id,
@@ -66,7 +73,6 @@ class DriverService:
             .subquery()
         )
 
-        # Subquery: count distinct seasons per driver+team
         team_seasons_sq = (
             select(
                 SessionResult.driver_id,
@@ -79,7 +85,6 @@ class DriverService:
             .subquery()
         )
 
-        # Subquery: max season count per driver
         max_team_seasons_sq = (
             select(
                 team_seasons_sq.c.driver_id,
@@ -89,7 +94,6 @@ class DriverService:
             .subquery()
         )
 
-        # Subquery: get the team with the most seasons (tie-break by team_id desc for most recent)
         primary_team_sq = (
             select(
                 team_seasons_sq.c.driver_id,
@@ -107,10 +111,10 @@ class DriverService:
             .subquery()
         )
 
-        # Main query: aggregate stats per driver
         query = (
             select(
                 Driver.id,
+                Driver.slug,
                 Driver.driver_code,
                 Driver.jolpica_id,
                 Driver.full_name,
@@ -139,6 +143,7 @@ class DriverService:
             .where(Session.session_type.in_(session_types))
             .group_by(
                 Driver.id,
+                Driver.slug,
                 Driver.driver_code,
                 Driver.jolpica_id,
                 Driver.full_name,
@@ -157,12 +162,10 @@ class DriverService:
         result = await db.execute(query)
         rows = result.all()
 
-        from app.services.results.common import _make_slug
-
         drivers = [
             DriverListItem(
                 driver_code=row.driver_code,
-                driver_slug=_make_slug(row.jolpica_id, row.full_name),
+                driver_slug=row.slug,
                 full_name=row.full_name,
                 country_code=row.country_code,
                 headshot_url=row.headshot_url,
@@ -195,15 +198,11 @@ class DriverService:
         Returns:
             DriverProfileResponse with stats or None if not found
         """
-        # Get driver basic info
         driver = await DriverService._get_driver_by_code(db, driver_code)
         if not driver:
             return None
 
         session_types = DriverService._session_types(include_sprint)
-        current_year = date.today().year
-
-        # Single aggregate query for all career stats
         stats_query = (
             select(
                 func.count(SessionResult.id).label("total_races"),
@@ -243,34 +242,18 @@ class DriverService:
                 latest_season=None,
             )
 
-        # Championship count — one query using subqueries instead of a per-season loop
-        dsp_sq = (
-            select(
-                Session.year,
-                SessionResult.driver_id,
-                func.sum(SessionResult.points).label("pts"),
-            )
-            .join(Session, SessionResult.session_id == Session.id)
-            .where(Session.session_type.in_(session_types))
-            .where(SessionResult.points.isnot(None))
-            .where(Session.year < current_year)
-            .group_by(Session.year, SessionResult.driver_id)
-            .subquery()
-        )
-        season_max_sq = (
-            select(dsp_sq.c.year, func.max(dsp_sq.c.pts).label("max_pts"))
-            .group_by(dsp_sq.c.year)
-            .subquery()
-        )
         total_championships = (
-            await db.execute(
-                select(func.count().label("n"))
-                .select_from(dsp_sq)
-                .join(season_max_sq, dsp_sq.c.year == season_max_sq.c.year)
-                .where(dsp_sq.c.pts == season_max_sq.c.max_pts)
-                .where(dsp_sq.c.driver_id == driver.id)
+            await db.scalar(
+                select(func.count())
+                .select_from(DriverChampionshipStanding)
+                .where(
+                    DriverChampionshipStanding.driver_id == driver.id,
+                    DriverChampionshipStanding.position == 1,
+                    DriverChampionshipStanding.is_final.is_(True),
+                )
             )
-        ).scalar() or 0
+            or 0
+        )
 
         # Most recent result — current team, headshot, latest season
         recent = (
@@ -330,46 +313,84 @@ class DriverService:
 
         years = [row.year for row in season_data]
 
-        # Single query: championship position for all years via window function
-        all_pts_sq = (
-            select(
-                Session.year,
-                SessionResult.driver_id,
-                func.sum(SessionResult.points).label("pts"),
-            )
-            .join(Session, SessionResult.session_id == Session.id)
-            .where(Session.session_type.in_(["race", "sprint_race"]))
-            .where(SessionResult.points.isnot(None))
-            .where(Session.year.in_(years))
-            .group_by(Session.year, SessionResult.driver_id)
-            .subquery()
-        )
-        ranked_sq = select(
-            all_pts_sq.c.year,
-            all_pts_sq.c.driver_id,
-            func.rank()
-            .over(
-                partition_by=all_pts_sq.c.year,
-                order_by=all_pts_sq.c.pts.desc(),
-            )
-            .label("champ_position"),
-        ).subquery()
-        positions = {
-            row.year: row.champ_position
+        official = {
+            row.year: row
             for row in (
-                await db.execute(
-                    select(ranked_sq.c.year, ranked_sq.c.champ_position).where(
-                        ranked_sq.c.driver_id == driver.id
+                await db.scalars(
+                    select(DriverChampionshipStanding).where(
+                        DriverChampionshipStanding.driver_id == driver.id,
+                        DriverChampionshipStanding.year.in_(years),
                     )
                 )
             ).all()
         }
-
+        contexts = {
+            row.year: row.explanation
+            for row in (
+                await db.scalars(
+                    select(ChampionshipScoringContext).where(
+                        ChampionshipScoringContext.entrant_type == "driver",
+                        ChampionshipScoringContext.year.in_(years),
+                    )
+                )
+            ).all()
+        }
+        exceptions = {
+            row.year: row
+            for row in (
+                await db.scalars(
+                    select(ChampionshipClassificationException).where(
+                        ChampionshipClassificationException.driver_id == driver.id,
+                        ChampionshipClassificationException.year.in_(years),
+                    )
+                )
+            ).all()
+        }
         seasons = [
             SeasonHistory(
                 year=row.year,
-                championship_position=positions.get(row.year),
-                total_points=float(row.total_points),
+                championship_position=(
+                    None
+                    if row.year in exceptions
+                    else official.get(row.year).position
+                    if row.year in official
+                    else None
+                ),
+                total_points=(
+                    float(official[row.year].championship_points)
+                    if row.year in official
+                    else 0
+                    if row.year < date.today().year
+                    else float(row.total_points)
+                ),
+                championship_points=(
+                    None
+                    if row.year in exceptions
+                    else float(official[row.year].championship_points)
+                    if row.year in official
+                    else None
+                    if row.year < date.today().year
+                    else float(row.total_points)
+                ),
+                points_scored=float(row.total_points),
+                classification_status=(
+                    exceptions[row.year].status
+                    if row.year in exceptions
+                    else "classified"
+                    if row.year in official and official[row.year].is_final
+                    else "not_classified"
+                    if row.year < date.today().year
+                    else "provisional"
+                ),
+                scoring_explanation=(
+                    exceptions[row.year].explanation
+                    if row.year in exceptions
+                    else contexts.get(row.year)
+                    if row.year in official
+                    and float(official[row.year].championship_points)
+                    != float(row.total_points)
+                    else None
+                ),
                 race_count=int(row.race_count or 0),
                 team_name=row.team_name,
                 team_color=row.team_color,
@@ -847,28 +868,7 @@ class DriverService:
     async def _get_driver_by_code(
         db: AsyncSession, driver_code: str
     ) -> Optional[Driver]:
-        # Try jolpica_id first (slug format: "max-verstappen" -> "max_verstappen")
-        jolpica_id = driver_code.replace("-", "_")
-        query = select(Driver).where(Driver.jolpica_id == jolpica_id)
-        result = await db.execute(query)
-        driver = result.scalar_one_or_none()
-        if driver:
-            return driver
-
-        # Try exact driver_code match (VER, HAM, etc.)
-        query = select(Driver).where(Driver.driver_code == driver_code.upper())
-        result = await db.execute(query)
-        driver = result.scalar_one_or_none()
-        if driver:
-            return driver
-
-        # Fallback: treat as a name slug (e.g. "juan-manuel-fangio")
-        name_from_slug = driver_code.replace("-", " ")
-        query = select(Driver).where(
-            func.lower(Driver.full_name) == name_from_slug.lower()
-        )
-        result = await db.execute(query)
-        return result.scalar_one_or_none()
+        return await DriverIdentityService.resolve(db, driver_code)
 
     @staticmethod
     async def _get_season_aggregated_results(db: AsyncSession, driver_id: int):
