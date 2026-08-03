@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-import { act, fireEvent } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import AIAnalystPreview from "@/components/home/AIAnalystPreview";
 import LiveReplayPreview from "@/components/home/LiveReplayPreview";
@@ -25,10 +24,10 @@ vi.mock("@/app/replay/components/TrackCanvas", () => ({
 }));
 
 const REPLAY_BLOB_PATH = `/api/replay/${fixtures.FIXTURE_SEASON}/${fixtures.FIXTURE_ROUND}`;
+const REPLAY_PREVIEW_PATH = "/api/replay/preview/latest";
 
 const ROUTES = {
-  "/api/replay/seasons": fixtures.replaySeasons,
-  "/api/replay/available": fixtures.availableReplays,
+  [REPLAY_PREVIEW_PATH]: msgpackBody(fixtures.replayPreviewArtifact),
   [`/api/replay/${fixtures.FIXTURE_SEASON}/${fixtures.FIXTURE_ROUND}`]:
     msgpackBody(fixtures.replayData),
   [`/api/results/${fixtures.FIXTURE_SEASON}/standings`]: fixtures.standings,
@@ -65,8 +64,7 @@ describe("home initial request inventory", () => {
     expect(paths).toEqual([
       "/api/circuits/",
       "/api/events/upcoming?limit=10",
-      `/api/replay/available?season=${fixtures.FIXTURE_SEASON}`,
-      "/api/replay/seasons",
+      REPLAY_PREVIEW_PATH,
       `/api/results/${fixtures.FIXTURE_SEASON}`,
       `/api/results/${fixtures.FIXTURE_SEASON}/standings`,
       "/api/results/latest",
@@ -74,7 +72,7 @@ describe("home initial request inventory", () => {
     ]);
   });
 
-  it("never requests the replay blob before user intent", async () => {
+  it("never requests the full replay blob", async () => {
     const recorder = installFetchRecorder(ROUTES);
     renderWithQueryClient(<HomeClientSections />);
     await flushRequests();
@@ -82,18 +80,16 @@ describe("home initial request inventory", () => {
     expect(recorder.countMatching(REPLAY_BLOB_PATH)).toBe(0);
   });
 
-  it("requests the replay blob once the preview is loaded", async () => {
+  it("resolves the autoplaying preview in a single request", async () => {
     const recorder = installFetchRecorder(ROUTES);
-    const { findByRole } = renderWithQueryClient(<HomeClientSections />);
+    renderWithQueryClient(<HomeClientSections />);
     await flushRequests();
 
-    const loadButton = await findByRole("button", { name: /load preview/i });
-    await act(async () => {
-      fireEvent.click(loadButton);
-    });
-    await flushRequests();
-
-    expect(recorder.countMatching(REPLAY_BLOB_PATH)).toBe(1);
+    expect(recorder.countMatching(REPLAY_PREVIEW_PATH)).toBe(1);
+    // The artifact carries the latest race, so home does not chain
+    // seasons -> available to find it.
+    expect(recorder.countMatching("/api/replay/seasons")).toBe(0);
+    expect(recorder.countMatching("/api/replay/available")).toBe(0);
   });
 
   it("requests current standings once for the color consumers", async () => {

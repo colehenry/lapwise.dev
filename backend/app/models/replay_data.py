@@ -31,6 +31,9 @@ class ReplayData(Base):
     - driver info (colors, names, numbers)
     - frames array (per-frame driver positions, telemetry, track status)
     - race control messages with timestamps
+
+    The preview_data column holds the downsampled columnar artifact defined in
+    `app.services.replay_preview`.
     """
 
     __tablename__ = "replay_data"
@@ -52,6 +55,13 @@ class ReplayData(Base):
 
     # The replay data (MessagePack + gzip compressed)
     data = Column(LargeBinary, nullable=False)
+
+    # Downsampled autoplay artifact for the home preview. Nullable so a race
+    # ingested before the artifact existed still serves its full replay.
+    preview_data = Column(LargeBinary, nullable=True)
+    preview_frames = Column(Integer, nullable=True)
+    preview_fps = Column(Float, nullable=True)
+    preview_size_bytes = Column(Integer, nullable=True)
 
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
 

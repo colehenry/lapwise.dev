@@ -41,6 +41,31 @@ async def get_available_replays(
     return ReplayListResponse(season=season, replays=replays)
 
 
+@router.get("/preview/latest")
+async def get_latest_replay_preview(
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(verify_api_key),
+):
+    """
+    Get the downsampled autoplay artifact for the most recent race.
+
+    Returns a gzip-compressed MessagePack blob roughly 26x smaller than the
+    full replay. The artifact changes only when a new race is ingested.
+    """
+    data = await ReplayService.get_latest_preview(db)
+    if data is None:
+        raise HTTPException(status_code=404, detail="No replay preview available")
+
+    return Response(
+        content=data,
+        media_type="application/x-msgpack",
+        headers={
+            "Content-Encoding": "gzip",
+            "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+        },
+    )
+
+
 @router.get("/track/{circuit_id}", response_model=ReplayTrackResponse)
 async def get_replay_track_geometry(
     circuit_id: int,
