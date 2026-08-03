@@ -16,7 +16,7 @@ from .results import (
     QualifyingSessionsService,
     QualifyingStandingsService,
     SessionDataService,
-    StandingsService,
+    TeammateService,
 )
 
 __all__ = [
@@ -30,5 +30,5 @@ __all__ = [
     "QualifyingSessionsService",
     "QualifyingStandingsService",
     "SessionDataService",
-    "StandingsService",
+    "TeammateService",
 ]

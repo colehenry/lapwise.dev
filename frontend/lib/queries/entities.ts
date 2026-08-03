@@ -1,9 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
-import { apiHeaders, apiUrl } from "@/lib/api";
 import type {
   DriverRaceHistoryResponse,
   DriverSuperlativesResponse,
 } from "@/lib/types";
+import { getJson, getJsonOrNull } from "./http";
 
 export type QualifyingSectorRow = {
   driver_code: string | null;
@@ -37,16 +37,6 @@ export const entityKeys = {
     ["qualifying-sectors", season, round] as const,
 };
 
-async function getJson<T>(
-  path: string,
-  error: string,
-  init?: RequestInit,
-): Promise<T> {
-  const res = await fetch(apiUrl(path), { headers: apiHeaders(), ...init });
-  if (!res.ok) throw new Error(error);
-  return res.json();
-}
-
 export function driverSuperlativesQuery(
   driverCode: string,
   includeSprint: boolean,
@@ -77,13 +67,10 @@ export function driverRaceHistoryQuery(driverCode: string) {
 export function qualifyingSectorsQuery(season: number, round: number) {
   return queryOptions({
     queryKey: entityKeys.qualifyingSectors(season, round),
-    queryFn: async (): Promise<QualifyingSectorsResponse | null> => {
-      const res = await fetch(
-        apiUrl(`/api/results/${season}/${round}/qualifying/sectors`),
-        { cache: "no-store", headers: apiHeaders() },
-      );
-      if (!res.ok) return null;
-      return res.json();
-    },
+    queryFn: () =>
+      getJsonOrNull<QualifyingSectorsResponse>(
+        `/api/results/${season}/${round}/qualifying/sectors`,
+        { cache: "no-store" },
+      ),
   });
 }

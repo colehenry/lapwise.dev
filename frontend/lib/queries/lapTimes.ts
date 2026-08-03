@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
-import { apiHeaders, apiUrl } from "@/lib/api";
 import type { LapTimesResponse } from "@/lib/types";
+import { getJsonOrNull } from "./http";
 
 export type LapSession =
   | { kind: "race" }
@@ -54,13 +54,10 @@ export function practiceSession(practiceNumber: 1 | 2 | 3): LapSession {
 export function lapTimesQuery(params: LapTimesParams) {
   return queryOptions({
     queryKey: lapTimeKeys.session(params),
-    queryFn: async (): Promise<LapTimesResponse | null> => {
-      const res = await fetch(
-        apiUrl(lapSessionPath(params.season, params.round, params.session)),
-        { cache: "no-store", headers: apiHeaders() },
-      );
-      if (!res.ok) return null;
-      return res.json();
-    },
+    queryFn: () =>
+      getJsonOrNull<LapTimesResponse>(
+        lapSessionPath(params.season, params.round, params.session),
+        { cache: "no-store" },
+      ),
   });
 }

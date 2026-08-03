@@ -1,7 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
-import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
+import { fetchSeasons } from "@/lib/api";
 import type { RoundSummary } from "@/lib/types";
 import { hours, minutes } from "./durations";
+import { DEFAULT_REVALIDATE_SECONDS, getJson } from "./http";
 
 /**
  * Season and round metadata. Every route that needs the season list, the
@@ -22,18 +23,6 @@ export type SeasonRoundsData = {
 
 const METADATA_STALE_TIME = hours(1);
 
-/** Server renders revalidate on this interval; browsers ignore `next`. */
-const METADATA_REVALIDATE_SECONDS = 300;
-
-async function getJson<T>(path: string, error: string): Promise<T> {
-  const res = await fetch(apiUrl(path), {
-    headers: apiHeaders(),
-    next: { revalidate: METADATA_REVALIDATE_SECONDS },
-  });
-  if (!res.ok) throw new Error(error);
-  return res.json();
-}
-
 export function seasonsQuery() {
   return queryOptions({
     queryKey: seasonKeys.all(),
@@ -53,6 +42,7 @@ export function latestRoundQuery() {
       getJson<RoundSummary>(
         "/api/results/latest",
         "Failed to fetch latest race",
+        { revalidate: DEFAULT_REVALIDATE_SECONDS },
       ),
     staleTime: minutes(10),
     retry: 1,
@@ -73,6 +63,7 @@ export function roundsQuery(season: number | null, kind: RoundsKind = "race") {
           ? `/api/results/${season}/qualifying`
           : `/api/results/${season}`,
         "Failed to fetch rounds",
+        { revalidate: DEFAULT_REVALIDATE_SECONDS },
       ),
     enabled: season !== null,
   });

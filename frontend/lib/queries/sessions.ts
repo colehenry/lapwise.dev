@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
-import { apiHeaders, apiUrl } from "@/lib/api";
 import type { SessionResultsResponse } from "@/lib/types";
+import { getJsonOrNull } from "./http";
 
 export type RoundTabKind =
   | "race"
@@ -70,14 +70,10 @@ function sessionPath(
 export function roundAvailabilityQuery(season: number, round: number) {
   return queryOptions({
     queryKey: sessionKeys.availability(season, round),
-    queryFn: async (): Promise<RoundAvailability | null> => {
-      const res = await fetch(
-        apiUrl(`/api/results/${season}/${round}/availability`),
-        { headers: apiHeaders() },
-      );
-      if (!res.ok) return null;
-      return res.json();
-    },
+    queryFn: () =>
+      getJsonOrNull<RoundAvailability>(
+        `/api/results/${season}/${round}/availability`,
+      ),
     enabled: Number.isFinite(season) && Number.isFinite(round),
   });
 }
@@ -95,14 +91,11 @@ export function roundSessionQuery(
       tab,
       tab === "practice" ? practiceNumber : null,
     ),
-    queryFn: async (): Promise<SessionResultsResponse | null> => {
-      const res = await fetch(
-        apiUrl(sessionPath(season, round, tab, practiceNumber)),
-        { cache: "no-store", headers: apiHeaders() },
-      );
-      if (!res.ok) return null;
-      return res.json();
-    },
+    queryFn: () =>
+      getJsonOrNull<SessionResultsResponse>(
+        sessionPath(season, round, tab, practiceNumber),
+        { cache: "no-store" },
+      ),
     enabled: Number.isFinite(season) && Number.isFinite(round),
   });
 }
@@ -110,14 +103,11 @@ export function roundSessionQuery(
 export function roundSummariesQuery(season: number, round: number) {
   return queryOptions({
     queryKey: sessionKeys.summaries(season, round),
-    queryFn: async (): Promise<SessionSummariesResponse | null> => {
-      const res = await fetch(
-        apiUrl(`/api/results/${season}/${round}/summaries`),
-        { cache: "no-store", headers: apiHeaders() },
-      );
-      if (!res.ok) return null;
-      return res.json();
-    },
+    queryFn: () =>
+      getJsonOrNull<SessionSummariesResponse>(
+        `/api/results/${season}/${round}/summaries`,
+        { cache: "no-store" },
+      ),
     enabled: Number.isFinite(season) && Number.isFinite(round),
   });
 }

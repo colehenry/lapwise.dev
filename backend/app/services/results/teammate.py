@@ -1,4 +1,4 @@
-"""Standings service: season championship standings and teammate head-to-head."""
+"""Teammate service: per-team head-to-head comparison for a season."""
 
 from typing import Optional
 
@@ -12,28 +12,17 @@ from app.models import (
     Team,
 )
 from app.schemas.result import (
-    StandingsResponse,
     TeammateDriverInfo,
     TeammateH2HResponse,
     TeammateH2HTeam,
 )
-from app.services.canonical_standings_service import CanonicalStandingsService
 from app.services.results.common import (
     headshot_fallback_expr,
 )
 
 
-class StandingsService:
-    """Standings service: season championship standings and teammate head-to-head."""
-
-    @staticmethod
-    async def get_season_standings(
-        db: AsyncSession, season: int
-    ) -> Optional[StandingsResponse]:
-        """
-        Get driver and constructor championship standings for a season.
-        """
-        return await CanonicalStandingsService.get_season_standings(db, season)
+class TeammateService:
+    """Teammate service: per-team head-to-head comparison for a season."""
 
     @staticmethod
     async def get_teammate_h2h(
