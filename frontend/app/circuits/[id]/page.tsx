@@ -1,17 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import ArchivePanel from "@/components/archive/ArchivePanel";
 import CircuitLapRecords from "@/components/CircuitLapRecords";
-import CircuitLapTimeTrend from "@/components/CircuitLapTimeTrend";
-import CircuitRaceHistoryTable from "@/components/CircuitRaceHistoryTable";
 import CircuitRecentRace from "@/components/CircuitRecentRace";
-import CircuitStatisticsPanel from "@/components/CircuitStatisticsPanel";
-import CircuitTyreStats from "@/components/CircuitTyreStats";
-import CircuitWeatherProfile from "@/components/CircuitWeatherProfile";
 import InteractiveTrackMap from "@/components/InteractiveTrackMap";
 import PageHeader from "@/components/PageHeader";
 import DeferredSection from "@/components/ui/DeferredSection";
@@ -21,6 +17,28 @@ import TabBar from "@/components/ui/TabBar";
 import { useTabSync } from "@/hooks/useTabSync";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { CircuitInfo } from "@/lib/types";
+
+// Analysis panels load with their section, not with the profile shell.
+const CircuitStatisticsPanel = dynamic(
+  () => import("@/components/CircuitStatisticsPanel"),
+  { loading: () => <Skeleton variant="rectangular" height="320px" /> },
+);
+const CircuitRaceHistoryTable = dynamic(
+  () => import("@/components/CircuitRaceHistoryTable"),
+  { loading: () => <Skeleton variant="rectangular" height="320px" /> },
+);
+const CircuitLapTimeTrend = dynamic(
+  () => import("@/components/CircuitLapTimeTrend"),
+  { loading: () => <Skeleton variant="rectangular" height="320px" /> },
+);
+const CircuitTyreStats = dynamic(
+  () => import("@/components/CircuitTyreStats"),
+  { loading: () => <Skeleton variant="rectangular" height="320px" /> },
+);
+const CircuitWeatherProfile = dynamic(
+  () => import("@/components/CircuitWeatherProfile"),
+  { loading: () => <Skeleton variant="rectangular" height="320px" /> },
+);
 
 type CircuitTab = "overview" | "history" | "statistics";
 

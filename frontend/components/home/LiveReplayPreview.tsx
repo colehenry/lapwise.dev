@@ -1,13 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import TrackCanvas from "@/app/replay/components/TrackCanvas";
-import {
-  LeaderTelemetry,
-  MiniLeaderboard,
-} from "@/components/home/ReplayPreviewPanels";
 import ReplayPreviewPoster from "@/components/home/ReplayPreviewPoster";
 import Skeleton from "@/components/ui/Skeleton";
 import {
@@ -20,6 +16,26 @@ import {
   findLapStartFrame,
 } from "@/lib/replayPreviewGeometry";
 import type { ReplayData } from "@/lib/types";
+
+// The canvas player and its panels load with the frame data, not with home.
+const TrackCanvas = dynamic(
+  () => import("@/app/replay/components/TrackCanvas"),
+  { ssr: false },
+);
+const MiniLeaderboard = dynamic(
+  () =>
+    import("@/components/home/ReplayPreviewPanels").then(
+      (module) => module.MiniLeaderboard,
+    ),
+  { ssr: false },
+);
+const LeaderTelemetry = dynamic(
+  () =>
+    import("@/components/home/ReplayPreviewPanels").then(
+      (module) => module.LeaderTelemetry,
+    ),
+  { ssr: false },
+);
 
 const PLAYBACK_SPEED = 2;
 const START_LAP = 10; // Skip formation / early laps for more action
