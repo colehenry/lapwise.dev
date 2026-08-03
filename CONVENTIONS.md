@@ -12,9 +12,9 @@ aligned.
   derived data must be rebuildable.
 - **G-3 `[review]`** Prefer simple, intentional solutions for the product's real
   scale. Delete dead code and document deliberate exceptions.
-- **WF-1 `[review]`** Branch flow is `feature/*` → `dev` → `main`; `main` deploys
-  to production.
-- **WF-2 `[CI]`** Protected branches require PRs and green CI.
+- **WF-1 `[review]`** Direct commits and pushes to `dev` are allowed; `main`
+  deploys to production.
+- **WF-2 `[CI]`** Changes reach protected `main` only through a PR with green CI.
 - **WF-3 `[agent]`** Preserve unrelated work. The user owns commit wording; add
   no AI attribution. Keep one logical change per PR.
 - **WF-4 `[review]`** Never commit secrets, environment files, dumps, keys, or
@@ -87,8 +87,8 @@ aligned.
 
 GitHub CI blocks on three jobs: frontend lint/tests/build; backend
 Ruff/migrations/pytest; and repository guardrails plus their tests. Branch
-protection applies to `dev`, `main`, and administrators; force pushes and
-deletions are disabled.
+protection applies to `main` and administrators; force pushes and deletions are
+disabled. `dev` intentionally permits direct pushes.
 
 `npm run guardrails` blocks new/increased size debt, unapproved hex, backend
 `print()`, and frontend debug consoles. `npm run guardrails:update` is
