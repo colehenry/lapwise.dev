@@ -6,6 +6,11 @@ if (typeof HTMLCanvasElement !== "undefined") {
     null) as unknown as HTMLCanvasElement["getContext"];
 }
 
+// jsdom has no layout, so scroll calls are no-ops rather than errors.
+if (typeof window !== "undefined") {
+  window.scrollTo = () => {};
+}
+
 afterEach(async () => {
   if (typeof document === "undefined") return;
   const { cleanup } = await import("@testing-library/react");

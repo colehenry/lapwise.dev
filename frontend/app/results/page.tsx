@@ -1,20 +1,26 @@
 import { redirect } from "next/navigation";
 import { apiHeaders, apiUrl } from "@/lib/api";
 
+/** The redirect target depends on live data, so it is resolved per request —
+ * but the seasons list itself is cached, which removes the origin round trip
+ * from almost every visit. */
+export const dynamic = "force-dynamic";
+
+const SEASONS_REVALIDATE_SECONDS = 3600;
+
 async function getLatestSeason(): Promise<number> {
-  const res = await fetch(apiUrl("/api/results/seasons"), {
-    cache: "no-store",
-    headers: apiHeaders(),
-  });
+  try {
+    const res = await fetch(apiUrl("/api/results/seasons"), {
+      next: { revalidate: SEASONS_REVALIDATE_SECONDS },
+      headers: apiHeaders(),
+    });
+    if (!res.ok) return new Date().getFullYear();
 
-  if (!res.ok) {
-    // Fallback to 2025 if API fails
-    return 2025;
+    const seasons: number[] = await res.json();
+    return seasons.length > 0 ? Math.max(...seasons) : new Date().getFullYear();
+  } catch {
+    return new Date().getFullYear();
   }
-
-  const seasons: number[] = await res.json();
-  // Return the highest season number (API returns in descending order, so first element is newest)
-  return Math.max(...seasons);
 }
 
 export default async function ResultsPage() {

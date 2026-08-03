@@ -13,6 +13,7 @@ import ConstructorSeasonHistoryGraph from "@/components/ConstructorSeasonHistory
 import ConstructorStatisticsPanel from "@/components/ConstructorStatisticsPanel";
 import PageHeader from "@/components/PageHeader";
 import { useTheme } from "@/components/ThemeProvider";
+import DeferredSection from "@/components/ui/DeferredSection";
 import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
 import SprintToggle from "@/components/ui/SprintToggle";
 import TabBar from "@/components/ui/TabBar";
@@ -246,12 +247,16 @@ export default function ConstructorProfilePage() {
               </div>
             </ArchivePanel>
 
-            <ConstructorSeasonHistoryGraph teamName={teamName} />
+            <DeferredSection minHeight={360}>
+              <ConstructorSeasonHistoryGraph teamName={teamName} />
+            </DeferredSection>
 
-            <ConstructorStatisticsPanel
-              teamName={teamName}
-              accentColor={teamColor}
-            />
+            <DeferredSection minHeight={360}>
+              <ConstructorStatisticsPanel
+                teamName={teamName}
+                accentColor={teamColor}
+              />
+            </DeferredSection>
           </div>
         )}
 
