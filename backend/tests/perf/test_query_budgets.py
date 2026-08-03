@@ -11,12 +11,12 @@ from app.services.driver_service import DriverService
 
 from .statement_counter import count_statements
 
-# Measured on the production database at 10b4b6d; see
-# scripts/perf/README.md.
-STANDINGS_BUDGET = 31
-CONSTRUCTOR_PROFILE_BUDGET = 8
-CONSTRUCTOR_HISTORY_BUDGET = 11
-CONSTRUCTOR_LIST_BUDGET = 204
+# Upper bounds, measured on the production database; see scripts/perf/README.md.
+# A constructor resolved through a legacy name costs one extra lookup.
+STANDINGS_BUDGET = 5
+CONSTRUCTOR_PROFILE_BUDGET = 3
+CONSTRUCTOR_HISTORY_BUDGET = 5
+CONSTRUCTOR_LIST_BUDGET = 2
 DRIVER_LIST_BUDGET = 1
 DRIVER_PROFILE_BUDGET = 6
 DRIVER_HISTORY_BUDGET = 7
@@ -113,3 +113,24 @@ async def test_driver_season_history_query_budget(db, profiled_driver_code):
 
     assert history is not None
     assert counter.count <= DRIVER_HISTORY_BUDGET, counter.report()
+
+
+async def test_constructor_profile_count_is_independent_of_career_length(
+    db, long_history_team, short_history_team
+):
+    with count_statements() as long_counter:
+        long_profile = await ConstructorService.get_constructor_profile(
+            db, long_history_team
+        )
+    with count_statements() as short_counter:
+        short_profile = await ConstructorService.get_constructor_profile(
+            db, short_history_team
+        )
+
+    assert long_profile is not None
+    assert short_profile is not None
+    assert long_profile.total_races > short_profile.total_races
+    assert long_counter.count == short_counter.count, (
+        f"profile query count grows with career length:\n"
+        f"{long_counter.report()}\n{short_counter.report()}"
+    )

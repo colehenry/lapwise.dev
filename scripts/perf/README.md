@@ -98,25 +98,25 @@ Every JSON response is gzip encoded at the edge. No public endpoint sends a
 
 ### SQL statements per uncached service call
 
-| Service call | Statements | Direct call latency |
-| --- | ---: | ---: |
-| `CanonicalStandingsService.get_season_standings(2026)` | 31 | 6.0 s |
-| `ConstructorService.get_all_constructors()` | **204** | 18.5 s |
-| `ConstructorService.get_constructor_profile("Ferrari")` | 8 | 2.0 s |
-| `ConstructorService.get_season_history("Ferrari")` | 11 | 1.8 s |
-| `DriverService.get_all_drivers()` | 1 | 0.7 s |
-| `DriverService.get_driver_profile("VER")` | 6 | 1.4 s |
-| `DriverService.get_season_history("VER")` | 7 | 1.3 s |
-| `CircuitService.get_all_circuits()` | 1 | 0.5 s |
+| Service call | Statements | After Step 3–4 | Latency | After |
+| --- | ---: | ---: | ---: | ---: |
+| `CanonicalStandingsService.get_season_standings(2026)` | 31 | **4** | 6.0 s | 2.8 s |
+| `ConstructorService.get_all_constructors()` | 204 | **1** | 18.5 s | 0.6 s |
+| `ConstructorService.get_constructor_profile("Ferrari")` | 8 | **2** | 2.0 s | 0.8 s |
+| `ConstructorService.get_season_history("Ferrari")` | 11 | **4** | 1.8 s | 1.1 s |
+| `DriverService.get_all_drivers()` | 1 | 1 | 0.7 s | 0.8 s |
+| `DriverService.get_driver_profile("VER")` | 6 | 6 | 1.4 s | 1.4 s |
+| `DriverService.get_season_history("VER")` | 7 | 7 | 1.3 s | 1.3 s |
+| `CircuitService.get_all_circuits()` | 1 | 1 | 0.5 s | 0.6 s |
 
 Direct-call latency is measured from a development machine to Neon, so it
 exaggerates round trips relative to the deployed API. The statement counts are
 the durable evidence.
 
-The audit did not cover the constructor list endpoint. It runs one
-latest-team-branding query per constructor, which is the largest remaining N+1
-in the archive routes and is the reason `/constructors` takes over 1.5 s
-uncached. Step 3–4 owns the fix.
+The audit did not cover the constructor list endpoint. It ran one
+latest-team-branding query per constructor, which made `/constructors` the
+slowest public endpoint at over 1.5 s. Step 3–4 replaced it with a single
+`DISTINCT ON` join.
 
 ### Home request inventory before any interaction
 
