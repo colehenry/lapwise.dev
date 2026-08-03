@@ -23,8 +23,8 @@ from app.schemas.constructor import (
     ConstructorSeasonHistory,
     ConstructorSeasonHistoryResponse,
 )
+from app.services.archive_aggregate_service import ArchiveAggregateService
 from app.services.championship_errors import MissingCanonicalStandingsError
-from app.services.constructor_catalog_service import ConstructorCatalogService
 from app.services.results.common import _make_slug, as_records, json_rows
 
 
@@ -39,8 +39,12 @@ class ConstructorService:
     async def get_all_constructors(
         db: AsyncSession, include_sprint: bool = True
     ) -> ConstructorListResponse:
-        """Get constructor identities with career statistics."""
-        return await ConstructorCatalogService.get_all(db, include_sprint)
+        """Get constructor identities with career statistics.
+
+        Reads the rebuildable career aggregate, falling back to live
+        computation when it has not been refreshed yet.
+        """
+        return await ArchiveAggregateService.constructor_list(db, include_sprint)
 
     @staticmethod
     async def get_constructor_profile(

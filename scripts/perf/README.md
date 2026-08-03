@@ -102,10 +102,10 @@ Every JSON response is gzip encoded at the edge. No public endpoint sends a
 | Service call | Statements | After Step 3–4 | Latency | After |
 | --- | ---: | ---: | ---: | ---: |
 | `CanonicalStandingsService.get_season_standings(2026)` | 31 | **4** | 6.0 s | 2.8 s |
-| `ConstructorService.get_all_constructors()` | 204 | **1** | 18.5 s | 0.6 s |
+| `ConstructorService.get_all_constructors()` | 204 | **1** | 18.5 s | 0.10 s (aggregate) |
 | `ConstructorService.get_constructor_profile("Ferrari")` | 8 | **2** | 2.0 s | 0.8 s |
 | `ConstructorService.get_season_history("Ferrari")` | 11 | **4** | 1.8 s | 1.1 s |
-| `DriverService.get_all_drivers()` | 1 | 1 | 0.7 s | 0.8 s |
+| `DriverService.get_all_drivers()` | 1 | 1 | 0.7 s | 0.19 s (aggregate) |
 | `DriverService.get_driver_profile("VER")` | 6 | 6 | 1.4 s | 1.4 s |
 | `DriverService.get_season_history("VER")` | 7 | 7 | 1.3 s | 1.3 s |
 | `CircuitService.get_all_circuits()` | 1 | 1 | 0.5 s | 0.6 s |
@@ -118,6 +118,21 @@ The audit did not cover the constructor list endpoint. It ran one
 latest-team-branding query per constructor, which made `/constructors` the
 slowest public endpoint at over 1.5 s. Step 3–4 replaced it with a single
 `DISTINCT ON` join.
+
+### Archive aggregates
+
+`agg_driver_career` and `agg_constructor_career` hold career totals for both
+sprint-inclusion variants, keyed by canonical id. The listing endpoints read
+them with one indexed statement instead of scanning every session result:
+
+```bash
+cd backend && PYTHONPATH=. python scripts/refresh_archive_aggregates.py
+```
+
+The rebuild is deterministic, runs server-side as `INSERT ... SELECT` inside
+one transaction, and is wired into the Railway pre-deploy command and both
+ingestion workflows. An empty aggregate falls back to live computation, so a
+missed refresh degrades speed rather than correctness.
 
 ### Home request inventory before any interaction
 

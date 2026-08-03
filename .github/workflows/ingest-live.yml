@@ -150,3 +150,10 @@ jobs:
           echo "Generating replay for $REPLAY_YEAR R$REPLAY_ROUND"
           PYTHONPATH=$PWD python scripts/ingest_replays.py \
             $REPLAY_YEAR $REPLAY_ROUND ${{ inputs.force && '--force' || '' }}
+
+      - name: Refresh archive aggregates
+        if: >-
+          ${{ (!inputs.year && steps.check.outputs.should_ingest == 'true')
+              || inputs.year }}
+        working-directory: ./backend
+        run: PYTHONPATH=$PWD python scripts/refresh_archive_aggregates.py
