@@ -38,7 +38,12 @@ def main() -> int:
     db = get_db_session()
 
     query = (
-        select(ReplayData.id, SessionModel.year, SessionModel.round, SessionModel.event_name)
+        select(
+            ReplayData.id,
+            SessionModel.year,
+            SessionModel.round,
+            SessionModel.event_name,
+        )
         .join(SessionModel, SessionModel.id == ReplayData.session_id)
         .order_by(SessionModel.year.desc(), SessionModel.round.desc())
     )
