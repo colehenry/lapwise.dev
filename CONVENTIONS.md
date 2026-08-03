@@ -17,8 +17,18 @@ aligned.
 - **WF-2 `[CI]`** Changes reach protected `main` only through a PR with green CI.
 - **WF-3 `[agent]`** Preserve unrelated work. The user owns commit wording; add
   no AI attribution. Keep one logical change per PR.
+- **G-4 `[review]`** Finish migrations. A PR that introduces a canonical layer
+  deletes the path it replaces, or enumerates every remaining caller with a
+  named follow-up. A pass-through shim is a deferral, not a deletion, and is
+  called one in the PR.
+- **G-5 `[review]`** Two implementations of one shape are allowed; the third
+  extracts the shared shell and passes the differences in. A comment that had
+  to be duplicated verbatim is the tell that the code was pasted too.
 - **WF-4 `[review]`** Never commit secrets, environment files, dumps, keys, or
   tokens. `NEXT_PUBLIC_*` values are intentionally public.
+- **WF-5 `[agent]`** A move commit moves. No content change, so the diff is
+  renames and the guardrails baseline update is key renames at identical
+  values. Edit before or after, never during.
 
 ## Frontend
 
@@ -34,6 +44,16 @@ aligned.
 - **FE-5 `[review]`** API access uses `lib/api`, React Query, and `X-API-Key`.
   Keep API response types centralized and separate from view-model types.
 - **FE-6 `[review]`** Images require `alt`; SVGs require accessible titles.
+- **FE-7 `[CI]`** Query keys and fetchers live in `lib/queries`. Components
+  consume the exported `queryOptions` and derive with `select`; they declare no
+  `queryKey` of their own. Cache durations come from `lib/queries/durations.ts`,
+  never bare millisecond arithmetic.
+- **FE-8 `[review]`** A component with one consumer and under ~200 lines
+  colocates with its route. Two consumers, over ~200 lines, or dynamically
+  imported means `components/<surface>/`. Name it for what it renders, not for
+  where it currently sits.
+- **FE-9 `[CI]`** No two frontend source files share a filename. Next.js route
+  filenames (`page.tsx`, `layout.tsx`, `route.ts`, …) are the exception.
 
 ## Backend
 
@@ -46,6 +66,10 @@ aligned.
 - **BE-4 `[review]`** Functions target 60 and should not exceed 100 lines.
 - **BE-5 `[review]`** Request/response bodies use Pydantic schemas. Services take
   explicit dependencies and remain independently testable.
+- **BE-6 `[review]`** Response freshness is one decision with two expressions:
+  `app/cache_policy.py` classifies the endpoint and the matching `staleTime` in
+  `frontend/lib/queries` follows the same class. Retiering one means retiering
+  the other in the same PR.
 
 ## Data and ingestion
 
@@ -80,6 +104,10 @@ aligned.
 - **DOC-1 `[review]`** Comments capture non-obvious constraints, not narration or
   change history. Add standalone docs only when requested and keep governance
   docs current.
+- **DOC-2 `[review]`** A plan document records status in exactly one table; step
+  bodies describe intent and exit gates only. Changing what a function computes
+  means updating its docstring and its callers' — an explanation left behind
+  after a behavior change teaches the old bug.
 - **OPS-1 `[review]`** Backend deploys to Railway and frontend to Netlify from
   `main`. Validate migrations before dependent code and retain rollback paths.
 
@@ -90,11 +118,16 @@ Ruff/migrations/pytest; and repository guardrails plus their tests. Branch
 protection applies to `main` and administrators; force pushes and deletions are
 disabled. `dev` intentionally permits direct pushes.
 
-`npm run guardrails` blocks new/increased size debt, unapproved hex, backend
-`print()`, and frontend debug consoles. `npm run guardrails:update` is
-downward-only. Existing oversized files and the 400-line frontend target remain
-report-only; the refactor sequence is in
-`docs/oversized-components-refactor-plan.md`.
+`npm run guardrails` blocks unapproved hex, backend `print()`, frontend debug
+consoles, and four ratcheted counts: over-cap file sizes, duplicate filenames,
+query keys outside `lib/queries`, and bare duration arithmetic in the query
+layer. Each ratchet fails on a new key or a grown count and reports existing
+debt without blocking. `npm run guardrails:update` is downward-only; it seeds a
+ratchet the first time its baseline section is absent and refuses new debt
+thereafter. The 400-line frontend target stays report-only; the refactor
+sequence is in `docs/oversized-components-refactor-plan.md` and the drift
+findings behind the newer ratchets are in
+`docs/refactor-drift-guardrails.md`.
 
 Endpoint-auth coverage, function length, generated API-type staleness, derived
 table rebuild coverage, secret scanning, and attribution are review-enforced

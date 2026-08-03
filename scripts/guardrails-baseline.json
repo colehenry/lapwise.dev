@@ -1,5 +1,5 @@
 {
-  "note": "Baseline for the guardrails file-size ratchet. Regenerate with `npm run guardrails:update`. Numbers only move down; new or increased debt is rejected.",
+  "note": "Baseline for the guardrails ratchets. Regenerate with `npm run guardrails:update`. Numbers only move down; new or increased debt is rejected.",
   "sizeCaps": {
     "backend/app/routers/auth.py": 528,
     "backend/app/routers/oauth.py": 409,
@@ -22,5 +22,37 @@
     "frontend/lib/ai/router.ts": 371,
     "frontend/lib/ai/tools.ts": 751,
     "frontend/lib/types.ts": 791
+  },
+  "drift": {
+    "duplicateBasenames": {
+      "ArchivePageClient.tsx": 3,
+      "auth.ts": 2
+    },
+    "inlineQueryKeys": {
+      "frontend/app/ask/AskContent.tsx": 4,
+      "frontend/app/circuits/[id]/page.tsx": 1,
+      "frontend/app/constructors/[teamName]/page.tsx": 1,
+      "frontend/app/drivers/[driverCode]/page.tsx": 1,
+      "frontend/app/profile/[username]/page.tsx": 2,
+      "frontend/app/replay/components/ReplayBrowser.tsx": 1,
+      "frontend/components/charts/EntityHistoryGraph.tsx": 2,
+      "frontend/components/charts/LapTimeDistributionChart.tsx": 1,
+      "frontend/components/charts/PointsByRoundGraph.tsx": 1,
+      "frontend/components/charts/TyreDegradationChart.tsx": 1,
+      "frontend/components/charts/TyreStintChart.tsx": 1,
+      "frontend/components/entities/CircuitLapRecords.tsx": 1,
+      "frontend/components/entities/CircuitLapTimeTrend.tsx": 1,
+      "frontend/components/entities/CircuitRaceHistoryTable.tsx": 1,
+      "frontend/components/entities/CircuitRecentRace.tsx": 1,
+      "frontend/components/entities/CircuitStatisticsPanel.tsx": 1,
+      "frontend/components/entities/CircuitTyreStats.tsx": 1,
+      "frontend/components/entities/CircuitWeatherProfile.tsx": 1,
+      "frontend/components/entities/ConstructorResultsTable.tsx": 1,
+      "frontend/components/entities/ConstructorStatisticsPanel.tsx": 1,
+      "frontend/components/home/NextRaceBanner.tsx": 1,
+      "frontend/components/standings/TeammateHeadToHead.tsx": 1,
+      "frontend/hooks/useRaceComments.ts": 1
+    },
+    "rawDurations": {}
   }
 }
