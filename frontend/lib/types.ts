@@ -1,38 +1,11 @@
 // Shared API type definitions — canonical source of truth for API response types
 
-export interface DriverStanding {
-  position: number;
-  driver_code: string | null;
-  driver_slug: string | null;
-  full_name: string;
-  country_code: string | null;
-  team_name: string;
-  team_color: string | null;
-  total_points: number;
-  headshot_url: string | null;
-  wins: number;
-  p2s: number;
-  p3s: number;
-  position_counts: Record<string, number>;
-}
-
-export interface ConstructorStanding {
-  position: number;
-  team_name: string;
-  team_color: string | null;
-  logo_url: string | null;
-  total_points: number;
-  wins: number;
-  p2s: number;
-  p3s: number;
-  position_counts: Record<string, number>;
-}
-
-export interface StandingsResponse {
-  year: number;
-  drivers: DriverStanding[];
-  constructors: ConstructorStanding[];
-}
+export type {
+  ChampionshipScoringInfo,
+  ConstructorStanding,
+  DriverStanding,
+  StandingsResponse,
+} from "./championshipTypes";
 
 export interface DriverQualifyingStanding {
   position: number;
@@ -87,6 +60,7 @@ export interface RoundSummary {
   date: string;
   circuit_name: string;
   circuit_id: number;
+  venue_slug?: string | null;
   circuit_location?: string | null;
   circuit_country?: string | null;
   track_length_km: number | null;
@@ -117,6 +91,7 @@ export interface DriverListResponse {
 
 export interface ConstructorListItem {
   team_name: string;
+  constructor_slug: string | null;
   team_color: string | null;
   logo_url: string | null;
   total_wins: number;
@@ -134,6 +109,8 @@ export interface ConstructorListResponse {
 
 export interface CircuitInfo {
   id: number;
+  venue_slug: string;
+  layout_slug: string | null;
   name: string;
   location: string;
   country: string;
@@ -155,6 +132,7 @@ export type DriverInfo = {
 
 export type TeamInfo = {
   name: string;
+  constructor_slug: string | null;
   team_color: string | null;
   logo_url: string | null;
 };
@@ -162,6 +140,7 @@ export type TeamInfo = {
 // Session-level circuit (subset of CircuitInfo, used by session results)
 export type SessionCircuitInfo = {
   id: number;
+  venue_slug: string | null;
   name: string;
   location: string;
   country: string;
@@ -346,6 +325,10 @@ export interface DriverSeasonHistory {
   year: number;
   championship_position: number | null;
   total_points: number;
+  championship_points: number | null;
+  points_scored: number;
+  classification_status: string;
+  scoring_explanation: string | null;
   race_count?: number;
   points_per_race?: number;
   team_name: string;
@@ -368,6 +351,7 @@ export interface DriverSuperlativesResponse {
 // Constructor profile types
 export interface ConstructorProfile {
   team_name: string;
+  constructor_slug: string | null;
   team_color: string | null;
   logo_url: string | null;
   total_seasons: number;
@@ -408,6 +392,10 @@ export interface ConstructorSeasonHistory {
   year: number;
   championship_position: number | null;
   total_points: number;
+  championship_points: number | null;
+  points_scored: number;
+  classification_status: string;
+  scoring_explanation: string | null;
   team_color: string | null;
 }
 
@@ -539,12 +527,14 @@ export interface FavoriteDriver {
 
 export interface FavoriteTeam {
   team_name: string;
+  constructor_slug: string | null;
   team_color: string | null;
   logo_url: string | null;
 }
 
 export interface FavoriteCircuit {
   circuit_id: number;
+  venue_slug: string | null;
   name: string;
   location: string;
   country: string;

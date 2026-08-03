@@ -7,6 +7,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings
 from app.limiter import limiter
+from app.services.driver_identity_service import AmbiguousLegacyDriverError
 
 if settings.sentry_dsn:
     sentry_sdk.init(
@@ -33,6 +34,17 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
     return JSONResponse(
         status_code=429,
         content={"detail": "Too many requests. Please try again later."},
+    )
+
+
+@app.exception_handler(AmbiguousLegacyDriverError)
+async def ambiguous_driver_handler(request: Request, exc: AmbiguousLegacyDriverError):
+    return JSONResponse(
+        status_code=409,
+        content={
+            "detail": f"Legacy driver code '{exc.code}' is ambiguous; use a canonical slug",
+            "candidate_slugs": exc.candidates,
+        },
     )
 
 

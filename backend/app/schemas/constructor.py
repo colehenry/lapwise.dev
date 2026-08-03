@@ -13,6 +13,7 @@ class ConstructorListItem(BaseModel):
     """Single constructor in the all-time constructors listing."""
 
     team_name: str
+    constructor_slug: Optional[str] = None
     team_color: Optional[str] = None
     logo_url: Optional[str] = None
     total_wins: int
@@ -45,6 +46,7 @@ class ConstructorProfileResponse(BaseModel):
 
     # Basic info
     team_name: str
+    constructor_slug: Optional[str] = None
     team_color: Optional[str] = None
     logo_url: Optional[str] = None
 
@@ -70,6 +72,10 @@ class ConstructorSeasonHistory(BaseModel):
     year: int
     championship_position: Optional[int] = None
     total_points: float
+    championship_points: Optional[float] = None
+    points_scored: float
+    classification_status: str = "classified"
+    scoring_explanation: Optional[str] = None
     race_count: int = 0
     team_color: Optional[str] = None
 
@@ -85,6 +91,7 @@ class ConstructorSeasonHistoryResponse(BaseModel):
     """
 
     team_name: str
+    constructor_slug: Optional[str] = None
     seasons: List[ConstructorSeasonHistory]
 
     class Config:

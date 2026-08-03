@@ -94,7 +94,9 @@ export default function SessionDetail({
     session.circuit.location,
   );
   const compactLocation = dedupeCommaSeparated(session.circuit.location);
-  const sessionCircuitHref = circuitHref(session.circuit.id);
+  const sessionCircuitHref = circuitHref(
+    session.circuit.venue_slug ?? session.circuit.id,
+  );
 
   return (
     <main className={hideHeader ? "" : "min-h-screen bg-bg-secondary"}>
@@ -383,15 +385,26 @@ export default function SessionDetail({
                     {/* Driver */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        {isValidHeadshotUrl(result.headshot_url) && (
-                          <Image
-                            src={result.headshot_url || ""}
-                            alt={result.driver.full_name}
-                            width={36}
-                            height={36}
-                            className="rounded-sm object-cover border border-border-secondary hidden sm:block"
-                          />
-                        )}
+                        <div className="relative hidden h-9 w-9 shrink-0 overflow-hidden rounded-sm border border-border-secondary bg-bg-secondary sm:block">
+                          {isValidHeadshotUrl(result.headshot_url) ? (
+                            <Image
+                              src={result.headshot_url || ""}
+                              alt={result.driver.full_name}
+                              fill
+                              sizes="36px"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <span className="flex h-full w-full items-center justify-center text-[10px] font-bold font-mono text-text-muted">
+                              {result.driver.driver_code ??
+                                result.driver.full_name
+                                  .split(" ")
+                                  .map((name) => name[0])
+                                  .join("")
+                                  .slice(0, 3)}
+                            </span>
+                          )}
+                        </div>
                         <div className="flex flex-col">
                           <Link
                             href={driverHref(result.driver) ?? "/drivers"}
@@ -414,8 +427,7 @@ export default function SessionDetail({
                           </Link>
                           <Link
                             href={
-                              constructorHref(result.team.name) ??
-                              "/constructors"
+                              constructorHref(result.team) ?? "/constructors"
                             }
                             className="text-[10px] font-mono text-text-muted md:hidden hover:text-purple-300 transition-colors duration-150"
                           >
@@ -428,9 +440,7 @@ export default function SessionDetail({
                     {/* Constructor */}
                     <td className="px-4 py-3 hidden md:table-cell">
                       <Link
-                        href={
-                          constructorHref(result.team.name) ?? "/constructors"
-                        }
+                        href={constructorHref(result.team) ?? "/constructors"}
                         className="text-xs font-medium hover:text-purple-300 transition-colors duration-150 flex items-center gap-2"
                         style={{
                           color:

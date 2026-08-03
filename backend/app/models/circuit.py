@@ -5,7 +5,7 @@ Represents a Formula 1 racing circuit/track.
 Circuits can host multiple races across different seasons.
 """
 
-from sqlalchemy import Column, Float, Integer, String
+from sqlalchemy import Column, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -23,6 +23,12 @@ class Circuit(Base):
     # Primary key
     id = Column(Integer, primary_key=True, index=True)
 
+    venue_id = Column(
+        Integer, ForeignKey("circuit_venues.id", ondelete="RESTRICT"), nullable=False
+    )
+    layout_slug = Column(String, nullable=False, unique=True, index=True)
+    source_name = Column(String, nullable=True)
+
     # Circuit information
     name = Column(String, nullable=False)  # "Bahrain International Circuit"
     location = Column(String, nullable=False)  # "Sakhir"
@@ -37,6 +43,7 @@ class Circuit(Base):
 
     # Relationships
     sessions = relationship("Session", back_populates="circuit")
+    venue = relationship("CircuitVenue", back_populates="layouts")
 
     def __repr__(self):
         """String representation for debugging"""

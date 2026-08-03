@@ -14,10 +14,19 @@ export function driverHref(driver: DriverLinkInput): string | null {
   return identifier ? `/drivers/${encodePathSegment(identifier)}` : null;
 }
 
+type ConstructorLinkInput = {
+  constructor_slug?: string | null;
+  team_name?: string | null;
+};
+
 export function constructorHref(
-  teamName: string | null | undefined,
+  input: string | ConstructorLinkInput | null | undefined,
 ): string | null {
-  return teamName ? `/constructors/${encodePathSegment(teamName)}` : null;
+  const identifier =
+    typeof input === "string"
+      ? input
+      : (input?.constructor_slug ?? input?.team_name);
+  return identifier ? `/constructors/${encodePathSegment(identifier)}` : null;
 }
 
 export function circuitHref(

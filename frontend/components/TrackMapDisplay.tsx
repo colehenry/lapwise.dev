@@ -140,6 +140,7 @@ export function TrackMapFull({
           circuitName={circuitName}
           width={240}
           height={150}
+          priority
           className="object-contain relative z-10 opacity-90 p-4"
           fallbackClassName="relative z-10 h-full w-full px-4"
           style={

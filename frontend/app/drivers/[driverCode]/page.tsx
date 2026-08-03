@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
 import ArchiveMetricBar from "@/components/archive/ArchiveMetricBar";
 import ArchivePanel from "@/components/archive/ArchivePanel";
@@ -80,6 +80,12 @@ export default function DriverProfilePage() {
     queryFn: () => fetchSuperlatives(driverCode, includeSprint),
     placeholderData: keepPreviousData,
   });
+
+  useEffect(() => {
+    if (data?.driver_slug && driverCode !== data.driver_slug) {
+      router.replace(`/drivers/${data.driver_slug}${window.location.search}`);
+    }
+  }, [data?.driver_slug, driverCode, router]);
 
   if (isLoading) {
     return <ProfileSkeleton />;

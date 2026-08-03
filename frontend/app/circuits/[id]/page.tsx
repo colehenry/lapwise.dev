@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import ArchivePanel from "@/components/archive/ArchivePanel";
 import CircuitLapRecords from "@/components/CircuitLapRecords";
 import CircuitLapTimeTrend from "@/components/CircuitLapTimeTrend";
@@ -80,6 +81,14 @@ export default function CircuitDetailPage() {
     enabled: !!id,
     retry: false,
   });
+
+  useEffect(() => {
+    if (circuit?.venue_slug && id !== circuit.venue_slug) {
+      router.replace(
+        `/circuits/${circuit.venue_slug}${window.location.search}`,
+      );
+    }
+  }, [circuit?.venue_slug, id, router]);
 
   if (isLoading) {
     return (

@@ -18,6 +18,8 @@ class CircuitResponse(BaseModel):
 
     # Basic info
     id: int
+    venue_slug: str
+    layout_slug: Optional[str] = None
     name: str
     location: str
     country: str
@@ -69,6 +71,7 @@ class CircuitRaceHistoryResponse(BaseModel):
 
     circuit_id: int
     circuit_name: str
+    venue_slug: Optional[str] = None
     races: List[CircuitRaceResult]
 
     class Config:

@@ -1,12 +1,21 @@
 from datetime import date
 from typing import Dict, List, Optional, Tuple
 
-from sqlalchemy import case, func, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Driver, Session, SessionResult, Team
+from app.models import (
+    ChampionshipClassificationException,
+    ChampionshipScoringContext,
+    Constructor,
+    ConstructorChampionshipStanding,
+    ConstructorExternalId,
+    Driver,
+    Session,
+    SessionResult,
+    Team,
+)
 from app.schemas.constructor import (
-    ConstructorListItem,
     ConstructorListResponse,
     ConstructorProfileResponse,
     ConstructorRaceHistory,
@@ -14,6 +23,8 @@ from app.schemas.constructor import (
     ConstructorSeasonHistory,
     ConstructorSeasonHistoryResponse,
 )
+from app.services.championship_errors import MissingCanonicalStandingsError
+from app.services.constructor_catalog_service import ConstructorCatalogService
 from app.services.results.common import _make_slug
 
 
@@ -28,104 +39,8 @@ class ConstructorService:
     async def get_all_constructors(
         db: AsyncSession, include_sprint: bool = True
     ) -> ConstructorListResponse:
-        """
-        Get all-time constructor listing with career statistics.
-
-        Groups by normalized team name (case-insensitive).
-        Returns constructors ordered by total wins DESC, total points DESC.
-        """
-        # Subquery: latest team_color and logo_url per team name
-        latest_team = select(
-            func.lower(Team.name).label("team_name_lower"),
-            Team.team_color,
-            Team.logo_url,
-            func.row_number()
-            .over(
-                partition_by=func.lower(Team.name),
-                order_by=Team.year.desc(),
-            )
-            .label("rn"),
-        ).subquery("latest_team")
-        branding = (
-            select(
-                latest_team.c.team_name_lower,
-                latest_team.c.team_color,
-                latest_team.c.logo_url,
-            )
-            .where(latest_team.c.rn == 1)
-            .subquery("branding")
-        )
-
-        # Aggregate stats per team name (case-insensitive)
-        stats = (
-            select(
-                func.lower(Team.name).label("team_name_lower"),
-                func.max(Team.name).label("team_name"),
-                func.count(SessionResult.id).label("total_races"),
-                func.sum(case((SessionResult.position == 1, 1), else_=0)).label(
-                    "total_wins"
-                ),
-                func.sum(
-                    case(
-                        (SessionResult.position.in_([1, 2, 3]), 1),
-                        else_=0,
-                    )
-                ).label("total_podiums"),
-                func.coalesce(func.sum(SessionResult.points), 0).label("total_points"),
-                func.min(Session.year).label("first_season"),
-                func.max(Session.year).label("latest_season"),
-            )
-            .join(SessionResult, Team.id == SessionResult.team_id)
-            .join(Session, SessionResult.session_id == Session.id)
-            .where(
-                Session.session_type.in_(
-                    ConstructorService._session_types(include_sprint)
-                )
-            )
-            .group_by(func.lower(Team.name))
-        ).subquery("stats")
-
-        # Join stats with branding in a single query
-        query = (
-            select(
-                stats.c.team_name,
-                stats.c.total_races,
-                stats.c.total_wins,
-                stats.c.total_podiums,
-                stats.c.total_points,
-                stats.c.first_season,
-                stats.c.latest_season,
-                branding.c.team_color,
-                branding.c.logo_url,
-            )
-            .outerjoin(
-                branding,
-                stats.c.team_name_lower == branding.c.team_name_lower,
-            )
-            .order_by(stats.c.total_wins.desc(), stats.c.total_points.desc())
-        )
-
-        result = await db.execute(query)
-        rows = result.all()
-
-        constructors = [
-            ConstructorListItem(
-                team_name=row.team_name,
-                team_color=row.team_color,
-                logo_url=row.logo_url,
-                total_wins=int(row.total_wins or 0),
-                total_races=int(row.total_races or 0),
-                total_podiums=int(row.total_podiums or 0),
-                total_points=float(row.total_points or 0),
-                first_season=row.first_season,
-                latest_season=row.latest_season,
-            )
-            for row in rows
-        ]
-
-        return ConstructorListResponse(
-            constructors=constructors, total=len(constructors)
-        )
+        """Get constructor identities with career statistics."""
+        return await ConstructorCatalogService.get_all(db, include_sprint)
 
     @staticmethod
     async def get_constructor_profile(
@@ -136,15 +51,15 @@ class ConstructorService:
         """
         team_name_normalized = team_name
 
-        # Get team basic info
         team = await ConstructorService._get_team_by_name(db, team_name_normalized)
         if not team:
             return None
+        constructor_slug = await db.scalar(
+            select(Constructor.slug).where(Constructor.id == team.constructor_id)
+        )
 
-        # Get all team IDs for this name
         team_ids = await ConstructorService._get_all_team_ids(db, team_name_normalized)
 
-        # Get all race results
         race_results = await ConstructorService._get_race_results_by_ids(
             db, team_ids, include_sprint
         )
@@ -152,6 +67,7 @@ class ConstructorService:
         if not race_results:
             return ConstructorProfileResponse(
                 team_name=team.name,
+                constructor_slug=constructor_slug,
                 team_color=team.team_color,
                 total_seasons=0,
                 total_races=0,
@@ -191,19 +107,24 @@ class ConstructorService:
 
         total_races = len(races_set)
 
-        # Calculate championships — only count completed seasons
-        total_championships = 0
-        for year in seasons:
-            if not ConstructorService._is_season_complete(year):
-                continue
-            champion_id = await ConstructorService._get_season_champion_id(db, year)
-            if champion_id and champion_id in team_ids:
-                total_championships += 1
+        total_championships = (
+            await db.scalar(
+                select(func.count())
+                .select_from(ConstructorChampionshipStanding)
+                .where(
+                    ConstructorChampionshipStanding.team_id.in_(team_ids),
+                    ConstructorChampionshipStanding.position == 1,
+                    ConstructorChampionshipStanding.is_final.is_(True),
+                )
+            )
+            or 0
+        )
 
         latest_season = max(seasons) if seasons else None
 
         return ConstructorProfileResponse(
             team_name=team.name,
+            constructor_slug=constructor_slug,
             team_color=team.team_color,
             logo_url=team.logo_url,
             total_seasons=len(seasons),
@@ -227,6 +148,9 @@ class ConstructorService:
         team = await ConstructorService._get_team_by_name(db, team_name_normalized)
         if not team:
             return None
+        constructor_slug = await db.scalar(
+            select(Constructor.slug).where(Constructor.id == team.constructor_id)
+        )
 
         # Get team mapping (year -> (id, color))
         team_data_map = await ConstructorService._get_team_id_map(
@@ -242,28 +166,119 @@ class ConstructorService:
         if not season_data:
             return ConstructorSeasonHistoryResponse(
                 team_name=team.name,
+                constructor_slug=constructor_slug,
                 seasons=[],
             )
 
+        years = [row.year for row in season_data]
+        official = {
+            row.team_id: row
+            for row in (
+                await db.scalars(
+                    select(ConstructorChampionshipStanding).where(
+                        ConstructorChampionshipStanding.team_id.in_(team_ids),
+                        ConstructorChampionshipStanding.year.in_(years),
+                    )
+                )
+            ).all()
+        }
+        snapshot_years = set(
+            await db.scalars(
+                select(ConstructorChampionshipStanding.year)
+                .where(
+                    ConstructorChampionshipStanding.year.in_(years),
+                    ConstructorChampionshipStanding.is_final.is_(True),
+                )
+                .distinct()
+            )
+        )
+        contexts = {
+            row.year: row
+            for row in (
+                await db.scalars(
+                    select(ChampionshipScoringContext).where(
+                        ChampionshipScoringContext.entrant_type == "constructor",
+                        ChampionshipScoringContext.year.in_(years),
+                    )
+                )
+            ).all()
+        }
+        exceptions = {
+            row.team_id: row
+            for row in (
+                await db.scalars(
+                    select(ChampionshipClassificationException).where(
+                        ChampionshipClassificationException.team_id.in_(team_ids),
+                        ChampionshipClassificationException.year.in_(years),
+                    )
+                )
+            ).all()
+        }
+        missing_years = [
+            year
+            for year in years
+            if 1958 <= year < date.today().year and year not in snapshot_years
+        ]
+        if missing_years:
+            raise MissingCanonicalStandingsError(
+                "Completed constructor seasons are missing canonical standings: "
+                + ", ".join(str(year) for year in missing_years)
+            )
         seasons = []
         for season_row in season_data:
             year = season_row.year
-
-            standings = await ConstructorService._get_season_standings(db, year)
-
-            championship_position = None
             team_id_for_year = team_data_map.get(year, (None, None))[0]
-
-            for idx, (t_id, _) in enumerate(standings):
-                if t_id == team_id_for_year:
-                    championship_position = idx + 1
-                    break
+            standing = official.get(team_id_for_year)
+            exception = exceptions.get(team_id_for_year)
+            context = contexts.get(year)
+            scored = float(season_row.total_points)
+            not_held = context is not None and context.kind == "not_held"
+            championship_points = (
+                None
+                if exception or not_held
+                else float(standing.championship_points)
+                if standing
+                else None
+                if year < date.today().year
+                else scored
+            )
 
             seasons.append(
                 ConstructorSeasonHistory(
                     year=year,
-                    championship_position=championship_position,
-                    total_points=float(season_row.total_points),
+                    championship_position=(
+                        None
+                        if exception or not_held
+                        else standing.position
+                        if standing
+                        else None
+                    ),
+                    total_points=championship_points or 0,
+                    championship_points=championship_points,
+                    points_scored=scored,
+                    classification_status=(
+                        exception.status
+                        if exception
+                        else "not_classified"
+                        if not_held
+                        else "classified"
+                        if standing and standing.is_final
+                        else "not_classified"
+                        if year < date.today().year
+                        else "provisional"
+                    ),
+                    scoring_explanation=(
+                        exception.explanation
+                        if exception
+                        else context.explanation
+                        if context
+                        and (
+                            not_held
+                            or standing
+                            and float(standing.championship_points) != scored
+                        )
+                        else None
+                    ),
                     race_count=int(season_row.race_count or 0),
                     team_color=team_data_map.get(year, (None, None))[1],
                 )
@@ -271,6 +286,7 @@ class ConstructorService:
 
         return ConstructorSeasonHistoryResponse(
             team_name=team.name,
+            constructor_slug=constructor_slug,
             seasons=seasons,
         )
 
@@ -412,54 +428,66 @@ class ConstructorService:
 
     @staticmethod
     async def _get_team_by_name(db: AsyncSession, name: str) -> Optional[Team]:
-        for candidate in (name, name.replace("-", " ")):
-            query = (
+        constructor = await db.scalar(
+            select(Constructor).where(Constructor.slug == name.lower())
+        )
+        if not constructor:
+            constructor = await db.scalar(
+                select(Constructor)
+                .join(ConstructorExternalId)
+                .where(
+                    ConstructorExternalId.source == "legacy-name",
+                    ConstructorExternalId.external_id == name.replace("-", " ").lower(),
+                )
+            )
+        if constructor:
+            return await db.scalar(
                 select(Team)
-                .where(func.lower(Team.name) == candidate.lower())
+                .where(Team.constructor_id == constructor.id)
                 .order_by(Team.year.desc())
                 .limit(1)
             )
-            result = await db.execute(query)
-            team = result.scalar_one_or_none()
-            if team:
-                return team
         return None
 
     @staticmethod
     async def _get_all_team_ids(db: AsyncSession, name: str) -> List[int]:
-        for candidate in (name, name.replace("-", " ")):
-            query = select(Team.id).where(func.lower(Team.name) == candidate.lower())
-            result = await db.execute(query)
-            rows = result.all()
-            if rows:
-                return [row[0] for row in rows]
-        return []
+        team = await ConstructorService._get_team_by_name(db, name)
+        if not team:
+            return []
+        return list(
+            await db.scalars(
+                select(Team.id).where(Team.constructor_id == team.constructor_id)
+            )
+        )
 
     @staticmethod
     async def _get_team_id_map(
         db: AsyncSession, name: str
     ) -> Dict[int, Tuple[int, str]]:
-        for candidate in (name, name.replace("-", " ")):
-            query = select(Team.id, Team.year, Team.team_color).where(
-                func.lower(Team.name) == candidate.lower()
+        team = await ConstructorService._get_team_by_name(db, name)
+        if not team:
+            return {}
+        rows = (
+            await db.execute(
+                select(Team.id, Team.year, Team.team_color).where(
+                    Team.constructor_id == team.constructor_id
+                )
             )
-            result = await db.execute(query)
-            rows = result.all()
-            if rows:
-                return {row.year: (row.id, row.team_color) for row in rows}
-        return {}
+        ).all()
+        return {row.year: (row.id, row.team_color) for row in rows}
 
     @staticmethod
     async def _get_all_teams_info(db: AsyncSession, name: str):
-        for candidate in (name, name.replace("-", " ")):
-            query = select(Team.id, Team.year).where(
-                func.lower(Team.name) == candidate.lower()
+        team = await ConstructorService._get_team_by_name(db, name)
+        if not team:
+            return []
+        return (
+            await db.execute(
+                select(Team.id, Team.year).where(
+                    Team.constructor_id == team.constructor_id
+                )
             )
-            result = await db.execute(query)
-            rows = result.all()
-            if rows:
-                return rows
-        return []
+        ).all()
 
     @staticmethod
     async def _get_race_results_by_ids(

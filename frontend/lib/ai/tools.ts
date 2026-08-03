@@ -7,25 +7,14 @@
 
 import { tool } from "ai";
 import { z } from "zod";
+import { ALLOWED_AI_TABLES } from "./allowed-tables";
 import { executeAIParamQuery, executeAIQuery } from "./db";
 
 /**
  * Allowlist of F1 data tables the AI can query.
  * Auth/user tables are explicitly excluded.
  */
-const ALLOWED_TABLES = [
-  "drivers",
-  "teams",
-  "circuits",
-  "sessions",
-  "session_results",
-  "laps",
-  "weather_data",
-  "track_status",
-  "race_control_messages",
-  "v_driver_standings",
-  "v_constructor_standings",
-];
+const ALLOWED_TABLES: readonly string[] = ALLOWED_AI_TABLES;
 
 /**
  * SQL keywords that indicate a write operation — blocked for safety.

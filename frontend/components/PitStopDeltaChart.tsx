@@ -489,7 +489,11 @@ export default function PitStopDeltaChart({
           </p>
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer
+          width="100%"
+          height={300}
+          initialDimension={{ width: 860, height: 300 }}
+        >
           <ScatterChart margin={{ top: 16, right: 16, left: 0, bottom: 4 }}>
             <CartesianGrid
               strokeDasharray="3 3"

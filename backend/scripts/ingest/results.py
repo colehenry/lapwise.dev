@@ -1,8 +1,11 @@
 from sqlalchemy import select
-from app.models import SessionResult
-from .utils import timedelta_to_seconds, safe_int, safe_float
-from .participants import ingest_driver, ingest_team
 from sqlalchemy.orm import Session as SQLAlchemySession
+
+from app.models import SessionResult
+
+from .championships import refresh_championship_standings
+from .participants import ingest_driver, ingest_team
+from .utils import safe_float, safe_int, timedelta_to_seconds
 
 
 def ingest_race_results(db: SQLAlchemySession, fastf1_session, session_id, year):
@@ -31,12 +34,12 @@ def ingest_race_results(db: SQLAlchemySession, fastf1_session, session_id, year)
         except Exception as e:
             print(f"    ⚠️  Could not determine fastest lap: {e}")
     else:
-        print(f"    ℹ️  Fastest lap data not available for pre-2018 seasons")
+        print("    ℹ️  Fastest lap data not available for pre-2018 seasons")
 
     new_results = 0
     for idx, driver_result in results.iterrows():
         # Get or create driver
-        driver_id = ingest_driver(db, driver_result)
+        driver_id = ingest_driver(db, driver_result, year)
 
         # Get or create team (year-specific)
         team_id = ingest_team(db, driver_result, year)
@@ -82,6 +85,7 @@ def ingest_race_results(db: SQLAlchemySession, fastf1_session, session_id, year)
         db.add(result)
 
     db.commit()
+    refresh_championship_standings(db, year)
     print(f"  ✓ Added {new_results} new results")
 
 
@@ -101,7 +105,7 @@ def ingest_qualifying_results(db: SQLAlchemySession, fastf1_session, session_id,
     new_results = 0
     for idx, driver_result in results.iterrows():
         # Get or create driver
-        driver_id = ingest_driver(db, driver_result)
+        driver_id = ingest_driver(db, driver_result, year)
 
         # Get or create team (year-specific)
         team_id = ingest_team(db, driver_result, year)

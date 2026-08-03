@@ -108,6 +108,12 @@ const formatLapTime = (seconds: number | null): string => {
   return `${mins}:${secs.toFixed(3).padStart(6, "0")}`;
 };
 
+const maxLapNumber = (drivers: DriverLapTimes[]): number =>
+  Math.max(
+    0,
+    ...drivers.flatMap((driver) => driver.laps.map((lap) => lap.lap_number)),
+  );
+
 interface LapTimeAxisTickProps {
   x?: number;
   y?: number;
@@ -866,8 +872,7 @@ export default function LapTimeByLapGraph({
 
     if (filteredDrivers.length === 0) return [];
 
-    // Get max lap count
-    const maxLaps = Math.max(...filteredDrivers.map((d) => d.laps.length));
+    const maxLaps = maxLapNumber(filteredDrivers);
 
     // Calculate cumulative times for each driver (using normalized lap times)
     const cumulativeTimes = new Map<string, number[]>();
@@ -933,7 +938,7 @@ export default function LapTimeByLapGraph({
 
     if (filteredDrivers.length === 0) return [];
 
-    const maxLaps = Math.max(...filteredDrivers.map((d) => d.laps.length));
+    const maxLaps = maxLapNumber(filteredDrivers);
     const chartData: ChartDataPoint[] = [];
 
     for (let lapNum = 1; lapNum <= maxLaps; lapNum++) {
@@ -965,7 +970,7 @@ export default function LapTimeByLapGraph({
 
     if (filteredDrivers.length === 0) return [];
 
-    const maxLaps = Math.max(...filteredDrivers.map((d) => d.laps.length));
+    const maxLaps = maxLapNumber(filteredDrivers);
 
     // Pre-compute per-driver nearest clean lap times before/after each outlier
     const preClean = new Map<string, Map<number, number>>();
@@ -1467,7 +1472,11 @@ export default function LapTimeByLapGraph({
       <MobileChartFrame height={420} logicalWidth={920} className="-ml-2">
         {chartData.length > 0 ? (
           <>
-            <ResponsiveContainer width="100%" height={420}>
+            <ResponsiveContainer
+              width="100%"
+              height={420}
+              initialDimension={{ width: 860, height: 420 }}
+            >
               <LineChart
                 data={chartData}
                 margin={{ top: 10, right: 16, left: 20, bottom: 30 }}
