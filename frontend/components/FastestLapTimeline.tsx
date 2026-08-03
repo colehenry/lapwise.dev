@@ -8,7 +8,6 @@ import {
   LineChart,
   ReferenceArea,
   ReferenceLine,
-  ResponsiveContainer,
   Scatter,
   ScatterChart,
   Tooltip,
@@ -21,6 +20,7 @@ import {
   CHART_TYPOGRAPHY,
 } from "@/components/chart-primitives";
 import MobileChartFrame from "@/components/ui/MobileChartFrame";
+import StableResponsiveContainer from "@/components/ui/StableResponsiveContainer";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import { DATA_FROM } from "@/lib/data-coverage";
 import { STATUS_COLORS } from "@/lib/palette";
@@ -580,11 +580,7 @@ export default function FastestLapTimeline({
       </p>
 
       <MobileChartFrame height={timelineHeight} logicalWidth={860}>
-        <ResponsiveContainer
-          width="100%"
-          height="100%"
-          initialDimension={{ width: 860, height: timelineHeight }}
-        >
+        <StableResponsiveContainer height="100%" initialHeight={timelineHeight}>
           <ScatterChart margin={TIMELINE_MARGIN}>
             <CartesianGrid
               strokeDasharray="3 3"
@@ -647,7 +643,7 @@ export default function FastestLapTimeline({
               }}
             />
           </ScatterChart>
-        </ResponsiveContainer>
+        </StableResponsiveContainer>
       </MobileChartFrame>
 
       <div className="flex items-center justify-between gap-4">
@@ -669,11 +665,7 @@ export default function FastestLapTimeline({
       </div>
 
       <MobileChartFrame height={224} logicalWidth={860}>
-        <ResponsiveContainer
-          width="100%"
-          height="100%"
-          initialDimension={{ width: 860, height: 224 }}
-        >
+        <StableResponsiveContainer height="100%" initialHeight={224}>
           <LineChart data={averageLapPoints} margin={AVG_MARGIN}>
             {/* Track event bands — colored area + boundary lines */}
             {eventBands.flatMap((band, bandIndex) => {
@@ -760,7 +752,7 @@ export default function FastestLapTimeline({
               isAnimationActive={false}
             />
           </LineChart>
-        </ResponsiveContainer>
+        </StableResponsiveContainer>
       </MobileChartFrame>
     </div>
   );
