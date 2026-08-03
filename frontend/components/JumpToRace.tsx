@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { apiHeaders, apiUrl } from "@/lib/api";
+import { roundsQuery, type SeasonRoundsData } from "@/lib/queries/seasons";
 
 type RoundOption = {
   round: number;
@@ -45,31 +45,16 @@ export default function JumpToRace({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const seasonYear = selectedSeason ? Number(selectedSeason) : null;
   const { data: rounds = [], isLoading: loadingRounds } = useQuery({
-    queryKey: ["jump-rounds", selectedSeason, sessionType],
-    queryFn: async () => {
-      const endpoint =
-        sessionType === "qualifying"
-          ? `/api/results/${selectedSeason}/qualifying`
-          : `/api/results/${selectedSeason}`;
-
-      const response = await fetch(apiUrl(endpoint), {
-        headers: apiHeaders(),
-        cache: "no-store",
-      });
-
-      if (!response.ok) return [];
-
-      const data = await response.json();
-      return data.rounds.map(
-        (r: { round: number; event_name: string; session_type: string }) => ({
-          round: r.round,
-          event_name: r.event_name,
-          session_type: r.session_type,
-        }),
-      ) as RoundOption[];
-    },
-    enabled: isOpen && !!selectedSeason,
+    ...roundsQuery(seasonYear, sessionType),
+    select: (data: SeasonRoundsData): RoundOption[] =>
+      (data.rounds ?? []).map((round) => ({
+        round: round.round,
+        event_name: round.event_name,
+        session_type: round.session_type,
+      })),
+    enabled: isOpen && seasonYear !== null,
   });
 
   // Reset round when season or sessionType changes

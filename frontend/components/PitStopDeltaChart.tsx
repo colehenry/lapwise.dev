@@ -18,10 +18,9 @@ import {
   CHART_TYPOGRAPHY,
 } from "@/components/chart-primitives";
 import StableResponsiveContainer from "@/components/ui/StableResponsiveContainer";
-import { apiHeaders, apiUrl } from "@/lib/api";
 import { DATA_FROM } from "@/lib/data-coverage";
 import { STATUS_COLORS } from "@/lib/palette";
-import type { LapTimesResponse } from "@/lib/types";
+import { lapTimesQuery, raceSession } from "@/lib/queries/lapTimes";
 
 interface PitStopDeltaChartProps {
   season: number;
@@ -193,19 +192,8 @@ export default function PitStopDeltaChart({
   const [excludeNeutralised, setExcludeNeutralised] = useState(false);
   const [removeOutliers, setRemoveOutliers] = useState(false);
 
-  const { data, isLoading } = useQuery<LapTimesResponse | null>({
-    queryKey: ["lap-times", season, round, isSprint],
-    queryFn: async () => {
-      const endpoint = isSprint
-        ? `/api/results/${season}/${round}/sprint/lap-times`
-        : `/api/results/${season}/${round}/lap-times`;
-      const res = await fetch(apiUrl(endpoint), {
-        cache: "no-store",
-        headers: apiHeaders(),
-      });
-      if (!res.ok) return null;
-      return res.json();
-    },
+  const { data, isLoading } = useQuery({
+    ...lapTimesQuery({ season, round, session: raceSession(isSprint) }),
     // Jolpica supplies pit stops from 2011; FastF1 covers 2018 on.
     enabled: season >= DATA_FROM.pitStops,
   });

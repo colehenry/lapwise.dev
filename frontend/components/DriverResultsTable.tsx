@@ -4,9 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import Skeleton from "@/components/ui/Skeleton";
-import { apiHeaders, apiUrl } from "@/lib/api";
 import { constructorHref } from "@/lib/entityLinks";
-import type { DriverRaceHistoryResponse } from "@/lib/types";
+import { driverRaceHistoryQuery } from "@/lib/queries/entities";
 
 function positionColor(pos: number | null, status: string): string {
   if (!pos || status === "DNF" || status === "DNS" || status === "DSQ")
@@ -46,17 +45,7 @@ export default function DriverResultsTable({
 }: DriverResultsTableProps) {
   const [selectedYear, setSelectedYear] = useState<number | "all">("all");
 
-  const { data, isLoading } = useQuery<DriverRaceHistoryResponse>({
-    queryKey: ["driver-race-history", driverCode, "all"],
-    queryFn: async () => {
-      const res = await fetch(
-        apiUrl(`/api/drivers/${driverCode}/race-history?all=true`),
-        { headers: apiHeaders() },
-      );
-      if (!res.ok) throw new Error("Failed to fetch race history");
-      return res.json();
-    },
-  });
+  const { data, isLoading } = useQuery(driverRaceHistoryQuery(driverCode));
 
   if (isLoading) {
     return (

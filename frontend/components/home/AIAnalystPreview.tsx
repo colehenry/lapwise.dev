@@ -16,7 +16,6 @@ import {
 import { CHART_COLORS, CustomDot } from "@/components/chart-primitives";
 import ClutchIcon from "@/components/ui/ClutchIcon";
 import { useEntityLinkColors } from "@/hooks/useEntityLinkColors";
-import { apiHeaders, apiUrl } from "@/lib/api";
 import { darken } from "@/lib/color-utils";
 import { constructorHref, driverHref } from "@/lib/entityLinks";
 import {
@@ -28,6 +27,7 @@ import {
   QUESTION,
   TABLE_ROWS,
 } from "@/lib/homeAnalystPreviewData";
+import { circuitsQuery, selectCircuitList } from "@/lib/queries/archive";
 import type { CircuitInfo } from "@/lib/types";
 
 function getDriverColor(
@@ -104,15 +104,6 @@ const CIRCUIT_ALIASES = [
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-async function fetchCircuits(): Promise<CircuitInfo[]> {
-  const res = await fetch(apiUrl("/api/circuits/"), {
-    headers: apiHeaders(),
-  });
-  if (!res.ok) return [];
-  const data = (await res.json()) as { circuits?: CircuitInfo[] };
-  return data.circuits ?? [];
 }
 
 function findCircuitHref(
@@ -364,9 +355,8 @@ export default function AIAnalystPreview() {
   const router = useRouter();
   const { driverColors, teamColors } = useEntityLinkColors();
   const { data: circuits = [] } = useQuery({
-    queryKey: ["preview-circuits"],
-    queryFn: fetchCircuits,
-    staleTime: 1000 * 60 * 60,
+    ...circuitsQuery(),
+    select: selectCircuitList,
   });
   const [phase, setPhase] = useState<Phase>("idle");
   const [introText, setIntroText] = useState("");

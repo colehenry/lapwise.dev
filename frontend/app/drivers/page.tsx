@@ -10,34 +10,18 @@ import Skeleton from "@/components/ui/Skeleton";
 import SortPills from "@/components/ui/SortPills";
 import SprintToggle from "@/components/ui/SprintToggle";
 import TiltCard from "@/components/ui/TiltCard";
-import {
-  apiHeaders,
-  apiUrl,
-  fetchSeasons,
-  isValidHeadshotUrl,
-} from "@/lib/api";
+import { isValidHeadshotUrl } from "@/lib/api";
 import { getDriverHeadshotUrl } from "@/lib/entityImageOverrides";
 import { constructorHref, driverHref } from "@/lib/entityLinks";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
-import type { DriverListItem, DriverListResponse } from "@/lib/types";
+import { driversQuery } from "@/lib/queries/archive";
+import { seasonsQuery } from "@/lib/queries/seasons";
+import type { DriverListItem } from "@/lib/types";
 
 type SortKey = "wins" | "races" | "points" | "alpha";
 
 const CURRENT_YEAR = new Date().getFullYear();
 const DEFAULT_VISIBLE_COUNT = 30;
-
-async function fetchAllDrivers(
-  includeSprint: boolean,
-): Promise<DriverListResponse> {
-  const params = new URLSearchParams();
-  if (!includeSprint) params.set("include_sprint", "false");
-  const url = params.toString()
-    ? apiUrl(`/api/drivers/?${params}`)
-    : apiUrl("/api/drivers/");
-  const res = await fetch(url, { headers: apiHeaders() });
-  if (!res.ok) throw new Error("Failed to fetch drivers");
-  return res.json();
-}
 
 function DriverCard({ driver }: { driver: DriverListItem }) {
   const isActive = driver.latest_season === CURRENT_YEAR;
@@ -166,16 +150,11 @@ export default function DriversPage() {
   const [includeSprint, setIncludeSprint] = useState(true);
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["drivers-all", includeSprint],
-    queryFn: () => fetchAllDrivers(includeSprint),
+    ...driversQuery(includeSprint),
     placeholderData: keepPreviousData,
   });
 
-  const { data: availableYears = [] } = useQuery<number[]>({
-    queryKey: ["seasons"],
-    queryFn: fetchSeasons,
-    staleTime: 1000 * 60 * 60,
-  });
+  const { data: availableYears = [] } = useQuery(seasonsQuery());
 
   const filteredDrivers = useMemo(() => {
     if (!data) return [];

@@ -4,28 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CHART_TYPOGRAPHY } from "@/components/chart-primitives";
-import { apiHeaders, apiUrl, isValidHeadshotUrl } from "@/lib/api";
+import { isValidHeadshotUrl } from "@/lib/api";
+import {
+  type QualifyingSectorRow,
+  qualifyingSectorsQuery,
+} from "@/lib/queries/entities";
 
 // Types
-type SectorData = {
-  driver_code: string;
-  full_name: string;
-  team_color: string | null;
-  headshot_url: string | null;
-  best_sector1: number | null;
-  best_sector2: number | null;
-  best_sector3: number | null;
-  best_lap_time: number | null;
-  q_session: string;
-};
-
-type QualifyingSectorResponse = {
-  year: number;
-  round: number;
-  event_name: string;
-  sectors: SectorData[];
-};
-
 interface QualifyingSectorComparisonProps {
   season: number;
   round: number;
@@ -114,25 +99,16 @@ export default function QualifyingSectorComparison({
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const { data, isLoading: loading } =
-    useQuery<QualifyingSectorResponse | null>({
-      queryKey: ["qualifying-sectors", season, round],
-      queryFn: async () => {
-        const response = await fetch(
-          apiUrl(`/api/results/${season}/${round}/qualifying/sectors`),
-          { cache: "no-store", headers: apiHeaders() },
-        );
-        if (!response.ok) return null;
-        return response.json();
-      },
-      enabled: season >= 2018,
-    });
+  const { data, isLoading: loading } = useQuery({
+    ...qualifyingSectorsQuery(season, round),
+    enabled: season >= 2018,
+  });
 
   // Auto-select top 2 drivers when data loads
   useEffect(() => {
     if (data?.sectors && data.sectors.length >= 2) {
-      setDriver1Code(data.sectors[0].driver_code);
-      setDriver2Code(data.sectors[1].driver_code);
+      setDriver1Code(data.sectors[0].driver_code ?? "");
+      setDriver2Code(data.sectors[1].driver_code ?? "");
     }
   }, [data]);
 
@@ -284,7 +260,7 @@ export default function QualifyingSectorComparison({
                     key={driver.driver_code}
                     type="button"
                     onClick={() => {
-                      onSelect(driver.driver_code);
+                      onSelect(driver.driver_code ?? "");
                       setShowDropdown(false);
                     }}
                     className={`flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-bg-elevated transition-colors ${
@@ -353,8 +329,8 @@ export default function QualifyingSectorComparison({
 
   // Get sector times and colors for a driver
   const getDriverSectors = (
-    driver: SectorData | null,
-    opponent: SectorData | null,
+    driver: QualifyingSectorRow | null,
+    opponent: QualifyingSectorRow | null,
   ) => {
     if (!driver) return [];
 
@@ -390,7 +366,7 @@ export default function QualifyingSectorComparison({
   const driver2Sectors = getDriverSectors(driver2, driver1);
 
   // Calculate bar widths proportional to sector times
-  const getBarWidths = (driver: SectorData | null) => {
+  const getBarWidths = (driver: QualifyingSectorRow | null) => {
     if (!driver || driver.best_lap_time === null) return [33.3, 33.3, 33.3];
     const total =
       (driver.best_sector1 ?? 0) +

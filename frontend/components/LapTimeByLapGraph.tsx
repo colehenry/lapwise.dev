@@ -19,14 +19,17 @@ import {
 } from "@/components/chart-primitives";
 import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import StableResponsiveContainer from "@/components/ui/StableResponsiveContainer";
-import { apiHeaders, apiUrl } from "@/lib/api";
 import { maxLapNumber } from "@/lib/chart-utils";
 import { DATA_FROM } from "@/lib/data-coverage";
+import {
+  lapTimesQuery,
+  practiceSession as practiceLapSession,
+  raceSession,
+} from "@/lib/queries/lapTimes";
 import {
   type DriverLapTimes,
   driverKey,
   type LapData,
-  type LapTimesResponse,
   type RaceControlEvent,
   type TrackStatusEvent,
 } from "@/lib/types";
@@ -778,24 +781,14 @@ export default function LapTimeByLapGraph({
     };
   }, []);
 
-  const { data, isLoading: loading } = useQuery<LapTimesResponse | null>({
-    queryKey: ["lap-times", season, round, isSprint, practiceSession],
-    queryFn: async () => {
-      let endpoint: string;
-      if (practiceSession) {
-        endpoint = `/api/results/${season}/${round}/practice/${practiceSession}/lap-times`;
-      } else if (isSprint) {
-        endpoint = `/api/results/${season}/${round}/sprint/lap-times`;
-      } else {
-        endpoint = `/api/results/${season}/${round}/lap-times`;
-      }
-      const response = await fetch(apiUrl(endpoint), {
-        cache: "no-store",
-        headers: apiHeaders(),
-      });
-      if (!response.ok) return null;
-      return response.json();
-    },
+  const { data, isLoading: loading } = useQuery({
+    ...lapTimesQuery({
+      season,
+      round,
+      session: practiceSession
+        ? practiceLapSession(practiceSession)
+        : raceSession(isSprint),
+    }),
     enabled: season >= DATA_FROM.laps,
   });
 

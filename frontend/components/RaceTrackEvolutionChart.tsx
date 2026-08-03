@@ -18,9 +18,9 @@ import {
 } from "@/components/chart-primitives";
 import { useTheme } from "@/components/ThemeProvider";
 import MobileChartFrame from "@/components/ui/MobileChartFrame";
-import { apiHeaders, apiUrl } from "@/lib/api";
 import { COMPOUND_COLORS } from "@/lib/palette";
-import { driverKey, type LapTimesResponse } from "@/lib/types";
+import { lapTimesQuery, raceSession } from "@/lib/queries/lapTimes";
+import { driverKey } from "@/lib/types";
 
 interface RaceTrackEvolutionChartProps {
   season: number;
@@ -45,16 +45,8 @@ export default function RaceTrackEvolutionChart({
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { data, isLoading } = useQuery<LapTimesResponse | null>({
-    queryKey: ["lap-times", season, round, false, undefined],
-    queryFn: async () => {
-      const res = await fetch(
-        apiUrl(`/api/results/${season}/${round}/lap-times`),
-        { cache: "no-store", headers: apiHeaders() },
-      );
-      if (!res.ok) return null;
-      return res.json();
-    },
+  const { data, isLoading } = useQuery({
+    ...lapTimesQuery({ season, round, session: raceSession() }),
     enabled: season >= 2018,
   });
 

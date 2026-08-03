@@ -1,6 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
-import { fetchStandings } from "@/lib/api";
-import type { StandingsResponse } from "@/lib/types";
+import { apiHeaders, apiUrl, fetchStandings } from "@/lib/api";
+import type {
+  QualifyingStandingsResponse,
+  StandingsResponse,
+} from "@/lib/types";
 
 /**
  * One key and one fetcher for a season's standings. The response carries both
@@ -10,7 +13,11 @@ import type { StandingsResponse } from "@/lib/types";
  */
 export const standingsKeys = {
   season: (season: number) => ["standings", season] as const,
+  qualifying: (season: number) => ["qualifying-standings", season] as const,
 };
+
+/** Short enough to follow a live race weekend, long enough to deduplicate. */
+const STANDINGS_STALE_TIME = 1000 * 60 * 5;
 
 export function currentStandingsSeason(): number {
   return new Date().getFullYear();
@@ -20,7 +27,22 @@ export function seasonStandingsQuery(season: number) {
   return queryOptions({
     queryKey: standingsKeys.season(season),
     queryFn: () => fetchStandings(season),
-    staleTime: 1000 * 60 * 60,
+    staleTime: STANDINGS_STALE_TIME,
+  });
+}
+
+export function qualifyingStandingsQuery(season: number) {
+  return queryOptions({
+    queryKey: standingsKeys.qualifying(season),
+    queryFn: async (): Promise<QualifyingStandingsResponse> => {
+      const res = await fetch(
+        apiUrl(`/api/results/${season}/qualifying-standings`),
+        { headers: apiHeaders() },
+      );
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      return res.json();
+    },
+    staleTime: STANDINGS_STALE_TIME,
   });
 }
 

@@ -5,31 +5,21 @@ import { useState } from "react";
 import ArchivePanel from "@/components/archive/ArchivePanel";
 import MonoLabel from "@/components/ui/MonoLabel";
 import Skeleton from "@/components/ui/Skeleton";
-import { apiHeaders, apiUrl } from "@/lib/api";
-import type { DriverRaceHistoryResponse } from "@/lib/types";
 
 interface DriverStatisticsPanelProps {
   driverCode: string;
 }
 
 import { POSITION_COLORS, SERIES_COLORS } from "@/lib/palette";
+import { driverRaceHistoryQuery } from "@/lib/queries/entities";
 
 export default function DriverStatisticsPanel({
   driverCode,
 }: DriverStatisticsPanelProps) {
   const [hoveredStatus, setHoveredStatus] = useState<string | null>(null);
-  const { data: raceData, isLoading: raceLoading } =
-    useQuery<DriverRaceHistoryResponse>({
-      queryKey: ["driver-race-history", driverCode, "all"],
-      queryFn: async () => {
-        const res = await fetch(
-          apiUrl(`/api/drivers/${driverCode}/race-history?all=true`),
-          { headers: apiHeaders() },
-        );
-        if (!res.ok) throw new Error("Failed to fetch race history");
-        return res.json();
-      },
-    });
+  const { data: raceData, isLoading: raceLoading } = useQuery(
+    driverRaceHistoryQuery(driverCode),
+  );
 
   if (raceLoading) {
     return (

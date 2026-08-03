@@ -11,10 +11,10 @@ import {
 import ReplayPreviewPoster from "@/components/home/ReplayPreviewPoster";
 import Skeleton from "@/components/ui/Skeleton";
 import {
-  fetchAvailableReplays,
-  fetchReplayData,
-  fetchReplaySeasons,
-} from "@/lib/api";
+  availableReplaysQuery,
+  replayDataQuery,
+  replaySeasonsQuery,
+} from "@/lib/queries/replay";
 import {
   computeArcLengths,
   findLapStartFrame,
@@ -44,11 +44,7 @@ function ReplayIcon({ className = "h-4 w-4" }: { className?: string }) {
 
 export default function LiveReplayPreview() {
   // 1. Find the latest season that has replay data
-  const { data: replaySeasons } = useQuery({
-    queryKey: ["replaySeasons"],
-    queryFn: fetchReplaySeasons,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: replaySeasons } = useQuery(replaySeasonsQuery());
 
   const latestSeason = useMemo(() => {
     if (!replaySeasons || replaySeasons.length === 0) return null;
@@ -56,12 +52,9 @@ export default function LiveReplayPreview() {
   }, [replaySeasons]);
 
   // 2. Find the most recent replay within that season
-  const { data: availableReplays } = useQuery({
-    queryKey: ["availableReplays", latestSeason],
-    queryFn: () => fetchAvailableReplays(latestSeason as number),
-    enabled: latestSeason !== null,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: availableReplays } = useQuery(
+    availableReplaysQuery(latestSeason),
+  );
 
   const latestReplay = useMemo(() => {
     if (!availableReplays || availableReplays.replays.length === 0) return null;
@@ -79,17 +72,14 @@ export default function LiveReplayPreview() {
   // 3. Frame data is multiple megabytes, so it waits for explicit intent.
   const [previewRequested, setPreviewRequested] = useState(false);
 
+  const replayQuery = replayDataQuery(activeSeason, activeRound);
   const {
     data: replayData,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["preview-replay", activeSeason, activeRound],
-    queryFn: () =>
-      fetchReplayData(activeSeason as number, activeRound as number),
-    enabled: previewRequested && activeSeason !== null && activeRound !== null,
-    staleTime: Number.POSITIVE_INFINITY,
-    gcTime: 30 * 60 * 1000,
+    ...replayQuery,
+    enabled: previewRequested && replayQuery.enabled,
   });
 
   const dataRef = useRef<ReplayData | null>(null);

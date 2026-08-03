@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type RefObject, useEffect, useMemo, useRef } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 import TrackMapImage from "@/components/TrackMapImage";
-import { fetchReplayTrackGeometry } from "@/lib/api";
+import { replayTrackQuery } from "@/lib/queries/replay";
 import type { ReplayTrack } from "@/lib/types";
 
 function DotGridPattern({ id = "track-dot-grid" }: { id?: string }) {
@@ -70,12 +70,7 @@ export default function InteractiveTrackMap({
   const { theme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const palette = useMemo(() => getTrackPalette(theme), [theme]);
-  const { data } = useQuery({
-    queryKey: ["replay-track-geometry", circuitId],
-    queryFn: () => fetchReplayTrackGeometry(circuitId),
-    staleTime: Number.POSITIVE_INFINITY,
-    retry: false,
-  });
+  const { data } = useQuery(replayTrackQuery(circuitId));
 
   const track = data?.track ?? null;
 
