@@ -9,22 +9,19 @@ import pytest
 import pytest_asyncio
 from sqlalchemy import func, select
 
-from app.database import AsyncSessionLocal
 from app.models import Driver
 from app.models import Session as RaceSession
 from app.models import SessionResult, Team
 
 
 @pytest_asyncio.fixture
-async def db():
-    async with AsyncSessionLocal() as session:
-        yield session
+async def db(db_session):
+    return db_session
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def require_ingested_data(db):
-    if await db.scalar(select(RaceSession.id).limit(1)) is None:
-        pytest.skip("no ingested session data in the configured database")
+async def require_ingested_data(ingested_data):
+    return ingested_data
 
 
 @pytest_asyncio.fixture
