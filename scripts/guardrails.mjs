@@ -27,8 +27,17 @@ const HEX_ALLOWED = new Set([
 ]);
 
 const SIZE_CAPS = [
-  { dirs: ["frontend/components", "frontend/app"], ext: [".tsx"], cap: 600, warn: 400 },
-  { dirs: ["frontend/lib", "frontend/hooks"], ext: [".ts"], cap: 300 },
+  {
+    dirs: ["frontend/components", "frontend/app"],
+    ext: [".ts", ".tsx"],
+    cap: 600,
+    warn: 400,
+  },
+  {
+    dirs: ["frontend/lib", "frontend/hooks"],
+    ext: [".ts", ".tsx"],
+    cap: 300,
+  },
   { dirs: ["backend/app/services"], ext: [".py"], cap: 600 },
   { dirs: ["backend/app/routers"], ext: [".py"], cap: 300 },
 ];
@@ -86,21 +95,6 @@ const baseline = existsSync(BASELINE_PATH)
   ? (JSON.parse(readFileSync(BASELINE_PATH, "utf8")).sizeCaps ?? {})
   : {};
 
-if (UPDATE_BASELINE) {
-  const sizeCaps = Object.fromEntries(
-    overCap
-      .sort((a, b) => a.file.localeCompare(b.file))
-      .map((v) => [v.file, v.lines]),
-  );
-  const payload = {
-    note: "Baseline for the guardrails file-size ratchet. Regenerate with `npm run guardrails:update`. Numbers should only ever go down.",
-    sizeCaps,
-  };
-  writeFileSync(BASELINE_PATH, `${JSON.stringify(payload, null, 2)}\n`);
-  console.log(`Wrote ${BASELINE_PATH}: ${overCap.length} over-cap file(s).`);
-  process.exit(0);
-}
-
 const ratchetFailures = [];
 const improvements = [];
 for (const v of overCap) {
@@ -122,6 +116,27 @@ for (const file of Object.keys(baseline)) {
   if (!currentOverCap.has(file)) {
     improvements.push(`${file} — now under cap (baseline ${baseline[file]})`);
   }
+}
+
+if (UPDATE_BASELINE) {
+  if (ratchetFailures.length > 0) {
+    console.error("Refusing to update a baseline with new or increased debt:");
+    for (const failure of ratchetFailures) console.error(`  ${failure}`);
+    process.exit(1);
+  }
+
+  const sizeCaps = Object.fromEntries(
+    overCap
+      .sort((a, b) => a.file.localeCompare(b.file))
+      .map((v) => [v.file, v.lines]),
+  );
+  const payload = {
+    note: "Baseline for the guardrails file-size ratchet. Regenerate with `npm run guardrails:update`. Numbers only move down; new or increased debt is rejected.",
+    sizeCaps,
+  };
+  writeFileSync(BASELINE_PATH, `${JSON.stringify(payload, null, 2)}\n`);
+  console.log(`Wrote ${BASELINE_PATH}: ${overCap.length} over-cap file(s).`);
+  process.exit(0);
 }
 
 function grepCount(dirs, exts, regex, { exclude } = {}) {
@@ -165,7 +180,7 @@ const checks = [
   { label: "file-size wins — run `npm run guardrails:update`", items: improvements, enforce: false },
 ];
 
-function section(label, items, enforce, sample = 5) {
+function section(label, items, enforce, sample = enforce ? items.length : 5) {
   const tag = enforce ? "[enforced]" : "[report]  ";
   if (items.length === 0) {
     console.log(`  ok  ${tag} ${label}`);

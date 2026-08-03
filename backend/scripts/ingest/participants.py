@@ -1,6 +1,8 @@
 import pandas as pd
 from sqlalchemy import select
+
 from app.models import Driver, Team
+
 from .team_colors import enrich_team_color, normalize_team_name
 from .utils import safe_int
 
@@ -54,17 +56,16 @@ def ingest_driver(db, driver_data):
             select(Driver).where(Driver.driver_code == driver_code)
         ).scalar_one_or_none()
         if code_match:
-            # Guard against cross-era code collisions (e.g. MSC = Michael + Mick).
-            # If jolpica_id is present and conflicts, do NOT attach this result
-            # to the code match. Keep distinct identity via jolpica_id.
-            if (
-                jolpica_id
-                and code_match.jolpica_id
-                and code_match.jolpica_id != jolpica_id
-            ):
+            # A 3-letter code is unique within a season, not across history
+            # (MAG = Jan and Kevin Magnussen, MSC = Michael and Mick Schumacher).
+            # An incoming jolpica_id that matched nothing above is therefore a
+            # distinct driver, whether or not the code match carries an id of
+            # its own — the code match must not absorb it.
+            if jolpica_id:
                 print(
                     "    ⚠ Driver code collision for "
-                    f"{driver_code}: existing={code_match.jolpica_id}, incoming={jolpica_id}. "
+                    f"{driver_code}: existing={code_match.jolpica_id or 'no jolpica_id'}, "
+                    f"incoming={jolpica_id}. "
                     "Keeping incoming driver separate (code set to NULL)."
                 )
                 # Avoid unique constraint violation on create.
