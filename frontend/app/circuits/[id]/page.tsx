@@ -14,6 +14,7 @@ import CircuitTyreStats from "@/components/CircuitTyreStats";
 import CircuitWeatherProfile from "@/components/CircuitWeatherProfile";
 import InteractiveTrackMap from "@/components/InteractiveTrackMap";
 import PageHeader from "@/components/PageHeader";
+import DeferredSection from "@/components/ui/DeferredSection";
 import MonoLabel from "@/components/ui/MonoLabel";
 import Skeleton from "@/components/ui/Skeleton";
 import TabBar from "@/components/ui/TabBar";
@@ -164,7 +165,9 @@ export default function CircuitDetailPage() {
 
                 {/* Recent Race - fills remaining space below map */}
                 <div className="flex-1">
-                  <CircuitRecentRace circuitId={id} />
+                  <DeferredSection minHeight={280}>
+                    <CircuitRecentRace circuitId={id} />
+                  </DeferredSection>
                 </div>
               </div>
 
@@ -218,23 +221,31 @@ export default function CircuitDetailPage() {
                 </ArchivePanel>
 
                 <ArchivePanel title="Lap Records">
-                  <CircuitLapRecords circuitId={id} />
+                  <DeferredSection minHeight={220}>
+                    <CircuitLapRecords circuitId={id} />
+                  </DeferredSection>
                 </ArchivePanel>
 
                 <ArchivePanel title="Weather Profile" className="flex-1">
-                  <CircuitWeatherProfile circuitId={id} />
+                  <DeferredSection minHeight={220}>
+                    <CircuitWeatherProfile circuitId={id} />
+                  </DeferredSection>
                 </ArchivePanel>
               </div>
             </div>
 
             {/* Lap Time Trend */}
             <ArchivePanel title="Lap Time Evolution">
-              <CircuitLapTimeTrend circuitId={id} />
+              <DeferredSection minHeight={320}>
+                <CircuitLapTimeTrend circuitId={id} />
+              </DeferredSection>
             </ArchivePanel>
 
             {/* Tyre Strategy */}
             <ArchivePanel title="Tyre Strategy">
-              <CircuitTyreStats circuitId={id} />
+              <DeferredSection minHeight={320}>
+                <CircuitTyreStats circuitId={id} />
+              </DeferredSection>
             </ArchivePanel>
           </div>
         )}

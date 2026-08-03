@@ -10,7 +10,7 @@
     "frontend/app/api/ai/ask/route.ts": 840,
     "frontend/app/replay/components/TelemetryPanel.tsx": 924,
     "frontend/app/replay/components/TrackCanvas.tsx": 782,
-    "frontend/app/results/[season]/page.tsx": 693,
+    "frontend/app/results/[season]/page.tsx": 663,
     "frontend/components/chat/ChatMessage.tsx": 618,
     "frontend/components/FastestLapTimeline.tsx": 745,
     "frontend/components/home/AIAnalystPreview.tsx": 652,

@@ -10,13 +10,10 @@ import ClassificationBadge from "@/components/ClassificationBadge";
 import DriverHeadshot from "@/components/DriverHeadshot";
 import JumpToRace from "@/components/JumpToRace";
 import PageHeader from "@/components/PageHeader";
-import { TrianglePattern } from "@/components/Patterns";
-import PointsByRoundGraph from "@/components/PointsByRoundGraph";
 import {
   MedalsWithBreakdown,
   QualifyingPointsInfo,
 } from "@/components/StandingsPointsDisplay";
-import TeammateHeadToHead from "@/components/TeammateHeadToHead";
 import { useTheme } from "@/components/ThemeProvider";
 import { TrackMapCompact } from "@/components/TrackMapDisplay";
 import TiltCard from "@/components/ui/TiltCard";
@@ -42,13 +39,9 @@ import type {
   ConstructorStanding,
   DriverQualifyingStanding,
   DriverStanding,
-  RoundSummary,
 } from "@/lib/types";
+import SeasonAnalysisPanels from "./SeasonAnalysisPanels";
 
-type RoundsData = {
-  year: number;
-  rounds: RoundSummary[];
-};
 export default function ResultsPage() {
   const { theme } = useTheme();
   const params = useParams();
@@ -83,9 +76,10 @@ export default function ResultsPage() {
     seasonRoundsQuery(Number.isFinite(seasonYear) ? seasonYear : null),
   );
 
-  const { data: qualifyingRounds } = useQuery(
-    qualifyingRoundsQuery(Number.isFinite(seasonYear) ? seasonYear : null),
-  );
+  const { data: qualifyingRounds } = useQuery({
+    ...qualifyingRoundsQuery(Number.isFinite(seasonYear) ? seasonYear : null),
+    enabled: Number.isFinite(seasonYear) && sessionType === "qualifying",
+  });
 
   const isLoading = standingsLoading || roundsLoading;
 
@@ -524,31 +518,7 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* ── Championship Battle Graph ── */}
-        <div className="mb-6 overflow-hidden bg-bg-tertiary border border-border-primary rounded-sm shadow-sm">
-          <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-            <TrianglePattern id="points-triangles" />
-            <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-              Championship Battle
-            </span>
-          </div>
-          <div className="min-w-0 p-3 md:p-4">
-            <PointsByRoundGraph season={season} pointsType={sessionType} />
-          </div>
-        </div>
-
-        {/* ── Teammate H2H ── */}
-        <div className="mb-6 bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-          <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-            <TrianglePattern id="teammate-h2h-triangles" />
-            <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-              Teammate Head-to-Head
-            </span>
-          </div>
-          <div className="p-4">
-            <TeammateHeadToHead season={season} mode={sessionType} />
-          </div>
-        </div>
+        <SeasonAnalysisPanels season={season} sessionType={sessionType} />
 
         {/* ── Race / Qualifying Results Grid ── */}
         <div>

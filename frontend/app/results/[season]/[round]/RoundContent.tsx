@@ -1,14 +1,26 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import RaceComments from "@/components/comments/RaceComments";
 import JumpToRace from "@/components/JumpToRace";
 import SessionDetail from "@/components/SessionDetail";
 import type { SessionSummary } from "@/components/SessionSummaryCard";
-import { apiHeaders, apiUrl } from "@/lib/api";
+import DeferredSection from "@/components/ui/DeferredSection";
 import { seasonsQuery } from "@/lib/queries/seasons";
+import {
+  defaultPracticeNumber,
+  roundAvailabilityQuery,
+  roundSessionQuery,
+  roundSummariesQuery,
+  serverSessionType,
+  availableTabs as tabsFromAvailability,
+} from "@/lib/queries/sessions";
 import type { SessionResultsResponse } from "@/lib/types";
 import RoundAnalysisCharts, { type RoundTab } from "./RoundAnalysisCharts";
 
@@ -30,22 +42,6 @@ const VALID_TABS = new Set<RoundTab>([
 
 function parseTab(tab: string | null): RoundTab {
   return tab && VALID_TABS.has(tab as RoundTab) ? (tab as RoundTab) : "race";
-}
-
-async function fetchSession(
-  season: string,
-  round: string,
-  suffix?: string,
-): Promise<SessionResultsResponse | null> {
-  const path = suffix
-    ? `/api/results/${season}/${round}/${suffix}`
-    : `/api/results/${season}/${round}`;
-  const res = await fetch(apiUrl(path), {
-    cache: "no-store",
-    headers: apiHeaders(),
-  });
-  if (!res.ok) return null;
-  return res.json();
 }
 
 export default function RoundContent() {
@@ -79,82 +75,46 @@ export default function RoundContent() {
     }
   }, [rawUrlTab, router, season, round]);
 
-  const enabled = !!season && !!round;
+  const queryClient = useQueryClient();
 
-  const { data: raceData, isLoading: raceLoading } = useQuery({
-    queryKey: ["round-race", season, round],
-    queryFn: () => fetchSession(season, round),
-    enabled,
+  // One metadata request describes the weekend; sessions load on selection.
+  const { data: availability, isLoading: availabilityLoading } = useQuery(
+    roundAvailabilityQuery(seasonNum, roundNum),
+  );
+
+  const availableTabs = tabsFromAvailability(availability);
+  const isActiveTabAvailable = availableTabs.includes(activeTab);
+  const resolvedTab: RoundTab = isActiveTabAvailable ? activeTab : "race";
+
+  const [practiceSub, setPracticeSub] = useState<1 | 2 | 3 | null>(null);
+  const practiceNumbers = availability?.practice_numbers ?? [];
+  const activePractice = practiceSub ?? defaultPracticeNumber(availability);
+
+  // Keeping the previous session on screen means a tab change never blanks
+  // the page while the newly selected session loads.
+  const { data: sessionData, isLoading: sessionLoading } = useQuery({
+    ...roundSessionQuery(seasonNum, roundNum, resolvedTab, activePractice),
+    placeholderData: keepPreviousData,
   });
 
-  const { data: qualifyingData } = useQuery({
-    queryKey: ["round-qualifying", season, round],
-    queryFn: () => fetchSession(season, round, "qualifying"),
-    enabled,
-  });
-
-  const { data: sprintData } = useQuery({
-    queryKey: ["round-sprint", season, round],
-    queryFn: () => fetchSession(season, round, "sprint"),
-    enabled,
-  });
-
-  const { data: sprintQualData } = useQuery({
-    queryKey: ["round-sprint-qualifying", season, round],
-    queryFn: () => fetchSession(season, round, "sprint-qualifying"),
-    enabled,
-  });
-
-  const { data: fp1Data } = useQuery({
-    queryKey: ["round-fp1", season, round],
-    queryFn: () => fetchSession(season, round, "practice/1"),
-    enabled,
-  });
-
-  const { data: fp2Data } = useQuery({
-    queryKey: ["round-fp2", season, round],
-    queryFn: () => fetchSession(season, round, "practice/2"),
-    enabled,
-  });
-
-  const { data: fp3Data } = useQuery({
-    queryKey: ["round-fp3", season, round],
-    queryFn: () => fetchSession(season, round, "practice/3"),
-    enabled,
-  });
-
-  const { data: summariesData } = useQuery<{
-    summaries: SessionSummary[];
-  } | null>({
-    queryKey: ["round-summaries", season, round],
-    queryFn: async () => {
-      const res = await fetch(
-        apiUrl(`/api/results/${season}/${round}/summaries`),
-        { cache: "no-store", headers: apiHeaders() },
-      );
-      if (!res.ok) return null;
-      return res.json();
-    },
-    enabled,
+  const { data: summariesData } = useQuery({
+    ...roundSummariesQuery(seasonNum, roundNum),
+    enabled: (availability?.summary_session_types.length ?? 0) > 0,
   });
 
   const { data: availableYears = [] } = useQuery(seasonsQuery());
 
-  const loading = raceLoading;
-  const hasSprint = !!sprintData;
-  const hasPractice = !!fp1Data || !!fp2Data || !!fp3Data;
+  const loading = availabilityLoading || (sessionLoading && !sessionData);
 
-  // Practice sub-tab: default to latest available (FP3 > FP2 > FP1)
-  const [practiceSub, setPracticeSub] = useState<1 | 2 | 3>(
-    fp3Data ? 3 : fp2Data ? 2 : 1,
+  // Warm a tab on hover or keyboard focus, never on mount.
+  const prefetchTab = useCallback(
+    (tab: RoundTab) => {
+      queryClient.prefetchQuery(
+        roundSessionQuery(seasonNum, roundNum, tab, activePractice),
+      );
+    },
+    [queryClient, seasonNum, roundNum, activePractice],
   );
-
-  // Update practice sub default when data loads
-  useEffect(() => {
-    if (fp3Data) setPracticeSub(3);
-    else if (fp2Data) setPracticeSub(2);
-    else if (fp1Data) setPracticeSub(1);
-  }, [fp1Data, fp2Data, fp3Data]);
 
   // Update URL when tab changes
   const switchTab = (tab: RoundTab) => {
@@ -166,21 +126,12 @@ export default function RoundContent() {
     router.replace(url, { scroll: false });
   };
 
-  // Available tabs (conditional on data)
-  const availableTabs: RoundTab[] = ["race", "qualifying"];
-  if (hasSprint) {
-    availableTabs.push("sprint");
-    if (sprintQualData) availableTabs.push("sprint-qualifying");
-  }
-  if (hasPractice) availableTabs.push("practice");
-  const isActiveTabAvailable = availableTabs.includes(activeTab);
-
   useEffect(() => {
-    if (!loading && !isActiveTabAvailable) {
+    if (availability && !isActiveTabAvailable) {
       setActiveTab("race");
       router.replace(`/results/${season}/${round}`, { scroll: false });
     }
-  }, [isActiveTabAvailable, loading, router, season, round]);
+  }, [availability, isActiveTabAvailable, router, season, round]);
 
   if (loading) {
     return (
@@ -194,7 +145,7 @@ export default function RoundContent() {
     );
   }
 
-  if (!raceData) {
+  if (!availability || !sessionData) {
     return (
       <main className="min-h-screen bg-bg-secondary p-8">
         <div className="max-w-6xl mx-auto">
@@ -206,58 +157,21 @@ export default function RoundContent() {
     );
   }
 
-  // Determine which data to pass to SessionDetail based on active tab
-  const getSessionDetailData = (): SessionResultsResponse | null => {
-    switch (activeTab) {
-      case "qualifying":
-        return qualifyingData ?? null;
-      case "sprint":
-        return sprintData ?? null;
-      case "sprint-qualifying":
-        return sprintQualData ?? null;
-      case "practice":
-        if (practiceSub === 1) return fp1Data ?? null;
-        if (practiceSub === 2) return fp2Data ?? null;
-        return fp3Data ?? null;
-      default:
-        return raceData ?? null;
-    }
-  };
-
-  const getQualifyingDataForTab = (): SessionResultsResponse | null => {
-    if (activeTab === "sprint") return sprintQualData ?? null;
-    return qualifyingData ?? null;
-  };
+  const activeSessionData: SessionResultsResponse | null = sessionData ?? null;
 
   // Check if the active tab is a results tab (shows SessionDetail)
-  const isResultsTab = [
-    "race",
-    "qualifying",
-    "sprint",
-    "sprint-qualifying",
-    "practice",
-  ].includes(activeTab);
-  const isSprint = activeTab === "sprint" || activeTab === "sprint-qualifying";
+  const isResultsTab = availableTabs.includes(resolvedTab);
+  const isSprint =
+    resolvedTab === "sprint" || resolvedTab === "sprint-qualifying";
   const sessionTypeForDetail =
-    activeTab === "qualifying" || activeTab === "sprint-qualifying"
+    resolvedTab === "qualifying" || resolvedTab === "sprint-qualifying"
       ? "qualifying"
       : "race";
 
-  // Find summary for the active tab
-  const getActiveSummary = (): SessionSummary | undefined => {
-    if (!summariesData?.summaries) return undefined;
-    const tabToSessionType: Record<string, string> = {
-      race: "race",
-      qualifying: "qualifying",
-      sprint: "sprint_race",
-      "sprint-qualifying": "sprint_qualifying",
-      practice: `fp${practiceSub}`,
-    };
-    const sessionType = tabToSessionType[activeTab];
-    if (!sessionType) return undefined;
-    return summariesData.summaries.find((s) => s.session_type === sessionType);
-  };
-  const activeSummary = getActiveSummary();
+  const activeSessionType = serverSessionType(resolvedTab, activePractice);
+  const activeSummary = summariesData?.summaries.find(
+    (summary) => summary.session_type === activeSessionType,
+  ) as SessionSummary | undefined;
 
   return (
     <main className="min-h-screen bg-bg-secondary">
@@ -280,10 +194,10 @@ export default function RoundContent() {
 
                 <div className="min-w-0 flex flex-col items-center text-center">
                   <span className="text-text-primary font-mono text-sm font-bold leading-none truncate w-full">
-                    ROUND {String(raceData.session.round).padStart(2, "0")}
+                    ROUND {String(availability.round).padStart(2, "0")}
                   </span>
                   <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold truncate w-full">
-                    {raceData.session.event_name.replace("Grand Prix", "GP")}
+                    {availability.event_name.replace("Grand Prix", "GP")}
                   </span>
                 </div>
 
@@ -301,25 +215,19 @@ export default function RoundContent() {
               <div className="px-4">
                 <div className="flex items-center justify-center gap-1 overflow-x-auto pb-2">
                   {availableTabs.map((tab) => {
-                    const isActive = activeTab === tab;
-                    const isDisabled =
-                      (tab === "qualifying" && !qualifyingData) ||
-                      (tab === "sprint" && !sprintData) ||
-                      (tab === "sprint-qualifying" && !sprintQualData) ||
-                      (tab === "practice" && !hasPractice);
+                    const isActive = resolvedTab === tab;
 
                     return (
                       <button
                         key={tab}
                         type="button"
-                        onClick={() => !isDisabled && switchTab(tab)}
-                        disabled={isDisabled}
+                        onClick={() => switchTab(tab)}
+                        onPointerEnter={() => prefetchTab(tab)}
+                        onFocus={() => prefetchTab(tab)}
                         className={`px-4 py-2.5 text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 border-b-2 whitespace-nowrap ${
                           isActive
                             ? "border-purple-500 text-purple-300"
-                            : isDisabled
-                              ? "border-transparent text-text-muted/40 cursor-not-allowed"
-                              : "border-transparent text-text-muted hover:text-text-secondary hover:border-border-primary"
+                            : "border-transparent text-text-muted hover:text-text-secondary hover:border-border-primary"
                         }`}
                       >
                         {TAB_LABELS[tab]}
@@ -339,13 +247,12 @@ export default function RoundContent() {
         {isResultsTab && (
           <>
             {/* Practice sub-toggle (FP1/FP2/FP3) */}
-            {activeTab === "practice" && (
+            {resolvedTab === "practice" && (
               <div className="px-6 pt-6 flex justify-center">
                 <div className="inline-flex bg-bg-primary border border-border-primary rounded-sm overflow-hidden">
                   {([1, 2, 3] as const).map((num) => {
-                    const hasData =
-                      num === 1 ? !!fp1Data : num === 2 ? !!fp2Data : !!fp3Data;
-                    const isActive = practiceSub === num;
+                    const hasData = practiceNumbers.includes(num);
+                    const isActive = activePractice === num;
                     return (
                       <button
                         key={num}
@@ -368,14 +275,14 @@ export default function RoundContent() {
               </div>
             )}
             <SessionDetail
-              data={getSessionDetailData()}
-              qualifyingData={
-                activeTab === "practice" ? null : getQualifyingDataForTab()
-              }
+              data={activeSessionData}
+              // The session-type toggle is not offered here, which is the only
+              // consumer of qualifying context inside SessionDetail.
+              qualifyingData={null}
               season={season}
               isSprint={isSprint}
               sessionType={
-                activeTab === "practice" ? "practice" : sessionTypeForDetail
+                resolvedTab === "practice" ? "practice" : sessionTypeForDetail
               }
               onSessionTypeChange={undefined}
               onBack={() => router.push(`/results/${season}`)}
@@ -383,19 +290,19 @@ export default function RoundContent() {
               summary={activeSummary}
             />
             <RoundAnalysisCharts
-              activeTab={activeTab}
+              activeTab={resolvedTab}
               season={seasonNum}
               round={roundNum}
-              practiceSession={practiceSub}
-              sessionData={getSessionDetailData()}
-              fp1Data={fp1Data}
-              fp2Data={fp2Data}
-              fp3Data={fp3Data}
+              practiceSession={activePractice}
+              sessionData={activeSessionData}
+              practiceNumbers={practiceNumbers}
             />
           </>
         )}
 
-        <RaceComments season={seasonNum} round={roundNum} />
+        <DeferredSection minHeight={320}>
+          <RaceComments season={seasonNum} round={roundNum} />
+        </DeferredSection>
       </div>
     </main>
   );

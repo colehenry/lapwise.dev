@@ -13,6 +13,7 @@ import DriverSeasonHistoryGraph from "@/components/DriverSeasonHistoryGraph";
 import DriverStatisticsPanel from "@/components/DriverStatisticsPanel";
 import DriverSuperlativesCard from "@/components/DriverSuperlativesCard";
 import PageHeader from "@/components/PageHeader";
+import DeferredSection from "@/components/ui/DeferredSection";
 import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
 import SprintToggle from "@/components/ui/SprintToggle";
 import TabBar from "@/components/ui/TabBar";
@@ -237,9 +238,13 @@ export default function DriverProfilePage() {
               </div>
             </ArchivePanel>
 
-            <DriverSeasonHistoryGraph driverCode={driverCode} />
+            <DeferredSection minHeight={360}>
+              <DriverSeasonHistoryGraph driverCode={driverCode} />
+            </DeferredSection>
 
-            <DriverStatisticsPanel driverCode={driverCode} />
+            <DeferredSection minHeight={360}>
+              <DriverStatisticsPanel driverCode={driverCode} />
+            </DeferredSection>
           </div>
         )}
 
