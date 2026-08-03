@@ -6,6 +6,10 @@
  */
 
 import { decode } from "@msgpack/msgpack";
+import {
+  expandPreviewArtifact,
+  type ReplayPreviewArtifact,
+} from "@/lib/replayPreviewArtifact";
 import type {
   ReplayData,
   ReplayListResponse,
@@ -132,6 +136,24 @@ export async function fetchReplayData(
   if (!res.ok) throw new Error("Failed to fetch replay data");
   const buffer = await res.arrayBuffer();
   return decode(new Uint8Array(buffer)) as ReplayData;
+}
+
+/**
+ * Fetches the downsampled autoplay artifact for the most recent race.
+ *
+ * One request resolves the latest race and its frames, and the payload is
+ * roughly 26x smaller than the full replay blob.
+ */
+export async function fetchLatestReplayPreview(): Promise<ReplayData | null> {
+  const res = await fetch(apiUrl("/api/replay/preview/latest"), {
+    headers: apiHeaders(),
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("Failed to fetch replay preview");
+  const buffer = await res.arrayBuffer();
+  return expandPreviewArtifact(
+    decode(new Uint8Array(buffer)) as ReplayPreviewArtifact,
+  );
 }
 
 /**

@@ -11,6 +11,8 @@ import msgpack
 import numpy as np
 import pandas as pd
 
+from app.services.replay_preview import build_preview, preview_stats
+
 from .utils import datetime_or_timedelta_to_seconds, timedelta_to_seconds
 from .team_colors import enrich_team_color
 
@@ -859,12 +861,24 @@ def generate_replay_data(fastf1_session, session_id, season, round_num, event_na
     size_mb = len(compressed) / (1024 * 1024)
     print(f"    Compressed size: {size_mb:.2f} MB")
 
+    # Step 14: Build the downsampled artifact the home page autoplays
+    preview = build_preview(payload)
+    stats = preview_stats(preview, payload)
+    print(
+        f"    Preview size: {stats['preview_size_bytes'] / 1024:.0f} KB "
+        f"({stats['preview_frames']} frames @ {stats['preview_fps']}fps)"
+    )
+
     metadata = {
         "total_frames": n_frames,
         "total_duration_seconds": round(float(t_max - t_min), 2),
         "total_laps": total_laps,
         "driver_count": len(driver_meta),
         "compressed_size_bytes": len(compressed),
+        "preview_data": preview,
+        "preview_frames": stats["preview_frames"],
+        "preview_fps": stats["preview_fps"],
+        "preview_size_bytes": stats["preview_size_bytes"],
     }
 
     return compressed, metadata

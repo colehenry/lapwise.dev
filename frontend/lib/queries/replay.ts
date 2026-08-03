@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import {
   fetchAvailableReplays,
+  fetchLatestReplayPreview,
   fetchReplayData,
   fetchReplaySeasons,
   fetchReplayTrackGeometry,
@@ -16,6 +17,7 @@ export const replayKeys = {
   available: (season: number) => ["replay-available", season] as const,
   data: (season: number, round: number) => ["replay", season, round] as const,
   track: (circuitId: number) => ["replay-track", circuitId] as const,
+  latestPreview: () => ["replay-preview-latest"] as const,
 };
 
 const LISTING_STALE_TIME = 5 * 60 * 1000;
@@ -44,6 +46,20 @@ export function replayDataQuery(season: number | null, round: number | null) {
     enabled: season !== null && round !== null,
     staleTime: Number.POSITIVE_INFINITY,
     gcTime: 30 * 60 * 1000,
+  });
+}
+
+/**
+ * The home autoplay artifact. One request resolves the latest race and its
+ * frames, so home does not chain seasons -> available -> data.
+ */
+export function latestReplayPreviewQuery() {
+  return queryOptions({
+    queryKey: replayKeys.latestPreview(),
+    queryFn: fetchLatestReplayPreview,
+    staleTime: 60 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: false,
   });
 }
 

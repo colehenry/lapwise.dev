@@ -5,19 +5,14 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Skeleton from "@/components/ui/Skeleton";
-import {
-  availableReplaysQuery,
-  replayDataQuery,
-  replaySeasonsQuery,
-} from "@/lib/queries/replay";
+import { latestReplayPreviewQuery } from "@/lib/queries/replay";
 import {
   computeArcLengths,
   findLapStartFrame,
 } from "@/lib/replayPreviewGeometry";
 import type { ReplayData } from "@/lib/types";
-import ReplayPreviewPoster from "./ReplayPreviewPoster";
 
-// The canvas player and its panels load with the frame data, not with home.
+// The canvas player and its panel load with the frame data, not with home.
 const TrackCanvas = dynamic(
   () => import("@/app/replay/components/TrackCanvas"),
   { ssr: false },
@@ -27,13 +22,10 @@ const MiniLeaderboard = dynamic(
     import("./ReplayPreviewPanels").then((module) => module.MiniLeaderboard),
   { ssr: false },
 );
-const LeaderTelemetry = dynamic(
-  () =>
-    import("./ReplayPreviewPanels").then((module) => module.LeaderTelemetry),
-  { ssr: false },
-);
 
-const PLAYBACK_SPEED = 2;
+// The artifact carries 2 frames per second, so 10x playback steps 20 samples
+// per second — the same on-screen cadence the full 10fps blob gave at 2x.
+const PLAYBACK_SPEED = 10;
 const START_LAP = 10; // Skip formation / early laps for more action
 
 function ReplayIcon({ className = "h-4 w-4" }: { className?: string }) {
@@ -55,44 +47,13 @@ function ReplayIcon({ className = "h-4 w-4" }: { className?: string }) {
 }
 
 export default function LiveReplayPreview() {
-  // 1. Find the latest season that has replay data
-  const { data: replaySeasons } = useQuery(replaySeasonsQuery());
+  // The artifact resolves the latest race and its frames in one request, and
+  // is small enough to load and play without waiting for user intent.
+  const { data: replayData, isLoading } = useQuery(latestReplayPreviewQuery());
 
-  const latestSeason = useMemo(() => {
-    if (!replaySeasons || replaySeasons.length === 0) return null;
-    return Math.max(...replaySeasons);
-  }, [replaySeasons]);
-
-  // 2. Find the most recent replay within that season
-  const { data: availableReplays } = useQuery(
-    availableReplaysQuery(latestSeason),
-  );
-
-  const latestReplay = useMemo(() => {
-    if (!availableReplays || availableReplays.replays.length === 0) return null;
-    // Pick the most recent by date (fall back to highest round)
-    return [...availableReplays.replays].sort((a, b) => {
-      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
-      if (dateDiff !== 0) return dateDiff;
-      return b.round - a.round;
-    })[0];
-  }, [availableReplays]);
-
-  const activeSeason = latestSeason;
-  const activeRound = latestReplay?.round ?? null;
-
-  // 3. Frame data is multiple megabytes, so it waits for explicit intent.
-  const [previewRequested, setPreviewRequested] = useState(false);
-
-  const replayQuery = replayDataQuery(activeSeason, activeRound);
-  const {
-    data: replayData,
-    isLoading,
-    error,
-  } = useQuery({
-    ...replayQuery,
-    enabled: previewRequested && replayQuery.enabled,
-  });
+  const activeSeason = replayData?.metadata.season ?? null;
+  const activeRound = replayData?.metadata.round ?? null;
+  const eventName = replayData?.metadata.event_name ?? null;
 
   const dataRef = useRef<ReplayData | null>(null);
   const [frameIndex, setFrameIndex] = useState(0);
@@ -133,7 +94,7 @@ export default function LiveReplayPreview() {
     return () => document.removeEventListener("visibilitychange", sync);
   }, []);
 
-  // Animation loop — auto-plays at 2x, loops back to START_LAP at end
+  // Animation loop — auto-plays at PLAYBACK_SPEED, loops back to START_LAP
   const animate = useCallback((timestamp: number) => {
     const data = dataRef.current;
     if (!data) return;
@@ -184,7 +145,6 @@ export default function LiveReplayPreview() {
   const playing = Boolean(replayData) && !documentHidden;
 
   const noOp = useCallback(() => {}, []);
-  const requestPreview = useCallback(() => setPreviewRequested(true), []);
 
   return (
     <section className="overflow-hidden border-b border-border-primary/40 bg-bg-primary px-6 py-10">
@@ -209,9 +169,9 @@ export default function LiveReplayPreview() {
                 <span className="text-sm font-bold text-text-primary">
                   Live Replay
                 </span>
-                {latestReplay && activeSeason !== null && (
+                {eventName && activeSeason !== null && (
                   <span className="ml-2 text-xs text-text-muted">
-                    {latestReplay.event_name} {activeSeason}
+                    {eventName} {activeSeason}
                   </span>
                 )}
               </div>
@@ -240,18 +200,20 @@ export default function LiveReplayPreview() {
           {/* Body */}
           <div className="px-5 py-5">
             {!replayData && !isLoading && (
-              <ReplayPreviewPoster
-                season={activeSeason}
-                round={activeRound}
-                eventName={latestReplay?.event_name ?? null}
-                circuitId={latestReplay?.circuit_id ?? null}
-                circuitName={latestReplay?.circuit_name ?? null}
-                totalLaps={latestReplay?.total_laps ?? null}
-                driverCount={latestReplay?.driver_count ?? null}
-                isLoading={false}
-                error={Boolean(error)}
-                onLoadPreview={requestPreview}
-              />
+              <div
+                className="flex flex-col items-center justify-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] text-center"
+                style={{ height: 380 }}
+              >
+                <p className="text-sm text-text-secondary">
+                  Replay preview is unavailable right now.
+                </p>
+                <Link
+                  href="/replay"
+                  className="font-mono text-[10px] uppercase tracking-[0.1em] text-purple-400 transition-colors hover:text-purple-300"
+                >
+                  Open the replay player
+                </Link>
+              </div>
             )}
 
             {isLoading && (
@@ -298,16 +260,6 @@ export default function LiveReplayPreview() {
                     />
                   </div>
                 </div>
-
-                {/* Leader telemetry trace */}
-                <LeaderTelemetry
-                  frame={frame}
-                  drivers={replayData.drivers}
-                  allFrames={replayData.frames}
-                  frameIndex={frameIndex}
-                  polyline={replayData.track.polyline}
-                  arcLengths={arcLengths}
-                />
               </div>
             )}
           </div>

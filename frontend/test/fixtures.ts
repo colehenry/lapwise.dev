@@ -1,3 +1,4 @@
+import type { ReplayPreviewArtifact } from "@/lib/replayPreviewArtifact";
 import type {
   ChampionshipScoringInfo,
   ReplayData,
@@ -39,6 +40,17 @@ export const availableReplays: ReplayListResponse = {
     },
   ],
 };
+
+function packI16Deltas(values: number[]): Uint8Array {
+  const out = new Uint8Array(values.length * 2);
+  const view = new DataView(out.buffer);
+  let previous = 0;
+  values.forEach((value, i) => {
+    view.setInt16(i * 2, value - previous, true);
+    previous = value;
+  });
+  return out;
+}
 
 export const replayData: ReplayData = {
   metadata: {
@@ -86,6 +98,19 @@ export const replayData: ReplayData = {
     },
   ],
   race_control: [],
+};
+
+/** The columnar autoplay artifact served by /api/replay/preview/latest. */
+export const replayPreviewArtifact: ReplayPreviewArtifact = {
+  version: 1,
+  metadata: replayData.metadata,
+  track: replayData.track,
+  drivers: replayData.drivers,
+  codes: ["VER"],
+  x: { VER: packI16Deltas([0, 5]) },
+  y: { VER: packI16Deltas([0, 0]) },
+  lap: { VER: new Uint8Array([10, 11]) },
+  sc: new Uint8Array([0, 0]),
 };
 
 export const standings: StandingsResponse = {
