@@ -43,6 +43,8 @@ export function useChampionshipDisplay(
   };
 }
 
+export type ChampionshipDisplay = ReturnType<typeof useChampionshipDisplay>;
+
 export function displayedPosition(
   row: DriverStanding | ConstructorStanding,
   index: number,

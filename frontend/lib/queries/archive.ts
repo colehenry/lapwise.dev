@@ -29,8 +29,14 @@ function listPath(base: string, includeSprint: boolean): string {
   return includeSprint ? base : `${base}?include_sprint=false`;
 }
 
+/** Server renders revalidate on this interval; browsers ignore `next`. */
+const LIST_REVALIDATE_SECONDS = 300;
+
 async function getJson<T>(path: string, error: string): Promise<T> {
-  const res = await fetch(apiUrl(path), { headers: apiHeaders() });
+  const res = await fetch(apiUrl(path), {
+    headers: apiHeaders(),
+    next: { revalidate: LIST_REVALIDATE_SECONDS },
+  });
   if (!res.ok) throw new Error(error);
   return res.json();
 }

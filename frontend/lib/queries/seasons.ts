@@ -21,8 +21,14 @@ export type SeasonRoundsData = {
 
 const METADATA_STALE_TIME = 1000 * 60 * 60;
 
+/** Server renders revalidate on this interval; browsers ignore `next`. */
+const METADATA_REVALIDATE_SECONDS = 300;
+
 async function getJson<T>(path: string, error: string): Promise<T> {
-  const res = await fetch(apiUrl(path), { headers: apiHeaders() });
+  const res = await fetch(apiUrl(path), {
+    headers: apiHeaders(),
+    next: { revalidate: METADATA_REVALIDATE_SECONDS },
+  });
   if (!res.ok) throw new Error(error);
   return res.json();
 }

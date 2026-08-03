@@ -85,6 +85,8 @@ export async function fetchStandings(
 ): Promise<StandingsResponse> {
   const res = await fetch(apiUrl(`/api/results/${season}/standings`), {
     headers: apiHeaders(),
+    // Server renders revalidate on this interval; browsers ignore `next`.
+    next: { revalidate: 60 },
   });
   if (!res.ok) throw new Error("Failed to fetch standings");
   return res.json();
