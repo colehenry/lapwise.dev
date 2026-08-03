@@ -1,0 +1,17 @@
+{
+  "note": "First-load JavaScript budgets in kB, enforced in CI by scripts/perf/bundle-report.mjs. Each is a little above the measured size so ordinary changes pass and a regression does not. Lower a budget when a reduction is earned; raising one needs a reason in the PR.",
+  "sharedFirstLoadKb": 190,
+  "routes": {
+    "/": 230,
+    "/results/[season]": 225,
+    "/results/[season]/[round]": 240,
+    "/drivers/[driverCode]": 225,
+    "/constructors/[teamName]": 225,
+    "/circuits/[id]": 225,
+    "/drivers": 220,
+    "/constructors": 220,
+    "/circuits": 220,
+    "/replay": 235,
+    "/ask": 270
+  }
+}

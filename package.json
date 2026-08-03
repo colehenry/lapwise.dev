@@ -11,6 +11,7 @@
     "perf:api": "node scripts/perf/measure-endpoints.mjs",
     "perf:bundle": "node scripts/perf/bundle-report.mjs",
     "perf:queries": "cd backend && ./venv/bin/python -m pytest tests/perf -q",
-    "perf:requests": "npm --prefix frontend test -- test/"
+    "perf:requests": "npm --prefix frontend test -- test/",
+    "perf:budget": "node scripts/perf/bundle-report.mjs --budget scripts/perf/bundle-budget.json"
   }
 }

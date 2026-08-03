@@ -65,18 +65,19 @@ the assertions that catch a page silently re-adding an eager request.
 
 ### Shared and route JavaScript
 
-| Measure | First load |
-| --- | ---: |
-| Shared by all routes | 222 kB |
-| `/` | 382 kB |
-| `/results/[season]` | 378 kB |
-| `/results/[season]/[round]` | 395 kB |
-| `/drivers/[driverCode]` | 379 kB |
-| `/constructors/[teamName]` | 378 kB |
-| `/circuits/[id]` | 372 kB |
-| Middleware | 103 kB |
+| Measure | Baseline | After Step 9 | Budget |
+| --- | ---: | ---: | ---: |
+| Shared by all routes | 222 kB | **184 kB** | 190 kB |
+| `/` | 382 kB | **220 kB** | 230 kB |
+| `/results/[season]` | 378 kB | **218 kB** | 225 kB |
+| `/results/[season]/[round]` | 395 kB | **226 kB** | 240 kB |
+| `/drivers/[driverCode]` | 379 kB | **215 kB** | 225 kB |
+| `/constructors/[teamName]` | 378 kB | **214 kB** | 225 kB |
+| `/circuits/[id]` | 372 kB | **214 kB** | 225 kB |
+| Middleware | 103 kB | 103 kB | — |
 
-Largest shared chunks: 126 kB, 54.4 kB, and 37.9 kB (Sentry Replay).
+The 37.9 kB Sentry Replay chunk is gone; the remaining shared chunks are
+125 kB and 54.4 kB. Budgets are enforced in CI by `npm run perf:budget`.
 
 ### API, production, three runs
 

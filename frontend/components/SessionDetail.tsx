@@ -14,13 +14,11 @@ import {
 } from "@/lib/flags";
 import type { SessionResultsResponse } from "@/lib/types";
 import DriverHeadshot from "./DriverHeadshot";
-import LapTimeByLapGraph from "./LapTimeByLapGraph";
 import { GridPattern, TrianglePattern } from "./Patterns";
-import QualifyingSpreadChart from "./QualifyingSpreadChart";
+import SessionAnalysisPanels from "./SessionAnalysisPanels";
 import type { SessionSummary } from "./SessionSummaryCard";
 import SessionSummaryCard from "./SessionSummaryCard";
 import { TrackMapFull } from "./TrackMapDisplay";
-import TyreStintChart from "./TyreStintChart";
 
 interface SessionDetailProps {
   data: SessionResultsResponse | null;
@@ -564,49 +562,14 @@ export default function SessionDetail({
           </div>
         )}
 
-        {/* ── Lap Time Graph (Race) or Gap Chart (Qualifying) ── */}
-        {!isPractice && (
-          <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-visible">
-            <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden rounded-t-sm">
-              <TrianglePattern id="analysis-triangles" />
-              <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                {isQualifying ? "Qualifying Analysis" : "Race Performance"}
-              </span>
-            </div>
-
-            <div className="p-6">
-              {!isQualifying ? (
-                <LapTimeByLapGraph
-                  season={session.year}
-                  round={session.round}
-                  isSprint={isSprint}
-                />
-              ) : (
-                <QualifyingSpreadChart results={results} />
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ── Tyre Strategy (Race only) ── */}
-        {!isQualifying && !isPractice && (
-          <div className="mt-6 bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-            <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-              <TrianglePattern id="tyre-triangles" />
-              <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
-                Tyre Strategy
-              </span>
-            </div>
-
-            <div className="p-6">
-              <TyreStintChart
-                season={session.year}
-                round={session.round}
-                isSprint={isSprint}
-              />
-            </div>
-          </div>
-        )}
+        <SessionAnalysisPanels
+          season={session.year}
+          round={session.round}
+          isSprint={isSprint}
+          isQualifying={isQualifying}
+          isPractice={isPractice}
+          results={results}
+        />
       </div>
     </main>
   );
