@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { TrackMapCompact } from "@/components/TrackMapDisplay";
+import { TrackMapCompact } from "@/components/track/TrackMapDisplay";
 import Skeleton from "@/components/ui/Skeleton";
 import TiltCard from "@/components/ui/TiltCard";
 import { fetchAvailableReplays } from "@/lib/api";

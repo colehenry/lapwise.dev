@@ -8,9 +8,9 @@ import {
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import RaceComments from "@/components/comments/RaceComments";
-import JumpToRace from "@/components/JumpToRace";
-import SessionDetail from "@/components/SessionDetail";
-import type { SessionSummary } from "@/components/SessionSummaryCard";
+import JumpToRace from "@/components/layout/JumpToRace";
+import SessionDetail from "@/components/session/SessionDetail";
+import type { SessionSummary } from "@/components/session/SessionSummaryCard";
 import DeferredSection from "@/components/ui/DeferredSection";
 import { seasonsQuery } from "@/lib/queries/seasons";
 import {

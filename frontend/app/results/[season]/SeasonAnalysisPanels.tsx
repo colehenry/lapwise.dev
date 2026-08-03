@@ -1,19 +1,19 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { TrianglePattern } from "@/components/Patterns";
+import { TrianglePattern } from "@/components/layout/Patterns";
 import DeferredSection from "@/components/ui/DeferredSection";
 import Skeleton from "@/components/ui/Skeleton";
 
 const ANALYSIS_MIN_HEIGHT = 360;
 
 const PointsByRoundGraph = dynamic(
-  () => import("@/components/PointsByRoundGraph"),
+  () => import("@/components/charts/PointsByRoundGraph"),
   { loading: () => <Skeleton variant="rectangular" height="320px" /> },
 );
 
 const TeammateHeadToHead = dynamic(
-  () => import("@/components/TeammateHeadToHead"),
+  () => import("@/components/standings/TeammateHeadToHead"),
   { loading: () => <Skeleton variant="rectangular" height="320px" /> },
 );
 

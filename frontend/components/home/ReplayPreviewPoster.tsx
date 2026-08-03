@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import TrackMapImage from "@/components/TrackMapImage";
+import TrackMapImage from "@/components/track/TrackMapImage";
 
 type ReplayPreviewPosterProps = {
   season: number | null;

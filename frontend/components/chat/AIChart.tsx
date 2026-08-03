@@ -20,7 +20,7 @@ import {
 import {
   CHART_AXIS_LABEL_STYLE,
   CHART_COLORS,
-} from "@/components/chart-primitives";
+} from "@/components/charts/chart-primitives";
 import Card from "@/components/ui/Card";
 import type { ChartConfig } from "@/lib/chat";
 

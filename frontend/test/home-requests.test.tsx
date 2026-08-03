@@ -3,9 +3,9 @@ import { act, fireEvent } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import AIAnalystPreview from "@/components/home/AIAnalystPreview";
 import LiveReplayPreview from "@/components/home/LiveReplayPreview";
+import NextRaceBanner from "@/components/home/NextRaceBanner";
 import SeasonRoundSelector from "@/components/home/SeasonRoundSelector";
 import TopRightLatestRace from "@/components/home/TopRightLatestRace";
-import NextRaceBanner from "@/components/NextRaceBanner";
 import * as fixtures from "./fixtures";
 import {
   flushRequests,

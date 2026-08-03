@@ -1,10 +1,10 @@
 import Link from "next/link";
 import AIAnalystPreview from "@/components/home/AIAnalystPreview";
 import LiveReplayPreview from "@/components/home/LiveReplayPreview";
+import NextRaceBanner from "@/components/home/NextRaceBanner";
 import SeasonRoundSelector from "@/components/home/SeasonRoundSelector";
 import TopRightLatestRace from "@/components/home/TopRightLatestRace";
-import NextRaceBanner from "@/components/NextRaceBanner";
-import { GridPattern } from "@/components/Patterns";
+import { GridPattern } from "@/components/layout/Patterns";
 import TiltCard from "@/components/ui/TiltCard";
 
 function FeatureIcon({ label }: { label: string }) {

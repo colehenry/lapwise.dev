@@ -3,10 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import DriverHeadshot from "@/components/DriverHeadshot";
-import JumpToRace from "@/components/JumpToRace";
-import PageHeader from "@/components/PageHeader";
-import { TrackMapCompact } from "@/components/TrackMapDisplay";
+import DriverHeadshot from "@/components/entities/DriverHeadshot";
+import JumpToRace from "@/components/layout/JumpToRace";
+import PageHeader from "@/components/layout/PageHeader";
+import { TrackMapCompact } from "@/components/track/TrackMapDisplay";
 import TiltCard from "@/components/ui/TiltCard";
 import { useChampionshipDisplay } from "@/hooks/useChampionshipDisplay";
 import {

@@ -19,10 +19,9 @@ import { circuitsQuery, selectCircuitList } from "@/lib/queries/archive";
 import type { CircuitInfo } from "@/lib/types";
 
 // Recharts only reaches the browser when the scripted answer shows its chart.
-const ChampionshipChart = dynamic(
-  () => import("@/components/home/ChampionshipPreviewChart"),
-  { loading: () => <Skeleton variant="rectangular" height="220px" /> },
-);
+const ChampionshipChart = dynamic(() => import("./ChampionshipPreviewChart"), {
+  loading: () => <Skeleton variant="rectangular" height="220px" />,
+});
 
 function getDriverColor(
   code: string | undefined,

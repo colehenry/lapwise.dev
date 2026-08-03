@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useMemo } from "react";
-import { TrianglePattern } from "@/components/Patterns";
+import { TrianglePattern } from "@/components/layout/Patterns";
 import { isValidHeadshotUrl } from "@/lib/api";
 import type {
   ReplayDriverFrame,

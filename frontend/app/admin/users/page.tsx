@@ -3,7 +3,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { format } from "date-fns";
 import { useCallback, useEffect, useState } from "react";
-import { GridPattern } from "@/components/Patterns";
+import { GridPattern } from "@/components/layout/Patterns";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";

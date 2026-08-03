@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getCanvasTheme } from "@/components/chart-primitives";
+import { getCanvasTheme } from "@/components/charts/chart-primitives";
 import { isValidHeadshotUrl } from "@/lib/api";
 import type {
   ReplayCorner,

@@ -9,8 +9,8 @@ import { useEffect, useState } from "react";
 import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
 import ArchiveMetricBar from "@/components/archive/ArchiveMetricBar";
 import ArchivePanel from "@/components/archive/ArchivePanel";
-import PageHeader from "@/components/PageHeader";
-import { useTheme } from "@/components/ThemeProvider";
+import PageHeader from "@/components/layout/PageHeader";
+import { useTheme } from "@/components/providers/ThemeProvider";
 import DeferredSection from "@/components/ui/DeferredSection";
 import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
 import Skeleton from "@/components/ui/Skeleton";
@@ -29,15 +29,15 @@ import type { ConstructorProfile } from "@/lib/types";
 
 // Analysis panels load with their section, not with the profile shell.
 const ConstructorResultsTable = dynamic(
-  () => import("@/components/ConstructorResultsTable"),
+  () => import("@/components/entities/ConstructorResultsTable"),
   { loading: () => <Skeleton variant="rectangular" height="320px" /> },
 );
 const ConstructorSeasonHistoryGraph = dynamic(
-  () => import("@/components/ConstructorSeasonHistoryGraph"),
+  () => import("@/components/charts/ConstructorSeasonHistoryGraph"),
   { loading: () => <Skeleton variant="rectangular" height="320px" /> },
 );
 const ConstructorStatisticsPanel = dynamic(
-  () => import("@/components/ConstructorStatisticsPanel"),
+  () => import("@/components/entities/ConstructorStatisticsPanel"),
   { loading: () => <Skeleton variant="rectangular" height="320px" /> },
 );
 

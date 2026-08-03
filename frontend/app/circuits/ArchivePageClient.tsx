@@ -3,8 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import PageHeader from "@/components/PageHeader";
-import TrackMapImage from "@/components/TrackMapImage";
+import PageHeader from "@/components/layout/PageHeader";
+import TrackMapImage from "@/components/track/TrackMapImage";
 import ExpandButton from "@/components/ui/ExpandButton";
 import Skeleton from "@/components/ui/Skeleton";
 import SortPills from "@/components/ui/SortPills";
