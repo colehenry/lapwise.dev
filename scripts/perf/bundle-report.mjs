@@ -31,8 +31,9 @@ const LOG = flag("log");
 const JSON_OUT = flag("json");
 const BUDGET = flag("budget");
 
+// Trailing columns appear for ISR routes: revalidate and expire.
 const ROUTE_ROW =
-  /^[┌├└]\s+\S\s+(\S+)\s+([\d.]+\s*[kM]?B)\s+([\d.]+\s*[kM]?B)\s*$/;
+  /^[┌├└]\s+\S\s+(\S+)\s+([\d.]+\s*[kM]?B)\s+([\d.]+\s*[kM]?B)(?:\s+\S+\s+\S+)?\s*$/;
 const SHARED_ROW = /^\+\s*First Load JS shared by all\s+([\d.]+\s*[kM]?B)\s*$/;
 const CHUNK_ROW = /^\s+[├└]\s+(\S.*?)\s{2,}([\d.]+\s*[kM]?B)\s*$/;
 const MIDDLEWARE_ROW = /^ƒ\s+Middleware\s+([\d.]+\s*[kM]?B)\s*$/;
