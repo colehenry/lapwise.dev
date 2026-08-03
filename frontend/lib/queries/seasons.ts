@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import type { RoundSummary } from "@/lib/types";
+import { hours, minutes } from "./durations";
 
 /**
  * Season and round metadata. Every route that needs the season list, the
@@ -19,7 +20,7 @@ export type SeasonRoundsData = {
   rounds: RoundSummary[];
 };
 
-const METADATA_STALE_TIME = 1000 * 60 * 60;
+const METADATA_STALE_TIME = hours(1);
 
 /** Server renders revalidate on this interval; browsers ignore `next`. */
 const METADATA_REVALIDATE_SECONDS = 300;
@@ -53,7 +54,7 @@ export function latestRoundQuery() {
         "/api/results/latest",
         "Failed to fetch latest race",
       ),
-    staleTime: 1000 * 60 * 10,
+    staleTime: minutes(10),
     retry: 1,
   });
 }
