@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CHART_COLORS, CustomDot } from "@/components/chart-primitives";
+import { CHART_COLORS, CustomDot } from "@/components/charts/chart-primitives";
 import StableResponsiveContainer from "@/components/ui/StableResponsiveContainer";
 import { darken } from "@/lib/color-utils";
 import {

@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ReplayPreviewPoster from "@/components/home/ReplayPreviewPoster";
 import Skeleton from "@/components/ui/Skeleton";
 import {
   availableReplaysQuery,
@@ -16,6 +15,7 @@ import {
   findLapStartFrame,
 } from "@/lib/replayPreviewGeometry";
 import type { ReplayData } from "@/lib/types";
+import ReplayPreviewPoster from "./ReplayPreviewPoster";
 
 // The canvas player and its panels load with the frame data, not with home.
 const TrackCanvas = dynamic(
@@ -24,16 +24,12 @@ const TrackCanvas = dynamic(
 );
 const MiniLeaderboard = dynamic(
   () =>
-    import("@/components/home/ReplayPreviewPanels").then(
-      (module) => module.MiniLeaderboard,
-    ),
+    import("./ReplayPreviewPanels").then((module) => module.MiniLeaderboard),
   { ssr: false },
 );
 const LeaderTelemetry = dynamic(
   () =>
-    import("@/components/home/ReplayPreviewPanels").then(
-      (module) => module.LeaderTelemetry,
-    ),
+    import("./ReplayPreviewPanels").then((module) => module.LeaderTelemetry),
   { ssr: false },
 );
 

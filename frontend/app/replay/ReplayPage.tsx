@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import PageHeader from "@/components/PageHeader";
+import PageHeader from "@/components/layout/PageHeader";
 import { fetchAvailableReplays } from "@/lib/api";
 import { replaySeasonsQuery } from "@/lib/queries/replay";
 import ReplayBrowser from "./components/ReplayBrowser";

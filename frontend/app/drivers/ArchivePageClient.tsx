@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import PageHeader from "@/components/PageHeader";
+import PageHeader from "@/components/layout/PageHeader";
 import ExpandButton from "@/components/ui/ExpandButton";
 import Skeleton from "@/components/ui/Skeleton";
 import SortPills from "@/components/ui/SortPills";

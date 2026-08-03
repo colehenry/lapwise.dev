@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { useQuery } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import FastestLapTimeline from "@/components/FastestLapTimeline";
-import PitStopDeltaChart from "@/components/PitStopDeltaChart";
-import RaceTrackEvolutionChart from "@/components/RaceTrackEvolutionChart";
+import FastestLapTimeline from "@/components/charts/FastestLapTimeline";
+import PitStopDeltaChart from "@/components/charts/PitStopDeltaChart";
+import RaceTrackEvolutionChart from "@/components/charts/RaceTrackEvolutionChart";
 import {
   circuitsQuery,
   constructorsQuery,

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
-import { TrianglePattern } from "@/components/Patterns";
+import { TrianglePattern } from "@/components/layout/Patterns";
 import DeferredSection from "@/components/ui/DeferredSection";
 import { DATA_FROM } from "@/lib/data-coverage";
 import type { SessionResultsResponse } from "@/lib/types";
@@ -18,54 +18,54 @@ const PracticeComparisonPanel = dynamic(
   { loading: ChartLoading, ssr: false },
 );
 const FastestLapTimeline = dynamic(
-  () => import("@/components/FastestLapTimeline"),
+  () => import("@/components/charts/FastestLapTimeline"),
   { loading: ChartLoading, ssr: false },
 );
 const LapTimeDistributionChart = dynamic(
-  () => import("@/components/LapTimeDistributionChart"),
+  () => import("@/components/charts/LapTimeDistributionChart"),
   { loading: ChartLoading, ssr: false },
 );
 const LongRunPaceChart = dynamic(
-  () => import("@/components/LongRunPaceChart"),
+  () => import("@/components/charts/LongRunPaceChart"),
   {
     loading: ChartLoading,
     ssr: false,
   },
 );
 const PitStopDeltaChart = dynamic(
-  () => import("@/components/PitStopDeltaChart"),
+  () => import("@/components/charts/PitStopDeltaChart"),
   { loading: ChartLoading, ssr: false },
 );
 const PracticeSectorHeatmap = dynamic(
-  () => import("@/components/PracticeSectorHeatmap"),
+  () => import("@/components/charts/PracticeSectorHeatmap"),
   { loading: ChartLoading, ssr: false },
 );
 const QualifyingProgressionChart = dynamic(
-  () => import("@/components/QualifyingProgressionChart"),
+  () => import("@/components/charts/QualifyingProgressionChart"),
   { loading: ChartLoading, ssr: false },
 );
 const QualifyingSectorComparison = dynamic(
-  () => import("@/components/QualifyingSectorComparison"),
+  () => import("@/components/charts/QualifyingSectorComparison"),
   { loading: ChartLoading, ssr: false },
 );
 const QualifyingSectorHeatmap = dynamic(
-  () => import("@/components/QualifyingSectorHeatmap"),
+  () => import("@/components/charts/QualifyingSectorHeatmap"),
   { loading: ChartLoading, ssr: false },
 );
 const RaceTrackEvolutionChart = dynamic(
-  () => import("@/components/RaceTrackEvolutionChart"),
+  () => import("@/components/charts/RaceTrackEvolutionChart"),
   { loading: ChartLoading, ssr: false },
 );
 const TrackEvolutionChart = dynamic(
-  () => import("@/components/TrackEvolutionChart"),
+  () => import("@/components/charts/TrackEvolutionChart"),
   { loading: ChartLoading, ssr: false },
 );
 const TyreDegradationChart = dynamic(
-  () => import("@/components/TyreDegradationChart"),
+  () => import("@/components/charts/TyreDegradationChart"),
   { loading: ChartLoading, ssr: false },
 );
 const TyreProgrammeChart = dynamic(
-  () => import("@/components/TyreProgrammeChart"),
+  () => import("@/components/charts/TyreProgrammeChart"),
   { loading: ChartLoading, ssr: false },
 );
 

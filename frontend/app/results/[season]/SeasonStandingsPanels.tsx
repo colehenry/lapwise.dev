@@ -2,14 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import ChampionshipPanelHeader from "@/components/ChampionshipPanelHeader";
-import ClassificationBadge from "@/components/ClassificationBadge";
-import DriverHeadshot from "@/components/DriverHeadshot";
+import DriverHeadshot from "@/components/entities/DriverHeadshot";
+import { useTheme } from "@/components/providers/ThemeProvider";
+import ChampionshipPanelHeader from "@/components/standings/ChampionshipPanelHeader";
+import ClassificationBadge from "@/components/standings/ClassificationBadge";
 import {
   MedalsWithBreakdown,
   QualifyingPointsInfo,
-} from "@/components/StandingsPointsDisplay";
-import { useTheme } from "@/components/ThemeProvider";
+} from "@/components/standings/StandingsPointsDisplay";
 import {
   type ChampionshipDisplay,
   displayedPoints,

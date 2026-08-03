@@ -2,8 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { useTheme } from "@/components/ThemeProvider";
-import TrackMapImage from "@/components/TrackMapImage";
+import { useTheme } from "@/components/providers/ThemeProvider";
+import TrackMapImage from "@/components/track/TrackMapImage";
 import Button from "@/components/ui/Button";
 import Skeleton from "@/components/ui/Skeleton";
 import { isValidHeadshotUrl } from "@/lib/api";

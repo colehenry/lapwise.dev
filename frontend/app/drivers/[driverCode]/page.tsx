@@ -9,8 +9,8 @@ import { useEffect, useState } from "react";
 import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
 import ArchiveMetricBar from "@/components/archive/ArchiveMetricBar";
 import ArchivePanel from "@/components/archive/ArchivePanel";
-import DriverSuperlativesCard from "@/components/DriverSuperlativesCard";
-import PageHeader from "@/components/PageHeader";
+import DriverSuperlativesCard from "@/components/entities/DriverSuperlativesCard";
+import PageHeader from "@/components/layout/PageHeader";
 import DeferredSection from "@/components/ui/DeferredSection";
 import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
 import Skeleton from "@/components/ui/Skeleton";
@@ -28,15 +28,15 @@ import type { DriverProfile } from "@/lib/types";
 
 // Analysis panels load with their section, not with the profile shell.
 const DriverResultsTable = dynamic(
-  () => import("@/components/DriverResultsTable"),
+  () => import("@/components/entities/DriverResultsTable"),
   { loading: () => <Skeleton variant="rectangular" height="320px" /> },
 );
 const DriverSeasonHistoryGraph = dynamic(
-  () => import("@/components/DriverSeasonHistoryGraph"),
+  () => import("@/components/charts/DriverSeasonHistoryGraph"),
   { loading: () => <Skeleton variant="rectangular" height="320px" /> },
 );
 const DriverStatisticsPanel = dynamic(
-  () => import("@/components/DriverStatisticsPanel"),
+  () => import("@/components/entities/DriverStatisticsPanel"),
   { loading: () => <Skeleton variant="rectangular" height="320px" /> },
 );
 

@@ -6,10 +6,10 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import ArchivePanel from "@/components/archive/ArchivePanel";
-import CircuitLapRecords from "@/components/CircuitLapRecords";
-import CircuitRecentRace from "@/components/CircuitRecentRace";
-import InteractiveTrackMap from "@/components/InteractiveTrackMap";
-import PageHeader from "@/components/PageHeader";
+import CircuitLapRecords from "@/components/entities/CircuitLapRecords";
+import CircuitRecentRace from "@/components/entities/CircuitRecentRace";
+import PageHeader from "@/components/layout/PageHeader";
+import InteractiveTrackMap from "@/components/track/InteractiveTrackMap";
 import DeferredSection from "@/components/ui/DeferredSection";
 import MonoLabel from "@/components/ui/MonoLabel";
 import Skeleton from "@/components/ui/Skeleton";
@@ -20,23 +20,23 @@ import type { CircuitInfo } from "@/lib/types";
 
 // Analysis panels load with their section, not with the profile shell.
 const CircuitStatisticsPanel = dynamic(
-  () => import("@/components/CircuitStatisticsPanel"),
+  () => import("@/components/entities/CircuitStatisticsPanel"),
   { loading: () => <Skeleton variant="rectangular" height="320px" /> },
 );
 const CircuitRaceHistoryTable = dynamic(
-  () => import("@/components/CircuitRaceHistoryTable"),
+  () => import("@/components/entities/CircuitRaceHistoryTable"),
   { loading: () => <Skeleton variant="rectangular" height="320px" /> },
 );
 const CircuitLapTimeTrend = dynamic(
-  () => import("@/components/CircuitLapTimeTrend"),
+  () => import("@/components/entities/CircuitLapTimeTrend"),
   { loading: () => <Skeleton variant="rectangular" height="320px" /> },
 );
 const CircuitTyreStats = dynamic(
-  () => import("@/components/CircuitTyreStats"),
+  () => import("@/components/entities/CircuitTyreStats"),
   { loading: () => <Skeleton variant="rectangular" height="320px" /> },
 );
 const CircuitWeatherProfile = dynamic(
-  () => import("@/components/CircuitWeatherProfile"),
+  () => import("@/components/entities/CircuitWeatherProfile"),
   { loading: () => <Skeleton variant="rectangular" height="320px" /> },
 );
 

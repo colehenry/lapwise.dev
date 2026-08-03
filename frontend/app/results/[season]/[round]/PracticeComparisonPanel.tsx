@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import CrossSessionComparison from "@/components/CrossSessionComparison";
+import CrossSessionComparison from "@/components/charts/CrossSessionComparison";
 import { roundSessionQuery } from "@/lib/queries/sessions";
 
 type PracticeComparisonPanelProps = {

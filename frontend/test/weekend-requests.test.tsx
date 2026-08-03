@@ -17,7 +17,7 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-vi.mock("@/components/SessionDetail", () => ({ default: () => null }));
+vi.mock("@/components/session/SessionDetail", () => ({ default: () => null }));
 vi.mock("@/app/results/[season]/[round]/RoundAnalysisCharts", () => ({
   default: () => null,
 }));

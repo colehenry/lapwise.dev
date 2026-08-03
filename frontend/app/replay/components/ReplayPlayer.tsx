@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { TrianglePattern } from "@/components/Patterns";
+import { TrianglePattern } from "@/components/layout/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
 import { replayDataQuery } from "@/lib/queries/replay";
 import type { BattleEvent, ReplayData, ReplayWeather } from "@/lib/types";

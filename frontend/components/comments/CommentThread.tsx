@@ -2,13 +2,13 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { useAuth } from "@/components/AuthProvider";
-import CommentEditor from "@/components/comments/CommentEditor";
-import MarkdownContent from "@/components/comments/MarkdownContent";
-import UserAvatar from "@/components/comments/UserAvatar";
-import VoteButton from "@/components/comments/VoteButton";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { formatRelativeTime } from "@/lib/time";
 import type { CommentResponse } from "@/lib/types";
+import CommentEditor from "./CommentEditor";
+import MarkdownContent from "./MarkdownContent";
+import UserAvatar from "./UserAvatar";
+import VoteButton from "./VoteButton";
 
 interface CommentThreadProps {
   comments: CommentResponse[];

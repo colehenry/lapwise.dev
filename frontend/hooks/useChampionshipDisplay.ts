@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ChampionshipPointsMode } from "@/components/ChampionshipScoringControl";
+import type { ChampionshipPointsMode } from "@/components/standings/ChampionshipScoringControl";
 import type {
   ConstructorStanding,
   DriverStanding,
