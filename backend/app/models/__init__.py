@@ -14,6 +14,7 @@ Usage:
 
 from app.models.ai_conversation import AIConversation
 from app.models.ai_message import AIMessage
+from app.models.archive_aggregate import AggConstructorCareer, AggDriverCareer
 from app.models.championship import (
     ChampionshipClassificationException,
     ChampionshipScoringContext,
@@ -59,6 +60,8 @@ __all__ = [
     "Constructor",
     "ConstructorExternalId",
     "Team",
+    "AggConstructorCareer",
+    "AggDriverCareer",
     "Circuit",
     "CircuitVenue",
     "CircuitVenueExternalId",

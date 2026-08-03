@@ -1,5 +1,5 @@
 import Link from "next/link";
-import PageHeader from "@/components/PageHeader";
+import PageHeader from "@/components/layout/PageHeader";
 
 export const metadata = {
   title: "About Lapwise",

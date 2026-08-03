@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { TrianglePattern } from "@/components/Patterns";
+import { TrianglePattern } from "@/components/layout/Patterns";
 
 type ArchivePanelProps = {
   title?: string;

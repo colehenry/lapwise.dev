@@ -36,7 +36,13 @@ jobs:
         run: npm test
 
       - name: Build
-        run: npm run build
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee ../build.log
+
+      - name: Bundle budgets
+        working-directory: .
+        run: node scripts/perf/bundle-report.mjs --log build.log --budget scripts/perf/bundle-budget.json
 
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high

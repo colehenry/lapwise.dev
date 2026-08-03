@@ -119,3 +119,7 @@ jobs:
           path: backend/logs/
           retention-days: 30
           if-no-files-found: ignore
+
+      - name: Refresh archive aggregates
+        working-directory: ./backend
+        run: PYTHONPATH=$PWD python scripts/refresh_archive_aggregates.py

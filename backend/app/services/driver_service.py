@@ -14,7 +14,6 @@ from app.models import (
     Team,
 )
 from app.schemas.driver import (
-    DriverListItem,
     DriverListResponse,
     DriverProfileResponse,
     DriverRaceHistoryResponse,
@@ -24,6 +23,7 @@ from app.schemas.driver import (
     RaceHistory,
     SeasonHistory,
 )
+from app.services.archive_aggregate_service import ArchiveAggregateService
 from app.services.driver_identity_service import DriverIdentityService
 
 
@@ -41,147 +41,10 @@ class DriverService:
         """
         Get all-time driver listing with career statistics.
 
-        Returns all drivers ordered by total wins DESC, total points DESC.
+        Reads the rebuildable career aggregate, falling back to live
+        computation when it has not been refreshed yet.
         """
-        session_types = DriverService._session_types(include_sprint)
-
-        latest_session_sq = (
-            select(
-                SessionResult.driver_id,
-                func.max(Session.date).label("max_date"),
-            )
-            .join(Session, SessionResult.session_id == Session.id)
-            .where(Session.session_type.in_(["race", "sprint_race"]))
-            .group_by(SessionResult.driver_id)
-            .subquery()
-        )
-
-        latest_info_sq = (
-            select(
-                SessionResult.driver_id,
-                SessionResult.headshot_url,
-                Session.year.label("latest_season"),
-            )
-            .join(Session, SessionResult.session_id == Session.id)
-            .join(
-                latest_session_sq,
-                (SessionResult.driver_id == latest_session_sq.c.driver_id)
-                & (Session.date == latest_session_sq.c.max_date),
-            )
-            .where(Session.session_type.in_(["race", "sprint_race"]))
-            .distinct(SessionResult.driver_id)
-            .subquery()
-        )
-
-        team_seasons_sq = (
-            select(
-                SessionResult.driver_id,
-                SessionResult.team_id,
-                func.count(func.distinct(Session.year)).label("season_count"),
-            )
-            .join(Session, SessionResult.session_id == Session.id)
-            .where(Session.session_type.in_(session_types))
-            .group_by(SessionResult.driver_id, SessionResult.team_id)
-            .subquery()
-        )
-
-        max_team_seasons_sq = (
-            select(
-                team_seasons_sq.c.driver_id,
-                func.max(team_seasons_sq.c.season_count).label("max_seasons"),
-            )
-            .group_by(team_seasons_sq.c.driver_id)
-            .subquery()
-        )
-
-        primary_team_sq = (
-            select(
-                team_seasons_sq.c.driver_id,
-                Team.name.label("team_name"),
-                Team.team_color.label("team_color"),
-            )
-            .join(Team, team_seasons_sq.c.team_id == Team.id)
-            .join(
-                max_team_seasons_sq,
-                (team_seasons_sq.c.driver_id == max_team_seasons_sq.c.driver_id)
-                & (team_seasons_sq.c.season_count == max_team_seasons_sq.c.max_seasons),
-            )
-            .distinct(team_seasons_sq.c.driver_id)
-            .order_by(team_seasons_sq.c.driver_id, team_seasons_sq.c.team_id.desc())
-            .subquery()
-        )
-
-        query = (
-            select(
-                Driver.id,
-                Driver.slug,
-                Driver.driver_code,
-                Driver.jolpica_id,
-                Driver.full_name,
-                Driver.country_code,
-                func.count(SessionResult.id).label("total_races"),
-                func.sum(case((SessionResult.position == 1, 1), else_=0)).label(
-                    "total_wins"
-                ),
-                func.sum(
-                    case(
-                        (SessionResult.position.in_([1, 2, 3]), 1),
-                        else_=0,
-                    )
-                ).label("total_podiums"),
-                func.coalesce(func.sum(SessionResult.points), 0).label("total_points"),
-                primary_team_sq.c.team_name.label("current_team"),
-                primary_team_sq.c.team_color.label("current_team_color"),
-                latest_info_sq.c.headshot_url,
-                latest_info_sq.c.latest_season,
-                func.min(Session.year).label("first_season"),
-            )
-            .join(SessionResult, Driver.id == SessionResult.driver_id)
-            .join(Session, SessionResult.session_id == Session.id)
-            .outerjoin(primary_team_sq, Driver.id == primary_team_sq.c.driver_id)
-            .outerjoin(latest_info_sq, Driver.id == latest_info_sq.c.driver_id)
-            .where(Session.session_type.in_(session_types))
-            .group_by(
-                Driver.id,
-                Driver.slug,
-                Driver.driver_code,
-                Driver.jolpica_id,
-                Driver.full_name,
-                Driver.country_code,
-                primary_team_sq.c.team_name,
-                primary_team_sq.c.team_color,
-                latest_info_sq.c.headshot_url,
-                latest_info_sq.c.latest_season,
-            )
-            .order_by(
-                func.sum(case((SessionResult.position == 1, 1), else_=0)).desc(),
-                func.coalesce(func.sum(SessionResult.points), 0).desc(),
-            )
-        )
-
-        result = await db.execute(query)
-        rows = result.all()
-
-        drivers = [
-            DriverListItem(
-                driver_code=row.driver_code,
-                driver_slug=row.slug,
-                full_name=row.full_name,
-                country_code=row.country_code,
-                headshot_url=row.headshot_url,
-                total_wins=int(row.total_wins or 0),
-                total_races=int(row.total_races or 0),
-                total_podiums=int(row.total_podiums or 0),
-                total_points=float(row.total_points or 0),
-                current_team=row.current_team,
-                current_team_color=row.current_team_color,
-                first_season=row.first_season,
-                latest_season=row.latest_season,
-            )
-            for row in rows
-        ]
-
-        return DriverListResponse(drivers=drivers, total=len(drivers))
+        return await ArchiveAggregateService.driver_list(db, include_sprint)
 
     @staticmethod
     async def get_driver_profile(

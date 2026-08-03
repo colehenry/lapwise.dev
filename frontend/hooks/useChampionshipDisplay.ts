@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ChampionshipPointsMode } from "@/components/ChampionshipScoringControl";
+import type { ChampionshipPointsMode } from "@/components/standings/ChampionshipScoringControl";
 import type {
   ConstructorStanding,
   DriverStanding,
@@ -42,6 +42,8 @@ export function useChampionshipDisplay(
     },
   };
 }
+
+export type ChampionshipDisplay = ReturnType<typeof useChampionshipDisplay>;
 
 export function displayedPosition(
   row: DriverStanding | ConstructorStanding,
