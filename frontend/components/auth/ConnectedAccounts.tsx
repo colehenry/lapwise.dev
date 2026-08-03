@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "@/components/AuthProvider";
-import GoogleButton from "@/components/auth/GoogleButton";
+import { useAuth } from "@/components/providers/AuthProvider";
 import Button from "@/components/ui/Button";
 import { apiUrl, extractErrorMessage } from "@/lib/api";
 import { fetchWithAuth } from "@/lib/auth";
+import GoogleButton from "./GoogleButton";
 
 interface ConnectedAccount {
   provider: string;

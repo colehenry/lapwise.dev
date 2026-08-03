@@ -3,8 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import PageHeader from "@/components/PageHeader";
-import { fetchAvailableReplays, fetchReplaySeasons } from "@/lib/api";
+import PageHeader from "@/components/layout/PageHeader";
+import { fetchAvailableReplays } from "@/lib/api";
+import { replaySeasonsQuery } from "@/lib/queries/replay";
 import ReplayBrowser from "./components/ReplayBrowser";
 import ReplayPlayer from "./components/ReplayPlayer";
 
@@ -19,8 +20,7 @@ export default function ReplayPage() {
   const [autoLoaded, setAutoLoaded] = useState(false);
 
   const { data: seasons = [] } = useQuery({
-    queryKey: ["replaySeasons"],
-    queryFn: fetchReplaySeasons,
+    ...replaySeasonsQuery(),
   });
 
   const activeSeason = selectedSeason ?? seasons[0] ?? null;

@@ -2,8 +2,9 @@
 
 from datetime import date
 
-from sqlalchemy import func, select
+from sqlalchemy import String, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from app.models import (
     ChampionshipClassificationException,
@@ -24,7 +25,7 @@ from app.schemas.result import (
     StandingsResponse,
 )
 from app.services.championship_errors import MissingCanonicalStandingsError
-from app.services.results.common import headshot_fallback_expr
+from app.services.results.common import as_records, json_rows
 
 
 class CanonicalStandingsService:
@@ -44,25 +45,10 @@ class CanonicalStandingsService:
 
         driver_raw = await CanonicalStandingsService._driver_raw(db, season)
         constructor_raw = await CanonicalStandingsService._constructor_raw(db, season)
-        driver_official = {
-            row.driver_id: row
-            for row in (
-                await db.scalars(
-                    select(DriverChampionshipStanding).where(
-                        DriverChampionshipStanding.year == season
-                    )
-                )
-            ).all()
-        }
+        canonical = await CanonicalStandingsService._canonical_records(db, season)
+        driver_official = {row.driver_id: row for row in canonical["driver_official"]}
         constructor_official = {
-            row.team_id: row
-            for row in (
-                await db.scalars(
-                    select(ConstructorChampionshipStanding).where(
-                        ConstructorChampionshipStanding.year == season
-                    )
-                )
-            ).all()
+            row.team_id: row for row in canonical["constructor_official"]
         }
 
         constructor_required = season >= 1958
@@ -84,23 +70,8 @@ class CanonicalStandingsService:
                 f"Completed season {season} is missing canonical {' and '.join(missing)} standings"
             )
 
-        contexts = {
-            row.entrant_type: row
-            for row in (
-                await db.scalars(
-                    select(ChampionshipScoringContext).where(
-                        ChampionshipScoringContext.year == season
-                    )
-                )
-            ).all()
-        }
-        exceptions = (
-            await db.scalars(
-                select(ChampionshipClassificationException).where(
-                    ChampionshipClassificationException.year == season
-                )
-            )
-        ).all()
+        contexts = {row.entrant_type: row for row in canonical["contexts"]}
+        exceptions = canonical["exceptions"]
         driver_exceptions = {row.driver_id: row for row in exceptions if row.driver_id}
         constructor_exceptions = {row.team_id: row for row in exceptions if row.team_id}
         drivers = []
@@ -321,11 +292,47 @@ class CanonicalStandingsService:
         )
 
     @staticmethod
-    async def _position_counts(
-        db: AsyncSession, season: int, owner_column, result_owner_column
-    ):
-        rows = await db.execute(
-            select(owner_column, SessionResult.position, func.count())
+    async def _canonical_records(db: AsyncSession, season: int) -> dict:
+        """Official standings, scoring contexts, and exceptions in one statement."""
+
+        def for_season(model, alias_name):
+            return json_rows(model, alias_name, lambda m: (m.year == season,))
+
+        record = (
+            await db.execute(
+                select(
+                    for_season(DriverChampionshipStanding, "dcs").label(
+                        "driver_official"
+                    ),
+                    for_season(ConstructorChampionshipStanding, "ccs").label(
+                        "constructor_official"
+                    ),
+                    for_season(ChampionshipScoringContext, "csc").label("contexts"),
+                    for_season(ChampionshipClassificationException, "cce").label(
+                        "exceptions"
+                    ),
+                )
+            )
+        ).one()
+        return {
+            key: as_records(getattr(record, key))
+            for key in (
+                "driver_official",
+                "constructor_official",
+                "contexts",
+                "exceptions",
+            )
+        }
+
+    @staticmethod
+    def _position_counts_subquery(season: int, owner_column, result_owner_column):
+        """One row per entrant holding a JSON map of finishing position to count."""
+        counts = (
+            select(
+                owner_column.label("owner_id"),
+                SessionResult.position.label("position"),
+                func.count().label("total"),
+            )
             .join(SessionResult, owner_column == result_owner_column)
             .join(Session, SessionResult.session_id == Session.id)
             .where(
@@ -334,18 +341,85 @@ class CanonicalStandingsService:
                 SessionResult.position.is_not(None),
             )
             .group_by(owner_column, SessionResult.position)
+            .subquery()
         )
-        counts = {}
-        for owner_id, position, count in rows:
-            counts.setdefault(owner_id, {})[int(position)] = int(count)
-        return counts
+        return (
+            select(
+                counts.c.owner_id,
+                func.jsonb_object_agg(
+                    cast(counts.c.position, String), counts.c.total
+                ).label("positions"),
+            )
+            .group_by(counts.c.owner_id)
+            .subquery()
+        )
+
+    @staticmethod
+    def _position_counts(positions) -> dict[int, int]:
+        return {int(key): int(value) for key, value in (positions or {}).items()}
+
+    @staticmethod
+    def _latest_headshot_subquery():
+        """Latest valid headshot for the outer driver row, across all seasons."""
+        result = aliased(SessionResult, name="headshot_result")
+        session = aliased(Session, name="headshot_session")
+        return (
+            select(result.headshot_url)
+            .join(session, result.session_id == session.id)
+            .where(
+                result.driver_id == Driver.id,
+                result.headshot_url.isnot(None),
+                result.headshot_url != "None",
+                result.headshot_url != "nan",
+                result.headshot_url != "",
+            )
+            .order_by(session.date.desc(), session.round.desc())
+            .limit(1)
+            .correlate(Driver)
+            .scalar_subquery()
+        )
 
     @staticmethod
     async def _driver_raw(db: AsyncSession, season: int) -> list[dict]:
-        counts = await CanonicalStandingsService._position_counts(
-            db, season, Driver.id, SessionResult.driver_id
+        positions = CanonicalStandingsService._position_counts_subquery(
+            season, Driver.id, SessionResult.driver_id
         )
-        totals = (
+        # Latest scoring entry per driver in the season, resolved set-based
+        # rather than with one query per driver. Restricted to the session types
+        # these standings are built from, so a one-off practice entry for
+        # another team cannot become the driver's listed team.
+        entry_result = aliased(SessionResult, name="entry_result")
+        entry_session = aliased(Session, name="entry_session")
+        latest = (
+            select(
+                entry_result.driver_id.label("driver_id"),
+                Team.name.label("team_name"),
+                Team.team_color.label("team_color"),
+                entry_result.headshot_url.label("headshot_url"),
+            )
+            .join(entry_session, entry_session.id == entry_result.session_id)
+            .join(Team, Team.id == entry_result.team_id)
+            .where(
+                entry_session.year == season,
+                entry_session.session_type.in_(CanonicalStandingsService.RACE_TYPES),
+            )
+            .distinct(entry_result.driver_id)
+            .order_by(
+                entry_result.driver_id,
+                entry_session.date.desc(),
+                entry_session.round.desc(),
+                entry_session.id.desc(),
+            )
+            .subquery()
+        )
+        headshot = func.coalesce(
+            func.nullif(
+                func.nullif(func.nullif(latest.c.headshot_url, "None"), "nan"), ""
+            ),
+            CanonicalStandingsService._latest_headshot_subquery(),
+        )
+        points = func.coalesce(func.sum(SessionResult.points), 0)
+        rows = (
             await db.execute(
                 select(
                     Driver.id,
@@ -354,7 +428,11 @@ class CanonicalStandingsService:
                     Driver.country_code,
                     Driver.driver_code,
                     DriverSeason.driver_code,
-                    func.coalesce(func.sum(SessionResult.points), 0),
+                    points,
+                    latest.c.team_name,
+                    latest.c.team_color,
+                    headshot,
+                    positions.c.positions,
                 )
                 .join(SessionResult, SessionResult.driver_id == Driver.id)
                 .join(Session, Session.id == SessionResult.session_id)
@@ -363,48 +441,45 @@ class CanonicalStandingsService:
                     (DriverSeason.driver_id == Driver.id)
                     & (DriverSeason.year == season),
                 )
+                .outerjoin(latest, latest.c.driver_id == Driver.id)
+                .outerjoin(positions, positions.c.owner_id == Driver.id)
                 .where(
                     Session.year == season,
                     Session.session_type.in_(CanonicalStandingsService.RACE_TYPES),
                 )
-                .group_by(Driver.id, DriverSeason.driver_code)
-                .order_by(func.coalesce(func.sum(SessionResult.points), 0).desc())
+                .group_by(
+                    Driver.id,
+                    DriverSeason.driver_code,
+                    latest.c.team_name,
+                    latest.c.team_color,
+                    latest.c.headshot_url,
+                    positions.c.positions,
+                )
+                .order_by(points.desc())
             )
         ).all()
-        output = []
-        for row in totals:
-            latest = (
-                await db.execute(
-                    select(Team.name, Team.team_color, headshot_fallback_expr())
-                    .join(SessionResult, SessionResult.team_id == Team.id)
-                    .join(Session, Session.id == SessionResult.session_id)
-                    .join(Driver, Driver.id == SessionResult.driver_id)
-                    .where(SessionResult.driver_id == row[0], Session.year == season)
-                    .order_by(Session.date.desc(), Session.round.desc())
-                    .limit(1)
-                )
-            ).first()
-            output.append(
-                {
-                    "driver_id": row[0],
-                    "driver_slug": row[1],
-                    "full_name": row[2],
-                    "country_code": row[3],
-                    "driver_code": row[5] or row[4],
-                    "points_scored": float(row[6]),
-                    "team_name": latest[0] if latest else "Unknown",
-                    "team_color": latest[1] if latest else None,
-                    "headshot_url": latest[2] if latest else None,
-                    "positions": counts.get(row[0], {}),
-                }
-            )
-        return output
+        return [
+            {
+                "driver_id": row[0],
+                "driver_slug": row[1],
+                "full_name": row[2],
+                "country_code": row[3],
+                "driver_code": row[5] or row[4],
+                "points_scored": float(row[6]),
+                "team_name": row[7] if row[7] is not None else "Unknown",
+                "team_color": row[8],
+                "headshot_url": row[9],
+                "positions": CanonicalStandingsService._position_counts(row[10]),
+            }
+            for row in rows
+        ]
 
     @staticmethod
     async def _constructor_raw(db: AsyncSession, season: int) -> list[dict]:
-        counts = await CanonicalStandingsService._position_counts(
-            db, season, Team.id, SessionResult.team_id
+        positions = CanonicalStandingsService._position_counts_subquery(
+            season, Team.id, SessionResult.team_id
         )
+        points = func.coalesce(func.sum(SessionResult.points), 0)
         rows = (
             await db.execute(
                 select(
@@ -413,17 +488,19 @@ class CanonicalStandingsService:
                     Team.team_color,
                     Team.logo_url,
                     Constructor.slug,
-                    func.coalesce(func.sum(SessionResult.points), 0),
+                    points,
+                    positions.c.positions,
                 )
                 .join(Constructor, Constructor.id == Team.constructor_id)
                 .join(SessionResult, SessionResult.team_id == Team.id)
                 .join(Session, Session.id == SessionResult.session_id)
+                .outerjoin(positions, positions.c.owner_id == Team.id)
                 .where(
                     Session.year == season,
                     Session.session_type.in_(CanonicalStandingsService.RACE_TYPES),
                 )
-                .group_by(Team.id, Constructor.slug)
-                .order_by(func.coalesce(func.sum(SessionResult.points), 0).desc())
+                .group_by(Team.id, Constructor.slug, positions.c.positions)
+                .order_by(points.desc())
             )
         ).all()
         return [
@@ -434,7 +511,7 @@ class CanonicalStandingsService:
                 "logo_url": row[3],
                 "constructor_slug": row[4],
                 "points_scored": float(row[5]),
-                "positions": counts.get(row[0], {}),
+                "positions": CanonicalStandingsService._position_counts(row[6]),
             }
             for row in rows
         ]

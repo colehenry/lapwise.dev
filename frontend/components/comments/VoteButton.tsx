@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/components/AuthProvider";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { voteComment } from "@/lib/comments";
 
 interface VoteButtonProps {

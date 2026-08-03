@@ -4,12 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { ConcentricPattern } from "@/components/Patterns";
-import TrackMapImage from "@/components/TrackMapImage";
+import { ConcentricPattern } from "@/components/layout/Patterns";
+import TrackMapImage from "@/components/track/TrackMapImage";
 import Skeleton from "@/components/ui/Skeleton";
-import { apiHeaders, apiUrl, isValidHeadshotUrl } from "@/lib/api";
+import { isValidHeadshotUrl } from "@/lib/api";
 import { circuitHref, driverHref } from "@/lib/entityLinks";
-import type { RoundSummary } from "@/lib/types";
+import { latestRoundQuery } from "@/lib/queries/seasons";
 
 const formatGap = (
   time: number | null | undefined,
@@ -35,18 +35,7 @@ export default function TopRightLatestRace() {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showDiscussionTooltip, setShowDiscussionTooltip] = useState(false);
 
-  const { data, isLoading, isError } = useQuery<RoundSummary>({
-    queryKey: ["latest-race"],
-    queryFn: async () => {
-      const res = await fetch(apiUrl("/api/results/latest"), {
-        headers: apiHeaders(),
-      });
-      if (!res.ok) throw new Error("Failed to fetch latest race");
-      return res.json();
-    },
-    staleTime: 1000 * 60 * 10,
-    retry: 1,
-  });
+  const { data, isLoading, isError } = useQuery(latestRoundQuery());
 
   if (isLoading) {
     return (

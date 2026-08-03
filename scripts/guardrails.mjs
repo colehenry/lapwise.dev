@@ -22,7 +22,7 @@ const SKIP_DIRS = new Set([
 
 const HEX_ALLOWED = new Set([
   "frontend/lib/chart-utils.ts",
-  "frontend/components/chart-primitives.tsx",
+  "frontend/components/charts/chart-primitives.tsx",
   "frontend/lib/color-utils.ts",
 ]);
 

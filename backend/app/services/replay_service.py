@@ -86,6 +86,24 @@ class ReplayService:
         return row
 
     @staticmethod
+    async def get_latest_preview(db: AsyncSession) -> bytes | None:
+        """
+        Get the preview artifact for the most recent race that has one.
+
+        Home resolves the latest race and its frames in this single request,
+        rather than chaining seasons -> available -> data.
+        """
+        result = await db.execute(
+            select(ReplayData.preview_data)
+            .join(Session, Session.id == ReplayData.session_id)
+            .where(Session.session_type == "race")
+            .where(ReplayData.preview_data.is_not(None))
+            .order_by(Session.date.desc(), Session.round.desc(), Session.id.desc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    @staticmethod
     async def get_latest_track_geometry(
         db: AsyncSession, circuit_id: int
     ) -> ReplayTrackResponse | None:

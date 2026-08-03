@@ -1,25 +1,44 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import ArchivePanel from "@/components/archive/ArchivePanel";
-import CircuitLapRecords from "@/components/CircuitLapRecords";
-import CircuitLapTimeTrend from "@/components/CircuitLapTimeTrend";
-import CircuitRaceHistoryTable from "@/components/CircuitRaceHistoryTable";
-import CircuitRecentRace from "@/components/CircuitRecentRace";
-import CircuitStatisticsPanel from "@/components/CircuitStatisticsPanel";
-import CircuitTyreStats from "@/components/CircuitTyreStats";
-import CircuitWeatherProfile from "@/components/CircuitWeatherProfile";
-import InteractiveTrackMap from "@/components/InteractiveTrackMap";
-import PageHeader from "@/components/PageHeader";
+import CircuitLapRecords from "@/components/entities/CircuitLapRecords";
+import CircuitRecentRace from "@/components/entities/CircuitRecentRace";
+import PageHeader from "@/components/layout/PageHeader";
+import InteractiveTrackMap from "@/components/track/InteractiveTrackMap";
+import DeferredSection from "@/components/ui/DeferredSection";
 import MonoLabel from "@/components/ui/MonoLabel";
 import Skeleton from "@/components/ui/Skeleton";
 import TabBar from "@/components/ui/TabBar";
 import { useTabSync } from "@/hooks/useTabSync";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import type { CircuitInfo } from "@/lib/types";
+
+// Analysis panels load with their section, not with the profile shell.
+const CircuitStatisticsPanel = dynamic(
+  () => import("@/components/entities/CircuitStatisticsPanel"),
+  { loading: () => <Skeleton variant="rectangular" height="320px" /> },
+);
+const CircuitRaceHistoryTable = dynamic(
+  () => import("@/components/entities/CircuitRaceHistoryTable"),
+  { loading: () => <Skeleton variant="rectangular" height="320px" /> },
+);
+const CircuitLapTimeTrend = dynamic(
+  () => import("@/components/entities/CircuitLapTimeTrend"),
+  { loading: () => <Skeleton variant="rectangular" height="320px" /> },
+);
+const CircuitTyreStats = dynamic(
+  () => import("@/components/entities/CircuitTyreStats"),
+  { loading: () => <Skeleton variant="rectangular" height="320px" /> },
+);
+const CircuitWeatherProfile = dynamic(
+  () => import("@/components/entities/CircuitWeatherProfile"),
+  { loading: () => <Skeleton variant="rectangular" height="320px" /> },
+);
 
 type CircuitTab = "overview" | "history" | "statistics";
 
@@ -164,7 +183,9 @@ export default function CircuitDetailPage() {
 
                 {/* Recent Race - fills remaining space below map */}
                 <div className="flex-1">
-                  <CircuitRecentRace circuitId={id} />
+                  <DeferredSection minHeight={280}>
+                    <CircuitRecentRace circuitId={id} />
+                  </DeferredSection>
                 </div>
               </div>
 
@@ -218,23 +239,31 @@ export default function CircuitDetailPage() {
                 </ArchivePanel>
 
                 <ArchivePanel title="Lap Records">
-                  <CircuitLapRecords circuitId={id} />
+                  <DeferredSection minHeight={220}>
+                    <CircuitLapRecords circuitId={id} />
+                  </DeferredSection>
                 </ArchivePanel>
 
                 <ArchivePanel title="Weather Profile" className="flex-1">
-                  <CircuitWeatherProfile circuitId={id} />
+                  <DeferredSection minHeight={220}>
+                    <CircuitWeatherProfile circuitId={id} />
+                  </DeferredSection>
                 </ArchivePanel>
               </div>
             </div>
 
             {/* Lap Time Trend */}
             <ArchivePanel title="Lap Time Evolution">
-              <CircuitLapTimeTrend circuitId={id} />
+              <DeferredSection minHeight={320}>
+                <CircuitLapTimeTrend circuitId={id} />
+              </DeferredSection>
             </ArchivePanel>
 
             {/* Tyre Strategy */}
             <ArchivePanel title="Tyre Strategy">
-              <CircuitTyreStats circuitId={id} />
+              <DeferredSection minHeight={320}>
+                <CircuitTyreStats circuitId={id} />
+              </DeferredSection>
             </ArchivePanel>
           </div>
         )}

@@ -2,11 +2,11 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { useAuth } from "@/components/AuthProvider";
-import CommentEditor from "@/components/comments/CommentEditor";
-import CommentThread from "@/components/comments/CommentThread";
+import { useAuth } from "@/components/providers/AuthProvider";
 import Button from "@/components/ui/Button";
 import { type CommentSort, useRaceComments } from "@/hooks/useRaceComments";
+import CommentEditor from "./CommentEditor";
+import CommentThread from "./CommentThread";
 
 interface RaceCommentsProps {
   season: number;

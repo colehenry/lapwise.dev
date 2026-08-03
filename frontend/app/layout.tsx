@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Outfit, Space_Grotesk } from "next/font/google";
 import "./globals.css";
-import AppShell from "@/components/AppShell";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import AppShell from "@/components/layout/AppShell";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { BG_THEME_COLOR } from "@/lib/palette";
 import { getThemeInitScript } from "@/lib/theme";
 

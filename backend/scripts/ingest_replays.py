@@ -167,6 +167,10 @@ def main():
                         driver_count=metadata["driver_count"],
                         compressed_size_bytes=metadata["compressed_size_bytes"],
                         data=compressed,
+                        preview_data=metadata["preview_data"],
+                        preview_frames=metadata["preview_frames"],
+                        preview_fps=metadata["preview_fps"],
+                        preview_size_bytes=metadata["preview_size_bytes"],
                     )
                     db.add(replay)
                     db.commit()

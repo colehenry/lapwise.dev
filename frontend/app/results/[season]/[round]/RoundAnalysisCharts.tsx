@@ -2,67 +2,70 @@
 
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
-import { TrianglePattern } from "@/components/Patterns";
+import { TrianglePattern } from "@/components/layout/Patterns";
+import DeferredSection from "@/components/ui/DeferredSection";
 import { DATA_FROM } from "@/lib/data-coverage";
 import type { SessionResultsResponse } from "@/lib/types";
+
+const PANEL_MIN_HEIGHT = 256;
 
 const ChartLoading = () => (
   <div className="h-64 animate-pulse rounded-sm bg-bg-elevated" />
 );
 
-const CrossSessionComparison = dynamic(
-  () => import("@/components/CrossSessionComparison"),
+const PracticeComparisonPanel = dynamic(
+  () => import("./PracticeComparisonPanel"),
   { loading: ChartLoading, ssr: false },
 );
 const FastestLapTimeline = dynamic(
-  () => import("@/components/FastestLapTimeline"),
+  () => import("@/components/charts/FastestLapTimeline"),
   { loading: ChartLoading, ssr: false },
 );
 const LapTimeDistributionChart = dynamic(
-  () => import("@/components/LapTimeDistributionChart"),
+  () => import("@/components/charts/LapTimeDistributionChart"),
   { loading: ChartLoading, ssr: false },
 );
 const LongRunPaceChart = dynamic(
-  () => import("@/components/LongRunPaceChart"),
+  () => import("@/components/charts/LongRunPaceChart"),
   {
     loading: ChartLoading,
     ssr: false,
   },
 );
 const PitStopDeltaChart = dynamic(
-  () => import("@/components/PitStopDeltaChart"),
+  () => import("@/components/charts/PitStopDeltaChart"),
   { loading: ChartLoading, ssr: false },
 );
 const PracticeSectorHeatmap = dynamic(
-  () => import("@/components/PracticeSectorHeatmap"),
+  () => import("@/components/charts/PracticeSectorHeatmap"),
   { loading: ChartLoading, ssr: false },
 );
 const QualifyingProgressionChart = dynamic(
-  () => import("@/components/QualifyingProgressionChart"),
+  () => import("@/components/charts/QualifyingProgressionChart"),
   { loading: ChartLoading, ssr: false },
 );
 const QualifyingSectorComparison = dynamic(
-  () => import("@/components/QualifyingSectorComparison"),
+  () => import("@/components/charts/QualifyingSectorComparison"),
   { loading: ChartLoading, ssr: false },
 );
 const QualifyingSectorHeatmap = dynamic(
-  () => import("@/components/QualifyingSectorHeatmap"),
+  () => import("@/components/charts/QualifyingSectorHeatmap"),
   { loading: ChartLoading, ssr: false },
 );
 const RaceTrackEvolutionChart = dynamic(
-  () => import("@/components/RaceTrackEvolutionChart"),
+  () => import("@/components/charts/RaceTrackEvolutionChart"),
   { loading: ChartLoading, ssr: false },
 );
 const TrackEvolutionChart = dynamic(
-  () => import("@/components/TrackEvolutionChart"),
+  () => import("@/components/charts/TrackEvolutionChart"),
   { loading: ChartLoading, ssr: false },
 );
 const TyreDegradationChart = dynamic(
-  () => import("@/components/TyreDegradationChart"),
+  () => import("@/components/charts/TyreDegradationChart"),
   { loading: ChartLoading, ssr: false },
 );
 const TyreProgrammeChart = dynamic(
-  () => import("@/components/TyreProgrammeChart"),
+  () => import("@/components/charts/TyreProgrammeChart"),
   { loading: ChartLoading, ssr: false },
 );
 
@@ -98,7 +101,14 @@ function ChartPanel({
           {title}
         </span>
       </div>
-      <div className="p-3 md:p-6">{children}</div>
+      <div className="p-3 md:p-6">
+        <DeferredSection
+          minHeight={PANEL_MIN_HEIGHT}
+          placeholder={<ChartLoading />}
+        >
+          {children}
+        </DeferredSection>
+      </div>
     </div>
   );
 }
@@ -109,9 +119,7 @@ interface RoundAnalysisChartsProps {
   round: number;
   practiceSession: 1 | 2 | 3;
   sessionData: SessionResultsResponse | null;
-  fp1Data?: SessionResultsResponse | null;
-  fp2Data?: SessionResultsResponse | null;
-  fp3Data?: SessionResultsResponse | null;
+  practiceNumbers: number[];
 }
 
 export default function RoundAnalysisCharts({
@@ -120,9 +128,7 @@ export default function RoundAnalysisCharts({
   round,
   practiceSession,
   sessionData,
-  fp1Data,
-  fp2Data,
-  fp3Data,
+  practiceNumbers,
 }: RoundAnalysisChartsProps) {
   if (activeTab === "qualifying" || activeTab === "sprint-qualifying") {
     return (
@@ -203,8 +209,6 @@ export default function RoundAnalysisCharts({
 
   if (activeTab !== "practice") return null;
 
-  const sessionCount = [fp1Data, fp2Data, fp3Data].filter(Boolean).length;
-
   return (
     <div className="p-3 md:p-6 space-y-4 md:space-y-6">
       <ChartPanel
@@ -255,16 +259,16 @@ export default function RoundAnalysisCharts({
           practiceSession={practiceSession}
         />
       </ChartPanel>
-      {sessionCount >= 2 && (
+      {practiceNumbers.length >= 2 && (
         <ChartPanel
           title="FP1 / FP2 / FP3 Session Comparison"
           patternId="cross-session-triangles"
           season={season}
         >
-          <CrossSessionComparison
-            fp1Data={fp1Data}
-            fp2Data={fp2Data}
-            fp3Data={fp3Data}
+          <PracticeComparisonPanel
+            season={season}
+            round={round}
+            practiceNumbers={practiceNumbers}
           />
         </ChartPanel>
       )}
