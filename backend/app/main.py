@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 from starlette.middleware.sessions import SessionMiddleware
 
+from app.cache_policy import NO_STORE, add_vary_header, cache_control_for
 from app.config import settings
 from app.limiter import limiter
 from app.services.driver_identity_service import AmbiguousLegacyDriverError
@@ -46,6 +47,34 @@ async def ambiguous_driver_handler(request: Request, exc: AmbiguousLegacyDriverE
             "candidate_slugs": exc.candidates,
         },
     )
+
+
+@app.middleware("http")
+async def apply_cache_policy(request: Request, call_next):
+    """
+    Attach the freshness directive for the requested path.
+
+    Only successful reads are cacheable. A route that sets its own
+    Cache-Control keeps it, so binary blobs can declare their own lifetime.
+    """
+    response = await call_next(request)
+
+    if "cache-control" in response.headers:
+        return response
+
+    if request.method not in ("GET", "HEAD") or response.status_code != 200:
+        response.headers["Cache-Control"] = NO_STORE
+        return response
+
+    directive = cache_control_for(request.url.path)
+    response.headers["Cache-Control"] = directive
+
+    # Keying public entries on the API key keeps the gate intact at a shared
+    # cache: a keyless request cannot be served an entry stored for a keyed one.
+    if directive != NO_STORE:
+        add_vary_header(response, "X-API-Key")
+
+    return response
 
 
 # Configure CORS (Cross-Origin Resource Sharing)
