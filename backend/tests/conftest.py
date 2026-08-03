@@ -11,9 +11,12 @@ import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 
+from sqlalchemy import select
+
 from app.config import settings
-from app.database import engine
+from app.database import AsyncSessionLocal, engine
 from app.main import app
+from app.models import Session as RaceSession
 from app.services.auth_service import AuthService
 
 TEST_EMAILS = (
@@ -94,6 +97,21 @@ async def cleanup_test_data():
     yield
     await engine.dispose()
     _cleanup()
+
+
+@pytest_asyncio.fixture
+async def db_session():
+    """Read-only session against the configured database."""
+    async with AsyncSessionLocal() as session:
+        yield session
+
+
+@pytest_asyncio.fixture
+async def ingested_data(db_session):
+    """Skips when the configured database holds no ingested sessions."""
+    if await db_session.scalar(select(RaceSession.id).limit(1)) is None:
+        pytest.skip("no ingested session data in the configured database")
+    return db_session
 
 
 @pytest_asyncio.fixture

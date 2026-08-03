@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { TrianglePattern } from "@/components/Patterns";
+import { TrianglePattern } from "@/components/layout/Patterns";
 import { resolveToken } from "@/lib/palette";
 import type { ReplayData } from "@/lib/types";
 

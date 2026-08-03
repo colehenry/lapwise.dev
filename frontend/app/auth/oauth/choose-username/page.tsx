@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { useAuth } from "@/components/AuthProvider";
+import { useAuth } from "@/components/providers/AuthProvider";
 import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { apiUrl, extractErrorMessage } from "@/lib/api";

@@ -1,6 +1,7 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -8,12 +9,11 @@ import { useEffect, useState } from "react";
 import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
 import ArchiveMetricBar from "@/components/archive/ArchiveMetricBar";
 import ArchivePanel from "@/components/archive/ArchivePanel";
-import DriverResultsTable from "@/components/DriverResultsTable";
-import DriverSeasonHistoryGraph from "@/components/DriverSeasonHistoryGraph";
-import DriverStatisticsPanel from "@/components/DriverStatisticsPanel";
-import DriverSuperlativesCard from "@/components/DriverSuperlativesCard";
-import PageHeader from "@/components/PageHeader";
+import DriverSuperlativesCard from "@/components/entities/DriverSuperlativesCard";
+import PageHeader from "@/components/layout/PageHeader";
+import DeferredSection from "@/components/ui/DeferredSection";
 import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
+import Skeleton from "@/components/ui/Skeleton";
 import SprintToggle from "@/components/ui/SprintToggle";
 import TabBar from "@/components/ui/TabBar";
 import { useTabSync } from "@/hooks/useTabSync";
@@ -23,7 +23,22 @@ import {
   getDriverPortraitUrl,
 } from "@/lib/entityImageOverrides";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
-import type { DriverProfile, DriverSuperlativesResponse } from "@/lib/types";
+import { driverSuperlativesQuery } from "@/lib/queries/entities";
+import type { DriverProfile } from "@/lib/types";
+
+// Analysis panels load with their section, not with the profile shell.
+const DriverResultsTable = dynamic(
+  () => import("@/components/entities/DriverResultsTable"),
+  { loading: () => <Skeleton variant="rectangular" height="320px" /> },
+);
+const DriverSeasonHistoryGraph = dynamic(
+  () => import("@/components/charts/DriverSeasonHistoryGraph"),
+  { loading: () => <Skeleton variant="rectangular" height="320px" /> },
+);
+const DriverStatisticsPanel = dynamic(
+  () => import("@/components/entities/DriverStatisticsPanel"),
+  { loading: () => <Skeleton variant="rectangular" height="320px" /> },
+);
 
 type DriverTab = "overview" | "results";
 
@@ -46,19 +61,6 @@ async function fetchDriverProfile(
   return res.json();
 }
 
-async function fetchSuperlatives(
-  driverCode: string,
-  includeSprint: boolean,
-): Promise<DriverSuperlativesResponse> {
-  const params = includeSprint ? "" : "?include_sprint=false";
-  const res = await fetch(
-    apiUrl(`/api/drivers/${driverCode}/superlatives${params}`),
-    { headers: apiHeaders() },
-  );
-  if (!res.ok) throw new Error("Failed to fetch superlatives");
-  return res.json();
-}
-
 export default function DriverProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -76,8 +78,7 @@ export default function DriverProfilePage() {
   });
 
   const { data: superlativesData } = useQuery({
-    queryKey: ["driver-superlatives", driverCode, includeSprint],
-    queryFn: () => fetchSuperlatives(driverCode, includeSprint),
+    ...driverSuperlativesQuery(driverCode, includeSprint),
     placeholderData: keepPreviousData,
   });
 
@@ -250,9 +251,13 @@ export default function DriverProfilePage() {
               </div>
             </ArchivePanel>
 
-            <DriverSeasonHistoryGraph driverCode={driverCode} />
+            <DeferredSection minHeight={360}>
+              <DriverSeasonHistoryGraph driverCode={driverCode} />
+            </DeferredSection>
 
-            <DriverStatisticsPanel driverCode={driverCode} />
+            <DeferredSection minHeight={360}>
+              <DriverStatisticsPanel driverCode={driverCode} />
+            </DeferredSection>
           </div>
         )}
 

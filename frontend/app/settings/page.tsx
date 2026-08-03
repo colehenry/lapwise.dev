@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "@/components/AuthProvider";
 import ConnectedAccounts from "@/components/auth/ConnectedAccounts";
 import FavoritesPicker from "@/components/favorites/FavoritesPicker";
+import { useAuth } from "@/components/providers/AuthProvider";
 import Button from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { apiUrl, extractErrorMessage } from "@/lib/api";

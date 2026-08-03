@@ -1,11 +1,38 @@
 """Shared helpers for the results services."""
 
 import math
+from types import SimpleNamespace
 from typing import Optional
 
-from sqlalchemy import func, select
+from sqlalchemy import func, literal_column, select
+from sqlalchemy.orm import aliased
 
 from app.models import Driver, Session, SessionResult
+
+
+def json_rows(model, alias_name: str, conditions):
+    """Scalar subquery returning matching rows as one JSON array.
+
+    Lets several independent lookups travel in a single statement.
+    `conditions` receives the aliased model and returns a filter sequence.
+    """
+    alias = aliased(model, name=alias_name)
+    return (
+        select(
+            func.coalesce(
+                func.jsonb_agg(func.to_jsonb(literal_column(alias_name))),
+                literal_column("'[]'::jsonb"),
+            )
+        )
+        .select_from(alias)
+        .where(*conditions(alias))
+        .scalar_subquery()
+    )
+
+
+def as_records(rows) -> list[SimpleNamespace]:
+    """Attribute access over rows returned by `json_rows`."""
+    return [SimpleNamespace(**row) for row in rows or []]
 
 
 def _make_slug(jolpica_id: Optional[str], full_name: str) -> str:

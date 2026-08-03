@@ -1,48 +1,23 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { apiHeaders, apiUrl } from "@/lib/api";
-import type { StandingsResponse } from "@/lib/types";
+import {
+  currentStandingsSeason,
+  EMPTY_ENTITY_COLORS,
+  type EntityColors,
+  seasonStandingsQuery,
+  selectEntityColors,
+} from "@/lib/queries/standings";
 
-type EntityLinkColors = {
-  driverColors: Map<string, string>;
-  teamColors: Map<string, string>;
-};
-
-async function fetchEntityLinkColors(): Promise<EntityLinkColors> {
-  const currentYear = new Date().getFullYear();
-  const res = await fetch(apiUrl(`/api/results/${currentYear}/standings`), {
-    headers: apiHeaders(),
-  });
-  if (!res.ok) {
-    return { driverColors: new Map(), teamColors: new Map() };
-  }
-
-  const data = (await res.json()) as StandingsResponse;
-  const driverColors = new Map<string, string>();
-  const teamColors = new Map<string, string>();
-
-  for (const driver of data.drivers ?? []) {
-    if (driver.driver_code && driver.team_color) {
-      driverColors.set(driver.driver_code, `#${driver.team_color}`);
-    }
-  }
-
-  for (const team of data.constructors ?? []) {
-    if (team.team_name && team.team_color) {
-      teamColors.set(team.team_name, `#${team.team_color}`);
-    }
-  }
-
-  return { driverColors, teamColors };
-}
-
-export function useEntityLinkColors(): EntityLinkColors {
+/**
+ * Current-season driver and team colors, derived from the shared standings
+ * cache entry rather than a second request for the same resource.
+ */
+export function useEntityLinkColors(): EntityColors {
   const { data } = useQuery({
-    queryKey: ["chat-entity-link-colors"],
-    queryFn: fetchEntityLinkColors,
-    staleTime: 1000 * 60 * 60,
+    ...seasonStandingsQuery(currentStandingsSeason()),
+    select: selectEntityColors,
   });
 
-  return data ?? { driverColors: new Map(), teamColors: new Map() };
+  return data ?? EMPTY_ENTITY_COLORS;
 }

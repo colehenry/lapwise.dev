@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import ArchivePanel from "@/components/archive/ArchivePanel";
 import MonoLabel from "@/components/ui/MonoLabel";
+import ArchivePanel from "./ArchivePanel";
 
 type ArchiveHeaderStat = {
   label: string;

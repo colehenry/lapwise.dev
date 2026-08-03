@@ -1,6 +1,7 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -8,12 +9,11 @@ import { useEffect, useState } from "react";
 import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
 import ArchiveMetricBar from "@/components/archive/ArchiveMetricBar";
 import ArchivePanel from "@/components/archive/ArchivePanel";
-import ConstructorResultsTable from "@/components/ConstructorResultsTable";
-import ConstructorSeasonHistoryGraph from "@/components/ConstructorSeasonHistoryGraph";
-import ConstructorStatisticsPanel from "@/components/ConstructorStatisticsPanel";
-import PageHeader from "@/components/PageHeader";
-import { useTheme } from "@/components/ThemeProvider";
+import PageHeader from "@/components/layout/PageHeader";
+import { useTheme } from "@/components/providers/ThemeProvider";
+import DeferredSection from "@/components/ui/DeferredSection";
 import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
+import Skeleton from "@/components/ui/Skeleton";
 import SprintToggle from "@/components/ui/SprintToggle";
 import TabBar from "@/components/ui/TabBar";
 import { useTabSync } from "@/hooks/useTabSync";
@@ -26,6 +26,20 @@ import {
 } from "@/lib/entityImageOverrides";
 import { constructorHref } from "@/lib/entityLinks";
 import type { ConstructorProfile } from "@/lib/types";
+
+// Analysis panels load with their section, not with the profile shell.
+const ConstructorResultsTable = dynamic(
+  () => import("@/components/entities/ConstructorResultsTable"),
+  { loading: () => <Skeleton variant="rectangular" height="320px" /> },
+);
+const ConstructorSeasonHistoryGraph = dynamic(
+  () => import("@/components/charts/ConstructorSeasonHistoryGraph"),
+  { loading: () => <Skeleton variant="rectangular" height="320px" /> },
+);
+const ConstructorStatisticsPanel = dynamic(
+  () => import("@/components/entities/ConstructorStatisticsPanel"),
+  { loading: () => <Skeleton variant="rectangular" height="320px" /> },
+);
 
 type ConstructorTab = "overview" | "results";
 
@@ -246,12 +260,16 @@ export default function ConstructorProfilePage() {
               </div>
             </ArchivePanel>
 
-            <ConstructorSeasonHistoryGraph teamName={teamName} />
+            <DeferredSection minHeight={360}>
+              <ConstructorSeasonHistoryGraph teamName={teamName} />
+            </DeferredSection>
 
-            <ConstructorStatisticsPanel
-              teamName={teamName}
-              accentColor={teamColor}
-            />
+            <DeferredSection minHeight={360}>
+              <ConstructorStatisticsPanel
+                teamName={teamName}
+                accentColor={teamColor}
+              />
+            </DeferredSection>
           </div>
         )}
 

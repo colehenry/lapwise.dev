@@ -3,19 +3,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
-import type { RoundSummary } from "@/lib/types";
+import {
+  seasonRoundsQuery,
+  seasonsQuery,
+  selectUniqueRounds,
+} from "@/lib/queries/seasons";
 
 export default function SeasonRoundSelector() {
   const router = useRouter();
   const [selectedSeason, setSelectedSeason] = useState<string>("");
   const [selectedRound, setSelectedRound] = useState<string>("");
 
-  const { data: seasons = [] } = useQuery<number[]>({
-    queryKey: ["seasons"],
-    queryFn: fetchSeasons,
-    staleTime: 1000 * 60 * 60,
-  });
+  const { data: seasons = [] } = useQuery(seasonsQuery());
 
   useEffect(() => {
     if (seasons.length > 0 && !selectedSeason) {
@@ -23,23 +22,9 @@ export default function SeasonRoundSelector() {
     }
   }, [seasons, selectedSeason]);
 
-  const { data: rounds = [] } = useQuery<RoundSummary[]>({
-    queryKey: ["rounds-minimal", selectedSeason],
-    queryFn: async () => {
-      const res = await fetch(apiUrl(`/api/results/${selectedSeason}`), {
-        headers: apiHeaders(),
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      const allRounds: RoundSummary[] = data.rounds || [];
-      const seen = new Set<number>();
-      return allRounds.filter((r) => {
-        if (seen.has(r.round)) return false;
-        seen.add(r.round);
-        return true;
-      });
-    },
-    enabled: !!selectedSeason,
+  const { data: rounds = [] } = useQuery({
+    ...seasonRoundsQuery(selectedSeason ? Number(selectedSeason) : null),
+    select: selectUniqueRounds,
     staleTime: 1000 * 60 * 60,
   });
 

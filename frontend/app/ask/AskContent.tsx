@@ -4,12 +4,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAuth } from "@/components/AuthProvider";
 import ChatInput from "@/components/chat/ChatInput";
 import ChatMessage from "@/components/chat/ChatMessage";
 import ConversationSidebar from "@/components/chat/ConversationSidebar";
 import SuggestedQuestions from "@/components/chat/SuggestedQuestions";
-import PageHeader from "@/components/PageHeader";
+import PageHeader from "@/components/layout/PageHeader";
+import { useAuth } from "@/components/providers/AuthProvider";
 import ClutchIcon from "@/components/ui/ClutchIcon";
 import { SUGGESTION_QUESTIONS } from "@/lib/ai/suggestions";
 import {
