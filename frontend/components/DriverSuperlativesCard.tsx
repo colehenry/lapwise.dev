@@ -3,30 +3,14 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import ArchivePanel from "@/components/archive/ArchivePanel";
 import MonoLabel from "@/components/ui/MonoLabel";
-import { apiHeaders, apiUrl } from "@/lib/api";
-import type {
-  DriverSuperlative,
-  DriverSuperlativesResponse,
-} from "@/lib/types";
+import { driverSuperlativesQuery } from "@/lib/queries/entities";
+import type { DriverSuperlative } from "@/lib/types";
 
 type Props = {
   driverCode: string;
   includeSprint?: boolean;
   variant?: "card" | "inline";
 };
-
-async function fetchSuperlatives(
-  driverCode: string,
-  includeSprint: boolean,
-): Promise<DriverSuperlativesResponse> {
-  const params = includeSprint ? "" : "?include_sprint=false";
-  const res = await fetch(
-    apiUrl(`/api/drivers/${driverCode}/superlatives${params}`),
-    { headers: apiHeaders() },
-  );
-  if (!res.ok) throw new Error("Failed to fetch superlatives");
-  return res.json();
-}
 
 function SuperlativeRow({ item }: { item: DriverSuperlative }) {
   return (
@@ -54,8 +38,7 @@ export default function DriverSuperlativesCard({
   variant = "card",
 }: Props) {
   const { data } = useQuery({
-    queryKey: ["driver-superlatives", driverCode, includeSprint],
-    queryFn: () => fetchSuperlatives(driverCode, includeSprint),
+    ...driverSuperlativesQuery(driverCode, includeSprint),
     placeholderData: keepPreviousData,
   });
 

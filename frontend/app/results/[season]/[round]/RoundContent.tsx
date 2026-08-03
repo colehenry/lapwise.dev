@@ -7,7 +7,8 @@ import RaceComments from "@/components/comments/RaceComments";
 import JumpToRace from "@/components/JumpToRace";
 import SessionDetail from "@/components/SessionDetail";
 import type { SessionSummary } from "@/components/SessionSummaryCard";
-import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
+import { apiHeaders, apiUrl } from "@/lib/api";
+import { seasonsQuery } from "@/lib/queries/seasons";
 import type { SessionResultsResponse } from "@/lib/types";
 import RoundAnalysisCharts, { type RoundTab } from "./RoundAnalysisCharts";
 
@@ -137,11 +138,7 @@ export default function RoundContent() {
     enabled,
   });
 
-  const { data: availableYears = [] } = useQuery<number[]>({
-    queryKey: ["seasons"],
-    queryFn: fetchSeasons,
-    staleTime: 1000 * 60 * 60,
-  });
+  const { data: availableYears = [] } = useQuery(seasonsQuery());
 
   const loading = raceLoading;
   const hasSprint = !!sprintData;

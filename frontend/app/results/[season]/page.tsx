@@ -25,22 +25,24 @@ import {
   displayedPosition,
   useChampionshipDisplay,
 } from "@/hooks/useChampionshipDisplay";
-import {
-  apiHeaders,
-  apiUrl,
-  fetchSeasons,
-  isValidHeadshotUrl,
-} from "@/lib/api";
+import { isValidHeadshotUrl } from "@/lib/api";
 import { resolveReadableAccentColor } from "@/lib/color-utils";
 import { constructorHref, driverHref } from "@/lib/entityLinks";
+import {
+  qualifyingRoundsQuery,
+  seasonRoundsQuery,
+  seasonsQuery,
+} from "@/lib/queries/seasons";
+import {
+  qualifyingStandingsQuery,
+  seasonStandingsQuery,
+} from "@/lib/queries/standings";
 import type {
   ConstructorQualifyingStanding,
   ConstructorStanding,
   DriverQualifyingStanding,
   DriverStanding,
-  QualifyingStandingsResponse,
   RoundSummary,
-  StandingsResponse,
 } from "@/lib/types";
 
 type RoundsData = {
@@ -52,6 +54,9 @@ export default function ResultsPage() {
   const params = useParams();
   const router = useRouter();
   const season = params.season as string;
+  // Canonical query keys are numeric so cached standings and rounds are shared
+  // with routes that never see the URL string.
+  const seasonYear = Number(season);
 
   const [expandedStandings, setExpandedStandings] = useState<boolean>(false);
   const [sessionType, setSessionType] = useState<"race" | "qualifying">("race");
@@ -62,60 +67,25 @@ export default function ResultsPage() {
     window.scrollTo(0, 0);
   }, [season]);
 
-  const { data: availableYears = [] } = useQuery<number[]>({
-    queryKey: ["seasons"],
-    queryFn: fetchSeasons,
-    staleTime: 1000 * 60 * 60,
+  const { data: availableYears = [] } = useQuery(seasonsQuery());
+
+  const { data: standings, isLoading: standingsLoading } = useQuery({
+    ...seasonStandingsQuery(seasonYear),
+    enabled: Number.isFinite(seasonYear),
   });
 
-  const { data: standings, isLoading: standingsLoading } =
-    useQuery<StandingsResponse>({
-      queryKey: ["standings", season],
-      queryFn: () =>
-        fetch(apiUrl(`/api/results/${season}/standings`), {
-          headers: apiHeaders(),
-        }).then((r) => {
-          if (!r.ok) throw new Error(`API error: ${r.status}`);
-          return r.json();
-        }),
-      enabled: !!season,
-    });
-
-  const { data: qualifyingStandings } = useQuery<QualifyingStandingsResponse>({
-    queryKey: ["qualifying-standings", season],
-    queryFn: () =>
-      fetch(apiUrl(`/api/results/${season}/qualifying-standings`), {
-        headers: apiHeaders(),
-      }).then((r) => {
-        if (!r.ok) throw new Error(`API error: ${r.status}`);
-        return r.json();
-      }),
-    enabled: !!season && sessionType === "qualifying",
+  const { data: qualifyingStandings } = useQuery({
+    ...qualifyingStandingsQuery(seasonYear),
+    enabled: Number.isFinite(seasonYear) && sessionType === "qualifying",
   });
 
-  const { data: rounds, isLoading: roundsLoading } = useQuery<RoundsData>({
-    queryKey: ["rounds", season],
-    queryFn: () =>
-      fetch(apiUrl(`/api/results/${season}`), {
-        headers: apiHeaders(),
-      }).then((r) => {
-        if (!r.ok) throw new Error(`API error: ${r.status}`);
-        return r.json();
-      }),
-    enabled: !!season,
-  });
+  const { data: rounds, isLoading: roundsLoading } = useQuery(
+    seasonRoundsQuery(Number.isFinite(seasonYear) ? seasonYear : null),
+  );
 
-  const { data: qualifyingRounds } = useQuery<RoundsData>({
-    queryKey: ["qualifying", season],
-    queryFn: () =>
-      fetch(apiUrl(`/api/results/${season}/qualifying`), {
-        headers: apiHeaders(),
-      }).then((r) => {
-        if (!r.ok) throw new Error(`API error: ${r.status}`);
-        return r.json();
-      }),
-    enabled: !!season,
-  });
+  const { data: qualifyingRounds } = useQuery(
+    qualifyingRoundsQuery(Number.isFinite(seasonYear) ? seasonYear : null),
+  );
 
   const isLoading = standingsLoading || roundsLoading;
 

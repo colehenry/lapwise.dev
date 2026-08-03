@@ -6,7 +6,12 @@ import { useTheme } from "@/components/ThemeProvider";
 import TrackMapImage from "@/components/TrackMapImage";
 import Button from "@/components/ui/Button";
 import Skeleton from "@/components/ui/Skeleton";
-import { apiHeaders, apiUrl, isValidHeadshotUrl } from "@/lib/api";
+import { isValidHeadshotUrl } from "@/lib/api";
+import {
+  circuitsQuery,
+  constructorsQuery,
+  driversQuery,
+} from "@/lib/queries/archive";
 import type {
   CircuitInfo,
   ConstructorListItem,
@@ -97,49 +102,19 @@ export default function FavoritesPicker({
     }
   }, [open, initialTeamName, initialDriverSlug, initialCircuitId]);
 
-  const { data: constructors, isLoading: loadingTeams } = useQuery<{
-    constructors: ConstructorListItem[];
-  }>({
-    queryKey: ["constructors-list"],
-    queryFn: async () => {
-      const res = await fetch(apiUrl("/api/constructors/"), {
-        headers: apiHeaders(),
-      });
-      if (!res.ok) throw new Error("Failed to fetch constructors");
-      return res.json();
-    },
+  const { data: constructors, isLoading: loadingTeams } = useQuery({
+    ...constructorsQuery(),
     enabled: open,
-    staleTime: 5 * 60 * 1000,
   });
 
-  const { data: drivers, isLoading: loadingDrivers } = useQuery<{
-    drivers: DriverListItem[];
-  }>({
-    queryKey: ["drivers-list"],
-    queryFn: async () => {
-      const res = await fetch(apiUrl("/api/drivers/"), {
-        headers: apiHeaders(),
-      });
-      if (!res.ok) throw new Error("Failed to fetch drivers");
-      return res.json();
-    },
+  const { data: drivers, isLoading: loadingDrivers } = useQuery({
+    ...driversQuery(),
     enabled: open,
-    staleTime: 5 * 60 * 1000,
   });
 
-  const { data: circuits, isLoading: loadingCircuits } = useQuery<{
-    circuits: CircuitInfo[];
-  }>({
-    queryKey: ["circuits-list"],
-    queryFn: async () => {
-      const res = await fetch(apiUrl("/api/circuits/"), {
-        headers: apiHeaders(),
-      });
-      if (!res.ok) throw new Error("Failed to fetch circuits");
-      return res.json();
-    },
+  const { data: circuits, isLoading: loadingCircuits } = useQuery({
+    ...circuitsQuery(),
     enabled: open,
-    staleTime: 5 * 60 * 1000,
   });
 
   const currentYear = new Date().getFullYear();

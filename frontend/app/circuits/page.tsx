@@ -9,26 +9,14 @@ import ExpandButton from "@/components/ui/ExpandButton";
 import Skeleton from "@/components/ui/Skeleton";
 import SortPills from "@/components/ui/SortPills";
 import TiltCard from "@/components/ui/TiltCard";
-import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import { getCircuitFlagEmoji } from "@/lib/flags";
+import { circuitsQuery } from "@/lib/queries/archive";
+import { seasonsQuery } from "@/lib/queries/seasons";
 import type { CircuitInfo } from "@/lib/types";
 
 type SortKey = "races" | "recent" | "alpha";
 const CURRENT_YEAR = new Date().getFullYear();
 const DEFAULT_VISIBLE_COUNT = 30;
-
-interface CircuitsResponse {
-  circuits: CircuitInfo[];
-  total: number;
-}
-
-async function fetchCircuits(): Promise<CircuitsResponse> {
-  const res = await fetch(apiUrl("/api/circuits/"), {
-    headers: apiHeaders(),
-  });
-  if (!res.ok) throw new Error("Failed to fetch circuits");
-  return res.json();
-}
 
 function CircuitCard({ circuit }: { circuit: CircuitInfo }) {
   return (
@@ -109,15 +97,10 @@ export default function CircuitsPage() {
   const [selectedYear, setSelectedYear] = useState<string>("all");
 
   const { data: circuitsData, isLoading } = useQuery({
-    queryKey: ["circuits"],
-    queryFn: fetchCircuits,
+    ...circuitsQuery(),
   });
 
-  const { data: availableYears = [] } = useQuery<number[]>({
-    queryKey: ["seasons"],
-    queryFn: fetchSeasons,
-    staleTime: 1000 * 60 * 60,
-  });
+  const { data: availableYears = [] } = useQuery(seasonsQuery());
 
   const filteredCircuits = useMemo(() => {
     if (!circuitsData) return [];

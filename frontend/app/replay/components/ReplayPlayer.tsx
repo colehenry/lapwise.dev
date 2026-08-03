@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TrianglePattern } from "@/components/Patterns";
 import Skeleton from "@/components/ui/Skeleton";
-import { fetchReplayData } from "@/lib/api";
+import { replayDataQuery } from "@/lib/queries/replay";
 import type { BattleEvent, ReplayData, ReplayWeather } from "@/lib/types";
 import BattleFeed from "./BattleFeed";
 import Leaderboard from "./Leaderboard";
@@ -35,12 +35,7 @@ export default function ReplayPlayer({
     data: replayData,
     isLoading,
     error,
-  } = useQuery({
-    queryKey: ["replayData", season, round],
-    queryFn: () => fetchReplayData(season, round),
-    staleTime: Number.POSITIVE_INFINITY,
-    gcTime: 30 * 60 * 1000,
-  });
+  } = useQuery(replayDataQuery(season, round));
 
   // Store decoded data in ref to avoid re-render overhead
   const dataRef = useRef<ReplayData | null>(null);

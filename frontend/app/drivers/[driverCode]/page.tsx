@@ -23,7 +23,8 @@ import {
   getDriverPortraitUrl,
 } from "@/lib/entityImageOverrides";
 import { getCountryName, getDriverFlagEmoji } from "@/lib/flags";
-import type { DriverProfile, DriverSuperlativesResponse } from "@/lib/types";
+import { driverSuperlativesQuery } from "@/lib/queries/entities";
+import type { DriverProfile } from "@/lib/types";
 
 type DriverTab = "overview" | "results";
 
@@ -46,19 +47,6 @@ async function fetchDriverProfile(
   return res.json();
 }
 
-async function fetchSuperlatives(
-  driverCode: string,
-  includeSprint: boolean,
-): Promise<DriverSuperlativesResponse> {
-  const params = includeSprint ? "" : "?include_sprint=false";
-  const res = await fetch(
-    apiUrl(`/api/drivers/${driverCode}/superlatives${params}`),
-    { headers: apiHeaders() },
-  );
-  if (!res.ok) throw new Error("Failed to fetch superlatives");
-  return res.json();
-}
-
 export default function DriverProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -76,8 +64,7 @@ export default function DriverProfilePage() {
   });
 
   const { data: superlativesData } = useQuery({
-    queryKey: ["driver-superlatives", driverCode, includeSprint],
-    queryFn: () => fetchSuperlatives(driverCode, includeSprint),
+    ...driverSuperlativesQuery(driverCode, includeSprint),
     placeholderData: keepPreviousData,
   });
 

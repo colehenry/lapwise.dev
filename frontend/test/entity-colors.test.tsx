@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { useEntityLinkColors } from "@/hooks/useEntityLinkColors";
 import {
   currentStandingsSeason,
+  type EntityColors,
   seasonStandingsQuery,
 } from "@/lib/queries/standings";
 import * as fixtures from "./fixtures";
@@ -39,33 +40,33 @@ describe("current-season color consumers", () => {
 
   it("derives driver and team colors from the shared response", async () => {
     installFetchRecorder({ [STANDINGS_PATH]: fixtures.standings });
-    let colors: ReturnType<typeof useEntityLinkColors> | null = null;
+    const captured: { colors?: EntityColors } = {};
 
     function Probe() {
-      colors = useEntityLinkColors();
+      captured.colors = useEntityLinkColors();
       return null;
     }
 
     renderWithQueryClient(<Probe />);
     await flushRequests();
 
-    expect(colors?.driverColors.get("VER")).toBe("#3671C6");
-    expect(colors?.teamColors.get("Red Bull Racing")).toBe("#3671C6");
+    expect(captured.colors?.driverColors.get("VER")).toBe("#3671C6");
+    expect(captured.colors?.teamColors.get("Red Bull Racing")).toBe("#3671C6");
   });
 
   it("falls back to empty maps when standings are unavailable", async () => {
     installFetchRecorder({});
-    let colors: ReturnType<typeof useEntityLinkColors> | null = null;
+    const captured: { colors?: EntityColors } = {};
 
     function Probe() {
-      colors = useEntityLinkColors();
+      captured.colors = useEntityLinkColors();
       return null;
     }
 
     renderWithQueryClient(<Probe />);
     await flushRequests();
 
-    expect(colors?.driverColors.size).toBe(0);
-    expect(colors?.teamColors.size).toBe(0);
+    expect(captured.colors?.driverColors.size).toBe(0);
+    expect(captured.colors?.teamColors.size).toBe(0);
   });
 });

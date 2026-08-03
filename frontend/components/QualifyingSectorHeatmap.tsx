@@ -3,31 +3,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { CHART_TYPOGRAPHY } from "@/components/chart-primitives";
-import { apiHeaders, apiUrl } from "@/lib/api";
+import { qualifyingSectorsQuery } from "@/lib/queries/entities";
 
 interface QualifyingSectorHeatmapProps {
   season: number;
   round: number;
 }
-
-type SectorData = {
-  driver_code: string | null;
-  full_name: string;
-  team_color: string | null;
-  headshot_url: string | null;
-  best_sector1: number | null;
-  best_sector2: number | null;
-  best_sector3: number | null;
-  best_lap_time: number | null;
-  q_session: string;
-};
-
-type QualifyingSectorResponse = {
-  year: number;
-  round: number;
-  event_name: string;
-  sectors: SectorData[];
-};
 
 const fmtSector = (s: number | null) => (s == null ? "-" : s.toFixed(3));
 const fmtTime = (s: number | null) => {
@@ -62,16 +43,8 @@ export default function QualifyingSectorHeatmap({
   season,
   round,
 }: QualifyingSectorHeatmapProps) {
-  const { data, isLoading } = useQuery<QualifyingSectorResponse | null>({
-    queryKey: ["qualifying-sectors", season, round],
-    queryFn: async () => {
-      const res = await fetch(
-        apiUrl(`/api/results/${season}/${round}/qualifying/sectors`),
-        { cache: "no-store", headers: apiHeaders() },
-      );
-      if (!res.ok) return null;
-      return res.json();
-    },
+  const { data, isLoading } = useQuery({
+    ...qualifyingSectorsQuery(season, round),
     enabled: season >= 2018,
   });
 

@@ -11,31 +11,19 @@ import Skeleton from "@/components/ui/Skeleton";
 import SortPills from "@/components/ui/SortPills";
 import SprintToggle from "@/components/ui/SprintToggle";
 import TiltCard from "@/components/ui/TiltCard";
-import { apiHeaders, apiUrl, fetchSeasons } from "@/lib/api";
 import {
   getConstructorLogoUrl,
   shouldInvertConstructorLogoOnLight,
 } from "@/lib/entityImageOverrides";
 import { constructorHref } from "@/lib/entityLinks";
-import type { ConstructorListItem, ConstructorListResponse } from "@/lib/types";
+import { constructorsQuery } from "@/lib/queries/archive";
+import { seasonsQuery } from "@/lib/queries/seasons";
+import type { ConstructorListItem } from "@/lib/types";
 
 type SortKey = "wins" | "races" | "points" | "alpha";
 
 const CURRENT_YEAR = new Date().getFullYear();
 const DEFAULT_VISIBLE_COUNT = 30;
-
-async function fetchAllConstructors(
-  includeSprint: boolean,
-): Promise<ConstructorListResponse> {
-  const params = new URLSearchParams();
-  if (!includeSprint) params.set("include_sprint", "false");
-  const url = params.toString()
-    ? apiUrl(`/api/constructors/?${params}`)
-    : apiUrl("/api/constructors/");
-  const res = await fetch(url, { headers: apiHeaders() });
-  if (!res.ok) throw new Error("Failed to fetch constructors");
-  return res.json();
-}
 
 function ConstructorCard({ team }: { team: ConstructorListItem }) {
   const { theme } = useTheme();
@@ -156,16 +144,11 @@ export default function ConstructorsPage() {
   const [includeSprint, setIncludeSprint] = useState(true);
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["constructors-all", includeSprint],
-    queryFn: () => fetchAllConstructors(includeSprint),
+    ...constructorsQuery(includeSprint),
     placeholderData: keepPreviousData,
   });
 
-  const { data: availableYears = [] } = useQuery<number[]>({
-    queryKey: ["seasons"],
-    queryFn: fetchSeasons,
-    staleTime: 1000 * 60 * 60,
-  });
+  const { data: availableYears = [] } = useQuery(seasonsQuery());
 
   const filteredConstructors = useMemo(() => {
     if (!data) return [];

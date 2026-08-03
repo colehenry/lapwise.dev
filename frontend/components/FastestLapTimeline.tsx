@@ -21,14 +21,10 @@ import {
 } from "@/components/chart-primitives";
 import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import StableResponsiveContainer from "@/components/ui/StableResponsiveContainer";
-import { apiHeaders, apiUrl } from "@/lib/api";
 import { DATA_FROM } from "@/lib/data-coverage";
 import { STATUS_COLORS } from "@/lib/palette";
-import type {
-  DriverLapTimes,
-  LapTimesResponse,
-  TrackStatusEvent,
-} from "@/lib/types";
+import { lapTimesQuery, raceSession } from "@/lib/queries/lapTimes";
+import type { DriverLapTimes, TrackStatusEvent } from "@/lib/types";
 
 interface FastestLapTimelineProps {
   season: number;
@@ -383,19 +379,8 @@ export default function FastestLapTimeline({
 }: FastestLapTimelineProps) {
   const [removeOutliers, setRemoveOutliers] = useState(true);
 
-  const { data, isLoading } = useQuery<LapTimesResponse | null>({
-    queryKey: ["lap-times", season, round, isSprint],
-    queryFn: async () => {
-      const endpoint = isSprint
-        ? `/api/results/${season}/${round}/sprint/lap-times`
-        : `/api/results/${season}/${round}/lap-times`;
-      const res = await fetch(apiUrl(endpoint), {
-        cache: "no-store",
-        headers: apiHeaders(),
-      });
-      if (!res.ok) return null;
-      return res.json();
-    },
+  const { data, isLoading } = useQuery({
+    ...lapTimesQuery({ season, round, session: raceSession(isSprint) }),
     enabled: season >= DATA_FROM.laps,
   });
 
