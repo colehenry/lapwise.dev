@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { act, fireEvent } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import AIAnalystPreview from "@/components/home/AIAnalystPreview";
 import LiveReplayPreview from "@/components/home/LiveReplayPreview";
@@ -22,6 +23,8 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/app/replay/components/TrackCanvas", () => ({
   default: () => null,
 }));
+
+const REPLAY_BLOB_PATH = `/api/replay/${fixtures.FIXTURE_SEASON}/${fixtures.FIXTURE_ROUND}`;
 
 const ROUTES = {
   "/api/replay/seasons": fixtures.replaySeasons,
@@ -62,7 +65,6 @@ describe("home initial request inventory", () => {
     expect(paths).toEqual([
       "/api/circuits/",
       "/api/events/upcoming?limit=10",
-      `/api/replay/${fixtures.FIXTURE_SEASON}/${fixtures.FIXTURE_ROUND}`,
       `/api/replay/available?season=${fixtures.FIXTURE_SEASON}`,
       "/api/replay/seasons",
       `/api/results/${fixtures.FIXTURE_SEASON}`,
@@ -72,14 +74,36 @@ describe("home initial request inventory", () => {
     ]);
   });
 
-  it("requests the full replay blob on mount", async () => {
+  it("never requests the replay blob before user intent", async () => {
+    const recorder = installFetchRecorder(ROUTES);
+    renderWithQueryClient(<HomeClientSections />);
+    await flushRequests();
+
+    expect(recorder.countMatching(REPLAY_BLOB_PATH)).toBe(0);
+  });
+
+  it("requests the replay blob once the preview is loaded", async () => {
+    const recorder = installFetchRecorder(ROUTES);
+    const { findByRole } = renderWithQueryClient(<HomeClientSections />);
+    await flushRequests();
+
+    const loadButton = await findByRole("button", { name: /load preview/i });
+    await act(async () => {
+      fireEvent.click(loadButton);
+    });
+    await flushRequests();
+
+    expect(recorder.countMatching(REPLAY_BLOB_PATH)).toBe(1);
+  });
+
+  it("requests current standings once for the color consumers", async () => {
     const recorder = installFetchRecorder(ROUTES);
     renderWithQueryClient(<HomeClientSections />);
     await flushRequests();
 
     expect(
       recorder.countMatching(
-        `/api/replay/${fixtures.FIXTURE_SEASON}/${fixtures.FIXTURE_ROUND}`,
+        `/api/results/${fixtures.FIXTURE_SEASON}/standings`,
       ),
     ).toBe(1);
   });
