@@ -212,3 +212,53 @@ test("a check with no baseline section seeds on update, then enforces", () => {
   writeFile(root, "frontend/app/c/Card.tsx", "export {};");
   assert.equal(runGuardrails(root, "--update-baseline").status, 1);
 });
+
+test("AI attribution in a commit message fails, and clean history passes", () => {
+  const root = createFixture();
+  const git = (...args) =>
+    spawnSync("git", args, { cwd: root, encoding: "utf8" });
+
+  git("init", "-q");
+  git("config", "user.email", "test@example.com");
+  git("config", "user.name", "Test");
+  writeFile(root, "a.txt", "one");
+  git("add", "-A");
+  git("commit", "-qm", "a clean commit");
+  writeBaseline(root, {}, { ...EMPTY_DRIFT, aiAttributionCommits: {} });
+
+  assert.equal(runGuardrails(root).status, 0);
+
+  writeFile(root, "b.txt", "two");
+  git("add", "-A");
+  git(
+    "commit",
+    "-qm",
+    "tainted\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>",
+  );
+
+  const result = runGuardrails(root);
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /tainted — AI attribution in commit message/);
+});
+
+test("the commit-msg hook rejects attribution and passes clean messages", () => {
+  const hook = fileURLToPath(
+    new URL("../.githooks/commit-msg", import.meta.url),
+  );
+  const root = createFixture();
+
+  writeFile(
+    root,
+    "bad.txt",
+    "subject\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n",
+  );
+  writeFile(root, "good.txt", "subject\n\nan ordinary body\n");
+
+  const bad = spawnSync(hook, [join(root, "bad.txt")], { encoding: "utf8" });
+  const good = spawnSync(hook, [join(root, "good.txt")], { encoding: "utf8" });
+
+  assert.equal(bad.status, 1);
+  assert.match(bad.stderr, /AI attribution is not allowed/);
+  assert.equal(good.status, 0);
+});

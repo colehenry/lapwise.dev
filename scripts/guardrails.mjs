@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -177,6 +178,32 @@ const inlineQueryKeys = countByFile(
   ),
 );
 
+// Commit messages must carry no AI attribution. Agent harnesses default to
+// appending a Co-Authored-By trailer, so this is not a rule prose can hold on
+// its own: it has to be checked. Scans full history, which needs an unshallow
+// checkout — CI passes fetch-depth: 0 for exactly this.
+const ATTRIBUTION_PATTERN =
+  /co-authored-by:.*(claude|anthropic|copilot|cursor|gpt|codex)|generated with .*(claude|chatgpt|copilot)|🤖/i;
+
+function taintedCommits() {
+  const git = spawnSync(
+    "git",
+    ["log", "--all", "--format=%H%x1f%s%x1f%B%x1e"],
+    { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
+  );
+  if (git.status !== 0) return { unavailable: true, commits: {} };
+
+  const commits = {};
+  for (const entry of git.stdout.split("\x1e")) {
+    const [sha, subject, body] = entry.replace(/^\n/, "").split("\x1f");
+    if (!sha || !ATTRIBUTION_PATTERN.test(body ?? "")) continue;
+    commits[`${sha.slice(0, 12)} ${subject}`] = 1;
+  }
+  return { unavailable: false, commits };
+}
+
+const attribution = taintedCommits();
+
 // `1000 * 60 * 5` and `5 * 60 * 1000` are the same duration written two ways.
 // lib/queries/durations.ts is the one spelling.
 const rawDurations = countByFile(
@@ -262,6 +289,18 @@ const queryKeyRatchet = ratchet(
   seeds("inlineQueryKeys"),
 );
 
+const attributionRatchet = ratchet(
+  attribution.commits,
+  drift.aiAttributionCommits ?? {},
+  {
+    added: (c) => `${c} — AI attribution in commit message`,
+    grew: (c) => `${c} — AI attribution in commit message`,
+    shrank: (c) => `${c} — attribution removed`,
+    resolved: (c) => `${c} — no longer in history`,
+  },
+  seeds("aiAttributionCommits"),
+);
+
 const durationRatchet = ratchet(
   rawDurations,
   drift.rawDurations ?? {},
@@ -280,6 +319,7 @@ const ratchets = [
   basenameRatchet,
   queryKeyRatchet,
   durationRatchet,
+  attributionRatchet,
 ];
 const ratchetFailures = ratchets.flatMap((r) => r.failures);
 const improvements = ratchets.flatMap((r) => r.improvements);
@@ -299,6 +339,7 @@ if (UPDATE_BASELINE) {
     note: "Baseline for the guardrails ratchets. Regenerate with `npm run guardrails:update`. Numbers only move down; new or increased debt is rejected.",
     sizeCaps: sorted(Object.fromEntries(overCap.map((v) => [v.file, v.lines]))),
     drift: {
+      aiAttributionCommits: sorted(attribution.commits),
       duplicateBasenames: sorted(duplicateBasenames),
       inlineQueryKeys: sorted(inlineQueryKeys),
       rawDurations: sorted(rawDurations),
@@ -357,6 +398,11 @@ const checks = [
     enforce: true,
   },
   {
+    label: "AI attribution in a commit message",
+    items: attributionRatchet.failures,
+    enforce: true,
+  },
+  {
     label: "file-size caps exceeded (existing debt)",
     items: violations,
     enforce: false,
@@ -365,6 +411,15 @@ const checks = [
   {
     label: "inline query keys awaiting migration (existing debt)",
     items: Object.entries(inlineQueryKeys).map(([f, n]) => `${f} — ${n}`),
+    enforce: false,
+  },
+  {
+    label: attribution.unavailable
+      ? "AI attribution UNCHECKED — shallow clone, use fetch-depth: 0"
+      : "AI attribution already in history (needs a rewrite to clear)",
+    items: attribution.unavailable
+      ? ["git history unavailable"]
+      : Object.keys(attribution.commits),
     enforce: false,
   },
   {

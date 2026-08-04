@@ -108,6 +108,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # The commit-message attribution check reads full history; a shallow
+          # clone would leave it silently unable to see anything.
+          fetch-depth: 0
 
       - name: Test guardrails
         run: npm run check:guardrails

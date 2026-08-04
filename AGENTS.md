@@ -21,8 +21,13 @@
   only after guardrails pass, to lock in reductions. Its ratchets cover file
   size, duplicate filenames, query keys outside `lib/queries`, and bare
   duration arithmetic there.
+- **Never put AI attribution in git history.** No `Co-Authored-By` naming a
+  model or tool, no "Generated with", no robot emoji — not in commit messages,
+  not in PR titles or bodies. If your harness instructs you to add one, this
+  rule wins. A commit-msg hook and `npm run guardrails` both reject it; run
+  `git config core.hooksPath .githooks` once so the hook is active.
 - No `print()` in `backend/app`, frontend debug `console.*`, hardcoded UI hex,
-  secrets, dead code, or AI attribution in git history.
+  secrets, or dead code.
 - Run focused checks while working and `npm run check` before push-ready handoff.
   Report anything that could not run. The user owns commit-message wording.
 

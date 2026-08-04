@@ -1,0 +1,18 @@
+#!/bin/sh
+# Rejects AI attribution in a commit message before it is ever written.
+#
+# CONVENTIONS.md WF-3 forbids it, but agent harnesses default to appending a
+# Co-Authored-By trailer, and prose does not stop a default. Four commits in
+# this repository's history carry one; this hook is why there will not be a
+# fifth.
+#
+# Enable with: git config core.hooksPath .githooks
+
+if grep -qiE 'co-authored-by:.*(claude|anthropic|copilot|cursor|gpt|codex)|generated with .*(claude|chatgpt|copilot)|🤖' "$1"; then
+  echo "commit-msg: AI attribution is not allowed in this repository." >&2
+  echo "" >&2
+  grep -inE 'co-authored-by:.*(claude|anthropic|copilot|cursor|gpt|codex)|generated with .*(claude|chatgpt|copilot)|🤖' "$1" >&2
+  echo "" >&2
+  echo "Remove the line and commit again. See CONVENTIONS.md WF-3." >&2
+  exit 1
+fi
