@@ -5,6 +5,7 @@ import type {
   ConstructorListResponse,
   DriverListResponse,
 } from "@/lib/types";
+import { minutes } from "./durations";
 
 /**
  * All-time driver, constructor, and circuit listings. Archive routes, the
@@ -23,7 +24,7 @@ export type CircuitsResponse = {
   total: number;
 };
 
-const LIST_STALE_TIME = 1000 * 60 * 5;
+const LIST_STALE_TIME = minutes(5);
 
 function listPath(base: string, includeSprint: boolean): string {
   return includeSprint ? base : `${base}?include_sprint=false`;

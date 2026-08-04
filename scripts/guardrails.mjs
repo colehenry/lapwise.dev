@@ -26,6 +26,35 @@ const HEX_ALLOWED = new Set([
   "frontend/lib/color-utils.ts",
 ]);
 
+// Next.js owns these filenames; every route folder legitimately repeats them.
+const ROUTE_FILENAMES = new Set([
+  "page.tsx",
+  "layout.tsx",
+  "loading.tsx",
+  "error.tsx",
+  "global-error.tsx",
+  "not-found.tsx",
+  "template.tsx",
+  "default.tsx",
+  "route.ts",
+  "opengraph-image.tsx",
+  "icon.tsx",
+  "apple-icon.tsx",
+  "sitemap.ts",
+  "robots.ts",
+  "manifest.ts",
+]);
+
+const FRONTEND_SOURCE_DIRS = [
+  "frontend/app",
+  "frontend/components",
+  "frontend/lib",
+  "frontend/hooks",
+];
+
+// Canonical query keys and fetchers live here; everywhere else declares none.
+const QUERY_LAYER_DIR = "frontend/lib/queries";
+
 const SIZE_CAPS = [
   {
     dirs: ["frontend/components", "frontend/app"],
@@ -65,6 +94,42 @@ function lineCount(file) {
   return readFileSync(file, "utf8").split("\n").length;
 }
 
+function sourceFiles(dirs, exts, { exclude } = {}) {
+  const out = [];
+  for (const dir of dirs) {
+    for (const file of walk(dir)) {
+      if (!exts.includes(extname(file))) continue;
+      const rel = file.replace(/\\/g, "/");
+      if (exclude?.(rel)) continue;
+      out.push(rel);
+    }
+  }
+  return out;
+}
+
+function grepCount(dirs, exts, regex, { exclude } = {}) {
+  const hits = [];
+  for (const rel of sourceFiles(dirs, exts, {
+    exclude: exclude ? (f) => exclude.has(f) : undefined,
+  })) {
+    const lines = readFileSync(rel, "utf8").split("\n");
+    lines.forEach((line, i) => {
+      if (regex.test(line)) hits.push(`${rel}:${i + 1}`);
+    });
+  }
+  return hits;
+}
+
+/** Collapses `path:line` hits into a per-file count for the ratchet. */
+function countByFile(hits) {
+  const counts = {};
+  for (const hit of hits) {
+    const file = hit.slice(0, hit.lastIndexOf(":"));
+    counts[file] = (counts[file] ?? 0) + 1;
+  }
+  return counts;
+}
+
 const violations = [];
 const warnings = [];
 const overCap = []; // { file, lines, cap } — structured, drives the ratchet
@@ -85,38 +150,139 @@ for (const rule of SIZE_CAPS) {
   }
 }
 
-// --- File-size ratchet ---------------------------------------------------
-// Baseline records the line count of every file currently over its cap. CI
-// fails only when a *new* over-cap file appears or an existing one *grows*
-// past its baseline — the 29 existing offenders stay report-only until they
-// are chipped down. A file that shrinks below its baseline (or under the cap)
-// is a report-only nudge to re-run with --update-baseline and lock the win in.
-const baseline = existsSync(BASELINE_PATH)
-  ? (JSON.parse(readFileSync(BASELINE_PATH, "utf8")).sizeCaps ?? {})
+// --- Drift measurements --------------------------------------------------
+// Each one counts a way the repo can end up with two of something. They are
+// ratcheted, not banned outright, because today's counts are already non-zero.
+
+// Two source files with one name are hostile to grep, to editor tabs, and to
+// anyone reading an import line. Route filenames are Next.js's, not ours.
+const basenameCounts = {};
+for (const rel of sourceFiles(FRONTEND_SOURCE_DIRS, [".ts", ".tsx"])) {
+  const name = rel.slice(rel.lastIndexOf("/") + 1);
+  if (ROUTE_FILENAMES.has(name)) continue;
+  basenameCounts[name] = (basenameCounts[name] ?? 0) + 1;
+}
+const duplicateBasenames = Object.fromEntries(
+  Object.entries(basenameCounts).filter(([, count]) => count > 1),
+);
+
+// A `queryKey` outside the query layer is a resource addressed twice: the
+// canonical key in lib/queries and a component-local copy that never shares
+// its cache entry.
+const inlineQueryKeys = countByFile(
+  grepCount(
+    ["frontend/app", "frontend/components", "frontend/hooks"],
+    [".ts", ".tsx"],
+    /\bqueryKey\s*:/,
+  ),
+);
+
+// `1000 * 60 * 5` and `5 * 60 * 1000` are the same duration written two ways.
+// lib/queries/durations.ts is the one spelling.
+const rawDurations = countByFile(
+  grepCount([QUERY_LAYER_DIR], [".ts"], /\b\d[\d_]*\s*\*\s*\d/, {
+    exclude: new Set([`${QUERY_LAYER_DIR}/durations.ts`]),
+  }),
+);
+
+// --- Ratchet -------------------------------------------------------------
+// Every guardrail above records a per-key count in the baseline. CI fails only
+// when a *new* key appears or an existing count *grows* — existing debt stays
+// report-only until it is chipped down. A count that drops is a report-only
+// nudge to re-run with --update-baseline and lock the win in.
+const baselineFile = existsSync(BASELINE_PATH)
+  ? JSON.parse(readFileSync(BASELINE_PATH, "utf8"))
   : {};
 
-const ratchetFailures = [];
-const improvements = [];
-for (const v of overCap) {
-  const base = baseline[v.file];
-  if (base === undefined) {
-    ratchetFailures.push(
-      `${v.file} — NEW over-cap file at ${v.lines} lines (cap ${v.cap})`,
-    );
-  } else if (v.lines > base) {
-    ratchetFailures.push(
-      `${v.file} — grew to ${v.lines} lines (baseline ${base}, cap ${v.cap})`,
-    );
-  } else if (v.lines < base) {
-    improvements.push(`${v.file} — down to ${v.lines} lines (baseline ${base})`);
+// A check whose baseline section does not exist yet is being introduced: its
+// current state is the seed, so `--update-baseline` may record it. Once the
+// section exists, a new key is new debt and is rejected like any other.
+function ratchet(current, base, describe, { seeding = false } = {}) {
+  const failures = [];
+  const improvements = [];
+  for (const [key, count] of Object.entries(current)) {
+    const prior = base[key];
+    if (prior === undefined) {
+      if (!seeding) failures.push(describe.added(key, count));
+    } else if (count > prior) failures.push(describe.grew(key, count, prior));
+    else if (count < prior)
+      improvements.push(describe.shrank(key, count, prior));
   }
-}
-const currentOverCap = new Set(overCap.map((v) => v.file));
-for (const file of Object.keys(baseline)) {
-  if (!currentOverCap.has(file)) {
-    improvements.push(`${file} — now under cap (baseline ${baseline[file]})`);
+  for (const key of Object.keys(base)) {
+    if (current[key] === undefined) {
+      improvements.push(describe.resolved(key, base[key]));
+    }
   }
+  return { failures, improvements };
 }
+
+const capOf = new Map(overCap.map((v) => [v.file, v.cap]));
+const sizeRatchet = ratchet(
+  Object.fromEntries(overCap.map((v) => [v.file, v.lines])),
+  baselineFile.sizeCaps ?? {},
+  {
+    added: (f, n) =>
+      `${f} — NEW over-cap file at ${n} lines (cap ${capOf.get(f)})`,
+    grew: (f, n, was) =>
+      `${f} — grew to ${n} lines (baseline ${was}, cap ${capOf.get(f)})`,
+    shrank: (f, n, was) => `${f} — down to ${n} lines (baseline ${was})`,
+    resolved: (f, was) => `${f} — now under cap (baseline ${was})`,
+  },
+);
+
+const drift = baselineFile.drift ?? {};
+const seeds = (section) => ({
+  seeding: UPDATE_BASELINE && drift[section] === undefined,
+});
+
+const basenameRatchet = ratchet(
+  duplicateBasenames,
+  drift.duplicateBasenames ?? {},
+  {
+    added: (name, n) => `${name} — NEW duplicate basename (${n} files)`,
+    grew: (name, n, was) => `${name} — now ${n} files (baseline ${was})`,
+    shrank: (name, n, was) => `${name} — down to ${n} files (baseline ${was})`,
+    resolved: (name, was) => `${name} — no longer duplicated (baseline ${was})`,
+  },
+  seeds("duplicateBasenames"),
+);
+
+const queryKeyRatchet = ratchet(
+  inlineQueryKeys,
+  drift.inlineQueryKeys ?? {},
+  {
+    added: (f, n) =>
+      `${f} — ${n} inline queryKey(s); use ${QUERY_LAYER_DIR} instead`,
+    grew: (f, n, was) => `${f} — ${n} inline queryKey(s) (baseline ${was})`,
+    shrank: (f, n, was) =>
+      `${f} — down to ${n} inline queryKey(s) (baseline ${was})`,
+    resolved: (f, was) =>
+      `${f} — migrated to the query layer (baseline ${was})`,
+  },
+  seeds("inlineQueryKeys"),
+);
+
+const durationRatchet = ratchet(
+  rawDurations,
+  drift.rawDurations ?? {},
+  {
+    added: (f, n) => `${f} — ${n} bare duration(s); use ./durations helpers`,
+    grew: (f, n, was) => `${f} — ${n} bare duration(s) (baseline ${was})`,
+    shrank: (f, n, was) =>
+      `${f} — down to ${n} bare duration(s) (baseline ${was})`,
+    resolved: (f, was) => `${f} — no bare durations left (baseline ${was})`,
+  },
+  seeds("rawDurations"),
+);
+
+const ratchets = [
+  sizeRatchet,
+  basenameRatchet,
+  queryKeyRatchet,
+  durationRatchet,
+];
+const ratchetFailures = ratchets.flatMap((r) => r.failures);
+const improvements = ratchets.flatMap((r) => r.improvements);
 
 if (UPDATE_BASELINE) {
   if (ratchetFailures.length > 0) {
@@ -125,34 +291,26 @@ if (UPDATE_BASELINE) {
     process.exit(1);
   }
 
-  const sizeCaps = Object.fromEntries(
-    overCap
-      .sort((a, b) => a.file.localeCompare(b.file))
-      .map((v) => [v.file, v.lines]),
-  );
+  const sorted = (map) =>
+    Object.fromEntries(
+      Object.entries(map).sort(([a], [b]) => a.localeCompare(b)),
+    );
   const payload = {
-    note: "Baseline for the guardrails file-size ratchet. Regenerate with `npm run guardrails:update`. Numbers only move down; new or increased debt is rejected.",
-    sizeCaps,
+    note: "Baseline for the guardrails ratchets. Regenerate with `npm run guardrails:update`. Numbers only move down; new or increased debt is rejected.",
+    sizeCaps: sorted(Object.fromEntries(overCap.map((v) => [v.file, v.lines]))),
+    drift: {
+      duplicateBasenames: sorted(duplicateBasenames),
+      inlineQueryKeys: sorted(inlineQueryKeys),
+      rawDurations: sorted(rawDurations),
+    },
   };
   writeFileSync(BASELINE_PATH, `${JSON.stringify(payload, null, 2)}\n`);
-  console.log(`Wrote ${BASELINE_PATH}: ${overCap.length} over-cap file(s).`);
+  console.log(
+    `Wrote ${BASELINE_PATH}: ${overCap.length} over-cap file(s), ` +
+      `${Object.keys(duplicateBasenames).length} duplicate basename(s), ` +
+      `${Object.keys(inlineQueryKeys).length} file(s) with inline query keys.`,
+  );
   process.exit(0);
-}
-
-function grepCount(dirs, exts, regex, { exclude } = {}) {
-  const hits = [];
-  for (const dir of dirs) {
-    for (const file of walk(dir)) {
-      if (!exts.includes(extname(file))) continue;
-      const rel = file.replace(/\\/g, "/");
-      if (exclude?.has(rel)) continue;
-      const lines = readFileSync(file, "utf8").split("\n");
-      lines.forEach((line, i) => {
-        if (regex.test(line)) hits.push(`${rel}:${i + 1}`);
-      });
-    }
-  }
-  return hits;
 }
 
 const hexHits = grepCount(
@@ -173,11 +331,54 @@ const consoleHits = grepCount(
 const checks = [
   { label: "print() in backend/app", items: printHits, enforce: true },
   { label: "console.* in frontend source", items: consoleHits, enforce: true },
-  { label: "hardcoded hex outside approved files", items: hexHits, enforce: true },
-  { label: "file-size ratchet (new or grown over-cap files)", items: ratchetFailures, enforce: true },
-  { label: "file-size caps exceeded (existing debt)", items: violations, enforce: false },
+  {
+    label: "hardcoded hex outside approved files",
+    items: hexHits,
+    enforce: true,
+  },
+  {
+    label: "file-size ratchet (new or grown over-cap files)",
+    items: sizeRatchet.failures,
+    enforce: true,
+  },
+  {
+    label: "duplicate filenames (new or spreading)",
+    items: basenameRatchet.failures,
+    enforce: true,
+  },
+  {
+    label: "query keys declared outside the query layer",
+    items: queryKeyRatchet.failures,
+    enforce: true,
+  },
+  {
+    label: "bare duration arithmetic in the query layer",
+    items: durationRatchet.failures,
+    enforce: true,
+  },
+  {
+    label: "file-size caps exceeded (existing debt)",
+    items: violations,
+    enforce: false,
+  },
   { label: "file-size targets (soft)", items: warnings, enforce: false },
-  { label: "file-size wins — run `npm run guardrails:update`", items: improvements, enforce: false },
+  {
+    label: "inline query keys awaiting migration (existing debt)",
+    items: Object.entries(inlineQueryKeys).map(([f, n]) => `${f} — ${n}`),
+    enforce: false,
+  },
+  {
+    label: "duplicated filenames (existing debt)",
+    items: Object.entries(duplicateBasenames).map(
+      ([f, n]) => `${f} — ${n} files`,
+    ),
+    enforce: false,
+  },
+  {
+    label: "ratchet wins — run `npm run guardrails:update`",
+    items: improvements,
+    enforce: false,
+  },
 ];
 
 function section(label, items, enforce, sample = enforce ? items.length : 5) {

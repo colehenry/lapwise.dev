@@ -4,6 +4,7 @@ import type {
   QualifyingStandingsResponse,
   StandingsResponse,
 } from "@/lib/types";
+import { minutes } from "./durations";
 
 /**
  * One key and one fetcher for a season's standings. The response carries both
@@ -17,7 +18,7 @@ export const standingsKeys = {
 };
 
 /** Short enough to follow a live race weekend, long enough to deduplicate. */
-const STANDINGS_STALE_TIME = 1000 * 60 * 5;
+const STANDINGS_STALE_TIME = minutes(5);
 
 export function currentStandingsSeason(): number {
   return new Date().getFullYear();
