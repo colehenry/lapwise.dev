@@ -2,7 +2,7 @@ import { HydrationBoundary } from "@tanstack/react-query";
 import { circuitsQuery } from "@/lib/queries/archive";
 import { seasonsQuery } from "@/lib/queries/seasons";
 import { prefetchForHydration } from "@/lib/queries/server";
-import ArchivePageClient from "./ArchivePageClient";
+import CircuitsArchive from "./CircuitsArchive";
 
 /** The listing is the page's primary content, so it is fetched on the server
  * and hydrated under the same query keys the client uses. */
@@ -13,7 +13,7 @@ export default async function CircuitsPage() {
 
   return (
     <HydrationBoundary state={state}>
-      <ArchivePageClient />
+      <CircuitsArchive />
     </HydrationBoundary>
   );
 }
