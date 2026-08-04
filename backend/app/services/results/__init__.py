@@ -7,7 +7,7 @@ from app.services.results.progression import ProgressionService
 from app.services.results.qualifying_sessions import QualifyingSessionsService
 from app.services.results.qualifying_standings import QualifyingStandingsService
 from app.services.results.session_data import SessionDataService
-from app.services.results.standings import StandingsService
+from app.services.results.teammate import TeammateService
 
 __all__ = [
     "LapsService",
@@ -16,6 +16,6 @@ __all__ = [
     "QualifyingSessionsService",
     "QualifyingStandingsService",
     "SessionDataService",
-    "StandingsService",
+    "TeammateService",
     "_make_slug",
 ]

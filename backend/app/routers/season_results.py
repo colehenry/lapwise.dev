@@ -33,6 +33,7 @@ from app.schemas.summary import (
     SessionSummaryResponse,
 )
 from app.security import verify_api_key
+from app.services.canonical_standings_service import CanonicalStandingsService
 from app.services.results import (
     LapsService,
     PracticeService,
@@ -40,7 +41,7 @@ from app.services.results import (
     QualifyingSessionsService,
     QualifyingStandingsService,
     SessionDataService,
-    StandingsService,
+    TeammateService,
     _make_slug,
 )
 
@@ -127,11 +128,10 @@ async def get_season_standings(
 ):
     """
     Get driver and constructor championship standings for a season.
-
-    Calculates total points by summing all session results
-    (races, sprints, etc.) for each driver and team.
+    Official position and points come from the canonical standings
+    snapshot, not from summing session results.
     """
-    standings = await StandingsService.get_season_standings(db, season)
+    standings = await CanonicalStandingsService.get_season_standings(db, season)
 
     if not standings:
         raise HTTPException(
@@ -219,7 +219,7 @@ async def get_teammate_h2h(
     mode=race (default): finishing position in race/sprint sessions.
     mode=qualifying: qualifying position in quali/sprint-quali sessions.
     """
-    h2h = await StandingsService.get_teammate_h2h(db, season, mode=mode)
+    h2h = await TeammateService.get_teammate_h2h(db, season, mode=mode)
 
     if not h2h:
         raise HTTPException(
