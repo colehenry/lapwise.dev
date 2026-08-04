@@ -6,6 +6,7 @@ import {
   fetchReplaySeasons,
   fetchReplayTrackGeometry,
 } from "@/lib/api";
+import { hours, minutes } from "./durations";
 
 /**
  * Replay resources. The frame blob is several megabytes, so home and the
@@ -20,7 +21,7 @@ export const replayKeys = {
   latestPreview: () => ["replay-preview-latest"] as const,
 };
 
-const LISTING_STALE_TIME = 5 * 60 * 1000;
+const LISTING_STALE_TIME = minutes(5);
 
 export function replaySeasonsQuery() {
   return queryOptions({
@@ -45,7 +46,7 @@ export function replayDataQuery(season: number | null, round: number | null) {
     queryFn: () => fetchReplayData(season as number, round as number),
     enabled: season !== null && round !== null,
     staleTime: Number.POSITIVE_INFINITY,
-    gcTime: 30 * 60 * 1000,
+    gcTime: minutes(30),
   });
 }
 
@@ -57,8 +58,8 @@ export function latestReplayPreviewQuery() {
   return queryOptions({
     queryKey: replayKeys.latestPreview(),
     queryFn: fetchLatestReplayPreview,
-    staleTime: 60 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
+    staleTime: hours(1),
+    gcTime: minutes(30),
     retry: false,
   });
 }
