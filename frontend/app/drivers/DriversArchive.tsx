@@ -190,7 +190,9 @@ export default function DriversArchive() {
       comparators={COMPARATORS}
       matchesSearch={matchesSearch}
       seasonRange={seasonRange}
-      itemKey={(driver) => driver.driver_code || driver.full_name}
+      // Codes repeat across eras — MSC and MAG each cover two drivers — so the
+      // canonical slug is the only stable identity here.
+      itemKey={(driver) => driver.driver_slug || driver.full_name}
       renderCard={(driver) => <DriverCard driver={driver} />}
       gridClassName="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
       skeletonHeight="120px"
