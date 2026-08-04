@@ -25,7 +25,6 @@
   },
   "drift": {
     "duplicateBasenames": {
-      "ArchivePageClient.tsx": 3,
       "auth.ts": 2
     },
     "inlineQueryKeys": {
