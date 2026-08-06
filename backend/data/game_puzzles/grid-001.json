@@ -1,0 +1,93 @@
+{
+  "id": "grid-001",
+  "number": 1,
+  "published_on": "2026-08-05",
+  "answer_version": 1,
+  "max_guesses": 9,
+  "rows": [
+    {
+      "id": "constructor-ferrari",
+      "label": "Ferrari",
+      "description": "Entered a World Championship race for Ferrari",
+      "predicate": { "kind": "constructor", "value": "ferrari", "version": 1 }
+    },
+    {
+      "id": "nationality-gbr",
+      "label": "British driver",
+      "description": "Has canonical British sporting nationality",
+      "predicate": { "kind": "nationality", "value": "GBR", "version": 1 }
+    },
+    {
+      "id": "raced-2000s",
+      "label": "Raced in the 2000s",
+      "description": "Appeared in a World Championship race from 2000–2009",
+      "predicate": { "kind": "race_decade", "value": 2000, "version": 1 }
+    }
+  ],
+  "columns": [
+    {
+      "id": "constructor-mclaren",
+      "label": "McLaren",
+      "description": "Entered a World Championship race for McLaren",
+      "predicate": { "kind": "constructor", "value": "mclaren", "version": 1 }
+    },
+    {
+      "id": "won-from-p6-plus",
+      "label": "Won from P6+",
+      "description": "Won a race after starting sixth or lower",
+      "predicate": { "kind": "win_from_grid", "minimum": 6, "version": 1 }
+    },
+    {
+      "id": "race-entries-100",
+      "label": "100+ race entries",
+      "description": "Appeared in at least 100 World Championship race results",
+      "predicate": { "kind": "race_entries", "minimum": 100, "version": 1 }
+    }
+  ],
+  "answers": {
+    "constructor-ferrari__constructor-mclaren": [
+      "alonso", "berger", "gilles-villeneuve", "hamilton", "ickx", "johansson",
+      "lauda", "mansell", "prost", "raikkonen", "sainz", "scheckter", "tambay"
+    ],
+    "constructor-ferrari__won-from-p6-plus": [
+      "alboreto", "alonso", "arnoux", "baghetti", "bandini", "barrichello",
+      "collins", "fangio", "fisichella", "gilles-villeneuve", "gurney", "hamilton",
+      "hawthorn", "irvine", "lauda", "mansell", "michael-schumacher", "prost",
+      "raikkonen", "reutemann", "rodriguez", "scheckter", "surtees", "trintignant"
+    ],
+    "constructor-ferrari__race-entries-100": [
+      "alboreto", "alesi", "alonso", "amon", "arnoux", "barrichello", "berger",
+      "fisichella", "hamilton", "ickx", "irvine", "lauda", "leclerc", "mansell",
+      "mario-andretti", "massa", "michael-schumacher", "prost", "raikkonen",
+      "regazzoni", "reutemann", "sainz", "salo", "scheckter", "surtees", "tambay",
+      "vettel"
+    ],
+    "nationality-gbr__constructor-mclaren": [
+      "blundell", "brundle", "button", "coulthard", "gethin", "hailwood", "hamilton",
+      "hobbs", "hunt", "mansell", "norris", "oliver", "redman", "watson"
+    ],
+    "nationality-gbr__won-from-p6-plus": [
+      "button", "clark", "collins", "coulthard", "gethin", "hamilton", "hawthorn",
+      "herbert", "hill", "ireland", "irvine", "mansell", "moss", "stewart", "surtees",
+      "watson"
+    ],
+    "nationality-gbr__race-entries-100": [
+      "brundle", "button", "coulthard", "damon-hill", "hamilton", "herbert", "hill",
+      "irvine", "mansell", "norris", "russell", "stewart", "surtees", "warwick", "watson"
+    ],
+    "raced-2000s__constructor-mclaren": [
+      "alonso", "button", "coulthard", "hakkinen", "hamilton", "kovalainen", "montoya",
+      "raikkonen", "rosa", "wurz"
+    ],
+    "raced-2000s__won-from-p6-plus": [
+      "alonso", "barrichello", "button", "coulthard", "fisichella", "hamilton", "herbert",
+      "irvine", "michael-schumacher", "panis", "raikkonen"
+    ],
+    "raced-2000s__race-entries-100": [
+      "alesi", "alonso", "barrichello", "button", "coulthard", "fisichella", "frentzen",
+      "grosjean", "hakkinen", "hamilton", "heidfeld", "herbert", "irvine", "kovalainen",
+      "massa", "michael-schumacher", "panis", "raikkonen", "ralf-schumacher", "rosa",
+      "rosberg", "salo", "sutil", "trulli", "verstappen", "vettel", "villeneuve", "webber"
+    ]
+  }
+}

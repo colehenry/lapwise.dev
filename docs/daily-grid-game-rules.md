@@ -154,11 +154,12 @@ disabled until its coverage and tests pass.
 - **100+ race entries:** has at least 100 rows under the shared race-entry
   predicate.
 
-### Available after nationality backfill
+### Available from enriched driver data
 
 - **Nationality:** `drivers.country_code` equals the canonical nationality
   code. A missing value makes a driver ineligible for that category, not a
-  negative answer.
+  negative answer. The reviewed backfill completed on 2026-08-05 with full
+  coverage of the post-1990 and post-2000 game pools.
 
 ### Deferred enrichment
 
@@ -212,9 +213,9 @@ Before any production board is generated or frozen:
 - manually review every singleton; and
 - freeze category versions and answer IDs.
 
-Nationality backfill is required before nationality headers are enabled, but it
-does not block the category engine, schema, API, scheduler, or UI. Constructor
-lineage and owned driver photos are not launch blockers.
+Nationality headers are enabled from the canonical driver field after the
+completed backfill. Constructor lineage and owned driver photos are not launch
+blockers.
 
 ## Open decisions
 

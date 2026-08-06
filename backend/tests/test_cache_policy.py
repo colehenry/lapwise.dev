@@ -94,6 +94,8 @@ def test_latest_round_refreshes_faster_than_season_metadata():
         "/api/circuits/",
         "/api/circuits/14",
         "/api/events/upcoming",
+        "/api/game/daily",
+        "/api/game/drivers",
     ],
 )
 def test_archive_endpoints_are_publicly_cacheable(path):
@@ -102,6 +104,11 @@ def test_archive_endpoints_are_publicly_cacheable(path):
 
 def test_replay_track_geometry_is_treated_as_a_static_asset():
     assert max_age("/api/replay/track/14") == 7 * 24 * 3600
+
+
+def test_daily_game_refreshes_without_caching_guess_submissions():
+    assert max_age("/api/game/daily") == 300
+    assert directive("/api/game/daily/guess") == NO_STORE
 
 
 def test_public_directives_are_marked_public():

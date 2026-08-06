@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { GridPattern } from "@/components/layout/Patterns";
 import Container from "@/components/ui/Container";
-import GameGridPreview from "./GameGridPreview";
+import DailyGameGrid from "./DailyGameGrid";
 
 export const metadata: Metadata = {
   title: "Daily F1 Grid | Lapwise",
@@ -25,15 +25,15 @@ export default function GamePage() {
               <div className="flex items-center gap-3">
                 <span className="h-2 w-2 rounded-full bg-purple-400" />
                 <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-text-muted">
-                  Daily challenge · Puzzle 001
+                  Daily Formula 1 challenge
                 </p>
               </div>
               <h1 className="mt-4 text-4xl font-bold tracking-tight text-text-primary sm:text-6xl">
                 Lapwise <span className="text-purple-400">Grid</span>
               </h1>
               <p className="mt-3 max-w-xl text-sm leading-relaxed text-text-tertiary sm:text-base">
-                Nine squares. Nine submissions. Connect constructors, eras,
-                achievements, and race history with one driver per square.
+                Nine squares. Nine submissions. Connect constructors,
+                nationalities, eras, achievements, and race history.
               </p>
             </div>
 
@@ -48,7 +48,7 @@ export default function GamePage() {
               </div>
               <span className="h-8 w-px bg-border-primary" />
               <span className="rounded-full border border-warning/20 bg-warning/10 px-2.5 py-1 font-mono text-[9px] font-bold uppercase tracking-widest text-warning">
-                Building
+                Playable
               </span>
             </div>
           </div>
@@ -56,7 +56,7 @@ export default function GamePage() {
       </header>
 
       <Container className="py-8 sm:py-10">
-        <GameGridPreview />
+        <DailyGameGrid />
 
         <section className="mt-10 border-t border-border-primary pt-8">
           <div className="grid gap-4 sm:grid-cols-3">
