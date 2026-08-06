@@ -18,7 +18,7 @@
     "frontend/components/charts/QualifyingSectorComparison.tsx": 790,
     "frontend/components/charts/TyreDegradationChart.tsx": 915,
     "frontend/components/chat/ChatMessage.tsx": 618,
-    "frontend/components/layout/Navigation.tsx": 1177,
+    "frontend/components/layout/Navigation.tsx": 1091,
     "frontend/lib/ai/router.ts": 371,
     "frontend/lib/ai/tools.ts": 751,
     "frontend/lib/types.ts": 791
