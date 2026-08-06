@@ -67,8 +67,8 @@ export const archiveLinks: NavLink[] = [
 
 export const navLinksBefore: NavLink[] = [
   {
-    href: "/game",
-    label: "Game",
+    href: "/daily",
+    label: "Daily Grid",
     icon: "M4.5 4.5h6v6h-6v-6Zm9 0h6v6h-6v-6Zm-9 9h6v6h-6v-6Zm9 0h6v6h-6v-6Z",
   },
   {

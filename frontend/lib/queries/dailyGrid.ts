@@ -1,12 +1,17 @@
 import { queryOptions } from "@tanstack/react-query";
 import { apiHeaders, apiUrl, extractErrorMessage } from "@/lib/api";
-import { hours, minutes } from "./durations";
-import { DEFAULT_REVALIDATE_SECONDS, getJson } from "./http";
+import { hours } from "./durations";
+import { getJson } from "./http";
 
 export type GameCategory = {
   id: string;
   label: string;
+  prompt_label: string;
   description: string;
+  visual: {
+    kind: "constructor" | "nationality" | "text";
+    value: string;
+  };
 };
 
 export type DailyGame = {
@@ -15,6 +20,8 @@ export type DailyGame = {
   published_on: string;
   answer_version: number;
   max_guesses: number;
+  previous_number: number | null;
+  next_number: number | null;
   rows: GameCategory[];
   columns: GameCategory[];
 };
@@ -23,14 +30,23 @@ export type GameDriver = {
   driver_slug: string;
   full_name: string;
   driver_code: string | null;
-  country_code: string | null;
+  headshot_url: string | null;
 };
 
 export type GameDriverSearchResponse = {
   drivers: GameDriver[];
 };
 
+export type GameDriverCatalogItem = GameDriver & {
+  race_entries: number;
+};
+
+export type GameDriverCatalogResponse = {
+  drivers: GameDriverCatalogItem[];
+};
+
 export type GameGuess = {
+  puzzle_id: string;
   row_id: string;
   column_id: string;
   driver_slug: string;
@@ -44,18 +60,23 @@ export type GameGuessResult = {
 };
 
 export const gameKeys = {
-  daily: () => ["game", "daily"] as const,
-  driverSearch: (query: string) => ["game", "drivers", query] as const,
+  puzzle: (number?: number) => ["game", "puzzle", number ?? "daily"] as const,
+  driverCatalog: ["game", "drivers", "catalog"] as const,
+  driverSearch: (query: string) =>
+    ["game", "drivers", "search", query] as const,
 };
 
-export function dailyGameQuery() {
+export function dailyGameQuery(number?: number) {
   return queryOptions({
-    queryKey: gameKeys.daily(),
+    queryKey: gameKeys.puzzle(number),
     queryFn: () =>
-      getJson<DailyGame>("/api/game/daily", "Failed to load today's grid", {
-        revalidate: DEFAULT_REVALIDATE_SECONDS,
-      }),
-    staleTime: minutes(5),
+      getJson<DailyGame>(
+        number ? `/api/daily/${number}` : "/api/daily",
+        "Failed to load this grid",
+        {
+          cache: "no-store",
+        },
+      ),
   });
 }
 
@@ -65,10 +86,22 @@ export function gameDriverSearchQuery(query: string) {
     queryKey: gameKeys.driverSearch(normalized.toLowerCase()),
     queryFn: () =>
       getJson<GameDriverSearchResponse>(
-        `/api/game/drivers?q=${encodeURIComponent(normalized)}`,
+        `/api/daily/drivers?q=${encodeURIComponent(normalized)}`,
         "Failed to search drivers",
       ),
     enabled: normalized.length >= 2,
+    staleTime: hours(1),
+  });
+}
+
+export function gameDriverCatalogQuery() {
+  return queryOptions({
+    queryKey: gameKeys.driverCatalog,
+    queryFn: () =>
+      getJson<GameDriverCatalogResponse>(
+        "/api/daily/drivers/catalog",
+        "Failed to load the driver catalog",
+      ),
     staleTime: hours(1),
   });
 }
@@ -78,7 +111,7 @@ export async function submitGameGuess(
 ): Promise<GameGuessResult> {
   const headers = new Headers(apiHeaders());
   headers.set("Content-Type", "application/json");
-  const response = await fetch(apiUrl("/api/game/daily/guess"), {
+  const response = await fetch(apiUrl("/api/daily/guess"), {
     method: "POST",
     headers,
     body: JSON.stringify(guess),

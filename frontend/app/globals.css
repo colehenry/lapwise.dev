@@ -254,6 +254,65 @@
   }
 }
 
+@keyframes gameCellShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-7px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+.game-cell-shake {
+  animation: gameCellShake 360ms ease-in-out;
+}
+
+.game-card-perspective {
+  perspective: 700px;
+}
+
+.game-card-inner {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  transform-style: preserve-3d;
+  transition: transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.game-card-solved .game-card-inner {
+  transform: rotateY(180deg);
+}
+
+.game-card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+}
+
+.game-card-back {
+  transform: rotateY(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-cell-shake {
+    animation: none;
+  }
+
+  .game-card-inner {
+    transition: none;
+  }
+}
+
 @keyframes scaleIn {
   from {
     opacity: 0;

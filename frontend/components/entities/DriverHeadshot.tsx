@@ -9,6 +9,7 @@ type DriverHeadshotProps = {
   size?: number;
   src?: string | null;
   className?: string;
+  responsive?: boolean;
 };
 
 const initials = (fullName: string) =>
@@ -24,18 +25,19 @@ export default function DriverHeadshot({
   size = 40,
   src,
   className = "",
+  responsive = false,
 }: DriverHeadshotProps) {
   return (
     <div
       className={`relative shrink-0 overflow-hidden rounded-sm border border-border-secondary bg-bg-secondary ${className}`}
-      style={{ width: size, height: size }}
+      style={responsive ? undefined : { width: size, height: size }}
     >
       {isValidHeadshotUrl(src) ? (
         <Image
           src={src ?? ""}
           alt={fullName}
           fill
-          sizes={`${size}px`}
+          sizes={responsive ? "(max-width: 640px) 64px, 96px" : `${size}px`}
           className="object-cover"
         />
       ) : (

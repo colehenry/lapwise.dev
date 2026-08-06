@@ -40,8 +40,10 @@ _PUBLIC_RULES: list[tuple[re.Pattern[str], tuple[int, int]]] = [
     (re.compile(r"^/api/results/latest$"), _LATEST),
     (re.compile(r"^/api/replay/(seasons|available)$"), _METADATA),
     (re.compile(r"^/api/replay/track/\d+$"), _STATIC_ASSET),
-    (re.compile(r"^/api/game/daily$"), _LATEST),
-    (re.compile(r"^/api/game/drivers$"), _ARCHIVE),
+    (re.compile(r"^/api/daily$"), _LATEST),
+    (re.compile(r"^/api/daily/\d+$"), _ARCHIVE),
+    (re.compile(r"^/api/daily/drivers$"), _ARCHIVE),
+    (re.compile(r"^/api/daily/drivers/catalog$"), _ARCHIVE),
     (re.compile(r"^/api/events/"), _ARCHIVE),
     (re.compile(r"^/api/(drivers|constructors|circuits)(/|$)"), _ARCHIVE),
 ]

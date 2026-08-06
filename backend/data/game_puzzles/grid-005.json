@@ -1,0 +1,70 @@
+{
+  "id": "grid-005",
+  "number": 5,
+  "published_on": "2026-08-05",
+  "answer_version": 2,
+  "max_guesses": 12,
+  "rows": [
+    {
+      "id": "teammate-max-verstappen",
+      "label": "Teammate of Verstappen",
+      "prompt_label": "Teammate of Max Verstappen",
+      "description": "Shared an exact constructor in the same race with Max Verstappen",
+      "visual": { "kind": "text", "value": "Teammate of Verstappen" },
+      "predicate": { "kind": "named_teammate", "driver_slug": "max-verstappen", "version": 1 }
+    },
+    {
+      "id": "constructor-williams",
+      "label": "Williams",
+      "prompt_label": "Williams Driver",
+      "description": "Entered a World Championship race for Williams",
+      "visual": { "kind": "constructor", "value": "Williams" },
+      "predicate": { "kind": "constructor", "value": "williams", "version": 1 }
+    },
+    {
+      "id": "debuted-2010s",
+      "label": "Debuted in the 2010s",
+      "prompt_label": "Debuted in the 2010s",
+      "description": "Made their World Championship race debut from 2010–2019",
+      "visual": { "kind": "text", "value": "Debuted in the 2010s" },
+      "predicate": { "kind": "debut_decade", "value": 2010, "version": 1 }
+    }
+  ],
+  "columns": [
+    {
+      "id": "raced-2020s",
+      "label": "Raced in the 2020s",
+      "prompt_label": "Raced in the 2020s",
+      "description": "Appeared in a World Championship race from 2020–2029",
+      "visual": { "kind": "text", "value": "Raced in the 2020s" },
+      "predicate": { "kind": "race_decade", "value": 2020, "version": 1 }
+    },
+    {
+      "id": "race-winner",
+      "label": "Race winner",
+      "prompt_label": "Race Winner",
+      "description": "Won a World Championship race",
+      "visual": { "kind": "text", "value": "Race Winner" },
+      "predicate": { "kind": "race_winner", "version": 1 }
+    },
+    {
+      "id": "podium-finisher",
+      "label": "Podium finisher",
+      "prompt_label": "Podium Finisher",
+      "description": "Finished a World Championship race on the podium",
+      "visual": { "kind": "text", "value": "Podium Finisher" },
+      "predicate": { "kind": "podium", "version": 1 }
+    }
+  ],
+  "answers": {
+    "teammate-max-verstappen__raced-2020s": ["albon", "gasly", "hadjar", "lawson", "perez", "ricciardo", "sainz", "tsunoda"],
+    "teammate-max-verstappen__race-winner": ["gasly", "perez", "ricciardo", "sainz"],
+    "teammate-max-verstappen__podium-finisher": ["albon", "gasly", "hadjar", "perez", "ricciardo", "sainz"],
+    "constructor-williams__raced-2020s": ["aitken", "albon", "bottas", "colapinto", "de-vries", "hulkenberg", "kubica", "latifi", "russell", "sainz", "sargeant", "stroll"],
+    "constructor-williams__race-winner": ["barrichello", "bottas", "boutsen", "button", "coulthard", "damon-hill", "frentzen", "jones", "keke-rosberg", "kubica", "laffite", "maldonado", "mansell", "mario-andretti", "massa", "montoya", "patrese", "piquet", "prost", "ralf-schumacher", "regazzoni", "reutemann", "rosberg", "russell", "sainz", "senna", "villeneuve", "webber"],
+    "constructor-williams__podium-finisher": ["albon", "barrichello", "bottas", "boutsen", "brundle", "button", "coulthard", "damon-hill", "frentzen", "heidfeld", "hulkenberg", "jones", "keke-rosberg", "kubica", "laffite", "maldonado", "mansell", "mario-andretti", "massa", "montoya", "patrese", "piquet", "prost", "ralf-schumacher", "regazzoni", "reutemann", "rosberg", "russell", "sainz", "senna", "stroll", "villeneuve", "webber", "wurz"],
+    "debuted-2010s__raced-2020s": ["albon", "bottas", "gasly", "giovinazzi", "hulkenberg", "kevin-magnussen", "kvyat", "leclerc", "max-verstappen", "norris", "ocon", "perez", "ricciardo", "russell", "sainz", "stroll"],
+    "debuted-2010s__race-winner": ["bottas", "gasly", "leclerc", "maldonado", "max-verstappen", "norris", "ocon", "perez", "ricciardo", "russell", "sainz"],
+    "debuted-2010s__podium-finisher": ["albon", "bottas", "gasly", "hulkenberg", "kevin-magnussen", "kvyat", "leclerc", "maldonado", "max-verstappen", "norris", "ocon", "perez", "petrov", "ricciardo", "russell", "sainz", "stroll"]
+  }
+}

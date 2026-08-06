@@ -1,0 +1,70 @@
+{
+  "id": "grid-004",
+  "number": 4,
+  "published_on": "2026-08-04",
+  "answer_version": 2,
+  "max_guesses": 12,
+  "rows": [
+    {
+      "id": "won-with-multiple-constructors",
+      "label": "Won with 2+ constructors",
+      "prompt_label": "Won with Multiple Constructors",
+      "description": "Won World Championship races for at least two exact constructors",
+      "visual": { "kind": "text", "value": "Won with 2+ Constructors" },
+      "predicate": { "kind": "multi_constructor_winner", "minimum": 2, "version": 1 }
+    },
+    {
+      "id": "nationality-fra",
+      "label": "French driver",
+      "prompt_label": "French Driver",
+      "description": "Has canonical French sporting nationality",
+      "visual": { "kind": "nationality", "value": "FRA" },
+      "predicate": { "kind": "nationality", "value": "FRA", "version": 1 }
+    },
+    {
+      "id": "raced-1980s",
+      "label": "Raced in the 1980s",
+      "prompt_label": "Raced in the 1980s",
+      "description": "Appeared in a World Championship race from 1980–1989",
+      "visual": { "kind": "text", "value": "Raced in the 1980s" },
+      "predicate": { "kind": "race_decade", "value": 1980, "version": 1 }
+    }
+  ],
+  "columns": [
+    {
+      "id": "constructor-renault",
+      "label": "Renault",
+      "prompt_label": "Renault Driver",
+      "description": "Entered a World Championship race for Renault",
+      "visual": { "kind": "constructor", "value": "Renault" },
+      "predicate": { "kind": "constructor", "value": "renault", "version": 1 }
+    },
+    {
+      "id": "constructor-ferrari",
+      "label": "Ferrari",
+      "prompt_label": "Ferrari Driver",
+      "description": "Entered a World Championship race for Ferrari",
+      "visual": { "kind": "constructor", "value": "Ferrari" },
+      "predicate": { "kind": "constructor", "value": "ferrari", "version": 1 }
+    },
+    {
+      "id": "race-entries-100",
+      "label": "100+ race entries",
+      "prompt_label": "100+ Race Entries",
+      "description": "Appeared in at least 100 World Championship race results",
+      "visual": { "kind": "text", "value": "100+ Race Entries" },
+      "predicate": { "kind": "race_entries", "minimum": 100, "version": 1 }
+    }
+  ],
+  "answers": {
+    "won-with-multiple-constructors__constructor-renault": ["alonso", "arnoux", "button", "fisichella", "prost", "ricciardo"],
+    "won-with-multiple-constructors__constructor-ferrari": ["alboreto", "alonso", "arnoux", "barrichello", "berger", "brooks", "fangio", "farina", "fisichella", "gurney", "hamilton", "ickx", "lauda", "mansell", "mario-andretti", "michael-schumacher", "pironi", "prost", "raikkonen", "regazzoni", "reutemann", "rodriguez", "scheckter", "surtees", "trintignant", "vettel"],
+    "won-with-multiple-constructors__race-entries-100": ["alboreto", "alonso", "arnoux", "barrichello", "berger", "button", "coulthard", "damon-hill", "emerson-fittipaldi", "fisichella", "frentzen", "hamilton", "herbert", "hill", "hulme", "ickx", "jack-brabham", "jones", "lauda", "mansell", "mario-andretti", "mclaren", "michael-schumacher", "patrese", "perez", "peterson", "piquet", "prost", "raikkonen", "regazzoni", "reutemann", "ricciardo", "scheckter", "senna", "stewart", "surtees", "vettel", "watson"],
+    "nationality-fra__constructor-renault": ["arnoux", "grosjean", "hesnault", "jabouille", "ocon", "prost", "streiff", "tambay"],
+    "nationality-fra__constructor-ferrari": ["alesi", "arnoux", "behra", "manzon", "pironi", "prost", "rosier", "simon", "sommer", "tambay", "trintignant"],
+    "nationality-fra__race-entries-100": ["alesi", "alliot", "arnoux", "gasly", "grosjean", "jarier", "laffite", "ocon", "panis", "prost", "tambay"],
+    "raced-1980s__constructor-renault": ["arnoux", "cheever", "hesnault", "jabouille", "prost", "streiff", "tambay", "warwick"],
+    "raced-1980s__constructor-ferrari": ["alboreto", "alesi", "arnoux", "berger", "capelli", "gilles-villeneuve", "johansson", "larini", "lauda", "mansell", "mario-andretti", "pironi", "prost", "regazzoni", "reutemann", "scheckter", "tambay"],
+    "raced-1980s__race-entries-100": ["alboreto", "alesi", "alliot", "angelis", "arnoux", "berger", "boutsen", "brundle", "cesaris", "cheever", "emerson-fittipaldi", "herbert", "jarier", "jones", "keke-rosberg", "laffite", "lauda", "mansell", "mario-andretti", "martini", "mass", "patrese", "piquet", "prost", "regazzoni", "reutemann", "scheckter", "senna", "tambay", "warwick", "watson"]
+  }
+}

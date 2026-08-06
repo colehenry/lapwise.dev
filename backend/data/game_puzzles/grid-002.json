@@ -1,0 +1,70 @@
+{
+  "id": "grid-002",
+  "number": 2,
+  "published_on": "2026-08-02",
+  "answer_version": 2,
+  "max_guesses": 12,
+  "rows": [
+    {
+      "id": "constructor-williams",
+      "label": "Williams",
+      "prompt_label": "Williams Driver",
+      "description": "Entered a World Championship race for Williams",
+      "visual": { "kind": "constructor", "value": "Williams" },
+      "predicate": { "kind": "constructor", "value": "williams", "version": 1 }
+    },
+    {
+      "id": "debuted-2000s",
+      "label": "Debuted in the 2000s",
+      "prompt_label": "Debuted in the 2000s",
+      "description": "Made their World Championship race debut from 2000–2009",
+      "visual": { "kind": "text", "value": "Debuted in the 2000s" },
+      "predicate": { "kind": "debut_decade", "value": 2000, "version": 1 }
+    },
+    {
+      "id": "raced-2010s",
+      "label": "Raced in the 2010s",
+      "prompt_label": "Raced in the 2010s",
+      "description": "Appeared in a World Championship race from 2010–2019",
+      "visual": { "kind": "text", "value": "Raced in the 2010s" },
+      "predicate": { "kind": "race_decade", "value": 2010, "version": 1 }
+    }
+  ],
+  "columns": [
+    {
+      "id": "race-winner",
+      "label": "Race winner",
+      "prompt_label": "Race Winner",
+      "description": "Won a World Championship race",
+      "visual": { "kind": "text", "value": "Race Winner" },
+      "predicate": { "kind": "race_winner", "version": 1 }
+    },
+    {
+      "id": "race-entries-100",
+      "label": "100+ race entries",
+      "prompt_label": "100+ Race Entries",
+      "description": "Appeared in at least 100 World Championship race results",
+      "visual": { "kind": "text", "value": "100+ Race Entries" },
+      "predicate": { "kind": "race_entries", "minimum": 100, "version": 1 }
+    },
+    {
+      "id": "podium-finisher",
+      "label": "Podium finisher",
+      "prompt_label": "Podium Finisher",
+      "description": "Finished a World Championship race on the podium",
+      "visual": { "kind": "text", "value": "Podium Finisher" },
+      "predicate": { "kind": "podium", "version": 1 }
+    }
+  ],
+  "answers": {
+    "constructor-williams__race-winner": ["barrichello", "bottas", "boutsen", "button", "coulthard", "damon-hill", "frentzen", "jones", "keke-rosberg", "kubica", "laffite", "maldonado", "mansell", "mario-andretti", "massa", "montoya", "patrese", "piquet", "prost", "ralf-schumacher", "regazzoni", "reutemann", "rosberg", "russell", "sainz", "senna", "villeneuve", "webber"],
+    "constructor-williams__race-entries-100": ["albon", "barrichello", "bottas", "boutsen", "brundle", "button", "coulthard", "damon-hill", "frentzen", "heidfeld", "hulkenberg", "jones", "keke-rosberg", "laffite", "mansell", "mario-andretti", "massa", "patrese", "piquet", "prost", "ralf-schumacher", "regazzoni", "reutemann", "rosberg", "russell", "sainz", "senna", "stroll", "villeneuve", "webber"],
+    "constructor-williams__podium-finisher": ["albon", "barrichello", "bottas", "boutsen", "brundle", "button", "coulthard", "damon-hill", "frentzen", "heidfeld", "hulkenberg", "jones", "keke-rosberg", "kubica", "laffite", "maldonado", "mansell", "mario-andretti", "massa", "montoya", "patrese", "piquet", "prost", "ralf-schumacher", "regazzoni", "reutemann", "rosberg", "russell", "sainz", "senna", "stroll", "villeneuve", "webber", "wurz"],
+    "debuted-2000s__race-winner": ["alonso", "button", "hamilton", "kovalainen", "kubica", "massa", "montoya", "raikkonen", "rosberg", "vettel", "webber"],
+    "debuted-2000s__race-entries-100": ["alonso", "button", "grosjean", "hamilton", "heidfeld", "kovalainen", "massa", "raikkonen", "rosberg", "sutil", "vettel", "webber"],
+    "debuted-2000s__podium-finisher": ["alonso", "button", "glock", "grosjean", "hamilton", "heidfeld", "kobayashi", "kovalainen", "kubica", "massa", "monteiro", "montoya", "piquet-jr", "raikkonen", "rosberg", "sato", "vettel", "webber"],
+    "raced-2010s__race-winner": ["alonso", "barrichello", "bottas", "button", "gasly", "hamilton", "kovalainen", "kubica", "leclerc", "maldonado", "massa", "max-verstappen", "michael-schumacher", "norris", "ocon", "perez", "raikkonen", "ricciardo", "rosberg", "russell", "sainz", "trulli", "vettel", "webber"],
+    "raced-2010s__race-entries-100": ["albon", "alonso", "barrichello", "bottas", "button", "gasly", "grosjean", "hamilton", "heidfeld", "hulkenberg", "kevin-magnussen", "kovalainen", "kvyat", "leclerc", "massa", "max-verstappen", "michael-schumacher", "norris", "ocon", "perez", "raikkonen", "ricciardo", "rosa", "rosberg", "russell", "sainz", "stroll", "sutil", "trulli", "vettel", "webber"],
+    "raced-2010s__podium-finisher": ["albon", "alonso", "barrichello", "bottas", "button", "gasly", "glock", "grosjean", "hamilton", "heidfeld", "hulkenberg", "kevin-magnussen", "kobayashi", "kovalainen", "kubica", "kvyat", "leclerc", "maldonado", "massa", "max-verstappen", "michael-schumacher", "norris", "ocon", "perez", "petrov", "raikkonen", "ricciardo", "rosa", "rosberg", "russell", "sainz", "stroll", "trulli", "vettel", "webber"]
+  }
+}

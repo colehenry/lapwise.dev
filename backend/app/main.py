@@ -129,9 +129,9 @@ from app.routers import (
     circuits,
     comments,
     constructors,
+    daily_grid,
     drivers,
     events,
-    game,
     oauth,
     replay,
     season_results,
@@ -150,7 +150,7 @@ app.include_router(
     constructors.router, prefix="/api/constructors", tags=["constructors"]
 )
 app.include_router(events.router, prefix="/api/events", tags=["events"])
-app.include_router(game.router, prefix="/api/game", tags=["game"])
+app.include_router(daily_grid.router, prefix="/api/daily", tags=["daily-grid"])
 app.include_router(circuits.router, prefix="/api/circuits", tags=["circuits"])
 app.include_router(comments.router, prefix="/api/comments", tags=["comments"])
 app.include_router(replay.router, prefix="/api/replay", tags=["replay"])

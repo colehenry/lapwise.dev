@@ -8,26 +8,29 @@ rule record; implementation plans should link here rather than restating it.
 
 | Decision area | State | Current decision or exit gate |
 |---|---|---|
-| Core 3×3 format | Decided | Nine intersections and nine total submissions |
-| Answer uniqueness | Decided | A driver may be used once per board |
+| Core 3×3 format | Decided | Nine intersections and twelve total submissions |
+| Answer uniqueness | Decided | A correctly placed driver may be used once per board |
 | Standard cell depth | Decided | At least three valid answers |
 | Signature singleton | Decided | One reviewed, famous/iconic singleton may appear per board |
 | Constructor semantics | Decided | Exact constructor identities at launch; lineage deferred |
 | Category foundation | Decided | Predicates below are enabled individually when data-ready |
 | Historical eligibility floor | Open | Choose all-history, 1990+, or board-specific eligibility before launch scheduling |
 | Rarity scoring | Open | Decide whether to add it after enough real guesses exist |
-| Archive behavior | Open | Decide whether prior boards remain playable |
+| Archive behavior | Decided | Prior boards remain playable with previous/next navigation |
 
 ## Core player rules
 
 - Each daily puzzle is a 3×3 board with three row and three column headers.
 - A cell accepts a driver who satisfies both intersecting headers.
-- The player has nine total submissions for the entire board.
+- The player has twelve total submissions for the entire board.
 - A correct submission fills and locks the cell.
 - An incorrect submission consumes one submission and leaves the cell empty.
-- A driver may be used only once per board, even when eligible for several
-  cells.
-- The board ends when all nine cells are correct or all submissions are used.
+- An incorrect cell shakes, and hovering it lists the drivers already tried for
+  that intersection.
+- A correctly placed driver may be used only once per board, even when eligible
+  for several cells. An incorrect guess remains available for another cell.
+- The board ends when all nine cells are correct or all twelve submissions are
+  used.
 - Search returns canonical drivers and reviewed aliases. A player must select a
   driver record before submitting; an incomplete search does not consume a
   submission.
@@ -35,6 +38,8 @@ rule record; implementation plans should link here rather than restating it.
   client.
 - One global puzzle is published daily at 00:00 UTC.
 - MVP progress, streak, and share state are local. An account is not required.
+- Previous and next links move between published grids. Completed links are
+  marked, and a restart control clears only the active grid's local progress.
 - Sharing produces a spoiler-free 3×3 emoji grid, puzzle number, and score.
 
 ## Universal answer semantics
@@ -113,6 +118,12 @@ current-season fact and should be play-tested before publication.
 
 ### Repetition and difficulty
 
+- Every board includes at least one secondary category beyond constructor,
+  nationality, and raced-in-decade.
+- Do not repeat the same structural template on consecutive boards. Constructor
+  headers may appear on rows or columns, and a board may use zero, one, or two.
+- Flag identical or near-identical answer sets within the same board for manual
+  review.
 - Do not repeat an exact row/column intersection within 30 published days.
 - Avoid repeating a header within approximately five to seven days.
 - Reject boards whose answer sets are near-identical to a recent board.
@@ -132,8 +143,6 @@ disabled until its coverage and tests pass.
   constructor.
 - **Named teammate:** both drivers appeared for the same exact constructor in
   the same race session.
-- **Used car number N:** `driver_seasons.driver_number = N` in at least one
-  season. This does not imply a permanent career number.
 - **Debuted in decade:** decade of the driver's earliest World Championship
   race result.
 - **World champion:** position 1 in canonical final driver standings.
@@ -163,6 +172,8 @@ disabled until its coverage and tests pass.
 
 ### Deferred enrichment
 
+- Car-number categories are excluded from the game; historical allocations are
+  technically available but feel arbitrary and create thin intersections.
 - **Constructor franchise/lineage:** FastF1 constructor IDs do not provide
   predecessor/successor history.
 - Season-specific sporting nationality.
@@ -186,8 +197,10 @@ publish them before the relevant session or championship fact is final.
   forms, and historical display names.
 - Driver abbreviations and car numbers assist search but never resolve identity.
 - Ambiguous aliases display candidates rather than selecting automatically.
-- Selecting an already-used driver is blocked before submission and does not
-  consume a guess.
+- Selecting a driver already placed correctly is blocked before submission and
+  does not consume a guess. Incorrectly guessed drivers remain selectable.
+- Selecting a cell opens the driver search directly over the board. Clicking
+  outside it, choosing another cell, or pressing Escape dismisses it.
 
 ## Scoring and sharing
 
@@ -222,7 +235,6 @@ blockers.
 - Choose the default historical eligibility policy. A 1990 floor gives a
   205-driver pool; all-history enables more legends but raises difficulty. The
   policy may instead be explicit per board.
-- Decide whether prior puzzles remain playable.
 - Decide whether completion reveals every accepted answer or only popular ones.
 - Decide whether a missed singleton gets a special reveal.
 - Define and name regulation-era boundaries.

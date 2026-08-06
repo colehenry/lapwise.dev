@@ -1,26 +1,32 @@
 {
   "id": "grid-001",
   "number": 1,
-  "published_on": "2026-08-05",
+  "published_on": "2026-08-01",
   "answer_version": 1,
-  "max_guesses": 9,
+  "max_guesses": 12,
   "rows": [
     {
       "id": "constructor-ferrari",
       "label": "Ferrari",
+      "prompt_label": "Ferrari Driver",
       "description": "Entered a World Championship race for Ferrari",
+      "visual": { "kind": "constructor", "value": "Ferrari" },
       "predicate": { "kind": "constructor", "value": "ferrari", "version": 1 }
     },
     {
       "id": "nationality-gbr",
       "label": "British driver",
+      "prompt_label": "British Driver",
       "description": "Has canonical British sporting nationality",
+      "visual": { "kind": "nationality", "value": "GBR" },
       "predicate": { "kind": "nationality", "value": "GBR", "version": 1 }
     },
     {
       "id": "raced-2000s",
       "label": "Raced in the 2000s",
+      "prompt_label": "Raced in the 2000s",
       "description": "Appeared in a World Championship race from 2000–2009",
+      "visual": { "kind": "text", "value": "Raced in the 2000s" },
       "predicate": { "kind": "race_decade", "value": 2000, "version": 1 }
     }
   ],
@@ -28,19 +34,25 @@
     {
       "id": "constructor-mclaren",
       "label": "McLaren",
+      "prompt_label": "McLaren Driver",
       "description": "Entered a World Championship race for McLaren",
+      "visual": { "kind": "constructor", "value": "McLaren" },
       "predicate": { "kind": "constructor", "value": "mclaren", "version": 1 }
     },
     {
       "id": "won-from-p6-plus",
       "label": "Won from P6+",
+      "prompt_label": "Won from P6+",
       "description": "Won a race after starting sixth or lower",
+      "visual": { "kind": "text", "value": "Won from P6+" },
       "predicate": { "kind": "win_from_grid", "minimum": 6, "version": 1 }
     },
     {
       "id": "race-entries-100",
       "label": "100+ race entries",
+      "prompt_label": "100+ Race Entries",
       "description": "Appeared in at least 100 World Championship race results",
+      "visual": { "kind": "text", "value": "100+ Race Entries" },
       "predicate": { "kind": "race_entries", "minimum": 100, "version": 1 }
     }
   ],
