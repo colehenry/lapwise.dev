@@ -1,44 +1,63 @@
 /**
  * Flag utility functions for displaying country flags as emojis
  *
- * Converts ISO 3166-1 alpha-3 country codes to flag emojis using
- * Unicode regional indicator symbols.
+ * Converts country codes to flag emojis using Unicode regional indicator
+ * symbols.
  */
 
-// Map of ISO 3166-1 alpha-3 to alpha-2 country codes
-const COUNTRY_CODE_MAP: Record<string, string> = {
-  // Driver nationalities (from FastF1 data)
-  NED: "NL", // Netherlands
-  GBR: "GB", // Great Britain
-  MON: "MC", // Monaco
-  ESP: "ES", // Spain
-  MEX: "MX", // Mexico
-  CAN: "CA", // Canada
-  AUS: "AU", // Australia
-  JPN: "JP", // Japan
-  CHN: "CN", // China
-  THA: "TH", // Thailand
-  FRA: "FR", // France
-  GER: "DE", // Germany
-  FIN: "FI", // Finland
-  DEN: "DK", // Denmark
-  USA: "US", // United States
-  NZL: "NZ", // New Zealand
-  ARG: "AR", // Argentina
-  ITA: "IT", // Italy
-  AUT: "AT", // Austria
-  BRA: "BR", // Brazil
-  BEL: "BE", // Belgium
-  SWE: "SE", // Sweden
-  POL: "PL", // Poland
-  CHE: "CH", // Switzerland
-  RUS: "RU", // Russia
-  IND: "IN", // India
-  COL: "CO", // Colombia
-  VEN: "VE", // Venezuela
-  MAL: "MY", // Malaysia
-  SGP: "SG", // Singapore
+/**
+ * Driver nationality codes, keyed by the F1-style three-letter code stored in
+ * `drivers.country_code`. These are not ISO 3166-1 alpha-3 — the backend
+ * normalizes ISO and FastF1 values into this vocabulary in
+ * `backend/app/nationality.py`, which must stay in sync with these keys.
+ */
+const DRIVER_COUNTRIES: Record<string, { alpha2: string; name: string }> = {
+  ARG: { alpha2: "AR", name: "Argentina" },
+  AUS: { alpha2: "AU", name: "Australia" },
+  AUT: { alpha2: "AT", name: "Austria" },
+  BEL: { alpha2: "BE", name: "Belgium" },
+  BRA: { alpha2: "BR", name: "Brazil" },
+  CAN: { alpha2: "CA", name: "Canada" },
+  CHI: { alpha2: "CL", name: "Chile" },
+  CHN: { alpha2: "CN", name: "China" },
+  COL: { alpha2: "CO", name: "Colombia" },
+  CZE: { alpha2: "CZ", name: "Czechia" },
+  DEN: { alpha2: "DK", name: "Denmark" },
+  ESP: { alpha2: "ES", name: "Spain" },
+  EST: { alpha2: "EE", name: "Estonia" },
+  FIN: { alpha2: "FI", name: "Finland" },
+  FRA: { alpha2: "FR", name: "France" },
+  GBR: { alpha2: "GB", name: "Great Britain" },
+  GER: { alpha2: "DE", name: "Germany" },
+  HUN: { alpha2: "HU", name: "Hungary" },
+  INA: { alpha2: "ID", name: "Indonesia" },
+  IND: { alpha2: "IN", name: "India" },
+  IRL: { alpha2: "IE", name: "Ireland" },
+  ISR: { alpha2: "IL", name: "Israel" },
+  ITA: { alpha2: "IT", name: "Italy" },
+  JPN: { alpha2: "JP", name: "Japan" },
+  LIE: { alpha2: "LI", name: "Liechtenstein" },
+  MAL: { alpha2: "MY", name: "Malaysia" },
+  MEX: { alpha2: "MX", name: "Mexico" },
+  MON: { alpha2: "MC", name: "Monaco" },
+  NED: { alpha2: "NL", name: "Netherlands" },
+  NZL: { alpha2: "NZ", name: "New Zealand" },
+  POL: { alpha2: "PL", name: "Poland" },
+  POR: { alpha2: "PT", name: "Portugal" },
+  // Rhodesia has no flag emoji; Zimbabwe is the successor state.
+  RHO: { alpha2: "ZW", name: "Rhodesia" },
+  RSA: { alpha2: "ZA", name: "South Africa" },
+  RUS: { alpha2: "RU", name: "Russia" },
+  SGP: { alpha2: "SG", name: "Singapore" },
+  SUI: { alpha2: "CH", name: "Switzerland" },
+  SWE: { alpha2: "SE", name: "Sweden" },
+  THA: { alpha2: "TH", name: "Thailand" },
+  URU: { alpha2: "UY", name: "Uruguay" },
+  USA: { alpha2: "US", name: "United States" },
+  VEN: { alpha2: "VE", name: "Venezuela" },
 };
+
+export const DRIVER_COUNTRY_CODES = Object.keys(DRIVER_COUNTRIES);
 
 // Map of F1 team names (2018-2025) to country codes (alpha-2)
 const TEAM_COUNTRY_MAP: Record<string, string> = {
@@ -133,19 +152,19 @@ function alpha2ToFlagEmoji(alpha2Code: string): string {
 }
 
 /**
- * Converts a 3-letter driver/country code to a flag emoji
- * @param countryCode - ISO 3166-1 alpha-3 country code (e.g., "NED", "GBR")
+ * Converts a 3-letter driver nationality code to a flag emoji
+ * @param countryCode - Driver nationality code (e.g., "NED", "GBR")
  * @returns Flag emoji string or empty string if not found
  */
 export function getDriverFlagEmoji(countryCode: string | null): string {
   if (!countryCode) return "";
 
-  const alpha2 = COUNTRY_CODE_MAP[countryCode.toUpperCase()];
-  if (!alpha2) {
+  const country = DRIVER_COUNTRIES[countryCode.toUpperCase()];
+  if (!country) {
     return "";
   }
 
-  return alpha2ToFlagEmoji(alpha2);
+  return alpha2ToFlagEmoji(country.alpha2);
 }
 
 /**
@@ -181,43 +200,12 @@ export function getCircuitFlagEmoji(countryName: string | null): string {
 }
 
 /**
- * Gets the full country name from a 3-letter code
- * @param countryCode - ISO 3166-1 alpha-3 country code
+ * Gets the full country name from a driver nationality code
+ * @param countryCode - Driver nationality code (e.g., "NED", "GBR")
  * @returns Full country name or the original code if not found
  */
 export function getCountryName(countryCode: string | null): string {
-  const countries: Record<string, string> = {
-    NED: "Netherlands",
-    GBR: "Great Britain",
-    MON: "Monaco",
-    ESP: "Spain",
-    MEX: "Mexico",
-    CAN: "Canada",
-    AUS: "Australia",
-    JPN: "Japan",
-    CHN: "China",
-    THA: "Thailand",
-    FRA: "France",
-    GER: "Germany",
-    FIN: "Finland",
-    DEN: "Denmark",
-    USA: "United States",
-    NZL: "New Zealand",
-    ARG: "Argentina",
-    ITA: "Italy",
-    AUT: "Austria",
-    BRA: "Brazil",
-    BEL: "Belgium",
-    SWE: "Sweden",
-    POL: "Poland",
-    CHE: "Switzerland",
-    RUS: "Russia",
-    IND: "India",
-    COL: "Colombia",
-    VEN: "Venezuela",
-    MAL: "Malaysia",
-    SGP: "Singapore",
-  };
+  if (!countryCode) return "Unknown";
 
-  return countryCode ? countries[countryCode] || countryCode : "Unknown";
+  return DRIVER_COUNTRIES[countryCode.toUpperCase()]?.name ?? countryCode;
 }
