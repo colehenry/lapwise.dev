@@ -1,0 +1,17 @@
+#!/bin/sh
+# Rejects a commit message that names a tool or assistant as an author.
+#
+# CONVENTIONS.md WF-3 forbids it. Some tooling appends such a trailer by
+# default, and prose does not stop a default, so the rule is checked here
+# before the commit exists.
+#
+# Enable with: git config core.hooksPath .githooks
+
+if grep -qiE 'co-authored-by:.*(claude|anthropic|copilot|cursor|gpt|codex)|generated with .*(claude|chatgpt|copilot)|🤖' "$1"; then
+  echo "commit-msg: this message names a tool as an author; not allowed here." >&2
+  echo "" >&2
+  grep -inE 'co-authored-by:.*(claude|anthropic|copilot|cursor|gpt|codex)|generated with .*(claude|chatgpt|copilot)|🤖' "$1" >&2
+  echo "" >&2
+  echo "Remove the line and commit again. See CONVENTIONS.md WF-3." >&2
+  exit 1
+fi

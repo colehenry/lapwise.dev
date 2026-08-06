@@ -6,16 +6,28 @@
   `main` only through a PR with green CI; never push directly to `main`.
 - Frontend: routes in `frontend/app`, shared UI in `frontend/components`, and
   reusable data logic in `frontend/lib` or `frontend/hooks`. Reuse UI/chart
-  primitives and semantic color tokens.
+  primitives and semantic color tokens. Query keys, fetchers, and cache
+  durations come from `frontend/lib/queries`; components declare none of their
+  own. Two files never share a filename.
+- Finish what you replace. Introducing a canonical layer means deleting the old
+  path or listing every remaining caller in the PR. A third copy of one shape
+  gets extracted rather than written. Move files in a commit that only moves.
 - Backend: routers handle HTTP; services own database access and business logic.
   Raw ingested data is canonical; schema changes use reviewed Alembic migrations.
 - Size limits: frontend routes/components target 400 and cap at 600 lines;
   frontend `lib`/`hooks` and backend routers cap at 300; backend services cap at
   600. Grandfathered files must not grow—extract a real responsibility.
 - Never raise `scripts/guardrails-baseline.json`. Run `npm run guardrails:update`
-  only after guardrails pass, to lock in reductions.
+  only after guardrails pass, to lock in reductions. Its ratchets cover file
+  size, duplicate filenames, query keys outside `lib/queries`, and bare
+  duration arithmetic there.
+- Commit messages and PR text name no tool or assistant as an author — no
+  `Co-Authored-By` trailer for one, no "Generated with", no robot emoji. If your
+  tooling adds one by default, this rule overrides it. A commit-msg hook and
+  `npm run guardrails` both reject it; run `git config core.hooksPath .githooks`
+  once so the hook is active.
 - No `print()` in `backend/app`, frontend debug `console.*`, hardcoded UI hex,
-  secrets, dead code, or AI attribution in git history.
+  secrets, or dead code.
 - Run focused checks while working and `npm run check` before push-ready handoff.
   Report anything that could not run. The user owns commit-message wording.
 

@@ -2,9 +2,10 @@ name: Auto-Ingest F1 Sessions
 
 on:
   schedule:
-    # Every six hours, every day — includes the post-race recovery window when
-    # FastF1 timing data can arrive after classification results.
-    - cron: '0 */6 * * *'
+    # Every six hours, Friday through Monday (UTC) — the race weekend plus the
+    # post-race recovery window when FastF1 timing data can arrive after
+    # classification results.
+    - cron: '0 */6 * * 5,6,0,1'
   workflow_dispatch:
     inputs:
       year:

@@ -20,6 +20,15 @@ from .team_colors import enrich_team_color
 FPS = 10
 DT = 1.0 / FPS  # 0.1 seconds per frame
 
+# Track coordinates are normalized into a NORMALIZED_RANGE square.
+NORMALIZED_RANGE = 1000.0
+
+# Geometry rejection thresholds. Healthy circuits sit near 0% duplicate segments with
+# a longest chord under ~61 units, and repeat ~31% of position samples across a race.
+MAX_DUPLICATE_SEGMENT_FRACTION = 0.10
+MAX_SEGMENT_UNITS = 80.0
+MAX_FROZEN_SAMPLE_FRACTION = 0.50
+
 # Tyre compound encoding
 COMPOUND_MAP = {
     "SOFT": 0,
@@ -44,7 +53,7 @@ def rotate(xy, *, angle):
     return np.matmul(xy, rot_mat)
 
 
-def normalize_coords(coords, target_range=1000.0, padding=0.05):
+def normalize_coords(coords, target_range=NORMALIZED_RANGE, padding=0.05):
     """
     Normalize coordinates to [0, target_range] with aspect ratio preserved.
 
@@ -84,12 +93,56 @@ def normalize_coords(coords, target_range=1000.0, padding=0.05):
     return normalized
 
 
+def polyline_defect(polyline):
+    """
+    Describe why a normalized polyline is unusable as a circuit outline, or None.
+
+    A frozen position feed produces repeated coordinates broken by long straight
+    chords, which renders as a coarse polygon rather than the track shape.
+    """
+    coords = np.asarray(polyline, dtype=float)
+    if len(coords) < 2:
+        return "fewer than 2 points"
+
+    lengths = np.linalg.norm(np.diff(coords, axis=0), axis=1)
+    duplicate_fraction = float((lengths == 0).mean())
+    longest_segment = float(lengths.max())
+
+    if duplicate_fraction > MAX_DUPLICATE_SEGMENT_FRACTION:
+        return (
+            f"{duplicate_fraction:.0%} of segments are zero-length "
+            f"(limit {MAX_DUPLICATE_SEGMENT_FRACTION:.0%})"
+        )
+    if longest_segment > MAX_SEGMENT_UNITS:
+        return (
+            f"longest segment spans {longest_segment:.0f} units of "
+            f"{NORMALIZED_RANGE:.0f} (limit {MAX_SEGMENT_UNITS:.0f})"
+        )
+    return None
+
+
+def frozen_sample_fraction(fastf1_session):
+    """Mean fraction of position samples repeating the previous coordinates."""
+    fractions = []
+    for driver in fastf1_session.drivers:
+        try:
+            coords = fastf1_session.pos_data[driver].loc[:, ("X", "Y")].to_numpy()
+        except (KeyError, TypeError, AttributeError):
+            continue
+        if len(coords) < 2:
+            continue
+        fractions.append((np.abs(np.diff(coords, axis=0)).sum(axis=1) == 0).mean())
+
+    return float(np.mean(fractions)) if fractions else 0.0
+
+
 def extract_track_polyline(fastf1_session):
     """
     Extract track polyline from the fastest lap telemetry.
 
     Returns:
-        tuple: (polyline as list of [x,y], rotation_degrees) or (None, None)
+        tuple: (polyline as list of [x,y], rotation_degrees), or (None, None) when
+            the lap is missing or its geometry is too degraded to use as an outline
     """
     try:
         fastest_lap = fastf1_session.laps.pick_fastest()
@@ -107,6 +160,12 @@ def extract_track_polyline(fastf1_session):
 
         # Convert to list of [x, y] pairs, rounded for compactness
         polyline = [[round(float(p[0]), 1), round(float(p[1]), 1)] for p in normalized]
+
+        defect = polyline_defect(polyline)
+        if defect is not None:
+            print(f"  ❌ Track outline rejected: {defect}")
+            return None, None
+
         return polyline, float(rotation_deg)
 
     except Exception as e:
@@ -685,6 +744,15 @@ def generate_replay_data(fastf1_session, session_id, season, round_num, event_na
         tuple: (compressed_bytes, metadata_dict) or (None, None) on failure
     """
     print("  🎬 Generating replay frames...")
+
+    # Step 0: Reject a position feed too frozen to describe car movement
+    frozen = frozen_sample_fraction(fastf1_session)
+    if frozen > MAX_FROZEN_SAMPLE_FRACTION:
+        print(
+            f"  ❌ Position feed rejected: {frozen:.0%} of samples repeat the "
+            f"previous coordinates (limit {MAX_FROZEN_SAMPLE_FRACTION:.0%})"
+        )
+        return None, None
 
     # Step 1: Extract track polyline
     polyline, rotation_deg = extract_track_polyline(fastf1_session)

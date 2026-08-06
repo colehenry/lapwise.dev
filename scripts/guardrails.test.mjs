@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { afterEach, test } from "node:test";
+import { spawnSync } from "node:child_process";
 import {
   copyFileSync,
   mkdirSync,
@@ -10,8 +10,8 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { afterEach, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 
 const SOURCE_SCRIPT = fileURLToPath(
   new URL("./guardrails.mjs", import.meta.url),
@@ -38,10 +38,28 @@ function writeLines(root, relativePath, count) {
   writeFileSync(path, Array.from({ length: count }, () => "x").join("\n"));
 }
 
-function writeBaseline(root, sizeCaps) {
+function writeFile(root, relativePath, contents) {
+  const path = join(root, relativePath);
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, contents);
+}
+
+const EMPTY_DRIFT = {
+  duplicateBasenames: {},
+  inlineQueryKeys: {},
+  rawDurations: {},
+};
+
+function writeBaseline(root, sizeCaps, drift = EMPTY_DRIFT) {
   writeFileSync(
     join(root, "scripts", "guardrails-baseline.json"),
-    `${JSON.stringify({ sizeCaps }, null, 2)}\n`,
+    `${JSON.stringify({ sizeCaps, drift }, null, 2)}\n`,
+  );
+}
+
+function readBaseline(root) {
+  return JSON.parse(
+    readFileSync(join(root, "scripts", "guardrails-baseline.json"), "utf8"),
   );
 }
 
@@ -93,10 +111,154 @@ test("baseline updates lock in improvements and remove resolved files", () => {
   writeBaseline(root, { [improved]: 610, [resolved]: 700 });
 
   const result = runGuardrails(root, "--update-baseline");
-  const baseline = JSON.parse(
-    readFileSync(join(root, "scripts", "guardrails-baseline.json"), "utf8"),
-  ).sizeCaps;
 
   assert.equal(result.status, 0);
-  assert.deepEqual(baseline, { [improved]: 605 });
+  assert.deepEqual(readBaseline(root).sizeCaps, { [improved]: 605 });
+});
+
+test("a new duplicate filename fails, and route filenames do not count", () => {
+  const root = createFixture();
+  writeFile(root, "frontend/app/drivers/ArchivePageClient.tsx", "export {};");
+  writeFile(root, "frontend/app/circuits/ArchivePageClient.tsx", "export {};");
+  writeFile(root, "frontend/app/drivers/page.tsx", "export {};");
+  writeFile(root, "frontend/app/circuits/page.tsx", "export {};");
+  writeBaseline(root, {});
+
+  const result = runGuardrails(root);
+
+  assert.equal(result.status, 1);
+  assert.match(
+    result.stdout,
+    /ArchivePageClient\.tsx — NEW duplicate basename/,
+  );
+  assert.doesNotMatch(result.stdout, /page\.tsx — NEW duplicate/);
+});
+
+test("a baselined duplicate passes until another copy appears", () => {
+  const root = createFixture();
+  writeFile(root, "frontend/app/a/Card.tsx", "export {};");
+  writeFile(root, "frontend/app/b/Card.tsx", "export {};");
+  writeBaseline(
+    root,
+    {},
+    { ...EMPTY_DRIFT, duplicateBasenames: { "Card.tsx": 2 } },
+  );
+
+  assert.equal(runGuardrails(root).status, 0);
+
+  writeFile(root, "frontend/app/c/Card.tsx", "export {};");
+  const result = runGuardrails(root);
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /Card\.tsx — now 3 files \(baseline 2\)/);
+});
+
+test("query keys are allowed in the query layer and rejected outside it", () => {
+  const root = createFixture();
+  writeFile(
+    root,
+    "frontend/lib/queries/seasons.ts",
+    "  queryKey: seasonKeys.all(),",
+  );
+  writeFile(
+    root,
+    "frontend/components/charts/Chart.tsx",
+    "  queryKey: ['laps', season],",
+  );
+  writeBaseline(root, {});
+
+  const result = runGuardrails(root);
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /charts\/Chart\.tsx — 1 inline queryKey/);
+  assert.doesNotMatch(
+    result.stdout,
+    /queries\/seasons\.ts — 1 inline queryKey/,
+  );
+});
+
+test("bare duration arithmetic in the query layer fails, durations.ts excepted", () => {
+  const root = createFixture();
+  writeFile(root, "frontend/lib/queries/durations.ts", "return n * 60_000;");
+  writeFile(
+    root,
+    "frontend/lib/queries/standings.ts",
+    "const S = 1000 * 60 * 5;",
+  );
+  writeBaseline(root, {});
+
+  const result = runGuardrails(root);
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /standings\.ts — 1 bare duration/);
+  assert.doesNotMatch(result.stdout, /durations\.ts — 1 bare duration/);
+});
+
+test("a check with no baseline section seeds on update, then enforces", () => {
+  const root = createFixture();
+  writeFile(root, "frontend/app/a/Card.tsx", "export {};");
+  writeFile(root, "frontend/app/b/Card.tsx", "export {};");
+  writeFileSync(
+    join(root, "scripts", "guardrails-baseline.json"),
+    `${JSON.stringify({ sizeCaps: {} }, null, 2)}\n`,
+  );
+
+  const seeded = runGuardrails(root, "--update-baseline");
+  assert.equal(seeded.status, 0);
+  assert.deepEqual(readBaseline(root).drift.duplicateBasenames, {
+    "Card.tsx": 2,
+  });
+
+  writeFile(root, "frontend/app/c/Card.tsx", "export {};");
+  assert.equal(runGuardrails(root, "--update-baseline").status, 1);
+});
+
+test("a commit message naming a tool fails, and clean history passes", () => {
+  const root = createFixture();
+  const git = (...args) =>
+    spawnSync("git", args, { cwd: root, encoding: "utf8" });
+
+  git("init", "-q");
+  git("config", "user.email", "test@example.com");
+  git("config", "user.name", "Test");
+  writeFile(root, "a.txt", "one");
+  git("add", "-A");
+  git("commit", "-qm", "a clean commit");
+  writeBaseline(root, {}, { ...EMPTY_DRIFT, aiAttributionCommits: {} });
+
+  assert.equal(runGuardrails(root).status, 0);
+
+  writeFile(root, "b.txt", "two");
+  git("add", "-A");
+  git(
+    "commit",
+    "-qm",
+    "tainted\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>",
+  );
+
+  const result = runGuardrails(root);
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /tainted — names a tool as an author/);
+});
+
+test("the commit-msg hook rejects tool attribution and passes clean messages", () => {
+  const hook = fileURLToPath(
+    new URL("../.githooks/commit-msg", import.meta.url),
+  );
+  const root = createFixture();
+
+  writeFile(
+    root,
+    "bad.txt",
+    "subject\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n",
+  );
+  writeFile(root, "good.txt", "subject\n\nan ordinary body\n");
+
+  const bad = spawnSync(hook, [join(root, "bad.txt")], { encoding: "utf8" });
+  const good = spawnSync(hook, [join(root, "good.txt")], { encoding: "utf8" });
+
+  assert.equal(bad.status, 1);
+  assert.match(bad.stderr, /names a tool as an author/);
+  assert.equal(good.status, 0);
 });

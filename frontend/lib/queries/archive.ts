@@ -1,10 +1,11 @@
 import { queryOptions } from "@tanstack/react-query";
-import { apiHeaders, apiUrl } from "@/lib/api";
 import type {
   CircuitInfo,
   ConstructorListResponse,
   DriverListResponse,
 } from "@/lib/types";
+import { minutes } from "./durations";
+import { DEFAULT_REVALIDATE_SECONDS, getJson } from "./http";
 
 /**
  * All-time driver, constructor, and circuit listings. Archive routes, the
@@ -23,22 +24,10 @@ export type CircuitsResponse = {
   total: number;
 };
 
-const LIST_STALE_TIME = 1000 * 60 * 5;
+const LIST_STALE_TIME = minutes(5);
 
 function listPath(base: string, includeSprint: boolean): string {
   return includeSprint ? base : `${base}?include_sprint=false`;
-}
-
-/** Server renders revalidate on this interval; browsers ignore `next`. */
-const LIST_REVALIDATE_SECONDS = 300;
-
-async function getJson<T>(path: string, error: string): Promise<T> {
-  const res = await fetch(apiUrl(path), {
-    headers: apiHeaders(),
-    next: { revalidate: LIST_REVALIDATE_SECONDS },
-  });
-  if (!res.ok) throw new Error(error);
-  return res.json();
 }
 
 export function driversQuery(includeSprint = true) {
@@ -48,6 +37,7 @@ export function driversQuery(includeSprint = true) {
       getJson<DriverListResponse>(
         listPath("/api/drivers/", includeSprint),
         "Failed to fetch drivers",
+        { revalidate: DEFAULT_REVALIDATE_SECONDS },
       ),
     staleTime: LIST_STALE_TIME,
   });
@@ -60,6 +50,7 @@ export function constructorsQuery(includeSprint = true) {
       getJson<ConstructorListResponse>(
         listPath("/api/constructors/", includeSprint),
         "Failed to fetch constructors",
+        { revalidate: DEFAULT_REVALIDATE_SECONDS },
       ),
     staleTime: LIST_STALE_TIME,
   });
@@ -69,7 +60,9 @@ export function circuitsQuery() {
   return queryOptions({
     queryKey: archiveKeys.circuits(),
     queryFn: () =>
-      getJson<CircuitsResponse>("/api/circuits/", "Failed to fetch circuits"),
+      getJson<CircuitsResponse>("/api/circuits/", "Failed to fetch circuits", {
+        revalidate: DEFAULT_REVALIDATE_SECONDS,
+      }),
     staleTime: LIST_STALE_TIME,
   });
 }
