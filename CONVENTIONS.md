@@ -15,8 +15,13 @@ aligned.
 - **WF-1 `[review]`** Direct commits and pushes to `dev` are allowed; `main`
   deploys to production.
 - **WF-2 `[CI]`** Changes reach protected `main` only through a PR with green CI.
-- **WF-3 `[agent]`** Preserve unrelated work. The user owns commit wording; add
-  no AI attribution. Keep one logical change per PR.
+- **WF-3 `[CI]`** Commit messages, PR titles, and PR bodies name no tool or
+  assistant as an author: no `Co-Authored-By` trailer for one, no "Generated
+  with", no 🤖. Tooling that adds such a trailer by default is overridden by
+  this rule, so it is enforced by `.githooks/commit-msg` and by
+  `npm run guardrails`, not left to prose.
+- **WF-3a `[agent]`** Preserve unrelated work. The user owns commit wording.
+  Keep one logical change per PR.
 - **G-4 `[review]`** Finish migrations. A PR that introduces a canonical layer
   deletes the path it replaces, or enumerates every remaining caller with a
   named follow-up. A pass-through shim is a deferral, not a deletion, and is
@@ -119,16 +124,22 @@ protection applies to `main` and administrators; force pushes and deletions are
 disabled. `dev` intentionally permits direct pushes.
 
 `npm run guardrails` blocks unapproved hex, backend `print()`, frontend debug
-consoles, and four ratcheted counts: over-cap file sizes, duplicate filenames,
-query keys outside `lib/queries`, and bare duration arithmetic in the query
-layer. Each ratchet fails on a new key or a grown count and reports existing
-debt without blocking. `npm run guardrails:update` is downward-only; it seeds a
-ratchet the first time its baseline section is absent and refuses new debt
-thereafter. The 400-line frontend target stays report-only; the refactor
-sequence is in `docs/oversized-components-refactor-plan.md` and the drift
-findings behind the newer ratchets are in
-`docs/refactor-drift-guardrails.md`.
+consoles, tool attribution in any commit message, and four ratcheted counts:
+over-cap file sizes, duplicate filenames, query keys outside `lib/queries`, and
+bare duration arithmetic in the query layer. Each ratchet fails on a new key or
+a grown count and reports existing debt without blocking.
+`npm run guardrails:update` is downward-only; it seeds a ratchet the first time
+its baseline section is absent and refuses new debt thereafter.
+
+`.githooks/commit-msg` rejects a non-conforming message before the commit is
+written; enable it once with `git config core.hooksPath .githooks`. The
+guardrails CI job checks out with `fetch-depth: 0` so the history scan is never
+silently empty.
+
+The 400-line frontend target stays report-only; the refactor sequence is in
+`docs/oversized-components-refactor-plan.md` and the drift findings behind the
+newer ratchets are in `docs/refactor-drift-guardrails.md`.
 
 Endpoint-auth coverage, function length, generated API-type staleness, derived
-table rebuild coverage, secret scanning, and attribution are review-enforced
+table rebuild coverage, and secret scanning are review-enforced
 until automated.
