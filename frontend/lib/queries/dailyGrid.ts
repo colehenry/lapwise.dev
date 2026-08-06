@@ -26,11 +26,25 @@ export type DailyGame = {
   columns: GameCategory[];
 };
 
+/** Resolved driver imagery. `focal_*` are CSS position percentages, so they
+ *  must be applied with `object-fit: cover` and `object-position`. */
+export type DriverMedia = {
+  url: string;
+  focal_x: number | null;
+  focal_y: number | null;
+  attribution_text: string | null;
+  license_code: string | null;
+  license_url: string | null;
+  is_owned: boolean;
+};
+
 export type GameDriver = {
   driver_slug: string;
   full_name: string;
   driver_code: string | null;
   headshot_url: string | null;
+  // Optional: responses cached from before the media library shipped omit it.
+  media?: DriverMedia | null;
 };
 
 export type GameDriverSearchResponse = {

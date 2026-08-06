@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Approved driver media</title>
+<style>
+  :root {
+    --bg: #0d0f12; --panel: #15181d; --line: #262b33;
+    --text: #e8eaed; --muted: #8a929e; --warn: #d9a441;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
+  }
+  header {
+    position: sticky; top: 0; z-index: 10; background: var(--panel);
+    border-bottom: 1px solid var(--line); padding: 12px 20px;
+    display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+  }
+  h1 { font-size: 14px; margin: 0; font-weight: 600; }
+  .tabs { display: flex; gap: 1px; background: var(--line); border-radius: 4px; overflow: hidden; }
+  .tabs button {
+    border: 0; background: #1b2027; color: var(--muted); padding: 6px 14px;
+    font: inherit; font-size: 14px; cursor: pointer;
+  }
+  .tabs button.on { background: #2a3542; color: var(--text); }
+  .sizes { display: flex; gap: 1px; background: var(--line); border-radius: 4px; overflow: hidden; }
+  .sizes button {
+    border: 0; background: #1b2027; color: var(--muted); padding: 6px 12px;
+    font: 11px ui-monospace, monospace; cursor: pointer;
+  }
+  .sizes button.on { background: #2a3542; color: var(--text); }
+  .count { color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+  main { padding: 20px; display: flex; flex-wrap: wrap; gap: 18px; }
+  figure { margin: 0; width: var(--tile, 96px); }
+  .face {
+    width: 100%; aspect-ratio: 1; border-radius: 3px; overflow: hidden;
+    border: 1px solid var(--line); background: #000;
+  }
+  .face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  figcaption {
+    font-size: 11px; color: var(--muted); margin-top: 5px; text-align: center;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  figure.nofocal .face { border-color: var(--warn); }
+  .legend { color: var(--muted); font-size: 11px; padding: 0 20px 20px; }
+  .swatch {
+    display: inline-block; width: 9px; height: 9px; border: 1px solid var(--warn);
+    vertical-align: middle; margin-right: 4px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Approved media</h1>
+  <div class="tabs">
+    <button data-tier="1" class="on">Tier 1 · 2026 grid</button>
+    <button data-tier="2">Tier 2 · post-2000</button>
+    <button data-tier="3">Tier 3 · post-1990</button>
+  </div>
+  <div class="sizes">
+    <button data-size="48">48</button>
+    <button data-size="96" class="on">96</button>
+    <button data-size="160">160</button>
+    <button data-size="280">280</button>
+  </div>
+  <span class="count" id="count"></span>
+</header>
+<main id="grid"></main>
+<div class="legend">
+  <span class="swatch"></span> no focal point stored — using the CSS default that was
+  reviewed. Rendered with <code>object-fit: cover</code> and
+  <code>object-position: x% y%</code>, the exact framing the site will use.
+</div>
+
+<script>
+let tier = '1', size = 96;
+
+async function load() {
+  const rows = await (await fetch('/api/approved?tier=' + tier)).json();
+  const missing = rows.filter(r => !r.has_focal).length;
+  document.getElementById('count').textContent =
+    `${rows.length} drivers · ${missing} without a focal point`;
+  document.getElementById('grid').innerHTML = rows.map(r => `
+    <figure class="${r.has_focal ? '' : 'nofocal'}" style="--tile:${size}px">
+      <div class="face">
+        <img src="/api/thumb?key=${encodeURIComponent(r.key)}&w=${size * 2}&fx=${r.focal_x}&fy=${r.focal_y}"
+             loading="lazy" alt="${r.driver}">
+      </div>
+      <figcaption title="${r.driver} · ${r.width}×${r.height} · ${r.license}">${r.driver}</figcaption>
+    </figure>`).join('');
+}
+
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-tier]');
+  if (t) {
+    tier = t.dataset.tier;
+    document.querySelectorAll('[data-tier]').forEach(b => b.classList.toggle('on', b === t));
+    return load();
+  }
+  const s = e.target.closest('[data-size]');
+  if (s) {
+    size = +s.dataset.size;
+    document.querySelectorAll('[data-size]').forEach(b => b.classList.toggle('on', b === s));
+    return load();
+  }
+});
+
+load();
+</script>
+</body>
+</html>

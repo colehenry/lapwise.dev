@@ -154,6 +154,8 @@ export default function DriverSearchPanel({
                     fullName={driver.full_name}
                     size={44}
                     src={getDriverHeadshotUrl(driver)}
+                    focalX={driver.media?.focal_x}
+                    focalY={driver.media?.focal_y}
                     className="rounded-md"
                   />
                   <span className="truncate text-sm font-semibold text-text-primary">

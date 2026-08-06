@@ -17,7 +17,9 @@ from app.schemas.daily_grid import (
     GameDriverSearchResponse,
     GameGuessResponse,
 )
+from app.schemas.media import DriverMedia
 from app.services.driver_catalog_service import DriverCatalogService
+from app.services.media_service import MediaService
 
 _PUZZLE_DIRECTORY = Path(__file__).resolve().parents[2] / "data" / "game_puzzles"
 _PUZZLE_NUMBERS = tuple(range(1, 6))
@@ -58,13 +60,31 @@ def _public_category(raw: dict) -> GameCategory:
     )
 
 
-def _driver_response(driver: Driver, headshot_url: str | None) -> GameDriver:
+def _driver_response(
+    driver: Driver,
+    headshot_url: str | None,
+    media: DriverMedia | None = None,
+) -> GameDriver:
     return GameDriver(
         driver_slug=driver.slug,
         full_name=driver.full_name,
         driver_code=driver.driver_code,
-        headshot_url=headshot_url,
+        # Resolved media wins; the legacy column is the fallback until step 10.
+        headshot_url=media.url if media else headshot_url,
+        media=media,
     )
+
+
+async def _resolve_media(
+    db: AsyncSession, driver_ids: list[int]
+) -> dict[int, DriverMedia]:
+    """Owned imagery for a set of drivers, in a fixed number of queries."""
+    resolved = await MediaService.resolve_many(db, driver_ids, None, "headshot")
+    return {
+        driver_id: media
+        for driver_id, ref in resolved.items()
+        if (media := DriverMedia.from_ref(ref)) is not None
+    }
 
 
 def _escaped_like(value: str) -> str:
@@ -126,12 +146,21 @@ class DailyGridService:
                 .order_by(AggDriverCareer.full_name)
             )
         ).scalars()
+        rows = list(rows)
+        # The dropdown and the grid cell both read this catalog, so resolving
+        # here is what keeps the two showing the same photograph.
+        media = await _resolve_media(db, [row.driver_id for row in rows])
         drivers = [
             GameDriverCatalogItem(
                 driver_slug=row.driver_slug,
                 full_name=row.full_name,
                 driver_code=row.driver_code,
-                headshot_url=row.headshot_url,
+                headshot_url=(
+                    media[row.driver_id].url
+                    if row.driver_id in media
+                    else row.headshot_url
+                ),
+                media=media.get(row.driver_id),
                 race_entries=row.total_races,
             )
             for row in rows
@@ -198,8 +227,12 @@ class DailyGridService:
             .limit(limit)
         )
         drivers = (await db.execute(statement)).all()
+        media = await _resolve_media(db, [row.Driver.id for row in drivers])
         return GameDriverSearchResponse(
-            drivers=[_driver_response(row.Driver, row.headshot_url) for row in drivers]
+            drivers=[
+                _driver_response(row.Driver, row.headshot_url, media.get(row.Driver.id))
+                for row in drivers
+            ]
         )
 
     @staticmethod
@@ -233,5 +266,9 @@ class DailyGridService:
             correct=normalized_slug in puzzle["answers"][cell_id],
             row_id=row_id,
             column_id=column_id,
-            driver=_driver_response(row.Driver, row.headshot_url),
+            driver=_driver_response(
+                row.Driver,
+                row.headshot_url,
+                (await _resolve_media(db, [row.Driver.id])).get(row.Driver.id),
+            ),
         )

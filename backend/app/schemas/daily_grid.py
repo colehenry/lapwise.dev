@@ -5,6 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.schemas.media import DriverMedia
+
 
 class GameCategoryVisual(BaseModel):
     kind: Literal["constructor", "nationality", "text"]
@@ -35,7 +37,9 @@ class GameDriver(BaseModel):
     driver_slug: str
     full_name: str
     driver_code: str | None
+    # Retained for compatibility while consumers migrate to `media`.
     headshot_url: str | None
+    media: DriverMedia | None = None
 
 
 class GameDriverSearchResponse(BaseModel):

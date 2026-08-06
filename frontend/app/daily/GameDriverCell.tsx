@@ -55,6 +55,8 @@ export default function GameDriverCell({
                   code={driver.driver_code}
                   fullName={driver.full_name}
                   src={getDriverHeadshotUrl(driver)}
+                  focalX={driver.media?.focal_x}
+                  focalY={driver.media?.focal_y}
                   className="aspect-square w-[68%] rounded-md"
                 />
                 <span className="mt-1.5 line-clamp-2 text-center text-[9px] font-semibold leading-tight text-text-primary sm:text-xs">

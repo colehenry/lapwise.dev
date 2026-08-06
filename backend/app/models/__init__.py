@@ -36,6 +36,7 @@ from app.models.identity import (
 )
 from app.models.lap import Lap
 from app.models.login_history import LoginHistory
+from app.models.media import DriverMediaAssignment, MediaAsset
 from app.models.oauth_account import OAuthAccount
 from app.models.password_reset_token import PasswordResetToken
 from app.models.pit_stop import PitStop
@@ -55,6 +56,8 @@ from app.models.weather import Weather
 # Export all models
 __all__ = [
     "Driver",
+    "MediaAsset",
+    "DriverMediaAssignment",
     "DriverExternalId",
     "DriverSeason",
     "Constructor",
