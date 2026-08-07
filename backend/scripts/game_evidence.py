@@ -19,7 +19,16 @@ from typing import Any, Callable, Iterable, Sequence
 from sqlalchemy import select
 from sqlalchemy.orm import Session as OrmSession
 
-from app.models import Constructor, Driver, Session, SessionResult, Team
+from app.models import (
+    Circuit,
+    CircuitVenue,
+    Constructor,
+    Driver,
+    DriverChampionshipStanding,
+    Session,
+    SessionResult,
+    Team,
+)
 
 PODIUM_POSITIONS = (1, 2, 3)
 
@@ -35,6 +44,10 @@ class RaceEntry:
     team_id: int | None
     constructor_slug: str | None
     constructor_name: str | None
+    # The canonical venue rather than the layout raced on, so a win on any
+    # reviewed Silverstone layout satisfies "Won at Silverstone".
+    venue_slug: str | None = None
+    venue_name: str | None = None
 
 
 @dataclass
@@ -45,6 +58,10 @@ class DriverFacts:
     country_code: str | None
     races: list[RaceEntry] = field(default_factory=list)
     sprints: list[RaceEntry] = field(default_factory=list)
+    # Qualifying is loaded separately because a pole is a qualifying result;
+    # starting a race from the front row after a penalty is not one.
+    qualifying: list[RaceEntry] = field(default_factory=list)
+    champion_years: list[int] = field(default_factory=list)
 
 
 def _year_spans(years: Iterable[int]) -> list[list[int]]:
@@ -75,7 +92,8 @@ def _race_ref(race: RaceEntry) -> dict[str, Any]:
 def load_driver_facts(
     db: OrmSession, driver_ids: Sequence[int]
 ) -> dict[int, DriverFacts]:
-    """Every race and sprint entry for the given drivers, in one pass."""
+    """Every race, sprint and qualifying entry for the given drivers, plus the
+    titles they won, in one pass."""
     if not driver_ids:
         return {}
 
@@ -111,15 +129,26 @@ def load_driver_facts(
             Session.date,
             Session.event_name,
             Session.session_type,
+            CircuitVenue.slug.label("venue_slug"),
+            CircuitVenue.canonical_name.label("venue_name"),
         )
         .join(Session, Session.id == SessionResult.session_id)
+        # Outer joins: a session with no reviewed circuit still counts as a
+        # race entry, it simply cannot answer a venue category.
+        .outerjoin(Circuit, Circuit.id == Session.circuit_id)
+        .outerjoin(CircuitVenue, CircuitVenue.id == Circuit.venue_id)
         .where(
             SessionResult.driver_id.in_(driver_ids),
-            Session.session_type.in_(("race", "sprint_race")),
+            Session.session_type.in_(("race", "sprint_race", "qualifying")),
         )
         .order_by(Session.date)
     ).all()
 
+    buckets = {
+        "race": "races",
+        "sprint_race": "sprints",
+        "qualifying": "qualifying",
+    }
     for row in rows:
         if row.driver_id not in facts:
             continue
@@ -134,13 +163,24 @@ def load_driver_facts(
             team_id=row.team_id,
             constructor_slug=constructor_slug,
             constructor_name=constructor_name,
+            venue_slug=row.venue_slug,
+            venue_name=row.venue_name,
         )
-        bucket = (
-            facts[row.driver_id].races
-            if row.session_type == "race"
-            else facts[row.driver_id].sprints
+        getattr(facts[row.driver_id], buckets[row.session_type]).append(entry)
+
+    for driver_id, year in db.execute(
+        select(
+            DriverChampionshipStanding.driver_id, DriverChampionshipStanding.year
+        ).where(
+            DriverChampionshipStanding.driver_id.in_(driver_ids),
+            DriverChampionshipStanding.position == 1,
+            DriverChampionshipStanding.is_final.is_(True),
         )
-        bucket.append(entry)
+    ).all():
+        if driver_id in facts:
+            facts[driver_id].champion_years.append(year)
+    for value in facts.values():
+        value.champion_years.sort()
 
     return facts
 
@@ -372,6 +412,95 @@ def _named_teammate(
     }
 
 
+def _world_champion(facts: DriverFacts, _predicate: dict, _: dict) -> dict[str, Any]:
+    if facts.champion_years:
+        return {
+            "satisfied": True,
+            "titles": len(facts.champion_years),
+            "years": list(facts.champion_years),
+        }
+    # The near miss is the teaching line: a runner-up reads as a number rather
+    # than a cross.
+    return {"satisfied": False, "titles": 0, "years": []}
+
+
+def _pole_sitter(facts: DriverFacts, _predicate: dict, _: dict) -> dict[str, Any]:
+    """Qualifying P1. A race-grid P1 inherited through a penalty is not a pole,
+    which is why qualifying is loaded separately from the race result."""
+    poles = [entry for entry in facts.qualifying if entry.position == 1]
+    if poles:
+        return {
+            "satisfied": True,
+            "poles": len(poles),
+            "first_pole": _race_ref(poles[0]),
+        }
+    best = _best_finish(facts.qualifying)
+    return {
+        "satisfied": False,
+        "poles": 0,
+        "best_qualifying": best.position if best else None,
+        "best_qualifying_race": _race_ref(best) if best else None,
+    }
+
+
+def _won_at_venue(facts: DriverFacts, predicate: dict, context: dict) -> dict[str, Any]:
+    """A win at the canonical venue, on any of its reviewed layouts."""
+    target = predicate["value"]
+    name = context.get("venue_names", {}).get(target, target)
+    wins = [
+        race for race in facts.races if race.position == 1 and race.venue_slug == target
+    ]
+    if wins:
+        return {
+            "satisfied": True,
+            "venue": wins[0].venue_name or name,
+            "wins": len(wins),
+            "first_win": _race_ref(wins[0]),
+        }
+    starts = [race for race in facts.races if race.venue_slug == target]
+    best = _best_finish(starts)
+    return {
+        "satisfied": False,
+        "venue": name,
+        "wins": 0,
+        "starts": len(starts),
+        "best_finish": best.position if best else None,
+    }
+
+
+def _defunct_venue(
+    facts: DriverFacts, predicate: dict, context: dict
+) -> dict[str, Any]:
+    """Raced at a venue absent from a named season's scheduled calendar.
+
+    The season is carried on the predicate and its calendar is frozen with the
+    board, so a venue returning to the schedule cannot invalidate an answer on
+    a puzzle already played.
+    """
+    season = predicate["season"]
+    active = context.get("active_venues", {}).get(season, set())
+    raced = {
+        race.venue_slug: race
+        for race in facts.races
+        if race.venue_slug and race.venue_slug not in active
+    }
+    if raced:
+        ordered = sorted(raced.values(), key=lambda race: race.date)
+        return {
+            "satisfied": True,
+            "season": season,
+            "venues": [race.venue_name or race.venue_slug for race in ordered[:3]],
+            "venue_count": len(raced),
+            "first": _race_ref(ordered[0]),
+        }
+    return {
+        "satisfied": False,
+        "season": season,
+        "venues": [],
+        "venue_count": 0,
+    }
+
+
 BUILDERS: dict[str, Callable[[DriverFacts, dict, dict], dict[str, Any]]] = {
     "constructor": _constructor,
     "nationality": _nationality,
@@ -384,6 +513,10 @@ BUILDERS: dict[str, Callable[[DriverFacts, dict, dict], dict[str, Any]]] = {
     "sprint_winner": _sprint_winner,
     "multi_constructor_winner": _multi_constructor_winner,
     "named_teammate": _named_teammate,
+    "world_champion": _world_champion,
+    "pole_sitter": _pole_sitter,
+    "won_at_venue": _won_at_venue,
+    "defunct_venue": _defunct_venue,
 }
 
 
@@ -433,10 +566,48 @@ def build_context(db: OrmSession, categories: Sequence[dict]) -> dict:
             ).all()
         }
 
+    venue_slugs = {
+        category["predicate"]["value"]
+        for category in categories
+        if category["predicate"]["kind"] == "won_at_venue"
+    }
+    venue_names: dict[str, str] = {}
+    if venue_slugs:
+        venue_names = {
+            slug: canonical_name
+            for slug, canonical_name in db.execute(
+                select(CircuitVenue.slug, CircuitVenue.canonical_name).where(
+                    CircuitVenue.slug.in_(venue_slugs)
+                )
+            ).all()
+        }
+
+    # The full scheduled calendar for the season, future rounds included, so a
+    # venue already dropped but still to be visited this year is not defunct.
+    seasons = {
+        category["predicate"]["season"]
+        for category in categories
+        if category["predicate"]["kind"] == "defunct_venue"
+    }
+    active_venues: dict[int, set[str]] = {}
+    for season in seasons:
+        active_venues[season] = {
+            slug
+            for slug in db.execute(
+                select(CircuitVenue.slug)
+                .join(Circuit, Circuit.venue_id == CircuitVenue.id)
+                .join(Session, Session.circuit_id == Circuit.id)
+                .where(Session.year == season, Session.session_type == "race")
+                .distinct()
+            ).scalars()
+        }
+
     return {
         "teammate_seats": defaultdict(
             set, {slug: load_teammate_seats(db, slug) for slug in teammate_slugs}
         ),
         "driver_names": names,
         "constructor_names": constructor_names,
+        "venue_names": venue_names,
+        "active_venues": active_venues,
     }

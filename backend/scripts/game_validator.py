@@ -49,6 +49,10 @@ ANCHOR_MIN_WINS = 10
 # Two cells whose answer sets differ by less than this are the same cell twice.
 NEAR_IDENTICAL_RATIO = 0.8
 
+# A cell accepting this share of the eligible pool is a free square: almost any
+# name a player types lands. Legal, but the reviewer should see it.
+FREE_SQUARE_SHARE = 0.2
+
 PRIMARY_KINDS = {"constructor", "nationality", "race_decade"}
 
 
@@ -323,6 +327,13 @@ def validate(
         report.error("unresolved_driver", f"unknown slugs {sorted(unresolved)}")
 
     _check_depths(report, cells, recognition)
+    for cell_id, answers in sorted(cells.items()):
+        if len(answers) > FREE_SQUARE_SHARE * len(pool):
+            report.warn(
+                "free_square",
+                f"{cell_id}: {len(answers)} answers, {len(answers) / len(pool):.0%}"
+                " of the eligible pool",
+            )
     _check_structure(report, board, cells)
     _check_axis_implication(report, board, by_category)
     _check_decoy_pools(report, board, cells)

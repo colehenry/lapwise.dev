@@ -123,6 +123,55 @@ _DEMONYM_TO_LAPWISE = {
 }
 
 
+# The demonym to print for a code. Several demonyms map to one code, and the
+# reverse mapping has to be chosen rather than derived: "east german" and
+# "german" both resolve to GER, and only one of them belongs on a label.
+PREFERRED_DEMONYM = {
+    "ARG": "Argentine",
+    "AUS": "Australian",
+    "AUT": "Austrian",
+    "BEL": "Belgian",
+    "BRA": "Brazilian",
+    "CAN": "Canadian",
+    "CHI": "Chilean",
+    "CHN": "Chinese",
+    "COL": "Colombian",
+    "CZE": "Czech",
+    "DEN": "Danish",
+    "ESP": "Spanish",
+    "EST": "Estonian",
+    "FIN": "Finnish",
+    "FRA": "French",
+    "GBR": "British",
+    "GER": "German",
+    "HUN": "Hungarian",
+    "INA": "Indonesian",
+    "IND": "Indian",
+    "IRL": "Irish",
+    "ISR": "Israeli",
+    "ITA": "Italian",
+    "JPN": "Japanese",
+    "LIE": "Liechtensteiner",
+    "MAL": "Malaysian",
+    "MEX": "Mexican",
+    "MON": "Monegasque",
+    "NED": "Dutch",
+    "NZL": "New Zealander",
+    "POL": "Polish",
+    "POR": "Portuguese",
+    "RHO": "Rhodesian",
+    "RSA": "South African",
+    "RUS": "Russian",
+    "SGP": "Singaporean",
+    "SUI": "Swiss",
+    "SWE": "Swedish",
+    "THA": "Thai",
+    "URU": "Uruguayan",
+    "USA": "American",
+    "VEN": "Venezuelan",
+}
+
+
 def normalize_country_code(value: str | None) -> str | None:
     """Map an ISO alpha-3 or Lapwise code to the Lapwise vocabulary."""
     if not value:

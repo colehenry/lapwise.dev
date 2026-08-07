@@ -209,11 +209,16 @@ current-season fact and should be play-tested before publication.
 
 Six headers a board against a five-to-seven-day no-repeat window means at least
 42 distinct headers must be usable in any week, and two to three times that
-before the schedule stops feeling repetitive. The predicate resolvers are what
-answer how many headers actually clear a three-deep intersection at the board's
-eligibility floor. If the usable count is tight, themed boards are the relief
-rather than the strain: they draw on venue and nationality headers that
-otherwise sit idle.
+before the schedule stops feeling repetitive.
+
+Measured 2026-08-07: 47 headers clear a twelve-answer depth at the 1990 floor,
+against 96 at an all-history floor. The eligibility floor costs roughly half
+the catalog, and 47 leaves almost no headroom over the weekly minimum.
+
+Five categories listed below as available are not yet implemented —
+world champion, pole sitter, won at venue, raced at a defunct venue, and raced
+across regulation eras. Implementing them is the intended relief, and venue
+headers should roughly double the catalog on their own.
 
 ## Publication cadence
 
@@ -249,6 +254,12 @@ a Grand Prix weekend carry at least one header tied to that race — its venue,
 its country, or a constructor with a history there. This needs no new
 predicate: won-at-venue and nationality already exist, so a theme is a
 constraint on the generator and a tag on the scheduled board.
+
+A theme must offer at least one header per day it covers. The no-repeat window
+blocks a header once used, so a two-header theme cannot fill three days: venue
+plus host nationality covers Friday and Saturday and then runs out. A
+constructor with history at the circuit, or a driver associated with it, is the
+third.
 
 The Sunday board publishes alongside the race and its completion screen links
 to that race's page, which is the intended route from the game into the rest of
@@ -299,8 +310,19 @@ disabled until its coverage and tests pass.
 - **World champion:** position 1 in canonical final driver standings.
 - **Race winner:** finished position 1 in a race session.
 - **Podium finisher:** finished position 1, 2, or 3 in a race session.
-- **Pole sitter:** finished position 1 in qualifying; race-grid P1 is not a
-  substitute.
+- **World champion:** position 1 in canonical final driver standings. Coverage
+  is complete: 76 seasons, 1950–2025.
+- **Won at venue:** won a race at the canonical venue, on any of its reviewed
+  layouts. Every race session from 1950 onward resolves to a canonical venue,
+  so coverage is complete.
+- **Raced at a currently defunct venue:** raced at a venue absent from a named
+  season's race calendar. The season is carried on the predicate and its
+  calendar is frozen with the board.
+  This header is broad — at a 1990 floor it accepts 188 of 205 drivers, because
+  almost any career touches a circuit the calendar has since dropped. It
+  discriminates only when crossed with a narrow header, and reads best against
+  a recent debut decade, where it isolates the newer drivers who caught a
+  vanishing circuit.
 - **Won with multiple constructors:** race wins for at least two exact canonical
   constructors.
 - **Raced across regulation eras:** race results in at least two named,
@@ -329,14 +351,26 @@ disabled until its coverage and tests pass.
   predecessor/successor history.
 - Season-specific sporting nationality.
 - Historical fastest laps, because the current flag has no pre-2018 coverage.
+- **Pole sitter.** The predicate is implemented and correct, but qualifying
+  positions do not exist before 1990 and cover 45% of the 1990s and 75% of the
+  2000s. Enabling it would credit Senna with a handful of poles and exclude
+  drivers who genuinely took them — a wrong answer, not a missing one. The
+  header is withheld from the catalog until qualifying results are backfilled;
+  the builder stays, so restoring it is a one-line change.
 - All-era telemetry, tyre, pit-stop, and race-control categories because those
   sources begin later than race results.
 
 ## Dynamic categories
 
-“Currently defunct venue” uses the full scheduled race calendar for the
-puzzle's publication season, including future rounds. The value is frozen with
-the puzzle. A later return does not invalidate an old answer.
+“Currently defunct venue” reads a named season's race calendar, frozen with the
+puzzle. A later return does not invalidate an old answer.
+
+The season must be one whose calendar is complete. `sessions` holds rounds that
+have happened, so the season in progress is always partial, and reading a
+partial calendar marks every venue later in the year as defunct — Monza and Abu
+Dhabi included. The catalog therefore defaults to the most recent complete
+season rather than the current one. Reading the publication season directly
+becomes correct only once forward calendar ingestion exists.
 
 Other current-season categories must declare when their answers freeze. Do not
 publish them before the relevant session or championship fact is final.
