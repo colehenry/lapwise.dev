@@ -19,8 +19,14 @@ router = APIRouter()
 
 
 @router.get("", response_model=DailyGameResponse)
-async def get_daily_game(api_key: str = Depends(verify_api_key)):
-    return DailyGridService.puzzle()
+async def get_daily_game(
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    try:
+        return await DailyGridService.puzzle(db)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail="Grid not found") from error
 
 
 @router.get("/drivers", response_model=GameDriverSearchResponse)
@@ -43,11 +49,12 @@ async def get_game_driver_catalog(
 @router.get("/{puzzle_number}", response_model=DailyGameResponse)
 async def get_game(
     puzzle_number: int,
+    db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
     try:
-        return DailyGridService.puzzle(puzzle_number)
-    except (FileNotFoundError, ValueError) as error:
+        return await DailyGridService.puzzle(db, puzzle_number)
+    except ValueError as error:
         raise HTTPException(status_code=404, detail="Grid not found") from error
 
 
@@ -59,8 +66,10 @@ async def get_rookie_options(
 ):
     try:
         return await DailyGridService.rookie_options(db, puzzle_number)
-    except (FileNotFoundError, ValueError) as error:
-        raise HTTPException(status_code=404, detail="Rookie options not found") from error
+    except ValueError as error:
+        raise HTTPException(
+            status_code=404, detail="Rookie options not found"
+        ) from error
 
 
 @router.post("/guess", response_model=GameGuessResponse)

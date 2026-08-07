@@ -190,7 +190,9 @@ def verify(puzzle: dict, options: dict[str, list[str]], evidence: dict) -> list[
                 column_evidence = evidence.get(f"{slug}__{column}")
                 if row_evidence is None or column_evidence is None:
                     continue
-                satisfies_both = row_evidence["satisfied"] and column_evidence["satisfied"]
+                satisfies_both = (
+                    row_evidence["satisfied"] and column_evidence["satisfied"]
+                )
                 if satisfies_both != (slug in answers):
                     problems.append(
                         f"{key}: {slug} evidence says "
@@ -238,9 +240,7 @@ def freeze(db, number: int, check_only: bool) -> bool:
     puzzle = json.loads(path.read_text(encoding="utf-8"))
     rng = random.Random(puzzle["id"])
 
-    answer_slugs = {
-        slug for answers in puzzle["answers"].values() for slug in answers
-    }
+    answer_slugs = {slug for answers in puzzle["answers"].values() for slug in answers}
     row_unions = set()
     for row in puzzle["rows"]:
         for column in puzzle["columns"]:

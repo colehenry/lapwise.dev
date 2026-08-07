@@ -142,7 +142,9 @@ def test_race_winner_counter_evidence_is_the_best_finish():
 
 
 def test_podium_counts_every_top_three_finish():
-    driver = facts(entry(2010, position=3), entry(2011, position=1), entry(2012, position=8))
+    driver = facts(
+        entry(2010, position=3), entry(2011, position=1), entry(2012, position=8)
+    )
 
     evidence = build_evidence(driver, {"kind": "podium"})
 
@@ -169,7 +171,9 @@ def test_multi_constructor_winner_lists_first_win_per_constructor():
         entry(2014, position=5, constructor="Mercedes", slug="mercedes"),
     )
 
-    evidence = build_evidence(driver, {"kind": "multi_constructor_winner", "minimum": 2})
+    evidence = build_evidence(
+        driver, {"kind": "multi_constructor_winner", "minimum": 2}
+    )
 
     assert evidence["satisfied"] is True
     assert evidence["won_for"] == [
@@ -214,4 +218,6 @@ def test_a_driver_is_not_their_own_teammate():
 def test_unknown_kind_degrades_to_no_evidence():
     """A category without an evidence builder still plays; the boolean result
     is the floor."""
-    assert build_evidence(facts(entry(2010)), {"kind": "car_number", "value": 44}) is None
+    assert (
+        build_evidence(facts(entry(2010)), {"kind": "car_number", "value": 44}) is None
+    )

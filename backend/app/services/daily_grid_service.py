@@ -1,13 +1,11 @@
 """Daily grid discovery, driver search, and snapshot-based validation."""
 
-import json
-from functools import lru_cache
-from pathlib import Path
+from datetime import date, datetime, timezone
 
-from sqlalchemy import case, func, or_, select
+from sqlalchemy import case, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import AggDriverCareer, Driver, Session, SessionResult
+from app.models import AggDriverCareer, Driver, Puzzle, Session, SessionResult
 from app.schemas.daily_grid import (
     DailyGameResponse,
     GameCategory,
@@ -22,33 +20,19 @@ from app.schemas.media import DriverMedia
 from app.services.driver_catalog_service import DriverCatalogService
 from app.services.media_service import MediaService
 
-_PUZZLE_DIRECTORY = Path(__file__).resolve().parents[2] / "data" / "game_puzzles"
-_PUZZLE_NUMBERS = tuple(range(1, 6))
+
+def _today() -> date:
+    """Boards publish at 00:00 UTC, so the calendar is UTC's."""
+    return datetime.now(timezone.utc).date()
 
 
-@lru_cache(maxsize=32)
-def _load_puzzle(path: Path, modified_ns: int) -> dict:
-    del modified_ns
-    with path.open(encoding="utf-8") as puzzle_file:
-        return json.load(puzzle_file)
+def _published():
+    """A board is playable once approved and its publication date has arrived.
 
-
-def _puzzle(number: int) -> dict:
-    if number not in _PUZZLE_NUMBERS:
-        raise ValueError("Grid not found")
-    path = _PUZZLE_DIRECTORY / f"grid-{number:03d}.json"
-    return _load_puzzle(path, path.stat().st_mtime_ns)
-
-
-def _puzzle_number(puzzle_id: str) -> int:
-    try:
-        prefix, raw_number = puzzle_id.rsplit("-", 1)
-        number = int(raw_number)
-    except (TypeError, ValueError) as error:
-        raise ValueError("Grid not found") from error
-    if prefix != "grid" or number not in _PUZZLE_NUMBERS:
-        raise ValueError("Grid not found")
-    return number
+    A future-dated published row is scheduled, not live, so the editorial queue
+    can run ahead of the calendar without exposing tomorrow's board.
+    """
+    return (Puzzle.status == "published") & (Puzzle.published_on <= _today())
 
 
 def _public_category(raw: dict) -> GameCategory:
@@ -96,27 +80,56 @@ class DailyGridService:
     """Serve one immutable puzzle snapshot without exposing its answer sets."""
 
     @staticmethod
-    def puzzle(number: int | None = None) -> DailyGameResponse:
-        resolved_number = number or _PUZZLE_NUMBERS[-1]
-        puzzle = _puzzle(resolved_number)
-        current_index = _PUZZLE_NUMBERS.index(resolved_number)
+    async def puzzle(db: AsyncSession, number: int | None = None) -> DailyGameResponse:
+        """One published board, or the latest when no number is given.
+
+        Answers, option lists and evidence are never selected here: the board
+        payload is read on every page load and the evidence column alone runs
+        to hundreds of records.
+        """
+        statement = select(
+            Puzzle.public_id,
+            Puzzle.number,
+            Puzzle.published_on,
+            Puzzle.answer_version,
+            Puzzle.max_guesses,
+            Puzzle.row_categories,
+            Puzzle.column_categories,
+            Puzzle.rookie_options.is_not(None).label("has_rookie_mode"),
+        ).where(_published())
+        if number is None:
+            statement = statement.order_by(
+                Puzzle.published_on.desc(), Puzzle.number.desc()
+            ).limit(1)
+        else:
+            statement = statement.where(Puzzle.number == number)
+
+        row = (await db.execute(statement)).one_or_none()
+        if row is None:
+            raise ValueError("Grid not found")
+
+        # Neighbours come from the same published set, so an unpublished gap in
+        # the numbering cannot produce a link to a board that will not load.
+        neighbours = (
+            await db.execute(
+                select(
+                    func.max(Puzzle.number).filter(Puzzle.number < row.number),
+                    func.min(Puzzle.number).filter(Puzzle.number > row.number),
+                ).where(_published())
+            )
+        ).one()
+
         return DailyGameResponse(
-            id=puzzle["id"],
-            number=puzzle["number"],
-            published_on=puzzle["published_on"],
-            answer_version=puzzle["answer_version"],
-            max_guesses=puzzle["max_guesses"],
-            previous_number=(
-                _PUZZLE_NUMBERS[current_index - 1] if current_index > 0 else None
-            ),
-            next_number=(
-                _PUZZLE_NUMBERS[current_index + 1]
-                if current_index < len(_PUZZLE_NUMBERS) - 1
-                else None
-            ),
-            has_rookie_mode=bool(puzzle.get("rookie_options")),
-            rows=[_public_category(category) for category in puzzle["rows"]],
-            columns=[_public_category(category) for category in puzzle["columns"]],
+            id=row.public_id,
+            number=row.number,
+            published_on=row.published_on,
+            answer_version=row.answer_version,
+            max_guesses=row.max_guesses,
+            previous_number=neighbours[0],
+            next_number=neighbours[1],
+            has_rookie_mode=bool(row.has_rookie_mode),
+            rows=[_public_category(category) for category in row.row_categories],
+            columns=[_public_category(category) for category in row.column_categories],
         )
 
     @staticmethod
@@ -192,8 +205,16 @@ class DailyGridService:
         The frozen order is preserved: it was shuffled at freeze time, and
         re-sorting here would leak structure across cells.
         """
-        puzzle = _puzzle(number)
-        options = puzzle.get("rookie_options")
+        board = (
+            await db.execute(
+                select(Puzzle.public_id, Puzzle.rookie_options).where(
+                    _published(), Puzzle.number == number
+                )
+            )
+        ).one_or_none()
+        if board is None:
+            raise ValueError("Grid not found")
+        options = board.rookie_options
         if not options:
             raise ValueError("This grid has no rookie options")
 
@@ -214,7 +235,7 @@ class DailyGridService:
             for row in rows
         }
         return RookieOptionsResponse(
-            puzzle_id=puzzle["id"],
+            puzzle_id=board.public_id,
             options={
                 cell_id: [by_slug[slug] for slug in cell_slugs if slug in by_slug]
                 for cell_id, cell_slugs in options.items()
@@ -281,14 +302,41 @@ class DailyGridService:
         column_id: str,
         driver_slug: str,
     ) -> GameGuessResponse | None:
-        puzzle = _puzzle(_puzzle_number(puzzle_id))
-        if puzzle["id"] != puzzle_id:
-            raise ValueError("Grid not found")
         cell_id = f"{row_id}__{column_id}"
-        if cell_id not in puzzle["answers"]:
+        normalized_slug = driver_slug.strip().lower()
+
+        # The answer set and the evidence pair are resolved in Postgres rather
+        # than loaded into Python: a board's evidence runs to hundreds of
+        # records and a guess needs exactly two of them.
+        verdict = (
+            await db.execute(
+                text(
+                    "SELECT jsonb_exists(answers, :cell_id) AS cell_exists,"
+                    " COALESCE("
+                    "   answers -> :cell_id @> to_jsonb(CAST(:slug AS text)), false"
+                    " ) AS correct,"
+                    " rookie_evidence -> :row_key AS row_evidence,"
+                    " rookie_evidence -> :column_key AS column_evidence"
+                    " FROM puzzles"
+                    " WHERE public_id = :public_id"
+                    "   AND status = 'published'"
+                    "   AND published_on <= :today"
+                ),
+                {
+                    "cell_id": cell_id,
+                    "slug": normalized_slug,
+                    "row_key": f"{normalized_slug}__{row_id}",
+                    "column_key": f"{normalized_slug}__{column_id}",
+                    "public_id": puzzle_id,
+                    "today": _today(),
+                },
+            )
+        ).one_or_none()
+        if verdict is None:
+            raise ValueError("Grid not found")
+        if not verdict.cell_exists:
             raise ValueError("That row and column do not belong to this puzzle")
 
-        normalized_slug = driver_slug.strip().lower()
         latest_headshot = DailyGridService._latest_headshot()
         row = (
             await db.execute(
@@ -300,9 +348,8 @@ class DailyGridService:
         if row is None:
             return None
 
-        evidence = puzzle.get("rookie_evidence", {})
         return GameGuessResponse(
-            correct=normalized_slug in puzzle["answers"][cell_id],
+            correct=bool(verdict.correct),
             row_id=row_id,
             column_id=column_id,
             driver=_driver_response(
@@ -310,6 +357,6 @@ class DailyGridService:
                 row.headshot_url,
                 (await _resolve_media(db, [row.Driver.id])).get(row.Driver.id),
             ),
-            row_evidence=evidence.get(f"{normalized_slug}__{row_id}"),
-            column_evidence=evidence.get(f"{normalized_slug}__{column_id}"),
+            row_evidence=verdict.row_evidence,
+            column_evidence=verdict.column_evidence,
         )

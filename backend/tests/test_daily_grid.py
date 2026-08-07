@@ -1,10 +1,31 @@
-"""Daily grid API and immutable answer snapshot tests."""
+"""Daily grid API and immutable answer snapshot tests.
 
+Board invariants are asserted against the authoring files under
+`data/game_puzzles`, which remain the output of the freeze scripts and need no
+database. `test_published_boards_match_their_authoring_files` is what ties the
+two together.
+"""
+
+import json
+from datetime import date, datetime, timezone
+from functools import lru_cache
+from pathlib import Path
+
+import pytest
 from sqlalchemy import select
 
 from app.config import settings
-from app.models import Driver
-from app.services.daily_grid_service import _puzzle
+from app.models import Driver, Puzzle
+
+PUZZLE_DIRECTORY = Path(__file__).resolve().parents[1] / "data" / "game_puzzles"
+BOARD_NUMBERS = range(1, 6)
+
+
+@lru_cache(maxsize=None)
+def _puzzle(number: int) -> dict:
+    path = PUZZLE_DIRECTORY / f"grid-{number:03d}.json"
+    with path.open(encoding="utf-8") as handle:
+        return json.load(handle)
 
 
 def api_headers() -> dict[str, str]:
@@ -12,14 +33,14 @@ def api_headers() -> dict[str, str]:
 
 
 def test_snapshot_has_one_answer_set_per_cell_and_safe_depth():
-    for number in range(1, 6):
+    for number in BOARD_NUMBERS:
         puzzle = _puzzle(number)
         assert len(puzzle["answers"]) == 9
         assert min(len(answers) for answers in puzzle["answers"].values()) >= 3
 
 
 def test_sandbox_boards_vary_structure_and_include_secondary_categories():
-    puzzles = [_puzzle(number) for number in range(1, 6)]
+    puzzles = [_puzzle(number) for number in BOARD_NUMBERS]
     primary_kinds = {"constructor", "nationality", "race_decade"}
 
     for puzzle in puzzles:
@@ -45,7 +66,7 @@ def test_sandbox_boards_vary_structure_and_include_secondary_categories():
 def test_rookie_option_lists_are_uniform_and_solvable():
     """Every list is the same length, so size never signals cell depth, and
     every cell keeps at least one correct option."""
-    for number in range(1, 6):
+    for number in BOARD_NUMBERS:
         puzzle = _puzzle(number)
         options = puzzle["rookie_options"]
 
@@ -59,7 +80,7 @@ def test_rookie_option_lists_are_uniform_and_solvable():
 def test_rookie_correct_options_are_disjoint_across_cells():
     """A correct placement must never consume the only listed answer for
     another cell, because a driver may be used once per board."""
-    for number in range(1, 6):
+    for number in BOARD_NUMBERS:
         puzzle = _puzzle(number)
         claimed: set[str] = set()
         for cell_id, cell_options in puzzle["rookie_options"].items():
@@ -71,7 +92,7 @@ def test_rookie_correct_options_are_disjoint_across_cells():
 def test_every_rookie_decoy_fails_exactly_one_header():
     """Satisfying both headers makes a driver correct by definition, so a decoy
     can only ever be wrong on one axis."""
-    for number in range(1, 6):
+    for number in BOARD_NUMBERS:
         puzzle = _puzzle(number)
         evidence = puzzle["rookie_evidence"]
         for row in puzzle["rows"]:
@@ -81,14 +102,16 @@ def test_every_rookie_decoy_fails_exactly_one_header():
                 for slug in puzzle["rookie_options"][cell_id]:
                     row_proof = evidence[f"{slug}__{row['id']}"]
                     column_proof = evidence[f"{slug}__{column['id']}"]
-                    satisfies_both = row_proof["satisfied"] and column_proof["satisfied"]
+                    satisfies_both = (
+                        row_proof["satisfied"] and column_proof["satisfied"]
+                    )
                     assert satisfies_both is (slug in answers)
                     if slug not in answers:
                         assert row_proof["satisfied"] or column_proof["satisfied"]
 
 
 def test_evidence_covers_every_answer_so_placements_can_be_proved():
-    for number in range(1, 6):
+    for number in BOARD_NUMBERS:
         puzzle = _puzzle(number)
         categories = puzzle["rows"] + puzzle["columns"]
         for answers in puzzle["answers"].values():
@@ -140,7 +163,7 @@ async def test_guess_returns_evidence_for_both_headers(client, ingested_data):
 async def test_every_snapshot_driver_resolves(ingested_data):
     expected = {
         slug
-        for number in range(1, 6)
+        for number in BOARD_NUMBERS
         for answers in _puzzle(number)["answers"].values()
         for slug in answers
     }
@@ -151,6 +174,52 @@ async def test_every_snapshot_driver_resolves(ingested_data):
     )
 
     assert resolved == expected
+
+
+async def test_published_boards_match_their_authoring_files(db_session):
+    """The served board and the frozen file are the same board.
+
+    Boards moved into `puzzles` but the freeze scripts still write the files,
+    so a re-import that silently dropped or reshaped a column would otherwise
+    only show up in play.
+    """
+    rows = {
+        row.number: row
+        for row in await db_session.execute(
+            select(
+                Puzzle.number,
+                Puzzle.public_id,
+                Puzzle.row_categories,
+                Puzzle.column_categories,
+                Puzzle.answers,
+                Puzzle.rookie_options,
+                Puzzle.rookie_evidence,
+            ).where(Puzzle.status == "published")
+        )
+    }
+
+    if not rows:
+        pytest.skip("no published boards in the configured database")
+
+    for number in BOARD_NUMBERS:
+        board = _puzzle(number)
+        row = rows[number]
+        assert row.public_id == board["id"]
+        assert row.row_categories == board["rows"]
+        assert row.column_categories == board["columns"]
+        assert row.answers == board["answers"]
+        assert row.rookie_options == board["rookie_options"]
+        assert row.rookie_evidence == board["rookie_evidence"]
+
+
+async def test_served_board_is_never_future_dated(client):
+    """A scheduled board is not a live board, so the editorial queue can run
+    ahead of the calendar without exposing tomorrow's grid."""
+    response = await client.get("/api/daily", headers=api_headers())
+
+    assert response.status_code == 200
+    published_on = date.fromisoformat(response.json()["published_on"])
+    assert published_on <= datetime.now(timezone.utc).date()
 
 
 async def test_daily_puzzle_does_not_expose_answers(client):

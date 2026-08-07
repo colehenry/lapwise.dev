@@ -25,6 +25,7 @@ from app.models.circuit import Circuit
 from app.models.comment import Comment
 from app.models.driver import Driver
 from app.models.email_verification_token import EmailVerificationToken
+from app.models.game import GameSession, GameSessionGuess, Puzzle
 from app.models.identity import (
     CircuitVenue,
     CircuitVenueExternalId,
@@ -94,4 +95,7 @@ __all__ = [
     "AIMessage",
     "ReplayData",
     "SessionSummary",
+    "Puzzle",
+    "GameSession",
+    "GameSessionGuess",
 ]
