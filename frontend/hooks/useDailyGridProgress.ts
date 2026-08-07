@@ -1,18 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { CategoryEvidence } from "@/lib/gridEvidence";
 import type { GameDriver, GameGuessResult } from "@/lib/queries/dailyGrid";
+
+export type GridMode = "standard" | "rookie";
+
+export const GRID_MODES: GridMode[] = ["standard", "rookie"];
 
 export type GridAttempt = {
   cellId: string;
   correct: boolean;
   driver: GameDriver;
+  rowEvidence?: CategoryEvidence | null;
+  columnEvidence?: CategoryEvidence | null;
 };
 
-const STORAGE_VERSION = "v3";
+const STORAGE_VERSION = "v4";
 
-function storageKey(puzzleId: string) {
-  return `lapwise:grid-progress:${STORAGE_VERSION}:${puzzleId}`;
+function storageKey(puzzleId: string, mode: GridMode) {
+  return `lapwise:grid-progress:${STORAGE_VERSION}:${mode}:${puzzleId}`;
 }
 
 export function deriveGridProgress(attempts: GridAttempt[]) {
@@ -26,15 +33,21 @@ export function deriveGridProgress(attempts: GridAttempt[]) {
       .filter((attempt) => attempt.correct)
       .map((attempt) => [attempt.cellId, attempt.driver]),
   );
-  const missesByCell = new Map<string, GameDriver[]>();
+  const missesByCell = new Map<string, GridAttempt[]>();
   for (const attempt of attempts) {
     if (attempt.correct) continue;
     missesByCell.set(attempt.cellId, [
       ...(missesByCell.get(attempt.cellId) ?? []),
-      attempt.driver,
+      attempt,
     ]);
   }
-  return { filledCells, missesByCell, placedDriverSlugs };
+  // Proof for a solved cell, so a placement can be inspected after the fact.
+  const solvedByCell = new Map(
+    attempts
+      .filter((attempt) => attempt.correct)
+      .map((attempt) => [attempt.cellId, attempt]),
+  );
+  return { filledCells, missesByCell, placedDriverSlugs, solvedByCell };
 }
 
 function isAttempt(value: unknown): value is GridAttempt {
@@ -49,10 +62,12 @@ function isAttempt(value: unknown): value is GridAttempt {
   );
 }
 
-export function useDailyGridProgress(puzzleId: string) {
+/** Progress is stored per mode, so the two modes hold independent state on the
+ *  same board and switching cannot import a half-solved grid. */
+export function useDailyGridProgress(puzzleId: string, mode: GridMode) {
   const [attempts, setAttempts] = useState<GridAttempt[]>([]);
   const [ready, setReady] = useState(false);
-  const puzzleStorageKey = storageKey(puzzleId);
+  const puzzleStorageKey = storageKey(puzzleId, mode);
 
   useEffect(() => {
     setReady(false);
@@ -82,6 +97,8 @@ export function useDailyGridProgress(puzzleId: string) {
         cellId: `${result.row_id}__${result.column_id}`,
         correct: result.correct,
         driver: result.driver,
+        rowEvidence: result.row_evidence,
+        columnEvidence: result.column_evidence,
       },
     ]);
   }, []);
@@ -90,10 +107,8 @@ export function useDailyGridProgress(puzzleId: string) {
     setAttempts([]);
   }, []);
 
-  const { filledCells, missesByCell, placedDriverSlugs } = useMemo(
-    () => deriveGridProgress(attempts),
-    [attempts],
-  );
+  const { filledCells, missesByCell, placedDriverSlugs, solvedByCell } =
+    useMemo(() => deriveGridProgress(attempts), [attempts]);
 
   return {
     attempts,
@@ -103,19 +118,31 @@ export function useDailyGridProgress(puzzleId: string) {
     ready,
     recordAttempt,
     restart,
+    solvedByCell,
   };
 }
 
+function isModeFinished(
+  puzzleId: string,
+  mode: GridMode,
+  maxGuesses: number,
+): boolean {
+  const stored = window.localStorage.getItem(storageKey(puzzleId, mode));
+  const parsed: unknown = stored ? JSON.parse(stored) : [];
+  if (!Array.isArray(parsed)) return false;
+  const attempts = parsed.filter(isAttempt);
+  return (
+    deriveGridProgress(attempts).filledCells.size === 9 ||
+    attempts.length >= maxGuesses
+  );
+}
+
+/** A board counts as played once either mode has finished it. */
 export function isStoredGridFinished(puzzleId: string, maxGuesses = 12) {
   if (typeof window === "undefined") return false;
   try {
-    const stored = window.localStorage.getItem(storageKey(puzzleId));
-    const parsed: unknown = stored ? JSON.parse(stored) : [];
-    if (!Array.isArray(parsed)) return false;
-    const attempts = parsed.filter(isAttempt);
-    return (
-      deriveGridProgress(attempts).filledCells.size === 9 ||
-      attempts.length >= maxGuesses
+    return GRID_MODES.some((mode) =>
+      isModeFinished(puzzleId, mode, maxGuesses),
     );
   } catch {
     return false;

@@ -10,24 +10,45 @@
       "label": "Teammate of Verstappen",
       "prompt_label": "Teammate of Max Verstappen",
       "description": "Shared an exact constructor in the same race with Max Verstappen",
-      "visual": { "kind": "text", "value": "Teammate of Verstappen" },
-      "predicate": { "kind": "named_teammate", "driver_slug": "max-verstappen", "version": 1 }
+      "visual": {
+        "kind": "text",
+        "value": "Teammate of Verstappen"
+      },
+      "predicate": {
+        "kind": "named_teammate",
+        "driver_slug": "max-verstappen",
+        "version": 1
+      }
     },
     {
       "id": "constructor-williams",
       "label": "Williams",
       "prompt_label": "Williams Driver",
       "description": "Entered a World Championship race for Williams",
-      "visual": { "kind": "constructor", "value": "Williams" },
-      "predicate": { "kind": "constructor", "value": "williams", "version": 1 }
+      "visual": {
+        "kind": "constructor",
+        "value": "Williams"
+      },
+      "predicate": {
+        "kind": "constructor",
+        "value": "williams",
+        "version": 1
+      }
     },
     {
       "id": "debuted-2010s",
       "label": "Debuted in the 2010s",
       "prompt_label": "Debuted in the 2010s",
-      "description": "Made their World Championship race debut from 2010–2019",
-      "visual": { "kind": "text", "value": "Debuted in the 2010s" },
-      "predicate": { "kind": "debut_decade", "value": 2010, "version": 1 }
+      "description": "Made their World Championship race debut from 2010\u20132019",
+      "visual": {
+        "kind": "text",
+        "value": "Debuted in the 2010s"
+      },
+      "predicate": {
+        "kind": "debut_decade",
+        "value": 2010,
+        "version": 1
+      }
     }
   ],
   "columns": [
@@ -35,36 +56,3094 @@
       "id": "raced-2020s",
       "label": "Raced in the 2020s",
       "prompt_label": "Raced in the 2020s",
-      "description": "Appeared in a World Championship race from 2020–2029",
-      "visual": { "kind": "text", "value": "Raced in the 2020s" },
-      "predicate": { "kind": "race_decade", "value": 2020, "version": 1 }
+      "description": "Appeared in a World Championship race from 2020\u20132029",
+      "visual": {
+        "kind": "text",
+        "value": "Raced in the 2020s"
+      },
+      "predicate": {
+        "kind": "race_decade",
+        "value": 2020,
+        "version": 1
+      }
     },
     {
       "id": "race-winner",
       "label": "Race winner",
       "prompt_label": "Race Winner",
       "description": "Won a World Championship race",
-      "visual": { "kind": "text", "value": "Race Winner" },
-      "predicate": { "kind": "race_winner", "version": 1 }
+      "visual": {
+        "kind": "text",
+        "value": "Race Winner"
+      },
+      "predicate": {
+        "kind": "race_winner",
+        "version": 1
+      }
     },
     {
       "id": "podium-finisher",
       "label": "Podium finisher",
       "prompt_label": "Podium Finisher",
       "description": "Finished a World Championship race on the podium",
-      "visual": { "kind": "text", "value": "Podium Finisher" },
-      "predicate": { "kind": "podium", "version": 1 }
+      "visual": {
+        "kind": "text",
+        "value": "Podium Finisher"
+      },
+      "predicate": {
+        "kind": "podium",
+        "version": 1
+      }
     }
   ],
   "answers": {
-    "teammate-max-verstappen__raced-2020s": ["albon", "gasly", "hadjar", "lawson", "perez", "ricciardo", "sainz", "tsunoda"],
-    "teammate-max-verstappen__race-winner": ["gasly", "perez", "ricciardo", "sainz"],
-    "teammate-max-verstappen__podium-finisher": ["albon", "gasly", "hadjar", "perez", "ricciardo", "sainz"],
-    "constructor-williams__raced-2020s": ["aitken", "albon", "bottas", "colapinto", "de-vries", "hulkenberg", "kubica", "latifi", "russell", "sainz", "sargeant", "stroll"],
-    "constructor-williams__race-winner": ["barrichello", "bottas", "boutsen", "button", "coulthard", "damon-hill", "frentzen", "jones", "keke-rosberg", "kubica", "laffite", "maldonado", "mansell", "mario-andretti", "massa", "montoya", "patrese", "piquet", "prost", "ralf-schumacher", "regazzoni", "reutemann", "rosberg", "russell", "sainz", "senna", "villeneuve", "webber"],
-    "constructor-williams__podium-finisher": ["albon", "barrichello", "bottas", "boutsen", "brundle", "button", "coulthard", "damon-hill", "frentzen", "heidfeld", "hulkenberg", "jones", "keke-rosberg", "kubica", "laffite", "maldonado", "mansell", "mario-andretti", "massa", "montoya", "patrese", "piquet", "prost", "ralf-schumacher", "regazzoni", "reutemann", "rosberg", "russell", "sainz", "senna", "stroll", "villeneuve", "webber", "wurz"],
-    "debuted-2010s__raced-2020s": ["albon", "bottas", "gasly", "giovinazzi", "hulkenberg", "kevin-magnussen", "kvyat", "leclerc", "max-verstappen", "norris", "ocon", "perez", "ricciardo", "russell", "sainz", "stroll"],
-    "debuted-2010s__race-winner": ["bottas", "gasly", "leclerc", "maldonado", "max-verstappen", "norris", "ocon", "perez", "ricciardo", "russell", "sainz"],
-    "debuted-2010s__podium-finisher": ["albon", "bottas", "gasly", "hulkenberg", "kevin-magnussen", "kvyat", "leclerc", "maldonado", "max-verstappen", "norris", "ocon", "perez", "petrov", "ricciardo", "russell", "sainz", "stroll"]
+    "teammate-max-verstappen__raced-2020s": [
+      "albon",
+      "gasly",
+      "hadjar",
+      "lawson",
+      "perez",
+      "ricciardo",
+      "sainz",
+      "tsunoda"
+    ],
+    "teammate-max-verstappen__race-winner": [
+      "gasly",
+      "perez",
+      "ricciardo",
+      "sainz"
+    ],
+    "teammate-max-verstappen__podium-finisher": [
+      "albon",
+      "gasly",
+      "hadjar",
+      "perez",
+      "ricciardo",
+      "sainz"
+    ],
+    "constructor-williams__raced-2020s": [
+      "aitken",
+      "albon",
+      "bottas",
+      "colapinto",
+      "de-vries",
+      "hulkenberg",
+      "kubica",
+      "latifi",
+      "russell",
+      "sainz",
+      "sargeant",
+      "stroll"
+    ],
+    "constructor-williams__race-winner": [
+      "barrichello",
+      "bottas",
+      "boutsen",
+      "button",
+      "coulthard",
+      "damon-hill",
+      "frentzen",
+      "jones",
+      "keke-rosberg",
+      "kubica",
+      "laffite",
+      "maldonado",
+      "mansell",
+      "mario-andretti",
+      "massa",
+      "montoya",
+      "patrese",
+      "piquet",
+      "prost",
+      "ralf-schumacher",
+      "regazzoni",
+      "reutemann",
+      "rosberg",
+      "russell",
+      "sainz",
+      "senna",
+      "villeneuve",
+      "webber"
+    ],
+    "constructor-williams__podium-finisher": [
+      "albon",
+      "barrichello",
+      "bottas",
+      "boutsen",
+      "brundle",
+      "button",
+      "coulthard",
+      "damon-hill",
+      "frentzen",
+      "heidfeld",
+      "hulkenberg",
+      "jones",
+      "keke-rosberg",
+      "kubica",
+      "laffite",
+      "maldonado",
+      "mansell",
+      "mario-andretti",
+      "massa",
+      "montoya",
+      "patrese",
+      "piquet",
+      "prost",
+      "ralf-schumacher",
+      "regazzoni",
+      "reutemann",
+      "rosberg",
+      "russell",
+      "sainz",
+      "senna",
+      "stroll",
+      "villeneuve",
+      "webber",
+      "wurz"
+    ],
+    "debuted-2010s__raced-2020s": [
+      "albon",
+      "bottas",
+      "gasly",
+      "giovinazzi",
+      "hulkenberg",
+      "kevin-magnussen",
+      "kvyat",
+      "leclerc",
+      "max-verstappen",
+      "norris",
+      "ocon",
+      "perez",
+      "ricciardo",
+      "russell",
+      "sainz",
+      "stroll"
+    ],
+    "debuted-2010s__race-winner": [
+      "bottas",
+      "gasly",
+      "leclerc",
+      "maldonado",
+      "max-verstappen",
+      "norris",
+      "ocon",
+      "perez",
+      "ricciardo",
+      "russell",
+      "sainz"
+    ],
+    "debuted-2010s__podium-finisher": [
+      "albon",
+      "bottas",
+      "gasly",
+      "hulkenberg",
+      "kevin-magnussen",
+      "kvyat",
+      "leclerc",
+      "maldonado",
+      "max-verstappen",
+      "norris",
+      "ocon",
+      "perez",
+      "petrov",
+      "ricciardo",
+      "russell",
+      "sainz",
+      "stroll"
+    ]
+  },
+  "rookie_options": {
+    "teammate-max-verstappen__raced-2020s": [
+      "max-verstappen",
+      "tsunoda",
+      "bottas",
+      "kevin-magnussen",
+      "leclerc",
+      "hulkenberg",
+      "ocon",
+      "stroll"
+    ],
+    "teammate-max-verstappen__race-winner": [
+      "ricciardo",
+      "tsunoda",
+      "sainz",
+      "perez",
+      "albon",
+      "barrichello",
+      "button",
+      "lawson"
+    ],
+    "teammate-max-verstappen__podium-finisher": [
+      "gasly",
+      "lawson",
+      "hadjar",
+      "massa",
+      "tsunoda",
+      "button",
+      "albon",
+      "barrichello"
+    ],
+    "constructor-williams__raced-2020s": [
+      "max-verstappen",
+      "ricciardo",
+      "button",
+      "patrese",
+      "barrichello",
+      "stroll",
+      "perez",
+      "massa"
+    ],
+    "constructor-williams__race-winner": [
+      "perez",
+      "stroll",
+      "barrichello",
+      "max-verstappen",
+      "massa",
+      "ricciardo",
+      "hulkenberg",
+      "heidfeld"
+    ],
+    "constructor-williams__podium-finisher": [
+      "perez",
+      "villeneuve",
+      "coulthard",
+      "sargeant",
+      "max-verstappen",
+      "ricciardo",
+      "colapinto",
+      "latifi"
+    ],
+    "debuted-2010s__raced-2020s": [
+      "maldonado",
+      "tsunoda",
+      "latifi",
+      "kubica",
+      "leclerc",
+      "petrov",
+      "lawson",
+      "kevin-magnussen"
+    ],
+    "debuted-2010s__race-winner": [
+      "bottas",
+      "button",
+      "hulkenberg",
+      "ocon",
+      "kevin-magnussen",
+      "max-verstappen",
+      "barrichello",
+      "stroll"
+    ],
+    "debuted-2010s__podium-finisher": [
+      "coulthard",
+      "barrichello",
+      "massa",
+      "norris",
+      "webber",
+      "patrese",
+      "giovinazzi",
+      "button"
+    ]
+  },
+  "rookie_evidence": {
+    "aitken__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2020,
+      "career_last": 2020
+    },
+    "albon__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": true,
+      "teammate": "Max Verstappen",
+      "constructors": [
+        "Red Bull Racing"
+      ],
+      "spans": [
+        [
+          2019,
+          2020
+        ]
+      ]
+    },
+    "barrichello__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1993,
+      "career_last": 2011
+    },
+    "bottas__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2013,
+      "career_last": 2026
+    },
+    "boutsen__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1983,
+      "career_last": 1993
+    },
+    "brundle__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1984,
+      "career_last": 1996
+    },
+    "button__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2000,
+      "career_last": 2017
+    },
+    "colapinto__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2024,
+      "career_last": 2026
+    },
+    "coulthard__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1994,
+      "career_last": 2008
+    },
+    "damon-hill__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1992,
+      "career_last": 1999
+    },
+    "de-vries__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2022,
+      "career_last": 2023
+    },
+    "frentzen__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1994,
+      "career_last": 2003
+    },
+    "gasly__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": true,
+      "teammate": "Max Verstappen",
+      "constructors": [
+        "Red Bull Racing"
+      ],
+      "spans": [
+        [
+          2019,
+          2019
+        ]
+      ]
+    },
+    "giovinazzi__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2017,
+      "career_last": 2021
+    },
+    "hadjar__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": true,
+      "teammate": "Max Verstappen",
+      "constructors": [
+        "Red Bull Racing"
+      ],
+      "spans": [
+        [
+          2026,
+          2026
+        ]
+      ]
+    },
+    "heidfeld__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2000,
+      "career_last": 2011
+    },
+    "hulkenberg__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2010,
+      "career_last": 2026
+    },
+    "jones__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1975,
+      "career_last": 1986
+    },
+    "keke-rosberg__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1978,
+      "career_last": 1986
+    },
+    "kevin-magnussen__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2014,
+      "career_last": 2024
+    },
+    "kubica__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2006,
+      "career_last": 2021
+    },
+    "kvyat__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2014,
+      "career_last": 2020
+    },
+    "laffite__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1974,
+      "career_last": 1986
+    },
+    "latifi__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2020,
+      "career_last": 2022
+    },
+    "lawson__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": true,
+      "teammate": "Max Verstappen",
+      "constructors": [
+        "Red Bull Racing"
+      ],
+      "spans": [
+        [
+          2025,
+          2025
+        ]
+      ]
+    },
+    "leclerc__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2018,
+      "career_last": 2026
+    },
+    "maldonado__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2011,
+      "career_last": 2015
+    },
+    "mansell__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1980,
+      "career_last": 1995
+    },
+    "mario-andretti__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1968,
+      "career_last": 1982
+    },
+    "massa__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2002,
+      "career_last": 2017
+    },
+    "max-verstappen__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "self_reference": true
+    },
+    "montoya__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2001,
+      "career_last": 2006
+    },
+    "norris__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2019,
+      "career_last": 2026
+    },
+    "ocon__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2016,
+      "career_last": 2026
+    },
+    "patrese__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1977,
+      "career_last": 1993
+    },
+    "perez__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": true,
+      "teammate": "Max Verstappen",
+      "constructors": [
+        "Red Bull Racing"
+      ],
+      "spans": [
+        [
+          2021,
+          2024
+        ]
+      ]
+    },
+    "petrov__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2010,
+      "career_last": 2012
+    },
+    "piquet__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1978,
+      "career_last": 1991
+    },
+    "prost__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1980,
+      "career_last": 1993
+    },
+    "ralf-schumacher__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1997,
+      "career_last": 2007
+    },
+    "regazzoni__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1970,
+      "career_last": 1980
+    },
+    "reutemann__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1972,
+      "career_last": 1982
+    },
+    "ricciardo__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": true,
+      "teammate": "Max Verstappen",
+      "constructors": [
+        "Red Bull Racing"
+      ],
+      "spans": [
+        [
+          2016,
+          2018
+        ]
+      ]
+    },
+    "rosberg__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2006,
+      "career_last": 2016
+    },
+    "russell__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2019,
+      "career_last": 2026
+    },
+    "sainz__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": true,
+      "teammate": "Max Verstappen",
+      "constructors": [
+        "Toro Rosso"
+      ],
+      "spans": [
+        [
+          2015,
+          2016
+        ]
+      ]
+    },
+    "sargeant__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2023,
+      "career_last": 2024
+    },
+    "senna__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1984,
+      "career_last": 1994
+    },
+    "stroll__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2017,
+      "career_last": 2026
+    },
+    "tsunoda__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": true,
+      "teammate": "Max Verstappen",
+      "constructors": [
+        "Red Bull Racing"
+      ],
+      "spans": [
+        [
+          2025,
+          2025
+        ]
+      ]
+    },
+    "villeneuve__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1996,
+      "career_last": 2006
+    },
+    "webber__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 2002,
+      "career_last": 2013
+    },
+    "wurz__teammate-max-verstappen": {
+      "kind": "named_teammate",
+      "satisfied": false,
+      "teammate": "Max Verstappen",
+      "career_first": 1997,
+      "career_last": 2007
+    },
+    "aitken__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2020,
+          2020
+        ]
+      ],
+      "entries": 1
+    },
+    "albon__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2022,
+          2026
+        ]
+      ],
+      "entries": 102
+    },
+    "barrichello__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2010,
+          2011
+        ]
+      ],
+      "entries": 38
+    },
+    "bottas__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2013,
+          2016
+        ]
+      ],
+      "entries": 78
+    },
+    "boutsen__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1989,
+          1990
+        ]
+      ],
+      "entries": 32
+    },
+    "brundle__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1988,
+          1988
+        ]
+      ],
+      "entries": 1
+    },
+    "button__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2000,
+          2000
+        ]
+      ],
+      "entries": 17
+    },
+    "colapinto__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2024,
+          2024
+        ]
+      ],
+      "entries": 9
+    },
+    "coulthard__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1994,
+          1995
+        ]
+      ],
+      "entries": 25
+    },
+    "damon-hill__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1993,
+          1996
+        ]
+      ],
+      "entries": 65
+    },
+    "de-vries__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2022,
+          2022
+        ]
+      ],
+      "entries": 1
+    },
+    "frentzen__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1997,
+          1998
+        ]
+      ],
+      "entries": 33
+    },
+    "gasly__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Williams",
+      "drove_for": [
+        "Alpine",
+        "AlphaTauri",
+        "Toro Rosso"
+      ],
+      "constructor_count": 4
+    },
+    "giovinazzi__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Williams",
+      "drove_for": [
+        "Alfa Romeo",
+        "Sauber"
+      ],
+      "constructor_count": 2
+    },
+    "hadjar__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Williams",
+      "drove_for": [
+        "RB",
+        "Red Bull Racing"
+      ],
+      "constructor_count": 2
+    },
+    "heidfeld__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2005,
+          2005
+        ]
+      ],
+      "entries": 14
+    },
+    "hulkenberg__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2010,
+          2010
+        ]
+      ],
+      "entries": 19
+    },
+    "jones__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1978,
+          1981
+        ]
+      ],
+      "entries": 60
+    },
+    "keke-rosberg__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1982,
+          1985
+        ]
+      ],
+      "entries": 62
+    },
+    "kevin-magnussen__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Williams",
+      "drove_for": [
+        "Haas F1 Team",
+        "Renault",
+        "McLaren"
+      ],
+      "constructor_count": 3
+    },
+    "kubica__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2019,
+          2019
+        ]
+      ],
+      "entries": 21
+    },
+    "kvyat__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Williams",
+      "drove_for": [
+        "Toro Rosso",
+        "Red Bull Racing",
+        "AlphaTauri"
+      ],
+      "constructor_count": 3
+    },
+    "laffite__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1975,
+          1975
+        ],
+        [
+          1983,
+          1984
+        ]
+      ],
+      "entries": 40
+    },
+    "latifi__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2020,
+          2022
+        ]
+      ],
+      "entries": 61
+    },
+    "lawson__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Williams",
+      "drove_for": [
+        "RB",
+        "AlphaTauri",
+        "Red Bull Racing"
+      ],
+      "constructor_count": 3
+    },
+    "leclerc__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Williams",
+      "drove_for": [
+        "Ferrari",
+        "Sauber"
+      ],
+      "constructor_count": 2
+    },
+    "maldonado__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2011,
+          2013
+        ]
+      ],
+      "entries": 58
+    },
+    "mansell__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1985,
+          1988
+        ],
+        [
+          1991,
+          1992
+        ],
+        [
+          1994,
+          1994
+        ]
+      ],
+      "entries": 97
+    },
+    "mario-andretti__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1982,
+          1982
+        ]
+      ],
+      "entries": 1
+    },
+    "massa__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2014,
+          2017
+        ]
+      ],
+      "entries": 78
+    },
+    "max-verstappen__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Williams",
+      "drove_for": [
+        "Red Bull Racing",
+        "Toro Rosso"
+      ],
+      "constructor_count": 2
+    },
+    "montoya__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2001,
+          2004
+        ]
+      ],
+      "entries": 68
+    },
+    "norris__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Williams",
+      "drove_for": [
+        "McLaren"
+      ],
+      "constructor_count": 1
+    },
+    "ocon__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Williams",
+      "drove_for": [
+        "Alpine",
+        "Haas F1 Team",
+        "Force India"
+      ],
+      "constructor_count": 6
+    },
+    "patrese__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1987,
+          1992
+        ]
+      ],
+      "entries": 81
+    },
+    "perez__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Williams",
+      "drove_for": [
+        "Force India",
+        "Red Bull Racing",
+        "Racing Point"
+      ],
+      "constructor_count": 6
+    },
+    "petrov__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Williams",
+      "drove_for": [
+        "Renault",
+        "Caterham"
+      ],
+      "constructor_count": 2
+    },
+    "piquet__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1986,
+          1987
+        ]
+      ],
+      "entries": 32
+    },
+    "prost__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1993,
+          1993
+        ]
+      ],
+      "entries": 16
+    },
+    "ralf-schumacher__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1999,
+          2004
+        ]
+      ],
+      "entries": 94
+    },
+    "regazzoni__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1979,
+          1979
+        ]
+      ],
+      "entries": 15
+    },
+    "reutemann__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1980,
+          1982
+        ]
+      ],
+      "entries": 31
+    },
+    "ricciardo__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Williams",
+      "drove_for": [
+        "Red Bull Racing",
+        "McLaren",
+        "Toro Rosso"
+      ],
+      "constructor_count": 7
+    },
+    "rosberg__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2006,
+          2009
+        ]
+      ],
+      "entries": 70
+    },
+    "russell__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2019,
+          2021
+        ]
+      ],
+      "entries": 59
+    },
+    "sainz__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2025,
+          2026
+        ]
+      ],
+      "entries": 35
+    },
+    "sargeant__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2023,
+          2024
+        ]
+      ],
+      "entries": 36
+    },
+    "senna__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1994,
+          1994
+        ]
+      ],
+      "entries": 3
+    },
+    "stroll__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2017,
+          2018
+        ]
+      ],
+      "entries": 41
+    },
+    "tsunoda__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Williams",
+      "drove_for": [
+        "AlphaTauri",
+        "RB",
+        "Red Bull Racing"
+      ],
+      "constructor_count": 3
+    },
+    "villeneuve__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          1996,
+          1998
+        ]
+      ],
+      "entries": 49
+    },
+    "webber__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2005,
+          2006
+        ]
+      ],
+      "entries": 37
+    },
+    "wurz__constructor-williams": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Williams",
+      "spans": [
+        [
+          2007,
+          2007
+        ]
+      ],
+      "entries": 16
+    },
+    "aitken__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 2020,
+      "debut_event": "Sakhir Grand Prix"
+    },
+    "albon__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2019,
+      "debut_event": "Australian Grand Prix"
+    },
+    "barrichello__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1993,
+      "debut_event": "South African Grand Prix"
+    },
+    "bottas__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2013,
+      "debut_event": "Australian Grand Prix"
+    },
+    "boutsen__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1983,
+      "debut_event": "Belgian Grand Prix"
+    },
+    "brundle__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1984,
+      "debut_event": "Brazilian Grand Prix"
+    },
+    "button__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 2000,
+      "debut_event": "Australian Grand Prix"
+    },
+    "colapinto__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 2024,
+      "debut_event": "Italian Grand Prix"
+    },
+    "coulthard__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1994,
+      "debut_event": "Spanish Grand Prix"
+    },
+    "damon-hill__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1992,
+      "debut_event": "British Grand Prix"
+    },
+    "de-vries__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 2022,
+      "debut_event": "Italian Grand Prix"
+    },
+    "frentzen__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1994,
+      "debut_event": "Brazilian Grand Prix"
+    },
+    "gasly__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2017,
+      "debut_event": "Malaysian Grand Prix"
+    },
+    "giovinazzi__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2017,
+      "debut_event": "Australian Grand Prix"
+    },
+    "hadjar__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 2025,
+      "debut_event": "Australian Grand Prix"
+    },
+    "heidfeld__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 2000,
+      "debut_event": "Australian Grand Prix"
+    },
+    "hulkenberg__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2010,
+      "debut_event": "Bahrain Grand Prix"
+    },
+    "jones__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1975,
+      "debut_event": "Spanish Grand Prix"
+    },
+    "keke-rosberg__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1978,
+      "debut_event": "South African Grand Prix"
+    },
+    "kevin-magnussen__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2014,
+      "debut_event": "Australian Grand Prix"
+    },
+    "kubica__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 2006,
+      "debut_event": "Hungarian Grand Prix"
+    },
+    "kvyat__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2014,
+      "debut_event": "Australian Grand Prix"
+    },
+    "laffite__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1974,
+      "debut_event": "German Grand Prix"
+    },
+    "latifi__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 2020,
+      "debut_event": "Austrian Grand Prix"
+    },
+    "lawson__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 2023,
+      "debut_event": "Dutch Grand Prix"
+    },
+    "leclerc__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2018,
+      "debut_event": "Australian Grand Prix"
+    },
+    "maldonado__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2011,
+      "debut_event": "Australian Grand Prix"
+    },
+    "mansell__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1980,
+      "debut_event": "Austrian Grand Prix"
+    },
+    "mario-andretti__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1968,
+      "debut_event": "United States Grand Prix"
+    },
+    "massa__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 2002,
+      "debut_event": "Australian Grand Prix"
+    },
+    "max-verstappen__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2015,
+      "debut_event": "Australian Grand Prix"
+    },
+    "montoya__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 2001,
+      "debut_event": "Australian Grand Prix"
+    },
+    "norris__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2019,
+      "debut_event": "Australian Grand Prix"
+    },
+    "ocon__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2016,
+      "debut_event": "Belgian Grand Prix"
+    },
+    "patrese__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1977,
+      "debut_event": "Monaco Grand Prix"
+    },
+    "perez__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2011,
+      "debut_event": "Australian Grand Prix"
+    },
+    "petrov__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2010,
+      "debut_event": "Bahrain Grand Prix"
+    },
+    "piquet__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1978,
+      "debut_event": "German Grand Prix"
+    },
+    "prost__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1980,
+      "debut_event": "Argentine Grand Prix"
+    },
+    "ralf-schumacher__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1997,
+      "debut_event": "Australian Grand Prix"
+    },
+    "regazzoni__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1970,
+      "debut_event": "Dutch Grand Prix"
+    },
+    "reutemann__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1972,
+      "debut_event": "Argentine Grand Prix"
+    },
+    "ricciardo__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2011,
+      "debut_event": "British Grand Prix"
+    },
+    "rosberg__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 2006,
+      "debut_event": "Bahrain Grand Prix"
+    },
+    "russell__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2019,
+      "debut_event": "Australian Grand Prix"
+    },
+    "sainz__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2015,
+      "debut_event": "Australian Grand Prix"
+    },
+    "sargeant__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 2023,
+      "debut_event": "Bahrain Grand Prix"
+    },
+    "senna__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1984,
+      "debut_event": "Brazilian Grand Prix"
+    },
+    "stroll__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": true,
+      "decade": 2010,
+      "debut_year": 2017,
+      "debut_event": "Australian Grand Prix"
+    },
+    "tsunoda__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 2021,
+      "debut_event": "Bahrain Grand Prix"
+    },
+    "villeneuve__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1996,
+      "debut_event": "Australian Grand Prix"
+    },
+    "webber__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 2002,
+      "debut_event": "Australian Grand Prix"
+    },
+    "wurz__debuted-2010s": {
+      "kind": "debut_decade",
+      "satisfied": false,
+      "decade": 2010,
+      "debut_year": 1997,
+      "debut_event": "Canadian Grand Prix"
+    },
+    "aitken__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2020,
+      "entries": 1
+    },
+    "albon__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 119
+    },
+    "barrichello__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1993,
+      "career_last": 2011
+    },
+    "bottas__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 118
+    },
+    "boutsen__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1983,
+      "career_last": 1993
+    },
+    "brundle__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1984,
+      "career_last": 1996
+    },
+    "button__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 2000,
+      "career_last": 2017
+    },
+    "colapinto__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2024,
+      "last_year": 2026,
+      "entries": 38
+    },
+    "coulthard__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1994,
+      "career_last": 2008
+    },
+    "damon-hill__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1992,
+      "career_last": 1999
+    },
+    "de-vries__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2022,
+      "last_year": 2023,
+      "entries": 11
+    },
+    "frentzen__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1994,
+      "career_last": 2003
+    },
+    "gasly__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 142
+    },
+    "giovinazzi__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2021,
+      "entries": 39
+    },
+    "hadjar__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2025,
+      "last_year": 2026,
+      "entries": 35
+    },
+    "heidfeld__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 2000,
+      "career_last": 2011
+    },
+    "hulkenberg__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 86
+    },
+    "jones__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1975,
+      "career_last": 1986
+    },
+    "keke-rosberg__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1978,
+      "career_last": 1986
+    },
+    "kevin-magnussen__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2024,
+      "entries": 83
+    },
+    "kubica__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2021,
+      "last_year": 2021,
+      "entries": 2
+    },
+    "kvyat__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2020,
+      "entries": 17
+    },
+    "laffite__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1974,
+      "career_last": 1986
+    },
+    "latifi__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2022,
+      "entries": 61
+    },
+    "lawson__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2023,
+      "last_year": 2026,
+      "entries": 46
+    },
+    "leclerc__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 142
+    },
+    "maldonado__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 2011,
+      "career_last": 2015
+    },
+    "mansell__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1980,
+      "career_last": 1995
+    },
+    "mario-andretti__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1968,
+      "career_last": 1982
+    },
+    "massa__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 2002,
+      "career_last": 2017
+    },
+    "max-verstappen__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 142
+    },
+    "montoya__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 2001,
+      "career_last": 2006
+    },
+    "norris__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 142
+    },
+    "ocon__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 141
+    },
+    "patrese__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1977,
+      "career_last": 1993
+    },
+    "perez__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 116
+    },
+    "petrov__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 2010,
+      "career_last": 2012
+    },
+    "piquet__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1978,
+      "career_last": 1991
+    },
+    "prost__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1980,
+      "career_last": 1993
+    },
+    "ralf-schumacher__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1997,
+      "career_last": 2007
+    },
+    "regazzoni__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1970,
+      "career_last": 1980
+    },
+    "reutemann__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1972,
+      "career_last": 1982
+    },
+    "ricciardo__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2024,
+      "entries": 86
+    },
+    "rosberg__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 2006,
+      "career_last": 2016
+    },
+    "russell__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 142
+    },
+    "sainz__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 141
+    },
+    "sargeant__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2023,
+      "last_year": 2024,
+      "entries": 36
+    },
+    "senna__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1984,
+      "career_last": 1994
+    },
+    "stroll__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 140
+    },
+    "tsunoda__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2021,
+      "last_year": 2025,
+      "entries": 114
+    },
+    "villeneuve__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1996,
+      "career_last": 2006
+    },
+    "webber__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 2002,
+      "career_last": 2013
+    },
+    "wurz__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1997,
+      "career_last": 2007
+    },
+    "aitken__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 16,
+      "best_finish_race": {
+        "year": 2020,
+        "event": "Sakhir Grand Prix"
+      }
+    },
+    "albon__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 3,
+      "best_finish_race": {
+        "year": 2020,
+        "event": "Tuscan Grand Prix"
+      }
+    },
+    "barrichello__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 11,
+      "first_win": {
+        "year": 2000,
+        "event": "German Grand Prix"
+      }
+    },
+    "bottas__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 10,
+      "first_win": {
+        "year": 2017,
+        "event": "Russian Grand Prix"
+      }
+    },
+    "boutsen__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 3,
+      "first_win": {
+        "year": 1989,
+        "event": "Canadian Grand Prix"
+      }
+    },
+    "brundle__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 2,
+      "best_finish_race": {
+        "year": 1992,
+        "event": "Italian Grand Prix"
+      }
+    },
+    "button__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 15,
+      "first_win": {
+        "year": 2006,
+        "event": "Hungarian Grand Prix"
+      }
+    },
+    "colapinto__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 6,
+      "best_finish_race": {
+        "year": 2026,
+        "event": "Canadian Grand Prix"
+      }
+    },
+    "coulthard__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 13,
+      "first_win": {
+        "year": 1995,
+        "event": "Portuguese Grand Prix"
+      }
+    },
+    "damon-hill__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 22,
+      "first_win": {
+        "year": 1993,
+        "event": "Hungarian Grand Prix"
+      }
+    },
+    "de-vries__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 9,
+      "best_finish_race": {
+        "year": 2022,
+        "event": "Italian Grand Prix"
+      }
+    },
+    "frentzen__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 3,
+      "first_win": {
+        "year": 1997,
+        "event": "San Marino Grand Prix"
+      }
+    },
+    "gasly__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 1,
+      "first_win": {
+        "year": 2020,
+        "event": "Italian Grand Prix"
+      }
+    },
+    "giovinazzi__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 5,
+      "best_finish_race": {
+        "year": 2019,
+        "event": "Brazilian Grand Prix"
+      }
+    },
+    "hadjar__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 3,
+      "best_finish_race": {
+        "year": 2025,
+        "event": "Dutch Grand Prix"
+      }
+    },
+    "heidfeld__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 2,
+      "best_finish_race": {
+        "year": 2005,
+        "event": "Monaco Grand Prix"
+      }
+    },
+    "hulkenberg__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 3,
+      "best_finish_race": {
+        "year": 2025,
+        "event": "British Grand Prix"
+      }
+    },
+    "jones__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 12,
+      "first_win": {
+        "year": 1977,
+        "event": "Austrian Grand Prix"
+      }
+    },
+    "keke-rosberg__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 5,
+      "first_win": {
+        "year": 1982,
+        "event": "Swiss Grand Prix"
+      }
+    },
+    "kevin-magnussen__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 2,
+      "best_finish_race": {
+        "year": 2014,
+        "event": "Australian Grand Prix"
+      }
+    },
+    "kubica__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 1,
+      "first_win": {
+        "year": 2008,
+        "event": "Canadian Grand Prix"
+      }
+    },
+    "kvyat__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 2,
+      "best_finish_race": {
+        "year": 2015,
+        "event": "Hungarian Grand Prix"
+      }
+    },
+    "laffite__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 6,
+      "first_win": {
+        "year": 1977,
+        "event": "Swedish Grand Prix"
+      }
+    },
+    "latifi__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 7,
+      "best_finish_race": {
+        "year": 2021,
+        "event": "Hungarian Grand Prix"
+      }
+    },
+    "lawson__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 5,
+      "best_finish_race": {
+        "year": 2025,
+        "event": "Azerbaijan Grand Prix"
+      }
+    },
+    "leclerc__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 9,
+      "first_win": {
+        "year": 2019,
+        "event": "Belgian Grand Prix"
+      }
+    },
+    "maldonado__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 1,
+      "first_win": {
+        "year": 2012,
+        "event": "Spanish Grand Prix"
+      }
+    },
+    "mansell__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 31,
+      "first_win": {
+        "year": 1985,
+        "event": "European Grand Prix"
+      }
+    },
+    "mario-andretti__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 12,
+      "first_win": {
+        "year": 1971,
+        "event": "South African Grand Prix"
+      }
+    },
+    "massa__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 11,
+      "first_win": {
+        "year": 2006,
+        "event": "Turkish Grand Prix"
+      }
+    },
+    "max-verstappen__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 71,
+      "first_win": {
+        "year": 2016,
+        "event": "Spanish Grand Prix"
+      }
+    },
+    "montoya__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 7,
+      "first_win": {
+        "year": 2001,
+        "event": "Italian Grand Prix"
+      }
+    },
+    "norris__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 12,
+      "first_win": {
+        "year": 2024,
+        "event": "Miami Grand Prix"
+      }
+    },
+    "ocon__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 1,
+      "first_win": {
+        "year": 2021,
+        "event": "Hungarian Grand Prix"
+      }
+    },
+    "patrese__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 6,
+      "first_win": {
+        "year": 1982,
+        "event": "Monaco Grand Prix"
+      }
+    },
+    "perez__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 6,
+      "first_win": {
+        "year": 2020,
+        "event": "Sakhir Grand Prix"
+      }
+    },
+    "petrov__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 3,
+      "best_finish_race": {
+        "year": 2011,
+        "event": "Australian Grand Prix"
+      }
+    },
+    "piquet__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 23,
+      "first_win": {
+        "year": 1980,
+        "event": "United States Grand Prix West"
+      }
+    },
+    "prost__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 51,
+      "first_win": {
+        "year": 1981,
+        "event": "French Grand Prix"
+      }
+    },
+    "ralf-schumacher__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 6,
+      "first_win": {
+        "year": 2001,
+        "event": "San Marino Grand Prix"
+      }
+    },
+    "regazzoni__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 5,
+      "first_win": {
+        "year": 1970,
+        "event": "Italian Grand Prix"
+      }
+    },
+    "reutemann__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 12,
+      "first_win": {
+        "year": 1974,
+        "event": "South African Grand Prix"
+      }
+    },
+    "ricciardo__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 8,
+      "first_win": {
+        "year": 2014,
+        "event": "Canadian Grand Prix"
+      }
+    },
+    "rosberg__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 23,
+      "first_win": {
+        "year": 2012,
+        "event": "Chinese Grand Prix"
+      }
+    },
+    "russell__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 7,
+      "first_win": {
+        "year": 2022,
+        "event": "S\u00e3o Paulo Grand Prix"
+      }
+    },
+    "sainz__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 4,
+      "first_win": {
+        "year": 2022,
+        "event": "British Grand Prix"
+      }
+    },
+    "sargeant__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 10,
+      "best_finish_race": {
+        "year": 2023,
+        "event": "United States Grand Prix"
+      }
+    },
+    "senna__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 41,
+      "first_win": {
+        "year": 1985,
+        "event": "Portuguese Grand Prix"
+      }
+    },
+    "stroll__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 3,
+      "best_finish_race": {
+        "year": 2017,
+        "event": "Azerbaijan Grand Prix"
+      }
+    },
+    "tsunoda__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 4,
+      "best_finish_race": {
+        "year": 2021,
+        "event": "Abu Dhabi Grand Prix"
+      }
+    },
+    "villeneuve__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 11,
+      "first_win": {
+        "year": 1996,
+        "event": "European Grand Prix"
+      }
+    },
+    "webber__race-winner": {
+      "kind": "race_winner",
+      "satisfied": true,
+      "wins": 9,
+      "first_win": {
+        "year": 2009,
+        "event": "German Grand Prix"
+      }
+    },
+    "wurz__race-winner": {
+      "kind": "race_winner",
+      "satisfied": false,
+      "wins": 0,
+      "best_finish": 3,
+      "best_finish_race": {
+        "year": 1997,
+        "event": "British Grand Prix"
+      }
+    },
+    "aitken__podium-finisher": {
+      "kind": "podium",
+      "satisfied": false,
+      "podiums": 0,
+      "best_finish": 16,
+      "best_finish_race": {
+        "year": 2020,
+        "event": "Sakhir Grand Prix"
+      }
+    },
+    "albon__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 2,
+      "first_podium": {
+        "year": 2020,
+        "event": "Tuscan Grand Prix"
+      }
+    },
+    "barrichello__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 68,
+      "first_podium": {
+        "year": 1994,
+        "event": "Pacific Grand Prix"
+      }
+    },
+    "bottas__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 67,
+      "first_podium": {
+        "year": 2014,
+        "event": "Austrian Grand Prix"
+      }
+    },
+    "boutsen__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 15,
+      "first_podium": {
+        "year": 1985,
+        "event": "San Marino Grand Prix"
+      }
+    },
+    "brundle__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 9,
+      "first_podium": {
+        "year": 1992,
+        "event": "French Grand Prix"
+      }
+    },
+    "button__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 50,
+      "first_podium": {
+        "year": 2004,
+        "event": "Malaysian Grand Prix"
+      }
+    },
+    "colapinto__podium-finisher": {
+      "kind": "podium",
+      "satisfied": false,
+      "podiums": 0,
+      "best_finish": 6,
+      "best_finish_race": {
+        "year": 2026,
+        "event": "Canadian Grand Prix"
+      }
+    },
+    "coulthard__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 62,
+      "first_podium": {
+        "year": 1994,
+        "event": "Portuguese Grand Prix"
+      }
+    },
+    "damon-hill__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 42,
+      "first_podium": {
+        "year": 1993,
+        "event": "Brazilian Grand Prix"
+      }
+    },
+    "de-vries__podium-finisher": {
+      "kind": "podium",
+      "satisfied": false,
+      "podiums": 0,
+      "best_finish": 9,
+      "best_finish_race": {
+        "year": 2022,
+        "event": "Italian Grand Prix"
+      }
+    },
+    "frentzen__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 18,
+      "first_podium": {
+        "year": 1995,
+        "event": "Italian Grand Prix"
+      }
+    },
+    "gasly__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 6,
+      "first_podium": {
+        "year": 2019,
+        "event": "Brazilian Grand Prix"
+      }
+    },
+    "giovinazzi__podium-finisher": {
+      "kind": "podium",
+      "satisfied": false,
+      "podiums": 0,
+      "best_finish": 5,
+      "best_finish_race": {
+        "year": 2019,
+        "event": "Brazilian Grand Prix"
+      }
+    },
+    "hadjar__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 1,
+      "first_podium": {
+        "year": 2025,
+        "event": "Dutch Grand Prix"
+      }
+    },
+    "heidfeld__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 13,
+      "first_podium": {
+        "year": 2001,
+        "event": "Brazilian Grand Prix"
+      }
+    },
+    "hulkenberg__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 1,
+      "first_podium": {
+        "year": 2025,
+        "event": "British Grand Prix"
+      }
+    },
+    "jones__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 24,
+      "first_podium": {
+        "year": 1977,
+        "event": "Austrian Grand Prix"
+      }
+    },
+    "keke-rosberg__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 17,
+      "first_podium": {
+        "year": 1980,
+        "event": "Argentine Grand Prix"
+      }
+    },
+    "kevin-magnussen__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 1,
+      "first_podium": {
+        "year": 2014,
+        "event": "Australian Grand Prix"
+      }
+    },
+    "kubica__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 12,
+      "first_podium": {
+        "year": 2006,
+        "event": "Italian Grand Prix"
+      }
+    },
+    "kvyat__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 3,
+      "first_podium": {
+        "year": 2015,
+        "event": "Hungarian Grand Prix"
+      }
+    },
+    "laffite__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 33,
+      "first_podium": {
+        "year": 1975,
+        "event": "German Grand Prix"
+      }
+    },
+    "latifi__podium-finisher": {
+      "kind": "podium",
+      "satisfied": false,
+      "podiums": 0,
+      "best_finish": 7,
+      "best_finish_race": {
+        "year": 2021,
+        "event": "Hungarian Grand Prix"
+      }
+    },
+    "lawson__podium-finisher": {
+      "kind": "podium",
+      "satisfied": false,
+      "podiums": 0,
+      "best_finish": 5,
+      "best_finish_race": {
+        "year": 2025,
+        "event": "Azerbaijan Grand Prix"
+      }
+    },
+    "leclerc__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 54,
+      "first_podium": {
+        "year": 2019,
+        "event": "Bahrain Grand Prix"
+      }
+    },
+    "maldonado__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 1,
+      "first_podium": {
+        "year": 2012,
+        "event": "Spanish Grand Prix"
+      }
+    },
+    "mansell__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 59,
+      "first_podium": {
+        "year": 1981,
+        "event": "Belgian Grand Prix"
+      }
+    },
+    "mario-andretti__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 19,
+      "first_podium": {
+        "year": 1970,
+        "event": "Spanish Grand Prix"
+      }
+    },
+    "massa__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 41,
+      "first_podium": {
+        "year": 2006,
+        "event": "European Grand Prix"
+      }
+    },
+    "max-verstappen__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 131,
+      "first_podium": {
+        "year": 2016,
+        "event": "Spanish Grand Prix"
+      }
+    },
+    "montoya__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 30,
+      "first_podium": {
+        "year": 2001,
+        "event": "Spanish Grand Prix"
+      }
+    },
+    "norris__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 47,
+      "first_podium": {
+        "year": 2020,
+        "event": "Austrian Grand Prix"
+      }
+    },
+    "ocon__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 4,
+      "first_podium": {
+        "year": 2020,
+        "event": "Sakhir Grand Prix"
+      }
+    },
+    "patrese__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 37,
+      "first_podium": {
+        "year": 1978,
+        "event": "Swedish Grand Prix"
+      }
+    },
+    "perez__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 39,
+      "first_podium": {
+        "year": 2012,
+        "event": "Malaysian Grand Prix"
+      }
+    },
+    "petrov__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 1,
+      "first_podium": {
+        "year": 2011,
+        "event": "Australian Grand Prix"
+      }
+    },
+    "piquet__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 60,
+      "first_podium": {
+        "year": 1980,
+        "event": "Argentine Grand Prix"
+      }
+    },
+    "prost__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 106,
+      "first_podium": {
+        "year": 1981,
+        "event": "Argentine Grand Prix"
+      }
+    },
+    "ralf-schumacher__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 27,
+      "first_podium": {
+        "year": 1997,
+        "event": "Argentine Grand Prix"
+      }
+    },
+    "regazzoni__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 28,
+      "first_podium": {
+        "year": 1970,
+        "event": "Austrian Grand Prix"
+      }
+    },
+    "reutemann__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 45,
+      "first_podium": {
+        "year": 1973,
+        "event": "French Grand Prix"
+      }
+    },
+    "ricciardo__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 32,
+      "first_podium": {
+        "year": 2014,
+        "event": "Spanish Grand Prix"
+      }
+    },
+    "rosberg__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 57,
+      "first_podium": {
+        "year": 2008,
+        "event": "Australian Grand Prix"
+      }
+    },
+    "russell__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 29,
+      "first_podium": {
+        "year": 2021,
+        "event": "Belgian Grand Prix"
+      }
+    },
+    "sainz__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 29,
+      "first_podium": {
+        "year": 2019,
+        "event": "Brazilian Grand Prix"
+      }
+    },
+    "sargeant__podium-finisher": {
+      "kind": "podium",
+      "satisfied": false,
+      "podiums": 0,
+      "best_finish": 10,
+      "best_finish_race": {
+        "year": 2023,
+        "event": "United States Grand Prix"
+      }
+    },
+    "senna__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 80,
+      "first_podium": {
+        "year": 1984,
+        "event": "Monaco Grand Prix"
+      }
+    },
+    "stroll__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 3,
+      "first_podium": {
+        "year": 2017,
+        "event": "Azerbaijan Grand Prix"
+      }
+    },
+    "tsunoda__podium-finisher": {
+      "kind": "podium",
+      "satisfied": false,
+      "podiums": 0,
+      "best_finish": 4,
+      "best_finish_race": {
+        "year": 2021,
+        "event": "Abu Dhabi Grand Prix"
+      }
+    },
+    "villeneuve__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 23,
+      "first_podium": {
+        "year": 1996,
+        "event": "Australian Grand Prix"
+      }
+    },
+    "webber__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 42,
+      "first_podium": {
+        "year": 2005,
+        "event": "Monaco Grand Prix"
+      }
+    },
+    "wurz__podium-finisher": {
+      "kind": "podium",
+      "satisfied": true,
+      "podiums": 3,
+      "first_podium": {
+        "year": 1997,
+        "event": "British Grand Prix"
+      }
+    }
   }
 }

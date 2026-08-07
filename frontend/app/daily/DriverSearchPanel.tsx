@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useEffect, useRef, useState } from "react";
 import DriverHeadshot from "@/components/entities/DriverHeadshot";
 import { Input } from "@/components/ui/Input";
+import type { GridAttempt } from "@/hooks/useDailyGridProgress";
 import { findGameDrivers } from "@/lib/dailyGridDriverSearch";
 import { getDriverHeadshotUrl } from "@/lib/entityImageOverrides";
 import {
@@ -18,7 +19,7 @@ type DriverSearchPanelProps = {
   catalogLoading: boolean;
   columnLabel: string;
   loading: boolean;
-  misses: GameDriver[];
+  misses: GridAttempt[];
   onClose: () => void;
   onSubmit: (driver: GameDriver) => Promise<boolean>;
   placedDriverSlugs: Set<string>;
@@ -95,7 +96,9 @@ export default function DriverSearchPanel({
             {misses.length > 0 && (
               <p className="mt-1 truncate text-[10px] text-text-muted">
                 Previous:{" "}
-                {misses.map((miss) => `not ${miss.full_name}`).join(" · ")}
+                {misses
+                  .map((miss) => `not ${miss.driver.full_name}`)
+                  .join(" · ")}
               </p>
             )}
           </div>

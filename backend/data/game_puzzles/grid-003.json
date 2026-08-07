@@ -10,24 +10,44 @@
       "label": "Sprint winner",
       "prompt_label": "Sprint Winner",
       "description": "Won an official Formula 1 sprint",
-      "visual": { "kind": "text", "value": "Sprint Winner" },
-      "predicate": { "kind": "sprint_winner", "version": 1 }
+      "visual": {
+        "kind": "text",
+        "value": "Sprint Winner"
+      },
+      "predicate": {
+        "kind": "sprint_winner",
+        "version": 1
+      }
     },
     {
       "id": "nationality-gbr",
       "label": "British driver",
       "prompt_label": "British Driver",
       "description": "Has canonical British sporting nationality",
-      "visual": { "kind": "nationality", "value": "GBR" },
-      "predicate": { "kind": "nationality", "value": "GBR", "version": 1 }
+      "visual": {
+        "kind": "nationality",
+        "value": "GBR"
+      },
+      "predicate": {
+        "kind": "nationality",
+        "value": "GBR",
+        "version": 1
+      }
     },
     {
       "id": "constructor-red-bull",
       "label": "Red Bull",
       "prompt_label": "Red Bull Driver",
       "description": "Entered a World Championship race for Red Bull",
-      "visual": { "kind": "constructor", "value": "Red Bull" },
-      "predicate": { "kind": "constructor", "value": "red-bull", "version": 1 }
+      "visual": {
+        "kind": "constructor",
+        "value": "Red Bull"
+      },
+      "predicate": {
+        "kind": "constructor",
+        "value": "red-bull",
+        "version": 1
+      }
     }
   ],
   "columns": [
@@ -35,36 +55,2084 @@
       "id": "raced-2020s",
       "label": "Raced in the 2020s",
       "prompt_label": "Raced in the 2020s",
-      "description": "Appeared in a World Championship race from 2020–2029",
-      "visual": { "kind": "text", "value": "Raced in the 2020s" },
-      "predicate": { "kind": "race_decade", "value": 2020, "version": 1 }
+      "description": "Appeared in a World Championship race from 2020\u20132029",
+      "visual": {
+        "kind": "text",
+        "value": "Raced in the 2020s"
+      },
+      "predicate": {
+        "kind": "race_decade",
+        "value": 2020,
+        "version": 1
+      }
     },
     {
       "id": "won-from-p6-plus",
       "label": "Won from P6+",
       "prompt_label": "Won from P6+",
       "description": "Won a race after starting sixth or lower",
-      "visual": { "kind": "text", "value": "Won from P6+" },
-      "predicate": { "kind": "win_from_grid", "minimum": 6, "version": 1 }
+      "visual": {
+        "kind": "text",
+        "value": "Won from P6+"
+      },
+      "predicate": {
+        "kind": "win_from_grid",
+        "minimum": 6,
+        "version": 1
+      }
     },
     {
       "id": "race-entries-100",
       "label": "100+ race entries",
       "prompt_label": "100+ Race Entries",
       "description": "Appeared in at least 100 World Championship race results",
-      "visual": { "kind": "text", "value": "100+ Race Entries" },
-      "predicate": { "kind": "race_entries", "minimum": 100, "version": 1 }
+      "visual": {
+        "kind": "text",
+        "value": "100+ Race Entries"
+      },
+      "predicate": {
+        "kind": "race_entries",
+        "minimum": 100,
+        "version": 1
+      }
     }
   ],
   "answers": {
-    "sprint-winner__raced-2020s": ["antonelli", "bottas", "hamilton", "max-verstappen", "norris", "perez", "piastri", "russell"],
-    "sprint-winner__won-from-p6-plus": ["hamilton", "max-verstappen", "perez"],
-    "sprint-winner__race-entries-100": ["bottas", "hamilton", "max-verstappen", "norris", "perez", "russell"],
-    "nationality-gbr__raced-2020s": ["aitken", "arvid-lindblad", "bearman", "hamilton", "norris", "russell"],
-    "nationality-gbr__won-from-p6-plus": ["button", "clark", "collins", "coulthard", "gethin", "hamilton", "hawthorn", "herbert", "hill", "ireland", "irvine", "mansell", "moss", "stewart", "surtees", "watson"],
-    "nationality-gbr__race-entries-100": ["brundle", "button", "coulthard", "damon-hill", "hamilton", "herbert", "hill", "irvine", "mansell", "norris", "russell", "stewart", "surtees", "warwick", "watson"],
-    "constructor-red-bull__raced-2020s": ["albon", "gasly", "hadjar", "kvyat", "lawson", "max-verstappen", "perez", "ricciardo", "tsunoda", "vettel"],
-    "constructor-red-bull__won-from-p6-plus": ["coulthard", "gasly", "max-verstappen", "perez", "ricciardo"],
-    "constructor-red-bull__race-entries-100": ["albon", "coulthard", "gasly", "kvyat", "max-verstappen", "perez", "ricciardo", "tsunoda", "vettel", "webber"]
+    "sprint-winner__raced-2020s": [
+      "antonelli",
+      "bottas",
+      "hamilton",
+      "max-verstappen",
+      "norris",
+      "perez",
+      "piastri",
+      "russell"
+    ],
+    "sprint-winner__won-from-p6-plus": [
+      "hamilton",
+      "max-verstappen",
+      "perez"
+    ],
+    "sprint-winner__race-entries-100": [
+      "bottas",
+      "hamilton",
+      "max-verstappen",
+      "norris",
+      "perez",
+      "russell"
+    ],
+    "nationality-gbr__raced-2020s": [
+      "aitken",
+      "arvid-lindblad",
+      "bearman",
+      "hamilton",
+      "norris",
+      "russell"
+    ],
+    "nationality-gbr__won-from-p6-plus": [
+      "button",
+      "clark",
+      "collins",
+      "coulthard",
+      "gethin",
+      "hamilton",
+      "hawthorn",
+      "herbert",
+      "hill",
+      "ireland",
+      "irvine",
+      "mansell",
+      "moss",
+      "stewart",
+      "surtees",
+      "watson"
+    ],
+    "nationality-gbr__race-entries-100": [
+      "brundle",
+      "button",
+      "coulthard",
+      "damon-hill",
+      "hamilton",
+      "herbert",
+      "hill",
+      "irvine",
+      "mansell",
+      "norris",
+      "russell",
+      "stewart",
+      "surtees",
+      "warwick",
+      "watson"
+    ],
+    "constructor-red-bull__raced-2020s": [
+      "albon",
+      "gasly",
+      "hadjar",
+      "kvyat",
+      "lawson",
+      "max-verstappen",
+      "perez",
+      "ricciardo",
+      "tsunoda",
+      "vettel"
+    ],
+    "constructor-red-bull__won-from-p6-plus": [
+      "coulthard",
+      "gasly",
+      "max-verstappen",
+      "perez",
+      "ricciardo"
+    ],
+    "constructor-red-bull__race-entries-100": [
+      "albon",
+      "coulthard",
+      "gasly",
+      "kvyat",
+      "max-verstappen",
+      "perez",
+      "ricciardo",
+      "tsunoda",
+      "vettel",
+      "webber"
+    ]
+  },
+  "rookie_options": {
+    "sprint-winner__raced-2020s": [
+      "albon",
+      "tsunoda",
+      "ricciardo",
+      "kvyat",
+      "antonelli",
+      "gasly",
+      "vettel",
+      "piastri"
+    ],
+    "sprint-winner__won-from-p6-plus": [
+      "ricciardo",
+      "perez",
+      "max-verstappen",
+      "russell",
+      "hamilton",
+      "button",
+      "bottas",
+      "norris"
+    ],
+    "sprint-winner__race-entries-100": [
+      "button",
+      "webber",
+      "bottas",
+      "vettel",
+      "piastri",
+      "antonelli",
+      "ricciardo",
+      "coulthard"
+    ],
+    "nationality-gbr__raced-2020s": [
+      "norris",
+      "coulthard",
+      "mansell",
+      "button",
+      "russell",
+      "perez",
+      "vettel",
+      "bottas"
+    ],
+    "nationality-gbr__won-from-p6-plus": [
+      "brundle",
+      "russell",
+      "perez",
+      "ricciardo",
+      "norris",
+      "irvine",
+      "warwick",
+      "max-verstappen"
+    ],
+    "nationality-gbr__race-entries-100": [
+      "vettel",
+      "ireland",
+      "perez",
+      "moss",
+      "button",
+      "mansell",
+      "brundle",
+      "clark"
+    ],
+    "constructor-red-bull__raced-2020s": [
+      "norris",
+      "webber",
+      "bottas",
+      "albon",
+      "coulthard",
+      "vettel",
+      "gasly",
+      "hamilton"
+    ],
+    "constructor-red-bull__won-from-p6-plus": [
+      "hamilton",
+      "vettel",
+      "button",
+      "coulthard",
+      "ricciardo",
+      "mansell",
+      "webber",
+      "albon"
+    ],
+    "constructor-red-bull__race-entries-100": [
+      "tsunoda",
+      "button",
+      "hamilton",
+      "bottas",
+      "lawson",
+      "kvyat",
+      "webber",
+      "hadjar"
+    ]
+  },
+  "rookie_evidence": {
+    "aitken__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "albon__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 25
+    },
+    "antonelli__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": true,
+      "sprint_wins": 1,
+      "first_win": {
+        "year": 2026,
+        "event": "British Grand Prix"
+      }
+    },
+    "arvid-lindblad__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 4
+    },
+    "bearman__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 11
+    },
+    "bottas__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": true,
+      "sprint_wins": 2,
+      "first_win": {
+        "year": 2021,
+        "event": "Italian Grand Prix"
+      }
+    },
+    "brundle__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "button__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "clark__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "collins__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "coulthard__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "damon-hill__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "gasly__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 28
+    },
+    "gethin__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "hadjar__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 10
+    },
+    "hamilton__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": true,
+      "sprint_wins": 1,
+      "first_win": {
+        "year": 2025,
+        "event": "Chinese Grand Prix"
+      }
+    },
+    "hawthorn__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "herbert__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "hill__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "ireland__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "irvine__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "kvyat__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "lawson__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 14
+    },
+    "mansell__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "max-verstappen__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": true,
+      "sprint_wins": 13,
+      "first_win": {
+        "year": 2021,
+        "event": "British Grand Prix"
+      }
+    },
+    "moss__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "norris__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": true,
+      "sprint_wins": 4,
+      "first_win": {
+        "year": 2024,
+        "event": "S\u00e3o Paulo Grand Prix"
+      }
+    },
+    "perez__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": true,
+      "sprint_wins": 1,
+      "first_win": {
+        "year": 2023,
+        "event": "Azerbaijan Grand Prix"
+      }
+    },
+    "piastri__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": true,
+      "sprint_wins": 3,
+      "first_win": {
+        "year": 2023,
+        "event": "Qatar Grand Prix"
+      }
+    },
+    "ricciardo__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 12
+    },
+    "russell__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": true,
+      "sprint_wins": 3,
+      "first_win": {
+        "year": 2022,
+        "event": "S\u00e3o Paulo Grand Prix"
+      }
+    },
+    "stewart__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "surtees__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "tsunoda__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 24
+    },
+    "vettel__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 6
+    },
+    "warwick__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "watson__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "webber__sprint-winner": {
+      "kind": "sprint_winner",
+      "satisfied": false,
+      "sprint_wins": 0,
+      "sprint_entries": 0
+    },
+    "aitken__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "albon__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": false,
+      "country_code": "THA",
+      "required": "GBR"
+    },
+    "antonelli__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": false,
+      "country_code": "ITA",
+      "required": "GBR"
+    },
+    "arvid-lindblad__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "bearman__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "bottas__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": false,
+      "country_code": "FIN",
+      "required": "GBR"
+    },
+    "brundle__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "button__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "clark__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "collins__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "coulthard__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "damon-hill__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "gasly__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": false,
+      "country_code": "FRA",
+      "required": "GBR"
+    },
+    "gethin__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "hadjar__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": false,
+      "country_code": "FRA",
+      "required": "GBR"
+    },
+    "hamilton__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "hawthorn__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "herbert__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "hill__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "ireland__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "irvine__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "kvyat__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": false,
+      "country_code": "RUS",
+      "required": "GBR"
+    },
+    "lawson__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": false,
+      "country_code": "NZL",
+      "required": "GBR"
+    },
+    "mansell__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "max-verstappen__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": false,
+      "country_code": "NED",
+      "required": "GBR"
+    },
+    "moss__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "norris__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "perez__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": false,
+      "country_code": "MEX",
+      "required": "GBR"
+    },
+    "piastri__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": false,
+      "country_code": "AUS",
+      "required": "GBR"
+    },
+    "ricciardo__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": false,
+      "country_code": "AUS",
+      "required": "GBR"
+    },
+    "russell__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "stewart__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "surtees__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "tsunoda__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": false,
+      "country_code": "JPN",
+      "required": "GBR"
+    },
+    "vettel__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": false,
+      "country_code": "GER",
+      "required": "GBR"
+    },
+    "warwick__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "watson__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": true,
+      "country_code": "GBR",
+      "required": "GBR"
+    },
+    "webber__nationality-gbr": {
+      "kind": "nationality",
+      "satisfied": false,
+      "country_code": "AUS",
+      "required": "GBR"
+    },
+    "aitken__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Williams"
+      ],
+      "constructor_count": 1
+    },
+    "albon__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Red Bull Racing",
+      "spans": [
+        [
+          2019,
+          2020
+        ]
+      ],
+      "entries": 26
+    },
+    "antonelli__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Mercedes"
+      ],
+      "constructor_count": 1
+    },
+    "arvid-lindblad__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "RB"
+      ],
+      "constructor_count": 1
+    },
+    "bearman__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Haas F1 Team",
+        "Ferrari"
+      ],
+      "constructor_count": 2
+    },
+    "bottas__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Mercedes",
+        "Williams",
+        "Alfa Romeo"
+      ],
+      "constructor_count": 5
+    },
+    "brundle__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Tyrrell",
+        "Brabham",
+        "Ligier"
+      ],
+      "constructor_count": 8
+    },
+    "button__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "McLaren",
+        "Honda",
+        "BAR"
+      ],
+      "constructor_count": 7
+    },
+    "clark__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Lotus-Climax",
+        "Lotus-Ford",
+        "Team Lotus"
+      ],
+      "constructor_count": 4
+    },
+    "collins__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Ferrari",
+        "HWM",
+        "Vanwall"
+      ],
+      "constructor_count": 4
+    },
+    "coulthard__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Red Bull Racing",
+      "spans": [
+        [
+          2005,
+          2008
+        ]
+      ],
+      "entries": 72
+    },
+    "damon-hill__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Williams",
+        "Jordan",
+        "Arrows"
+      ],
+      "constructor_count": 4
+    },
+    "gasly__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Red Bull Racing",
+      "spans": [
+        [
+          2019,
+          2019
+        ]
+      ],
+      "entries": 12
+    },
+    "gethin__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "BRM",
+        "McLaren-Ford",
+        "McLaren"
+      ],
+      "constructor_count": 4
+    },
+    "hadjar__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Red Bull Racing",
+      "spans": [
+        [
+          2026,
+          2026
+        ]
+      ],
+      "entries": 11
+    },
+    "hamilton__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Mercedes",
+        "McLaren",
+        "Ferrari"
+      ],
+      "constructor_count": 3
+    },
+    "hawthorn__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Ferrari",
+        "Cooper",
+        "Vanwall"
+      ],
+      "constructor_count": 5
+    },
+    "herbert__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Team Lotus",
+        "Sauber",
+        "Benetton"
+      ],
+      "constructor_count": 7
+    },
+    "hill__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "BRM",
+        "Lotus-Ford",
+        "Team Lotus"
+      ],
+      "constructor_count": 7
+    },
+    "ireland__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Lotus-Climax",
+        "Team Lotus",
+        "Lotus-BRM"
+      ],
+      "constructor_count": 5
+    },
+    "irvine__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Ferrari",
+        "Jaguar",
+        "Jordan"
+      ],
+      "constructor_count": 3
+    },
+    "kvyat__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Red Bull Racing",
+      "spans": [
+        [
+          2015,
+          2016
+        ]
+      ],
+      "entries": 23
+    },
+    "lawson__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Red Bull Racing",
+      "spans": [
+        [
+          2025,
+          2025
+        ]
+      ],
+      "entries": 2
+    },
+    "mansell__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Williams",
+        "Team Lotus",
+        "Ferrari"
+      ],
+      "constructor_count": 4
+    },
+    "max-verstappen__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Red Bull Racing",
+      "spans": [
+        [
+          2016,
+          2026
+        ]
+      ],
+      "entries": 221
+    },
+    "moss__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Maserati",
+        "Vanwall",
+        "Cooper-Climax"
+      ],
+      "constructor_count": 12
+    },
+    "norris__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "McLaren"
+      ],
+      "constructor_count": 1
+    },
+    "perez__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Red Bull Racing",
+      "spans": [
+        [
+          2021,
+          2024
+        ]
+      ],
+      "entries": 90
+    },
+    "piastri__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "McLaren"
+      ],
+      "constructor_count": 1
+    },
+    "ricciardo__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Red Bull Racing",
+      "spans": [
+        [
+          2014,
+          2018
+        ]
+      ],
+      "entries": 100
+    },
+    "russell__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Mercedes",
+        "Williams"
+      ],
+      "constructor_count": 2
+    },
+    "stewart__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Tyrrell",
+        "BRM",
+        "Matra-Ford"
+      ],
+      "constructor_count": 4
+    },
+    "surtees__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Ferrari",
+        "Honda",
+        "Surtees"
+      ],
+      "constructor_count": 9
+    },
+    "tsunoda__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Red Bull Racing",
+      "spans": [
+        [
+          2025,
+          2025
+        ]
+      ],
+      "entries": 22
+    },
+    "vettel__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Red Bull Racing",
+      "spans": [
+        [
+          2009,
+          2014
+        ]
+      ],
+      "entries": 113
+    },
+    "warwick__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "Arrows",
+        "Renault",
+        "Toleman"
+      ],
+      "constructor_count": 6
+    },
+    "watson__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": false,
+      "constructor": "Red Bull Racing",
+      "drove_for": [
+        "McLaren",
+        "Brabham",
+        "Penske"
+      ],
+      "constructor_count": 5
+    },
+    "webber__constructor-red-bull": {
+      "kind": "constructor",
+      "satisfied": true,
+      "constructor": "Red Bull Racing",
+      "spans": [
+        [
+          2007,
+          2013
+        ]
+      ],
+      "entries": 129
+    },
+    "aitken__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2020,
+      "entries": 1
+    },
+    "albon__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 119
+    },
+    "antonelli__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2025,
+      "last_year": 2026,
+      "entries": 35
+    },
+    "arvid-lindblad__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2026,
+      "last_year": 2026,
+      "entries": 11
+    },
+    "bearman__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2024,
+      "last_year": 2026,
+      "entries": 38
+    },
+    "bottas__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 118
+    },
+    "brundle__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1984,
+      "career_last": 1996
+    },
+    "button__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 2000,
+      "career_last": 2017
+    },
+    "clark__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1960,
+      "career_last": 1968
+    },
+    "collins__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1952,
+      "career_last": 1958
+    },
+    "coulthard__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1994,
+      "career_last": 2008
+    },
+    "damon-hill__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1992,
+      "career_last": 1999
+    },
+    "gasly__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 142
+    },
+    "gethin__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1970,
+      "career_last": 1974
+    },
+    "hadjar__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2025,
+      "last_year": 2026,
+      "entries": 35
+    },
+    "hamilton__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 141
+    },
+    "hawthorn__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1952,
+      "career_last": 1958
+    },
+    "herbert__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1989,
+      "career_last": 2000
+    },
+    "hill__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1958,
+      "career_last": 1975
+    },
+    "ireland__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1959,
+      "career_last": 1966
+    },
+    "irvine__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1993,
+      "career_last": 2002
+    },
+    "kvyat__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2020,
+      "entries": 17
+    },
+    "lawson__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2023,
+      "last_year": 2026,
+      "entries": 46
+    },
+    "mansell__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1980,
+      "career_last": 1995
+    },
+    "max-verstappen__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 142
+    },
+    "moss__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1951,
+      "career_last": 1961
+    },
+    "norris__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 142
+    },
+    "perez__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 116
+    },
+    "piastri__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2023,
+      "last_year": 2026,
+      "entries": 81
+    },
+    "ricciardo__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2024,
+      "entries": 86
+    },
+    "russell__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2026,
+      "entries": 142
+    },
+    "stewart__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1965,
+      "career_last": 1973
+    },
+    "surtees__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1960,
+      "career_last": 1972
+    },
+    "tsunoda__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2021,
+      "last_year": 2025,
+      "entries": 114
+    },
+    "vettel__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": true,
+      "decade": 2020,
+      "first_year": 2020,
+      "last_year": 2022,
+      "entries": 59
+    },
+    "warwick__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1981,
+      "career_last": 1993
+    },
+    "watson__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 1973,
+      "career_last": 1985
+    },
+    "webber__raced-2020s": {
+      "kind": "race_decade",
+      "satisfied": false,
+      "decade": 2020,
+      "career_first": 2002,
+      "career_last": 2013
+    },
+    "aitken__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": null,
+      "wins": 0
+    },
+    "albon__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": null,
+      "wins": 0
+    },
+    "antonelli__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": 2,
+      "race": {
+        "year": 2026,
+        "event": "Canadian Grand Prix"
+      },
+      "wins": 6
+    },
+    "arvid-lindblad__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": null,
+      "wins": 0
+    },
+    "bearman__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": null,
+      "wins": 0
+    },
+    "bottas__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": 3,
+      "race": {
+        "year": 2017,
+        "event": "Russian Grand Prix"
+      },
+      "wins": 10
+    },
+    "brundle__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": null,
+      "wins": 0
+    },
+    "button__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 14,
+      "race": {
+        "year": 2006,
+        "event": "Hungarian Grand Prix"
+      }
+    },
+    "clark__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 13,
+      "race": {
+        "year": 1962,
+        "event": "Belgian Grand Prix"
+      }
+    },
+    "collins__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 6,
+      "race": {
+        "year": 1958,
+        "event": "British Grand Prix"
+      }
+    },
+    "coulthard__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 11,
+      "race": {
+        "year": 2003,
+        "event": "Australian Grand Prix"
+      }
+    },
+    "damon-hill__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": 4,
+      "race": {
+        "year": 1995,
+        "event": "San Marino Grand Prix"
+      },
+      "wins": 22
+    },
+    "gasly__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 10,
+      "race": {
+        "year": 2020,
+        "event": "Italian Grand Prix"
+      }
+    },
+    "gethin__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 11,
+      "race": {
+        "year": 1971,
+        "event": "Italian Grand Prix"
+      }
+    },
+    "hadjar__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": null,
+      "wins": 0
+    },
+    "hamilton__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 14,
+      "race": {
+        "year": 2018,
+        "event": "German Grand Prix"
+      }
+    },
+    "hawthorn__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 7,
+      "race": {
+        "year": 1953,
+        "event": "French Grand Prix"
+      }
+    },
+    "herbert__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 14,
+      "race": {
+        "year": 1999,
+        "event": "European Grand Prix"
+      }
+    },
+    "hill__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 6,
+      "race": {
+        "year": 1968,
+        "event": "Spanish Grand Prix"
+      }
+    },
+    "ireland__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 8,
+      "race": {
+        "year": 1961,
+        "event": "United States Grand Prix"
+      }
+    },
+    "irvine__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 6,
+      "race": {
+        "year": 1999,
+        "event": "Australian Grand Prix"
+      }
+    },
+    "kvyat__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": null,
+      "wins": 0
+    },
+    "lawson__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": null,
+      "wins": 0
+    },
+    "mansell__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 12,
+      "race": {
+        "year": 1989,
+        "event": "Hungarian Grand Prix"
+      }
+    },
+    "max-verstappen__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 17,
+      "race": {
+        "year": 2024,
+        "event": "S\u00e3o Paulo Grand Prix"
+      }
+    },
+    "moss__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 7,
+      "race": {
+        "year": 1958,
+        "event": "Argentine Grand Prix"
+      }
+    },
+    "norris__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": 5,
+      "race": {
+        "year": 2024,
+        "event": "Miami Grand Prix"
+      },
+      "wins": 12
+    },
+    "perez__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 6,
+      "race": {
+        "year": 2021,
+        "event": "Azerbaijan Grand Prix"
+      }
+    },
+    "piastri__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": 4,
+      "race": {
+        "year": 2025,
+        "event": "Miami Grand Prix"
+      },
+      "wins": 9
+    },
+    "ricciardo__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 10,
+      "race": {
+        "year": 2017,
+        "event": "Azerbaijan Grand Prix"
+      }
+    },
+    "russell__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": 3,
+      "race": {
+        "year": 2024,
+        "event": "Austrian Grand Prix"
+      },
+      "wins": 7
+    },
+    "stewart__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 16,
+      "race": {
+        "year": 1973,
+        "event": "South African Grand Prix"
+      }
+    },
+    "surtees__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 9,
+      "race": {
+        "year": 1967,
+        "event": "Italian Grand Prix"
+      }
+    },
+    "tsunoda__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": null,
+      "wins": 0
+    },
+    "vettel__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": 3,
+      "race": {
+        "year": 2010,
+        "event": "Malaysian Grand Prix"
+      },
+      "wins": 53
+    },
+    "warwick__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": null,
+      "wins": 0
+    },
+    "watson__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": true,
+      "minimum": 6,
+      "grid": 22,
+      "race": {
+        "year": 1983,
+        "event": "United States Grand Prix West"
+      }
+    },
+    "webber__won-from-p6-plus": {
+      "kind": "win_from_grid",
+      "satisfied": false,
+      "minimum": 6,
+      "best_grid": 2,
+      "race": {
+        "year": 2009,
+        "event": "Brazilian Grand Prix"
+      },
+      "wins": 9
+    },
+    "aitken__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": false,
+      "minimum": 100,
+      "entries": 1,
+      "first_year": 2020,
+      "last_year": 2020
+    },
+    "albon__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 140,
+      "first_year": 2019,
+      "last_year": 2026
+    },
+    "antonelli__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": false,
+      "minimum": 100,
+      "entries": 35,
+      "first_year": 2025,
+      "last_year": 2026
+    },
+    "arvid-lindblad__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": false,
+      "minimum": 100,
+      "entries": 11,
+      "first_year": 2026,
+      "last_year": 2026
+    },
+    "bearman__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": false,
+      "minimum": 100,
+      "entries": 38,
+      "first_year": 2024,
+      "last_year": 2026
+    },
+    "bottas__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 258,
+      "first_year": 2013,
+      "last_year": 2026
+    },
+    "brundle__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 158,
+      "first_year": 1984,
+      "last_year": 1996
+    },
+    "button__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 309,
+      "first_year": 2000,
+      "last_year": 2017
+    },
+    "clark__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": false,
+      "minimum": 100,
+      "entries": 72,
+      "first_year": 1960,
+      "last_year": 1968
+    },
+    "collins__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": false,
+      "minimum": 100,
+      "entries": 33,
+      "first_year": 1952,
+      "last_year": 1958
+    },
+    "coulthard__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 247,
+      "first_year": 1994,
+      "last_year": 2008
+    },
+    "damon-hill__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 116,
+      "first_year": 1992,
+      "last_year": 1999
+    },
+    "gasly__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 189,
+      "first_year": 2017,
+      "last_year": 2026
+    },
+    "gethin__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": false,
+      "minimum": 100,
+      "entries": 30,
+      "first_year": 1970,
+      "last_year": 1974
+    },
+    "hadjar__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": false,
+      "minimum": 100,
+      "entries": 35,
+      "first_year": 2025,
+      "last_year": 2026
+    },
+    "hamilton__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 391,
+      "first_year": 2007,
+      "last_year": 2026
+    },
+    "hawthorn__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": false,
+      "minimum": 100,
+      "entries": 46,
+      "first_year": 1952,
+      "last_year": 1958
+    },
+    "herbert__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 162,
+      "first_year": 1989,
+      "last_year": 2000
+    },
+    "hill__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 177,
+      "first_year": 1958,
+      "last_year": 1975
+    },
+    "ireland__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": false,
+      "minimum": 100,
+      "entries": 55,
+      "first_year": 1959,
+      "last_year": 1966
+    },
+    "irvine__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 147,
+      "first_year": 1993,
+      "last_year": 2002
+    },
+    "kvyat__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 112,
+      "first_year": 2014,
+      "last_year": 2020
+    },
+    "lawson__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": false,
+      "minimum": 100,
+      "entries": 46,
+      "first_year": 2023,
+      "last_year": 2026
+    },
+    "mansell__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 190,
+      "first_year": 1980,
+      "last_year": 1995
+    },
+    "max-verstappen__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 244,
+      "first_year": 2015,
+      "last_year": 2026
+    },
+    "moss__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": false,
+      "minimum": 100,
+      "entries": 67,
+      "first_year": 1951,
+      "last_year": 1961
+    },
+    "norris__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 163,
+      "first_year": 2019,
+      "last_year": 2026
+    },
+    "perez__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 294,
+      "first_year": 2011,
+      "last_year": 2026
+    },
+    "piastri__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": false,
+      "minimum": 100,
+      "entries": 81,
+      "first_year": 2023,
+      "last_year": 2026
+    },
+    "ricciardo__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 257,
+      "first_year": 2011,
+      "last_year": 2024
+    },
+    "russell__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 163,
+      "first_year": 2019,
+      "last_year": 2026
+    },
+    "stewart__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 100,
+      "first_year": 1965,
+      "last_year": 1973
+    },
+    "surtees__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 112,
+      "first_year": 1960,
+      "last_year": 1972
+    },
+    "tsunoda__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 114,
+      "first_year": 2021,
+      "last_year": 2025
+    },
+    "vettel__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 300,
+      "first_year": 2007,
+      "last_year": 2022
+    },
+    "warwick__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 148,
+      "first_year": 1981,
+      "last_year": 1993
+    },
+    "watson__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 152,
+      "first_year": 1973,
+      "last_year": 1985
+    },
+    "webber__race-entries-100": {
+      "kind": "race_entries",
+      "satisfied": true,
+      "minimum": 100,
+      "entries": 217,
+      "first_year": 2002,
+      "last_year": 2013
+    }
   }
 }

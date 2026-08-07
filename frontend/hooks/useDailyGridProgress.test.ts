@@ -26,7 +26,21 @@ describe("daily grid progress", () => {
   it("keeps incorrect guesses attached to their cell", () => {
     const progress = deriveGridProgress(attempts);
 
-    expect(progress.missesByCell.get("ferrari__winner")).toEqual([hamilton]);
+    expect(progress.missesByCell.get("ferrari__winner")).toEqual([attempts[0]]);
     expect(progress.missesByCell.has("ferrari__mclaren")).toBe(false);
+  });
+
+  it("keeps a solved cell's proof reachable after the guess", () => {
+    const solved: GridAttempt = {
+      cellId: "ferrari__mclaren",
+      correct: true,
+      driver: hamilton,
+      rowEvidence: { kind: "constructor", satisfied: true },
+      columnEvidence: { kind: "constructor", satisfied: true },
+    };
+
+    const progress = deriveGridProgress([solved]);
+
+    expect(progress.solvedByCell.get("ferrari__mclaren")).toEqual(solved);
   });
 });

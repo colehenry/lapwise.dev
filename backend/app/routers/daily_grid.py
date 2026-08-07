@@ -10,6 +10,7 @@ from app.schemas.daily_grid import (
     GameDriverSearchResponse,
     GameGuessRequest,
     GameGuessResponse,
+    RookieOptionsResponse,
 )
 from app.security import verify_api_key
 from app.services.daily_grid_service import DailyGridService
@@ -48,6 +49,18 @@ async def get_game(
         return DailyGridService.puzzle(puzzle_number)
     except (FileNotFoundError, ValueError) as error:
         raise HTTPException(status_code=404, detail="Grid not found") from error
+
+
+@router.get("/{puzzle_number}/rookie-options", response_model=RookieOptionsResponse)
+async def get_rookie_options(
+    puzzle_number: int,
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    try:
+        return await DailyGridService.rookie_options(db, puzzle_number)
+    except (FileNotFoundError, ValueError) as error:
+        raise HTTPException(status_code=404, detail="Rookie options not found") from error
 
 
 @router.post("/guess", response_model=GameGuessResponse)

@@ -17,6 +17,8 @@ rule record; implementation plans should link here rather than restating it.
 | Historical eligibility floor | Open | Choose all-history, 1990+, or board-specific eligibility before launch scheduling |
 | Rarity scoring | Open | Decide whether to add it after enough real guesses exist |
 | Archive behavior | Decided | Prior boards remain playable with previous/next navigation |
+| Rookie Mode | Decided | Eight options per cell; a decoy fails exactly one header |
+| Category evidence | Decided | Predicates return resolved facts, shown only after a guess |
 
 ## Core player rules
 
@@ -201,6 +203,58 @@ publish them before the relevant session or championship fact is final.
   does not consume a guess. Incorrectly guessed drivers remain selectable.
 - Selecting a cell opens the driver search directly over the board. Clicking
   outside it, choosing another cell, or pressing Escape dismisses it.
+
+## Rookie Mode
+
+An alternative to typing a driver name, for players who do not know the
+history. It changes how a driver is chosen and what a guess teaches. It does
+not change the board, the answer sets, the twelve-submission budget, or the
+one-driver-per-board rule.
+
+### Option lists
+
+- Selecting a cell offers eight drivers for that intersection. One to three are
+  correct and the rest are decoys.
+- Every list on a board is the same length, so list size never signals cell
+  depth. The number of correct options is not shown.
+- A decoy satisfies exactly one of the cell's two headers. Satisfying both
+  makes a driver a correct answer for that intersection, so no other kind of
+  decoy exists.
+- Decoys are drawn from both axes where both exist. Where one header implies
+  the other, only single-axis decoys are possible; the board is still valid and
+  the validator reports the cell as weak.
+- Decoys are ranked by career race entries, because a decoy nobody recognises
+  is eliminated on sight rather than considered.
+- Correct options are pairwise disjoint across the nine cells. A correct
+  placement can therefore never consume the only listed answer for another
+  cell.
+- Option lists are frozen with the board and derive from its answer sets, not
+  from live queries.
+
+### Category evidence
+
+- A guess result carries the resolved facts proving or disproving each header:
+  constructor years, a first win and its race, an actual entry count.
+- Evidence is shown only after a guess is committed — on a placed cell, on a
+  miss, and never in an option list. Proof attached to an unplayed option is
+  the answer.
+- The unsatisfied arm reports the driver's real value rather than a cross.
+  A win from P4 against a "Won from P6+" header is the near miss that teaches
+  the category.
+- Evidence is stored as facts and formatted at render time, so wording can
+  change without rewriting a snapshot and a career total cannot drift under a
+  completed board.
+- Evidence is optional per category kind. A kind without an evidence builder
+  still plays, and the correct/incorrect result is the floor.
+- A driver is never their own teammate. Seat-sharing tests must exclude the
+  named driver.
+
+### Mode and progress
+
+- Progress is stored per mode, so both modes hold independent state on the same
+  board and switching cannot import a half-solved grid.
+- A board counts as played once either mode has finished it.
+- The mode is offered only on boards that carry frozen option lists.
 
 ## Scoring and sharing
 

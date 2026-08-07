@@ -42,6 +42,101 @@ def test_sandbox_boards_vary_structure_and_include_secondary_categories():
     )
 
 
+def test_rookie_option_lists_are_uniform_and_solvable():
+    """Every list is the same length, so size never signals cell depth, and
+    every cell keeps at least one correct option."""
+    for number in range(1, 6):
+        puzzle = _puzzle(number)
+        options = puzzle["rookie_options"]
+
+        assert len(options) == 9
+        for cell_id, cell_options in options.items():
+            assert len(cell_options) == 8
+            assert len(set(cell_options)) == 8
+            assert set(cell_options) & set(puzzle["answers"][cell_id])
+
+
+def test_rookie_correct_options_are_disjoint_across_cells():
+    """A correct placement must never consume the only listed answer for
+    another cell, because a driver may be used once per board."""
+    for number in range(1, 6):
+        puzzle = _puzzle(number)
+        claimed: set[str] = set()
+        for cell_id, cell_options in puzzle["rookie_options"].items():
+            correct = set(cell_options) & set(puzzle["answers"][cell_id])
+            assert not correct & claimed
+            claimed.update(correct)
+
+
+def test_every_rookie_decoy_fails_exactly_one_header():
+    """Satisfying both headers makes a driver correct by definition, so a decoy
+    can only ever be wrong on one axis."""
+    for number in range(1, 6):
+        puzzle = _puzzle(number)
+        evidence = puzzle["rookie_evidence"]
+        for row in puzzle["rows"]:
+            for column in puzzle["columns"]:
+                cell_id = f"{row['id']}__{column['id']}"
+                answers = set(puzzle["answers"][cell_id])
+                for slug in puzzle["rookie_options"][cell_id]:
+                    row_proof = evidence[f"{slug}__{row['id']}"]
+                    column_proof = evidence[f"{slug}__{column['id']}"]
+                    satisfies_both = row_proof["satisfied"] and column_proof["satisfied"]
+                    assert satisfies_both is (slug in answers)
+                    if slug not in answers:
+                        assert row_proof["satisfied"] or column_proof["satisfied"]
+
+
+def test_evidence_covers_every_answer_so_placements_can_be_proved():
+    for number in range(1, 6):
+        puzzle = _puzzle(number)
+        categories = puzzle["rows"] + puzzle["columns"]
+        for answers in puzzle["answers"].values():
+            for slug in answers:
+                for category in categories:
+                    assert f"{slug}__{category['id']}" in puzzle["rookie_evidence"]
+
+
+async def test_rookie_options_endpoint_withholds_evidence(client, ingested_data):
+    """Proof attached to an unplayed option is the answer, so the option list
+    carries drivers only."""
+    response = await client.get("/api/daily/1/rookie-options", headers=api_headers())
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["puzzle_id"] == "grid-001"
+    assert len(payload["options"]) == 9
+    for cell_options in payload["options"].values():
+        assert len(cell_options) == 8
+        for option in cell_options:
+            assert "evidence" not in option
+            assert "satisfied" not in option
+
+
+async def test_guess_returns_evidence_for_both_headers(client, ingested_data):
+    puzzle = _puzzle(1)
+    row = puzzle["rows"][0]
+    column = puzzle["columns"][0]
+    slug = puzzle["answers"][f"{row['id']}__{column['id']}"][0]
+
+    response = await client.post(
+        "/api/daily/guess",
+        headers=api_headers(),
+        json={
+            "puzzle_id": "grid-001",
+            "row_id": row["id"],
+            "column_id": column["id"],
+            "driver_slug": slug,
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["correct"] is True
+    assert payload["row_evidence"]["satisfied"] is True
+    assert payload["column_evidence"]["satisfied"] is True
+
+
 async def test_every_snapshot_driver_resolves(ingested_data):
     expected = {
         slug

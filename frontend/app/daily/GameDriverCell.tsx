@@ -1,7 +1,9 @@
 import Link from "next/link";
 import DriverHeadshot from "@/components/entities/DriverHeadshot";
 import DriverSilhouette from "@/components/entities/DriverSilhouette";
+import type { GridAttempt } from "@/hooks/useDailyGridProgress";
 import { getDriverHeadshotUrl } from "@/lib/entityImageOverrides";
+import { formatEvidence } from "@/lib/gridEvidence";
 import type { GameDriver } from "@/lib/queries/dailyGrid";
 
 type GameDriverCellProps = {
@@ -9,12 +11,28 @@ type GameDriverCellProps = {
   disabled: boolean;
   driver?: GameDriver;
   finished: boolean;
-  misses: GameDriver[];
+  misses: GridAttempt[];
   onAnimationEnd: () => void;
   onSelect: () => void;
   rowLabel: string;
   shaking: boolean;
+  solved?: GridAttempt;
 };
+
+/** Proof for one header. Rendered only after a guess is committed. */
+function ProofLine({ evidence }: { evidence: GridAttempt["rowEvidence"] }) {
+  const proof = formatEvidence(evidence);
+  if (!proof) return null;
+  return (
+    <p
+      className={`text-[10px] leading-snug ${
+        evidence?.satisfied ? "text-success" : "text-red-400"
+      }`}
+    >
+      <span aria-hidden="true">{evidence?.satisfied ? "✓" : "✗"}</span> {proof}
+    </p>
+  );
+}
 
 export default function GameDriverCell({
   columnLabel,
@@ -26,6 +44,7 @@ export default function GameDriverCell({
   onSelect,
   rowLabel,
   shaking,
+  solved,
 }: GameDriverCellProps) {
   const label = driver
     ? `${driver.full_name} matches ${rowLabel} and ${columnLabel}`
@@ -101,13 +120,20 @@ export default function GameDriverCell({
             {misses
               .slice()
               .reverse()
-              .map((miss) => (
-                <p
-                  key={`${miss.driver_slug}-${misses.indexOf(miss)}`}
-                  className="text-[10px] text-text-secondary"
-                >
-                  Not {miss.full_name}
-                </p>
+              .map((miss, index) => (
+                <div key={`${miss.driver.driver_slug}-${index}`}>
+                  <p className="mt-1 text-[10px] text-text-secondary">
+                    Not {miss.driver.full_name}
+                  </p>
+                  {/* Proof only for the most recent miss: the whole history
+                      would outgrow the tooltip. */}
+                  {index === 0 && (
+                    <>
+                      <ProofLine evidence={miss.rowEvidence} />
+                      <ProofLine evidence={miss.columnEvidence} />
+                    </>
+                  )}
+                </div>
               ))}
             {misses.length === 0 && !finished && (
               <p className="mt-1 text-[10px] text-text-muted">
@@ -117,6 +143,17 @@ export default function GameDriverCell({
           </div>
         </>
       )}
+
+      {driver && (solved?.rowEvidence || solved?.columnEvidence) && (
+        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-52 -translate-x-1/2 translate-y-1 rounded-md border border-border-primary bg-bg-elevated px-3 py-2 opacity-0 shadow-xl transition-all group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100">
+          <p className="text-[10px] font-semibold text-text-primary">
+            {driver.full_name}
+          </p>
+          <ProofLine evidence={solved.rowEvidence} />
+          <ProofLine evidence={solved.columnEvidence} />
+        </div>
+      )}
+
       {driver && !finished && <span className="sr-only">{label}</span>}
     </div>
   );

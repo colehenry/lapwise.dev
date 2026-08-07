@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { apiHeaders, apiUrl, extractErrorMessage } from "@/lib/api";
+import type { CategoryEvidence } from "@/lib/gridEvidence";
 import { hours } from "./durations";
 import { getJson } from "./http";
 
@@ -22,6 +23,8 @@ export type DailyGame = {
   max_guesses: number;
   previous_number: number | null;
   next_number: number | null;
+  // Absent on responses cached from before Rookie Mode shipped.
+  has_rookie_mode?: boolean;
   rows: GameCategory[];
   columns: GameCategory[];
 };
@@ -71,6 +74,16 @@ export type GameGuessResult = {
   row_id: string;
   column_id: string;
   driver: GameDriver;
+  // Proof for each header, returned only after a guess is committed.
+  row_evidence?: CategoryEvidence | null;
+  column_evidence?: CategoryEvidence | null;
+};
+
+/** Per-cell option lists keyed by `row__column`. Carries no evidence: proof
+ *  attached to an unplayed option is the answer. */
+export type RookieOptionsResponse = {
+  puzzle_id: string;
+  options: Record<string, GameDriver[]>;
 };
 
 export const gameKeys = {
@@ -78,6 +91,7 @@ export const gameKeys = {
   driverCatalog: ["game", "drivers", "catalog"] as const,
   driverSearch: (query: string) =>
     ["game", "drivers", "search", query] as const,
+  rookieOptions: (number: number) => ["game", "rookie", number] as const,
 };
 
 export function dailyGameQuery(number?: number) {
@@ -116,6 +130,19 @@ export function gameDriverCatalogQuery() {
         "/api/daily/drivers/catalog",
         "Failed to load the driver catalog",
       ),
+    staleTime: hours(1),
+  });
+}
+
+export function rookieOptionsQuery(number: number, enabled: boolean) {
+  return queryOptions({
+    queryKey: gameKeys.rookieOptions(number),
+    queryFn: () =>
+      getJson<RookieOptionsResponse>(
+        `/api/daily/${number}/rookie-options`,
+        "Failed to load the driver options",
+      ),
+    enabled,
     staleTime: hours(1),
   });
 }

@@ -16,6 +16,7 @@ from app.schemas.daily_grid import (
     GameDriverCatalogResponse,
     GameDriverSearchResponse,
     GameGuessResponse,
+    RookieOptionsResponse,
 )
 from app.schemas.media import DriverMedia
 from app.services.driver_catalog_service import DriverCatalogService
@@ -113,6 +114,7 @@ class DailyGridService:
                 if current_index < len(_PUZZLE_NUMBERS) - 1
                 else None
             ),
+            has_rookie_mode=bool(puzzle.get("rookie_options")),
             rows=[_public_category(category) for category in puzzle["rows"]],
             columns=[_public_category(category) for category in puzzle["columns"]],
         )
@@ -181,6 +183,42 @@ class DailyGridService:
                 for row in live_rows
                 if row["driver_slug"]
             ]
+        )
+
+    @staticmethod
+    async def rookie_options(db: AsyncSession, number: int) -> RookieOptionsResponse:
+        """The frozen per-cell option lists, hydrated with names and imagery.
+
+        The frozen order is preserved: it was shuffled at freeze time, and
+        re-sorting here would leak structure across cells.
+        """
+        puzzle = _puzzle(number)
+        options = puzzle.get("rookie_options")
+        if not options:
+            raise ValueError("This grid has no rookie options")
+
+        slugs = {slug for cell in options.values() for slug in cell}
+        latest_headshot = DailyGridService._latest_headshot()
+        rows = (
+            await db.execute(
+                select(Driver, latest_headshot.label("headshot_url")).where(
+                    Driver.slug.in_(slugs)
+                )
+            )
+        ).all()
+        media = await _resolve_media(db, [row.Driver.id for row in rows])
+        by_slug = {
+            row.Driver.slug: _driver_response(
+                row.Driver, row.headshot_url, media.get(row.Driver.id)
+            )
+            for row in rows
+        }
+        return RookieOptionsResponse(
+            puzzle_id=puzzle["id"],
+            options={
+                cell_id: [by_slug[slug] for slug in cell_slugs if slug in by_slug]
+                for cell_id, cell_slugs in options.items()
+            },
         )
 
     @staticmethod
@@ -262,6 +300,7 @@ class DailyGridService:
         if row is None:
             return None
 
+        evidence = puzzle.get("rookie_evidence", {})
         return GameGuessResponse(
             correct=normalized_slug in puzzle["answers"][cell_id],
             row_id=row_id,
@@ -271,4 +310,6 @@ class DailyGridService:
                 row.headshot_url,
                 (await _resolve_media(db, [row.Driver.id])).get(row.Driver.id),
             ),
+            row_evidence=evidence.get(f"{normalized_slug}__{row_id}"),
+            column_evidence=evidence.get(f"{normalized_slug}__{column_id}"),
         )
