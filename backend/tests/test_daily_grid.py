@@ -7,7 +7,7 @@ two together.
 """
 
 import json
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from functools import lru_cache
 from pathlib import Path
 
@@ -16,6 +16,7 @@ from sqlalchemy import select
 
 from app.config import settings
 from app.models import Driver, Puzzle
+from app.services.daily_grid_service import PUZZLE_ROLLOVER_UTC_HOUR, _puzzle_date
 
 PUZZLE_DIRECTORY = Path(__file__).resolve().parents[1] / "data" / "game_puzzles"
 BOARD_NUMBERS = range(1, 6)
@@ -219,7 +220,20 @@ async def test_served_board_is_never_future_dated(client):
 
     assert response.status_code == 200
     published_on = date.fromisoformat(response.json()["published_on"])
-    assert published_on <= datetime.now(timezone.utc).date()
+    assert published_on <= _puzzle_date()
+
+
+def test_rollover_hour_shifts_the_playable_date():
+    """The board turns over on a fixed UTC hour, not at UTC midnight, so the
+    date in play trails the UTC date until that hour has passed."""
+    utc_now = datetime.now(timezone.utc)
+    expected = (utc_now - timedelta(hours=PUZZLE_ROLLOVER_UTC_HOUR)).date()
+
+    assert _puzzle_date() == expected
+    if utc_now.hour < PUZZLE_ROLLOVER_UTC_HOUR:
+        assert _puzzle_date() == utc_now.date() - timedelta(days=1)
+    else:
+        assert _puzzle_date() == utc_now.date()
 
 
 async def test_daily_puzzle_does_not_expose_answers(client):

@@ -10,7 +10,7 @@ rule record; implementation plans should link here rather than restating it.
 |---|---|---|
 | Core 3×3 format | Decided | Nine intersections and twelve total submissions |
 | Answer uniqueness | Decided | A correctly placed driver may be used once per board |
-| Standard cell depth | Decided | At least three valid answers |
+| Standard cell depth | Decided | Three answers by default; two allowed when both clear the recognition floor |
 | Signature singleton | Decided | One reviewed, famous/iconic singleton may appear per board |
 | Constructor semantics | Decided | Exact constructor identities at launch; lineage deferred |
 | Category foundation | Decided | Predicates below are enabled individually when data-ready |
@@ -25,7 +25,7 @@ rule record; implementation plans should link here rather than restating it.
 | Race time | Decided | Elapsed wall clock plus five seconds per miss |
 | Classification | Decided | Only a nine-cell board is classified; all others are DNF |
 | Leaderboards | Decided | One per puzzle per mode, daily, ranked among signed-in players |
-| Championship | Decided | Daily race, monthly season, percentile points frozen at 00:00 UTC |
+| Championship | Decided | Daily race, monthly season, percentile points frozen at 07:00 UTC |
 | Play session records | Decided | Server-side; supersedes the local-only MVP progress model |
 | Publication cadence | Decided | Daily year-round; race weekends themed, not exclusive |
 | Board approval | Decided | Human approves and dates a board; the date gate publishes it |
@@ -52,7 +52,7 @@ rule record; implementation plans should link here rather than restating it.
   submission.
 - The server validates guesses and does not send complete answer sets to the
   client.
-- One global puzzle is published daily at 00:00 UTC.
+- One global puzzle is published daily at 07:00 UTC.
 - An account is not required to play, to be timed, or to share. It is required
   to appear on a leaderboard and to score championship points.
 - The server records a play session per board and mode. Local storage keeps the
@@ -121,13 +121,56 @@ earlier floor to run a deliberate classics grid. The floor is frozen with the
 board and applied before every answer set is materialized, so a later change to
 the default cannot alter a published board.
 
+The five sandbox boards predate this decision and were authored with no floor.
+Re-materialized at 1990 they keep at least three answers everywhere except
+grid-004, which gains two two-answer cells. Both clear the two-answer gate
+below, so all five boards remain valid at the 1990 floor and are re-frozen
+there rather than kept as all-history.
+
+Re-freezing is not optional bookkeeping. A board whose stored floor does not
+match the answers frozen under it is lying about its own contents, and its
+Rookie option lists would be drawn from a pool the board no longer uses.
+
 ### Standard cells
 
 The default minimum is three valid drivers per cell after applying the board's
-eligibility policy.
+eligibility policy. Aim for three; the exceptions below are exceptions.
 
-A two-answer cell is rejected. It offers neither the flexibility of a standard
-cell nor the deliberate reveal of a signature singleton.
+### Two-answer cells
+
+A two-answer cell is allowed when both of its answers are recognisable. Depth
+is a proxy for fairness, not the thing itself: a cell offering Prost or Alesi
+is kinder than one offering three drivers nobody can name.
+
+Both answers must clear the **recognition floor**:
+
+- world champion; or
+- at least 5 Formula 1 race wins; or
+- at least 100 race entries.
+
+At least one answer must additionally clear the **anchor gate**:
+
+- world champion; or
+- at least 10 Formula 1 race wins.
+
+The floor is what stops a two-answer cell being two obscure names. The anchor
+is what guarantees a route in for a player who knows only the famous era of
+that intersection. All three floor tests are already shipped predicates, so
+this needs no new category work.
+
+At most two two-answer cells per board. A board carrying a signature singleton
+may carry none, because one deliberately thin cell per board is the budget.
+
+Where two thin cells share an answer, the board is tighter than its depths
+suggest: spending the shared driver in one cell narrows the other. This is
+legal and is part of the planning the board is testing, but the validator must
+report it, because a board can pass every depth check and still play as though
+it has a singleton.
+
+Board solvability is a separate requirement from depth. Under the
+one-driver-per-board rule, a board is only completable if a distinct driver can
+be assigned to all nine cells at once. The validator checks that a perfect
+assignment exists rather than inferring it from cell counts.
 
 ### Signature singleton
 
@@ -179,6 +222,28 @@ product. A weekly puzzle cannot build one, and a puzzle that runs only on race
 weekends trains players to forget it in the gap and goes dark for the months
 between seasons.
 
+### Rollover hour
+
+Boards turn over at 07:00 UTC, worldwide and simultaneously.
+
+The rollover is one fixed hour rather than each viewer's local midnight, which
+is what Wordle and the NYT puzzles use. Local midnight is better for a purely
+solitary puzzle, but a leaderboard needs one field racing one board over one
+window, and a locally-rolling board spreads a single day's field across some
+fifty hours and leaks results across time zones.
+
+07:00 UTC rather than 00:00 UTC because midnight UTC lands in the middle of the
+American evening — the board would change under a player at 8pm Eastern, and a
+board labelled the 8th would appear on the 7th for most of the Americas. At
+07:00 UTC the change falls in Europe's early morning, between late evening and
+the small hours across the Americas, and only Asia-Pacific sees it mid-
+afternoon. No large market has the board swap mid-session.
+
+This is a single constant, `PUZZLE_ROLLOVER_UTC_HOUR`, and the decision should
+be revisited once analytics show where players actually are. It is a guess
+until then; the point of keeping it in one place is that the guess is cheap to
+correct.
+
 Race weekends are themed rather than exclusive. Friday, Saturday and Sunday of
 a Grand Prix weekend carry at least one header tied to that race — its venue,
 its country, or a constructor with a history there. This needs no new
@@ -207,7 +272,7 @@ A board is served when it is published and its date has arrived. A published
 board dated in the future is scheduled, not live.
 
 That gate is the whole publication mechanism. Approving a board with tomorrow's
-date is what schedules it, and it becomes playable at 00:00 UTC on its date
+date is what schedules it, and it becomes playable at 07:00 UTC on its date
 with nothing running to make that happen. There is no publish job to fail, and
 the queue can sit thirty days ahead without exposing anything.
 
@@ -398,7 +463,7 @@ shown against each other: one mode is typing and the other is clicking, so the
 times are not comparable.
 
 - The daily leaderboard covers the puzzle published that day and closes at
-  00:00 UTC with the next publication.
+  07:00 UTC with the next publication.
 - Archive boards are timed and the time is shown, but they are never ranked.
   Unlimited preparation makes an archive time meaningless.
 - One session per puzzle, per mode, per player is eligible for ranking. A
@@ -410,7 +475,7 @@ times are not comparable.
 
 A finish screen reports a provisional position, because the field is
 incomplete until the puzzle closes. Final classification is published at
-00:00 UTC.
+07:00 UTC.
 
 ### Implausible results
 
@@ -436,7 +501,7 @@ The competition structure follows the sport's own.
 
 ### Points
 
-Points are awarded at 00:00 UTC on the day after publication, against the
+Points are awarded at 07:00 UTC on the day after publication, against the
 complete field for that puzzle. Points are never awarded live. A percentile
 measured against the twelve players who have finished at 00:05 UTC is noise,
 and a score that moves after the player has seen it breaks the result.
@@ -516,8 +581,19 @@ venue, teammate, and car-number predicates.
 
 Before any production board is generated or frozen:
 
-- repair the Jack Doohan/Robert Doornbos identity misassignment and add a
-  regression check;
+- ~~repair the Jack Doohan/Robert Doornbos identity misassignment~~ — done
+  2026-08-07. Doohan's 2023 Abu Dhabi practice outing, his 2024 Abu Dhabi
+  debut, and his 2025 Chinese sprint qualifying were all filed under
+  Doornbos, who last raced in 2006; both carry the code DOO. It made
+  Doornbos a false accepted answer for a Red Bull × raced-in-2020s cell. 8
+  results, 700 laps and 7 pit stops moved. Doornbos is 2005–2006 again, and
+  all forty-five cells across the five boards now reproduce exactly from the
+  predicates. The regression check is a ratchet in
+  `tests/test_identity_mapping.py`, and it spans every session type: a
+  race-only check went green while four practice and sprint-qualifying rows
+  were still misfiled;
+- re-freeze the five sandbox boards at the 1990 floor, including their Rookie
+  option lists, which are currently drawn from an all-history pool;
 - run canonical identity and database audits;
 - make every enabled category report coverage and source boundaries;
 - prove each standard cell has at least three accepted answers;

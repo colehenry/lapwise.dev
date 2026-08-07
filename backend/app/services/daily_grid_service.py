@@ -1,6 +1,6 @@
 """Daily grid discovery, driver search, and snapshot-based validation."""
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import case, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,10 +20,18 @@ from app.schemas.media import DriverMedia
 from app.services.driver_catalog_service import DriverCatalogService
 from app.services.media_service import MediaService
 
+# One fixed hour worldwide, not each viewer's local midnight: a leaderboard
+# needs one field racing one board over one window. 07:00 UTC is midnight on
+# the US west coast and 8am in the UK through the summer, so the change lands
+# overnight across the Americas and before the European morning.
+PUZZLE_ROLLOVER_UTC_HOUR = 7
 
-def _today() -> date:
-    """Boards publish at 00:00 UTC, so the calendar is UTC's."""
-    return datetime.now(timezone.utc).date()
+
+def _puzzle_date() -> date:
+    """The date of the board currently in play."""
+    return (
+        datetime.now(timezone.utc) - timedelta(hours=PUZZLE_ROLLOVER_UTC_HOUR)
+    ).date()
 
 
 def _published():
@@ -32,7 +40,7 @@ def _published():
     A future-dated published row is scheduled, not live, so the editorial queue
     can run ahead of the calendar without exposing tomorrow's board.
     """
-    return (Puzzle.status == "published") & (Puzzle.published_on <= _today())
+    return (Puzzle.status == "published") & (Puzzle.published_on <= _puzzle_date())
 
 
 def _public_category(raw: dict) -> GameCategory:
@@ -328,7 +336,7 @@ class DailyGridService:
                     "row_key": f"{normalized_slug}__{row_id}",
                     "column_key": f"{normalized_slug}__{column_id}",
                     "public_id": puzzle_id,
-                    "today": _today(),
+                    "today": _puzzle_date(),
                 },
             )
         ).one_or_none()
