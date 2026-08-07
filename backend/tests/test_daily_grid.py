@@ -213,7 +213,7 @@ async def test_published_boards_match_their_authoring_files(db_session):
         assert row.rookie_evidence == board["rookie_evidence"]
 
 
-async def test_served_board_is_never_future_dated(client):
+async def test_served_board_is_never_future_dated(client, published_boards):
     """A scheduled board is not a live board, so the editorial queue can run
     ahead of the calendar without exposing tomorrow's grid."""
     response = await client.get("/api/daily", headers=api_headers())
@@ -236,7 +236,7 @@ def test_rollover_hour_shifts_the_playable_date():
         assert _puzzle_date() == utc_now.date()
 
 
-async def test_daily_puzzle_does_not_expose_answers(client):
+async def test_daily_puzzle_does_not_expose_answers(client, published_boards):
     response = await client.get("/api/daily", headers=api_headers())
 
     assert response.status_code == 200
@@ -255,7 +255,7 @@ async def test_daily_puzzle_does_not_expose_answers(client):
     assert payload["next_number"] is None
 
 
-async def test_numbered_puzzle_exposes_navigation_not_answers(client):
+async def test_numbered_puzzle_exposes_navigation_not_answers(client, published_boards):
     response = await client.get("/api/daily/1", headers=api_headers())
 
     assert response.status_code == 200

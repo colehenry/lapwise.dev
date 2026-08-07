@@ -181,6 +181,10 @@ class Proposal:
     columns: list[Header]
     cells: dict[str, set[str]]
     difficulty: int
+    # Frozen at proposal time so the editorial queue reads the findings rather
+    # than re-deriving them, and so a reviewer sees what the board was judged
+    # on rather than what the rules happen to say today.
+    findings: list[dict] = field(default_factory=list)
 
     @property
     def headers(self) -> list[Header]:
@@ -296,7 +300,8 @@ def propose(
             "rows": [header.as_category() for header in rows],
             "columns": [header.as_category() for header in columns],
         }
-        if not validate(db, board, pool, recognition).ok:
+        report = validate(db, board, pool, recognition)
+        if not report.ok:
             continue
 
         return Proposal(
@@ -304,6 +309,10 @@ def propose(
             columns=columns,
             cells=cells,
             difficulty=difficulty(cells, recognition, headers),
+            findings=[
+                {"level": f.level, "code": f.code, "message": f.message}
+                for f in report.findings
+            ],
         )
     return None
 
@@ -432,6 +441,7 @@ def main():
                         column_categories=board["columns"],
                         answers=board["answers"],
                         difficulty_score=proposal.difficulty,
+                        validator_report={"findings": proposal.findings},
                     )
                 )
             db.commit()

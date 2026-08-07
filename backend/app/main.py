@@ -125,6 +125,7 @@ async def health_check():
 
 from app.routers import (
     admin,
+    admin_puzzles,
     auth,
     circuits,
     comments,
@@ -142,6 +143,9 @@ from app.routers import (
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(oauth.router, prefix="/auth/oauth", tags=["oauth"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(
+    admin_puzzles.router, prefix="/api/admin/puzzles", tags=["admin", "daily-grid"]
+)
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(season_results.router, prefix="/api/results", tags=["results"])
 app.include_router(weekend.router, prefix="/api/results", tags=["results"])

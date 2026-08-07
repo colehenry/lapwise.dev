@@ -13,9 +13,10 @@ from app.models import (
     ChampionshipClassificationException,
     Driver,
     DriverChampionshipStanding,
+    SessionResult,
+    Team,
 )
 from app.models import Session as RaceSession
-from app.models import SessionResult, Team
 from app.services.canonical_standings_service import CanonicalStandingsService
 
 RACE_TYPES = ("race", "sprint_race")

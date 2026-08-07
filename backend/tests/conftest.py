@@ -9,13 +9,13 @@ import psycopg2
 import psycopg2.extras
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 
 from app.config import settings
 from app.database import AsyncSessionLocal, engine
 from app.main import app
+from app.models import Puzzle
 from app.models import Session as RaceSession
 from app.services.auth_service import AuthService
 
@@ -111,6 +111,21 @@ async def ingested_data(db_session):
     """Skips when the configured database holds no ingested sessions."""
     if await db_session.scalar(select(RaceSession.id).limit(1)) is None:
         pytest.skip("no ingested session data in the configured database")
+    return db_session
+
+
+@pytest_asyncio.fixture
+async def published_boards(db_session):
+    """Skips when the configured database holds no published boards.
+
+    Boards moved from JSON files into `puzzles`, so anything reading the daily
+    grid now needs rows. A fresh CI database has none.
+    """
+    published = await db_session.scalar(
+        select(Puzzle.id).where(Puzzle.status == "published").limit(1)
+    )
+    if published is None:
+        pytest.skip("no published boards in the configured database")
     return db_session
 
 
