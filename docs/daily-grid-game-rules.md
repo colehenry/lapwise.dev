@@ -255,6 +255,8 @@ one-driver-per-board rule.
   board and switching cannot import a half-solved grid.
 - A board counts as played once either mode has finished it.
 - The mode is offered only on boards that carry frozen option lists.
+- Switching mode is free and needs no confirmation: separate storage means
+  there is no progress to lose on either side.
 
 ## Scoring and sharing
 

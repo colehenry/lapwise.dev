@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useCallback, useState } from "react";
 import {
+  GRID_MODES,
   type GridMode,
   useDailyGridProgress,
 } from "@/hooks/useDailyGridProgress";
@@ -19,49 +20,49 @@ import {
 import DriverSearchPanel from "./DriverSearchPanel";
 import GameCategoryHeader from "./GameCategoryHeader";
 import GameDriverCell from "./GameDriverCell";
-import GameRulesTooltip from "./GameRulesTooltip";
+import GameHelpMenu from "./GameHelpMenu";
 import PuzzleNavigation from "./PuzzleNavigation";
 import RookieOptionRail from "./RookieOptionRail";
 import StartingLights from "./StartingLights";
 
 type ShakeState = { cellId: string } | null;
 
+const MODE_LABELS: Record<GridMode, string> = {
+  standard: "Standard",
+  rookie: "Rookie",
+};
+
+/** Both states are shown rather than one toggle label, so the alternative is
+ *  discoverable without clicking it. Each mode keeps its own progress, so
+ *  switching costs the player nothing and needs no confirmation. */
 function ModeToggle({
   mode,
   onChange,
-  started,
 }: {
   mode: GridMode;
   onChange: (mode: GridMode) => void;
-  started: boolean;
 }) {
-  const switchTo: GridMode = mode === "rookie" ? "standard" : "rookie";
-
   return (
-    <button
-      type="button"
-      aria-pressed={mode === "rookie"}
-      onClick={() => {
-        // Progress is stored per mode, so switching keeps both boards intact
-        // rather than importing a half-solved grid into the other mode.
-        if (
-          started &&
-          !window.confirm(
-            `Switch to ${switchTo === "rookie" ? "Rookie" : "Standard"} Mode? This grid keeps separate progress for each mode.`,
-          )
-        ) {
-          return;
-        }
-        onChange(switchTo);
-      }}
-      className={`rounded-sm border px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wider transition-colors ${
-        mode === "rookie"
-          ? "border-purple-400/60 bg-purple-400/10 text-purple-300"
-          : "border-border-secondary text-text-muted hover:text-text-primary"
-      }`}
+    <fieldset
+      aria-label="Difficulty mode"
+      className="inline-flex rounded-sm border border-border-primary bg-bg-secondary p-0.5"
     >
-      Rookie Mode
-    </button>
+      {GRID_MODES.map((option) => (
+        <button
+          key={option}
+          type="button"
+          aria-pressed={mode === option}
+          onClick={() => onChange(option)}
+          className={`rounded-sm px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-400 ${
+            mode === option
+              ? "bg-bg-elevated text-text-primary"
+              : "text-text-muted hover:text-text-secondary"
+          }`}
+        >
+          {MODE_LABELS[option]}
+        </button>
+      ))}
+    </fieldset>
   );
 }
 
@@ -152,59 +153,65 @@ function GameBoard({
   const lastMiss = selectedMisses.at(-1) ?? null;
 
   return (
-    <div
-      className={`relative mx-auto w-full ${
-        rookie
-          ? "max-w-[32rem] lg:flex lg:max-w-[50rem] lg:items-start lg:gap-4"
-          : "max-w-[32rem]"
-      }`}
-    >
-      <div className="w-full min-w-0">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <p className="font-mono text-xs font-bold uppercase tracking-wider text-text-primary">
-              Grid #{String(puzzle.number).padStart(3, "0")}
-            </p>
-            <GameRulesTooltip />
-          </div>
-          <div className="flex items-center gap-2">
-            {puzzle.has_rookie_mode && (
-              <ModeToggle
-                mode={mode}
-                started={progress.attempts.length > 0}
-                onChange={(next) => {
-                  setMode(next);
-                  setSelectedCell(null);
-                  guessMutation.reset();
-                }}
-              />
-            )}
-            <StartingLights
-              attempts={progress.attempts}
-              total={puzzle.max_guesses}
+    // The board keeps a single width in both modes. Rookie Mode's panel is
+    // placed beside it rather than in the flow, so opening it never shifts the
+    // grid off centre.
+    <div className="relative mx-auto w-full max-w-[32rem]">
+      <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <div className="flex items-center gap-2">
+          <p className="font-mono text-xs font-bold uppercase tracking-wider text-text-primary">
+            Grid #{String(puzzle.number).padStart(3, "0")}
+          </p>
+          <GameHelpMenu
+            rookieAvailable={Boolean(puzzle.has_rookie_mode)}
+            onRestart={() => {
+              progress.restart();
+              closeSearch();
+              guessMutation.reset();
+              setAnnouncement("Grid restarted.");
+            }}
+          />
+        </div>
+        <StartingLights
+          attempts={progress.attempts}
+          total={puzzle.max_guesses}
+        />
+        <div />
+      </div>
+
+      <div className="relative">
+        <div className="grid grid-cols-[4.5rem_repeat(3,minmax(0,1fr))] sm:grid-cols-[6rem_repeat(3,minmax(0,1fr))]">
+          <div className="flex min-h-16 items-center justify-center rounded-tl-sm border border-border-primary bg-bg-secondary sm:min-h-20">
+            <Image
+              src="/favicon.ico"
+              alt="Lapwise"
+              width={44}
+              height={44}
+              className="h-9 w-9 rounded-md sm:h-11 sm:w-11"
             />
           </div>
-        </div>
 
-        <div className="relative">
-          <div className="grid grid-cols-[4.5rem_repeat(3,minmax(0,1fr))] sm:grid-cols-[6rem_repeat(3,minmax(0,1fr))]">
-            <div className="flex min-h-16 items-center justify-center border border-border-primary bg-bg-secondary sm:min-h-20">
-              <Image
-                src="/favicon.ico"
-                alt="Lapwise"
-                width={44}
-                height={44}
-                className="h-9 w-9 rounded-md sm:h-11 sm:w-11"
-              />
-            </div>
+          {puzzle.columns.map((column, columnIndex) => (
+            <GameCategoryHeader
+              key={column.id}
+              category={column}
+              className={
+                columnIndex === puzzle.columns.length - 1
+                  ? "rounded-tr-sm"
+                  : undefined
+              }
+            />
+          ))}
 
-            {puzzle.columns.map((column) => (
-              <GameCategoryHeader key={column.id} category={column} />
-            ))}
-
-            {puzzle.rows.map((row, rowIndex) => (
+          {puzzle.rows.map((row, rowIndex) => {
+            const lastRow = rowIndex === puzzle.rows.length - 1;
+            return (
               <div key={row.id} className="contents">
-                <GameCategoryHeader category={row} orientation="row" />
+                <GameCategoryHeader
+                  category={row}
+                  orientation="row"
+                  className={lastRow ? "rounded-bl-sm" : undefined}
+                />
                 {puzzle.columns.map((column, columnIndex) => {
                   const cellIndex =
                     rowIndex * puzzle.columns.length + columnIndex;
@@ -214,9 +221,15 @@ function GameBoard({
                       key={cellId}
                       rowLabel={row.prompt_label}
                       columnLabel={column.prompt_label}
+                      cornerClass={
+                        lastRow && columnIndex === puzzle.columns.length - 1
+                          ? "rounded-br-sm"
+                          : undefined
+                      }
                       disabled={finished || !progress.ready}
                       driver={progress.filledCells.get(cellId)}
                       finished={finished}
+                      selected={selectedCell === cellIndex}
                       misses={progress.missesByCell.get(cellId) ?? []}
                       solved={progress.solvedByCell.get(cellId)}
                       shaking={shake?.cellId === cellId}
@@ -231,70 +244,70 @@ function GameBoard({
                   );
                 })}
               </div>
-            ))}
-          </div>
-
-          {!rookie &&
-            selectedRow !== null &&
-            selectedColumn !== null &&
-            !finished && (
-              <DriverSearchPanel
-                catalog={catalog}
-                catalogError={catalogError}
-                catalogLoading={catalogLoading}
-                rowLabel={puzzle.rows[selectedRow].prompt_label}
-                columnLabel={puzzle.columns[selectedColumn].prompt_label}
-                loading={guessMutation.isPending}
-                misses={selectedMisses}
-                onClose={closeSearch}
-                onSubmit={submitDriver}
-                placedDriverSlugs={progress.placedDriverSlugs}
-              />
-            )}
+            );
+          })}
         </div>
 
-        <PuzzleNavigation
-          previousNumber={puzzle.previous_number}
-          nextNumber={puzzle.next_number}
-          onRestart={() => {
-            progress.restart();
-            closeSearch();
-            guessMutation.reset();
-            setAnnouncement("Grid restarted.");
-          }}
-        />
+        {!rookie &&
+          selectedRow !== null &&
+          selectedColumn !== null &&
+          !finished && (
+            <DriverSearchPanel
+              catalog={catalog}
+              catalogError={catalogError}
+              catalogLoading={catalogLoading}
+              rowLabel={puzzle.rows[selectedRow].prompt_label}
+              columnLabel={puzzle.columns[selectedColumn].prompt_label}
+              loading={guessMutation.isPending}
+              misses={selectedMisses}
+              onClose={closeSearch}
+              onSubmit={submitDriver}
+              placedDriverSlugs={progress.placedDriverSlugs}
+            />
+          )}
 
-        <p className="sr-only" aria-live="polite">
-          {announcement}
-        </p>
+        {/* Appears only once a square is chosen; there is nothing useful to
+              show before one is. */}
+        {rookie &&
+          selectedRow !== null &&
+          selectedColumn !== null &&
+          selectedCellId !== null &&
+          !finished && (
+            <RookieOptionRail
+              rowLabel={puzzle.rows[selectedRow].prompt_label}
+              columnLabel={puzzle.columns[selectedColumn].prompt_label}
+              error={rookieOptions.isError}
+              lastMiss={lastMiss}
+              loading={rookieOptions.isLoading}
+              misses={selectedMisses}
+              options={rookieOptions.data?.options[selectedCellId]}
+              onSelect={submitDriver}
+              placedDriverSlugs={progress.placedDriverSlugs}
+              submitting={guessMutation.isPending}
+            />
+          )}
       </div>
 
-      {rookie && (
-        <RookieOptionRail
-          rowLabel={
-            selectedRow === null || finished
-              ? undefined
-              : puzzle.rows[selectedRow].prompt_label
-          }
-          columnLabel={
-            selectedColumn === null || finished
-              ? undefined
-              : puzzle.columns[selectedColumn].prompt_label
-          }
-          error={rookieOptions.isError}
-          lastMiss={lastMiss}
-          loading={rookieOptions.isLoading}
-          misses={selectedMisses}
-          options={
-            selectedCellId
-              ? rookieOptions.data?.options[selectedCellId]
-              : undefined
-          }
-          onSelect={submitDriver}
-          placedDriverSlugs={progress.placedDriverSlugs}
-          submitting={guessMutation.isPending}
-        />
-      )}
+      <PuzzleNavigation
+        previousNumber={puzzle.previous_number}
+        nextNumber={puzzle.next_number}
+        center={
+          puzzle.has_rookie_mode ? (
+            <ModeToggle
+              mode={mode}
+              onChange={(next) => {
+                setMode(next);
+                setSelectedCell(null);
+                guessMutation.reset();
+              }}
+            />
+          ) : null
+        }
+      />
+
+      <p className="sr-only" aria-live="polite">
+        {announcement}
+      </p>
     </div>
   );
 }

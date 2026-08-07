@@ -33,12 +33,12 @@ function GridLink({
 }
 
 export default function PuzzleNavigation({
+  center,
   nextNumber,
-  onRestart,
   previousNumber,
 }: {
+  center?: React.ReactNode;
   nextNumber: number | null;
-  onRestart: () => void;
   previousNumber: number | null;
 }) {
   return (
@@ -51,13 +51,7 @@ export default function PuzzleNavigation({
           <GridLink number={previousNumber} direction="previous" />
         )}
       </div>
-      <button
-        type="button"
-        onClick={onRestart}
-        className="justify-self-center text-xs font-semibold text-text-muted underline decoration-border-secondary underline-offset-4 transition-colors hover:text-text-primary"
-      >
-        Restart grid
-      </button>
+      <div className="justify-self-center">{center}</div>
       <div className="justify-self-end">
         {nextNumber !== null && (
           <GridLink number={nextNumber} direction="next" />

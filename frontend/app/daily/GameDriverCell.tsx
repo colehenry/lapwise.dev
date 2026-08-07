@@ -8,6 +8,8 @@ import type { GameDriver } from "@/lib/queries/dailyGrid";
 
 type GameDriverCellProps = {
   columnLabel: string;
+  /** Corner radius for the grid's outer edge, applied to both card faces. */
+  cornerClass?: string;
   disabled: boolean;
   driver?: GameDriver;
   finished: boolean;
@@ -15,6 +17,9 @@ type GameDriverCellProps = {
   onAnimationEnd: () => void;
   onSelect: () => void;
   rowLabel: string;
+  /** Holds the hover treatment while this cell's picker is open, so the board
+   *  shows which square is being answered. */
+  selected: boolean;
   shaking: boolean;
   solved?: GridAttempt;
 };
@@ -36,6 +41,7 @@ function ProofLine({ evidence }: { evidence: GridAttempt["rowEvidence"] }) {
 
 export default function GameDriverCell({
   columnLabel,
+  cornerClass,
   disabled,
   driver,
   finished,
@@ -43,6 +49,7 @@ export default function GameDriverCell({
   onAnimationEnd,
   onSelect,
   rowLabel,
+  selected,
   shaking,
   solved,
 }: GameDriverCellProps) {
@@ -63,10 +70,22 @@ export default function GameDriverCell({
         }`}
       >
         <div className="game-card-inner">
-          <div className="game-card-face flex items-center justify-center border border-dashed border-border-secondary bg-bg-primary/60 transition-colors group-hover:border-text-muted group-hover:bg-bg-tertiary">
-            <DriverSilhouette className="w-[46%] max-w-16 transition-colors group-hover:text-text-secondary/55" />
+          <div
+            className={`game-card-face flex items-center justify-center border border-dashed transition-colors group-hover:border-text-muted group-hover:bg-bg-tertiary ${
+              selected
+                ? "border-text-muted bg-bg-tertiary"
+                : "border-border-secondary bg-bg-primary/60"
+            } ${cornerClass ?? ""}`}
+          >
+            <DriverSilhouette
+              className={`w-[46%] max-w-16 transition-colors group-hover:text-text-secondary/55 ${
+                selected ? "text-text-secondary/55" : ""
+              }`}
+            />
           </div>
-          <div className="game-card-face game-card-back flex flex-col items-center justify-center border border-success/50 bg-success/10 p-1.5 sm:p-2">
+          <div
+            className={`game-card-face game-card-back flex flex-col items-center justify-center border border-success/50 bg-success/10 p-1.5 sm:p-2 ${cornerClass ?? ""}`}
+          >
             {driver && (
               <>
                 <DriverHeadshot

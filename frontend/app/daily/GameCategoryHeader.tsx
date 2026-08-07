@@ -11,9 +11,13 @@ import type { GameCategory } from "@/lib/queries/dailyGrid";
 
 export default function GameCategoryHeader({
   category,
+  className,
   orientation = "column",
 }: {
   category: GameCategory;
+  /** Corner radius for the grid's outer edge, applied per corner cell so the
+   *  block reads as rounded without clipping the hover labels. */
+  className?: string;
   orientation?: "column" | "row";
 }) {
   const { theme } = useTheme();
@@ -28,7 +32,9 @@ export default function GameCategoryHeader({
       : null;
 
   return (
-    <div className="group relative flex min-h-16 min-w-0 items-center justify-center border border-border-primary bg-bg-secondary text-center sm:min-h-20">
+    <div
+      className={`group relative flex min-h-16 min-w-0 items-center justify-center border border-border-primary bg-bg-secondary text-center sm:min-h-20 ${className ?? ""}`}
+    >
       <div
         className={`flex h-full w-full min-w-0 items-center justify-center overflow-hidden ${
           orientation === "row" ? "px-1 py-2 sm:px-1.5" : "p-2 sm:p-3"

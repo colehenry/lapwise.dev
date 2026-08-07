@@ -7,7 +7,7 @@ import { formatEvidence } from "@/lib/gridEvidence";
 import type { GameDriver } from "@/lib/queries/dailyGrid";
 
 type RookieOptionRailProps = {
-  columnLabel?: string;
+  columnLabel: string;
   error: boolean;
   lastMiss: GridAttempt | null;
   loading: boolean;
@@ -15,33 +15,56 @@ type RookieOptionRailProps = {
   onSelect: (driver: GameDriver) => void;
   options?: GameDriver[];
   placedDriverSlugs: Set<string>;
-  rowLabel?: string;
+  rowLabel: string;
   submitting: boolean;
 };
 
-/** Proof for one header. Rendered only after a guess is committed. */
-function ProofLine({ evidence }: { evidence: GridAttempt["rowEvidence"] }) {
+/** One header's verdict: what was asked, and what the driver actually did. */
+function ProofRow({
+  evidence,
+  label,
+}: {
+  evidence: GridAttempt["rowEvidence"];
+  label: string;
+}) {
   const proof = formatEvidence(evidence);
   if (!proof) return null;
+  const satisfied = evidence?.satisfied ?? false;
+
   return (
-    <p
-      className={`mt-1 text-[11px] leading-snug ${
-        evidence?.satisfied ? "text-success" : "text-red-400"
-      }`}
-    >
-      <span aria-hidden="true">{evidence?.satisfied ? "✓" : "✗"}</span> {proof}
-    </p>
+    <div className="mt-2 first:mt-0">
+      <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-text-muted">
+        {label}
+      </p>
+      <p
+        className={`text-[11px] leading-snug ${
+          satisfied ? "text-text-secondary" : "text-red-400"
+        }`}
+      >
+        {proof}
+      </p>
+    </div>
   );
 }
 
-function MissProof({ attempt }: { attempt: GridAttempt }) {
+function MissProof({
+  attempt,
+  columnLabel,
+  rowLabel,
+}: {
+  attempt: GridAttempt;
+  columnLabel: string;
+  rowLabel: string;
+}) {
   return (
-    <div className="mt-3 rounded-md border border-red-500/40 bg-red-500/5 p-3">
-      <p className="text-xs font-bold text-text-primary">
+    <div className="border-l-2 border-border-secondary pl-2.5">
+      <p className="text-xs font-semibold text-text-primary">
         {attempt.driver.full_name}
       </p>
-      <ProofLine evidence={attempt.rowEvidence} />
-      <ProofLine evidence={attempt.columnEvidence} />
+      <div className="mt-1.5">
+        <ProofRow evidence={attempt.rowEvidence} label={rowLabel} />
+        <ProofRow evidence={attempt.columnEvidence} label={columnLabel} />
+      </div>
     </div>
   );
 }
@@ -63,64 +86,75 @@ export default function RookieOptionRail({
   return (
     <aside
       aria-label="Driver options"
-      className="mt-4 w-full rounded-lg border border-border-primary bg-bg-secondary p-3 lg:mt-0 lg:w-64 lg:shrink-0"
+      // Absolutely placed beside the grid from xl up, so opening it never
+      // shifts the board off centre. Height tracks the grid rather than the
+      // contents, so the panel does not resize as squares are answered.
+      className="relative mt-3 min-h-[22rem] w-full rounded-sm border border-border-primary bg-bg-secondary xl:absolute xl:left-full xl:top-0 xl:ml-3 xl:mt-0 xl:h-full xl:min-h-0 xl:w-72"
     >
-      {rowLabel && columnLabel ? (
-        <p className="text-xs font-bold text-text-primary">
-          {rowLabel} <span className="text-text-muted">•</span> {columnLabel}
-        </p>
-      ) : (
-        <p className="text-xs font-semibold text-text-secondary">
-          Pick a square to see its drivers.
-        </p>
-      )}
+      <div className="absolute inset-0 flex flex-col overflow-hidden p-3">
+        <header className="shrink-0 border-b border-border-primary pb-2">
+          <p className="text-[10px] font-bold uppercase leading-snug tracking-[0.08em] text-text-primary">
+            {rowLabel} <span className="text-text-muted">·</span> {columnLabel}
+          </p>
+        </header>
 
-      {lastMiss && <MissProof attempt={lastMiss} />}
+        {lastMiss && (
+          <div className="shrink-0 py-2.5">
+            <MissProof
+              attempt={lastMiss}
+              rowLabel={rowLabel}
+              columnLabel={columnLabel}
+            />
+          </div>
+        )}
 
-      {rowLabel && (
-        <div className="mt-3 max-h-[26rem] overflow-y-auto lg:max-h-[30rem]">
+        <div className="min-h-0 flex-1 overflow-y-auto pt-2.5">
           {loading && (
-            <p className="py-4 text-sm text-text-muted">Loading drivers…</p>
+            <p className="text-xs text-text-muted">Loading drivers…</p>
           )}
           {error && (
-            <p className="py-4 text-sm text-red-400">
-              Driver options are unavailable. Switch off Rookie Mode to search
+            <p className="text-xs text-red-400">
+              Driver options are unavailable. Switch to Standard to search
               instead.
             </p>
           )}
-          {options?.map((driver) => {
-            const used =
-              placedDriverSlugs.has(driver.driver_slug) ||
-              missedSlugs.has(driver.driver_slug);
-            return (
-              <button
-                key={driver.driver_slug}
-                type="button"
-                disabled={used || submitting}
-                onClick={() => onSelect(driver)}
-                className="flex w-full items-center gap-2 border-b border-border-primary px-1 py-2 text-left transition-colors last:border-b-0 hover:bg-bg-tertiary focus-visible:bg-bg-tertiary focus-visible:outline-none disabled:opacity-40"
-              >
-                <DriverHeadshot
-                  code={driver.driver_code}
-                  fullName={driver.full_name}
-                  size={32}
-                  src={getDriverHeadshotUrl(driver)}
-                  focalX={driver.media?.focal_x}
-                  focalY={driver.media?.focal_y}
-                  className="rounded"
-                />
-                <span
-                  className={`truncate text-xs font-semibold ${
-                    used ? "text-text-muted line-through" : "text-text-primary"
-                  }`}
+          <div className="grid grid-cols-3 gap-1.5">
+            {options?.map((driver) => {
+              const used =
+                placedDriverSlugs.has(driver.driver_slug) ||
+                missedSlugs.has(driver.driver_slug);
+              return (
+                <button
+                  key={driver.driver_slug}
+                  type="button"
+                  disabled={used || submitting}
+                  onClick={() => onSelect(driver)}
+                  className="group flex flex-col items-center gap-1 rounded-sm border border-border-primary bg-bg-primary p-1 transition-colors hover:border-text-muted hover:bg-bg-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-400 disabled:pointer-events-none disabled:opacity-35"
                 >
-                  {driver.full_name}
-                </span>
-              </button>
-            );
-          })}
+                  <DriverHeadshot
+                    responsive
+                    code={driver.driver_code}
+                    fullName={driver.full_name}
+                    src={getDriverHeadshotUrl(driver)}
+                    focalX={driver.media?.focal_x}
+                    focalY={driver.media?.focal_y}
+                    className="aspect-square w-[84%] rounded-sm"
+                  />
+                  <span
+                    className={`line-clamp-2 text-center text-[9px] font-semibold leading-tight ${
+                      used
+                        ? "text-text-muted line-through"
+                        : "text-text-secondary group-hover:text-text-primary"
+                    }`}
+                  >
+                    {driver.full_name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      )}
+      </div>
     </aside>
   );
 }
