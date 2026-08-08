@@ -2,8 +2,8 @@
 
 A `Puzzle` row is the immutable published board: its answer sets, Rookie Mode
 option lists and frozen evidence, plus the editorial state that governs whether
-it may be served. It replaces the JSON files under `data/game_puzzles`, which
-cannot support daily publication without a deploy.
+it may be served. It is the only store: boards are generated, validated and
+frozen against this table, and nothing is authored on disk.
 
 A `GameSession` is one attempt at one board in one mode. The server owns the
 clock: local progress is editable, so a client-measured time cannot rank.

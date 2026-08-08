@@ -5,6 +5,8 @@ import type {
   AdminPuzzleDetail,
   AdminPuzzleListResponse,
   AdminUserListResponse,
+  PuzzleGenerateRequest,
+  PuzzleGenerateResponse,
   PuzzleStatus,
 } from "./adminTypes";
 import { apiUrl } from "./api";
@@ -124,6 +126,22 @@ export async function fetchAdminPuzzles(
   const query = status ? `?status=${status}` : "";
   const res = await fetchWithAuth(apiUrl(`/api/admin/puzzles${query}`));
   if (!res.ok) throw new Error("Failed to fetch puzzles");
+  return res.json();
+}
+
+/** Proposes boards as drafts. Loading the driver pool and header catalog
+ *  dominates the cost, so a batch of ten costs about what one does — and the
+ *  request runs for seconds rather than milliseconds. */
+export async function adminGeneratePuzzles(
+  request: PuzzleGenerateRequest,
+): Promise<PuzzleGenerateResponse> {
+  const res = await fetchWithAuth(apiUrl("/api/admin/puzzles/generate"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok)
+    throw new Error(await extractAdminError(res, "Failed to generate boards"));
   return res.json();
 }
 

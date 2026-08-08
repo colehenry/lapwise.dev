@@ -136,8 +136,8 @@ def load_recognition(db: OrmSession, pool: Pool) -> dict[str, Recognition]:
     }
 
 
-def has_perfect_assignment(cells: dict[str, set[str]]) -> tuple[bool, list[str]]:
-    """Whether one distinct driver can fill every cell at once.
+def solve_assignment(cells: dict[str, set[str]]) -> tuple[dict[str, str], list[str]]:
+    """One distinct driver per cell, plus the cells that could not be filled.
 
     A board where every cell has answers can still be unfinishable, because a
     correctly placed driver is spent for the rest of the board. Nine non-empty
@@ -145,16 +145,16 @@ def has_perfect_assignment(cells: dict[str, set[str]]) -> tuple[bool, list[str]]
     see. Augmenting paths over nine cells; the size makes anything cleverer
     pointless.
     """
-    assignment: dict[str, str] = {}
+    by_slug: dict[str, str] = {}
 
     def augment(cell_id: str, seen: set[str]) -> bool:
         for slug in sorted(cells[cell_id]):
             if slug in seen:
                 continue
             seen.add(slug)
-            holder = assignment.get(slug)
+            holder = by_slug.get(slug)
             if holder is None or augment(holder, seen):
-                assignment[slug] = cell_id
+                by_slug[slug] = cell_id
                 return True
         return False
 
@@ -162,6 +162,12 @@ def has_perfect_assignment(cells: dict[str, set[str]]) -> tuple[bool, list[str]]
     for cell_id in sorted(cells, key=lambda key: len(cells[key])):
         if not augment(cell_id, set()):
             unmatched.append(cell_id)
+    return {cell: slug for slug, cell in by_slug.items()}, unmatched
+
+
+def has_perfect_assignment(cells: dict[str, set[str]]) -> tuple[bool, list[str]]:
+    """Whether one distinct driver can fill every cell at once."""
+    _, unmatched = solve_assignment(cells)
     return not unmatched, unmatched
 
 
@@ -371,16 +377,15 @@ def main():
     parser.add_argument("--floor", type=int, default=DEFAULT_ELIGIBILITY_FLOOR)
     args = parser.parse_args()
 
-    numbers: Sequence[int] = (
-        list(_parse_boards(args.boards)) if args.boards else _board_numbers()
-    )
-
     db = get_db_session()
     try:
+        numbers: Sequence[int] = (
+            list(_parse_boards(args.boards)) if args.boards else _board_numbers(db)
+        )
         pool = load_pool(db, args.floor)
         recognition = load_recognition(db, pool)
         print(f"Pool at {args.floor}+: {len(pool)} drivers\n")
-        reports = [validate(db, _load_board(n), pool, recognition) for n in numbers]
+        reports = [validate(db, _load_board(db, n), pool, recognition) for n in numbers]
     finally:
         db.close()
 

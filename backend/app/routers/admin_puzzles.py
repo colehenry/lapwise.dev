@@ -13,12 +13,29 @@ from app.models.user import User
 from app.schemas.admin_puzzle import (
     AdminPuzzleDetail,
     AdminPuzzleListResponse,
+    PuzzleGenerateRequest,
+    PuzzleGenerateResponse,
     PuzzleScheduleRequest,
     PuzzleStatusResponse,
 )
 from app.services.admin_puzzle_service import AdminPuzzleService
 
 router = APIRouter()
+
+
+@router.post("/generate", response_model=PuzzleGenerateResponse)
+async def generate_puzzles(
+    request: PuzzleGenerateRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_current_admin),
+):
+    """Propose boards as drafts.
+
+    Loading the driver pool and the header catalog dominates the cost, so a
+    batch of ten runs in about the time one does. The request is synchronous
+    and takes seconds.
+    """
+    return await AdminPuzzleService.generate(db, request)
 
 
 @router.get("", response_model=AdminPuzzleListResponse)

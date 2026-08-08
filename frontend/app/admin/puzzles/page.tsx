@@ -14,6 +14,7 @@ import type {
   AdminPuzzleSummary,
   PuzzleStatus,
 } from "@/lib/adminTypes";
+import GeneratePanel from "./GeneratePanel";
 import PuzzleReviewGrid from "./PuzzleReviewGrid";
 
 const FILTERS: { value: PuzzleStatus | "all"; label: string }[] = [
@@ -22,6 +23,12 @@ const FILTERS: { value: PuzzleStatus | "all"; label: string }[] = [
   { value: "approved", label: "Approved" },
   { value: "published", label: "Published" },
 ];
+
+function isoDate(offsetDays: number): string {
+  const day = new Date();
+  day.setDate(day.getDate() + offsetDays);
+  return day.toISOString().slice(0, 10);
+}
 
 const STATUS_STYLES: Record<PuzzleStatus, string> = {
   draft: "bg-bg-elevated text-text-muted",
@@ -150,6 +157,8 @@ export default function AdminPuzzlesPage() {
 
   return (
     <div className="space-y-4">
+      <GeneratePanel onGenerated={load} />
+
       <div className="flex flex-wrap items-center gap-2">
         {FILTERS.map((option) => (
           <button
@@ -184,9 +193,7 @@ export default function AdminPuzzlesPage() {
         </div>
       ) : puzzles.length === 0 ? (
         <p className="rounded-sm border border-border-primary bg-bg-secondary px-3 py-6 text-center text-sm text-text-muted">
-          No boards in this state. Run{" "}
-          <code className="font-mono text-xs">scripts/game_generator.py</code>{" "}
-          to propose some.
+          No boards in this state. Generate some above.
         </p>
       ) : (
         <div className="divide-y divide-border-primary rounded-sm border border-border-primary bg-bg-secondary">
@@ -221,6 +228,23 @@ export default function AdminPuzzlesPage() {
                           }
                           className="rounded-sm border border-border-primary bg-bg-secondary px-2 py-1 text-xs text-text-primary"
                         />
+                        {/* A past date is live immediately and a future one is
+                            queued: same endpoint, and the date gate in the
+                            player service is the whole difference. */}
+                        <button
+                          type="button"
+                          onClick={() => setScheduleDate(isoDate(-1))}
+                          className="rounded-sm border border-border-primary px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-text-secondary hover:bg-bg-tertiary"
+                        >
+                          Archive
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setScheduleDate(isoDate(1))}
+                          className="rounded-sm border border-border-primary px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-text-secondary hover:bg-bg-tertiary"
+                        >
+                          Queue
+                        </button>
                         <Button
                           size="sm"
                           disabled={
@@ -235,7 +259,9 @@ export default function AdminPuzzlesPage() {
                             )
                           }
                         >
-                          Approve &amp; schedule
+                          {scheduleDate && scheduleDate <= isoDate(0)
+                            ? "Approve & publish now"
+                            : "Approve & schedule"}
                         </Button>
                         {puzzle.status !== "draft" && (
                           <Button

@@ -1,7 +1,15 @@
-"""The editorial queue: read a proposed board in full, then schedule it."""
+"""The editorial queue: generate proposals, read one in full, then schedule it.
 
-from datetime import date, datetime, timezone
+Generating and freezing run the authoring path, which is synchronous
+SQLAlchemy against its own session. Both are offloaded to a thread rather than
+rewritten async: they are admin-only, they run for seconds rather than
+milliseconds, and a second implementation of either is a second thing that can
+disagree with the evidence a player is shown.
+"""
 
+from datetime import date, datetime, timedelta, timezone
+
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +21,8 @@ from app.schemas.admin_puzzle import (
     PuzzleAnswer,
     PuzzleCell,
     PuzzleFinding,
+    PuzzleGenerateRequest,
+    PuzzleGenerateResponse,
     PuzzleScheduleRequest,
     PuzzleStatusResponse,
 )
@@ -68,6 +78,45 @@ class AdminPuzzleService:
             statement = statement.where(Puzzle.status == status)
         puzzles = (await db.execute(statement)).scalars().all()
         return AdminPuzzleListResponse(puzzles=[_summary(puzzle) for puzzle in puzzles])
+
+    @staticmethod
+    async def generate(
+        db: AsyncSession, request: PuzzleGenerateRequest
+    ) -> PuzzleGenerateResponse:
+        """Propose boards as drafts.
+
+        Every proposal is validated before it is stored and dropped if it
+        fails, so what lands here is legal but unreviewed. Fewer boards than
+        requested is a normal outcome: the generator drops what it cannot make
+        pass rather than lowering the bar.
+        """
+        # Imported here because the authoring path pulls in the whole predicate
+        # layer, which the API has no reason to load at import time.
+        from scripts.game_generator import generate_and_store
+
+        start = request.start_on or date.today() + timedelta(days=1)
+        numbers = await run_in_threadpool(
+            generate_and_store,
+            request.count,
+            start,
+            request.eligibility_floor,
+            request.seed,
+            set(request.theme) or None,
+        )
+        if not numbers:
+            return PuzzleGenerateResponse(requested=request.count, created=[])
+
+        # The generator committed on its own connection, so this session has to
+        # read the rows back rather than expect them in its identity map.
+        created = (
+            await db.execute(
+                select(Puzzle).where(Puzzle.number.in_(numbers)).order_by(Puzzle.number)
+            )
+        ).scalars()
+        return PuzzleGenerateResponse(
+            requested=request.count,
+            created=[_summary(puzzle) for puzzle in created],
+        )
 
     @staticmethod
     async def _puzzle(db: AsyncSession, number: int) -> Puzzle:
@@ -159,7 +208,12 @@ class AdminPuzzleService:
 
         A published board dated in the future is scheduled rather than live,
         so this is the whole publication mechanism: no job runs, the date gate
-        in the player service does the rest.
+        in the player service does the rest. A past date backdates the board
+        into the archive, which is how a historical board is made.
+
+        Freezing Rookie Mode happens here rather than by hand, so a board
+        cannot reach a player in one mode only. Its refusal gate is the last
+        check before publication.
         """
         puzzle = await AdminPuzzleService._puzzle(db, number)
         if any(finding.level == "error" for finding in _findings(puzzle)):
@@ -177,6 +231,10 @@ class AdminPuzzleService:
         if clash is not None:
             raise ValueError(f"Grid #{clash} is already published on that date")
 
+        if not puzzle.rookie_options:
+            await AdminPuzzleService._freeze_rookie(number)
+            await db.refresh(puzzle)
+
         puzzle.published_on = request.published_on
         puzzle.status = request.status
         puzzle.reviewed_at = datetime.now(timezone.utc)
@@ -189,6 +247,32 @@ class AdminPuzzleService:
             reviewed_at=puzzle.reviewed_at,
             reviewed_by_id=puzzle.reviewed_by_id,
         )
+
+    @staticmethod
+    async def _freeze_rookie(number: int) -> None:
+        """Build and store this board's option lists and evidence.
+
+        Runs on its own synchronous session in a thread, like generation. The
+        refusal is surfaced as a scheduling error rather than swallowed: a
+        board whose evidence contradicts its answer sets must not publish, and
+        that gate has already caught a real bug once.
+        """
+        from scripts.freeze_rookie_options import FreezeRefused, freeze
+        from scripts.ingest.utils import get_db_session
+
+        def _run() -> list[str]:
+            db = get_db_session()
+            try:
+                return freeze(db, number)
+            finally:
+                db.close()
+
+        try:
+            await run_in_threadpool(_run)
+        except FreezeRefused as refusal:
+            raise ValueError(
+                f"Rookie Mode could not be frozen for this board: {refusal}"
+            ) from refusal
 
     @staticmethod
     async def revert(db: AsyncSession, number: int) -> PuzzleStatusResponse:

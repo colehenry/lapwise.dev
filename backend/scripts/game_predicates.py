@@ -16,15 +16,14 @@ Usage:
 """
 
 import argparse
-import json
 import sys
-from pathlib import Path
 from typing import Sequence
 
 from sqlalchemy import distinct, select
 from sqlalchemy.orm import Session as OrmSession
 
 from app.models import Session, SessionResult
+from app.models.game import Puzzle
 from scripts.game_evidence import (
     DriverFacts,
     build_context,
@@ -33,7 +32,6 @@ from scripts.game_evidence import (
 )
 from scripts.ingest.utils import get_db_session
 
-PUZZLE_DIRECTORY = Path(__file__).resolve().parents[1] / "data" / "game_puzzles"
 DEFAULT_ELIGIBILITY_FLOOR = 1990
 
 Pool = dict[str, DriverFacts]
@@ -98,17 +96,37 @@ def materialize(
     }
 
 
-def _load_board(number: int) -> dict:
-    path = PUZZLE_DIRECTORY / f"grid-{number:03d}.json"
-    with path.open(encoding="utf-8") as handle:
-        return json.load(handle)
+def _load_board(db: OrmSession, number: int) -> dict:
+    """A stored board in the authoring shape.
+
+    `puzzles` is the source of truth. The column names and the authoring keys
+    differ for the two header fields, so the translation lives here rather than
+    in every script that reads a board.
+    """
+    row = db.execute(
+        select(
+            Puzzle.public_id,
+            Puzzle.number,
+            Puzzle.eligibility_floor,
+            Puzzle.row_categories,
+            Puzzle.column_categories,
+            Puzzle.answers,
+        ).where(Puzzle.number == number)
+    ).one_or_none()
+    if row is None:
+        raise SystemExit(f"No board numbered {number}")
+    return {
+        "id": row.public_id,
+        "number": row.number,
+        "eligibility_floor": row.eligibility_floor,
+        "rows": row.row_categories,
+        "columns": row.column_categories,
+        "answers": row.answers,
+    }
 
 
-def _board_numbers() -> list[int]:
-    return sorted(
-        int(path.stem.rsplit("-", 1)[1])
-        for path in PUZZLE_DIRECTORY.glob("grid-*.json")
-    )
+def _board_numbers(db: OrmSession) -> list[int]:
+    return sorted(db.execute(select(Puzzle.number)).scalars())
 
 
 def _describe(predicate: dict) -> str:
@@ -116,20 +134,27 @@ def _describe(predicate: dict) -> str:
     return f"{predicate['kind']}({', '.join(f'{k}={v}' for k, v in extra.items())})"
 
 
-def verify_boards(db: OrmSession, floor: int) -> bool:
-    """Reproduce every frozen board from the predicates alone.
+def verify_boards(db: OrmSession, floor: int | None) -> bool:
+    """Reproduce every stored board from the predicates alone.
 
-    The hand-authored answer sets are the only independent check the inverse
-    has. If a resolver disagrees with them, either the resolver is wrong or a
-    board was frozen against a different rule, and both must be found before
-    a generator is trusted to propose boards unattended.
+    The frozen answer sets are the only independent check the inverse has. If a
+    resolver disagrees with them, either the resolver is wrong or a board was
+    frozen against a different rule, and both must be found before a generator
+    is trusted to propose boards unattended.
+
+    Each board is checked at its own stored floor unless one is forced. A board
+    verified only at the default floor could still be lying about a floor it
+    does not carry, which is the failure this is here to catch.
     """
-    pool = load_pool(db, floor)
-    print(f"Pool at {floor}+: {len(pool)} drivers")
-
+    pools: dict[int, Pool] = {}
     ok = True
-    for number in _board_numbers():
-        board = _load_board(number)
+    for number in _board_numbers(db):
+        board = _load_board(db, number)
+        board_floor = floor if floor is not None else board["eligibility_floor"]
+        if board_floor not in pools:
+            pools[board_floor] = load_pool(db, board_floor)
+            print(f"Pool at {board_floor}+: {len(pools[board_floor])} drivers")
+        pool = pools[board_floor]
         categories = board["rows"] + board["columns"]
         by_category = resolve_categories(db, categories, pool)
         cells = materialize(board["rows"], board["columns"], by_category)
@@ -157,21 +182,22 @@ def verify_boards(db: OrmSession, floor: int) -> bool:
 
 
 def report_headers(db: OrmSession, floor: int) -> None:
-    """How deep each header used by the sandbox boards actually is.
+    """How deep each header used by a stored board actually is.
 
     Header supply is the constraint on a daily schedule: six a board against
     a five-to-seven-day no-repeat window needs 42 distinct headers a week.
     """
     pool = load_pool(db, floor)
+    numbers = _board_numbers(db)
     categories: dict[str, dict] = {}
-    for number in _board_numbers():
-        board = _load_board(number)
+    for number in numbers:
+        board = _load_board(db, number)
         for category in board["rows"] + board["columns"]:
             categories.setdefault(category["id"], category)
 
     by_category = resolve_categories(db, list(categories.values()), pool)
     print(f"Pool at {floor}+: {len(pool)} drivers")
-    print(f"{len(categories)} distinct headers across {len(_board_numbers())} boards\n")
+    print(f"{len(categories)} distinct headers across {len(numbers)} boards\n")
     for category_id, resolved in sorted(
         by_category.items(), key=lambda item: -len(item[1])
     ):
@@ -194,8 +220,9 @@ def main():
     parser.add_argument(
         "--floor",
         type=int,
-        default=DEFAULT_ELIGIBILITY_FLOOR,
-        help=f"Eligibility floor (default {DEFAULT_ELIGIBILITY_FLOOR})",
+        default=None,
+        help="Force an eligibility floor. --verify uses each board's own by"
+        f" default; --headers defaults to {DEFAULT_ELIGIBILITY_FLOOR}",
     )
     args = parser.parse_args()
     if not args.verify and not args.headers:
@@ -205,7 +232,7 @@ def main():
     ok = True
     try:
         if args.headers:
-            report_headers(db, args.floor)
+            report_headers(db, args.floor or DEFAULT_ELIGIBILITY_FLOOR)
         if args.verify:
             ok = verify_boards(db, args.floor)
     finally:

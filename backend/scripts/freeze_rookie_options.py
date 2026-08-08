@@ -1,14 +1,19 @@
 """Freeze Rookie Mode option lists and category evidence into board snapshots.
 
-Option lists derive from the frozen answer sets rather than live queries. A
-driver appearing in any cell of a row satisfies that row header, so the
-row-only decoy pool for a cell is that row's union minus the column's union.
-Every decoy therefore satisfies exactly one of the cell's two headers, which is
-forced: satisfying both makes a driver a correct answer for that intersection.
+Correct options come from the board's frozen answer sets. Decoys come from its
+headers resolved against the whole eligible pool: the row-only pool is every
+eligible driver satisfying the row header and failing the column one. Every
+decoy therefore satisfies exactly one of the cell's two headers, which is
+forced — satisfying both makes a driver a correct answer for that intersection.
 
 Correct options are pairwise disjoint across the nine cells, so a correct
 placement can never consume the only listed answer for another cell under the
 one-driver-per-board rule.
+
+`build_frozen` is the reusable half: it takes a board in the authoring shape
+and returns the option lists, the evidence and any refusal to freeze. The
+approval path calls it so a board cannot publish without Rookie Mode, and the
+CLI below calls it to re-freeze a board by hand.
 
 Usage:
     PYTHONPATH=$PWD python scripts/freeze_rookie_options.py
@@ -17,21 +22,22 @@ Usage:
 """
 
 import argparse
-import json
 import random
 import sys
-from pathlib import Path
 from typing import Sequence
 
+from app.models.game import Puzzle
 from scripts.game_evidence import DriverFacts, build_context, build_evidence
-from scripts.game_evidence import load_driver_facts
+from scripts.game_predicates import (
+    DEFAULT_ELIGIBILITY_FLOOR,
+    _board_numbers,
+    _load_board,
+    load_pool,
+    resolve_categories,
+)
+from scripts.game_validator import solve_assignment
 from scripts.ingest.utils import get_db_session
 
-from sqlalchemy import select
-
-from app.models import Driver
-
-PUZZLE_DIRECTORY = Path(__file__).resolve().parents[1] / "data" / "game_puzzles"
 OPTIONS_PER_CELL = 8
 MIN_CORRECT_PER_CELL = 1
 MAX_CORRECT_PER_CELL = 3
@@ -56,56 +62,71 @@ def select_correct(
 ) -> dict[str, list[str]]:
     """One to three correct options per cell, pairwise disjoint across cells.
 
-    Cells are filled most-constrained first so a shallow intersection is never
-    starved by a deep one that had its pick of the same drivers.
+    Every cell is seeded from a perfect assignment before any cell takes a
+    second option. Filling most-constrained first is not enough on its own: a
+    three-answer cell can lose all three to earlier cells that each took a
+    spare, and the freeze then fails on a board the validator passed. The
+    matching the validator already runs to prove solvability is the same
+    matching that guarantees each cell keeps one, so it is reused rather than
+    approximated by an ordering heuristic.
     """
     rows = [row["id"] for row in puzzle["rows"]]
     columns = [column["id"] for column in puzzle["columns"]]
     answers = puzzle["answers"]
-    order = sorted(
-        (cell_id(row, column) for row in rows for column in columns),
-        key=lambda key: len(answers[key]),
-    )
+    cells = {
+        cell_id(row, column): set(answers[cell_id(row, column)])
+        for row in rows
+        for column in columns
+    }
 
-    taken: set[str] = set()
-    chosen: dict[str, list[str]] = {}
-    for key in order:
-        available = _rank([s for s in answers[key] if s not in taken], facts_by_slug)
-        if not available:
-            raise SystemExit(f"{puzzle['id']}: no unclaimed answer left for {key}")
+    seeded, unmatched = solve_assignment(cells)
+    if unmatched:
+        raise FreezeRefused(
+            [f"{key}: no distinct answer remains for this cell" for key in unmatched]
+        )
+
+    chosen = {key: [slug] for key, slug in seeded.items()}
+    taken = set(seeded.values())
+    for key in sorted(cells, key=lambda k: len(cells[k])):
         wanted = rng.randint(MIN_CORRECT_PER_CELL, MAX_CORRECT_PER_CELL)
+        available = _rank([s for s in cells[key] if s not in taken], facts_by_slug)
         # Bias toward the recognisable half rather than always taking the most
         # famous, so the correct options are not simply the biggest names.
-        pool = available[: max(wanted, len(available) // 2)]
-        picked = rng.sample(pool, min(wanted, len(pool)))
-        chosen[key] = picked
+        spare = max(0, wanted - 1)
+        pool = available[: max(spare, len(available) // 2)]
+        picked = rng.sample(pool, min(spare, len(pool)))
+        chosen[key].extend(picked)
         taken.update(picked)
     return chosen
 
 
 def build_options(
-    puzzle: dict, facts_by_slug: dict[str, DriverFacts], rng: random.Random
+    puzzle: dict,
+    facts_by_slug: dict[str, DriverFacts],
+    by_category: dict[str, set[str]],
+    rng: random.Random,
 ) -> dict[str, list[str]]:
+    """Eight options a cell, correct answers plus decoys.
+
+    Decoys are drawn from the headers resolved against the whole eligible
+    pool, not from the board's own answer unions. A driver who satisfies the
+    row header and fails the column header is a valid decoy whether or not
+    they happen to appear in another cell of this board, and restricting to
+    the board's own answers made cells that could not be filled at all: on a
+    "Won at Montréal" × "Race winner" cell every Montréal winner is already a
+    race winner, so the board-relative row-only pool was empty.
+    """
     rows = [row["id"] for row in puzzle["rows"]]
     columns = [column["id"] for column in puzzle["columns"]]
-    answers = puzzle["answers"]
     correct = select_correct(puzzle, facts_by_slug, rng)
-
-    row_union = {
-        row: set().union(*(answers[cell_id(row, c)] for c in columns)) for row in rows
-    }
-    column_union = {
-        column: set().union(*(answers[cell_id(r, column)] for r in rows))
-        for column in columns
-    }
 
     options: dict[str, list[str]] = {}
     for row in rows:
         for column in columns:
             key = cell_id(row, column)
             picked = list(correct[key])
-            row_only = _rank(row_union[row] - column_union[column], facts_by_slug)
-            column_only = _rank(column_union[column] - row_union[row], facts_by_slug)
+            row_only = _rank(by_category[row] - by_category[column], facts_by_slug)
+            column_only = _rank(by_category[column] - by_category[row], facts_by_slug)
 
             needed = OPTIONS_PER_CELL - len(picked)
             decoys: list[str] = []
@@ -217,9 +238,12 @@ def verify(puzzle: dict, options: dict[str, list[str]], evidence: dict) -> list[
     return problems
 
 
-def report_weak_cells(puzzle: dict, options: dict[str, list[str]], evidence: dict):
+def weak_cells(
+    puzzle: dict, options: dict[str, list[str]], evidence: dict
+) -> list[str]:
     """Cells where one header implies the other can only offer single-axis
     decoys. That is a weak cell, and the board author should see it."""
+    weak = []
     for row in puzzle["rows"]:
         for column in puzzle["columns"]:
             key = cell_id(row["id"], column["id"])
@@ -232,61 +256,80 @@ def report_weak_cells(puzzle: dict, options: dict[str, list[str]], evidence: dic
                 if row_evidence is not None:
                     axes.add("row" if row_evidence["satisfied"] else "column")
             if len(axes) == 1:
-                print(f"    weak cell {key}: decoys are {axes.pop()}-only")
+                weak.append(f"{key}: decoys are {axes.pop()}-only")
+    return weak
 
 
-def freeze(db, number: int, check_only: bool) -> bool:
-    path = PUZZLE_DIRECTORY / f"grid-{number:03d}.json"
-    puzzle = json.loads(path.read_text(encoding="utf-8"))
+class FreezeRefused(Exception):
+    """The evidence disagrees with the answer sets, so nothing is written.
+
+    This is the last gate before a board reaches a player, and it has already
+    paid for itself once: the naive seat-sharing test made Verstappen his own
+    teammate and this is what caught it.
+    """
+
+    def __init__(self, problems: list[str]):
+        self.problems = problems
+        super().__init__("; ".join(problems[:5]))
+
+
+def build_frozen(db, puzzle: dict) -> tuple[dict, dict, list[str]]:
+    """Option lists, evidence and weak-cell notes for one board.
+
+    Raises `FreezeRefused` rather than returning a partial freeze, because a
+    board whose evidence contradicts its answers must not be publishable.
+    """
     rng = random.Random(puzzle["id"])
+    floor = puzzle.get("eligibility_floor") or DEFAULT_ELIGIBILITY_FLOOR
+    # The board's own pool, not just its answers: decoys are drawn from every
+    # eligible driver satisfying one header, so the facts have to span it.
+    facts_by_slug = load_pool(db, floor)
+    by_category = resolve_categories(
+        db, puzzle["rows"] + puzzle["columns"], facts_by_slug
+    )
 
     answer_slugs = {slug for answers in puzzle["answers"].values() for slug in answers}
-    row_unions = set()
-    for row in puzzle["rows"]:
-        for column in puzzle["columns"]:
-            row_unions.update(puzzle["answers"][cell_id(row["id"], column["id"])])
-    driver_ids = {
-        slug: driver_id
-        for slug, driver_id in db.execute(
-            select(Driver.slug, Driver.id).where(Driver.slug.in_(answer_slugs))
-        ).all()
-    }
-    missing = answer_slugs - driver_ids.keys()
+    missing = answer_slugs - facts_by_slug.keys()
     if missing:
-        print(f"  {puzzle['id']}: unresolved driver slugs {sorted(missing)}")
-        return False
+        raise FreezeRefused(
+            [f"answers outside the board's {floor} pool: {sorted(missing)}"]
+        )
 
-    facts = load_driver_facts(db, list(driver_ids.values()))
-    facts_by_slug = {value.slug: value for value in facts.values()}
-
-    options = build_options(puzzle, facts_by_slug, rng)
+    options = build_options(puzzle, facts_by_slug, by_category, rng)
     slugs = collect_slugs(puzzle, options)
     evidence = build_evidence_map(db, puzzle, slugs, facts_by_slug)
     problems = verify(puzzle, options, evidence)
-
-    print(f"  {puzzle['id']}: {len(options)} cells, {len(evidence)} evidence records")
-    report_weak_cells(puzzle, options, evidence)
     if problems:
-        for problem in problems[:20]:
-            print(f"    FAIL {problem}")
-        if len(problems) > 20:
-            print(f"    ... {len(problems) - 20} more")
-        return False
+        raise FreezeRefused(problems)
+    return options, evidence, weak_cells(puzzle, options, evidence)
 
-    if not check_only:
-        puzzle["rookie_options"] = options
-        puzzle["rookie_evidence"] = evidence
-        path.write_text(json.dumps(puzzle, indent=2) + "\n", encoding="utf-8")
-        print("    frozen")
-    return True
+
+def freeze(db, number: int, check_only: bool = False) -> list[str]:
+    """Freeze one board and return its weak-cell notes.
+
+    Raises `FreezeRefused` rather than returning a failure, so a caller that
+    forgets to check a boolean cannot publish an unfrozen board.
+    """
+    puzzle = _load_board(db, number)
+    options, evidence, weak = build_frozen(db, puzzle)
+    if check_only:
+        return weak
+
+    db.execute(
+        Puzzle.__table__.update()
+        .where(Puzzle.number == number)
+        .values(rookie_options=options, rookie_evidence=evidence)
+    )
+    db.commit()
+    return weak
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--boards",
-        default="1-5",
-        help="Board number or range, e.g. 3 or 1-5",
+        default=None,
+        help="Board number or range, e.g. 3 or 1-5. Defaults to every board",
     )
     parser.add_argument(
         "--check",
@@ -295,17 +338,31 @@ def main():
     )
     args = parser.parse_args()
 
-    if "-" in args.boards:
-        start, end = (int(part) for part in args.boards.split("-", 1))
-        numbers = range(start, end + 1)
-    else:
-        numbers = [int(args.boards)]
-
     db = get_db_session()
     ok = True
     try:
+        if args.boards is None:
+            numbers: Sequence[int] = _board_numbers(db)
+        elif "-" in args.boards:
+            start, end = (int(part) for part in args.boards.split("-", 1))
+            numbers = range(start, end + 1)
+        else:
+            numbers = [int(args.boards)]
+
         for number in numbers:
-            ok = freeze(db, number, args.check) and ok
+            try:
+                weak = freeze(db, number, args.check)
+            except FreezeRefused as refusal:
+                print(f"  #{number}: refused")
+                for problem in refusal.problems[:20]:
+                    print(f"    FAIL {problem}")
+                if len(refusal.problems) > 20:
+                    print(f"    ... {len(refusal.problems) - 20} more")
+                ok = False
+                continue
+            print(f"  #{number}: {'checked' if args.check else 'frozen'}")
+            for note in weak:
+                print(f"    weak cell {note}")
     finally:
         db.close()
 

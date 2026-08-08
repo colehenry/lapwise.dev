@@ -16,7 +16,10 @@ export type GridAttempt = {
   columnEvidence?: CategoryEvidence | null;
 };
 
-const STORAGE_VERSION = "v4";
+// v5 orphans every stored board: the sandbox grids were retired and generated
+// boards reissue `grid-001` onward, so v4 progress would attach a solved cell
+// to a board that never accepted that driver.
+const STORAGE_VERSION = "v5";
 
 function storageKey(puzzleId: string, mode: GridMode) {
   return `lapwise:grid-progress:${STORAGE_VERSION}:${mode}:${puzzleId}`;

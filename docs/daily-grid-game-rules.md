@@ -121,15 +121,18 @@ earlier floor to run a deliberate classics grid. The floor is frozen with the
 board and applied before every answer set is materialized, so a later change to
 the default cannot alter a published board.
 
-The five sandbox boards predate this decision and were authored with no floor.
-Re-materialized at 1990 they keep at least three answers everywhere except
-grid-004, which gains two two-answer cells. Both clear the two-answer gate
-below, so all five boards remain valid at the 1990 floor and are re-frozen
-there rather than kept as all-history.
+The five hand-authored sandbox boards predated this decision, were authored
+with no floor, and were stored claiming 1990 — so they accepted Fangio, Moss
+and Clark on boards labelled 1990, and their Rookie option lists were drawn
+from a pool the boards did not use. They were retired on 2026-08-08 rather
+than re-frozen: the generator has always applied the floor, so replacing them
+removed the violation instead of repairing it.
 
-Re-freezing is not optional bookkeeping. A board whose stored floor does not
-match the answers frozen under it is lying about its own contents, and its
-Rookie option lists would be drawn from a pool the board no longer uses.
+A board whose stored floor does not match the answers frozen under it is lying
+about its own contents. That is now a test rather than a discipline:
+`test_every_answer_sits_inside_the_board_eligibility_floor` reads each board's
+own stored floor, which is what nothing was doing when the sandbox boards
+passed every other check.
 
 ### Standard cells
 
@@ -287,6 +290,14 @@ date is what schedules it, and it becomes playable at 07:00 UTC on its date
 with nothing running to make that happen. There is no publish job to fail, and
 the queue can sit thirty days ahead without exposing anything.
 
+A past date runs the same gate in the other direction: the board is live the
+moment it is approved and sits in the archive. Queuing and backdating are one
+endpoint and one date field, not two mechanisms.
+
+Approval also freezes Rookie Mode. The option lists and evidence are built and
+stored as part of approving the board, so a board cannot reach a player in one
+mode only, and the freeze's refusal gate is the last check before publication.
+
 One board may be published per date. A second board claiming a taken date fails
 at approval rather than producing two grids for the same day.
 
@@ -403,6 +414,12 @@ one-driver-per-board rule.
 - A decoy satisfies exactly one of the cell's two headers. Satisfying both
   makes a driver a correct answer for that intersection, so no other kind of
   decoy exists.
+- Decoys are drawn from each header resolved against the whole eligible pool,
+  not from the board's own answer sets. A driver satisfying the row header and
+  failing the column one is a valid decoy whether or not they appear elsewhere
+  on the board. Restricting to the board's own answers produced cells that
+  could not be filled at all: on a "Won at Montréal" × "Race winner" cell every
+  Montréal winner is already a race winner, so one side of the pool was empty.
 - Decoys are drawn from both axes where both exist. Where one header implies
   the other, only single-axis decoys are possible; the board is still valid and
   the validator reports the cell as weak.
@@ -410,7 +427,10 @@ one-driver-per-board rule.
   is eliminated on sight rather than considered.
 - Correct options are pairwise disjoint across the nine cells. A correct
   placement can therefore never consume the only listed answer for another
-  cell.
+  cell. Every cell is seeded from the same perfect assignment the validator
+  computes to prove solvability, before any cell takes a second option:
+  filling most-constrained first is not enough, because a three-answer cell
+  can lose all three to earlier cells that each took a spare.
 - Option lists are frozen with the board and derive from its answer sets, not
   from live queries.
 
@@ -498,8 +518,16 @@ times are not comparable.
 
 - The daily leaderboard covers the puzzle published that day and closes at
   07:00 UTC with the next publication.
-- Archive boards are timed and the time is shown, but they are never ranked.
-  Unlimited preparation makes an archive time meaningless.
+- **Until launch, every board is rankable whenever it is played.** A board's
+  leaderboard is its own and does not close. The rule below is the launch
+  rule and is suspended, not deleted: with no users, a leaderboard that only
+  accepts same-day play has a field of nobody, and the point of the pre-launch
+  boards is that a handful of people play them at whatever hour they are free.
+  Restore the archive rule before the first real daily board publishes,
+  because the reason for it does not go away.
+- *(Launch rule, currently suspended.)* Archive boards are timed and the time
+  is shown, but they are never ranked. Unlimited preparation makes an archive
+  time meaningless.
 - One session per puzzle, per mode, per player is eligible for ranking. A
   restart produces an unranked practice session, and the interface must say so
   before the restart happens.
@@ -615,6 +643,10 @@ venue, teammate, and car-number predicates.
 
 Before any production board is generated or frozen:
 
+- ~~re-freeze the five sandbox boards at the 1990 floor~~ — superseded
+  2026-08-08. The boards were retired instead. Generated boards apply the floor
+  at materialization, so there is nothing to re-freeze, and the eligibility
+  test above is the check that replaces the gate.
 - ~~repair the Jack Doohan/Robert Doornbos identity misassignment~~ — done
   2026-08-07. Doohan's 2023 Abu Dhabi practice outing, his 2024 Abu Dhabi
   debut, and his 2025 Chinese sprint qualifying were all filed under
@@ -626,8 +658,6 @@ Before any production board is generated or frozen:
   `tests/test_identity_mapping.py`, and it spans every session type: a
   race-only check went green while four practice and sprint-qualifying rows
   were still misfiled;
-- re-freeze the five sandbox boards at the 1990 floor, including their Rookie
-  option lists, which are currently drawn from an all-history pool;
 - run canonical identity and database audits;
 - make every enabled category report coverage and source boundaries;
 - prove each standard cell has at least three accepted answers;

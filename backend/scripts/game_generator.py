@@ -363,6 +363,64 @@ def generate(
     return proposals
 
 
+def store(
+    db: OrmSession, proposals: list[tuple[date, Proposal]], floor: int
+) -> list[int]:
+    """Write proposals as drafts and return the numbers created.
+
+    Numbering continues from the highest board ever stored rather than from a
+    count, so a retired board's number is never reissued to a different grid.
+    """
+    next_number = (
+        db.execute(select(Puzzle.number).order_by(Puzzle.number.desc()).limit(1))
+    ).scalar() or 0
+    numbers = []
+    for offset, (on, proposal) in enumerate(proposals, start=1):
+        board = proposal.as_board(next_number + offset, on, floor)
+        db.add(
+            Puzzle(
+                number=board["number"],
+                public_id=board["id"],
+                status="draft",
+                published_on=on,
+                eligibility_floor=floor,
+                row_categories=board["rows"],
+                column_categories=board["columns"],
+                answers=board["answers"],
+                difficulty_score=proposal.difficulty,
+                validator_report={"findings": proposal.findings},
+            )
+        )
+        numbers.append(board["number"])
+    db.commit()
+    return numbers
+
+
+def generate_and_store(
+    count: int,
+    start: date,
+    floor: int,
+    seed: int,
+    theme: set[str] | None = None,
+    min_depth: int = 12,
+    header_window: int = HEADER_REPEAT_DAYS,
+) -> list[int]:
+    """Generate and persist in one synchronous unit.
+
+    The admin endpoint calls this in a thread: the authoring path is sync
+    SQLAlchemy throughout, and loading the pool and catalog dominates the cost,
+    so a batch is barely more expensive than one board.
+    """
+    db = get_db_session()
+    try:
+        proposals = generate(
+            db, count, start, floor, seed, theme, min_depth, header_window
+        )
+        return store(db, proposals, floor) if proposals else []
+    finally:
+        db.close()
+
+
 def _print(on: date, proposal: Proposal) -> None:
     depths = sorted(len(answers) for answers in proposal.cells.values())
     print(f"  {on}  difficulty {proposal.difficulty:>3}  depths {depths}")
@@ -423,29 +481,8 @@ def main():
             _print(on, proposal)
 
         if args.write and proposals:
-            next_number = (
-                db.execute(
-                    select(Puzzle.number).order_by(Puzzle.number.desc()).limit(1)
-                )
-            ).scalar() or 0
-            for offset, (on, proposal) in enumerate(proposals, start=1):
-                board = proposal.as_board(next_number + offset, on, args.floor)
-                db.add(
-                    Puzzle(
-                        number=board["number"],
-                        public_id=board["id"],
-                        status="draft",
-                        published_on=on,
-                        eligibility_floor=args.floor,
-                        row_categories=board["rows"],
-                        column_categories=board["columns"],
-                        answers=board["answers"],
-                        difficulty_score=proposal.difficulty,
-                        validator_report={"findings": proposal.findings},
-                    )
-                )
-            db.commit()
-            print(f"\nWrote {len(proposals)} drafts.")
+            numbers = store(db, proposals, args.floor)
+            print(f"\nWrote {len(numbers)} drafts: #{numbers[0]}–#{numbers[-1]}.")
     finally:
         db.close()
 

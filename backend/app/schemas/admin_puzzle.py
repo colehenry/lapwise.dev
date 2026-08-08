@@ -70,6 +70,23 @@ class AdminPuzzleListResponse(BaseModel):
     puzzles: list[AdminPuzzleSummary]
 
 
+class PuzzleGenerateRequest(BaseModel):
+    """A generation run. Proposals land as drafts; nothing here publishes."""
+
+    count: int = Field(default=7, ge=1, le=30)
+    eligibility_floor: int = Field(default=1990, ge=1950, le=2100)
+    # Boards are dated forward from here. A past date backdates them into the
+    # archive, which is how a historical board is made.
+    start_on: date | None = None
+    theme: list[str] = Field(default_factory=list)
+    seed: int = 0
+
+
+class PuzzleGenerateResponse(BaseModel):
+    requested: int
+    created: list[AdminPuzzleSummary]
+
+
 class PuzzleScheduleRequest(BaseModel):
     """Approving a board is also dating it; the date gate does the publishing."""
 
