@@ -788,3 +788,69 @@ export interface BattleEvent {
   /** Race control category for race_control type events */
   category?: string | null;
 }
+
+// --- Daily Grid editorial queue -------------------------------------------
+
+export type PuzzleStatus = "draft" | "approved" | "published";
+
+export interface PuzzleFinding {
+  level: "error" | "warning";
+  code: string;
+  message: string;
+}
+
+export interface PuzzleAnswer {
+  driver_slug: string;
+  full_name: string;
+  wins: number;
+  entries: number;
+  podiums: number;
+  first_season: number | null;
+  latest_season: number | null;
+}
+
+export interface PuzzleCell {
+  cell_id: string;
+  row_id: string;
+  column_id: string;
+  row_label: string;
+  column_label: string;
+  depth: number;
+  answers: PuzzleAnswer[];
+}
+
+export interface AdminPuzzleSummary {
+  number: number;
+  public_id: string;
+  status: PuzzleStatus;
+  published_on: string | null;
+  eligibility_floor: number;
+  difficulty_score: number | null;
+  min_depth: number;
+  max_depth: number;
+  error_count: number;
+  warning_count: number;
+  created_at: string | null;
+}
+
+/** Mirrors `GameCategory` in `lib/queries/dailyGrid.ts`, which is the player
+ *  contract. Duplicated rather than imported so the admin types stay free of
+ *  the query layer. */
+export interface PuzzleHeader {
+  id: string;
+  label: string;
+  prompt_label: string;
+  description: string;
+  visual: { kind: "constructor" | "nationality" | "text"; value: string };
+}
+
+export interface AdminPuzzleDetail extends AdminPuzzleSummary {
+  rows: PuzzleHeader[];
+  columns: PuzzleHeader[];
+  cells: PuzzleCell[];
+  findings: PuzzleFinding[];
+}
+
+export interface AdminPuzzleListResponse {
+  puzzles: AdminPuzzleSummary[];
+}

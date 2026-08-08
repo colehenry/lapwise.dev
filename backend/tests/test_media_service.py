@@ -6,6 +6,7 @@ database. Constraint behaviour is covered by the migration itself.
 
 import pytest
 
+from app.config import settings
 from app.services.media_service import (
     SOURCE_CAREER_FALLBACK,
     SOURCE_EXACT_SEASON,
@@ -16,6 +17,18 @@ from app.services.media_service import (
     public_url,
     rank_candidates,
 )
+
+
+@pytest.fixture(autouse=True)
+def storage_configured(monkeypatch):
+    """Pin the storage base URL rather than inheriting it.
+
+    `public_url` returns None when storage is unconfigured, and `rank_candidates`
+    drops a candidate it cannot build a URL for. Without this these tests pass
+    only on a machine that happens to carry B2 credentials, and every ranking
+    assertion below becomes a KeyError anywhere else.
+    """
+    monkeypatch.setattr(settings, "b2_public_base_url", "https://media.test")
 
 
 def candidate(driver_id: int, year, key: str = "originals/a.jpg") -> _Candidate:
