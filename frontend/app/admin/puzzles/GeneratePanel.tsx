@@ -18,7 +18,7 @@ export default function GeneratePanel({
   const [startOn, setStartOn] = useState("");
   const [floor, setFloor] = useState(1990);
   const [theme, setTheme] = useState<string[]>([]);
-  const [seed, setSeed] = useState(0);
+  const [seed, setSeed] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState("");
@@ -33,7 +33,7 @@ export default function GeneratePanel({
         eligibility_floor: floor,
         start_on: startOn || null,
         theme,
-        seed,
+        seed: seed.trim() === "" ? null : Number(seed),
       });
       const made = response.created.length;
       setResult(
@@ -94,13 +94,16 @@ export default function GeneratePanel({
             className={INPUT}
           />
         </Field>
-        <Field htmlFor="generate-seed" label="Seed">
+        {/* Blank means a new board set each run. A fixed seed reproduces one,
+            which is only wanted when chasing a specific result. */}
+        <Field htmlFor="generate-seed" label="Seed (optional)">
           <input
             id="generate-seed"
             type="number"
             value={seed}
-            onChange={(event) => setSeed(Number(event.target.value))}
-            className={`${INPUT} w-20`}
+            placeholder="random"
+            onChange={(event) => setSeed(event.target.value)}
+            className={`${INPUT} w-24`}
           />
         </Field>
       </div>

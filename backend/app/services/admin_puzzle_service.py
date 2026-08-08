@@ -372,6 +372,35 @@ class AdminPuzzleService:
         )
 
     @staticmethod
+    async def delete_all_drafts(db: AsyncSession) -> int:
+        """Clear the unreviewed queue in one action, and report the count.
+
+        Drafts are cheap — a generation run makes thirty — so rejecting a batch
+        one row at a time is the wrong shape. Only drafts: an approved or
+        published board was a decision someone made, and clearing those is the
+        per-board delete with its own confirmation.
+        """
+        drafts = (
+            (
+                await db.execute(
+                    select(Puzzle)
+                    .where(Puzzle.status == "draft")
+                    .order_by(Puzzle.number)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        removed = 0
+        for puzzle in drafts:
+            if await AdminPuzzleService._session_count(db, puzzle.id):
+                continue
+            await db.delete(puzzle)
+            removed += 1
+        await db.commit()
+        return removed
+
+    @staticmethod
     async def delete(db: AsyncSession, number: int) -> None:
         """Remove a board entirely, published or not, provided nobody has
         played it. Deleting frees its date for a replacement."""

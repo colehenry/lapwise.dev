@@ -136,7 +136,9 @@ export interface PuzzleGenerateRequest {
    *  archive, which is how a historical board is made. */
   start_on: string | null;
   theme: string[];
-  seed: number;
+  /** Fixes the run for reproducibility. Null asks for a different board set
+   *  each time, which is what a regenerate means. */
+  seed: number | null;
 }
 
 export interface PuzzleGenerateResponse {

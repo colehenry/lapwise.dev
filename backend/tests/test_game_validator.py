@@ -7,8 +7,11 @@ gates are testable without freezing a board or reaching a driver table.
 from scripts.game_validator import (
     Recognition,
     Report,
+    _check_board_slack,
     _check_decoy_pools,
     _check_depths,
+    _check_marquee_answers,
+    hall_deficiency,
     has_perfect_assignment,
 )
 
@@ -179,3 +182,93 @@ def test_single_axis_decoys_are_reported_when_a_row_adds_nothing():
     _check_decoy_pools(report, board, cells)
 
     assert "single_axis_decoys" in _codes(report, "warning")
+
+
+def test_a_cell_of_journeymen_is_rejected_however_deep_it_is():
+    """Depth was standing in for reachability and never enforced it. Fifteen
+    drivers nobody can name is not an easier cell than three famous ones."""
+    report = Report(board_id="test")
+    recognition = {
+        slug: _named(slug, wins=0, entries=90) for slug in ("a", "b", "c", "d")
+    }
+
+    _check_marquee_answers(
+        report, _cells({"r1__c1": {"a", "b", "c", "d"}}), recognition
+    )
+
+    assert "no_marquee_answer" in _codes(report, "error")
+
+
+def test_one_champion_is_enough_to_carry_a_cell():
+    report = Report(board_id="test")
+    recognition = {
+        "senna": _named("senna", wins=41, entries=161, champion=True),
+        "a": _named("a", wins=0, entries=40),
+    }
+
+    _check_marquee_answers(report, _cells({"r1__c1": {"senna", "a"}}), recognition)
+
+    assert not report.findings
+
+
+def test_long_service_alone_does_not_make_a_driver_reachable():
+    """95 entries and no wins clears `clears_floor` but is not a name a
+    casual player produces, which is why marquee ignores entries."""
+    report = Report(board_id="test")
+    recognition = {"katayama": _named("katayama", wins=0, entries=95)}
+
+    _check_marquee_answers(report, _cells({"r1__c1": {"katayama"}}), recognition)
+
+    assert "no_marquee_answer" in _codes(report, "error")
+
+
+def test_hall_deficiency_finds_the_tightest_group_of_cells():
+    """Three cells drawing on three drivers have no slack: the assignment is
+    forced, and any other placement strands one of them."""
+    cells = _cells(
+        {
+            "r1__c1": {"a", "b", "c"},
+            "r1__c2": {"a", "b", "c"},
+            "r1__c3": {"a", "b", "c"},
+            "r2__c1": {"d", "e", "f", "g"},
+        }
+    )
+
+    slack, tightest = hall_deficiency(cells)
+
+    assert slack == 0
+    assert set(tightest) == {"r1__c1", "r1__c2", "r1__c3"}
+
+
+def test_a_forced_board_is_rejected_even_though_it_is_solvable():
+    """`has_perfect_assignment` says yes — one arrangement exists. That is
+    exactly the board that plays as impossible."""
+    cells = _cells(
+        {
+            "r1__c1": {"a", "b", "c"},
+            "r1__c2": {"a", "b", "c"},
+            "r1__c3": {"a", "b", "c"},
+        }
+    )
+    report = Report(board_id="test")
+
+    solvable, _ = has_perfect_assignment(cells)
+    _check_board_slack(report, cells)
+
+    assert solvable
+    assert "forced_assignment" in _codes(report, "error")
+
+
+def test_a_board_with_room_to_spare_raises_nothing():
+    report = Report(board_id="test")
+    cells = _cells(
+        {
+            "r1__c1": {"a", "b", "c", "d"},
+            "r1__c2": {"e", "f", "g", "h"},
+            "r1__c3": {"i", "j", "k", "l"},
+        }
+    )
+
+    _check_board_slack(report, cells)
+
+    assert not report.findings

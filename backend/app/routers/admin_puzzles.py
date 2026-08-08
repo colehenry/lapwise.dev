@@ -13,6 +13,7 @@ from app.models.user import User
 from app.schemas.admin_puzzle import (
     AdminPuzzleDetail,
     AdminPuzzleListResponse,
+    PuzzleDeleteResponse,
     PuzzleGenerateRequest,
     PuzzleGenerateResponse,
     PuzzleHeaderCatalogResponse,
@@ -95,6 +96,15 @@ async def revert_puzzle(
         return await AdminPuzzleService.revert(db, number)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.delete("/drafts", response_model=PuzzleDeleteResponse)
+async def delete_all_drafts(
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_current_admin),
+):
+    """Discard every draft board. Approved and published boards are untouched."""
+    return PuzzleDeleteResponse(deleted=await AdminPuzzleService.delete_all_drafts(db))
 
 
 @router.delete("/{number}", status_code=204)

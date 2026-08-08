@@ -159,6 +159,16 @@ export async function adminGeneratePuzzles(
   return res.json();
 }
 
+/** Discards every draft. Approved and published boards are untouched. */
+export async function adminDeleteAllDrafts(): Promise<{ deleted: number }> {
+  const res = await fetchWithAuth(apiUrl("/api/admin/puzzles/drafts"), {
+    method: "DELETE",
+  });
+  if (!res.ok)
+    throw new Error(await extractAdminError(res, "Failed to delete drafts"));
+  return res.json();
+}
+
 export async function fetchAdminPuzzle(
   number: number,
 ): Promise<AdminPuzzleDetail> {

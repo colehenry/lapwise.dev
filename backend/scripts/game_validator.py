@@ -53,6 +53,15 @@ NEAR_IDENTICAL_RATIO = 0.8
 # name a player types lands. Legal, but the reviewer should see it.
 FREE_SQUARE_SHARE = 0.2
 
+# Every cell must offer at least one driver an ordinary fan can name unaided.
+# Depth does not imply this: a fifteen-answer Ligier cell has no way in.
+MARQUEE_MIN_WINS = 5
+
+# Hall's condition guarantees a perfect assignment exists; it does not say how
+# much room the player has to find one. Deficiency is the slack in the tightest
+# subset of cells, and a board at zero is solvable on exactly one arrangement.
+MIN_HALL_SLACK = 1
+
 PRIMARY_KINDS = {"constructor", "nationality", "race_decade"}
 
 
@@ -63,6 +72,7 @@ class Recognition:
     wins: int
     entries: int
     is_champion: bool
+    latest_season: int | None = None
 
     @property
     def clears_floor(self) -> bool:
@@ -75,6 +85,15 @@ class Recognition:
     @property
     def clears_anchor(self) -> bool:
         return self.is_champion or self.wins >= ANCHOR_MIN_WINS
+
+    @property
+    def is_marquee(self) -> bool:
+        """A name a casual fan produces without prompting.
+
+        Entries deliberately do not count here, unlike `clears_floor`. Ukyo
+        Katayama started 95 races and won nothing; long service is not fame.
+        """
+        return self.is_champion or self.wins >= MARQUEE_MIN_WINS
 
     def describe(self) -> str:
         title = "champion, " if self.is_champion else ""
@@ -131,6 +150,7 @@ def load_recognition(db: OrmSession, pool: Pool) -> dict[str, Recognition]:
             wins=sum(1 for race in facts.races if race.position == 1),
             entries=len(facts.races),
             is_champion=facts.driver_id in champions,
+            latest_season=max((race.year for race in facts.races), default=None),
         )
         for slug, facts in pool.items()
     }
@@ -169,6 +189,71 @@ def has_perfect_assignment(cells: dict[str, set[str]]) -> tuple[bool, list[str]]
     """Whether one distinct driver can fill every cell at once."""
     _, unmatched = solve_assignment(cells)
     return not unmatched, unmatched
+
+
+def hall_deficiency(cells: dict[str, set[str]]) -> tuple[int, list[str]]:
+    """Spare drivers in the tightest group of cells, and which cells those are.
+
+    A perfect assignment says a board *can* be completed. It does not say how
+    much room the player has. Nine cells drawing on ten drivers between them
+    pass every depth check and every solvability check, and still play as a
+    single forced arrangement where one wrong-but-correct placement strands a
+    later cell.
+
+    Hall's condition is the exact statement of that: a matching exists only
+    while every subset of cells reaches at least as many drivers as it has
+    cells. The smallest surplus over all subsets is the board's real slack.
+    Nine cells is 511 subsets, so the exact answer is cheaper than a heuristic.
+    """
+    ids = sorted(cells)
+    worst = len(ids)
+    tightest: list[str] = []
+    for mask in range(1, 1 << len(ids)):
+        subset = [ids[i] for i in range(len(ids)) if mask >> i & 1]
+        reachable = set().union(*(cells[cell_id] for cell_id in subset))
+        slack = len(reachable) - len(subset)
+        if slack < worst:
+            worst, tightest = slack, subset
+    return worst, tightest
+
+
+def _check_marquee_answers(
+    report: Report, cells: dict[str, set[str]], recognition: dict[str, Recognition]
+) -> None:
+    """Every cell needs one name a player can actually produce.
+
+    This is the rule depth was standing in for and never enforced. Ligier
+    crossed with a decade gives fifteen answers and no champion among them, so
+    the cell is deep, legal, and unanswerable by anyone who did not follow the
+    1993 season.
+    """
+    for cell_id, answers in sorted(cells.items()):
+        known = [recognition[slug] for slug in answers if slug in recognition]
+        if not any(entry.is_marquee for entry in known):
+            deepest = max(known, key=lambda entry: entry.entries, default=None)
+            best = f"; best known is {deepest.describe()}" if deepest else ""
+            report.error(
+                "no_marquee_answer",
+                f"{cell_id}: no champion and nobody with"
+                f" {MARQUEE_MIN_WINS}+ wins{best}",
+            )
+
+
+def _check_board_slack(report: Report, cells: dict[str, set[str]]) -> None:
+    slack, tightest = hall_deficiency(cells)
+    if slack < MIN_HALL_SLACK:
+        report.error(
+            "forced_assignment",
+            f"{len(tightest)} cells share only {len(tightest) + slack} drivers"
+            f" between them ({', '.join(sorted(tightest))}), so the board plays"
+            " as one forced arrangement",
+        )
+    elif slack == MIN_HALL_SLACK:
+        report.warn(
+            "tight_assignment",
+            f"{len(tightest)} cells have one spare driver between them"
+            f" ({', '.join(sorted(tightest))})",
+        )
 
 
 def _check_depths(
@@ -333,6 +418,8 @@ def validate(
         report.error("unresolved_driver", f"unknown slugs {sorted(unresolved)}")
 
     _check_depths(report, cells, recognition)
+    _check_marquee_answers(report, cells, recognition)
+    _check_board_slack(report, cells)
     for cell_id, answers in sorted(cells.items()):
         if len(answers) > FREE_SQUARE_SHARE * len(pool):
             report.warn(

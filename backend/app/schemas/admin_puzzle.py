@@ -96,7 +96,13 @@ class PuzzleGenerateRequest(BaseModel):
     # archive, which is how a historical board is made.
     start_on: date | None = None
     theme: list[str] = Field(default_factory=list)
-    seed: int = 0
+    # Fixes the run for reproducibility. Null means a different board set
+    # every time, which is what a regenerate is asking for.
+    seed: int | None = None
+
+
+class PuzzleDeleteResponse(BaseModel):
+    deleted: int
 
 
 class PuzzleGenerateResponse(BaseModel):

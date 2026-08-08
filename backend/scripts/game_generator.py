@@ -19,6 +19,7 @@ import sys
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date, timedelta
+from typing import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session as OrmSession
@@ -46,7 +47,36 @@ BROAD_HEADER_SHARE = 0.6
 # sample drifts towards boards asking "won at ..." four times over.
 MAX_HEADERS_PER_KIND = 2
 
+# Kinds that read as a special move rather than a category. Two of them on one
+# board stops being a theme and starts being the board's whole personality, so
+# each is capped at one regardless of the general per-kind limit.
+NICHE_KINDS = {"named_teammate", "won_at_venue", "defunct_venue"}
+MAX_NICHE_HEADERS_PER_KIND = 1
+
+# ...and at most this many niche headers in total, so a board is never three
+# quarters trivia.
+MAX_NICHE_HEADERS = 2
+
 PRIMARY_KINDS = {"constructor", "nationality", "race_decade"}
+
+# Sampling weights. Uniform sampling over the catalog is what produced boards
+# built on Ligier and Larrousse: the catalog's only entry requirement is twelve
+# eligible drivers, and a team that ran twenty journeymen clears that as easily
+# as Ferrari. There are more forgettable teams than great ones, so uniform
+# sampling favours them by count. These bias selection without forbidding
+# anything, so an obscure header still appears — just not on every board.
+
+# Share of a header's answers who are champions or five-race winners.
+MARQUEE_WEIGHT_FLOOR = 0.15
+MARQUEE_WEIGHT_RANGE = 2.5
+
+# Recency, measured as the median last season of a header's answers. The
+# catalog's median is 2010; a header centred on 1994 is not wrong, it is just
+# not what most of a modern audience can reach for.
+RECENCY_PIVOT_SEASON = 2005
+RECENCY_FULL_SEASON = 2015
+RECENCY_WEIGHT_FLOOR = 0.25
+RECENCY_WEIGHT_RANGE = 1.75
 
 # Kinds a player has to reason about rather than recall.
 COMPLEX_KINDS = {
@@ -57,6 +87,12 @@ COMPLEX_KINDS = {
     "won_at_venue",
 }
 
+# Raising this does not help. Measured over a 30-day run, 400 and 1200
+# attempts both yield ~23 boards: the binding constraint is the seven-day
+# header window, not the search. Strong headers are scarce, blocking one for a
+# week pushes the generator onto the weak tail, and the marquee gate then
+# rejects what it builds. Yield recovers by growing the catalog, not by trying
+# harder.
 ATTEMPTS_PER_BOARD = 400
 
 
@@ -168,6 +204,50 @@ def difficulty(
     return round(100 * (0.45 * depth_score + 0.4 * fame_score + 0.15 * complex_share))
 
 
+def header_appeal(answers: set[str], recognition: dict[str, Recognition]) -> float:
+    """How readily a modern audience can answer this header, as a weight.
+
+    Two independent things make a header reachable: whether its answers contain
+    names people know, and whether those names are recent. They are multiplied
+    rather than averaged so a header has to clear both — a 1994 header full of
+    champions and a 2024 header full of nobodies are each penalised once.
+    """
+    known = [recognition[slug] for slug in answers if slug in recognition]
+    if not known:
+        return MARQUEE_WEIGHT_FLOOR * RECENCY_WEIGHT_FLOOR
+
+    marquee_share = sum(1 for entry in known if entry.is_marquee) / len(known)
+    fame = MARQUEE_WEIGHT_FLOOR + MARQUEE_WEIGHT_RANGE * marquee_share
+
+    seasons = sorted(
+        entry.latest_season for entry in known if entry.latest_season is not None
+    )
+    if not seasons:
+        return fame * RECENCY_WEIGHT_FLOOR
+    median_season = seasons[len(seasons) // 2]
+    span = RECENCY_FULL_SEASON - RECENCY_PIVOT_SEASON
+    recent_share = max(0.0, min(1.0, (median_season - RECENCY_PIVOT_SEASON) / span))
+    recency = RECENCY_WEIGHT_FLOOR + RECENCY_WEIGHT_RANGE * recent_share
+
+    return fame * recency
+
+
+def weighted_order(
+    header_ids: Sequence[str], weights: dict[str, float], rng: random.Random
+) -> list[str]:
+    """The candidate list shuffled so heavier headers tend to come first.
+
+    A weighted shuffle rather than a weighted pick: the caller walks the list
+    taking whatever is compatible, so every header stays reachable and the
+    constraints still decide what actually lands. Exponential-of-uniform keyed
+    ordering draws each item with probability proportional to its weight.
+    """
+    return sorted(
+        header_ids,
+        key=lambda header_id: rng.expovariate(1.0) / max(weights[header_id], 1e-6),
+    )
+
+
 def _structure(headers: list[Header]) -> str:
     """Where the constructor headers sit, as a template signature."""
     rows = sum(1 for header in headers[:3] if header.kind == "constructor")
@@ -226,6 +306,11 @@ def propose(
     if len(available) < 6:
         return None
 
+    appeal = {
+        header_id: header_appeal(catalog[header_id][1], recognition)
+        for header_id in available
+    }
+
     def compatible(picked: list[str], candidate: str) -> bool:
         """Cheap constraints, checked before any intersection is computed."""
         if candidate in picked:
@@ -234,6 +319,11 @@ def propose(
         kinds = Counter(catalog[header_id][0].kind for header_id in chosen)
         if kinds.most_common(1)[0][1] > MAX_HEADERS_PER_KIND:
             return False
+        for kind, count in kinds.items():
+            if kind in NICHE_KINDS and count > MAX_NICHE_HEADERS_PER_KIND:
+                return False
+        if sum(kinds[kind] for kind in NICHE_KINDS) > MAX_NICHE_HEADERS:
+            return False
         if any(frozenset((header_id, candidate)) in correlated for header_id in picked):
             return False
         broad = sum(1 for h in chosen if len(catalog[h][1]) > broad_cutoff)
@@ -241,7 +331,7 @@ def propose(
 
     for _ in range(ATTEMPTS_PER_BOARD):
         row_ids: list[str] = []
-        for candidate in rng.sample(available, k=len(available)):
+        for candidate in weighted_order(available, appeal, rng):
             if len(row_ids) == 3:
                 break
             if compatible(row_ids, candidate):
@@ -270,7 +360,7 @@ def propose(
                 continue
 
         column_ids: list[str] = []
-        for candidate in rng.sample(candidates, k=len(candidates)):
+        for candidate in weighted_order(candidates, appeal, rng):
             if len(column_ids) == 3:
                 break
             if compatible(row_ids + column_ids, candidate):
@@ -322,7 +412,7 @@ def generate(
     count: int,
     start: date,
     floor: int,
-    seed: int,
+    seed: int | None = None,
     theme: set[str] | None = None,
     min_depth: int = 12,
     header_window: int = HEADER_REPEAT_DAYS,
@@ -333,6 +423,8 @@ def generate(
     history = load_history(db)
     history.header_window = header_window
     correlated = correlated_pairs(catalog, MAX_HEADER_CORRELATION)
+    # A fixed seed makes a run reproducible; the default must not, or every
+    # generation returns the boards the last one did.
     rng = random.Random(seed)
 
     print(f"Pool {len(pool)}, catalog {len(catalog)} headers,")
@@ -400,7 +492,7 @@ def generate_and_store(
     count: int,
     start: date,
     floor: int,
-    seed: int,
+    seed: int | None = None,
     theme: set[str] | None = None,
     min_depth: int = 12,
     header_window: int = HEADER_REPEAT_DAYS,
@@ -432,7 +524,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--count", type=int, default=10)
     parser.add_argument("--floor", type=int, default=DEFAULT_ELIGIBILITY_FLOOR)
-    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Fix the run for reproducibility. Omit for a different board set each time",
+    )
     parser.add_argument(
         "--start", default=None, help="First date to schedule (default tomorrow)"
     )

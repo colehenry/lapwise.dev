@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 import {
+  adminDeleteAllDrafts,
   adminDeletePuzzle,
   adminRevertPuzzle,
   adminSchedulePuzzle,
@@ -102,6 +103,10 @@ export default function AdminPuzzlesPage() {
   const [scheduleDate, setScheduleDate] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const draftCount = puzzles.filter(
+    (puzzle) => puzzle.status === "draft",
+  ).length;
+
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -157,7 +162,29 @@ export default function AdminPuzzlesPage() {
 
   return (
     <div className="space-y-4">
-      <GeneratePanel onGenerated={load} />
+      <div className="flex flex-wrap items-center gap-3">
+        <GeneratePanel onGenerated={load} />
+        {draftCount > 0 && (
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={busy}
+            onClick={() => {
+              if (
+                !window.confirm(
+                  `Discard all ${draftCount} draft board${draftCount === 1 ? "" : "s"}? Approved and published boards are untouched.`,
+                )
+              )
+                return;
+              act(async () => {
+                await adminDeleteAllDrafts();
+              });
+            }}
+          >
+            Delete all drafts ({draftCount})
+          </Button>
+        )}
+      </div>
 
       <div className="flex flex-wrap items-center gap-2">
         {FILTERS.map((option) => (
