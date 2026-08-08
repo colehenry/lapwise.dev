@@ -1,0 +1,352 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import Button from "@/components/ui/Button";
+import {
+  adminDeleteAllDrafts,
+  adminDeletePuzzle,
+  adminRevertPuzzle,
+  adminSchedulePuzzle,
+  fetchAdminPuzzle,
+  fetchAdminPuzzles,
+} from "@/lib/admin";
+import type {
+  AdminPuzzleDetail,
+  AdminPuzzleSummary,
+  PuzzleStatus,
+} from "@/lib/adminTypes";
+import GeneratePanel from "./GeneratePanel";
+import PuzzleReviewGrid from "./PuzzleReviewGrid";
+
+const FILTERS: { value: PuzzleStatus | "all"; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "draft", label: "Draft" },
+  { value: "approved", label: "Approved" },
+  { value: "published", label: "Published" },
+];
+
+function isoDate(offsetDays: number): string {
+  const day = new Date();
+  day.setDate(day.getDate() + offsetDays);
+  return day.toISOString().slice(0, 10);
+}
+
+const STATUS_STYLES: Record<PuzzleStatus, string> = {
+  draft: "bg-bg-elevated text-text-muted",
+  approved: "bg-amber-500/15 text-amber-300",
+  published: "bg-emerald-500/15 text-emerald-300",
+};
+
+function StatusChip({ status }: { status: PuzzleStatus }) {
+  return (
+    <span
+      className={`rounded-sm px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLES[status]}`}
+    >
+      {status}
+    </span>
+  );
+}
+
+function PuzzleRow({
+  puzzle,
+  expanded,
+  onToggle,
+}: {
+  puzzle: AdminPuzzleSummary;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex w-full flex-wrap items-center gap-3 px-3 py-2.5 text-left hover:bg-bg-tertiary"
+    >
+      <span className="font-mono text-sm font-bold text-text-primary">
+        #{String(puzzle.number).padStart(3, "0")}
+      </span>
+      <StatusChip status={puzzle.status} />
+      <span className="font-mono text-xs text-text-secondary">
+        {puzzle.published_on ?? "unscheduled"}
+      </span>
+      <span className="font-mono text-[10px] text-text-muted">
+        depth {puzzle.min_depth}–{puzzle.max_depth}
+        {puzzle.difficulty_score !== null &&
+          ` · difficulty ${puzzle.difficulty_score}`}
+        {` · floor ${puzzle.eligibility_floor}`}
+      </span>
+      {puzzle.error_count > 0 && (
+        <span className="font-mono text-[10px] font-bold text-red-400">
+          {puzzle.error_count} error{puzzle.error_count === 1 ? "" : "s"}
+        </span>
+      )}
+      {puzzle.warning_count > 0 && (
+        <span className="font-mono text-[10px] text-amber-400">
+          {puzzle.warning_count} warning{puzzle.warning_count === 1 ? "" : "s"}
+        </span>
+      )}
+      <span className="ml-auto text-xs text-text-muted">
+        {expanded ? "Close" : "Review"}
+      </span>
+    </button>
+  );
+}
+
+export default function AdminPuzzlesPage() {
+  const [puzzles, setPuzzles] = useState<AdminPuzzleSummary[]>([]);
+  const [filter, setFilter] = useState<PuzzleStatus | "all">("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [openNumber, setOpenNumber] = useState<number | null>(null);
+  const [detail, setDetail] = useState<AdminPuzzleDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const draftCount = puzzles.filter(
+    (puzzle) => puzzle.status === "draft",
+  ).length;
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await fetchAdminPuzzles(
+        filter === "all" ? undefined : filter,
+      );
+      setPuzzles(data.puzzles);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load puzzles");
+    } finally {
+      setLoading(false);
+    }
+  }, [filter]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const toggle = async (puzzle: AdminPuzzleSummary) => {
+    if (openNumber === puzzle.number) {
+      setOpenNumber(null);
+      setDetail(null);
+      return;
+    }
+    setOpenNumber(puzzle.number);
+    setDetail(null);
+    setScheduleDate(puzzle.published_on ?? "");
+    setDetailLoading(true);
+    try {
+      setDetail(await fetchAdminPuzzle(puzzle.number));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load board");
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const act = async (action: () => Promise<void>) => {
+    setBusy(true);
+    setError("");
+    try {
+      await action();
+      setOpenNumber(null);
+      setDetail(null);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Action failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <GeneratePanel onGenerated={load} />
+        {draftCount > 0 && (
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={busy}
+            onClick={() => {
+              if (
+                !window.confirm(
+                  `Discard all ${draftCount} draft board${draftCount === 1 ? "" : "s"}? Approved and published boards are untouched.`,
+                )
+              )
+                return;
+              act(async () => {
+                await adminDeleteAllDrafts();
+              });
+            }}
+          >
+            Delete all drafts ({draftCount})
+          </Button>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {FILTERS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => setFilter(option.value)}
+            className={`rounded-sm border px-3 py-1.5 text-xs font-medium transition-colors ${
+              filter === option.value
+                ? "border-purple-500/30 bg-purple-500/15 text-purple-300"
+                : "border-transparent text-text-secondary hover:bg-bg-tertiary"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      <p className="text-[11px] leading-relaxed text-text-muted">
+        <span className="font-mono uppercase tracking-wider">Depth</span> is how
+        many drivers answer a square — shown as the thinnest and deepest square
+        on the board. Below three is a thin cell.{" "}
+        <span className="font-mono uppercase tracking-wider">Difficulty</span>{" "}
+        is a 0–100 estimate from mean depth, how well known each square&apos;s
+        most recognisable answer is, and how many headers need reasoning rather
+        than recall.{" "}
+        <span className="font-mono uppercase tracking-wider">Floor</span> is the
+        earliest season a driver must have raced in to be eligible.
+      </p>
+
+      {error && (
+        <p className="rounded-sm border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+          {error}
+        </p>
+      )}
+
+      {loading ? (
+        <div className="space-y-2">
+          {["a", "b", "c"].map((key) => (
+            <div
+              key={key}
+              className="h-12 animate-pulse rounded-sm border border-border-primary bg-bg-tertiary"
+            />
+          ))}
+        </div>
+      ) : puzzles.length === 0 ? (
+        <p className="rounded-sm border border-border-primary bg-bg-secondary px-3 py-6 text-center text-sm text-text-muted">
+          No boards in this state. Generate some above.
+        </p>
+      ) : (
+        <div className="divide-y divide-border-primary rounded-sm border border-border-primary bg-bg-secondary">
+          {puzzles.map((puzzle) => (
+            <div key={puzzle.number}>
+              <PuzzleRow
+                puzzle={puzzle}
+                expanded={openNumber === puzzle.number}
+                onToggle={() => toggle(puzzle)}
+              />
+              {openNumber === puzzle.number && (
+                <div className="border-t border-border-primary bg-bg-primary p-3">
+                  {detailLoading || !detail ? (
+                    <div className="h-40 animate-pulse rounded-sm bg-bg-tertiary" />
+                  ) : (
+                    <div className="space-y-4">
+                      <PuzzleReviewGrid puzzle={detail} />
+
+                      <div className="flex flex-wrap items-center gap-2 border-t border-border-primary pt-3">
+                        <label
+                          htmlFor={`date-${puzzle.number}`}
+                          className="font-mono text-[10px] uppercase tracking-wider text-text-muted"
+                        >
+                          Publish on
+                        </label>
+                        <input
+                          id={`date-${puzzle.number}`}
+                          type="date"
+                          value={scheduleDate}
+                          onChange={(event) =>
+                            setScheduleDate(event.target.value)
+                          }
+                          className="rounded-sm border border-border-primary bg-bg-secondary px-2 py-1 text-xs text-text-primary"
+                        />
+                        {/* A past date is live immediately and a future one is
+                            queued: same endpoint, and the date gate in the
+                            player service is the whole difference. */}
+                        <button
+                          type="button"
+                          onClick={() => setScheduleDate(isoDate(-1))}
+                          className="rounded-sm border border-border-primary px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-text-secondary hover:bg-bg-tertiary"
+                        >
+                          Archive
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setScheduleDate(isoDate(1))}
+                          className="rounded-sm border border-border-primary px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-text-secondary hover:bg-bg-tertiary"
+                        >
+                          Queue
+                        </button>
+                        <Button
+                          size="sm"
+                          disabled={
+                            busy ||
+                            !scheduleDate ||
+                            detail.error_count > 0 ||
+                            puzzle.status === "published"
+                          }
+                          onClick={() =>
+                            act(() =>
+                              adminSchedulePuzzle(puzzle.number, scheduleDate),
+                            )
+                          }
+                        >
+                          {scheduleDate && scheduleDate <= isoDate(0)
+                            ? "Approve & publish now"
+                            : "Approve & schedule"}
+                        </Button>
+                        {puzzle.status !== "draft" && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            disabled={busy}
+                            onClick={() =>
+                              act(() => adminRevertPuzzle(puzzle.number))
+                            }
+                          >
+                            Return to draft
+                          </Button>
+                        )}
+                        {/* Allowed at any status: the gate is whether anyone
+                            has played the board, which the server enforces. */}
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={busy}
+                          onClick={() => {
+                            if (
+                              puzzle.status === "published" &&
+                              !window.confirm(
+                                `Delete published grid #${puzzle.number}? It is live at /daily and its date frees up for a replacement.`,
+                              )
+                            )
+                              return;
+                            act(() => adminDeletePuzzle(puzzle.number));
+                          }}
+                        >
+                          Delete
+                        </Button>
+                        {detail.error_count > 0 && (
+                          <span className="text-xs text-red-400">
+                            Validator errors must be resolved before scheduling.
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,4 +1,8 @@
-import type React from "react";
+import {
+  forwardRef,
+  type InputHTMLAttributes,
+  type TextareaHTMLAttributes,
+} from "react";
 
 type InputVariant = "default" | "danger";
 
@@ -12,24 +16,24 @@ const focusStyles: Record<InputVariant, string> = {
 
 type InputProps = {
   variant?: InputVariant;
-} & React.InputHTMLAttributes<HTMLInputElement>;
+} & InputHTMLAttributes<HTMLInputElement>;
 
 type TextareaProps = {
   variant?: InputVariant;
-} & React.TextareaHTMLAttributes<HTMLTextAreaElement>;
+} & TextareaHTMLAttributes<HTMLTextAreaElement>;
 
-export function Input({
-  variant = "default",
-  className = "",
-  ...props
-}: InputProps) {
+export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
+  { variant = "default", className = "", ...props },
+  ref,
+) {
   return (
     <input
+      ref={ref}
       className={`${base} ${focusStyles[variant]} ${className}`}
       {...props}
     />
   );
-}
+});
 
 export function Textarea({
   variant = "default",

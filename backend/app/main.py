@@ -125,10 +125,12 @@ async def health_check():
 
 from app.routers import (
     admin,
+    admin_puzzles,
     auth,
     circuits,
     comments,
     constructors,
+    daily_grid,
     drivers,
     events,
     oauth,
@@ -141,6 +143,9 @@ from app.routers import (
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(oauth.router, prefix="/auth/oauth", tags=["oauth"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(
+    admin_puzzles.router, prefix="/api/admin/puzzles", tags=["admin", "daily-grid"]
+)
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(season_results.router, prefix="/api/results", tags=["results"])
 app.include_router(weekend.router, prefix="/api/results", tags=["results"])
@@ -149,6 +154,7 @@ app.include_router(
     constructors.router, prefix="/api/constructors", tags=["constructors"]
 )
 app.include_router(events.router, prefix="/api/events", tags=["events"])
+app.include_router(daily_grid.router, prefix="/api/daily", tags=["daily-grid"])
 app.include_router(circuits.router, prefix="/api/circuits", tags=["circuits"])
 app.include_router(comments.router, prefix="/api/comments", tags=["comments"])
 app.include_router(replay.router, prefix="/api/replay", tags=["replay"])

@@ -131,9 +131,16 @@ const CONSTRUCTOR_LOGO_INVERT_ON_LIGHT = new Set<string>([
   "williams",
 ]);
 
+// Driver imagery now comes from the owned Commons library, which covers the
+// full 2026 grid. Flip to true to fall back to hotlinked Formula 1 media.
+// Constructor overrides below are unaffected: no owned team assets exist yet.
+const USE_FORMULA1_DRIVER_HOTLINKS = false;
+
 export function getDriverImageOverride(
   driver: DriverImageInput,
 ): EntityImageOverride | null {
+  if (!USE_FORMULA1_DRIVER_HOTLINKS) return null;
+
   const codeOverride =
     DRIVER_IMAGE_OVERRIDES[normalizeEntityKey(driver.driver_code)];
   if (codeOverride) return codeOverride;
