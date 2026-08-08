@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { AdminPuzzleDetail, PuzzleAnswer, PuzzleCell } from "@/lib/types";
+import type {
+  AdminPuzzleDetail,
+  PuzzleAnswer,
+  PuzzleCell,
+} from "@/lib/adminTypes";
 
 /** A cell's answers, scrollable in place.
  *

@@ -13,7 +13,7 @@ import type {
   AdminPuzzleDetail,
   AdminPuzzleSummary,
   PuzzleStatus,
-} from "@/lib/types";
+} from "@/lib/adminTypes";
 import PuzzleReviewGrid from "./PuzzleReviewGrid";
 
 const FILTERS: { value: PuzzleStatus | "all"; label: string }[] = [

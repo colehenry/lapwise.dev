@@ -1,5 +1,3 @@
-import { apiUrl } from "./api";
-import { fetchWithAuth } from "./auth";
 import type {
   AdminCommentListResponse,
   AdminDashboardPeriod,
@@ -8,8 +6,10 @@ import type {
   AdminPuzzleListResponse,
   AdminUserListResponse,
   PuzzleStatus,
-  UserProfile,
-} from "./types";
+} from "./adminTypes";
+import { apiUrl } from "./api";
+import { fetchWithAuth } from "./auth";
+import type { UserProfile } from "./types";
 
 export async function fetchAdminDashboardStats(
   period: AdminDashboardPeriod = "all",
