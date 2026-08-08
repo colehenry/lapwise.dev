@@ -114,6 +114,21 @@ export interface AdminPuzzleListResponse {
   puzzles: AdminPuzzleSummary[];
 }
 
+export interface PuzzleHeaderOption {
+  id: string;
+  label: string;
+  prompt_label: string;
+  kind: string;
+  /** Eligible drivers satisfying the header alone, before any intersection. */
+  depth: number;
+}
+
+export interface PuzzleHeaderCatalogResponse {
+  eligibility_floor: number;
+  pool_size: number;
+  headers: PuzzleHeaderOption[];
+}
+
 export interface PuzzleGenerateRequest {
   count: number;
   eligibility_floor: number;

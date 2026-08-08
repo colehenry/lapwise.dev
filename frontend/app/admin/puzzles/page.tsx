@@ -176,6 +176,18 @@ export default function AdminPuzzlesPage() {
         ))}
       </div>
 
+      <p className="text-[11px] leading-relaxed text-text-muted">
+        <span className="font-mono uppercase tracking-wider">Depth</span> is how
+        many drivers answer a square — shown as the thinnest and deepest square
+        on the board. Below three is a thin cell.{" "}
+        <span className="font-mono uppercase tracking-wider">Difficulty</span>{" "}
+        is a 0–100 estimate from mean depth, how well known each square&apos;s
+        most recognisable answer is, and how many headers need reasoning rather
+        than recall.{" "}
+        <span className="font-mono uppercase tracking-wider">Floor</span> is the
+        earliest season a driver must have raced in to be eligible.
+      </p>
+
       {error && (
         <p className="rounded-sm border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
           {error}
@@ -275,18 +287,25 @@ export default function AdminPuzzlesPage() {
                             Return to draft
                           </Button>
                         )}
-                        {puzzle.status === "draft" && (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            disabled={busy}
-                            onClick={() =>
-                              act(() => adminDeletePuzzle(puzzle.number))
-                            }
-                          >
-                            Delete
-                          </Button>
-                        )}
+                        {/* Allowed at any status: the gate is whether anyone
+                            has played the board, which the server enforces. */}
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={busy}
+                          onClick={() => {
+                            if (
+                              puzzle.status === "published" &&
+                              !window.confirm(
+                                `Delete published grid #${puzzle.number}? It is live at /daily and its date frees up for a replacement.`,
+                              )
+                            )
+                              return;
+                            act(() => adminDeletePuzzle(puzzle.number));
+                          }}
+                        >
+                          Delete
+                        </Button>
                         {detail.error_count > 0 && (
                           <span className="text-xs text-red-400">
                             Validator errors must be resolved before scheduling.

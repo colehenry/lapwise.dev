@@ -7,6 +7,7 @@ import type {
   AdminUserListResponse,
   PuzzleGenerateRequest,
   PuzzleGenerateResponse,
+  PuzzleHeaderCatalogResponse,
   PuzzleStatus,
 } from "./adminTypes";
 import { apiUrl } from "./api";
@@ -126,6 +127,19 @@ export async function fetchAdminPuzzles(
   const query = status ? `?status=${status}` : "";
   const res = await fetchWithAuth(apiUrl(`/api/admin/puzzles${query}`));
   if (!res.ok) throw new Error("Failed to fetch puzzles");
+  return res.json();
+}
+
+/** Headers the generator can build a board from, with each one's depth. The
+ *  first call at a given floor builds the catalog and is slow; the server
+ *  caches it after that. */
+export async function fetchAdminPuzzleHeaders(
+  floor: number,
+): Promise<PuzzleHeaderCatalogResponse> {
+  const res = await fetchWithAuth(
+    apiUrl(`/api/admin/puzzles/headers?floor=${floor}`),
+  );
+  if (!res.ok) throw new Error("Failed to fetch headers");
   return res.json();
 }
 

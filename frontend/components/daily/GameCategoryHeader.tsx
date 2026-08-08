@@ -13,13 +13,18 @@ export default function GameCategoryHeader({
   category,
   className,
   orientation = "column",
+  size = "default",
 }: {
   category: GameCategory;
   /** Corner radius for the grid's outer edge, applied per corner cell so the
    *  block reads as rounded without clipping the hover labels. */
   className?: string;
   orientation?: "column" | "row";
+  /** `compact` is the review board in the editorial queue, which shows the
+   *  board a player will see at a size that fits beside the queue. */
+  size?: "default" | "compact";
 }) {
+  const compact = size === "compact";
   const { theme } = useTheme();
   const team = { team_name: category.visual.value };
   const constructorLogo =
@@ -33,7 +38,9 @@ export default function GameCategoryHeader({
 
   return (
     <div
-      className={`group relative flex min-h-16 min-w-0 items-center justify-center border border-border-primary bg-bg-secondary text-center sm:min-h-20 ${className ?? ""}`}
+      className={`group relative flex min-w-0 items-center justify-center border border-border-primary bg-bg-secondary text-center ${
+        compact ? "min-h-14" : "min-h-16 sm:min-h-20"
+      } ${className ?? ""}`}
     >
       <div
         className={`flex h-full w-full min-w-0 items-center justify-center overflow-hidden ${
@@ -41,7 +48,9 @@ export default function GameCategoryHeader({
         }`}
       >
         {constructorLogo ? (
-          <div className="relative h-10 w-full min-w-0 sm:h-12">
+          <div
+            className={`relative w-full min-w-0 ${compact ? "h-8" : "h-10 sm:h-12"}`}
+          >
             <Image
               src={constructorLogo}
               alt={category.label}
@@ -52,7 +61,7 @@ export default function GameCategoryHeader({
           </div>
         ) : flag ? (
           <span
-            className="text-3xl leading-none sm:text-4xl"
+            className={`leading-none ${compact ? "text-2xl" : "text-3xl sm:text-4xl"}`}
             role="img"
             aria-label={category.label}
           >
@@ -61,7 +70,9 @@ export default function GameCategoryHeader({
         ) : (
           <span
             lang="en"
-            className="block w-full min-w-0 hyphens-auto text-balance text-[9px] font-bold uppercase leading-snug tracking-[0.08em] text-text-secondary [overflow-wrap:anywhere] sm:text-[11px]"
+            className={`block w-full min-w-0 hyphens-auto text-balance font-bold uppercase leading-snug tracking-[0.08em] text-text-secondary [overflow-wrap:anywhere] ${
+              compact ? "text-[8px]" : "text-[9px] sm:text-[11px]"
+            }`}
           >
             {category.label}
           </span>

@@ -3,6 +3,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useCallback, useState } from "react";
+import GameCategoryHeader from "@/components/daily/GameCategoryHeader";
 import {
   GRID_MODES,
   type GridMode,
@@ -18,7 +19,6 @@ import {
   submitGameGuess,
 } from "@/lib/queries/dailyGrid";
 import DriverSearchPanel from "./DriverSearchPanel";
-import GameCategoryHeader from "./GameCategoryHeader";
 import GameDriverCell from "./GameDriverCell";
 import GameHelpMenu from "./GameHelpMenu";
 import PuzzleNavigation from "./PuzzleNavigation";

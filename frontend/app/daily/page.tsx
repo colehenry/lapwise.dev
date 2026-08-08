@@ -13,9 +13,12 @@ export default async function DailyGridPage({
 }: {
   searchParams: Promise<{ grid?: string }>;
 }) {
+  // No upper bound: boards are published from the database and their numbering
+  // has no ceiling here. The service is the authority on which numbers exist,
+  // and it refuses one that is unpublished or future-dated.
   const requestedGrid = Number.parseInt((await searchParams).grid ?? "", 10);
   const puzzleNumber =
-    Number.isInteger(requestedGrid) && requestedGrid >= 1 && requestedGrid <= 5
+    Number.isInteger(requestedGrid) && requestedGrid >= 1
       ? requestedGrid
       : undefined;
 

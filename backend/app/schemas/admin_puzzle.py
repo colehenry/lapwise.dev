@@ -70,6 +70,23 @@ class AdminPuzzleListResponse(BaseModel):
     puzzles: list[AdminPuzzleSummary]
 
 
+class PuzzleHeaderOption(BaseModel):
+    """One header the generator may build a board from."""
+
+    id: str
+    label: str
+    prompt_label: str
+    kind: str
+    # How many eligible drivers satisfy it on its own, before any intersection.
+    depth: int
+
+
+class PuzzleHeaderCatalogResponse(BaseModel):
+    eligibility_floor: int
+    pool_size: int
+    headers: list[PuzzleHeaderOption]
+
+
 class PuzzleGenerateRequest(BaseModel):
     """A generation run. Proposals land as drafts; nothing here publishes."""
 

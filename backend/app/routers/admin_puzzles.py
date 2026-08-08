@@ -15,12 +15,25 @@ from app.schemas.admin_puzzle import (
     AdminPuzzleListResponse,
     PuzzleGenerateRequest,
     PuzzleGenerateResponse,
+    PuzzleHeaderCatalogResponse,
     PuzzleScheduleRequest,
     PuzzleStatusResponse,
 )
 from app.services.admin_puzzle_service import AdminPuzzleService
 
 router = APIRouter()
+
+
+@router.get("/headers", response_model=PuzzleHeaderCatalogResponse)
+async def list_headers(
+    floor: int = Query(default=1990, ge=1950, le=2100),
+    admin: User = Depends(get_current_admin),
+):
+    """Headers available to the generator, with the depth of each.
+
+    Cached per floor after the first call, which is the slow one.
+    """
+    return await AdminPuzzleService.header_catalog(floor)
 
 
 @router.post("/generate", response_model=PuzzleGenerateResponse)
@@ -90,7 +103,8 @@ async def delete_puzzle(
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(get_current_admin),
 ):
+    """Remove a board. Allowed at any status until someone has played it."""
     try:
-        await AdminPuzzleService.delete_draft(db, number)
+        await AdminPuzzleService.delete(db, number)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error

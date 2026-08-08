@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 import { adminGeneratePuzzles } from "@/lib/admin";
+import ThemeHeaderPicker from "./ThemeHeaderPicker";
 
 /** Proposing boards. The generator owns variety and scheduling memory; the
  *  validator owns correctness and drops anything that fails, so fewer boards
@@ -16,7 +17,7 @@ export default function GeneratePanel({
   const [count, setCount] = useState(7);
   const [startOn, setStartOn] = useState("");
   const [floor, setFloor] = useState(1990);
-  const [theme, setTheme] = useState("");
+  const [theme, setTheme] = useState<string[]>([]);
   const [seed, setSeed] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -31,10 +32,7 @@ export default function GeneratePanel({
         count,
         eligibility_floor: floor,
         start_on: startOn || null,
-        theme: theme
-          .split(",")
-          .map((value) => value.trim())
-          .filter(Boolean),
+        theme,
         seed,
       });
       const made = response.created.length;
@@ -96,16 +94,6 @@ export default function GeneratePanel({
             className={INPUT}
           />
         </Field>
-        <Field htmlFor="generate-theme" label="Theme headers">
-          <input
-            id="generate-theme"
-            type="text"
-            value={theme}
-            onChange={(event) => setTheme(event.target.value)}
-            placeholder="won-at-monza,nationality-ita"
-            className={`${INPUT} w-56`}
-          />
-        </Field>
         <Field htmlFor="generate-seed" label="Seed">
           <input
             id="generate-seed"
@@ -117,12 +105,17 @@ export default function GeneratePanel({
         </Field>
       </div>
 
+      <div className="max-w-md">
+        <p className="mb-1 font-mono text-[10px] uppercase tracking-wider text-text-muted">
+          Theme headers
+        </p>
+        <ThemeHeaderPicker floor={floor} selected={theme} onChange={setTheme} />
+      </div>
+
       <p className="text-[11px] leading-relaxed text-text-muted">
         Boards are dated forward one day at a time from the first date, and land
         as drafts. Leave the date empty to start tomorrow, or set a past date to
-        propose boards for the archive. A theme needs one header per day it
-        covers — the no-repeat window blocks each one after use, so two headers
-        cannot fill three days.
+        propose boards for the archive.
       </p>
 
       {error && (
