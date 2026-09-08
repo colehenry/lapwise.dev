@@ -17,6 +17,14 @@ function findingsForCell(cellId: string, findings: PuzzleFinding[]) {
   return findings.filter((finding) => finding.message.includes(cellId));
 }
 
+/** The message is rendered inside the square it names, so the id that found it
+ *  there is redundant once it is on screen. */
+function withoutCellId(message: string, cellId: string) {
+  return message.startsWith(`${cellId}: `)
+    ? message.slice(cellId.length + 2)
+    : message;
+}
+
 function AnswerRow({ answer }: { answer: PuzzleAnswer }) {
   const years =
     answer.first_season && answer.latest_season
@@ -96,7 +104,7 @@ function ReviewCell({
               finding.level === "error" ? "text-red-400" : "text-amber-400"
             }`}
           >
-            {finding.message}
+            {withoutCellId(finding.message, cell.cell_id)}
           </p>
         ))}
         <ul className="mt-1 max-h-56 overflow-y-auto border-t border-border-primary pt-1">
@@ -174,12 +182,6 @@ export default function PuzzleReviewGrid({
             );
           })}
         </div>
-
-        <p className="mt-1.5 text-[10px] leading-relaxed text-text-muted">
-          Each square shows how many drivers answer it. Hover a square for the
-          names. Amber is a cell the validator flagged, red is one that blocks
-          scheduling.
-        </p>
       </div>
 
       {puzzle.findings.length > 0 && (

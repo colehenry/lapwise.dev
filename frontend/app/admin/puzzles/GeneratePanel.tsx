@@ -5,9 +5,8 @@ import Button from "@/components/ui/Button";
 import { adminGeneratePuzzles } from "@/lib/admin";
 import ThemeHeaderPicker from "./ThemeHeaderPicker";
 
-/** Proposing boards. The generator owns variety and scheduling memory; the
- *  validator owns correctness and drops anything that fails, so fewer boards
- *  than requested is a normal outcome rather than an error. */
+/** Proposing boards. Anything that fails validation is dropped, so fewer
+ *  boards than asked for is a normal result rather than an error. */
 export default function GeneratePanel({
   onGenerated,
 }: {
@@ -15,7 +14,6 @@ export default function GeneratePanel({
 }) {
   const [open, setOpen] = useState(false);
   const [count, setCount] = useState(7);
-  const [startOn, setStartOn] = useState("");
   const [floor, setFloor] = useState(1990);
   const [theme, setTheme] = useState<string[]>([]);
   const [seed, setSeed] = useState("");
@@ -31,15 +29,14 @@ export default function GeneratePanel({
       const response = await adminGeneratePuzzles({
         count,
         eligibility_floor: floor,
-        start_on: startOn || null,
         theme,
         seed: seed.trim() === "" ? null : Number(seed),
       });
       const made = response.created.length;
       setResult(
         made === response.requested
-          ? `${made} board${made === 1 ? "" : "s"} proposed.`
-          : `${made} of ${response.requested} proposed — the rest failed validation and were dropped.`,
+          ? `${made} new board${made === 1 ? "" : "s"}.`
+          : `${made} of ${response.requested} — the rest failed validation.`,
       );
       await onGenerated();
     } catch (err) {
@@ -53,7 +50,7 @@ export default function GeneratePanel({
     return (
       <div className="flex items-center gap-3">
         <Button size="sm" onClick={() => setOpen(true)}>
-          Generate boards
+          Generate
         </Button>
         {result && <span className="text-xs text-emerald-300">{result}</span>}
       </div>
@@ -61,9 +58,9 @@ export default function GeneratePanel({
   }
 
   return (
-    <div className="space-y-3 rounded-sm border border-border-primary bg-bg-secondary p-3">
-      <div className="flex flex-wrap items-end gap-3">
-        <Field htmlFor="generate-count" label="How many">
+    <div className="w-full space-y-3 rounded-sm border border-border-primary bg-bg-secondary p-3">
+      <div className="flex flex-wrap items-end gap-4">
+        <Field htmlFor="generate-count" label="Boards">
           <input
             id="generate-count"
             type="number"
@@ -71,19 +68,10 @@ export default function GeneratePanel({
             max={30}
             value={count}
             onChange={(event) => setCount(Number(event.target.value))}
-            className={INPUT}
+            className={`${INPUT} w-16`}
           />
         </Field>
-        <Field htmlFor="generate-start" label="First date">
-          <input
-            id="generate-start"
-            type="date"
-            value={startOn}
-            onChange={(event) => setStartOn(event.target.value)}
-            className={INPUT}
-          />
-        </Field>
-        <Field htmlFor="generate-floor" label="Floor">
+        <Field htmlFor="generate-floor" label="Earliest season">
           <input
             id="generate-floor"
             type="number"
@@ -91,12 +79,11 @@ export default function GeneratePanel({
             max={2100}
             value={floor}
             onChange={(event) => setFloor(Number(event.target.value))}
-            className={INPUT}
+            className={`${INPUT} w-20`}
           />
         </Field>
-        {/* Blank means a new board set each run. A fixed seed reproduces one,
-            which is only wanted when chasing a specific result. */}
-        <Field htmlFor="generate-seed" label="Seed (optional)">
+        {/* Blank means a different set every run. A number repeats one. */}
+        <Field htmlFor="generate-seed" label="Seed">
           <input
             id="generate-seed"
             type="number"
@@ -109,17 +96,9 @@ export default function GeneratePanel({
       </div>
 
       <div className="max-w-md">
-        <p className="mb-1 font-mono text-[10px] uppercase tracking-wider text-text-muted">
-          Theme headers
-        </p>
+        <p className="mb-1.5 text-xs font-medium text-text-secondary">Theme</p>
         <ThemeHeaderPicker floor={floor} selected={theme} onChange={setTheme} />
       </div>
-
-      <p className="text-[11px] leading-relaxed text-text-muted">
-        Boards are dated forward one day at a time from the first date, and land
-        as drafts. Leave the date empty to start tomorrow, or set a past date to
-        propose boards for the archive.
-      </p>
 
       {error && (
         <p className="rounded-sm border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
@@ -138,13 +117,10 @@ export default function GeneratePanel({
           disabled={busy}
           onClick={() => setOpen(false)}
         >
-          Close
+          Cancel
         </Button>
         {busy && (
-          <span className="text-xs text-text-muted">
-            Loading the driver pool and header catalog; this takes a few
-            seconds.
-          </span>
+          <span className="text-xs text-text-muted">Takes a few seconds.</span>
         )}
       </div>
     </div>
@@ -152,7 +128,7 @@ export default function GeneratePanel({
 }
 
 const INPUT =
-  "rounded-sm border border-border-primary bg-bg-primary px-2 py-1 text-xs text-text-primary";
+  "rounded-sm border border-border-primary bg-bg-primary px-2 py-1 text-sm text-text-primary";
 
 function Field({
   htmlFor,
@@ -164,10 +140,10 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       <label
         htmlFor={htmlFor}
-        className="font-mono text-[10px] uppercase tracking-wider text-text-muted"
+        className="text-xs font-medium text-text-secondary"
       >
         {label}
       </label>

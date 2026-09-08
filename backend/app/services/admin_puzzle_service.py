@@ -7,7 +7,7 @@ milliseconds, and a second implementation of either is a second thing that can
 disagree with the evidence a player is shown.
 """
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import func, select
@@ -146,11 +146,9 @@ class AdminPuzzleService:
         # layer, which the API has no reason to load at import time.
         from scripts.game_generator import generate_and_store
 
-        start = request.start_on or date.today() + timedelta(days=1)
         numbers = await run_in_threadpool(
             generate_and_store,
             request.count,
-            start,
             request.eligibility_floor,
             request.seed,
             set(request.theme) or None,

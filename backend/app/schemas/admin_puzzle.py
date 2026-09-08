@@ -92,9 +92,6 @@ class PuzzleGenerateRequest(BaseModel):
 
     count: int = Field(default=7, ge=1, le=30)
     eligibility_floor: int = Field(default=1990, ge=1950, le=2100)
-    # Boards are dated forward from here. A past date backdates them into the
-    # archive, which is how a historical board is made.
-    start_on: date | None = None
     theme: list[str] = Field(default_factory=list)
     # Fixes the run for reproducibility. Null means a different board set
     # every time, which is what a regenerate is asking for.

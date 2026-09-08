@@ -92,13 +92,9 @@ export default function ThemeHeaderPicker({
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-1.5">
-        {selected.length === 0 ? (
-          <span className="text-[11px] text-text-muted">
-            No theme — the generator picks freely.
-          </span>
-        ) : (
-          selected.map((id) => (
+      {selected.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {selected.map((id) => (
             <button
               key={id}
               type="button"
@@ -111,9 +107,9 @@ export default function ThemeHeaderPicker({
               </span>
               <span className="sr-only">Remove</span>
             </button>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
       <input
         type="search"
@@ -180,13 +176,6 @@ export default function ThemeHeaderPicker({
           );
         })}
       </div>
-
-      <p className="text-[10px] leading-relaxed text-text-muted">
-        A themed header is placed on every board the run covers, and the
-        no-repeat window blocks it afterwards — so a three-day theme needs three
-        headers. The number beside each is its depth: how many eligible drivers
-        it accepts on its own.
-      </p>
     </div>
   );
 }

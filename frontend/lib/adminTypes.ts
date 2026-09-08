@@ -132,9 +132,6 @@ export interface PuzzleHeaderCatalogResponse {
 export interface PuzzleGenerateRequest {
   count: number;
   eligibility_floor: number;
-  /** Boards are dated forward from here. A past date backdates them into the
-   *  archive, which is how a historical board is made. */
-  start_on: string | null;
   theme: string[];
   /** Fixes the run for reproducibility. Null asks for a different board set
    *  each time, which is what a regenerate means. */

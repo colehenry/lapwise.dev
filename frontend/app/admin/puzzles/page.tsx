@@ -20,16 +20,10 @@ import PuzzleReviewGrid from "./PuzzleReviewGrid";
 
 const FILTERS: { value: PuzzleStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "draft", label: "Draft" },
-  { value: "approved", label: "Approved" },
-  { value: "published", label: "Published" },
+  { value: "draft", label: "Drafts" },
+  { value: "approved", label: "Scheduled" },
+  { value: "published", label: "Live" },
 ];
-
-function isoDate(offsetDays: number): string {
-  const day = new Date();
-  day.setDate(day.getDate() + offsetDays);
-  return day.toISOString().slice(0, 10);
-}
 
 const STATUS_STYLES: Record<PuzzleStatus, string> = {
   draft: "bg-bg-elevated text-text-muted",
@@ -37,14 +31,25 @@ const STATUS_STYLES: Record<PuzzleStatus, string> = {
   published: "bg-emerald-500/15 text-emerald-300",
 };
 
-function StatusChip({ status }: { status: PuzzleStatus }) {
-  return (
-    <span
-      className={`rounded-sm px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLES[status]}`}
-    >
-      {status}
-    </span>
-  );
+const STATUS_LABELS: Record<PuzzleStatus, string> = {
+  draft: "Draft",
+  approved: "Scheduled",
+  published: "Live",
+};
+
+const DEFAULT_FLOOR = 1990;
+
+function isoDate(offsetDays: number): string {
+  const day = new Date();
+  day.setDate(day.getDate() + offsetDays);
+  return day.toISOString().slice(0, 10);
+}
+
+/** The 0–100 score as the three words a reviewer actually sorts by. */
+function difficultyWord(score: number): string {
+  if (score < 20) return "Easy";
+  if (score < 40) return "Medium";
+  return "Hard";
 }
 
 function PuzzleRow({
@@ -60,32 +65,49 @@ function PuzzleRow({
     <button
       type="button"
       onClick={onToggle}
-      className="flex w-full flex-wrap items-center gap-3 px-3 py-2.5 text-left hover:bg-bg-tertiary"
+      className="flex w-full flex-wrap items-center gap-x-4 gap-y-1.5 px-3 py-3 text-left hover:bg-bg-tertiary"
     >
       <span className="font-mono text-sm font-bold text-text-primary">
         #{String(puzzle.number).padStart(3, "0")}
       </span>
-      <StatusChip status={puzzle.status} />
-      <span className="font-mono text-xs text-text-secondary">
-        {puzzle.published_on ?? "unscheduled"}
+      <span
+        className={`rounded-sm px-1.5 py-0.5 text-[11px] font-semibold ${STATUS_STYLES[puzzle.status]}`}
+      >
+        {STATUS_LABELS[puzzle.status]}
       </span>
-      <span className="font-mono text-[10px] text-text-muted">
-        depth {puzzle.min_depth}–{puzzle.max_depth}
-        {puzzle.difficulty_score !== null &&
-          ` · difficulty ${puzzle.difficulty_score}`}
-        {` · floor ${puzzle.eligibility_floor}`}
+      <span className="text-sm text-text-secondary">
+        {puzzle.published_on ?? "No date"}
       </span>
+      <span
+        className="text-sm text-text-muted"
+        title="Fewest and most drivers that answer a square"
+      >
+        {puzzle.min_depth}–{puzzle.max_depth} answers
+      </span>
+      {puzzle.difficulty_score !== null && (
+        <span
+          className="text-sm text-text-muted"
+          title={`Score ${puzzle.difficulty_score} of 100`}
+        >
+          {difficultyWord(puzzle.difficulty_score)}
+        </span>
+      )}
+      {puzzle.eligibility_floor !== DEFAULT_FLOOR && (
+        <span className="text-sm text-text-muted">
+          {puzzle.eligibility_floor}+
+        </span>
+      )}
       {puzzle.error_count > 0 && (
-        <span className="font-mono text-[10px] font-bold text-red-400">
+        <span className="text-sm font-semibold text-red-400">
           {puzzle.error_count} error{puzzle.error_count === 1 ? "" : "s"}
         </span>
       )}
       {puzzle.warning_count > 0 && (
-        <span className="font-mono text-[10px] text-amber-400">
+        <span className="text-sm text-amber-400">
           {puzzle.warning_count} warning{puzzle.warning_count === 1 ? "" : "s"}
         </span>
       )}
-      <span className="ml-auto text-xs text-text-muted">
+      <span className="ml-auto text-sm text-text-muted">
         {expanded ? "Close" : "Review"}
       </span>
     </button>
@@ -116,7 +138,7 @@ export default function AdminPuzzlesPage() {
       );
       setPuzzles(data.puzzles);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load puzzles");
+      setError(err instanceof Error ? err.message : "Failed to load boards");
     } finally {
       setLoading(false);
     }
@@ -162,7 +184,7 @@ export default function AdminPuzzlesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-start gap-3">
         <GeneratePanel onGenerated={load} />
         {draftCount > 0 && (
           <Button
@@ -172,7 +194,7 @@ export default function AdminPuzzlesPage() {
             onClick={() => {
               if (
                 !window.confirm(
-                  `Discard all ${draftCount} draft board${draftCount === 1 ? "" : "s"}? Approved and published boards are untouched.`,
+                  `Delete all ${draftCount} draft${draftCount === 1 ? "" : "s"}? Scheduled and live boards are untouched.`,
                 )
               )
                 return;
@@ -181,7 +203,7 @@ export default function AdminPuzzlesPage() {
               });
             }}
           >
-            Delete all drafts ({draftCount})
+            Delete {draftCount} draft{draftCount === 1 ? "" : "s"}
           </Button>
         )}
       </div>
@@ -192,7 +214,7 @@ export default function AdminPuzzlesPage() {
             key={option.value}
             type="button"
             onClick={() => setFilter(option.value)}
-            className={`rounded-sm border px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors ${
               filter === option.value
                 ? "border-purple-500/30 bg-purple-500/15 text-purple-300"
                 : "border-transparent text-text-secondary hover:bg-bg-tertiary"
@@ -202,18 +224,6 @@ export default function AdminPuzzlesPage() {
           </button>
         ))}
       </div>
-
-      <p className="text-[11px] leading-relaxed text-text-muted">
-        <span className="font-mono uppercase tracking-wider">Depth</span> is how
-        many drivers answer a square — shown as the thinnest and deepest square
-        on the board. Below three is a thin cell.{" "}
-        <span className="font-mono uppercase tracking-wider">Difficulty</span>{" "}
-        is a 0–100 estimate from mean depth, how well known each square&apos;s
-        most recognisable answer is, and how many headers need reasoning rather
-        than recall.{" "}
-        <span className="font-mono uppercase tracking-wider">Floor</span> is the
-        earliest season a driver must have raced in to be eligible.
-      </p>
 
       {error && (
         <p className="rounded-sm border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
@@ -231,8 +241,8 @@ export default function AdminPuzzlesPage() {
           ))}
         </div>
       ) : puzzles.length === 0 ? (
-        <p className="rounded-sm border border-border-primary bg-bg-secondary px-3 py-6 text-center text-sm text-text-muted">
-          No boards in this state. Generate some above.
+        <p className="rounded-sm border border-border-primary bg-bg-secondary px-3 py-8 text-center text-sm text-text-muted">
+          Nothing here yet. Generate some boards.
         </p>
       ) : (
         <div className="divide-y divide-border-primary rounded-sm border border-border-primary bg-bg-secondary">
@@ -254,9 +264,9 @@ export default function AdminPuzzlesPage() {
                       <div className="flex flex-wrap items-center gap-2 border-t border-border-primary pt-3">
                         <label
                           htmlFor={`date-${puzzle.number}`}
-                          className="font-mono text-[10px] uppercase tracking-wider text-text-muted"
+                          className="text-sm text-text-secondary"
                         >
-                          Publish on
+                          Run on
                         </label>
                         <input
                           id={`date-${puzzle.number}`}
@@ -265,24 +275,24 @@ export default function AdminPuzzlesPage() {
                           onChange={(event) =>
                             setScheduleDate(event.target.value)
                           }
-                          className="rounded-sm border border-border-primary bg-bg-secondary px-2 py-1 text-xs text-text-primary"
+                          className="rounded-sm border border-border-primary bg-bg-secondary px-2 py-1 text-sm text-text-primary"
                         />
-                        {/* A past date is live immediately and a future one is
-                            queued: same endpoint, and the date gate in the
-                            player service is the whole difference. */}
+                        {/* A past date goes live at once and a future one waits:
+                            same endpoint, and the date gate in the player
+                            service is the whole difference. */}
                         <button
                           type="button"
-                          onClick={() => setScheduleDate(isoDate(-1))}
-                          className="rounded-sm border border-border-primary px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-text-secondary hover:bg-bg-tertiary"
+                          onClick={() => setScheduleDate(isoDate(0))}
+                          className="rounded-sm border border-border-primary px-2 py-1 text-sm text-text-secondary hover:bg-bg-tertiary"
                         >
-                          Archive
+                          Today
                         </button>
                         <button
                           type="button"
                           onClick={() => setScheduleDate(isoDate(1))}
-                          className="rounded-sm border border-border-primary px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-text-secondary hover:bg-bg-tertiary"
+                          className="rounded-sm border border-border-primary px-2 py-1 text-sm text-text-secondary hover:bg-bg-tertiary"
                         >
-                          Queue
+                          Tomorrow
                         </button>
                         <Button
                           size="sm"
@@ -299,8 +309,8 @@ export default function AdminPuzzlesPage() {
                           }
                         >
                           {scheduleDate && scheduleDate <= isoDate(0)
-                            ? "Approve & publish now"
-                            : "Approve & schedule"}
+                            ? "Publish now"
+                            : "Schedule"}
                         </Button>
                         {puzzle.status !== "draft" && (
                           <Button
@@ -311,11 +321,11 @@ export default function AdminPuzzlesPage() {
                               act(() => adminRevertPuzzle(puzzle.number))
                             }
                           >
-                            Return to draft
+                            Unschedule
                           </Button>
                         )}
-                        {/* Allowed at any status: the gate is whether anyone
-                            has played the board, which the server enforces. */}
+                        {/* Allowed at any status: the gate is whether anyone has
+                            played the board, which the server enforces. */}
                         <Button
                           size="sm"
                           variant="secondary"
@@ -324,7 +334,7 @@ export default function AdminPuzzlesPage() {
                             if (
                               puzzle.status === "published" &&
                               !window.confirm(
-                                `Delete published grid #${puzzle.number}? It is live at /daily and its date frees up for a replacement.`,
+                                `Delete #${puzzle.number}? It is live at /daily and its date frees up.`,
                               )
                             )
                               return;
@@ -334,8 +344,8 @@ export default function AdminPuzzlesPage() {
                           Delete
                         </Button>
                         {detail.error_count > 0 && (
-                          <span className="text-xs text-red-400">
-                            Validator errors must be resolved before scheduling.
+                          <span className="text-sm text-red-400">
+                            Fix the errors above first.
                           </span>
                         )}
                       </div>

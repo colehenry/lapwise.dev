@@ -359,14 +359,16 @@ def _check_axis_implication(
             if row_set <= column_set:
                 report.warn(
                     "header_implies",
-                    f"{row['id']} implies {column['id']}: every answer to the"
-                    " first satisfies the second, so the pair tests one thing",
+                    f"Everyone who fits {row.get('label', row['id'])} also fits"
+                    f" {column.get('label', column['id'])}, so this pair asks one question"
+                    " rather than two",
                 )
             elif column_set <= row_set:
                 report.warn(
                     "header_implies",
-                    f"{column['id']} implies {row['id']}: every answer to the"
-                    " first satisfies the second, so the pair tests one thing",
+                    f"Everyone who fits {column.get('label', column['id'])} also fits"
+                    f" {row.get('label', row['id'])}, so this pair asks one question"
+                    " rather than two",
                 )
 
 
@@ -391,12 +393,16 @@ def _check_decoy_pools(report: Report, board: dict, cells: dict[str, set[str]]) 
             if not row_union - column_union:
                 report.warn(
                     "single_axis_decoys",
-                    f"{cell_id}: no row-only decoys available on this board",
+                    f"{cell_id}: nobody on this board fits {row.get('label', row['id'])}"
+                    f" without also fitting {column.get('label', column['id'])}, so every wrong"
+                    f" Rookie option here misses {row.get('label', row['id'])}",
                 )
             if not column_union - row_union:
                 report.warn(
                     "single_axis_decoys",
-                    f"{cell_id}: no column-only decoys available on this board",
+                    f"{cell_id}: nobody on this board fits {column.get('label', column['id'])}"
+                    f" without also fitting {row.get('label', row['id'])}, so every wrong"
+                    f" Rookie option here misses {column.get('label', column['id'])}",
                 )
 
 

@@ -50,12 +50,15 @@ MAX_HEADERS_PER_KIND = 2
 # Kinds that read as a special move rather than a category. Two of them on one
 # board stops being a theme and starts being the board's whole personality, so
 # each is capped at one regardless of the general per-kind limit.
-NICHE_KINDS = {"named_teammate", "won_at_venue", "defunct_venue"}
+#
+# `won_at_venue` sat here and is not niche. It is the strongest kind in the
+# catalog — Monaco, Spa and Suzuka are the most recognisable propositions in
+# the sport — and capping it at one per board reserved the other five slots for
+# the weak constructor and nationality tail. It now sits under the general
+# per-kind limit like any other category. With two niche kinds left, each
+# capped at one, the former board-wide niche total is unreachable and gone.
+NICHE_KINDS = {"named_teammate", "defunct_venue"}
 MAX_NICHE_HEADERS_PER_KIND = 1
-
-# ...and at most this many niche headers in total, so a board is never three
-# quarters trivia.
-MAX_NICHE_HEADERS = 2
 
 PRIMARY_KINDS = {"constructor", "nationality", "race_decade"}
 
@@ -78,6 +81,25 @@ RECENCY_FULL_SEASON = 2015
 RECENCY_WEIGHT_FLOOR = 0.25
 RECENCY_WEIGHT_RANGE = 1.75
 
+# Board-level budgets. Appeal weights order the candidates; these decide what a
+# finished board is allowed to be. Weighting alone cannot: it is a shuffle, and
+# once the per-kind caps and the repeat window block the strong headers the walk
+# takes whatever is left. Six individually-legal weak headers assembled into
+# "Won at Imola / French driver / British driver" against "Raced in the 1990s /
+# Debuted in the 1980s / Raced at a defunct venue".
+
+# A header's centre of gravity is the median last season of its answers. One
+# retro header is flavour; three is a board about a decade most of the audience
+# never watched. The pivot equals the recency pivot by coincidence of value,
+# not of meaning: that one starts a weight rising, this one draws a line.
+RETRO_PIVOT_SEASON = 2005
+MAX_RETRO_HEADERS = 1
+
+# Mean appeal across the six headers, on the scale `header_profile` returns.
+# The catalog median is 1.15, so this rejects a board built mostly from
+# below-median headers without demanding six strong ones.
+MIN_BOARD_APPEAL = 1.2
+
 # Kinds a player has to reason about rather than recall.
 COMPLEX_KINDS = {
     "named_teammate",
@@ -94,6 +116,19 @@ COMPLEX_KINDS = {
 # rejects what it builds. Yield recovers by growing the catalog, not by trying
 # harder.
 ATTEMPTS_PER_BOARD = 400
+
+
+# The header window, then progressively shorter ones. A batch of undated drafts
+# is not a schedule — the reviewer decides how far apart two boards sit — so
+# refusing to propose anything because six consecutive slots cannot draw
+# thirty-six distinct headers from a catalog of sixty-four leaves the queue
+# empty, which is worse than a board whose header last appeared two slots ago.
+# The floor is one slot, so nothing repeats back to back.
+def _relaxations(window: int) -> list[int]:
+    steps = [window]
+    while steps[-1] > 1:
+        steps.append(max(steps[-1] // 2, 1))
+    return steps
 
 
 @dataclass
@@ -122,16 +157,18 @@ class History:
 
 
 def load_history(db: OrmSession) -> History:
-    """Scheduling memory from the boards already in the queue.
+    """Scheduling memory from the boards that hold a date.
 
-    Draft boards count. Two proposals a day apart repeating a header is the
-    same problem as two published boards doing it.
+    Only approved and published boards count. A draft has no place in the
+    schedule yet, so it cannot repeat a header against anything: the windows
+    become the reviewer's constraint at the moment they date a board, not the
+    generator's against proposals nobody has read.
     """
     history = History()
     rows = db.execute(
         select(
             Puzzle.published_on, Puzzle.row_categories, Puzzle.column_categories
-        ).where(Puzzle.published_on.is_not(None))
+        ).where(Puzzle.published_on.is_not(None), Puzzle.status != "draft")
     ).all()
     for published_on, row_categories, column_categories in rows:
         history.record(
@@ -204,17 +241,35 @@ def difficulty(
     return round(100 * (0.45 * depth_score + 0.4 * fame_score + 0.15 * complex_share))
 
 
-def header_appeal(answers: set[str], recognition: dict[str, Recognition]) -> float:
+@dataclass(frozen=True)
+class Profile:
+    """How a header is sampled, and where in history it sits."""
+
+    appeal: float
+    median_season: int | None
+
+    @property
+    def is_retro(self) -> bool:
+        return (
+            self.median_season is not None and self.median_season < RETRO_PIVOT_SEASON
+        )
+
+
+def header_profile(answers: set[str], recognition: dict[str, Recognition]) -> Profile:
     """How readily a modern audience can answer this header, as a weight.
 
     Two independent things make a header reachable: whether its answers contain
     names people know, and whether those names are recent. They are multiplied
     rather than averaged so a header has to clear both — a 1994 header full of
     champions and a 2024 header full of nobodies are each penalised once.
+
+    The median season is returned alongside because the era budget needs it and
+    it is already computed here. Deriving it separately would let the weight and
+    the budget disagree about where a header sits.
     """
     known = [recognition[slug] for slug in answers if slug in recognition]
     if not known:
-        return MARQUEE_WEIGHT_FLOOR * RECENCY_WEIGHT_FLOOR
+        return Profile(MARQUEE_WEIGHT_FLOOR * RECENCY_WEIGHT_FLOOR, None)
 
     marquee_share = sum(1 for entry in known if entry.is_marquee) / len(known)
     fame = MARQUEE_WEIGHT_FLOOR + MARQUEE_WEIGHT_RANGE * marquee_share
@@ -223,13 +278,18 @@ def header_appeal(answers: set[str], recognition: dict[str, Recognition]) -> flo
         entry.latest_season for entry in known if entry.latest_season is not None
     )
     if not seasons:
-        return fame * RECENCY_WEIGHT_FLOOR
+        return Profile(fame * RECENCY_WEIGHT_FLOOR, None)
     median_season = seasons[len(seasons) // 2]
     span = RECENCY_FULL_SEASON - RECENCY_PIVOT_SEASON
     recent_share = max(0.0, min(1.0, (median_season - RECENCY_PIVOT_SEASON) / span))
     recency = RECENCY_WEIGHT_FLOOR + RECENCY_WEIGHT_RANGE * recent_share
 
-    return fame * recency
+    return Profile(fame * recency, median_season)
+
+
+def board_appeal(header_ids: Sequence[str], profiles: dict[str, Profile]) -> float:
+    """Mean appeal across a finished board."""
+    return sum(profiles[header_id].appeal for header_id in header_ids) / len(header_ids)
 
 
 def weighted_order(
@@ -270,11 +330,10 @@ class Proposal:
     def headers(self) -> list[Header]:
         return self.rows + self.columns
 
-    def as_board(self, number: int, published_on: date, floor: int) -> dict:
+    def as_board(self, number: int, floor: int) -> dict:
         return {
             "id": f"grid-{number:03d}",
             "number": number,
-            "published_on": published_on.isoformat(),
             "answer_version": 1,
             "max_guesses": 12,
             "eligibility_floor": floor,
@@ -300,16 +359,23 @@ def propose(
 ) -> Proposal | None:
     """One board that satisfies the schedule and passes the validator."""
     broad_cutoff = BROAD_HEADER_SHARE * len(pool)
+    # A themed run is asking for several boards about one thing, so the theme
+    # headers are exempt from the repeat window. Without this the window blocks
+    # the theme after the first board and every later slot fails: a six-board
+    # Monza run returned one board and five silent failures.
     available = [
-        header_id for header_id in catalog if not history.header_blocked(header_id, on)
+        header_id
+        for header_id in catalog
+        if (theme and header_id in theme) or not history.header_blocked(header_id, on)
     ]
     if len(available) < 6:
         return None
 
-    appeal = {
-        header_id: header_appeal(catalog[header_id][1], recognition)
+    profiles = {
+        header_id: header_profile(catalog[header_id][1], recognition)
         for header_id in available
     }
+    appeal = {header_id: profile.appeal for header_id, profile in profiles.items()}
 
     def compatible(picked: list[str], candidate: str) -> bool:
         """Cheap constraints, checked before any intersection is computed."""
@@ -322,7 +388,8 @@ def propose(
         for kind, count in kinds.items():
             if kind in NICHE_KINDS and count > MAX_NICHE_HEADERS_PER_KIND:
                 return False
-        if sum(kinds[kind] for kind in NICHE_KINDS) > MAX_NICHE_HEADERS:
+        retro = sum(1 for header_id in chosen if profiles[header_id].is_retro)
+        if retro > MAX_RETRO_HEADERS:
             return False
         if any(frozenset((header_id, candidate)) in correlated for header_id in picked):
             return False
@@ -367,6 +434,8 @@ def propose(
                 column_ids.append(candidate)
         if len(column_ids) < 3:
             continue
+        if board_appeal(row_ids + column_ids, profiles) < MIN_BOARD_APPEAL:
+            continue
         if theme and not (set(row_ids + column_ids) & theme):
             continue
 
@@ -410,13 +479,12 @@ def propose(
 def generate(
     db: OrmSession,
     count: int,
-    start: date,
     floor: int,
     seed: int | None = None,
     theme: set[str] | None = None,
     min_depth: int = 12,
     header_window: int = HEADER_REPEAT_DAYS,
-) -> list[tuple[date, Proposal]]:
+) -> list[Proposal]:
     pool = load_pool(db, floor)
     catalog = build_catalog(db, pool, minimum_depth=min_depth)
     recognition = load_recognition(db, pool)
@@ -430,51 +498,68 @@ def generate(
     print(f"Pool {len(pool)}, catalog {len(catalog)} headers,")
     print(f"{len(correlated)} correlated header pairs excluded\n")
 
+    # Proposals are undated. The repeat windows still need to know how far
+    # apart two boards would sit, so the run walks consecutive notional days
+    # from today: spacing, not a schedule. A reviewer dates a board when they
+    # approve it, and `load_history` reads only boards that already carry one.
     proposals = []
     previous_structure = None
+    today = date.today()
     for offset in range(count):
-        on = start + timedelta(days=offset)
-        proposal = propose(
-            db,
-            catalog,
-            pool,
-            recognition,
-            history,
-            on,
-            rng,
-            correlated,
-            theme=theme,
-            avoid_structure=previous_structure,
-        )
+        on = today + timedelta(days=offset)
+        proposal = None
+        for window in _relaxations(header_window):
+            history.header_window = window
+            proposal = propose(
+                db,
+                catalog,
+                pool,
+                recognition,
+                history,
+                on,
+                rng,
+                correlated,
+                theme=theme,
+                avoid_structure=previous_structure,
+            )
+            if proposal is not None:
+                if window != header_window:
+                    print(f"  slot {offset + 1}: found at a {window}-day header window")
+                break
+        history.header_window = header_window
         if proposal is None:
-            print(f"  {on}: no board found in {ATTEMPTS_PER_BOARD} attempts")
+            print(
+                f"  slot {offset + 1}: no board found in {ATTEMPTS_PER_BOARD} attempts"
+            )
             continue
         history.record(proposal.rows, proposal.columns, on)
         previous_structure = _structure(proposal.headers)
-        proposals.append((on, proposal))
+        proposals.append(proposal)
     return proposals
 
 
-def store(
-    db: OrmSession, proposals: list[tuple[date, Proposal]], floor: int
-) -> list[int]:
-    """Write proposals as drafts and return the numbers created.
+def store(db: OrmSession, proposals: list[Proposal], floor: int) -> list[int]:
+    """Write proposals as undated drafts and return the numbers created.
 
     Numbering continues from the highest board ever stored rather than from a
     count, so a retired board's number is never reissued to a different grid.
+
+    A draft carries no date. Dating a board is the act of approving it, and the
+    date gate in the player service is the whole publication mechanism, so a
+    generator that dated its own output was scheduling boards nobody had read.
     """
     next_number = (
         db.execute(select(Puzzle.number).order_by(Puzzle.number.desc()).limit(1))
     ).scalar() or 0
     numbers = []
-    for offset, (on, proposal) in enumerate(proposals, start=1):
-        board = proposal.as_board(next_number + offset, on, floor)
+    for offset, proposal in enumerate(proposals, start=1):
+        board = proposal.as_board(next_number + offset, floor)
         db.add(
             Puzzle(
                 number=board["number"],
                 public_id=board["id"],
                 status="draft",
-                published_on=on,
+                published_on=None,
                 eligibility_floor=floor,
                 row_categories=board["rows"],
                 column_categories=board["columns"],
@@ -490,7 +575,6 @@ def store(
 
 def generate_and_store(
     count: int,
-    start: date,
     floor: int,
     seed: int | None = None,
     theme: set[str] | None = None,
@@ -505,17 +589,15 @@ def generate_and_store(
     """
     db = get_db_session()
     try:
-        proposals = generate(
-            db, count, start, floor, seed, theme, min_depth, header_window
-        )
+        proposals = generate(db, count, floor, seed, theme, min_depth, header_window)
         return store(db, proposals, floor) if proposals else []
     finally:
         db.close()
 
 
-def _print(on: date, proposal: Proposal) -> None:
+def _print(index: int, proposal: Proposal) -> None:
     depths = sorted(len(answers) for answers in proposal.cells.values())
-    print(f"  {on}  difficulty {proposal.difficulty:>3}  depths {depths}")
+    print(f"  {index:>3}.  difficulty {proposal.difficulty:>3}  depths {depths}")
     print(f"      rows    {', '.join(h.label for h in proposal.rows)}")
     print(f"      columns {', '.join(h.label for h in proposal.columns)}")
 
@@ -529,9 +611,6 @@ def main():
         type=int,
         default=None,
         help="Fix the run for reproducibility. Omit for a different board set each time",
-    )
-    parser.add_argument(
-        "--start", default=None, help="First date to schedule (default tomorrow)"
     )
     parser.add_argument(
         "--theme",
@@ -555,11 +634,6 @@ def main():
     )
     args = parser.parse_args()
 
-    start = (
-        date.fromisoformat(args.start)
-        if args.start
-        else date.today() + timedelta(days=1)
-    )
     theme = set(args.theme.split(",")) if args.theme else None
 
     db = get_db_session()
@@ -567,15 +641,14 @@ def main():
         proposals = generate(
             db,
             args.count,
-            start,
             args.floor,
             args.seed,
             theme,
             min_depth=args.min_depth,
             header_window=args.header_window,
         )
-        for on, proposal in proposals:
-            _print(on, proposal)
+        for index, proposal in enumerate(proposals, start=1):
+            _print(index, proposal)
 
         if args.write and proposals:
             numbers = store(db, proposals, args.floor)
