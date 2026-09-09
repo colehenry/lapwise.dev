@@ -10,10 +10,10 @@ export default function PrivacyPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-12 space-y-10">
       <div>
-        <h1 className="text-3xl font-bold text-text-primary mb-2">
+        <h1 className="text-3xl font-bold text-ink-strong mb-2">
           Privacy Policy
         </h1>
-        <p className="text-text-muted text-sm">Last updated: May 2026</p>
+        <p className="text-ink-faint text-sm">Last updated: May 2026</p>
       </div>
 
       <Section title="1. What We Collect">
@@ -62,7 +62,7 @@ export default function PrivacyPage() {
             href="https://www.anthropic.com/privacy"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-purple-400 hover:text-purple-300 transition-colors"
+            className="text-accent-bright hover:text-accent-light transition-colors"
           >
             privacy policy
           </a>{" "}
@@ -80,14 +80,12 @@ export default function PrivacyPage() {
         <p>We use:</p>
         <ul>
           <li>
-            <strong className="text-text-primary">Auth cookies</strong> —
-            httpOnly session cookies used to keep you logged in. These are
-            essential and cannot be opted out of while using the Service.
+            <strong className="text-ink-strong">Auth cookies</strong> — httpOnly
+            session cookies used to keep you logged in. These are essential and
+            cannot be opted out of while using the Service.
           </li>
           <li>
-            <strong className="text-text-primary">
-              No advertising cookies
-            </strong>{" "}
+            <strong className="text-ink-strong">No advertising cookies</strong>{" "}
             — we do not use third-party tracking or advertising cookies.
           </li>
         </ul>
@@ -103,7 +101,7 @@ export default function PrivacyPage() {
             href="https://sentry.io/privacy/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-purple-400 hover:text-purple-300 transition-colors"
+            className="text-accent-bright hover:text-accent-light transition-colors"
           >
             Sentry&rsquo;s privacy policy
           </a>
@@ -132,31 +130,30 @@ export default function PrivacyPage() {
         <p>Lapwise uses the following third-party services:</p>
         <ul>
           <li>
-            <strong className="text-text-primary">Neon</strong> — database
+            <strong className="text-ink-strong">Neon</strong> — database hosting
+          </li>
+          <li>
+            <strong className="text-ink-strong">Railway</strong> — backend
             hosting
           </li>
           <li>
-            <strong className="text-text-primary">Railway</strong> — backend
+            <strong className="text-ink-strong">Netlify</strong> — frontend
             hosting
           </li>
           <li>
-            <strong className="text-text-primary">Netlify</strong> — frontend
-            hosting
+            <strong className="text-ink-strong">Resend</strong> — transactional
+            email
           </li>
           <li>
-            <strong className="text-text-primary">Resend</strong> —
-            transactional email
-          </li>
-          <li>
-            <strong className="text-text-primary">Anthropic</strong> — AI
+            <strong className="text-ink-strong">Anthropic</strong> — AI
             processing
           </li>
           <li>
-            <strong className="text-text-primary">Sentry</strong> — error
+            <strong className="text-ink-strong">Sentry</strong> — error
             monitoring
           </li>
           <li>
-            <strong className="text-text-primary">Google</strong> — OAuth login
+            <strong className="text-ink-strong">Google</strong> — OAuth login
             (optional)
           </li>
         </ul>
@@ -167,7 +164,7 @@ export default function PrivacyPage() {
           For privacy questions or data deletion requests, email us at{" "}
           <a
             href="mailto:support@lapwise.dev"
-            className="text-purple-400 hover:text-purple-300 transition-colors"
+            className="text-accent-bright hover:text-accent-light transition-colors"
           >
             support@lapwise.dev
           </a>
@@ -175,10 +172,10 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
-      <div className="pt-4 border-t border-border-primary">
+      <div className="pt-4 border-t border-line-soft">
         <Link
           href="/terms"
-          className="text-purple-400 hover:text-purple-300 text-sm transition-colors"
+          className="text-accent-bright hover:text-accent-light text-sm transition-colors"
         >
           Terms of Service →
         </Link>
@@ -196,8 +193,8 @@ function Section({
 }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
-      <div className="text-text-secondary text-sm leading-relaxed space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1">
+      <h2 className="text-lg font-semibold text-ink-strong">{title}</h2>
+      <div className="text-ink-base text-sm leading-relaxed space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1">
         {children}
       </div>
     </section>

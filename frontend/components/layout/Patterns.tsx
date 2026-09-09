@@ -1,6 +1,6 @@
 export function GridPattern({
   id = "grid-pattern",
-  className = "absolute inset-0 w-full h-full text-purple-500 opacity-10 pointer-events-none",
+  className = "absolute inset-0 w-full h-full text-accent opacity-10 pointer-events-none",
 }: {
   id?: string;
   className?: string;
@@ -25,7 +25,7 @@ export function GridPattern({
 
 export function ConcentricPattern({
   id = "concentric-pattern",
-  className = "absolute inset-0 w-full h-full text-purple-500 opacity-10 pointer-events-none",
+  className = "absolute inset-0 w-full h-full text-accent opacity-10 pointer-events-none",
 }: {
   id?: string;
   className?: string;
@@ -89,7 +89,7 @@ export function ConcentricPattern({
 
 export function TrianglePattern({
   id = "triangle-pattern",
-  className = "absolute inset-0 w-full h-full text-purple-500 opacity-8 pointer-events-none",
+  className = "absolute inset-0 w-full h-full text-accent opacity-8 pointer-events-none",
 }: {
   id?: string;
   className?: string;

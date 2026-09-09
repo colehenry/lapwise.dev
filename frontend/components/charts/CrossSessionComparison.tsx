@@ -124,7 +124,7 @@ export default function CrossSessionComparison({
   if (sessions.length < 2) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           Requires at least 2 practice sessions with data.
         </p>
       </div>
@@ -134,7 +134,7 @@ export default function CrossSessionComparison({
   if (rows.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           No comparable driver data across sessions.
         </p>
       </div>
@@ -146,7 +146,7 @@ export default function CrossSessionComparison({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+        <p className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
           Best lap time per session · sorted by fastest overall
         </p>
         <div className="flex items-center gap-4">
@@ -159,7 +159,7 @@ export default function CrossSessionComparison({
                   opacity: SESSION_OPACITY[s],
                 }}
               />
-              <span className="text-[10px] font-mono text-text-muted uppercase">
+              <span className="text-[10px] font-mono text-ink-faint uppercase">
                 {s}
               </span>
             </div>
@@ -211,8 +211,8 @@ export default function CrossSessionComparison({
               const row = rows.find((r) => r.driver === label);
               if (!row) return null;
               return (
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs space-y-0.5">
-                  <p className="font-bold text-text-primary font-mono mb-1">
+                <div className="bg-surface-panel border border-line-soft rounded-sm p-2 shadow-lg text-xs space-y-0.5">
+                  <p className="font-bold text-ink-strong font-mono mb-1">
                     {label}
                   </p>
                   {sessions.map(
@@ -228,7 +228,7 @@ export default function CrossSessionComparison({
                           >
                             {s}
                           </span>
-                          <span className="font-mono text-text-secondary">
+                          <span className="font-mono text-ink-base">
                             {formatTime(row[s] as number)}
                           </span>
                         </div>

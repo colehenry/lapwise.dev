@@ -49,7 +49,7 @@ export default function SeasonRoundSelector() {
               setSelectedSeason(e.target.value);
               setSelectedRound("");
             }}
-            className="w-full bg-bg-tertiary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-3 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest appearance-none"
+            className="w-full bg-surface-panel border border-line-soft text-ink-strong font-mono text-xs font-bold px-4 py-3 rounded-sm focus:outline-none focus:border-accent transition-colors duration-150 cursor-pointer uppercase tracking-widest appearance-none"
           >
             <option value="" disabled>
               Season
@@ -60,7 +60,7 @@ export default function SeasonRoundSelector() {
               </option>
             ))}
           </select>
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-ink-faint">
             <svg
               className="w-4 h-4"
               fill="none"
@@ -84,7 +84,7 @@ export default function SeasonRoundSelector() {
             value={selectedRound}
             onChange={(e) => setSelectedRound(e.target.value)}
             disabled={!selectedSeason || rounds.length === 0}
-            className="w-full bg-bg-tertiary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-3 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-surface-panel border border-line-soft text-ink-strong font-mono text-xs font-bold px-4 py-3 rounded-sm focus:outline-none focus:border-accent transition-colors duration-150 cursor-pointer uppercase tracking-widest appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <option value="">All Rounds</option>
             {rounds.map((round) => (
@@ -93,7 +93,7 @@ export default function SeasonRoundSelector() {
               </option>
             ))}
           </select>
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-ink-faint">
             <svg
               className="w-4 h-4"
               fill="none"
@@ -116,7 +116,7 @@ export default function SeasonRoundSelector() {
         type="button"
         onClick={handleGo}
         disabled={!selectedSeason}
-        className="bg-purple-500 border border-purple-500 text-white font-mono text-xs font-bold tracking-widest uppercase px-6 py-3 rounded-sm hover:bg-purple-600 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="bg-accent border border-accent text-white font-mono text-xs font-bold tracking-widest uppercase px-6 py-3 rounded-sm hover:bg-accent transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         Go
         <svg

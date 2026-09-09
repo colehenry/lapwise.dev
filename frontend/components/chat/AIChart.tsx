@@ -48,9 +48,7 @@ export default function AIChart({ config }: AIChartProps) {
 
   return (
     <Card variant="default" padding="sm">
-      <h4 className="text-text-primary text-sm font-medium mb-3 px-2">
-        {title}
-      </h4>
+      <h4 className="text-ink-strong text-sm font-medium mb-3 px-2">{title}</h4>
       <ResponsiveContainer width="100%" height={280}>
         {chartType === "line" ? (
           <LineChart data={data}>

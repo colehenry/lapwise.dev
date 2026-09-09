@@ -62,21 +62,21 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-text-primary mb-1">
-          Log in to <span className="text-purple-500">Lapwise</span>
+        <h1 className="text-2xl font-bold text-ink-strong mb-1">
+          Log in to <span className="text-accent">Lapwise</span>
         </h1>
-        <p className="text-text-muted text-sm mb-8">
+        <p className="text-ink-faint text-sm mb-8">
           Welcome back. Enter your credentials below.
         </p>
 
         {redirect && redirect !== "/" && (
-          <p className="text-[11px] font-mono text-text-muted border border-border-primary rounded-sm px-3 py-2 mb-4">
+          <p className="text-[11px] font-mono text-ink-faint border border-line-soft rounded-sm px-3 py-2 mb-4">
             Log in to continue
           </p>
         )}
 
         {oauthError && (
-          <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-sm px-3 py-2 mb-4">
+          <p className="text-danger-bright text-sm bg-danger/10 border border-danger/20 rounded-sm px-3 py-2 mb-4">
             {oauthErrorMessage(oauthError)}
           </p>
         )}
@@ -88,7 +88,7 @@ function LoginForm() {
           <div>
             <label
               htmlFor="identifier"
-              className="block text-sm text-text-secondary mb-1.5"
+              className="block text-sm text-ink-base mb-1.5"
             >
               Email or username
             </label>
@@ -105,15 +105,12 @@ function LoginForm() {
 
           <div>
             <div className="flex justify-between items-center mb-1.5">
-              <label
-                htmlFor="password"
-                className="block text-sm text-text-secondary"
-              >
+              <label htmlFor="password" className="block text-sm text-ink-base">
                 Password
               </label>
               <Link
                 href="/forgot-password"
-                className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                className="text-xs text-accent-bright hover:text-accent-light transition-colors"
               >
                 Forgot password?
               </Link>
@@ -129,7 +126,7 @@ function LoginForm() {
           </div>
 
           {error && (
-            <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-sm px-3 py-2">
+            <p className="text-danger-bright text-sm bg-danger/10 border border-danger/20 rounded-sm px-3 py-2">
               {error}
             </p>
           )}
@@ -139,11 +136,11 @@ function LoginForm() {
           </Button>
         </form>
 
-        <p className="text-center text-sm text-text-muted mt-6">
+        <p className="text-center text-sm text-ink-faint mt-6">
           Don&apos;t have an account?{" "}
           <Link
             href="/register"
-            className="text-purple-400 hover:text-purple-300 transition-colors"
+            className="text-accent-bright hover:text-accent-light transition-colors"
           >
             Sign up
           </Link>

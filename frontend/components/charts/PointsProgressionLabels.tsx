@@ -21,7 +21,7 @@ export function PointsProgressionTitle({
 
 export function PointsProgressionNote() {
   return (
-    <p className="mt-2 text-center text-[10px] leading-relaxed text-text-muted">
+    <p className="mt-2 text-center text-[10px] leading-relaxed text-ink-faint">
       The lines show all on-track race and sprint points. Official final totals
       can differ where historical counting rules or classifications apply.
     </p>

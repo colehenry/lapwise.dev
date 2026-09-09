@@ -147,12 +147,12 @@ export default function LiveReplayPreview() {
   const noOp = useCallback(() => {}, []);
 
   return (
-    <section className="overflow-hidden border-b border-border-primary/40 bg-bg-primary px-6 py-10">
+    <section className="overflow-hidden border-b border-line-soft/40 bg-surface-page px-6 py-10">
       <div className="mx-auto max-w-4xl">
         {/* Section label */}
         <div className="mb-5 flex items-center gap-3">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-purple-500" />
-          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-text-muted">
+          <div className="h-2 w-2 animate-pulse rounded-full bg-accent" />
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-ink-faint">
             Live Replay
           </span>
         </div>
@@ -162,15 +162,15 @@ export default function LiveReplayPreview() {
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-3.5">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10 text-purple-300">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent-light">
                 <ReplayIcon />
               </div>
               <div>
-                <span className="text-sm font-bold text-text-primary">
+                <span className="text-sm font-bold text-ink-strong">
                   Live Replay
                 </span>
                 {eventName && activeSeason !== null && (
-                  <span className="ml-2 text-xs text-text-muted">
+                  <span className="ml-2 text-xs text-ink-faint">
                     {eventName} {activeSeason}
                   </span>
                 )}
@@ -178,7 +178,7 @@ export default function LiveReplayPreview() {
             </div>
             <Link
               href="/replay"
-              className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-text-muted transition-all hover:border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-300"
+              className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-ink-faint transition-all hover:border-accent/30 hover:bg-accent/10 hover:text-accent-light"
             >
               Try it
               <svg
@@ -204,12 +204,12 @@ export default function LiveReplayPreview() {
                 className="flex flex-col items-center justify-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] text-center"
                 style={{ height: 380 }}
               >
-                <p className="text-sm text-text-secondary">
+                <p className="text-sm text-ink-base">
                   Replay preview is unavailable right now.
                 </p>
                 <Link
                   href="/replay"
-                  className="font-mono text-[10px] uppercase tracking-[0.1em] text-purple-400 transition-colors hover:text-purple-300"
+                  className="font-mono text-[10px] uppercase tracking-[0.1em] text-accent-bright transition-colors hover:text-accent-light"
                 >
                   Open the replay player
                 </Link>
@@ -248,7 +248,7 @@ export default function LiveReplayPreview() {
 
                   {/* Mini leaderboard */}
                   <div className="lg:w-48 shrink-0 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                    <p className="mb-2 text-[9px] font-mono uppercase tracking-[0.1em] text-text-muted">
+                    <p className="mb-2 text-[9px] font-mono uppercase tracking-[0.1em] text-ink-faint">
                       Positions
                     </p>
                     <MiniLeaderboard
@@ -266,11 +266,11 @@ export default function LiveReplayPreview() {
 
           {/* Bottom bar — playback info + CTA */}
           <div className="flex items-center justify-between border-t border-white/[0.06] px-5 py-3">
-            <div className="flex items-center gap-4 text-xs text-text-muted">
+            <div className="flex items-center gap-4 text-xs text-ink-faint">
               {/* Play indicator */}
               <div className="flex items-center gap-1.5">
                 <div
-                  className={`h-2 w-2 rounded-full ${playing ? "animate-pulse bg-green-500" : "bg-text-muted"}`}
+                  className={`h-2 w-2 rounded-full ${playing ? "animate-pulse bg-green-500" : "bg-ink-faint"}`}
                 />
                 <span className="font-mono text-[10px] uppercase tracking-wide">
                   {playing ? "Playing" : "Paused"}
@@ -285,7 +285,7 @@ export default function LiveReplayPreview() {
               )}
 
               {/* Speed badge */}
-              <span className="rounded-md border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5 font-mono text-[10px] font-bold text-text-secondary">
+              <span className="rounded-md border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5 font-mono text-[10px] font-bold text-ink-base">
                 {PLAYBACK_SPEED}x
               </span>
             </div>
@@ -296,7 +296,7 @@ export default function LiveReplayPreview() {
                   ? `/replay?season=${activeSeason}&round=${activeRound}`
                   : "/replay"
               }
-              className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-purple-400 transition-colors hover:text-purple-300"
+              className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-accent-bright transition-colors hover:text-accent-light"
             >
               Watch full replay
               <svg

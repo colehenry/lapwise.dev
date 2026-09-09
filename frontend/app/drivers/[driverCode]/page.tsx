@@ -94,18 +94,18 @@ export default function DriverProfilePage() {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-bg-secondary p-8">
+      <div className="min-h-screen bg-surface-band p-8">
         <div className="max-w-5xl mx-auto">
-          <div className="bg-bg-tertiary rounded-sm p-8">
-            <h1 className="text-2xl font-bold text-text-primary mb-4">
+          <div className="bg-surface-panel rounded-sm p-8">
+            <h1 className="text-2xl font-bold text-ink-strong mb-4">
               Driver Not Found
             </h1>
-            <p className="text-text-tertiary mb-6">
+            <p className="text-ink-soft mb-6">
               Could not find driver with code: {driverCode.toUpperCase()}
             </p>
             <Link
               href="/drivers"
-              className="text-red-500 hover:text-red-400 transition-colors"
+              className="text-danger hover:text-danger-bright transition-colors"
             >
               &larr; Back to Drivers
             </Link>
@@ -156,7 +156,7 @@ export default function DriverProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-bg-secondary">
+    <div className="min-h-screen bg-surface-band">
       {/* Sticky Header */}
       <PageHeader
         title={data.full_name}
@@ -167,7 +167,7 @@ export default function DriverProfilePage() {
           <div className="flex items-center relative">
             <div className="flex-1" />
             <TabBar tabs={TABS} activeTab={activeTab} onTabChange={switchTab} />
-            <div className="flex-1 flex justify-end border-t border-border-primary/40 mt-1 pt-1.5 mr-2">
+            <div className="flex-1 flex justify-end border-t border-line-soft/40 mt-1 pt-1.5 mr-2">
               <SprintToggle
                 checked={includeSprint}
                 onChange={setIncludeSprint}
@@ -213,23 +213,23 @@ export default function DriverProfilePage() {
                     className="h-full max-h-[360px] w-full object-contain object-bottom"
                   />
                 ) : (
-                  <span className="text-5xl font-bold font-mono text-text-tertiary">
+                  <span className="text-5xl font-bold font-mono text-ink-soft">
                     {data.driver_code}
                   </span>
                 )
               }
               meta={
-                <div className="flex items-center gap-3 bg-bg-primary border border-border-primary rounded-sm px-3 py-2">
+                <div className="flex items-center gap-3 bg-surface-page border border-line-soft rounded-sm px-3 py-2">
                   {data.country_code && (
                     <span className="text-2xl">
                       {getDriverFlagEmoji(data.country_code)}
                     </span>
                   )}
                   <div>
-                    <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+                    <div className="text-[10px] font-mono uppercase tracking-widest text-ink-faint">
                       Nationality
                     </div>
-                    <div className="text-sm font-semibold text-text-primary">
+                    <div className="text-sm font-semibold text-ink-strong">
                       {data.country_code
                         ? getCountryName(data.country_code)
                         : "Unknown"}
@@ -240,7 +240,7 @@ export default function DriverProfilePage() {
             />
 
             <ArchivePanel title="Career Highlights">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 rounded-sm border border-border-primary bg-bg-primary/20 px-4 md:px-5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 rounded-sm border border-line-soft bg-surface-page/20 px-4 md:px-5">
                 {highlights.map((stat) => (
                   <ArchiveMetricBar
                     key={stat.label}

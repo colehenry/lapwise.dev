@@ -99,12 +99,12 @@ export default function AdminUsersPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-1.5 h-8 bg-purple-500 rounded-full" />
+          <div className="w-1.5 h-8 bg-accent rounded-full" />
           <div>
-            <h1 className="text-2xl font-bold text-text-primary">
+            <h1 className="text-2xl font-bold text-ink-strong">
               User Management
             </h1>
-            <p className="text-sm text-text-muted">
+            <p className="text-sm text-ink-faint">
               Manage user accounts and permissions.
             </p>
           </div>
@@ -114,47 +114,47 @@ export default function AdminUsersPage() {
             placeholder="Search username or email..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="bg-bg-tertiary"
+            className="bg-surface-panel"
           />
         </div>
       </div>
 
-      <Card padding="none" className="border-border-primary overflow-hidden">
+      <Card padding="none" className="border-line-soft overflow-hidden">
         <div className="relative">
           <GridPattern
             id="users-table"
-            className="text-purple-500 opacity-[0.03]"
+            className="text-accent opacity-[0.03]"
           />
           <div className="overflow-x-auto relative">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-border-primary bg-bg-secondary">
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-text-muted font-mono">
+                <tr className="border-b border-line-soft bg-surface-band">
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-ink-faint font-mono">
                     User
                   </th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-text-muted font-mono">
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-ink-faint font-mono">
                     Role
                   </th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-text-muted font-mono text-center">
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-ink-faint font-mono text-center">
                     Joined
                   </th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-text-muted font-mono text-right">
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-ink-faint font-mono text-right">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border-primary">
+              <tbody className="divide-y divide-line-soft">
                 {users.map((user) => (
                   <tr
                     key={user.id}
-                    className="text-sm hover:bg-bg-secondary/50 transition-colors"
+                    className="text-sm hover:bg-surface-band/50 transition-colors"
                   >
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="font-bold text-text-primary">
+                        <span className="font-bold text-ink-strong">
                           {user.username}
                         </span>
-                        <span className="text-xs text-text-muted">
+                        <span className="text-xs text-ink-faint">
                           {user.email}
                         </span>
                       </div>
@@ -183,7 +183,7 @@ export default function AdminUsersPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-center text-text-muted text-xs font-mono">
+                    <td className="px-6 py-4 text-center text-ink-faint text-xs font-mono">
                       {format(new Date(user.created_at), "MMM d, yyyy")}
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -214,7 +214,7 @@ export default function AdminUsersPage() {
                   <tr>
                     <td
                       colSpan={4}
-                      className="px-6 py-12 text-center text-text-muted italic bg-bg-tertiary/20"
+                      className="px-6 py-12 text-center text-ink-faint italic bg-surface-panel/20"
                     >
                       No users found matching your search.
                     </td>
@@ -236,7 +236,7 @@ export default function AdminUsersPage() {
           >
             Previous
           </Button>
-          <div className="flex items-center px-4 text-sm font-bold text-text-muted font-mono">
+          <div className="flex items-center px-4 text-sm font-bold text-ink-faint font-mono">
             Page {page} of {Math.ceil(total / 20)}
           </div>
           <Button

@@ -33,15 +33,15 @@ function StatCard({
   note?: string;
 }) {
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm p-4 flex flex-col gap-1">
-      <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+    <div className="bg-surface-panel border border-line-soft rounded-sm p-4 flex flex-col gap-1">
+      <span className="text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
         {label}
       </span>
-      <p className="text-3xl font-bold text-purple-400 font-mono tracking-tight">
+      <p className="text-3xl font-bold text-accent-bright font-mono tracking-tight">
         {value.toLocaleString()}
       </p>
       {note && (
-        <span className="text-[10px] text-text-muted font-mono">{note}</span>
+        <span className="text-[10px] text-ink-faint font-mono">{note}</span>
       )}
     </div>
   );
@@ -66,17 +66,17 @@ export default function AdminDashboard() {
       {/* Header row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-1.5 h-8 bg-purple-500 rounded-full" />
+          <div className="w-1.5 h-8 bg-accent rounded-full" />
           <div>
-            <h2 className="text-xl font-bold text-text-primary">Overview</h2>
-            <p className="text-sm text-text-muted">
+            <h2 className="text-xl font-bold text-ink-strong">Overview</h2>
+            <p className="text-sm text-ink-faint">
               Quick statistics and recent activity.
             </p>
           </div>
         </div>
 
         {/* Period selector */}
-        <div className="flex items-center gap-1 bg-bg-secondary border border-border-primary rounded-sm p-1">
+        <div className="flex items-center gap-1 bg-surface-band border border-line-soft rounded-sm p-1">
           {PERIODS.map((p) => (
             <button
               key={p.value}
@@ -84,8 +84,8 @@ export default function AdminDashboard() {
               onClick={() => setPeriod(p.value)}
               className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-all ${
                 period === p.value
-                  ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
-                  : "text-text-muted hover:text-text-primary border border-transparent"
+                  ? "bg-accent/20 text-accent-light border border-accent/40"
+                  : "text-ink-faint hover:text-ink-strong border border-transparent"
               }`}
             >
               {p.label}
@@ -100,12 +100,12 @@ export default function AdminDashboard() {
           {["users", "active", "comments", "ai"].map((k) => (
             <div
               key={k}
-              className="bg-bg-tertiary border border-border-primary rounded-sm p-4 h-24 animate-pulse"
+              className="bg-surface-panel border border-line-soft rounded-sm p-4 h-24 animate-pulse"
             />
           ))}
         </div>
       ) : error || !stats ? (
-        <div className="p-8 text-center text-red-400 border border-red-400/20 bg-red-400/5 rounded-sm">
+        <div className="p-8 text-center text-danger-bright border border-danger-bright/20 bg-danger-bright/5 rounded-sm">
           {error || "Something went wrong"}
         </div>
       ) : (
@@ -135,8 +135,8 @@ export default function AdminDashboard() {
       {!loading && stats && (
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className="w-1.5 h-6 bg-purple-500 rounded-full" />
-            <h3 className="text-lg font-bold text-text-primary">Quick Links</h3>
+            <div className="w-1.5 h-6 bg-accent rounded-full" />
+            <h3 className="text-lg font-bold text-ink-strong">Quick Links</h3>
           </div>
           <div className="flex flex-wrap gap-2">
             {[
@@ -156,7 +156,7 @@ export default function AdminDashboard() {
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center px-3 py-1.5 rounded-sm text-xs font-medium bg-bg-secondary border border-border-primary hover:border-purple-500/50 text-text-secondary hover:text-text-primary transition-all"
+                className="inline-flex items-center px-3 py-1.5 rounded-sm text-xs font-medium bg-surface-band border border-line-soft hover:border-accent/50 text-ink-base hover:text-ink-strong transition-all"
               >
                 {link.label} ↗
               </a>
@@ -169,40 +169,38 @@ export default function AdminDashboard() {
       {!loading && stats && (
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-1.5 h-6 bg-purple-500 rounded-full" />
-            <h3 className="text-lg font-bold text-text-primary">
+            <div className="w-1.5 h-6 bg-accent rounded-full" />
+            <h3 className="text-lg font-bold text-ink-strong">
               Recent Login Activity
             </h3>
           </div>
-          <div className="border border-border-primary rounded-sm overflow-hidden">
+          <div className="border border-line-soft rounded-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-border-primary bg-bg-secondary">
+                  <tr className="border-b border-line-soft bg-surface-band">
                     {["User", "IP Address", "Status", "Time"].map((h) => (
                       <th
                         key={h}
-                        className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-text-muted font-mono"
+                        className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-ink-faint font-mono"
                       >
                         {h}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border-primary">
+                <tbody className="divide-y divide-line-soft">
                   {stats.recent_activity.map((activity) => (
                     <tr
                       key={activity.id}
-                      className="text-sm hover:bg-bg-secondary/50 transition-colors"
+                      className="text-sm hover:bg-surface-band/50 transition-colors"
                     >
-                      <td className="px-6 py-4 font-medium text-text-primary">
+                      <td className="px-6 py-4 font-medium text-ink-strong">
                         {activity.username || (
-                          <span className="text-text-muted italic">
-                            Unknown
-                          </span>
+                          <span className="text-ink-faint italic">Unknown</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-text-muted font-mono text-xs">
+                      <td className="px-6 py-4 text-ink-faint font-mono text-xs">
                         {activity.ip_address}
                       </td>
                       <td className="px-6 py-4">
@@ -212,13 +210,13 @@ export default function AdminDashboard() {
                             Success
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-sm text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-400 mr-2" />
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-sm text-[10px] font-bold uppercase tracking-wider bg-danger/10 text-danger-bright border border-danger/20">
+                            <span className="w-1.5 h-1.5 rounded-full bg-danger-bright mr-2" />
                             Failed
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-text-muted text-xs whitespace-nowrap">
+                      <td className="px-6 py-4 text-ink-faint text-xs whitespace-nowrap">
                         {formatDistanceToNow(new Date(activity.created_at), {
                           addSuffix: true,
                         })}

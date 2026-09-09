@@ -53,28 +53,28 @@ export default function TopRightLatestRace() {
 
   return (
     <div className="w-full max-w-2xl group relative">
-      <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/20 to-red-500/20 rounded-sm blur opacity-20 group-hover:opacity-30 transition duration-500" />
+      <div className="absolute -inset-1 bg-gradient-to-r from-accent/20 to-danger/20 rounded-sm blur opacity-20 group-hover:opacity-30 transition duration-500" />
 
-      <div className="relative overflow-visible bg-bg-tertiary border border-border-primary rounded-sm flex flex-col md:flex-row min-h-[260px] md:min-h-[300px]">
+      <div className="relative overflow-visible bg-surface-panel border border-line-soft rounded-sm flex flex-col md:flex-row min-h-[260px] md:min-h-[300px]">
         {/* Left: Results & Discussion CTA */}
         <div className="flex-1 p-4 md:p-6 md:pr-10 relative z-10 flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2.5">
-              <span className="text-[10px] text-purple-400 font-bold uppercase tracking-widest font-mono whitespace-nowrap">
+              <span className="text-[10px] text-accent-bright font-bold uppercase tracking-widest font-mono whitespace-nowrap">
                 Latest GP Results
               </span>
-              <div className="w-1 h-1 rounded-full bg-border-primary shrink-0" />
-              <span className="text-[10px] text-text-muted font-bold uppercase tracking-widest font-mono whitespace-nowrap">
+              <div className="w-1 h-1 rounded-full bg-line-soft shrink-0" />
+              <span className="text-[10px] text-ink-faint font-bold uppercase tracking-widest font-mono whitespace-nowrap">
                 RND {data.round}
               </span>
             </div>
 
-            <h3 className="text-xl md:text-2xl font-bold text-text-primary leading-tight mb-0.5">
+            <h3 className="text-xl md:text-2xl font-bold text-ink-strong leading-tight mb-0.5">
               {data.event_name}
             </h3>
             <Link
               href={circuitHref(data.circuit_id) ?? "/circuits"}
-              className="inline-flex text-[11px] text-text-muted font-mono uppercase tracking-wider mb-4 md:mb-5 hover:text-purple-300 transition-colors"
+              className="inline-flex text-[11px] text-ink-faint font-mono uppercase tracking-wider mb-4 md:mb-5 hover:text-accent-light transition-colors"
             >
               {data.circuit_name}
             </Link>
@@ -85,11 +85,11 @@ export default function TopRightLatestRace() {
                   key={driver.driver_slug ?? `${driver.full_name}-${idx}`}
                   className="flex items-center gap-3"
                 >
-                  <span className="w-4 text-[10px] font-bold text-text-muted font-mono shrink-0">
+                  <span className="w-4 text-[10px] font-bold text-ink-faint font-mono shrink-0">
                     P{idx + 1}
                   </span>
 
-                  <div className="relative w-8 h-8 bg-bg-secondary border border-border-primary rounded-sm overflow-hidden shrink-0">
+                  <div className="relative w-8 h-8 bg-surface-band border border-line-soft rounded-sm overflow-hidden shrink-0">
                     {isValidHeadshotUrl(driver.headshot_url) ? (
                       <Image
                         src={driver.headshot_url as string}
@@ -98,25 +98,25 @@ export default function TopRightLatestRace() {
                         className="object-cover scale-110 translate-y-1"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-text-muted font-mono text-[10px]">
+                      <div className="w-full h-full flex items-center justify-center text-ink-faint font-mono text-[10px]">
                         {driver.driver_code}
                       </div>
                     )}
                   </div>
 
-                  <div className="flex-1 flex items-center justify-between border-b border-border-primary/40 pb-1">
+                  <div className="flex-1 flex items-center justify-between border-b border-line-soft/40 pb-1">
                     <Link
                       href={driverHref(driver) ?? "/drivers"}
-                      className="text-sm font-bold text-text-primary mr-3 truncate md:mr-4 hover:text-purple-300 transition-colors"
+                      className="text-sm font-bold text-ink-strong mr-3 truncate md:mr-4 hover:text-accent-light transition-colors"
                     >
                       {driver.full_name}
                     </Link>
                     <span
-                      className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-sm bg-bg-secondary whitespace-nowrap shrink-0"
+                      className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-sm bg-surface-band whitespace-nowrap shrink-0"
                       style={{
                         color: driver.team_color
                           ? `#${driver.team_color}`
-                          : "var(--text-primary)",
+                          : "var(--ink-strong)",
                         borderColor: driver.team_color
                           ? `#${driver.team_color}40`
                           : "transparent",
@@ -136,7 +136,7 @@ export default function TopRightLatestRace() {
           <div className="flex flex-wrap items-center gap-4 md:gap-6 relative">
             <Link
               href={`/results/${currentYear}/${data.round}`}
-              className="px-4 py-2 bg-purple-500 text-text-primary text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-purple-600 transition-colors shadow-lg shadow-purple-500/20 whitespace-nowrap"
+              className="px-4 py-2 bg-accent text-ink-strong text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-accent transition-colors shadow-lg shadow-purple-500/20 whitespace-nowrap"
             >
               Full Results
             </Link>
@@ -144,7 +144,7 @@ export default function TopRightLatestRace() {
             <div className="relative">
               <Link
                 href={`/results/${currentYear}/${data.round}#comments`}
-                className="text-[10px] font-bold text-text-muted uppercase tracking-widest hover:text-purple-400 transition-colors flex items-center gap-2 group/link whitespace-nowrap"
+                className="text-[10px] font-bold text-ink-faint uppercase tracking-widest hover:text-accent-bright transition-colors flex items-center gap-2 group/link whitespace-nowrap"
                 onMouseEnter={() => setShowDiscussionTooltip(true)}
                 onMouseLeave={() => setShowDiscussionTooltip(false)}
               >
@@ -167,12 +167,12 @@ export default function TopRightLatestRace() {
 
               {showDiscussionTooltip && (
                 <div className="absolute left-0 top-full mt-3 z-50 animate-in fade-in slide-in-from-top-1 duration-200 min-w-[220px]">
-                  <div className="bg-bg-tertiary border border-border-primary px-3 py-2 rounded-sm shadow-2xl backdrop-blur-xl ring-1 ring-white/10">
-                    <p className="text-[10px] text-text-primary font-bold leading-relaxed whitespace-nowrap">
+                  <div className="bg-surface-panel border border-line-soft px-3 py-2 rounded-sm shadow-2xl backdrop-blur-xl ring-1 ring-white/10">
+                    <p className="text-[10px] text-ink-strong font-bold leading-relaxed whitespace-nowrap">
                       What&apos;d you think about the{" "}
-                      <span className="text-purple-400">{gpName}</span>?
+                      <span className="text-accent-bright">{gpName}</span>?
                     </p>
-                    <div className="absolute -top-1 left-4 w-2 h-2 bg-bg-tertiary border-t border-l border-border-primary rotate-45" />
+                    <div className="absolute -top-1 left-4 w-2 h-2 bg-surface-panel border-t border-l border-line-soft rotate-45" />
                   </div>
                 </div>
               )}
@@ -183,7 +183,7 @@ export default function TopRightLatestRace() {
         {/* Right: Track Map */}
         <Link
           href={circuitHref(data.circuit_id) ?? "/circuits"}
-          className="h-36 md:h-auto md:w-64 bg-bg-secondary/40 border-t md:border-t-0 md:border-l border-border-primary relative flex items-center justify-center p-6 md:p-8 overflow-hidden group/map shrink-0"
+          className="h-36 md:h-auto md:w-64 bg-surface-band/40 border-t md:border-t-0 md:border-l border-line-soft relative flex items-center justify-center p-6 md:p-8 overflow-hidden group/map shrink-0"
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
         >
@@ -201,11 +201,11 @@ export default function TopRightLatestRace() {
 
           {showTooltip && (
             <div className="absolute inset-x-0 bottom-4 flex justify-center z-30 animate-in fade-in slide-in-from-bottom-2 duration-200">
-              <div className="bg-bg-tertiary border border-border-primary px-3 py-1.5 rounded-sm shadow-xl backdrop-blur-md">
-                <p className="text-[10px] font-bold text-text-primary uppercase tracking-widest font-mono text-center whitespace-nowrap">
+              <div className="bg-surface-panel border border-line-soft px-3 py-1.5 rounded-sm shadow-xl backdrop-blur-md">
+                <p className="text-[10px] font-bold text-ink-strong uppercase tracking-widest font-mono text-center whitespace-nowrap">
                   Explore Circuit
                 </p>
-                <p className="text-[9px] text-text-muted font-mono uppercase tracking-wider text-center whitespace-nowrap">
+                <p className="text-[9px] text-ink-faint font-mono uppercase tracking-wider text-center whitespace-nowrap">
                   {data.circuit_location}, {data.circuit_country}
                 </p>
               </div>

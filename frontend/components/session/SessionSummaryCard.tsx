@@ -42,14 +42,14 @@ export default function SessionSummaryCard({
     SESSION_LABELS[summary.session_type] || summary.session_type;
 
   return (
-    <div className="bg-bg-elevated border border-border-primary rounded-sm overflow-hidden">
+    <div className="bg-surface-raised border border-line-soft rounded-sm overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-3 flex items-center gap-2 border-b border-border-primary/60">
-        <ClutchIcon className="h-4 w-4 text-purple-400" title="AI Summary" />
-        <span className="text-[10px] tracking-widest text-purple-400 font-bold uppercase font-mono">
+      <div className="px-4 py-3 flex items-center gap-2 border-b border-line-soft/60">
+        <ClutchIcon className="h-4 w-4 text-accent-bright" title="AI Summary" />
+        <span className="text-[10px] tracking-widest text-accent-bright font-bold uppercase font-mono">
           Clutch's {sessionLabel} Summary
         </span>
-        <span className="ml-auto text-[10px] text-text-muted font-mono">
+        <span className="ml-auto text-[10px] text-ink-faint font-mono">
           {new Date(summary.generated_at).toLocaleDateString()}
         </span>
       </div>
@@ -58,16 +58,14 @@ export default function SessionSummaryCard({
       <div className="p-4 space-y-3">
         {summary.key_facts.map((fact, i) => (
           <div key={fact.headline} className="flex gap-3">
-            <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-purple-500/15 text-purple-400 text-xs font-bold font-mono">
+            <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-accent/15 text-accent-bright text-xs font-bold font-mono">
               {i + 1}
             </span>
             <div>
-              <p className="text-text-primary text-sm font-semibold">
+              <p className="text-ink-strong text-sm font-semibold">
                 {fact.headline}
               </p>
-              <p className="text-text-secondary text-xs mt-0.5">
-                {fact.detail}
-              </p>
+              <p className="text-ink-base text-xs mt-0.5">{fact.detail}</p>
             </div>
           </div>
         ))}
@@ -75,11 +73,11 @@ export default function SessionSummaryCard({
 
       {/* Expandable full summary */}
       {summary.summary_text && (
-        <div className="border-t border-border-primary/60">
+        <div className="border-t border-line-soft/60">
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
-            className="w-full px-4 py-2 flex items-center justify-center gap-1.5 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono hover:text-purple-400 transition-colors"
+            className="w-full px-4 py-2 flex items-center justify-center gap-1.5 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono hover:text-accent-bright transition-colors"
           >
             {expanded ? "Hide" : "Read"} Full Analysis
             <span
@@ -90,7 +88,7 @@ export default function SessionSummaryCard({
           </button>
           {expanded && (
             <div className="px-4 pb-4">
-              <p className="text-text-secondary text-sm leading-relaxed whitespace-pre-line">
+              <p className="text-ink-base text-sm leading-relaxed whitespace-pre-line">
                 {summary.summary_text}
               </p>
             </div>

@@ -29,12 +29,12 @@ function ResetPasswordForm() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center">
-          <p className="text-text-muted mb-4">
+          <p className="text-ink-faint mb-4">
             Invalid reset link. Please request a new one.
           </p>
           <Link
             href="/forgot-password"
-            className="text-purple-400 hover:text-purple-300 transition-colors text-sm"
+            className="text-accent-bright hover:text-accent-light transition-colors text-sm"
           >
             Request password reset
           </Link>
@@ -75,10 +75,10 @@ function ResetPasswordForm() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-text-primary mb-1">
+        <h1 className="text-2xl font-bold text-ink-strong mb-1">
           Set new password
         </h1>
-        <p className="text-text-muted text-sm mb-8">
+        <p className="text-ink-faint text-sm mb-8">
           Choose a strong password for your account.
         </p>
 
@@ -86,7 +86,7 @@ function ResetPasswordForm() {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm text-text-secondary mb-1.5"
+              className="block text-sm text-ink-base mb-1.5"
             >
               New password
             </label>
@@ -99,7 +99,7 @@ function ResetPasswordForm() {
               minLength={8}
               autoComplete="new-password"
             />
-            <p className="text-xs text-text-muted mt-1">
+            <p className="text-xs text-ink-faint mt-1">
               Min 8 characters with uppercase, lowercase, and a number
             </p>
           </div>
@@ -107,7 +107,7 @@ function ResetPasswordForm() {
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-sm text-text-secondary mb-1.5"
+              className="block text-sm text-ink-base mb-1.5"
             >
               Confirm new password
             </label>
@@ -122,7 +122,7 @@ function ResetPasswordForm() {
           </div>
 
           {error && (
-            <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-sm px-3 py-2">
+            <p className="text-danger-bright text-sm bg-danger/10 border border-danger/20 rounded-sm px-3 py-2">
               {error}
             </p>
           )}

@@ -46,7 +46,7 @@ function TrendTooltip({ active, payload }: TrendTooltipProps) {
     : CHART_COLORS.purple;
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm p-3 shadow-xl">
+    <div className="bg-surface-panel border border-line-soft rounded-sm p-3 shadow-xl">
       <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-1`}>
         {entry.year}
       </p>
@@ -55,7 +55,7 @@ function TrendTooltip({ active, payload }: TrendTooltipProps) {
           <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
             Fastest Lap
           </span>
-          <span className="font-mono text-text-primary font-bold tabular-nums">
+          <span className="font-mono text-ink-strong font-bold tabular-nums">
             {formatLapTime(entry.fastest_lap_seconds)}
           </span>
         </div>
@@ -103,8 +103,8 @@ export default function CircuitLapTimeTrend({
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <div className="h-6 bg-bg-elevated rounded w-40 animate-pulse" />
-        <div className="h-48 bg-bg-elevated rounded animate-pulse" />
+        <div className="h-6 bg-surface-raised rounded w-40 animate-pulse" />
+        <div className="h-48 bg-surface-raised rounded animate-pulse" />
       </div>
     );
   }
@@ -112,7 +112,7 @@ export default function CircuitLapTimeTrend({
   if (!data || data.trend.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           Lap time data not available for this circuit.
         </p>
       </div>

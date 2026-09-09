@@ -38,7 +38,7 @@ export default function GameCategoryHeader({
 
   return (
     <div
-      className={`group relative flex min-w-0 items-center justify-center border border-border-primary bg-bg-secondary text-center ${
+      className={`group relative flex min-w-0 items-center justify-center border border-line-soft bg-surface-band text-center ${
         compact ? "min-h-14" : "min-h-16 sm:min-h-20"
       } ${className ?? ""}`}
     >
@@ -70,7 +70,7 @@ export default function GameCategoryHeader({
         ) : (
           <span
             lang="en"
-            className={`block w-full min-w-0 hyphens-auto text-balance font-bold uppercase leading-snug tracking-[0.08em] text-text-secondary [overflow-wrap:anywhere] ${
+            className={`block w-full min-w-0 hyphens-auto text-balance font-bold uppercase leading-snug tracking-[0.08em] text-ink-base [overflow-wrap:anywhere] ${
               compact ? "text-[8px]" : "text-[9px] sm:text-[11px]"
             }`}
           >
@@ -78,7 +78,7 @@ export default function GameCategoryHeader({
           </span>
         )}
       </div>
-      <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-48 -translate-x-1/2 translate-y-1 rounded-md border border-border-primary bg-bg-elevated px-2.5 py-1.5 text-[10px] font-semibold text-text-primary opacity-0 shadow-lg transition-all group-hover:translate-y-0 group-hover:opacity-100">
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-48 -translate-x-1/2 translate-y-1 rounded-md border border-line-soft bg-surface-raised px-2.5 py-1.5 text-[10px] font-semibold text-ink-strong opacity-0 shadow-lg transition-all group-hover:translate-y-0 group-hover:opacity-100">
         {category.prompt_label}
       </span>
     </div>

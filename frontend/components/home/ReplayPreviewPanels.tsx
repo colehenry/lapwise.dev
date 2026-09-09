@@ -45,7 +45,7 @@ export function MiniLeaderboard({
             key={code}
             className="flex items-center gap-2 px-2 py-1 rounded-md text-[11px]"
           >
-            <span className="w-4 text-right font-mono font-bold text-text-muted tabular-nums">
+            <span className="w-4 text-right font-mono font-bold text-ink-faint tabular-nums">
               {position}
             </span>
             {info && isValidHeadshotUrl(info.headshot_url) ? (
@@ -58,7 +58,7 @@ export function MiniLeaderboard({
                 unoptimized
               />
             ) : (
-              <div className="w-[18px] h-[18px] rounded-full bg-bg-tertiary shrink-0" />
+              <div className="w-[18px] h-[18px] rounded-full bg-surface-panel shrink-0" />
             )}
             <span
               className="font-mono font-bold tracking-wide"
@@ -68,7 +68,7 @@ export function MiniLeaderboard({
             >
               {code}
             </span>
-            <span className="ml-auto font-mono text-[10px] text-text-muted tabular-nums">
+            <span className="ml-auto font-mono text-[10px] text-ink-faint tabular-nums">
               {gaps[idx] ?? ""}
             </span>
           </div>

@@ -32,10 +32,10 @@ function AnswerRow({ answer }: { answer: PuzzleAnswer }) {
       : "—";
   return (
     <li className="flex items-baseline justify-between gap-3 py-0.5">
-      <span className="truncate text-[11px] text-text-primary">
+      <span className="truncate text-[11px] text-ink-strong">
         {answer.full_name}
       </span>
-      <span className="shrink-0 font-mono text-[9px] text-text-muted">
+      <span className="shrink-0 font-mono text-[9px] text-ink-faint">
         {answer.wins}W · {answer.entries}E · {years}
       </span>
     </li>
@@ -62,15 +62,15 @@ function ReviewCell({
   const flagged = cellFindings.length > 0 || cell.depth < STANDARD_MIN_ANSWERS;
 
   const tone = failed
-    ? "border-red-500/60 bg-red-500/5"
+    ? "border-danger/60 bg-danger/5"
     : flagged
       ? "border-amber-500/50 bg-amber-500/5"
-      : "border-border-primary bg-bg-secondary";
+      : "border-line-soft bg-surface-band";
   const countTone = failed
-    ? "text-red-400"
+    ? "text-danger-bright"
     : flagged
       ? "text-amber-400"
-      : "text-text-secondary";
+      : "text-ink-base";
 
   return (
     <div
@@ -82,14 +82,14 @@ function ReviewCell({
       {flagged && (
         <span
           className={`absolute right-1 top-1 h-1.5 w-1.5 rounded-full ${
-            failed ? "bg-red-400" : "bg-amber-400"
+            failed ? "bg-danger-bright" : "bg-amber-400"
           }`}
           aria-hidden="true"
         />
       )}
 
-      <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1 w-64 -translate-x-1/2 translate-y-1 rounded-sm border border-border-primary bg-bg-elevated p-2 text-left opacity-0 shadow-lg transition-all group-hover:translate-y-0 group-hover:opacity-100">
-        <p className="truncate font-mono text-[9px] uppercase tracking-wider text-text-muted">
+      <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1 w-64 -translate-x-1/2 translate-y-1 rounded-sm border border-line-soft bg-surface-raised p-2 text-left opacity-0 shadow-lg transition-all group-hover:translate-y-0 group-hover:opacity-100">
+        <p className="truncate font-mono text-[9px] uppercase tracking-wider text-ink-faint">
           {cell.row_label} × {cell.column_label}
         </p>
         <p className={`font-mono text-[10px] font-bold ${countTone}`}>
@@ -101,13 +101,15 @@ function ReviewCell({
           <p
             key={`${finding.code}-${finding.message}`}
             className={`mt-1 text-[10px] ${
-              finding.level === "error" ? "text-red-400" : "text-amber-400"
+              finding.level === "error"
+                ? "text-danger-bright"
+                : "text-amber-400"
             }`}
           >
             {withoutCellId(finding.message, cell.cell_id)}
           </p>
         ))}
-        <ul className="mt-1 max-h-56 overflow-y-auto border-t border-border-primary pt-1">
+        <ul className="mt-1 max-h-56 overflow-y-auto border-t border-line-soft pt-1">
           {cell.answers.map((answer) => (
             <AnswerRow key={answer.driver_slug} answer={answer} />
           ))}
@@ -133,8 +135,8 @@ export default function PuzzleReviewGrid({
           the width of the queue stops reading as one. */}
       <div className="max-w-md">
         <div className="grid grid-cols-[3.5rem_repeat(3,minmax(0,1fr))]">
-          <div className="flex min-h-14 items-center justify-center rounded-tl-sm border border-border-primary bg-bg-secondary">
-            <span className="font-mono text-[9px] uppercase tracking-wider text-text-muted">
+          <div className="flex min-h-14 items-center justify-center rounded-tl-sm border border-line-soft bg-surface-band">
+            <span className="font-mono text-[9px] uppercase tracking-wider text-ink-faint">
               #{puzzle.number}
             </span>
           </div>
@@ -185,22 +187,22 @@ export default function PuzzleReviewGrid({
       </div>
 
       {puzzle.findings.length > 0 && (
-        <div className="max-w-md rounded-sm border border-border-primary bg-bg-secondary">
+        <div className="max-w-md rounded-sm border border-line-soft bg-surface-band">
           <button
             type="button"
             onClick={() => setShowFindings((open) => !open)}
             className="flex w-full items-center justify-between px-3 py-1.5 text-left"
           >
-            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink-base">
               {errors.length} error{errors.length === 1 ? "" : "s"} ·{" "}
               {warnings.length} warning{warnings.length === 1 ? "" : "s"}
             </span>
-            <span className="text-xs text-text-muted">
+            <span className="text-xs text-ink-faint">
               {showFindings ? "Hide" : "Show"}
             </span>
           </button>
           {showFindings && (
-            <ul className="border-t border-border-primary px-3 py-2">
+            <ul className="border-t border-line-soft px-3 py-2">
               {puzzle.findings.map((finding) => (
                 <li
                   key={`${finding.code}-${finding.message}`}
@@ -209,13 +211,13 @@ export default function PuzzleReviewGrid({
                   <span
                     className={`shrink-0 font-mono text-[10px] font-bold uppercase ${
                       finding.level === "error"
-                        ? "text-red-400"
+                        ? "text-danger-bright"
                         : "text-amber-400"
                     }`}
                   >
                     {finding.level === "error" ? "fail" : "warn"}
                   </span>
-                  <span className="text-text-secondary">{finding.message}</span>
+                  <span className="text-ink-base">{finding.message}</span>
                 </li>
               ))}
             </ul>

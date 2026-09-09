@@ -190,7 +190,7 @@ export default function TrackEvolutionChart({
   if (season < 2018) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           Telemetry data available from 2018 onwards.
         </p>
       </div>
@@ -200,8 +200,8 @@ export default function TrackEvolutionChart({
   if (isLoading) {
     return (
       <div className="space-y-2">
-        <div className="h-5 bg-bg-elevated rounded w-56 animate-pulse" />
-        <div className="h-64 bg-bg-elevated rounded animate-pulse" />
+        <div className="h-5 bg-surface-raised rounded w-56 animate-pulse" />
+        <div className="h-64 bg-surface-raised rounded animate-pulse" />
       </div>
     );
   }
@@ -209,7 +209,7 @@ export default function TrackEvolutionChart({
   if (!data || movingAvgPoints.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           No lap timing data available (session time data required for 2018+).
         </p>
       </div>
@@ -223,18 +223,18 @@ export default function TrackEvolutionChart({
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+          <p className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
             Track improvement
           </p>
           {absImprovement >= 0.05 ? (
             <span
-              className={`text-sm font-bold font-mono ${improvement > 0 ? "text-green-400" : "text-red-400"}`}
+              className={`text-sm font-bold font-mono ${improvement > 0 ? "text-green-400" : "text-danger-bright"}`}
             >
               {improvement > 0 ? "+" : ""}
               {improvement.toFixed(3)}s
             </span>
           ) : (
-            <span className="text-sm font-bold font-mono text-text-muted">
+            <span className="text-sm font-bold font-mono text-ink-faint">
               Steady
             </span>
           )}
@@ -301,7 +301,7 @@ export default function TrackEvolutionChart({
                 const p = payload[0]?.payload as { x: number; y: number };
                 if (!p?.y) return null;
                 return (
-                  <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs">
+                  <div className="bg-surface-panel border border-line-soft rounded-sm p-2 shadow-lg text-xs">
                     <p
                       className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-0.5`}
                     >

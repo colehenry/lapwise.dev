@@ -26,14 +26,14 @@ export default function AdminLayout({
   // the site loads with.
   if (isLoading || !user || user.role !== "admin") {
     return (
-      <div className="min-h-screen bg-bg-primary">
+      <div className="min-h-screen bg-surface-page">
         <Section background="primary" spacing="sm">
-          <div className="mb-5 h-10 border-b border-border-primary" />
+          <div className="mb-5 h-10 border-b border-line-soft" />
           <div className="space-y-2">
             {["a", "b", "c"].map((key) => (
               <div
                 key={key}
-                className="h-12 animate-pulse rounded-sm border border-border-primary bg-bg-tertiary"
+                className="h-12 animate-pulse rounded-sm border border-line-soft bg-surface-panel"
               />
             ))}
           </div>
@@ -50,11 +50,11 @@ export default function AdminLayout({
   ];
 
   return (
-    <div className="bg-bg-primary min-h-screen">
+    <div className="bg-surface-page min-h-screen">
       <Section background="primary" spacing="sm">
         {/* The tab names say which page this is, so there is no heading above
             them to repeat it. */}
-        <nav className="mb-5 flex items-center gap-5 border-b border-border-primary">
+        <nav className="mb-5 flex items-center gap-5 border-b border-line-soft">
           {navItems.map((item) => {
             const isActive =
               item.href === "/admin"
@@ -67,8 +67,8 @@ export default function AdminLayout({
                 aria-current={isActive ? "page" : undefined}
                 className={`-mb-px border-b-2 py-2.5 text-sm font-medium transition-colors ${
                   isActive
-                    ? "border-purple-400 text-text-primary"
-                    : "border-transparent text-text-muted hover:text-text-primary"
+                    ? "border-accent-bright text-ink-strong"
+                    : "border-transparent text-ink-faint hover:text-ink-strong"
                 }`}
               >
                 {item.label}

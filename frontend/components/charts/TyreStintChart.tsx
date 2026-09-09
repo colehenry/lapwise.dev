@@ -25,16 +25,20 @@ const COMPOUND_COLORS: Record<
   string,
   { bg: string; border: string; text: string }
 > = {
-  SOFT: { bg: "bg-red-500/20", border: "border-red-500", text: "text-red-400" },
+  SOFT: {
+    bg: "bg-danger/20",
+    border: "border-danger",
+    text: "text-danger-bright",
+  },
   MEDIUM: {
     bg: "bg-yellow-500/20",
     border: "border-yellow-500",
     text: "text-yellow-400",
   },
   HARD: {
-    bg: "bg-bg-elevated/20",
-    border: "border-border-secondary",
-    text: "text-text-secondary",
+    bg: "bg-surface-raised/20",
+    border: "border-line-strong",
+    text: "text-ink-base",
   },
   INTERMEDIATE: {
     bg: "bg-green-500/20",
@@ -174,11 +178,11 @@ export default function TyreStintChart({
     return (
       <div style={{ minHeight: "300px" }}>
         <div className="h-8 mb-4 flex items-center">
-          <div className="h-6 bg-bg-elevated rounded w-96 animate-pulse" />
+          <div className="h-6 bg-surface-raised rounded w-96 animate-pulse" />
         </div>
         <div className="relative" style={{ height: "200px" }}>
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
+            <p className="text-center text-ink-faint font-mono tracking-widest text-xs uppercase">
               Loading tyre data...
             </p>
           </div>
@@ -192,13 +196,13 @@ export default function TyreStintChart({
     return (
       <div style={{ minHeight: "200px" }}>
         <div className="h-8 mb-4 flex items-center">
-          <h3 className="text-sm font-bold text-text-secondary font-mono">
+          <h3 className="text-sm font-bold text-ink-base font-mono">
             Tyre Strategy
           </h3>
         </div>
         <div className="relative" style={{ height: "150px" }}>
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-text-muted font-mono tracking-widest text-xs uppercase">
+            <p className="text-ink-faint font-mono tracking-widest text-xs uppercase">
               Tyre data not available for this session.
             </p>
           </div>
@@ -225,7 +229,7 @@ export default function TyreStintChart({
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-bold text-text-secondary font-mono">
+        <h3 className="text-sm font-bold text-ink-base font-mono">
           Tyre Strategy
         </h3>
 
@@ -252,13 +256,13 @@ export default function TyreStintChart({
           <button
             type="button"
             onClick={() => setShowDropdown(!showDropdown)}
-            className="px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-border-secondary text-text-secondary hover:border-purple-500 hover:text-purple-300 transition-colors duration-150"
+            className="px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-line-strong text-ink-base hover:border-accent hover:text-accent-light transition-colors duration-150"
           >
             Select ({selectedDrivers.length})
           </button>
 
           {showDropdown && (
-            <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-10 min-w-[250px] max-h-[300px] overflow-y-auto">
+            <div className="absolute right-0 top-full mt-1 bg-surface-panel border border-line-soft rounded-sm shadow-xl z-10 min-w-[250px] max-h-[300px] overflow-y-auto">
               {drivers.map((driver) => {
                 const dk = driverKey(driver);
                 const isSelected = selectedDrivers.includes(dk);
@@ -269,15 +273,15 @@ export default function TyreStintChart({
                 return (
                   <label
                     key={dk}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-bg-elevated cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-surface-raised cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleDriver(dk)}
-                      className="w-4 h-4 accent-purple-500"
+                      className="w-4 h-4 accent-accent"
                     />
-                    <span className="text-sm text-text-muted w-5 font-mono">
+                    <span className="text-sm text-ink-faint w-5 font-mono">
                       {driver.final_position || "-"}
                     </span>
                     <span
@@ -316,7 +320,7 @@ export default function TyreStintChart({
                 </div>
 
                 {/* Stint bar */}
-                <div className="flex-1 flex h-7 gap-px rounded-sm overflow-hidden bg-bg-primary/30 border border-border-primary/50">
+                <div className="flex-1 flex h-7 gap-px rounded-sm overflow-hidden bg-surface-page/30 border border-line-soft/50">
                   {stints.map((stint) => {
                     const widthPercent =
                       maxLap > 0 ? (stint.lapCount / maxLap) * 100 : 0;
@@ -350,10 +354,10 @@ export default function TyreStintChart({
                         )}
 
                         {/* Hover tooltip */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-20 whitespace-nowrap">
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-surface-panel border border-line-soft rounded-sm p-2 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-20 whitespace-nowrap">
                           <div className="text-[10px] font-mono space-y-0.5">
                             <div>
-                              <span className="text-text-muted">Compound:</span>{" "}
+                              <span className="text-ink-faint">Compound:</span>{" "}
                               <span
                                 className="font-bold"
                                 style={{ color: "rgba(0, 0, 0, 0.88)" }}
@@ -362,8 +366,8 @@ export default function TyreStintChart({
                               </span>
                             </div>
                             <div>
-                              <span className="text-text-muted">Laps:</span>{" "}
-                              <span className="text-text-primary font-bold">
+                              <span className="text-ink-faint">Laps:</span>{" "}
+                              <span className="text-ink-strong font-bold">
                                 {stint.startLap}-{stint.endLap} (
                                 {stint.lapCount})
                               </span>
@@ -377,7 +381,7 @@ export default function TyreStintChart({
 
                 {/* Total laps */}
                 <div className="w-8 shrink-0 text-right">
-                  <span className="text-[10px] text-text-muted font-mono">
+                  <span className="text-[10px] text-ink-faint font-mono">
                     {driver.laps.length > 0
                       ? driver.laps[driver.laps.length - 1].lap_number
                       : 0}
@@ -392,7 +396,7 @@ export default function TyreStintChart({
           className="flex items-center justify-center"
           style={{ minHeight: "150px" }}
         >
-          <p className="text-text-muted font-mono tracking-widest text-xs uppercase">
+          <p className="text-ink-faint font-mono tracking-widest text-xs uppercase">
             Select at least one driver to view tyre strategy.
           </p>
         </div>

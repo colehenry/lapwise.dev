@@ -58,7 +58,7 @@ export default function ChatInput({
 
   if (compact) {
     return (
-      <div className="border-t border-[var(--glass-border)] bg-bg-primary/90 px-3 py-2.5">
+      <div className="border-t border-[var(--glass-border)] bg-surface-page/90 px-3 py-2.5">
         <form onSubmit={handleSubmit} className="flex items-end gap-2">
           <textarea
             ref={textareaRef}
@@ -70,13 +70,13 @@ export default function ChatInput({
             maxLength={2000}
             disabled={isLoading || disabled}
             aria-label="Message Clutch"
-            className="max-h-20 min-h-9 flex-1 resize-none rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-purple-500/40 focus:outline-none focus:ring-1 focus:ring-purple-500/20 disabled:opacity-50"
+            className="max-h-20 min-h-9 flex-1 resize-none rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-2 text-sm text-ink-strong placeholder:text-ink-faint focus:border-accent/40 focus:outline-none focus:ring-1 focus:ring-accent/20 disabled:opacity-50"
           />
           {isLoading && onAbort ? (
             <button
               type="button"
               onClick={onAbort}
-              className="shrink-0 rounded-xl bg-red-500/10 border border-red-500/20 p-2 text-red-400 transition-colors hover:bg-red-500/20"
+              className="shrink-0 rounded-xl bg-danger/10 border border-danger/20 p-2 text-danger-bright transition-colors hover:bg-danger/20"
               title="Stop"
               aria-label="Stop generating"
             >
@@ -89,7 +89,7 @@ export default function ChatInput({
             <button
               type="submit"
               disabled={!input.trim() || isLoading || disabled}
-              className="shrink-0 rounded-xl bg-purple-500 p-2 text-text-primary transition-colors hover:bg-purple-600 disabled:cursor-not-allowed disabled:opacity-50"
+              className="shrink-0 rounded-xl bg-accent p-2 text-ink-strong transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="Send message"
             >
               <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -113,7 +113,7 @@ export default function ChatInput({
     >
       <form
         onSubmit={handleSubmit}
-        className="chat-input-glass mx-auto flex max-w-4xl items-end gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-surface)] px-4 py-2 backdrop-blur-xl transition-all duration-200 focus-within:border-purple-500/30 focus-within:shadow-[0_0_40px_-10px_rgba(160,32,240,0.15)]"
+        className="chat-input-glass mx-auto flex max-w-4xl items-end gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-surface)] px-4 py-2 backdrop-blur-xl transition-all duration-200 focus-within:border-accent/30 focus-within:shadow-[0_0_40px_-10px_rgba(160,32,240,0.15)]"
       >
         <textarea
           ref={textareaRef}
@@ -125,13 +125,13 @@ export default function ChatInput({
           maxLength={2000}
           disabled={isLoading || disabled}
           aria-label="Message Clutch"
-          className="max-h-36 min-h-10 flex-1 resize-none bg-transparent py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none disabled:opacity-50"
+          className="max-h-36 min-h-10 flex-1 resize-none bg-transparent py-2 text-sm text-ink-strong placeholder:text-ink-faint focus:outline-none disabled:opacity-50"
         />
         {isLoading && onAbort ? (
           <button
             type="button"
             onClick={onAbort}
-            className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 transition-all hover:bg-red-500/20 active:scale-95"
+            className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-danger/10 border border-danger/20 text-danger-bright transition-all hover:bg-danger/20 active:scale-95"
             title="Stop generating"
             aria-label="Stop generating"
           >
@@ -144,7 +144,7 @@ export default function ChatInput({
           <button
             type="submit"
             disabled={!input.trim() || isLoading || disabled}
-            className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500 text-text-primary transition-all hover:bg-purple-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+            className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-ink-strong transition-all hover:bg-accent active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Send message"
           >
             <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">

@@ -27,7 +27,7 @@ export default function UserAvatar({
 
   return (
     <div
-      className={`rounded-sm border border-border-primary bg-bg-secondary overflow-hidden flex items-center justify-center font-mono text-text-muted ${sizeStyles[size]} ${className}`}
+      className={`rounded-sm border border-line-soft bg-surface-band overflow-hidden flex items-center justify-center font-mono text-ink-faint ${sizeStyles[size]} ${className}`}
       title={username}
     >
       {avatarUrl ? (

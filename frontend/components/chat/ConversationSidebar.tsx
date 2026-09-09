@@ -76,7 +76,7 @@ export default function ConversationSidebar({
       <div className="flex h-full min-h-0 w-72 flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--glass-border)] px-4 py-3.5">
-          <h3 className="text-[11px] font-mono font-bold uppercase tracking-[0.1em] text-text-secondary">
+          <h3 className="text-[11px] font-mono font-bold uppercase tracking-[0.1em] text-ink-base">
             History
           </h3>
           <div className="flex items-center gap-1.5">
@@ -86,14 +86,14 @@ export default function ConversationSidebar({
                 onNew();
                 onClose();
               }}
-              className="theme-glass-card rounded-lg px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.1em] text-text-muted transition-all hover:border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-300"
+              className="theme-glass-card rounded-lg px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.1em] text-ink-faint transition-all hover:border-accent/30 hover:bg-accent/10 hover:text-accent-light"
             >
               + New Chat
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-1.5 text-text-muted transition-colors hover:text-text-secondary"
+              className="rounded-lg p-1.5 text-ink-faint transition-colors hover:text-ink-base"
             >
               <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <title>Close sidebar</title>
@@ -113,7 +113,7 @@ export default function ConversationSidebar({
             <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
               <div className="theme-glass-card mb-3 flex h-10 w-10 items-center justify-center rounded-2xl">
                 <svg
-                  className="h-5 w-5 text-text-muted"
+                  className="h-5 w-5 text-ink-faint"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -125,8 +125,8 @@ export default function ConversationSidebar({
                   />
                 </svg>
               </div>
-              <p className="text-xs text-text-muted">No conversations yet</p>
-              <p className="mt-0.5 text-[10px] text-text-muted/60">
+              <p className="text-xs text-ink-faint">No conversations yet</p>
+              <p className="mt-0.5 text-[10px] text-ink-faint/60">
                 Start asking to build history
               </p>
             </div>
@@ -135,7 +135,7 @@ export default function ConversationSidebar({
               {conversations.map((conv) => (
                 <div key={conv.id} className="group relative overflow-hidden">
                   {editingId === conv.id ? (
-                    <div className="rounded-xl border border-purple-500/20 bg-purple-500/[0.08] px-3 py-2.5">
+                    <div className="rounded-xl border border-accent/20 bg-accent/[0.08] px-3 py-2.5">
                       <input
                         type="text"
                         value={editTitle}
@@ -143,7 +143,7 @@ export default function ConversationSidebar({
                         onKeyDown={(e) => handleEditKeyDown(e, conv.id)}
                         onBlur={() => commitEdit(conv.id)}
                         ref={(el) => el?.focus()}
-                        className="w-full rounded bg-bg-primary/80 px-1.5 py-0.5 text-xs text-text-primary outline-none focus:ring-1 focus:ring-purple-500/40"
+                        className="w-full rounded bg-surface-page/80 px-1.5 py-0.5 text-xs text-ink-strong outline-none focus:ring-1 focus:ring-accent/40"
                       />
                     </div>
                   ) : (
@@ -158,14 +158,14 @@ export default function ConversationSidebar({
                         disabled={pendingId === conv.id}
                         className={`w-full rounded-xl px-3 py-2.5 text-left transition-all duration-200 ${
                           activeId === conv.id || pendingId === conv.id
-                            ? "border border-purple-500/20 bg-purple-500/[0.08] text-purple-200"
-                            : "border border-transparent text-text-secondary hover:bg-[var(--glass-surface-soft)] hover:text-text-primary"
+                            ? "border border-accent/20 bg-accent/[0.08] text-accent-light"
+                            : "border border-transparent text-ink-base hover:bg-[var(--glass-surface-soft)] hover:text-ink-strong"
                         }`}
                       >
                         <div className="flex items-center gap-1.5 pr-14">
                           {pendingId === conv.id && (
                             <svg
-                              className="h-3 w-3 shrink-0 animate-spin text-purple-400"
+                              className="h-3 w-3 shrink-0 animate-spin text-accent-bright"
                               viewBox="0 0 24 24"
                               fill="none"
                             >
@@ -189,7 +189,7 @@ export default function ConversationSidebar({
                             {conv.title || "Untitled"}
                           </span>
                         </div>
-                        <div className="mt-0.5 text-[10px] font-mono uppercase tracking-[0.08em] text-text-muted">
+                        <div className="mt-0.5 text-[10px] font-mono uppercase tracking-[0.08em] text-ink-faint">
                           {formatDistanceToNow(new Date(conv.updated_at), {
                             addSuffix: true,
                           })}
@@ -201,7 +201,7 @@ export default function ConversationSidebar({
                           <button
                             type="button"
                             onClick={(e) => startEdit(e, conv)}
-                            className="rounded-lg p-1.5 text-text-muted transition-all hover:text-text-secondary"
+                            className="rounded-lg p-1.5 text-ink-faint transition-all hover:text-ink-base"
                             title="Rename"
                           >
                             <svg
@@ -221,8 +221,8 @@ export default function ConversationSidebar({
                           disabled={deletingId === conv.id}
                           className={`rounded-lg p-1.5 transition-all ${
                             deletingId === conv.id
-                              ? "cursor-not-allowed text-text-muted opacity-50"
-                              : "text-text-muted hover:text-red-400"
+                              ? "cursor-not-allowed text-ink-faint opacity-50"
+                              : "text-ink-faint hover:text-danger-bright"
                           }`}
                           title="Delete"
                         >

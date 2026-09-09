@@ -40,7 +40,7 @@ export default function CircuitWeatherProfile({
       <div className="grid grid-cols-2 gap-3">
         {data.avg_air_temp != null && (
           <div>
-            <div className="text-[10px] text-text-muted font-mono uppercase tracking-widest mb-0.5">
+            <div className="text-[10px] text-ink-faint font-mono uppercase tracking-widest mb-0.5">
               Avg Air
             </div>
             <div className="text-lg font-bold text-orange-400 font-mono">
@@ -50,17 +50,17 @@ export default function CircuitWeatherProfile({
         )}
         {data.avg_track_temp != null && (
           <div>
-            <div className="text-[10px] text-text-muted font-mono uppercase tracking-widest mb-0.5">
+            <div className="text-[10px] text-ink-faint font-mono uppercase tracking-widest mb-0.5">
               Avg Track
             </div>
-            <div className="text-lg font-bold text-red-400 font-mono">
+            <div className="text-lg font-bold text-danger-bright font-mono">
               {data.avg_track_temp}°C
             </div>
           </div>
         )}
         {data.avg_humidity != null && (
           <div>
-            <div className="text-[10px] text-text-muted font-mono uppercase tracking-widest mb-0.5">
+            <div className="text-[10px] text-ink-faint font-mono uppercase tracking-widest mb-0.5">
               Humidity
             </div>
             <div className="text-lg font-bold text-blue-400 font-mono">
@@ -70,10 +70,10 @@ export default function CircuitWeatherProfile({
         )}
         {data.avg_wind_speed != null && (
           <div>
-            <div className="text-[10px] text-text-muted font-mono uppercase tracking-widest mb-0.5">
+            <div className="text-[10px] text-ink-faint font-mono uppercase tracking-widest mb-0.5">
               Wind
             </div>
-            <div className="text-lg font-bold text-text-secondary font-mono">
+            <div className="text-lg font-bold text-ink-base font-mono">
               {data.avg_wind_speed} m/s
             </div>
           </div>
@@ -81,20 +81,20 @@ export default function CircuitWeatherProfile({
       </div>
 
       {/* Wet race indicator */}
-      <div className="mt-3 pt-3 border-t border-border-primary">
+      <div className="mt-3 pt-3 border-t border-line-soft">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+          <span className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
             Rain Probability
           </span>
           <span
             className={`text-sm font-bold font-mono ${
-              wetPercent > 30 ? "text-blue-400" : "text-text-tertiary"
+              wetPercent > 30 ? "text-blue-400" : "text-ink-soft"
             }`}
           >
             {wetPercent}%
           </span>
         </div>
-        <div className="mt-1.5 h-1.5 bg-bg-primary rounded-full overflow-hidden">
+        <div className="mt-1.5 h-1.5 bg-surface-page rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{
@@ -104,7 +104,7 @@ export default function CircuitWeatherProfile({
             }}
           />
         </div>
-        <div className="text-[10px] text-text-muted mt-1">
+        <div className="text-[10px] text-ink-faint mt-1">
           {data.wet_race_count} wet out of {data.total_races_checked} total
           races
         </div>

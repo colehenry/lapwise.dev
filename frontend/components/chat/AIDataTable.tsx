@@ -60,10 +60,10 @@ export default function AIDataTable({ headers, rows }: AIDataTableProps) {
                 key={`mobile-${rowIndex}-${nodeToSortKey(headers[ci]) || ci}`}
                 className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-3 py-1.5"
               >
-                <div className="font-mono text-[9px] uppercase tracking-[0.08em] text-text-muted">
+                <div className="font-mono text-[9px] uppercase tracking-[0.08em] text-ink-faint">
                   {headers[ci]}
                 </div>
-                <div className="min-w-0 break-words text-right text-[11px] font-medium text-text-secondary">
+                <div className="min-w-0 break-words text-right text-[11px] font-medium text-ink-base">
                   {cell}
                 </div>
               </div>
@@ -79,7 +79,7 @@ export default function AIDataTable({ headers, rows }: AIDataTableProps) {
               {headers.map((h, i) => (
                 <th
                   key={nodeToSortKey(h) || String(i)}
-                  className="whitespace-nowrap px-2.5 py-2 text-left font-mono text-[9px] uppercase tracking-[0.08em] text-text-muted cursor-pointer select-none hover:text-text-secondary transition-colors md:px-3 md:text-[10px]"
+                  className="whitespace-nowrap px-2.5 py-2 text-left font-mono text-[9px] uppercase tracking-[0.08em] text-ink-faint cursor-pointer select-none hover:text-ink-base transition-colors md:px-3 md:text-[10px]"
                   onClick={() => handleSort(i)}
                 >
                   <span className="flex items-center gap-1 whitespace-nowrap">
@@ -133,7 +133,7 @@ export default function AIDataTable({ headers, rows }: AIDataTableProps) {
                 {row.map((cell, ci) => (
                   <td
                     key={`${nodeToSortKey(headers[ci]) || ci}-${nodeToSortKey(cell)}`}
-                    className="whitespace-nowrap px-2.5 py-2 text-text-secondary md:px-3"
+                    className="whitespace-nowrap px-2.5 py-2 text-ink-base md:px-3"
                   >
                     {cell}
                   </td>

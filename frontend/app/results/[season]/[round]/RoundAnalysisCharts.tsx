@@ -10,7 +10,7 @@ import type { SessionResultsResponse } from "@/lib/types";
 const PANEL_MIN_HEIGHT = 256;
 
 const ChartLoading = () => (
-  <div className="h-64 animate-pulse rounded-sm bg-bg-elevated" />
+  <div className="h-64 animate-pulse rounded-sm bg-surface-raised" />
 );
 
 const PracticeComparisonPanel = dynamic(
@@ -94,10 +94,10 @@ function ChartPanel({
   if (availableFrom && season < availableFrom) return null;
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-      <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+    <div className="bg-surface-panel border border-line-soft rounded-sm shadow-sm overflow-hidden">
+      <div className="relative h-10 bg-surface-page border-b border-line-soft px-4 flex items-center overflow-hidden">
         <TrianglePattern id={patternId} />
-        <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+        <span className="relative z-10 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
           {title}
         </span>
       </div>

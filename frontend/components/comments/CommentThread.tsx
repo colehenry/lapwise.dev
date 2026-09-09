@@ -19,7 +19,7 @@ interface CommentThreadProps {
 }
 
 const ACTION_CLASS =
-  "font-mono text-[11px] uppercase tracking-wider text-text-muted transition-colors hover:text-text-primary disabled:opacity-40";
+  "font-mono text-[11px] uppercase tracking-wider text-ink-faint transition-colors hover:text-ink-strong disabled:opacity-40";
 
 function CommentNode({
   comment,
@@ -83,7 +83,7 @@ function CommentNode({
         aria-expanded={!isCollapsed}
         aria-label={isCollapsed ? "Expand comment" : "Collapse comment"}
         title={isCollapsed ? "Expand" : "Collapse"}
-        className={`col-start-1 row-start-1 flex h-7 w-4 items-center justify-center text-text-muted transition-all hover:text-text-primary focus-visible:opacity-100 ${
+        className={`col-start-1 row-start-1 flex h-7 w-4 items-center justify-center text-ink-faint transition-all hover:text-ink-strong focus-visible:opacity-100 ${
           isCollapsed
             ? "opacity-100"
             : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
@@ -116,20 +116,20 @@ function CommentNode({
       </div>
 
       <div className="col-start-3 row-start-1 flex min-w-0 flex-wrap items-baseline gap-x-2 self-center">
-        <span className="text-sm font-medium text-text-primary">
+        <span className="text-sm font-medium text-ink-strong">
           {comment.author.username}
         </span>
         {comment.author.role !== "user" && (
-          <span className="font-mono text-[10px] uppercase tracking-widest text-purple-400">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-accent-bright">
             {comment.author.role}
           </span>
         )}
-        <span className="text-xs text-text-muted">
+        <span className="text-xs text-ink-faint">
           {formatRelativeTime(comment.created_at)}
           {isEdited && " · edited"}
         </span>
         {isCollapsed && replies.length > 0 && (
-          <span className="text-xs text-text-muted">
+          <span className="text-xs text-ink-faint">
             · {replies.length} {replies.length === 1 ? "reply" : "replies"}
           </span>
         )}
@@ -139,7 +139,7 @@ function CommentNode({
         <div className="col-start-3 row-start-2 min-w-0">
           <MarkdownContent
             content={comment.body}
-            className="comment-body mt-2"
+            className="prose--comment mt-2"
           />
 
           <div className="mt-2.5 flex flex-wrap items-center gap-5">
@@ -162,14 +162,14 @@ function CommentNode({
                 type="button"
                 disabled={deleting}
                 onClick={handleDelete}
-                className={`${ACTION_CLASS} hover:text-red-400`}
+                className={`${ACTION_CLASS} hover:text-danger-bright`}
               >
                 {deleting ? "Deleting" : "Delete"}
               </button>
             )}
           </div>
 
-          {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+          {error && <p className="mt-2 text-xs text-danger-bright">{error}</p>}
 
           {showReply && (
             <div className="mt-3">
@@ -183,7 +183,7 @@ function CommentNode({
           )}
 
           {replies.length > 0 && (
-            <div className="mt-1 border-l border-border-primary pl-3">
+            <div className="mt-1 border-l border-line-soft pl-3">
               {replies.map((reply) => (
                 <CommentNode
                   key={reply.id}
@@ -211,14 +211,14 @@ export default function CommentThread({
 }: CommentThreadProps) {
   if (!comments.length) {
     return (
-      <p className="py-6 text-sm text-text-muted">
+      <p className="py-6 text-sm text-ink-faint">
         No comments yet. Be the first to weigh in on this race.
       </p>
     );
   }
 
   return (
-    <div className="divide-y divide-border-primary/60">
+    <div className="divide-y divide-line-soft/60">
       {comments.map((comment) => (
         <CommentNode
           key={comment.id}

@@ -125,7 +125,7 @@ export default function ArchiveListPage<T, S extends string>({
     : filtered.slice(0, DEFAULT_VISIBLE_COUNT);
 
   return (
-    <div className="min-h-screen bg-bg-secondary">
+    <div className="min-h-screen bg-surface-band">
       <PageHeader
         title={title}
         subtitle={
@@ -138,7 +138,7 @@ export default function ArchiveListPage<T, S extends string>({
         <select
           value={selectedYear}
           onChange={(e) => setSelectedYear(e.target.value)}
-          className="w-28 bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-3 py-2 md:py-1.5 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
+          className="w-28 bg-surface-page border border-line-soft text-ink-strong font-mono text-xs font-bold px-3 py-2 md:py-1.5 rounded-sm focus:outline-none focus:border-accent transition-colors duration-150 cursor-pointer uppercase tracking-widest"
         >
           <option value="all">ALL TIME</option>
           {availableYears.map((year) => (
@@ -156,7 +156,7 @@ export default function ArchiveListPage<T, S extends string>({
             placeholder={searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-3 py-2 bg-bg-primary text-text-primary border border-border-primary rounded-sm font-mono text-xs focus:outline-none focus:border-purple-500 transition-colors placeholder-text-muted"
+            className="flex-1 px-3 py-2 bg-surface-page text-ink-strong border border-line-soft rounded-sm font-mono text-xs focus:outline-none focus:border-accent transition-colors placeholder-ink-faint"
           />
           <SortPills
             active={sortKey}
@@ -168,7 +168,7 @@ export default function ArchiveListPage<T, S extends string>({
         {items &&
           (sprintToggle ? (
             <div className="flex items-center justify-between mb-6">
-              <span className="text-[10px] text-text-muted font-mono tracking-widest uppercase">
+              <span className="text-[10px] text-ink-faint font-mono tracking-widest uppercase">
                 {filtered.length} total {noun}
               </span>
               <SprintToggle
@@ -178,7 +178,7 @@ export default function ArchiveListPage<T, S extends string>({
               />
             </div>
           ) : (
-            <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase mb-6">
+            <div className="text-[10px] text-ink-faint font-mono tracking-widest uppercase mb-6">
               {filtered.length} total {noun}
             </div>
           ))}
@@ -220,8 +220,8 @@ export default function ArchiveListPage<T, S extends string>({
         )}
 
         {!isLoading && filtered.length === 0 && items && (
-          <div className="border border-border-primary rounded-sm p-8 text-center">
-            <p className="text-text-muted font-mono text-sm">
+          <div className="border border-line-soft rounded-sm p-8 text-center">
+            <p className="text-ink-faint font-mono text-sm">
               No {noun} found matching "{searchQuery}"
             </p>
           </div>

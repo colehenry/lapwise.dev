@@ -45,7 +45,7 @@ function ModeToggle({
   return (
     <fieldset
       aria-label="Difficulty mode"
-      className="inline-flex rounded-sm border border-border-primary bg-bg-secondary p-0.5"
+      className="inline-flex rounded-sm border border-line-soft bg-surface-band p-0.5"
     >
       {GRID_MODES.map((option) => (
         <button
@@ -53,10 +53,10 @@ function ModeToggle({
           type="button"
           aria-pressed={mode === option}
           onClick={() => onChange(option)}
-          className={`rounded-sm px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-400 ${
+          className={`rounded-sm px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-bright ${
             mode === option
-              ? "bg-bg-elevated text-text-primary"
-              : "text-text-muted hover:text-text-secondary"
+              ? "bg-surface-raised text-ink-strong"
+              : "text-ink-faint hover:text-ink-base"
           }`}
         >
           {MODE_LABELS[option]}
@@ -159,7 +159,7 @@ function GameBoard({
     <div className="relative mx-auto w-full max-w-[32rem]">
       <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <div className="flex items-center gap-2">
-          <p className="font-mono text-xs font-bold uppercase tracking-wider text-text-primary">
+          <p className="font-mono text-xs font-bold uppercase tracking-wider text-ink-strong">
             Grid #{String(puzzle.number).padStart(3, "0")}
           </p>
           <GameHelpMenu
@@ -181,7 +181,7 @@ function GameBoard({
 
       <div className="relative">
         <div className="grid grid-cols-[4.5rem_repeat(3,minmax(0,1fr))] sm:grid-cols-[6rem_repeat(3,minmax(0,1fr))]">
-          <div className="flex min-h-16 items-center justify-center rounded-tl-sm border border-border-primary bg-bg-secondary sm:min-h-20">
+          <div className="flex min-h-16 items-center justify-center rounded-tl-sm border border-line-soft bg-surface-band sm:min-h-20">
             <Image
               src="/favicon.ico"
               alt="Lapwise"
@@ -322,16 +322,16 @@ export default function DailyGameGrid({
 
   if (puzzle.isLoading) {
     return (
-      <div className="mx-auto aspect-square w-full max-w-[31rem] animate-pulse rounded-md border border-border-primary bg-bg-secondary" />
+      <div className="mx-auto aspect-square w-full max-w-[31rem] animate-pulse rounded-md border border-line-soft bg-surface-band" />
     );
   }
   if (puzzle.isError || !puzzle.data) {
     return (
-      <div className="mx-auto flex min-h-64 max-w-[31rem] flex-col items-center justify-center rounded-md border border-border-primary bg-bg-secondary p-6 text-center">
-        <p className="font-bold text-text-primary">The grid could not load.</p>
+      <div className="mx-auto flex min-h-64 max-w-[31rem] flex-col items-center justify-center rounded-md border border-line-soft bg-surface-band p-6 text-center">
+        <p className="font-bold text-ink-strong">The grid could not load.</p>
         <button
           type="button"
-          className="mt-3 text-sm text-text-secondary underline underline-offset-4"
+          className="mt-3 text-sm text-ink-base underline underline-offset-4"
           onClick={() => puzzle.refetch()}
         >
           Try again

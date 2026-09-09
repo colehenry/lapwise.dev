@@ -53,9 +53,9 @@ export default function AskContent() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-bg-secondary">
+      <div className="min-h-screen bg-surface-band">
         <div className="flex items-center justify-center py-32">
-          <div className="text-text-muted text-sm">Loading...</div>
+          <div className="text-ink-faint text-sm">Loading...</div>
         </div>
       </div>
     );
@@ -63,23 +63,23 @@ export default function AskContent() {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className="min-h-screen bg-bg-secondary">
+      <div className="min-h-screen bg-surface-band">
         <PageHeader title="Clutch" subtitle="F1 Intelligence" />
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
           <div className="flex flex-col items-center justify-center py-24">
-            <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-3xl border border-purple-500/20 bg-purple-500/10 text-purple-300 shadow-[0_0_40px_-10px_rgba(160,32,240,0.25)]">
+            <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-3xl border border-accent/20 bg-accent/10 text-accent-light shadow-[0_0_40px_-10px_rgba(160,32,240,0.25)]">
               <ClutchIcon className="h-8 w-8" />
             </div>
-            <h2 className="text-text-primary text-lg font-bold tracking-tight mb-2">
+            <h2 className="text-ink-strong text-lg font-bold tracking-tight mb-2">
               Sign in to ask Clutch
             </h2>
-            <p className="text-text-muted text-sm mb-6 text-center max-w-md">
+            <p className="text-ink-faint text-sm mb-6 text-center max-w-md">
               Ask Clutch any question about Formula 1 and get expert analysis
               powered by AI.
             </p>
             <Link
               href="/login?redirect=/ask"
-              className="bg-purple-500 text-text-primary px-6 py-2.5 rounded-2xl font-mono text-xs font-bold uppercase tracking-widest hover:bg-purple-600 transition-colors"
+              className="bg-accent text-ink-strong px-6 py-2.5 rounded-2xl font-mono text-xs font-bold uppercase tracking-widest hover:bg-accent transition-colors"
             >
               Sign In
             </Link>
@@ -92,23 +92,23 @@ export default function AskContent() {
   const chatDisabled = isAsking || pendingConversationId !== null;
 
   return (
-    <div className="fixed inset-x-0 top-14 bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))] flex flex-col overflow-hidden bg-bg-secondary md:static md:inset-auto md:h-[calc(100dvh-3.5rem)] md:min-h-0">
+    <div className="fixed inset-x-0 top-14 bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))] flex flex-col overflow-hidden bg-surface-band md:static md:inset-auto md:h-[calc(100dvh-3.5rem)] md:min-h-0">
       <div className="shrink-0">
         <PageHeader title="Clutch" compactMobile>
           {remaining !== null && (
-            <span className="hidden rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-text-muted sm:block">
+            <span className="hidden rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-faint sm:block">
               {remaining}/{TOTAL_LIMIT}
             </span>
           )}
           {remaining === null && user.role === "admin" && (
-            <span className="hidden rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-text-muted sm:block">
+            <span className="hidden rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-faint sm:block">
               Unlimited
             </span>
           )}
           <button
             type="button"
             onClick={startNewConversation}
-            className="rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-2 font-mono text-[11px] font-bold text-text-secondary transition-colors hover:border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-300 sm:px-4 sm:text-xs"
+            className="rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-2 font-mono text-[11px] font-bold text-ink-base transition-colors hover:border-accent/30 hover:bg-accent/10 hover:text-accent-light sm:px-4 sm:text-xs"
           >
             <span className="sm:hidden">New</span>
             <span className="hidden sm:inline">+ New Chat</span>
@@ -118,8 +118,8 @@ export default function AskContent() {
             onClick={() => setSidebarOpen((open) => !open)}
             className={`rounded-lg border p-2 font-mono text-xs font-bold transition-colors ${
               sidebarOpen
-                ? "border-purple-500/30 bg-purple-500/10 text-purple-300"
-                : "border-[var(--glass-border)] bg-[var(--glass-surface-soft)] text-text-muted hover:border-purple-500/30 hover:text-purple-300"
+                ? "border-accent/30 bg-accent/10 text-accent-light"
+                : "border-[var(--glass-border)] bg-[var(--glass-surface-soft)] text-ink-faint hover:border-accent/30 hover:text-accent-light"
             }`}
             aria-label="Conversation history"
             aria-controls="conversation-history"
@@ -166,7 +166,7 @@ export default function AskContent() {
               onSend={sendMessage}
             />
 
-            <div className="shrink-0 border-t border-[var(--glass-border)] bg-bg-secondary px-3 py-3 md:px-6 md:py-4">
+            <div className="shrink-0 border-t border-[var(--glass-border)] bg-surface-band px-3 py-3 md:px-6 md:py-4">
               <ChatInput
                 onSend={sendMessage}
                 onAbort={abortResponse}

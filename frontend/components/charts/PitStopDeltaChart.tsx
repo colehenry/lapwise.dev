@@ -168,15 +168,13 @@ function FilterPill({
       onClick={onClick}
       className={`flex items-center gap-1 px-2 py-0.5 rounded-sm border font-mono text-[10px] transition-colors ${
         active
-          ? "border-border-secondary bg-bg-elevated text-text-secondary"
-          : "border-border-primary/50 bg-transparent text-text-muted"
+          ? "border-line-strong bg-surface-raised text-ink-base"
+          : "border-line-soft/50 bg-transparent text-ink-faint"
       }`}
     >
       <span
         className={`w-2 h-2 rounded-[2px] border ${
-          active
-            ? "bg-text-secondary border-text-secondary"
-            : "border-text-muted/50"
+          active ? "bg-ink-base border-ink-base" : "border-ink-faint/50"
         }`}
       />
       {children}
@@ -287,7 +285,7 @@ export default function PitStopDeltaChart({
   if (season < DATA_FROM.pitStops) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           Pit stop data available from 2011 onwards.
         </p>
       </div>
@@ -297,8 +295,8 @@ export default function PitStopDeltaChart({
   if (isLoading) {
     return (
       <div className="space-y-2">
-        <div className="h-5 bg-bg-elevated rounded w-48 animate-pulse" />
-        <div className="h-64 bg-bg-elevated rounded animate-pulse" />
+        <div className="h-5 bg-surface-raised rounded w-48 animate-pulse" />
+        <div className="h-64 bg-surface-raised rounded animate-pulse" />
       </div>
     );
   }
@@ -306,7 +304,7 @@ export default function PitStopDeltaChart({
   if (!data || allStops.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           No pit stop data found for this session.
         </p>
       </div>
@@ -350,20 +348,18 @@ export default function PitStopDeltaChart({
       {/* Header row */}
       <div className="flex items-start justify-between flex-wrap gap-2">
         <div className="space-y-1">
-          <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+          <p className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
             Time lost under pitting
             {stops.length > 0 && (
               <>
                 {" "}
                 · field avg{" "}
-                <span className="text-text-secondary">
-                  {fieldAvg.toFixed(2)}s
-                </span>
+                <span className="text-ink-base">{fieldAvg.toFixed(2)}s</span>
               </>
             )}
           </p>
           {outliersRemoved > 0 && (
-            <p className="text-[10px] text-text-muted/60 font-mono">
+            <p className="text-[10px] text-ink-faint/60 font-mono">
               {outliersRemoved} outlier{outliersRemoved !== 1 ? "s" : ""} hidden
             </p>
           )}
@@ -448,7 +444,7 @@ export default function PitStopDeltaChart({
           </>
         )}
         <div className="flex items-center gap-1.5">
-          <div className="w-8 h-0.5 border-t border-dashed border-text-muted/60" />
+          <div className="w-8 h-0.5 border-t border-dashed border-ink-faint/60" />
           <span className={CHART_TYPOGRAPHY.keyClassName}>Field avg</span>
         </div>
       </div>
@@ -456,23 +452,23 @@ export default function PitStopDeltaChart({
       {/* Fastest stop callout */}
       {fastestStop && (
         <div className="flex items-center gap-1.5 text-[10px] font-mono">
-          <span className="text-text-muted uppercase tracking-widest">
+          <span className="text-ink-faint uppercase tracking-widest">
             Fastest stop
           </span>
-          <span className="text-text-muted">·</span>
+          <span className="text-ink-faint">·</span>
           <span className="font-bold" style={{ color: fastestStop.teamColor }}>
             {fastestStop.driverCode}
           </span>
-          <span className="text-text-secondary">
+          <span className="text-ink-base">
             {fastestStop.duration.toFixed(2)}s
           </span>
-          <span className="text-text-muted">lap {fastestStop.lap}</span>
+          <span className="text-ink-faint">lap {fastestStop.lap}</span>
         </div>
       )}
 
       {stops.length === 0 ? (
         <div className="flex items-center justify-center py-12">
-          <p className="text-text-muted text-sm font-mono">
+          <p className="text-ink-faint text-sm font-mono">
             No stops match current filters.
           </p>
         </div>
@@ -547,7 +543,7 @@ export default function PitStopDeltaChart({
                 if (!active || !payload?.length) return null;
                 const d = payload[0]?.payload as PitStopWithLayout;
                 return (
-                  <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs space-y-1">
+                  <div className="bg-surface-panel border border-line-soft rounded-sm p-2 shadow-lg text-xs space-y-1">
                     <p
                       className={CHART_TYPOGRAPHY.tooltipTitleClassName}
                       style={{ color: d.teamColor }}
@@ -585,13 +581,13 @@ export default function PitStopDeltaChart({
 
       {/* Per-driver total time lost */}
       {driverTotals.length > 0 && (
-        <div className="pt-2 border-t border-border-primary/40 space-y-2">
+        <div className="pt-2 border-t border-line-soft/40 space-y-2">
           <p className={CHART_TYPOGRAPHY.keyClassName}>Total time lost</p>
           <div className="flex flex-wrap gap-1.5">
             {driverTotals.map(([code, info]) => (
               <div
                 key={code}
-                className="flex items-center gap-1.5 bg-bg-elevated rounded-sm px-2 py-1"
+                className="flex items-center gap-1.5 bg-surface-raised rounded-sm px-2 py-1"
               >
                 <div
                   className="w-1.5 h-1.5 rounded-full shrink-0"
@@ -602,7 +598,7 @@ export default function PitStopDeltaChart({
                   {info.total.toFixed(1)}s
                 </span>
                 {info.count > 1 && (
-                  <span className="text-[10px] font-mono text-text-muted/60">
+                  <span className="text-[10px] font-mono text-ink-faint/60">
                     ×{info.count}
                   </span>
                 )}

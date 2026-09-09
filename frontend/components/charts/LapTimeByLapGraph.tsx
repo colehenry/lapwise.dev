@@ -414,7 +414,7 @@ const CustomTooltip = ({
   );
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl max-w-xs">
+    <div className="bg-surface-panel border border-line-soft rounded-lg p-3 shadow-xl max-w-xs">
       <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-2`}>
         Lap {label}
       </p>
@@ -467,10 +467,10 @@ const CustomTooltip = ({
                 </span>
               )}
             </div>
-            <div className="ml-5 text-xs text-text-secondary space-y-0.5">
+            <div className="ml-5 text-xs text-ink-base space-y-0.5">
               {viewMode === "position" && entry.value != null && (
                 <div>
-                  <span className="text-text-muted">Position:</span>{" "}
+                  <span className="text-ink-faint">Position:</span>{" "}
                   <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
                     P{entry.value}
                   </span>
@@ -478,7 +478,7 @@ const CustomTooltip = ({
               )}
               {viewMode !== "position" && (
                 <div>
-                  <span className="text-text-muted">
+                  <span className="text-ink-faint">
                     {viewMode === "gapToLeader" ? "Gap:" : "Time:"}
                   </span>{" "}
                   <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
@@ -494,7 +494,7 @@ const CustomTooltip = ({
               )}
               {lapData?.compound && (
                 <div>
-                  <span className="text-text-muted">Tyre:</span>{" "}
+                  <span className="text-ink-faint">Tyre:</span>{" "}
                   <span
                     style={{
                       color:
@@ -511,7 +511,7 @@ const CustomTooltip = ({
               )}
               {lapData?.pit_duration_seconds != null && (
                 <div>
-                  <span className="text-text-muted">Pit stop:</span>{" "}
+                  <span className="text-ink-faint">Pit stop:</span>{" "}
                   <span
                     className={CHART_TYPOGRAPHY.tooltipValueClassName}
                     style={{ color: STATUS_COLORS.safetyCar }}
@@ -522,15 +522,15 @@ const CustomTooltip = ({
               )}
               {lapData?.sector1_time_seconds != null && (
                 <div className="flex gap-2">
-                  <span className="text-text-muted">S1</span>
+                  <span className="text-ink-faint">S1</span>
                   <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
                     {lapData.sector1_time_seconds.toFixed(3)}
                   </span>
-                  <span className="text-text-muted">S2</span>
+                  <span className="text-ink-faint">S2</span>
                   <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
                     {lapData.sector2_time_seconds?.toFixed(3) ?? "-"}
                   </span>
-                  <span className="text-text-muted">S3</span>
+                  <span className="text-ink-faint">S3</span>
                   <span className={CHART_TYPOGRAPHY.tooltipValueClassName}>
                     {lapData.sector3_time_seconds?.toFixed(3) ?? "-"}
                   </span>
@@ -538,8 +538,8 @@ const CustomTooltip = ({
               )}
               {lapData?.position != null && viewMode !== "position" && (
                 <div>
-                  <span className="text-text-muted">Pos:</span>{" "}
-                  <span className="text-text-primary">P{lapData.position}</span>
+                  <span className="text-ink-faint">Pos:</span>{" "}
+                  <span className="text-ink-strong">P{lapData.position}</span>
                 </div>
               )}
             </div>
@@ -1240,11 +1240,11 @@ export default function LapTimeByLapGraph({
     return (
       <div>
         <div className="h-8 mb-4 flex items-center">
-          <div className="h-6 bg-bg-elevated rounded w-96 animate-pulse" />
+          <div className="h-6 bg-surface-raised rounded w-96 animate-pulse" />
         </div>
         <div className="relative" style={{ height: "400px" }}>
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
+            <p className="text-center text-ink-faint font-mono tracking-widest text-xs uppercase">
               Loading lap times...
             </p>
           </div>
@@ -1263,7 +1263,7 @@ export default function LapTimeByLapGraph({
         <div className="relative" style={{ height: "400px" }}>
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center max-w-md">
-              <p className="text-text-muted mb-2">
+              <p className="text-ink-faint mb-2">
                 {beforeCoverage
                   ? `Lap timing data is not available for races before ${DATA_FROM.laps}.`
                   : "Lap time data not available for this session."}
@@ -1396,8 +1396,8 @@ export default function LapTimeByLapGraph({
                   onClick={() => setViewMode(mode)}
                   className={`px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                     viewMode === mode
-                      ? "bg-purple-500/20 border border-purple-500 text-purple-300"
-                      : "border border-transparent text-text-muted hover:text-text-secondary"
+                      ? "bg-accent/20 border border-accent text-accent-light"
+                      : "border border-transparent text-ink-faint hover:text-ink-base"
                   }`}
                 >
                   {mode === "lapTime"
@@ -1414,14 +1414,14 @@ export default function LapTimeByLapGraph({
           <button
             type="button"
             onClick={() => setShowDropdown(!showDropdown)}
-            className="px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-border-secondary text-text-secondary hover:border-purple-500 hover:text-purple-300 transition-colors duration-150"
+            className="px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-line-strong text-ink-base hover:border-accent hover:text-accent-light transition-colors duration-150"
           >
             Select ({selectedDrivers.length})
           </button>
 
           {/* Dropdown Menu */}
           {showDropdown && (
-            <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-10 min-w-[250px] max-h-[300px] overflow-y-auto">
+            <div className="absolute right-0 top-full mt-1 bg-surface-panel border border-line-soft rounded-sm shadow-xl z-10 min-w-[250px] max-h-[300px] overflow-y-auto">
               {drivers.map((driver) => {
                 const isSelected = selectedDrivers.includes(driverKey(driver));
                 const teamColor = driver.team_color
@@ -1431,15 +1431,15 @@ export default function LapTimeByLapGraph({
                 return (
                   <label
                     key={driverKey(driver)}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-bg-elevated cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-surface-raised cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleDriver(driverKey(driver))}
-                      className="w-4 h-4 accent-purple-500"
+                      className="w-4 h-4 accent-accent"
                     />
-                    <span className="text-sm text-text-muted w-5 font-mono">
+                    <span className="text-sm text-ink-faint w-5 font-mono">
                       {driver.final_position || "-"}
                     </span>
                     <span
@@ -1620,7 +1620,7 @@ export default function LapTimeByLapGraph({
             </StableResponsiveContainer>
 
             {/* Driver Legend — bottom right, above axis labels */}
-            <div className="absolute bottom-12 right-5 bg-bg-primary/80 border border-border-primary rounded-sm px-2 py-1.5 backdrop-blur-sm pointer-events-none">
+            <div className="absolute bottom-12 right-5 bg-surface-page/80 border border-line-soft rounded-sm px-2 py-1.5 backdrop-blur-sm pointer-events-none">
               <div className="flex flex-col gap-0.5">
                 {drivers
                   .filter((driver) =>
@@ -1650,7 +1650,7 @@ export default function LapTimeByLapGraph({
           </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
+            <p className="text-center text-ink-faint font-mono tracking-widest text-xs uppercase">
               No lap time data available. Select at least one driver to view lap
               times.
             </p>

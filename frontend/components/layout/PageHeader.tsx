@@ -29,9 +29,9 @@ export default function PageHeader({
     <div className="sticky top-0 z-40">
       <div className="px-2 md:px-4">
         <div className="mx-auto w-full max-w-full md:max-w-[calc(72rem+40px)]">
-          <div className="bg-bg-secondary/95 backdrop-blur-xl border-x border-b border-border-primary rounded-b-lg md:rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)]">
+          <div className="bg-surface-band/95 backdrop-blur-xl border-x border-b border-line-soft rounded-b-lg md:rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)]">
             <div
-              className={`px-3 py-2 md:h-16 md:px-6 md:py-0 ${compactMobile ? "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3" : "flex items-center gap-2"} md:grid md:grid-cols-[minmax(0,1fr)_minmax(12rem,auto)_minmax(0,1fr)] md:items-center md:gap-4 relative ${bottomContent ? "border-b border-border-primary/60" : ""}`}
+              className={`px-3 py-2 md:h-16 md:px-6 md:py-0 ${compactMobile ? "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3" : "flex items-center gap-2"} md:grid md:grid-cols-[minmax(0,1fr)_minmax(12rem,auto)_minmax(0,1fr)] md:items-center md:gap-4 relative ${bottomContent ? "border-b border-line-soft/60" : ""}`}
             >
               {/* Left: Back Button or Custom Content */}
               {hasLeftContent && (
@@ -42,7 +42,7 @@ export default function PageHeader({
                     <button
                       type="button"
                       onClick={onBack}
-                      className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center gap-2"
+                      className="bg-surface-page border border-line-soft text-ink-strong font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-accent hover:text-accent-light transition-colors duration-150 cursor-pointer flex items-center gap-2"
                     >
                       <span>←</span>
                       <span className="hidden sm:inline uppercase">
@@ -59,11 +59,11 @@ export default function PageHeader({
               <div
                 className={`${compactMobile ? "order-1 items-start text-left" : "absolute inset-0 items-center justify-center text-center"} md:static md:col-span-1 md:col-start-2 md:order-2 flex flex-col w-full md:max-w-none md:items-center md:text-center pointer-events-none`}
               >
-                <div className="text-text-primary font-mono text-xs md:text-sm font-bold leading-none uppercase tracking-tight pointer-events-auto truncate w-full">
+                <div className="text-ink-strong font-mono text-xs md:text-sm font-bold leading-none uppercase tracking-tight pointer-events-auto truncate w-full">
                   {title}
                 </div>
                 {subtitle && (
-                  <span className="text-text-muted text-[9px] md:text-[10px] tracking-widest uppercase font-bold mt-0.5 md:mt-1 pointer-events-auto truncate w-full">
+                  <span className="text-ink-faint text-[9px] md:text-[10px] tracking-widest uppercase font-bold mt-0.5 md:mt-1 pointer-events-auto truncate w-full">
                     {subtitle}
                   </span>
                 )}

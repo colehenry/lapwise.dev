@@ -67,7 +67,7 @@ export function PlaybackHeader({
       <button
         type="button"
         onClick={onTogglePlay}
-        className="w-6 h-6 flex items-center justify-center rounded-sm bg-purple-500 hover:bg-purple-400 text-white transition-colors shrink-0"
+        className="w-6 h-6 flex items-center justify-center rounded-sm bg-accent hover:bg-accent-bright text-white transition-colors shrink-0"
         aria-label={isPlaying ? "Pause" : "Play"}
       >
         {isPlaying ? (
@@ -92,12 +92,12 @@ export function PlaybackHeader({
             const prevLap = lapBoundaries.findLast((b) => b.lap < currentLap);
             if (prevLap) onSeek(prevLap.frameIndex);
           }}
-          className="w-5 h-5 flex items-center justify-center rounded-sm bg-bg-primary border border-border-primary text-text-muted hover:text-text-primary text-[9px] font-mono transition-colors"
+          className="w-5 h-5 flex items-center justify-center rounded-sm bg-surface-page border border-line-soft text-ink-faint hover:text-ink-strong text-[9px] font-mono transition-colors"
           title="Previous lap"
         >
           &larr;
         </button>
-        <span className="text-[10px] font-mono text-text-primary font-bold tabular-nums w-16 text-center">
+        <span className="text-[10px] font-mono text-ink-strong font-bold tabular-nums w-16 text-center">
           Lap {currentLap}/{totalLaps}
         </span>
         <button
@@ -106,7 +106,7 @@ export function PlaybackHeader({
             const nextLap = lapBoundaries.find((b) => b.lap > currentLap);
             if (nextLap) onSeek(nextLap.frameIndex);
           }}
-          className="w-5 h-5 flex items-center justify-center rounded-sm bg-bg-primary border border-border-primary text-text-muted hover:text-text-primary text-[9px] font-mono transition-colors"
+          className="w-5 h-5 flex items-center justify-center rounded-sm bg-surface-page border border-line-soft text-ink-faint hover:text-ink-strong text-[9px] font-mono transition-colors"
           title="Next lap"
         >
           &rarr;
@@ -114,7 +114,7 @@ export function PlaybackHeader({
       </div>
 
       {/* Divider */}
-      <div className="w-px h-4 bg-border-primary shrink-0" />
+      <div className="w-px h-4 bg-line-soft shrink-0" />
 
       {/* Speed pills */}
       <div className="flex items-center gap-0.5 shrink-0">
@@ -125,8 +125,8 @@ export function PlaybackHeader({
             onClick={() => onSpeedChange(speed)}
             className={`px-1.5 py-0.5 rounded-sm text-[9px] font-mono transition-colors ${
               playbackSpeed === speed
-                ? "bg-purple-500 text-white"
-                : "bg-bg-primary text-text-muted hover:text-text-primary border border-border-primary"
+                ? "bg-accent text-white"
+                : "bg-surface-page text-ink-faint hover:text-ink-strong border border-line-soft"
             }`}
           >
             {speed}x
@@ -144,8 +144,8 @@ export function PlaybackHeader({
           onClick={onToggleCorners}
           className={`px-2 py-0.5 rounded-sm text-[9px] font-mono transition-colors shrink-0 ${
             showCorners
-              ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
-              : "bg-bg-primary/60 text-text-muted border border-border-primary/40"
+              ? "bg-accent/20 text-accent-light border border-accent/40"
+              : "bg-surface-page/60 text-ink-faint border border-line-soft/40"
           }`}
         >
           Corners
@@ -175,15 +175,15 @@ export function PlaybackTimeline({
     totalFrames > 1 ? (currentFrame / (totalFrames - 1)) * 100 : 0;
 
   return (
-    <div className="relative h-[30px] shrink-0 border-t border-border-primary bg-bg-primary/40">
+    <div className="relative h-[30px] shrink-0 border-t border-line-soft bg-surface-page/40">
       {/* Inner container — all elements positioned relative to this */}
       <div className="absolute top-0 bottom-0 left-3 right-3">
         {/* Track bar background */}
-        <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-px bg-text-muted/20" />
+        <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-px bg-ink-faint/20" />
 
         {/* Progress fill */}
         <div
-          className="absolute top-1/2 -translate-y-1/2 left-0 h-px bg-text-muted/40"
+          className="absolute top-1/2 -translate-y-1/2 left-0 h-px bg-ink-faint/40"
           style={{ width: `${progressPct}%` }}
         />
         {/* Lap boundary ticks */}
@@ -193,7 +193,7 @@ export function PlaybackTimeline({
             <button
               key={b.lap}
               type="button"
-              className="absolute top-1/2 -translate-y-1/2 w-px h-2.5 bg-text-muted/30 hover:bg-text-muted/60 cursor-pointer"
+              className="absolute top-1/2 -translate-y-1/2 w-px h-2.5 bg-ink-faint/30 hover:bg-ink-faint/60 cursor-pointer"
               style={{ left: `${pct}%` }}
               onClick={() => seekToLap(b.lap)}
               title={`Lap ${b.lap}`}
@@ -223,8 +223,8 @@ export function PlaybackTimeline({
                 style={{ backgroundColor: color }}
               />
               {isHovered && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-bg-elevated border border-border-primary rounded-sm shadow-lg whitespace-nowrap pointer-events-none">
-                  <span className="text-[10px] font-mono text-text-primary">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-surface-raised border border-line-soft rounded-sm shadow-lg whitespace-nowrap pointer-events-none">
+                  <span className="text-[10px] font-mono text-ink-strong">
                     {ev.label}
                   </span>
                 </div>
@@ -248,7 +248,7 @@ export function PlaybackTimeline({
             }}
           />
           {/* Vertical line */}
-          <div className="w-px flex-1 bg-text-primary/50" />
+          <div className="w-px flex-1 bg-ink-strong/50" />
         </div>
 
         {/* Invisible range input for scrubbing */}

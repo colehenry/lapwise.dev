@@ -98,25 +98,25 @@ export default function SessionDetail({
   );
 
   return (
-    <main className={hideHeader ? "" : "min-h-screen bg-bg-secondary"}>
+    <main className={hideHeader ? "" : "min-h-screen bg-surface-band"}>
       {/* ── Sticky Header ── */}
       {!hideHeader && (
-        <div className="sticky top-0 z-40 bg-bg-secondary border-b border-border-primary h-16 flex items-center px-6">
+        <div className="sticky top-0 z-40 bg-surface-band border-b border-line-soft h-16 flex items-center px-6">
           <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 type="button"
                 onClick={onBack}
-                className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center gap-2"
+                className="bg-surface-page border border-line-soft text-ink-strong font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-accent hover:text-accent-light transition-colors duration-150 cursor-pointer flex items-center gap-2"
               >
                 <span>←</span>
                 <span className="hidden sm:inline">BACK TO {season}</span>
               </button>
               <div className="flex flex-col">
-                <span className="text-text-primary font-mono text-sm font-bold leading-none">
+                <span className="text-ink-strong font-mono text-sm font-bold leading-none">
                   ROUND {String(session.round).padStart(2, "0")}
                 </span>
-                <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
+                <span className="text-ink-faint text-[10px] tracking-widest uppercase font-bold hidden sm:inline">
                   {session.event_name.replace("Grand Prix", "GP")}
                 </span>
               </div>
@@ -131,8 +131,8 @@ export default function SessionDetail({
                     onClick={() => onSessionTypeChange("race")}
                     className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                       sessionType === "race"
-                        ? "bg-purple-500/20 border border-purple-500 text-purple-300"
-                        : "border border-transparent text-text-muted hover:text-text-secondary"
+                        ? "bg-accent/20 border border-accent text-accent-light"
+                        : "border border-transparent text-ink-faint hover:text-ink-base"
                     }`}
                   >
                     {isSprint ? "Sprint" : "Race"}
@@ -142,8 +142,8 @@ export default function SessionDetail({
                     onClick={() => onSessionTypeChange("qualifying")}
                     className={`px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                       sessionType === "qualifying"
-                        ? "bg-purple-500/20 border border-purple-500 text-purple-300"
-                        : "border border-transparent text-text-muted hover:text-text-secondary"
+                        ? "bg-accent/20 border border-accent text-accent-light"
+                        : "border border-transparent text-ink-faint hover:text-ink-base"
                     }`}
                   >
                     Qualifying
@@ -157,7 +157,7 @@ export default function SessionDetail({
 
       <div className="max-w-7xl mx-auto p-3 md:p-6">
         {/* ── Session Header Card ── */}
-        <div className="mb-4 md:mb-6 bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden flex flex-col md:flex-row">
+        <div className="mb-4 md:mb-6 bg-surface-panel border border-line-soft rounded-sm shadow-sm overflow-hidden flex flex-col md:flex-row">
           <div className="flex-1 p-4 md:p-6 relative">
             <GridPattern id="session-grid" />
             <div className="relative z-10">
@@ -168,11 +168,11 @@ export default function SessionDetail({
                     {getCircuitFlagEmoji(session.circuit.country)}
                   </span>
                 )}
-                <h1 className="text-xl md:text-3xl font-bold text-text-primary leading-tight">
+                <h1 className="text-xl md:text-3xl font-bold text-ink-strong leading-tight">
                   {session.event_name}
                 </h1>
                 {isSprint && (
-                  <span className="mt-1 shrink-0 bg-red-500/20 border border-red-500 text-red-400 text-[10px] tracking-widest uppercase font-bold font-mono px-2 py-0.5 rounded-sm">
+                  <span className="mt-1 shrink-0 bg-danger/20 border border-danger text-danger-bright text-[10px] tracking-widest uppercase font-bold font-mono px-2 py-0.5 rounded-sm">
                     Sprint
                   </span>
                 )}
@@ -185,7 +185,7 @@ export default function SessionDetail({
                       href={`https://www.youtube.com/watch?v=${session.highlights_video_id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[10px] tracking-widest uppercase font-bold font-mono text-red-400 hover:text-red-300 transition-colors duration-150 px-2 py-1 border border-red-500/30 rounded-sm hover:border-red-500/60"
+                      className="inline-flex items-center gap-1 text-[10px] tracking-widest uppercase font-bold font-mono text-danger-bright hover:text-danger-bright transition-colors duration-150 px-2 py-1 border border-danger/30 rounded-sm hover:border-danger/60"
                     >
                       <svg
                         className="w-3 h-3"
@@ -202,7 +202,7 @@ export default function SessionDetail({
                   {session.year >= 2018 && (
                     <Link
                       href={`/replay?season=${session.year}&round=${session.round}`}
-                      className="inline-flex items-center gap-1 text-[10px] tracking-widest uppercase font-bold font-mono text-purple-400 hover:text-purple-300 transition-colors duration-150 px-2 py-1 border border-purple-500/30 rounded-sm hover:border-purple-500/60"
+                      className="inline-flex items-center gap-1 text-[10px] tracking-widest uppercase font-bold font-mono text-accent-bright hover:text-accent-light transition-colors duration-150 px-2 py-1 border border-accent/30 rounded-sm hover:border-accent/60"
                     >
                       <svg
                         className="w-3 h-3"
@@ -223,16 +223,14 @@ export default function SessionDetail({
                 {sessionCircuitHref ? (
                   <Link
                     href={sessionCircuitHref}
-                    className="inline-flex text-text-secondary font-medium transition-colors hover:text-purple-300"
+                    className="inline-flex text-ink-base font-medium transition-colors hover:text-accent-light"
                   >
                     {circuitSummary}
                   </Link>
                 ) : (
-                  <p className="text-text-secondary font-medium">
-                    {circuitSummary}
-                  </p>
+                  <p className="text-ink-base font-medium">{circuitSummary}</p>
                 )}
-                <p className="text-xs text-text-muted font-mono uppercase tracking-widest">
+                <p className="text-xs text-ink-faint font-mono uppercase tracking-widest">
                   {new Date(session.date).toLocaleDateString("en-US", {
                     weekday: "long",
                     month: "long",
@@ -241,7 +239,7 @@ export default function SessionDetail({
                   })}
                 </p>
                 {session.circuit.track_length_km && (
-                  <p className="text-xs text-text-muted font-mono uppercase tracking-widest mt-1">
+                  <p className="text-xs text-ink-faint font-mono uppercase tracking-widest mt-1">
                     Circuit Length: {session.circuit.track_length_km.toFixed(3)}{" "}
                     km
                   </p>
@@ -260,11 +258,11 @@ export default function SessionDetail({
         </div>
 
         {/* ── Results Table ── */}
-        <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm flex flex-col">
+        <div className="bg-surface-panel border border-line-soft rounded-sm shadow-sm flex flex-col">
           {/* Header band with Pattern */}
-          <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+          <div className="relative h-10 bg-surface-page border-b border-line-soft px-4 flex items-center overflow-hidden">
             <TrianglePattern id="results-triangles" />
-            <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+            <span className="relative z-10 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
               {isPractice
                 ? "Practice Classification"
                 : isQualifying
@@ -282,51 +280,51 @@ export default function SessionDetail({
           >
             <table className="w-full text-left border-collapse">
               <thead className="sticky top-0 z-10">
-                <tr className="border-b border-border-primary bg-bg-tertiary">
-                  <th className="px-4 py-3 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono w-16 text-center">
+                <tr className="border-b border-line-soft bg-surface-panel">
+                  <th className="px-4 py-3 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono w-16 text-center">
                     POS
                   </th>
                   {!isQualifying && !isPractice && (
-                    <th className="px-2 py-3 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono w-12 text-center hidden sm:table-cell">
+                    <th className="px-2 py-3 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono w-12 text-center hidden sm:table-cell">
                       +/-
                     </th>
                   )}
-                  <th className="px-4 py-3 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                  <th className="px-4 py-3 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
                     DRIVER
                   </th>
-                  <th className="px-4 py-3 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono hidden md:table-cell">
+                  <th className="px-4 py-3 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono hidden md:table-cell">
                     CONSTRUCTOR
                   </th>
                   {isPractice ? (
                     <>
-                      <th className="px-4 py-3 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-right">
+                      <th className="px-4 py-3 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono text-right">
                         BEST LAP
                       </th>
-                      <th className="px-4 py-3 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-right">
+                      <th className="px-4 py-3 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono text-right">
                         GAP
                       </th>
                     </>
                   ) : isQualifying ? (
                     <>
-                      <th className="px-4 py-3 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-right">
+                      <th className="px-4 py-3 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono text-right">
                         Q1
                       </th>
-                      <th className="px-4 py-3 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-right">
+                      <th className="px-4 py-3 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono text-right">
                         Q2
                       </th>
-                      <th className="px-4 py-3 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-right">
+                      <th className="px-4 py-3 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono text-right">
                         Q3
                       </th>
-                      <th className="px-4 py-3 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-right">
+                      <th className="px-4 py-3 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono text-right">
                         GAP
                       </th>
                     </>
                   ) : (
                     <>
-                      <th className="px-4 py-3 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-right">
+                      <th className="px-4 py-3 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono text-right">
                         TIME/STATUS
                       </th>
-                      <th className="px-4 py-3 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-center">
+                      <th className="px-4 py-3 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono text-center">
                         PTS
                       </th>
                     </>
@@ -337,11 +335,11 @@ export default function SessionDetail({
                 {results.map((result, idx) => (
                   <tr
                     key={`${result.driver.driver_code}-${idx}`}
-                    className="border-b border-border-primary last:border-0 hover:bg-bg-primary/30 transition-colors duration-150"
+                    className="border-b border-line-soft last:border-0 hover:bg-surface-page/30 transition-colors duration-150"
                   >
                     {/* Position */}
                     <td className="px-4 py-3 w-16 text-center">
-                      <span className="text-lg font-bold text-text-muted font-mono">
+                      <span className="text-lg font-bold text-ink-faint font-mono">
                         {result.position || "NC"}
                       </span>
                     </td>
@@ -355,7 +353,7 @@ export default function SessionDetail({
                             result.position == null
                           )
                             return (
-                              <span className="text-text-muted font-mono text-xs">
+                              <span className="text-ink-faint font-mono text-xs">
                                 -
                               </span>
                             );
@@ -368,7 +366,7 @@ export default function SessionDetail({
                             );
                           if (diff < 0)
                             return (
-                              <span className="text-red-400 font-mono text-xs font-bold">
+                              <span className="text-danger-bright font-mono text-xs font-bold">
                                 {diff}
                               </span>
                             );
@@ -394,7 +392,7 @@ export default function SessionDetail({
                         <div className="flex flex-col">
                           <Link
                             href={driverHref(result.driver) ?? "/drivers"}
-                            className="font-semibold text-text-primary text-sm hover:text-purple-300 transition-colors duration-150 flex items-center gap-1.5"
+                            className="font-semibold text-ink-strong text-sm hover:text-accent-light transition-colors duration-150 flex items-center gap-1.5"
                           >
                             {result.driver.country_code && (
                               <span className="text-xs" aria-hidden="true">
@@ -404,7 +402,7 @@ export default function SessionDetail({
                             {result.driver.full_name}
                             {result.fastest_lap && (
                               <span
-                                className="text-purple-300 text-[10px]"
+                                className="text-accent-light text-[10px]"
                                 title="Fastest Lap"
                               >
                                 ⚡
@@ -415,7 +413,7 @@ export default function SessionDetail({
                             href={
                               constructorHref(result.team) ?? "/constructors"
                             }
-                            className="text-[10px] font-mono text-text-muted md:hidden hover:text-purple-300 transition-colors duration-150"
+                            className="text-[10px] font-mono text-ink-faint md:hidden hover:text-accent-light transition-colors duration-150"
                           >
                             {result.team.name}
                           </Link>
@@ -427,18 +425,18 @@ export default function SessionDetail({
                     <td className="px-4 py-3 hidden md:table-cell">
                       <Link
                         href={constructorHref(result.team) ?? "/constructors"}
-                        className="text-xs font-medium hover:text-purple-300 transition-colors duration-150 flex items-center gap-2"
+                        className="text-xs font-medium hover:text-accent-light transition-colors duration-150 flex items-center gap-2"
                         style={{
                           color:
                             resolveReadableAccentColor(
                               result.team.team_color,
                               theme,
-                              "var(--text-primary)",
+                              "var(--ink-strong)",
                             ) ?? "inherit",
                         }}
                       >
                         {isValidHeadshotUrl(result.team.logo_url) && (
-                          <div className="w-9 h-9 rounded-sm overflow-hidden border border-border-secondary bg-bg-secondary flex-shrink-0">
+                          <div className="w-9 h-9 rounded-sm overflow-hidden border border-line-strong bg-surface-band flex-shrink-0">
                             <Image
                               src={result.team.logo_url}
                               alt={result.team.name}
@@ -461,12 +459,12 @@ export default function SessionDetail({
                     {/* Mode Specific Columns */}
                     {isPractice ? (
                       <>
-                        <td className="px-4 py-3 text-right font-mono text-xs text-text-primary font-bold">
+                        <td className="px-4 py-3 text-right font-mono text-xs text-ink-strong font-bold">
                           {result.time_seconds
                             ? formatTime(result.time_seconds, false, true)
                             : "-"}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono text-xs text-text-muted">
+                        <td className="px-4 py-3 text-right font-mono text-xs text-ink-faint">
                           {result.position === 1
                             ? "P1"
                             : result.time_seconds && results[0]?.time_seconds
@@ -476,22 +474,22 @@ export default function SessionDetail({
                       </>
                     ) : isQualifying ? (
                       <>
-                        <td className="px-4 py-3 text-right font-mono text-xs text-text-secondary">
+                        <td className="px-4 py-3 text-right font-mono text-xs text-ink-base">
                           {result.q1_time_seconds
                             ? formatTime(result.q1_time_seconds, false, true)
                             : "-"}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono text-xs text-text-secondary">
+                        <td className="px-4 py-3 text-right font-mono text-xs text-ink-base">
                           {result.q2_time_seconds
                             ? formatTime(result.q2_time_seconds, false, true)
                             : "-"}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono text-xs text-text-primary font-bold">
+                        <td className="px-4 py-3 text-right font-mono text-xs text-ink-strong font-bold">
                           {result.q3_time_seconds
                             ? formatTime(result.q3_time_seconds, false, true)
                             : "-"}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono text-xs text-text-muted">
+                        <td className="px-4 py-3 text-right font-mono text-xs text-ink-faint">
                           {result.position === 1
                             ? "POLE"
                             : result.q3_time_seconds &&
@@ -508,7 +506,7 @@ export default function SessionDetail({
                       </>
                     ) : (
                       <>
-                        <td className="px-4 py-3 text-right font-mono text-xs text-text-primary">
+                        <td className="px-4 py-3 text-right font-mono text-xs text-ink-strong">
                           {result.status === "Finished" ||
                           result.status === "Lapped"
                             ? formatTime(
@@ -518,7 +516,7 @@ export default function SessionDetail({
                             : result.status}
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <span className="text-sm font-bold text-text-primary font-mono">
+                          <span className="text-sm font-bold text-ink-strong font-mono">
                             {result.points || 0}
                           </span>
                         </td>
@@ -536,7 +534,7 @@ export default function SessionDetail({
           <button
             type="button"
             onClick={() => setExpandedResults(!expandedResults)}
-            className="border border-border-secondary rounded-sm text-text-secondary hover:border-purple-500 hover:text-purple-300 font-mono text-xs uppercase tracking-widest px-6 py-2 transition-colors duration-150 flex items-center gap-2"
+            className="border border-line-strong rounded-sm text-ink-base hover:border-accent hover:text-accent-light font-mono text-xs uppercase tracking-widest px-6 py-2 transition-colors duration-150 flex items-center gap-2"
           >
             {expandedResults ? "COLLAPSE" : "FULL RESULTS"}
             <svg

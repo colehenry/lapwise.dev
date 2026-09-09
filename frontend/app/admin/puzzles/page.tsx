@@ -30,7 +30,7 @@ const FILTERS: { value: PuzzlePhase | "all"; label: string }[] = [
 ];
 
 const PHASE_STYLES: Record<PuzzlePhase, string> = {
-  draft: "bg-bg-elevated text-text-muted",
+  draft: "bg-surface-raised text-ink-faint",
   scheduled: "bg-amber-500/15 text-amber-300",
   live: "bg-emerald-500/15 text-emerald-300",
 };
@@ -65,9 +65,9 @@ function PuzzleRow({
     <button
       type="button"
       onClick={onToggle}
-      className="flex w-full flex-wrap items-center gap-x-4 gap-y-1.5 px-3 py-3 text-left hover:bg-bg-tertiary"
+      className="flex w-full flex-wrap items-center gap-x-4 gap-y-1.5 px-3 py-3 text-left hover:bg-surface-panel"
     >
-      <span className="font-mono text-sm font-bold text-text-primary">
+      <span className="font-mono text-sm font-bold text-ink-strong">
         #{String(puzzle.number).padStart(3, "0")}
       </span>
       <span
@@ -75,30 +75,30 @@ function PuzzleRow({
       >
         {PHASE_LABELS[phase]}
       </span>
-      <span className="text-sm text-text-secondary">
+      <span className="text-sm text-ink-base">
         {puzzle.published_on ?? "No date"}
       </span>
       <span
-        className="text-sm text-text-muted"
+        className="text-sm text-ink-faint"
         title="Fewest and most drivers that answer a square"
       >
         {puzzle.min_depth}–{puzzle.max_depth} answers
       </span>
       {puzzle.difficulty_score !== null && (
         <span
-          className="text-sm text-text-muted"
+          className="text-sm text-ink-faint"
           title={`Score ${puzzle.difficulty_score} of 100`}
         >
           {difficultyWord(puzzle.difficulty_score)}
         </span>
       )}
       {puzzle.eligibility_floor !== DEFAULT_FLOOR && (
-        <span className="text-sm text-text-muted">
+        <span className="text-sm text-ink-faint">
           {puzzle.eligibility_floor}+
         </span>
       )}
       {puzzle.error_count > 0 && (
-        <span className="text-sm font-semibold text-red-400">
+        <span className="text-sm font-semibold text-danger-bright">
           {puzzle.error_count} error{puzzle.error_count === 1 ? "" : "s"}
         </span>
       )}
@@ -107,7 +107,7 @@ function PuzzleRow({
           {puzzle.warning_count} warning{puzzle.warning_count === 1 ? "" : "s"}
         </span>
       )}
-      <span className="ml-auto text-sm text-text-muted">
+      <span className="ml-auto text-sm text-ink-faint">
         {expanded ? "Close" : "Review"}
       </span>
     </button>
@@ -224,8 +224,8 @@ export default function AdminPuzzlesPage() {
             onClick={() => setFilter(option.value)}
             className={`rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors ${
               filter === option.value
-                ? "border-purple-500/30 bg-purple-500/15 text-purple-300"
-                : "border-transparent text-text-secondary hover:bg-bg-tertiary"
+                ? "border-accent/30 bg-accent/15 text-accent-light"
+                : "border-transparent text-ink-base hover:bg-surface-panel"
             }`}
           >
             {option.label}
@@ -234,7 +234,7 @@ export default function AdminPuzzlesPage() {
       </div>
 
       {error && (
-        <p className="rounded-sm border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+        <p className="rounded-sm border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger-bright">
           {error}
         </p>
       )}
@@ -244,16 +244,16 @@ export default function AdminPuzzlesPage() {
           {["a", "b", "c"].map((key) => (
             <div
               key={key}
-              className="h-12 animate-pulse rounded-sm border border-border-primary bg-bg-tertiary"
+              className="h-12 animate-pulse rounded-sm border border-line-soft bg-surface-panel"
             />
           ))}
         </div>
       ) : visible.length === 0 ? (
-        <p className="rounded-sm border border-border-primary bg-bg-secondary px-3 py-8 text-center text-sm text-text-muted">
+        <p className="rounded-sm border border-line-soft bg-surface-band px-3 py-8 text-center text-sm text-ink-faint">
           Nothing here yet. Generate some boards.
         </p>
       ) : (
-        <div className="divide-y divide-border-primary rounded-sm border border-border-primary bg-bg-secondary">
+        <div className="divide-y divide-line-soft rounded-sm border border-line-soft bg-surface-band">
           {visible.map((puzzle) => (
             <div key={puzzle.number}>
               <PuzzleRow
@@ -263,17 +263,17 @@ export default function AdminPuzzlesPage() {
                 onToggle={() => toggle(puzzle)}
               />
               {openNumber === puzzle.number && (
-                <div className="border-t border-border-primary bg-bg-primary p-3">
+                <div className="border-t border-line-soft bg-surface-page p-3">
                   {detailLoading || !detail ? (
-                    <div className="h-40 animate-pulse rounded-sm bg-bg-tertiary" />
+                    <div className="h-40 animate-pulse rounded-sm bg-surface-panel" />
                   ) : (
                     <div className="space-y-4">
                       <PuzzleReviewGrid puzzle={detail} />
 
-                      <div className="flex flex-wrap items-center gap-2 border-t border-border-primary pt-3">
+                      <div className="flex flex-wrap items-center gap-2 border-t border-line-soft pt-3">
                         <label
                           htmlFor={`date-${puzzle.number}`}
-                          className="text-sm text-text-secondary"
+                          className="text-sm text-ink-base"
                         >
                           Run on
                         </label>
@@ -284,7 +284,7 @@ export default function AdminPuzzlesPage() {
                           onChange={(event) =>
                             setScheduleDate(event.target.value)
                           }
-                          className="rounded-sm border border-border-primary bg-bg-secondary px-2 py-1 text-sm text-text-primary"
+                          className="rounded-sm border border-line-soft bg-surface-band px-2 py-1 text-sm text-ink-strong"
                         />
                         {/* A past date goes live at once and a future one waits:
                             same endpoint, and the date gate in the player
@@ -292,14 +292,14 @@ export default function AdminPuzzlesPage() {
                         <button
                           type="button"
                           onClick={() => setScheduleDate(puzzleDate(0))}
-                          className="rounded-sm border border-border-primary px-2 py-1 text-sm text-text-secondary hover:bg-bg-tertiary"
+                          className="rounded-sm border border-line-soft px-2 py-1 text-sm text-ink-base hover:bg-surface-panel"
                         >
                           Today
                         </button>
                         <button
                           type="button"
                           onClick={() => setScheduleDate(puzzleDate(1))}
-                          className="rounded-sm border border-border-primary px-2 py-1 text-sm text-text-secondary hover:bg-bg-tertiary"
+                          className="rounded-sm border border-line-soft px-2 py-1 text-sm text-ink-base hover:bg-surface-panel"
                         >
                           Tomorrow
                         </button>
@@ -353,7 +353,7 @@ export default function AdminPuzzlesPage() {
                           Delete
                         </Button>
                         {detail.error_count > 0 && (
-                          <span className="text-sm text-red-400">
+                          <span className="text-sm text-danger-bright">
                             Fix the errors above first.
                           </span>
                         )}

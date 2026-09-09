@@ -158,7 +158,7 @@ function renderRichText(text: string, entities: EntityToken[]) {
       {parts.map((part, i) =>
         part.startsWith("**") && part.endsWith("**") ? (
           // biome-ignore lint/suspicious/noArrayIndexKey: static text segments from a fixed split
-          <strong key={i} className="text-text-primary font-semibold">
+          <strong key={i} className="text-ink-strong font-semibold">
             {renderEntityText(part.slice(2, -2), entities)}
           </strong>
         ) : (
@@ -253,12 +253,12 @@ export default function AIAnalystPreview() {
   ].sort((a, b) => b.text.length - a.text.length);
 
   return (
-    <section className="overflow-hidden border-b border-border-primary/40 bg-bg-primary px-6 py-10">
+    <section className="overflow-hidden border-b border-line-soft/40 bg-surface-page px-6 py-10">
       <div className="mx-auto max-w-4xl">
         {/* Section label */}
         <div className="mb-5 flex items-center gap-3">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-purple-500" />
-          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-text-muted">
+          <div className="h-2 w-2 animate-pulse rounded-full bg-accent" />
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-ink-faint">
             Ask Clutch
           </span>
         </div>
@@ -268,16 +268,14 @@ export default function AIAnalystPreview() {
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-3.5">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10 text-purple-300">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent-light">
                 <ClutchIcon className="h-4 w-4" />
               </div>
-              <span className="text-sm font-bold text-text-primary">
-                Clutch
-              </span>
+              <span className="text-sm font-bold text-ink-strong">Clutch</span>
             </div>
             <Link
               href="/ask"
-              className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-text-muted transition-all hover:border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-300"
+              className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.1em] text-ink-faint transition-all hover:border-accent/30 hover:bg-accent/10 hover:text-accent-light"
             >
               Try it
               <svg
@@ -300,11 +298,11 @@ export default function AIAnalystPreview() {
           <div className="space-y-4 px-5 py-5">
             {/* User message */}
             <div className="flex justify-end">
-              <div className="max-w-[85%] rounded-2xl border border-[var(--message-user-border)] bg-[var(--message-user-bg)] px-4 py-2.5 text-sm text-text-primary">
+              <div className="max-w-[85%] rounded-2xl border border-[var(--chat-user-border)] bg-[var(--chat-user-bg)] px-4 py-2.5 text-sm text-ink-strong">
                 {renderEntityText(QUESTION, entities, {
                   useColor: false,
                   linkClassName:
-                    "no-underline transition-opacity hover:opacity-80 text-text-primary font-normal",
+                    "no-underline transition-opacity hover:opacity-80 text-ink-strong font-normal",
                 })}
               </div>
             </div>
@@ -312,13 +310,13 @@ export default function AIAnalystPreview() {
             {/* AI response */}
             {phase !== "idle" && (
               <div className="flex gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10 text-purple-300">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent-light">
                   <ClutchIcon className="h-4 w-4" />
                 </div>
 
-                <div className="min-w-0 flex-1 rounded-2xl border border-[var(--message-assistant-border)] bg-[var(--message-assistant-bg)] px-4 py-3">
+                <div className="min-w-0 flex-1 rounded-2xl border border-[var(--chat-assistant-border)] bg-[var(--chat-assistant-bg)] px-4 py-3">
                   {phase === "thinking" ? (
-                    <div className="flex items-center gap-2 text-xs text-text-muted">
+                    <div className="flex items-center gap-2 text-xs text-ink-faint">
                       <svg
                         className="h-3.5 w-3.5 animate-spin"
                         viewBox="0 0 24 24"
@@ -344,10 +342,10 @@ export default function AIAnalystPreview() {
                   ) : (
                     <div className="space-y-3">
                       {introText && (
-                        <p className="text-sm leading-relaxed text-text-secondary">
+                        <p className="text-sm leading-relaxed text-ink-base">
                           {renderRichText(introText, entities)}
                           {phase === "intro" && (
-                            <span className="ml-0.5 inline-block h-[1em] w-0.5 animate-pulse bg-purple-400 align-middle" />
+                            <span className="ml-0.5 inline-block h-[1em] w-0.5 animate-pulse bg-accent-bright align-middle" />
                           )}
                         </p>
                       )}
@@ -360,7 +358,7 @@ export default function AIAnalystPreview() {
                                 {["Pos", "Driver", "Team", "Pts"].map((h) => (
                                   <th
                                     key={h}
-                                    className="px-3 py-2 text-left font-mono text-[10px] uppercase tracking-[0.08em] text-text-muted"
+                                    className="px-3 py-2 text-left font-mono text-[10px] uppercase tracking-[0.08em] text-ink-faint"
                                   >
                                     {h}
                                   </th>
@@ -373,10 +371,10 @@ export default function AIAnalystPreview() {
                                   key={row.pos}
                                   className="border-b border-white/[0.04] transition-colors hover:bg-white/[0.02]"
                                 >
-                                  <td className="px-3 py-2 font-mono text-text-muted">
+                                  <td className="px-3 py-2 font-mono text-ink-faint">
                                     {row.pos}
                                   </td>
-                                  <td className="px-3 py-2 font-medium text-text-secondary">
+                                  <td className="px-3 py-2 font-medium text-ink-base">
                                     <Link
                                       href={
                                         driverHref({
@@ -384,12 +382,12 @@ export default function AIAnalystPreview() {
                                           full_name: row.driver,
                                         }) ?? "/drivers"
                                       }
-                                      className="font-semibold no-underline transition-opacity hover:opacity-80 text-text-primary"
+                                      className="font-semibold no-underline transition-opacity hover:opacity-80 text-ink-strong"
                                     >
                                       {row.driver}
                                     </Link>
                                   </td>
-                                  <td className="px-3 py-2 text-text-muted">
+                                  <td className="px-3 py-2 text-ink-faint">
                                     <Link
                                       href={
                                         constructorHref(row.team) ??
@@ -399,13 +397,13 @@ export default function AIAnalystPreview() {
                                       style={{
                                         color:
                                           getTeamColor(row.team, teamColors) ??
-                                          "var(--text-primary)",
+                                          "var(--ink-strong)",
                                       }}
                                     >
                                       {row.team}
                                     </Link>
                                   </td>
-                                  <td className="px-3 py-2 font-mono font-bold text-text-secondary">
+                                  <td className="px-3 py-2 font-mono font-bold text-ink-base">
                                     {row.pts}
                                   </td>
                                 </tr>
@@ -416,10 +414,10 @@ export default function AIAnalystPreview() {
                       )}
 
                       {outroText && (
-                        <p className="text-sm leading-relaxed text-text-secondary">
+                        <p className="text-sm leading-relaxed text-ink-base">
                           {renderRichText(outroText, entities)}
                           {phase === "outro" && (
-                            <span className="ml-0.5 inline-block h-[1em] w-0.5 animate-pulse bg-purple-400 align-middle" />
+                            <span className="ml-0.5 inline-block h-[1em] w-0.5 animate-pulse bg-accent-bright align-middle" />
                           )}
                         </p>
                       )}
@@ -438,18 +436,18 @@ export default function AIAnalystPreview() {
           <div className="border-t border-white/[0.06] px-4 py-3">
             <form
               onSubmit={handleSubmit}
-              className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 transition-all focus-within:border-purple-500/30 focus-within:shadow-[0_0_20px_-5px_rgba(160,32,240,0.15)]"
+              className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 transition-all focus-within:border-accent/30 focus-within:shadow-[0_0_20px_-5px_rgba(160,32,240,0.15)]"
             >
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Ask anything about F1..."
-                className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
+                className="flex-1 bg-transparent text-sm text-ink-strong placeholder:text-ink-faint focus:outline-none"
               />
               <button
                 type="submit"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-purple-500 text-white transition-all hover:bg-purple-600 active:scale-95"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-white transition-all hover:bg-accent active:scale-95"
               >
                 <svg
                   className="h-3.5 w-3.5"

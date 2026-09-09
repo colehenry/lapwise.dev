@@ -23,7 +23,7 @@ export default async function DailyGridPage({
       : undefined;
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] bg-bg-primary">
+    <div className="min-h-[calc(100vh-3.5rem)] bg-surface-page">
       <Container className="py-4 sm:py-6">
         <DailyGameGrid puzzleNumber={puzzleNumber} />
       </Container>

@@ -19,15 +19,15 @@ export default function SprintToggle({
       onClick={() => onChange(!checked)}
       className={`flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-[10px] font-mono tracking-wider uppercase transition-colors border ${
         checked
-          ? "bg-purple-500/20 text-purple-300 border-purple-500/50 hover:bg-purple-500/30"
-          : "bg-bg-primary text-text-muted border-border-primary hover:text-text-primary hover:bg-bg-elevated"
+          ? "bg-accent/20 text-accent-light border-accent/50 hover:bg-accent/30"
+          : "bg-surface-page text-ink-faint border-line-soft hover:text-ink-strong hover:bg-surface-raised"
       } ${isLoading ? "animate-pulse" : ""} ${className}`}
     >
       <span
         className={`w-3 h-3 rounded-sm border flex items-center justify-center flex-shrink-0 transition-colors ${
           checked
-            ? "bg-purple-500 border-purple-500"
-            : "border-border-primary bg-transparent"
+            ? "bg-accent border-accent"
+            : "border-line-soft bg-transparent"
         }`}
       >
         {isLoading ? (

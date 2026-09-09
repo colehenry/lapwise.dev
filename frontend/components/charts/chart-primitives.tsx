@@ -6,29 +6,29 @@ import type { AppTheme } from "@/lib/theme";
 
 // Design system color constants — matches tokens in globals.css
 export const CHART_COLORS = {
-  bgPrimary: "var(--background-primary)",
-  bgTertiary: "var(--background-tertiary)",
-  borderPrimary: "var(--chart-grid)",
-  textTertiary: "var(--chart-axis)",
-  textMuted: "var(--chart-annotation)",
-  neutralStroke: "var(--chart-neutral-stroke)",
-  tooltipBg: "var(--chart-tooltip-bg)",
-  tooltipBorder: "var(--chart-tooltip-border)",
-  purple: "var(--purple-500)",
-  purpleHover: "var(--purple-700)",
+  bgPrimary: "var(--surface-page)",
+  bgTertiary: "var(--surface-panel)",
+  borderPrimary: "var(--line-soft)",
+  textTertiary: "var(--ink-soft)",
+  textMuted: "var(--ink-faint)",
+  neutralStroke: "var(--ink-soft)",
+  tooltipBg: "var(--surface-panel)",
+  tooltipBorder: "var(--line-soft)",
+  purple: "var(--accent)",
+  purpleHover: "var(--accent)",
 } as const;
 
 export const CHART_TYPOGRAPHY = {
   titleClassName:
-    "text-xs font-bold font-mono text-text-secondary uppercase tracking-widest",
+    "text-xs font-bold font-mono text-ink-base uppercase tracking-widest",
   keyClassName:
-    "[font-family:var(--font-space-grotesk)] text-xs font-semibold text-text-secondary tracking-[0.025em]",
+    "[font-family:var(--font-space-grotesk)] text-xs font-semibold text-ink-base tracking-[0.025em]",
   tooltipTitleClassName:
-    "[font-family:var(--font-space-grotesk)] font-semibold text-text-primary tracking-[0.025em]",
+    "[font-family:var(--font-space-grotesk)] font-semibold text-ink-strong tracking-[0.025em]",
   tooltipValueClassName:
-    "[font-family:var(--font-space-grotesk)] font-semibold text-text-secondary tracking-[0.02em]",
+    "[font-family:var(--font-space-grotesk)] font-semibold text-ink-base tracking-[0.02em]",
   axisLabelClassName:
-    "text-[11px] font-bold text-text-muted font-mono uppercase tracking-[0.2em]",
+    "text-[11px] font-bold text-ink-faint font-mono uppercase tracking-[0.2em]",
 } as const;
 
 export const CHART_AXIS_LABEL_STYLE = {
@@ -96,17 +96,17 @@ export function RangeSelector({
 
   return (
     <div className="fixed inset-0 theme-overlay flex items-center justify-center z-50">
-      <div className="bg-bg-tertiary border border-border-primary rounded-sm p-6 max-w-md w-full mx-4">
-        <h3 className="text-xl font-bold text-text-primary mb-4">
+      <div className="bg-surface-panel border border-line-soft rounded-sm p-6 max-w-md w-full mx-4">
+        <h3 className="text-xl font-bold text-ink-strong mb-4">
           Select Year Range
         </h3>
-        <p className="text-sm text-text-tertiary mb-4">Maximum 5 years</p>
+        <p className="text-sm text-ink-soft mb-4">Maximum 5 years</p>
 
         <div className="space-y-4">
           <div>
             <label
               htmlFor="range-start-year"
-              className="block text-sm text-text-tertiary mb-2"
+              className="block text-sm text-ink-soft mb-2"
             >
               Start Year
             </label>
@@ -117,7 +117,7 @@ export function RangeSelector({
                 setStartYear(Number(e.target.value));
                 setError("");
               }}
-              className="w-full px-3 py-2 bg-bg-elevated border border-border-primary rounded text-text-primary"
+              className="w-full px-3 py-2 bg-surface-raised border border-line-soft rounded text-ink-strong"
             >
               {availableYears.map((year) => (
                 <option key={year} value={year}>
@@ -130,7 +130,7 @@ export function RangeSelector({
           <div>
             <label
               htmlFor="range-end-year"
-              className="block text-sm text-text-tertiary mb-2"
+              className="block text-sm text-ink-soft mb-2"
             >
               End Year
             </label>
@@ -141,7 +141,7 @@ export function RangeSelector({
                 setEndYear(Number(e.target.value));
                 setError("");
               }}
-              className="w-full px-3 py-2 bg-bg-elevated border border-border-primary rounded text-text-primary"
+              className="w-full px-3 py-2 bg-surface-raised border border-line-soft rounded text-ink-strong"
             >
               {availableYears.map((year) => (
                 <option key={year} value={year}>
@@ -151,21 +151,21 @@ export function RangeSelector({
             </select>
           </div>
 
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && <p className="text-sm text-danger-bright">{error}</p>}
         </div>
 
         <div className="flex gap-3 mt-6">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-2 bg-bg-elevated text-text-muted rounded-sm border border-border-primary font-mono text-xs font-bold uppercase tracking-widest transition-colors"
+            className="flex-1 px-4 py-2 bg-surface-raised text-ink-faint rounded-sm border border-line-soft font-mono text-xs font-bold uppercase tracking-widest transition-colors"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleApply}
-            className="flex-1 px-4 py-2 bg-purple-500/20 border border-purple-500 text-purple-300 rounded-sm font-mono text-xs font-bold uppercase tracking-widest transition-colors"
+            className="flex-1 px-4 py-2 bg-accent/20 border border-accent text-accent-light rounded-sm font-mono text-xs font-bold uppercase tracking-widest transition-colors"
           >
             Apply
           </button>

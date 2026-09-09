@@ -25,8 +25,8 @@ export default function CircuitTyreStats({ circuitId }: CircuitTyreStatsProps) {
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <div className="h-6 bg-bg-elevated rounded w-40 animate-pulse" />
-        <div className="h-48 bg-bg-elevated rounded animate-pulse" />
+        <div className="h-6 bg-surface-raised rounded w-40 animate-pulse" />
+        <div className="h-48 bg-surface-raised rounded animate-pulse" />
       </div>
     );
   }
@@ -34,7 +34,7 @@ export default function CircuitTyreStats({ circuitId }: CircuitTyreStatsProps) {
   if (!data || data.compounds.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           Tyre data not available for this circuit.
         </p>
       </div>
@@ -77,16 +77,16 @@ export default function CircuitTyreStats({ circuitId }: CircuitTyreStatsProps) {
                 </div>
                 <div className="flex items-center gap-3">
                   {compound.avg_stint_length != null && (
-                    <span className="text-[10px] text-text-muted font-mono">
+                    <span className="text-[10px] text-ink-faint font-mono">
                       ~{compound.avg_stint_length} laps/stint
                     </span>
                   )}
-                  <span className="text-xs font-bold text-text-primary font-mono w-12 text-right">
+                  <span className="text-xs font-bold text-ink-strong font-mono w-12 text-right">
                     {compound.percentage}%
                   </span>
                 </div>
               </div>
-              <div className="h-2 bg-bg-primary rounded-full overflow-hidden">
+              <div className="h-2 bg-surface-page rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-700"
                   style={{
@@ -102,11 +102,11 @@ export default function CircuitTyreStats({ circuitId }: CircuitTyreStatsProps) {
       </div>
 
       {/* Total laps summary */}
-      <div className="mt-4 pt-3 border-t border-border-primary flex items-center justify-between">
-        <span className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+      <div className="mt-4 pt-3 border-t border-line-soft flex items-center justify-between">
+        <span className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
           Total Laps Analyzed
         </span>
-        <span className="text-xs font-bold text-text-tertiary font-mono">
+        <span className="text-xs font-bold text-ink-soft font-mono">
           {data.compounds
             .reduce((sum, c) => sum + c.total_laps, 0)
             .toLocaleString()}

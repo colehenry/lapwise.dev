@@ -104,18 +104,18 @@ export default function ConstructorProfilePage() {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-bg-secondary p-8">
+      <div className="min-h-screen bg-surface-band p-8">
         <div className="max-w-5xl mx-auto">
-          <div className="bg-bg-tertiary rounded-sm p-8">
-            <h1 className="text-2xl font-bold text-text-primary mb-4">
+          <div className="bg-surface-panel rounded-sm p-8">
+            <h1 className="text-2xl font-bold text-ink-strong mb-4">
               Constructor Not Found
             </h1>
-            <p className="text-text-tertiary mb-6">
+            <p className="text-ink-soft mb-6">
               Could not find constructor: {teamName.replace(/-/g, " ")}
             </p>
             <Link
               href="/constructors"
-              className="text-red-500 hover:text-red-400 transition-colors"
+              className="text-danger hover:text-danger-bright transition-colors"
             >
               &larr; Back to Constructors
             </Link>
@@ -167,7 +167,7 @@ export default function ConstructorProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-bg-secondary">
+    <div className="min-h-screen bg-surface-band">
       {/* Sticky Header */}
       <PageHeader
         title={data.team_name}
@@ -178,7 +178,7 @@ export default function ConstructorProfilePage() {
           <div className="flex items-center relative">
             <div className="flex-1" />
             <TabBar tabs={TABS} activeTab={activeTab} onTabChange={switchTab} />
-            <div className="flex-1 flex justify-end border-t border-border-primary/40 mt-1 pt-1.5 mr-2">
+            <div className="flex-1 flex justify-end border-t border-line-soft/40 mt-1 pt-1.5 mr-2">
               <SprintToggle
                 checked={includeSprint}
                 onChange={setIncludeSprint}
@@ -224,7 +224,7 @@ export default function ConstructorProfilePage() {
                     unoptimized={logoUrl.includes("wikimedia.org")}
                   />
                 ) : (
-                  <span className="text-text-primary font-bold text-5xl text-center px-4">
+                  <span className="text-ink-strong font-bold text-5xl text-center px-4">
                     {data.team_name
                       .split(" ")
                       .map((word) => word[0])
@@ -234,11 +234,11 @@ export default function ConstructorProfilePage() {
               }
               meta={
                 data.best_finish ? (
-                  <div className="bg-bg-primary border border-border-primary rounded-sm px-3 py-2">
-                    <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+                  <div className="bg-surface-page border border-line-soft rounded-sm px-3 py-2">
+                    <div className="text-[10px] font-mono uppercase tracking-widest text-ink-faint">
                       Best Finish
                     </div>
-                    <div className="text-sm font-semibold text-text-primary">
+                    <div className="text-sm font-semibold text-ink-strong">
                       {getOrdinalSuffix(data.best_finish)}
                     </div>
                   </div>
@@ -247,7 +247,7 @@ export default function ConstructorProfilePage() {
             />
 
             <ArchivePanel title="Constructor Highlights">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 rounded-sm border border-border-primary bg-bg-primary/20 px-4 md:px-5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 rounded-sm border border-line-soft bg-surface-page/20 px-4 md:px-5">
                 {highlights.map((stat) => (
                   <ArchiveMetricBar
                     key={stat.label}

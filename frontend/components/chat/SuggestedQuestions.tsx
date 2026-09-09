@@ -18,13 +18,13 @@ export default function SuggestedQuestions({
     return (
       <div className="flex h-full flex-col items-center justify-center px-3 py-6">
         <div className="w-full text-center">
-          <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-purple-500/30 bg-purple-500/15 text-purple-300">
+          <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-accent/30 bg-accent/15 text-accent-light">
             <ClutchIcon className="h-5 w-5" />
           </div>
-          <h3 className="mb-1 text-sm font-bold text-text-primary">
-            Ask <span className="text-purple-300">Clutch</span>
+          <h3 className="mb-1 text-sm font-bold text-ink-strong">
+            Ask <span className="text-accent-light">Clutch</span>
           </h3>
-          <p className="mb-4 text-xs text-text-muted">
+          <p className="mb-4 text-xs text-ink-faint">
             Ask Clutch anything about F1
           </p>
           <div className="space-y-1.5 text-left">
@@ -34,14 +34,14 @@ export default function SuggestedQuestions({
                 type="button"
                 onClick={() => !disabled && onSelect(s.question)}
                 disabled={disabled}
-                className={`w-full rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-2.5 text-left transition-all ${disabled ? "cursor-not-allowed opacity-50" : "hover:border-purple-500/30 hover:bg-purple-500/[0.06] hover:-translate-y-0.5"}`}
+                className={`w-full rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-2.5 text-left transition-all ${disabled ? "cursor-not-allowed opacity-50" : "hover:border-accent/30 hover:bg-accent/[0.06] hover:-translate-y-0.5"}`}
               >
                 <div
                   className={`text-[9px] font-mono uppercase tracking-[0.1em] ${s.color} mb-0.5`}
                 >
                   {s.category}
                 </div>
-                <div className="text-xs text-text-secondary truncate">
+                <div className="text-xs text-ink-base truncate">
                   {s.question}
                 </div>
               </button>
@@ -56,15 +56,15 @@ export default function SuggestedQuestions({
     <div className="flex flex-col items-center px-3 py-4 md:px-6 md:py-10">
       <div className="w-full max-w-3xl text-center">
         {/* Hero icon */}
-        <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-purple-500/20 bg-purple-500/10 text-purple-300 shadow-[0_0_40px_-10px_rgba(160,32,240,0.25)] md:mb-3 md:h-12 md:w-12 md:rounded-2xl">
+        <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-accent/20 bg-accent/10 text-accent-light shadow-[0_0_40px_-10px_rgba(160,32,240,0.25)] md:mb-3 md:h-12 md:w-12 md:rounded-2xl">
           <ClutchIcon className="h-5 w-5 md:h-6 md:w-6" />
         </div>
-        <h2 className="mb-1 flex items-center justify-center gap-2 text-base font-bold tracking-tight text-text-primary md:mb-1.5 md:text-xl">
-          Ask <span className="text-purple-300">Clutch</span>
+        <h2 className="mb-1 flex items-center justify-center gap-2 text-base font-bold tracking-tight text-ink-strong md:mb-1.5 md:text-xl">
+          Ask <span className="text-accent-light">Clutch</span>
         </h2>
 
         {/* Hero text */}
-        <p className="mx-auto mb-3 max-w-lg text-xs text-text-muted leading-relaxed md:mb-6 md:text-sm">
+        <p className="mx-auto mb-3 max-w-lg text-xs text-ink-faint leading-relaxed md:mb-6 md:text-sm">
           Dive deeper into race results, driver comparisons, and strategy. Make
           your own custom graphs and analyses.
         </p>
@@ -77,14 +77,14 @@ export default function SuggestedQuestions({
               type="button"
               onClick={() => !disabled && onSelect(s.question)}
               disabled={disabled}
-              className={`group rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface)] px-3 py-2.5 transition-all duration-200 md:rounded-2xl md:px-4 md:py-3 ${index >= 3 ? "hidden md:block" : ""} ${disabled ? "cursor-not-allowed opacity-50" : `hover:bg-purple-500/[0.04] ${s.borderHover} hover:-translate-y-0.5 hover:shadow-[0_8px_32px_-8px_rgba(160,32,240,0.12)]`}`}
+              className={`group rounded-lg border border-[var(--glass-border)] bg-[var(--glass-surface)] px-3 py-2.5 transition-all duration-200 md:rounded-2xl md:px-4 md:py-3 ${index >= 3 ? "hidden md:block" : ""} ${disabled ? "cursor-not-allowed opacity-50" : `hover:bg-accent/[0.04] ${s.borderHover} hover:-translate-y-0.5 hover:shadow-[0_8px_32px_-8px_rgba(160,32,240,0.12)]`}`}
             >
               <div
                 className={`text-xs font-semibold ${s.color} leading-snug md:text-sm`}
               >
                 {s.category}
               </div>
-              <div className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-text-muted md:mt-1 md:text-xs md:leading-relaxed">
+              <div className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-ink-faint md:mt-1 md:text-xs md:leading-relaxed">
                 {s.question}
               </div>
             </button>

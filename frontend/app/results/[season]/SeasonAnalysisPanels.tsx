@@ -32,10 +32,10 @@ function PanelShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 overflow-hidden bg-bg-tertiary border border-border-primary rounded-sm shadow-sm">
-      <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+    <div className="mb-6 overflow-hidden bg-surface-panel border border-line-soft rounded-sm shadow-sm">
+      <div className="relative h-10 bg-surface-page border-b border-line-soft px-4 flex items-center overflow-hidden">
         <TrianglePattern id={patternId} />
-        <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+        <span className="relative z-10 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
           {title}
         </span>
       </div>

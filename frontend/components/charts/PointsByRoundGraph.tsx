@@ -121,7 +121,7 @@ const CustomTooltip = ({
   if (filteredPayload.length === 0) return null;
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
+    <div className="bg-surface-panel border border-line-soft rounded-lg p-3 shadow-xl">
       <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-2`}>
         {displayName}
       </p>
@@ -364,11 +364,11 @@ export default function PointsByRoundGraph({
     return (
       <div style={{ minHeight: "540px" }}>
         <div className="h-8 mb-4 flex items-center">
-          <div className="h-6 bg-bg-elevated rounded w-96 animate-pulse" />
+          <div className="h-6 bg-surface-raised rounded w-96 animate-pulse" />
         </div>
         <div className="relative" style={{ height: "400px" }}>
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
+            <p className="text-center text-ink-faint font-mono tracking-widest text-xs uppercase">
               Loading progression data...
             </p>
           </div>
@@ -425,8 +425,8 @@ export default function PointsByRoundGraph({
               onClick={() => setMode("drivers")}
               className={`px-2 py-2 md:px-4 md:py-1.5 rounded-sm text-[10px] md:text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                 mode === "drivers"
-                  ? "bg-purple-500/20 border border-purple-500 text-purple-300"
-                  : "border border-transparent text-text-muted hover:text-text-secondary"
+                  ? "bg-accent/20 border border-accent text-accent-light"
+                  : "border border-transparent text-ink-faint hover:text-ink-base"
               }`}
             >
               Drivers
@@ -436,8 +436,8 @@ export default function PointsByRoundGraph({
               onClick={() => setMode("constructors")}
               className={`px-2 py-2 md:px-4 md:py-1.5 rounded-sm text-[10px] md:text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                 mode === "constructors"
-                  ? "bg-purple-500/20 border border-purple-500 text-purple-300"
-                  : "border border-transparent text-text-muted hover:text-text-secondary"
+                  ? "bg-accent/20 border border-accent text-accent-light"
+                  : "border border-transparent text-ink-faint hover:text-ink-base"
               }`}
             >
               Constructors
@@ -448,14 +448,14 @@ export default function PointsByRoundGraph({
           <button
             type="button"
             onClick={() => setShowDropdown(!showDropdown)}
-            className="px-2 py-2 md:px-4 md:py-1.5 rounded-sm text-[10px] md:text-xs font-bold font-mono uppercase tracking-widest border border-border-secondary text-text-secondary hover:border-purple-500 hover:text-purple-300 transition-colors duration-150"
+            className="px-2 py-2 md:px-4 md:py-1.5 rounded-sm text-[10px] md:text-xs font-bold font-mono uppercase tracking-widest border border-line-strong text-ink-base hover:border-accent hover:text-accent-light transition-colors duration-150"
           >
             Select ({selectedEntities.length})
           </button>
 
           {/* Dropdown Menu */}
           {showDropdown && (
-            <div className="fixed inset-x-3 top-28 z-50 max-h-[55vh] overflow-y-auto rounded-sm border border-border-primary bg-bg-tertiary shadow-xl md:absolute md:inset-x-auto md:right-0 md:top-full md:mt-1 md:max-h-[300px] md:min-w-[250px]">
+            <div className="fixed inset-x-3 top-28 z-50 max-h-[55vh] overflow-y-auto rounded-sm border border-line-soft bg-surface-panel shadow-xl md:absolute md:inset-x-auto md:right-0 md:top-full md:mt-1 md:max-h-[300px] md:min-w-[250px]">
               {entities.map((entity) => {
                 const key =
                   mode === "drivers"
@@ -473,15 +473,15 @@ export default function PointsByRoundGraph({
                 return (
                   <label
                     key={key}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-bg-elevated cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-surface-raised cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleEntity(key)}
-                      className="w-4 h-4 accent-purple-500"
+                      className="w-4 h-4 accent-accent"
                     />
-                    <span className="text-sm text-text-muted w-5 font-mono">
+                    <span className="text-sm text-ink-faint w-5 font-mono">
                       {entity.final_position}
                     </span>
                     <span
@@ -659,7 +659,7 @@ export default function PointsByRoundGraph({
                 </StableResponsiveContainer>
 
                 {/* Custom Legend - Positioned in top-left */}
-                <div className="absolute top-8 left-25 bg-bg-primary/90 border border-border-primary rounded-sm p-3 backdrop-blur-sm pointer-events-none">
+                <div className="absolute top-8 left-25 bg-surface-page/90 border border-line-soft rounded-sm p-3 backdrop-blur-sm pointer-events-none">
                   <div className="flex flex-col gap-1.5">
                     {entities
                       .filter((entity) => {
@@ -697,7 +697,7 @@ export default function PointsByRoundGraph({
               </>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
-                <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
+                <p className="text-center text-ink-faint font-mono tracking-widest text-xs uppercase">
                   No data available. Select at least one{" "}
                   {mode === "drivers" ? "driver" : "constructor"} to view
                   progression.

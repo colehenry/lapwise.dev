@@ -18,7 +18,7 @@ export default function SortPills<T extends string>({
 }: SortPillsProps<T>) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+      <span className="text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
         Sort by
       </span>
       <div className="flex items-center gap-1">
@@ -29,8 +29,8 @@ export default function SortPills<T extends string>({
             onClick={() => onChange(opt.key)}
             className={`px-3 py-1 rounded-sm text-xs font-mono tracking-wider uppercase transition-colors ${
               active === opt.key
-                ? "bg-purple-500 text-white"
-                : "bg-bg-primary text-text-muted hover:text-text-primary hover:bg-bg-elevated border border-border-primary"
+                ? "bg-accent text-white"
+                : "bg-surface-page text-ink-faint hover:text-ink-strong hover:bg-surface-raised border border-line-soft"
             }`}
           >
             {opt.label}

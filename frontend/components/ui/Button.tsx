@@ -23,15 +23,15 @@ export default function Button({
 
   const variantStyles = {
     primary:
-      "bg-purple-500 text-text-primary hover:bg-purple-600 active:bg-purple-700 focus-visible:outline-purple-500 shadow-md hover:shadow-lg hover:shadow-purple-500/20",
+      "bg-accent text-ink-strong hover:bg-accent active:bg-accent focus-visible:outline-accent shadow-md hover:shadow-lg hover:shadow-purple-500/20",
     secondary:
-      "bg-bg-elevated text-text-secondary hover:bg-border-secondary active:bg-border-primary border border-border-primary focus-visible:outline-purple-500",
+      "bg-surface-raised text-ink-base hover:bg-line-strong active:bg-line-soft border border-line-soft focus-visible:outline-accent",
     ghost:
-      "text-text-secondary hover:bg-bg-elevated active:bg-bg-tertiary focus-visible:outline-purple-500",
+      "text-ink-base hover:bg-surface-raised active:bg-surface-panel focus-visible:outline-accent",
     danger:
-      "bg-red-500 text-text-primary hover:bg-red-600 active:bg-red-700 focus-visible:outline-red-500 shadow-md hover:shadow-lg hover:shadow-red-500/20",
+      "bg-danger text-ink-strong hover:bg-danger active:bg-danger focus-visible:outline-danger shadow-md hover:shadow-lg hover:shadow-red-500/20",
     success:
-      "bg-success text-text-primary hover:bg-success-dark active:opacity-90 focus-visible:outline-success shadow-md",
+      "bg-success text-ink-strong hover:bg-success active:opacity-90 focus-visible:outline-success shadow-md",
   };
 
   const sizeStyles = {

@@ -17,16 +17,14 @@ function Rule({
 }) {
   return (
     <div className="flex gap-4">
-      <div className="flex-shrink-0 w-8 h-8 rounded-sm bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-        <span className="text-xs font-bold font-mono text-purple-400">
+      <div className="flex-shrink-0 w-8 h-8 rounded-sm bg-accent/10 border border-accent/20 flex items-center justify-center">
+        <span className="text-xs font-bold font-mono text-accent-bright">
           {number}
         </span>
       </div>
       <div className="flex-1 pt-1 space-y-1.5">
-        <h3 className="font-semibold text-text-primary">{title}</h3>
-        <div className="text-sm text-text-secondary leading-relaxed">
-          {children}
-        </div>
+        <h3 className="font-semibold text-ink-strong">{title}</h3>
+        <div className="text-sm text-ink-base leading-relaxed">{children}</div>
       </div>
     </div>
   );
@@ -37,15 +35,15 @@ export default function RulesPage() {
     <div className="max-w-2xl mx-auto px-4 py-12 space-y-10">
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-          <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+          <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+          <span className="text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
             Community
           </span>
         </div>
-        <h1 className="text-3xl font-bold text-text-primary mb-3">
+        <h1 className="text-3xl font-bold text-ink-strong mb-3">
           Community Rules
         </h1>
-        <p className="text-text-secondary">
+        <p className="text-ink-base">
           Lapwise is a place for serious F1 discussion backed by data. These
           rules exist to keep it useful and worth reading.
         </p>
@@ -86,7 +84,7 @@ export default function RulesPage() {
           All community activity is subject to the{" "}
           <Link
             href="/terms"
-            className="text-purple-400 hover:text-purple-300 underline underline-offset-2"
+            className="text-accent-bright hover:text-accent-light underline underline-offset-2"
           >
             Terms of Service
           </Link>
@@ -94,16 +92,16 @@ export default function RulesPage() {
         </Rule>
       </div>
 
-      <div className="border border-border-primary rounded-sm bg-bg-secondary p-5 space-y-2">
-        <p className="text-sm font-semibold text-text-primary">
+      <div className="border border-line-soft rounded-sm bg-surface-band p-5 space-y-2">
+        <p className="text-sm font-semibold text-ink-strong">
           Reporting a violation
         </p>
-        <p className="text-sm text-text-secondary">
+        <p className="text-sm text-ink-base">
           If you see a post or comment that breaks these rules, use the report
           function or contact{" "}
           <a
             href="mailto:support@lapwise.dev"
-            className="text-purple-400 hover:text-purple-300 underline underline-offset-2"
+            className="text-accent-bright hover:text-accent-light underline underline-offset-2"
           >
             support@lapwise.dev
           </a>

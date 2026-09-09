@@ -178,11 +178,11 @@ function ThinkingSteps({
         onClick={() => setExpanded((current) => !current)}
         disabled={isStreaming}
         aria-expanded={!isStreaming && expanded}
-        className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-text-tertiary transition-colors"
+        className="flex items-center gap-1.5 text-[11px] text-ink-faint hover:text-ink-soft transition-colors"
       >
         {isStreaming ? (
           <svg
-            className="h-3 w-3 animate-spin text-purple-400"
+            className="h-3 w-3 animate-spin text-accent-bright"
             viewBox="0 0 24 24"
             fill="none"
             aria-hidden="true"
@@ -226,7 +226,7 @@ function ThinkingSteps({
           {steps.map((step, i) => (
             <div
               key={`${step.stepType}-${i}`}
-              className="flex items-center gap-2 text-[11px] text-text-muted"
+              className="flex items-center gap-2 text-[11px] text-ink-faint"
             >
               <StepIcon stepType={step.stepType} />
               <span>{step.message}</span>
@@ -240,7 +240,7 @@ function ThinkingSteps({
 
 function WorkingStatus({ text }: { text: string }) {
   return (
-    <div className="flex items-center gap-2 text-xs text-text-muted">
+    <div className="flex items-center gap-2 text-xs text-ink-faint">
       <svg
         className="h-3.5 w-3.5 animate-spin"
         viewBox="0 0 24 24"
@@ -271,7 +271,7 @@ function AIAnalystAvatar({ size = "md" }: { size?: "sm" | "md" }) {
   const icon = size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
   return (
     <div
-      className={`flex ${dim} items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10 text-purple-300`}
+      className={`flex ${dim} items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent-light`}
     >
       <ClutchIcon className={icon} />
     </div>
@@ -330,12 +330,12 @@ export default function ChatMessage({
         className={`min-w-0 flex-1 overflow-hidden ${isUser ? "text-right" : ""}`}
       >
         {isUser ? (
-          <div className="inline-block w-fit max-w-[min(90%,calc(100vw-2rem))] whitespace-pre-wrap break-words rounded-xl border border-[var(--message-user-border)] bg-[var(--message-user-bg)] px-3 py-2 text-left text-xs leading-relaxed text-text-primary md:max-w-[85%] md:rounded-2xl md:px-4 md:py-2.5 md:text-sm">
+          <div className="inline-block w-fit max-w-[min(90%,calc(100vw-2rem))] whitespace-pre-wrap break-words rounded-xl border border-[var(--chat-user-border)] bg-[var(--chat-user-bg)] px-3 py-2 text-left text-xs leading-relaxed text-ink-strong md:max-w-[85%] md:rounded-2xl md:px-4 md:py-2.5 md:text-sm">
             {content}
           </div>
         ) : (
           <article
-            className="w-full min-w-0 max-w-full space-y-2 overflow-hidden rounded-xl border border-[var(--message-assistant-border)] bg-[var(--message-assistant-bg)] px-3 py-2.5 md:rounded-2xl md:px-5 md:py-3"
+            className="w-full min-w-0 max-w-full space-y-2 overflow-hidden rounded-xl border border-[var(--chat-assistant-border)] bg-[var(--chat-assistant-bg)] px-3 py-2.5 md:rounded-2xl md:px-5 md:py-3"
             aria-label="Clutch response"
             aria-busy={isLoading || isStreaming}
           >
@@ -350,7 +350,7 @@ export default function ChatMessage({
             {isLoading && !statusText && <WorkingStatus text="Analyzing..." />}
 
             {content && (
-              <div className="prose-chat min-w-0 max-w-full text-xs leading-relaxed text-text-secondary md:text-sm">
+              <div className="prose prose--chat min-w-0 max-w-full text-xs leading-relaxed text-ink-base md:text-sm">
                 <Markdown
                   remarkPlugins={[remarkGfm]}
                   components={{
@@ -374,7 +374,7 @@ export default function ChatMessage({
                             href={href}
                             target="_blank"
                             rel="noreferrer noopener"
-                            className="font-semibold transition-colors hover:text-purple-200"
+                            className="font-semibold transition-colors hover:text-accent-light"
                           >
                             {renderDeltaChildren(children)}
                           </a>
@@ -385,7 +385,7 @@ export default function ChatMessage({
                         <Link
                           href={href}
                           className="font-semibold no-underline transition-opacity hover:opacity-80"
-                          style={{ color: linkColor ?? "var(--text-primary)" }}
+                          style={{ color: linkColor ?? "var(--ink-strong)" }}
                         >
                           {renderDeltaChildren(children)}
                         </Link>
@@ -497,7 +497,7 @@ export default function ChatMessage({
                 <button
                   type="button"
                   onClick={() => setShowSQL(!showSQL)}
-                  className="text-[11px] text-text-muted hover:text-text-tertiary transition-colors flex items-center gap-1"
+                  className="text-[11px] text-ink-faint hover:text-ink-soft transition-colors flex items-center gap-1"
                 >
                   <svg
                     className={`h-3 w-3 transition-transform ${showSQL ? "rotate-90" : ""}`}
@@ -519,7 +519,7 @@ export default function ChatMessage({
                     {queries.map((sql) => (
                       <pre
                         key={sql}
-                        className="rounded-lg border border-[var(--message-query-border)] bg-[var(--message-query-bg)] p-3 text-xs text-text-tertiary font-mono whitespace-pre-wrap break-words"
+                        className="rounded-lg border border-[var(--chat-query-border)] bg-[var(--chat-query-bg)] p-3 text-xs text-ink-soft font-mono whitespace-pre-wrap break-words"
                       >
                         {sql}
                       </pre>
@@ -540,7 +540,7 @@ export default function ChatMessage({
                         key={q}
                         type="button"
                         onClick={() => onFollowUp(q)}
-                        className="max-w-full break-words rounded-full border border-purple-500/20 bg-purple-500/[0.06] px-2.5 py-1 text-left text-[11px] text-purple-300 transition-all hover:border-purple-500/30 hover:bg-purple-500/10"
+                        className="max-w-full break-words rounded-full border border-accent/20 bg-accent/[0.06] px-2.5 py-1 text-left text-[11px] text-accent-light transition-all hover:border-accent/30 hover:bg-accent/10"
                       >
                         {q}
                       </button>
@@ -549,7 +549,7 @@ export default function ChatMessage({
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="ml-2 shrink-0 rounded-lg p-1.5 text-text-muted transition-colors hover:text-text-secondary"
+                  className="ml-2 shrink-0 rounded-lg p-1.5 text-ink-faint transition-colors hover:text-ink-base"
                   title="Copy response"
                 >
                   {copied ? (

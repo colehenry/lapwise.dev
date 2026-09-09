@@ -8,7 +8,7 @@ import { GridPattern } from "@/components/layout/Patterns";
 import TiltCard from "@/components/ui/TiltCard";
 
 function FeatureIcon({ label }: { label: string }) {
-  const className = "w-6 h-6 text-purple-400";
+  const className = "w-6 h-6 text-accent-bright";
 
   if (label === "Drivers") {
     return (
@@ -77,7 +77,7 @@ function FeatureIcon({ label }: { label: string }) {
 function CrosshairPattern() {
   return (
     <svg
-      className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.05] pointer-events-none"
+      className="absolute inset-0 w-full h-full text-accent opacity-[0.05] pointer-events-none"
       viewBox="0 0 400 300"
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
@@ -129,18 +129,18 @@ function CrosshairPattern() {
 
 export default function Home() {
   return (
-    <div className="bg-bg-primary">
+    <div className="bg-surface-page">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-bg-secondary">
+      <section className="relative overflow-hidden bg-surface-band">
         <GridPattern
           id="hero-grid"
-          className="absolute inset-0 w-full h-full text-purple-500 opacity-[0.06] pointer-events-none"
+          className="absolute inset-0 w-full h-full text-accent opacity-[0.06] pointer-events-none"
         />
 
         {/* Subtle glow */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-purple-500 rounded-full blur-[160px] opacity-15" />
-          <div className="absolute bottom-1/4 left-1/3 w-48 h-48 bg-red-500 rounded-full blur-[120px] opacity-10" />
+          <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-accent rounded-full blur-[160px] opacity-15" />
+          <div className="absolute bottom-1/4 left-1/3 w-48 h-48 bg-danger rounded-full blur-[120px] opacity-10" />
         </div>
 
         <div className="relative z-10 max-w-6xl mx-auto px-4 py-10 md:px-6 md:py-16 lg:py-20 w-full">
@@ -149,18 +149,18 @@ export default function Home() {
             <div className="space-y-6 md:space-y-8 lg:space-y-10">
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
-                  <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                  <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+                  <span className="text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
                     Formula 1 Data · Replay · AI Analysis
                   </span>
                 </div>
 
                 <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tighter">
-                  <span className="text-purple-400">Lap</span>
-                  <span className="text-text-primary">wise</span>
+                  <span className="text-accent-bright">Lap</span>
+                  <span className="text-ink-strong">wise</span>
                 </h1>
 
-                <p className="text-xs text-text-muted tracking-widest uppercase font-medium">
+                <p className="text-xs text-ink-faint tracking-widest uppercase font-medium">
                   Charts, telemetry, replay, and analysis for every race
                 </p>
               </div>
@@ -174,7 +174,7 @@ export default function Home() {
                   <Link
                     key={action.href}
                     href={action.href}
-                    className="px-3 py-1.5 rounded-sm border border-border-primary text-xs text-text-muted hover:text-text-primary hover:border-purple-500/40 transition-colors font-medium"
+                    className="px-3 py-1.5 rounded-sm border border-line-soft text-xs text-ink-faint hover:text-ink-strong hover:border-accent/40 transition-colors font-medium"
                   >
                     {action.label}
                   </Link>
@@ -186,7 +186,7 @@ export default function Home() {
               </div>
 
               <div className="space-y-4 lg:pt-4">
-                <p className="text-[10px] text-text-muted tracking-widest uppercase font-mono font-bold">
+                <p className="text-[10px] text-ink-faint tracking-widest uppercase font-mono font-bold">
                   Explore the archive
                 </p>
                 <SeasonRoundSelector />
@@ -211,17 +211,17 @@ export default function Home() {
       <NextRaceBanner />
 
       {/* Feature Cards */}
-      <section className="overflow-hidden bg-bg-secondary py-14 px-4 md:px-6 border-y border-border-primary/60">
+      <section className="overflow-hidden bg-surface-band py-14 px-4 md:px-6 border-y border-line-soft/60">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8 flex flex-col items-center text-center">
             <div className="space-y-3">
               <div className="flex items-center justify-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-purple-500" />
-                <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+                <div className="w-2 h-2 rounded-full bg-accent" />
+                <span className="text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
                   Database
                 </span>
               </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">
+              <h2 className="text-2xl md:text-3xl font-bold text-ink-strong tracking-tight">
                 Explore the Archive
               </h2>
             </div>
@@ -248,20 +248,20 @@ export default function Home() {
               <TiltCard key={feature.label}>
                 <Link
                   href={feature.href}
-                  className="block group bg-bg-tertiary border border-border-primary rounded-sm hover:border-purple-500/70 transition-all duration-150 relative overflow-hidden h-full"
+                  className="block group bg-surface-panel border border-line-soft rounded-sm hover:border-accent/70 transition-all duration-150 relative overflow-hidden h-full"
                 >
                   <CrosshairPattern />
                   <div className="relative z-10 flex flex-col items-center text-center p-5 md:p-6">
-                    <div className="w-11 h-11 rounded-sm bg-purple-500/10 border border-purple-500/25 flex items-center justify-center mb-4 group-hover:bg-purple-500/15 group-hover:border-purple-500/40 transition-all duration-300">
+                    <div className="w-11 h-11 rounded-sm bg-accent/10 border border-accent/25 flex items-center justify-center mb-4 group-hover:bg-accent/15 group-hover:border-accent/40 transition-all duration-300">
                       <FeatureIcon label={feature.label} />
                     </div>
-                    <h3 className="text-base font-bold text-text-primary tracking-tight mb-1.5">
+                    <h3 className="text-base font-bold text-ink-strong tracking-tight mb-1.5">
                       {feature.label}
                     </h3>
-                    <p className="text-xs text-text-secondary leading-relaxed mb-4">
+                    <p className="text-xs text-ink-base leading-relaxed mb-4">
                       {feature.desc}
                     </p>
-                    <div className="flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest text-purple-400 group-hover:text-purple-300 transition-colors">
+                    <div className="flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest text-accent-bright group-hover:text-accent-light transition-colors">
                       Explore
                       <svg
                         className="w-3 h-3 group-hover:translate-x-0.5 transition-transform"

@@ -314,7 +314,7 @@ export default function ReplayPlayer({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg-secondary p-6">
+      <div className="min-h-screen bg-surface-band p-6">
         <div className="max-w-7xl mx-auto space-y-4">
           <Skeleton variant="text" width="300px" height="32px" />
           <Skeleton variant="rectangular" height="500px" />
@@ -326,18 +326,18 @@ export default function ReplayPlayer({
 
   if (error || !replayData) {
     return (
-      <div className="min-h-screen bg-bg-secondary p-6">
+      <div className="min-h-screen bg-surface-band p-6">
         <div className="max-w-7xl mx-auto">
           <button
             type="button"
             onClick={onBack}
-            className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center gap-2 mb-4"
+            className="bg-surface-page border border-line-soft text-ink-strong font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-accent hover:text-accent-light transition-colors duration-150 cursor-pointer flex items-center gap-2 mb-4"
           >
             <span>&larr;</span>
             <span>Back to replays</span>
           </button>
-          <div className="bg-bg-tertiary border border-border-primary rounded-sm p-8 text-center">
-            <p className="text-red-400 font-mono text-sm">
+          <div className="bg-surface-panel border border-line-soft rounded-sm p-8 text-center">
+            <p className="text-danger-bright font-mono text-sm">
               Failed to load replay data. This race may not have telemetry
               available.
             </p>
@@ -348,18 +348,18 @@ export default function ReplayPlayer({
   }
 
   return (
-    <div className="min-h-screen bg-bg-secondary">
+    <div className="min-h-screen bg-surface-band">
       {/* Sticky Header - matches race weekend hub style */}
       <div className="sticky top-0 z-40">
         <div className="px-4">
           <div className="mx-auto w-full max-w-full md:max-w-[calc(72rem+40px)]">
-            <div className="bg-bg-secondary/95 backdrop-blur-xl border-x border-b border-border-primary rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)]">
+            <div className="bg-surface-band/95 backdrop-blur-xl border-x border-b border-line-soft rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)]">
               <div className="h-14 px-6 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <button
                     type="button"
                     onClick={onBack}
-                    className="bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center gap-2"
+                    className="bg-surface-page border border-line-soft text-ink-strong font-mono text-xs font-bold px-4 py-2 rounded-sm hover:border-accent hover:text-accent-light transition-colors duration-150 cursor-pointer flex items-center gap-2"
                   >
                     <span>&larr;</span>
                     <span className="hidden sm:inline">BACK</span>
@@ -367,10 +367,10 @@ export default function ReplayPlayer({
                 </div>
 
                 <div className="flex flex-col items-center">
-                  <span className="text-text-primary font-mono text-sm font-bold leading-none">
+                  <span className="text-ink-strong font-mono text-sm font-bold leading-none">
                     {eventName}
                   </span>
-                  <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold">
+                  <span className="text-ink-faint text-[10px] tracking-widest uppercase font-bold">
                     {season} &middot; Round {String(round).padStart(2, "0")}
                   </span>
                 </div>
@@ -396,9 +396,9 @@ export default function ReplayPlayer({
             className="flex-1 min-w-0 lg:h-[462px] relative"
             ref={trackCardRef}
           >
-            <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden h-full flex flex-col">
+            <div className="bg-surface-panel border border-line-soft rounded-sm shadow-sm overflow-hidden h-full flex flex-col">
               {/* Playback header */}
-              <div className="relative h-10 bg-bg-primary border-b border-border-primary px-3 flex items-center overflow-hidden shrink-0">
+              <div className="relative h-10 bg-surface-page border-b border-line-soft px-3 flex items-center overflow-hidden shrink-0">
                 <TrianglePattern id="replay-track-triangles" />
                 <div className="relative z-10 w-full">
                   <PlaybackHeader
@@ -436,15 +436,15 @@ export default function ReplayPlayer({
                 </div>
                 {/* Race feed panel — collapsible */}
                 {!feedCollapsed && (
-                  <div className="w-52 lg:w-60 border-l border-border-primary flex flex-col shrink-0 h-full">
-                    <div className="px-3 py-2 border-b border-border-primary flex items-center justify-between shrink-0">
-                      <h3 className="text-[10px] font-mono tracking-widest text-text-muted uppercase font-bold">
+                  <div className="w-52 lg:w-60 border-l border-line-soft flex flex-col shrink-0 h-full">
+                    <div className="px-3 py-2 border-b border-line-soft flex items-center justify-between shrink-0">
+                      <h3 className="text-[10px] font-mono tracking-widest text-ink-faint uppercase font-bold">
                         Race Feed
                       </h3>
                       <button
                         type="button"
                         onClick={() => setFeedCollapsed(true)}
-                        className="text-[10px] font-mono text-text-muted hover:text-text-primary transition-colors"
+                        className="text-[10px] font-mono text-ink-faint hover:text-ink-strong transition-colors"
                         title="Collapse feed"
                       >
                         ▸
@@ -464,11 +464,11 @@ export default function ReplayPlayer({
                 )}
                 {/* Collapsed feed toggle */}
                 {feedCollapsed && (
-                  <div className="border-l border-border-primary flex flex-col items-center shrink-0">
+                  <div className="border-l border-line-soft flex flex-col items-center shrink-0">
                     <button
                       type="button"
                       onClick={() => setFeedCollapsed(false)}
-                      className="px-1.5 py-2 text-[10px] font-mono text-text-muted hover:text-text-primary transition-colors"
+                      className="px-1.5 py-2 text-[10px] font-mono text-ink-faint hover:text-ink-strong transition-colors"
                       title="Show feed"
                     >
                       ◂

@@ -329,7 +329,7 @@ export default function TrackCanvas({
         const hData = frame.d[highlightedDriver];
         const hColor = drivers[highlightedDriver]
           ? `#${drivers[highlightedDriver].color}`
-          : resolveToken("--text-primary");
+          : resolveToken("--ink-strong");
         // Pulsing ring
         const ringRadius = 14 / scale;
         ctx.strokeStyle = hColor;
@@ -607,7 +607,7 @@ function drawDriver(
   // Label for highlighted drivers
   if (isHighlighted) {
     ctx.font = `bold ${11 / scale}px monospace`;
-    ctx.fillStyle = resolveToken("--text-primary");
+    ctx.fillStyle = resolveToken("--ink-strong");
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
     ctx.fillText(code, x, y - radius - 3 / scale);
@@ -651,7 +651,7 @@ function drawSafetyCar(
   ctx.fill();
 
   ctx.font = `bold ${9 / scale}px monospace`;
-  ctx.fillStyle = resolveToken("--text-primary");
+  ctx.fillStyle = resolveToken("--ink-strong");
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   const scLabels: Record<number, string> = { 1: "SC", 2: "VSC", 3: "RED" };
@@ -716,7 +716,7 @@ export function DriverTooltip({
 
   return (
     <div
-      className="absolute pointer-events-none bg-bg-primary/95 backdrop-blur-sm border border-border-primary rounded-sm px-3 py-2 text-xs z-10"
+      className="absolute pointer-events-none bg-surface-page/95 backdrop-blur-sm border border-line-soft rounded-sm px-3 py-2 text-xs z-10"
       style={{
         left: flipX ? x - 170 : x + 12,
         top: Math.max(y - 60, 8),
@@ -738,26 +738,24 @@ export function DriverTooltip({
             style={{ backgroundColor: `#${driver.color}` }}
           />
         )}
-        <span className="font-semibold text-text-primary font-mono">
-          {code}
-        </span>
-        <span className="text-text-muted">P{position}</span>
+        <span className="font-semibold text-ink-strong font-mono">{code}</span>
+        <span className="text-ink-faint">P{position}</span>
       </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-text-secondary font-mono">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-ink-base font-mono">
         <span>Speed</span>
-        <span className="text-text-primary">{Math.round(speed)} km/h</span>
+        <span className="text-ink-strong">{Math.round(speed)} km/h</span>
         <span>Gear</span>
-        <span className="text-text-primary">{gear}</span>
+        <span className="text-ink-strong">{gear}</span>
         <span>Throttle</span>
-        <span className="text-text-primary">{Math.round(throttle ?? 0)}%</span>
+        <span className="text-ink-strong">{Math.round(throttle ?? 0)}%</span>
         <span>Brake</span>
-        <span className={brake ? "text-red-400" : "text-text-muted"}>
+        <span className={brake ? "text-danger-bright" : "text-ink-faint"}>
           {brake ? "ON" : "OFF"}
         </span>
         {hasDrs && (
           <>
             <span>DRS</span>
-            <span className={drs ? "text-green-400" : "text-text-muted"}>
+            <span className={drs ? "text-green-400" : "text-ink-faint"}>
               {drs ? "OPEN" : "OFF"}
             </span>
           </>
@@ -771,7 +769,7 @@ export function DriverTooltip({
                 COMPOUND_COLORS[compound] ?? "var(--delta-neutral)",
             }}
           />
-          <span className="text-text-primary">
+          <span className="text-ink-strong">
             {COMPOUND_LABELS[compound] ?? "?"} ({tyreLife}L)
           </span>
         </span>

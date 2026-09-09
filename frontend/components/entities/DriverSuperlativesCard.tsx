@@ -14,17 +14,15 @@ type Props = {
 
 function SuperlativeRow({ item }: { item: DriverSuperlative }) {
   return (
-    <li className="py-1.5 border-b border-border-primary/40 last:border-0">
+    <li className="py-1.5 border-b border-line-soft/40 last:border-0">
       <div className="flex items-baseline gap-1.5">
-        <span className="font-mono font-bold text-text-primary text-sm tabular-nums shrink-0">
+        <span className="font-mono font-bold text-ink-strong text-sm tabular-nums shrink-0">
           {item.value}
         </span>
-        <span className="text-sm text-text-secondary leading-snug">
-          {item.label}
-        </span>
+        <span className="text-sm text-ink-base leading-snug">{item.label}</span>
       </div>
       {item.sublabel && (
-        <span className="text-[9px] font-mono uppercase tracking-widest text-text-muted mt-0.5 block">
+        <span className="text-[9px] font-mono uppercase tracking-widest text-ink-faint mt-0.5 block">
           {item.sublabel}
         </span>
       )}

@@ -17,17 +17,17 @@ export default function ArchiveMetricBar({
     typeof progress === "number" ? Math.max(0, Math.min(progress, 100)) : null;
 
   return (
-    <div className="space-y-2 border-b border-border-primary py-4 last:border-b-0">
+    <div className="space-y-2 border-b border-line-soft py-4 last:border-b-0">
       <div className="flex items-baseline justify-between gap-4">
         <MonoLabel>{label}</MonoLabel>
-        <span className="font-mono text-lg font-bold tabular-nums text-text-primary">
+        <span className="font-mono text-lg font-bold tabular-nums text-ink-strong">
           {value}
         </span>
       </div>
       {clampedProgress != null && (
-        <div className="h-1.5 overflow-hidden rounded-sm bg-bg-primary">
+        <div className="h-1.5 overflow-hidden rounded-sm bg-surface-page">
           <div
-            className="h-full rounded-sm bg-red-500"
+            className="h-full rounded-sm bg-danger"
             style={{
               width: `${clampedProgress}%`,
               backgroundColor: accentColor ?? undefined,

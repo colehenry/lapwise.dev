@@ -2,7 +2,7 @@ import Skeleton from "./Skeleton";
 
 export default function ProfileSkeleton() {
   return (
-    <div className="min-h-screen bg-bg-secondary p-8">
+    <div className="min-h-screen bg-surface-band p-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <Skeleton variant="text" width="120px" />
         <div className="flex items-center gap-6">

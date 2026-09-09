@@ -12,7 +12,7 @@ export interface NavLink {
 function iconClass(active: boolean, scrolled: boolean): string {
   return `shrink-0 transition-all duration-500 ${
     scrolled ? "w-6 h-6" : "w-4 h-4"
-  } ${active ? "text-purple-400" : "text-text-muted group-hover:text-text-primary"}`;
+  } ${active ? "text-accent-bright" : "text-ink-faint group-hover:text-ink-strong"}`;
 }
 
 export const archiveLinks: NavLink[] = [

@@ -46,7 +46,7 @@ export default function DriverHeadshot({
 
   return (
     <div
-      className={`relative shrink-0 overflow-hidden rounded-sm border border-border-secondary bg-bg-secondary ${className}`}
+      className={`relative shrink-0 overflow-hidden rounded-sm border border-line-strong bg-surface-band ${className}`}
       style={responsive ? undefined : { width: size, height: size }}
     >
       {isValidHeadshotUrl(src) ? (
@@ -64,7 +64,7 @@ export default function DriverHeadshot({
           style={{ objectPosition }}
         />
       ) : (
-        <span className="flex h-full w-full items-center justify-center text-[10px] font-bold font-mono text-text-muted">
+        <span className="flex h-full w-full items-center justify-center text-[10px] font-bold font-mono text-ink-faint">
           {code ?? initials(fullName)}
         </span>
       )}

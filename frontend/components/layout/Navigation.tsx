@@ -23,8 +23,8 @@ function DatabaseIcon({
 }) {
   const sizeClass = scrolled ? "w-6 h-6" : "w-4 h-4";
   const colorClass = active
-    ? "text-purple-400"
-    : "text-text-muted group-hover:text-text-primary";
+    ? "text-accent-bright"
+    : "text-ink-faint group-hover:text-ink-strong";
   return (
     <svg
       className={`shrink-0 transition-all duration-500 ${sizeClass} ${colorClass}`}
@@ -56,8 +56,8 @@ function NavIcon({
 }) {
   const sizeClass = scrolled ? "w-6 h-6" : "w-4 h-4";
   const colorClass = active
-    ? "text-purple-400"
-    : "text-text-muted group-hover:text-text-primary";
+    ? "text-accent-bright"
+    : "text-ink-faint group-hover:text-ink-strong";
 
   if (link.renderIcon) return <>{link.renderIcon(active, scrolled)}</>;
 
@@ -111,8 +111,8 @@ function DataArchiveTopBarDropdown({
               href={link.href}
               className={`group flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors ${
                 active
-                  ? "text-purple-300 bg-purple-500/10"
-                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60"
+                  ? "text-accent-light bg-accent/10"
+                  : "text-ink-base hover:text-ink-strong hover:bg-surface-raised/60"
               }`}
             >
               <NavIcon link={link} active={active} scrolled={false} />
@@ -136,8 +136,8 @@ function DataArchiveDockSubmenu({
   return (
     <div className="absolute left-full top-0 pl-2 w-44 z-50">
       <div className="theme-glass-panel overflow-hidden rounded-2xl animate-scaleIn">
-        <div className="px-3 py-2 border-b border-border-primary">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+        <div className="px-3 py-2 border-b border-line-soft">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-ink-faint">
             Data Archive
           </p>
         </div>
@@ -149,8 +149,8 @@ function DataArchiveDockSubmenu({
               href={link.href}
               className={`group flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors ${
                 active
-                  ? "text-purple-300 bg-purple-500/10"
-                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60"
+                  ? "text-accent-light bg-accent/10"
+                  : "text-ink-base hover:text-ink-strong hover:bg-surface-raised/60"
               }`}
             >
               <NavIcon link={link} active={active} scrolled={false} />
@@ -187,12 +187,12 @@ function UserMenuDropdown({
   return (
     <div className={positionClass}>
       <div className="theme-glass-panel overflow-hidden rounded-2xl animate-scaleIn">
-        <div className="px-3 py-2.5 border-b border-border-primary">
-          <p className="text-sm font-medium text-text-primary truncate">
+        <div className="px-3 py-2.5 border-b border-line-soft">
+          <p className="text-sm font-medium text-ink-strong truncate">
             @{user.username}
           </p>
           {user.role !== "user" && (
-            <p className="text-[10px] uppercase tracking-widest text-purple-300 mt-0.5 font-mono">
+            <p className="text-[10px] uppercase tracking-widest text-accent-light mt-0.5 font-mono">
               {user.role}
             </p>
           )}
@@ -201,14 +201,14 @@ function UserMenuDropdown({
           <Link
             href={`/profile/${user.username}`}
             onClick={onClose}
-            className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
+            className="block px-3 py-2 text-sm text-ink-base hover:text-ink-strong hover:bg-surface-raised/60 transition-colors"
           >
             Profile
           </Link>
           <Link
             href="/settings"
             onClick={onClose}
-            className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 transition-colors"
+            className="block px-3 py-2 text-sm text-ink-base hover:text-ink-strong hover:bg-surface-raised/60 transition-colors"
           >
             Settings
           </Link>
@@ -216,19 +216,19 @@ function UserMenuDropdown({
             <Link
               href="/admin"
               onClick={onClose}
-              className="block px-3 py-2 text-sm text-purple-300 hover:text-purple-200 hover:bg-bg-elevated/60 transition-colors"
+              className="block px-3 py-2 text-sm text-accent-light hover:text-accent-light hover:bg-surface-raised/60 transition-colors"
             >
               Admin
             </Link>
           )}
         </div>
-        <div className="border-y border-border-primary px-3 py-3">
+        <div className="border-y border-line-soft px-3 py-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-ink-faint">
                 Appearance
               </span>
-              <p className="mt-0.5 text-[10px] text-text-tertiary">
+              <p className="mt-0.5 text-[10px] text-ink-soft">
                 {theme === "dark" ? "Dark mode" : "Light mode"}
               </p>
             </div>
@@ -236,10 +236,10 @@ function UserMenuDropdown({
             <div
               role="radiogroup"
               aria-label="Select appearance"
-              className="relative flex h-10 w-[88px] items-center rounded-full border border-border-primary bg-bg-primary/70 p-1"
+              className="relative flex h-10 w-[88px] items-center rounded-full border border-line-soft bg-surface-page/70 p-1"
             >
               <div
-                className={`absolute top-1 h-8 w-8 rounded-full border border-purple-500/20 bg-purple-500/12 shadow-[0_4px_12px_rgba(160,32,240,0.14)] transition-transform duration-300 ease-out ${
+                className={`absolute top-1 h-8 w-8 rounded-full border border-accent/20 bg-accent/12 shadow-[0_4px_12px_rgba(160,32,240,0.14)] transition-transform duration-300 ease-out ${
                   theme === "light" ? "translate-x-0" : "translate-x-10"
                 }`}
                 aria-hidden="true"
@@ -254,8 +254,8 @@ function UserMenuDropdown({
                 onClick={() => setTheme("light")}
                 className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
                   theme === "light"
-                    ? "text-purple-300"
-                    : "text-text-muted hover:text-text-primary"
+                    ? "text-accent-light"
+                    : "text-ink-faint hover:text-ink-strong"
                 }`}
               >
                 <svg
@@ -282,8 +282,8 @@ function UserMenuDropdown({
                 onClick={() => setTheme("dark")}
                 className={`relative z-10 ml-auto flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
                   theme === "dark"
-                    ? "text-purple-300"
-                    : "text-text-muted hover:text-text-primary"
+                    ? "text-accent-light"
+                    : "text-ink-faint hover:text-ink-strong"
                 }`}
               >
                 <svg
@@ -298,14 +298,14 @@ function UserMenuDropdown({
             </div>
           </div>
         </div>
-        <div className="border-t border-border-primary py-1">
+        <div className="border-t border-line-soft py-1">
           <button
             type="button"
             onClick={() => {
               onClose();
               onLogout();
             }}
-            className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+            className="w-full text-left px-3 py-2 text-sm text-danger-bright hover:bg-danger/10 transition-colors"
           >
             Log out
           </button>
@@ -392,7 +392,7 @@ export default function Navigation() {
     <>
       {/* ── Expanded state: full-width top bar ── */}
       <nav
-        className={`absolute top-0 left-0 right-0 z-[1200] backdrop-blur-xl border-b border-border-primary bg-bg-secondary/80 h-14 ${
+        className={`absolute top-0 left-0 right-0 z-[1200] backdrop-blur-xl border-b border-line-soft bg-surface-band/80 h-14 ${
           scrolled ? "pointer-events-none" : "pointer-events-auto"
         }`}
       >
@@ -403,13 +403,13 @@ export default function Navigation() {
               href="/"
               className={`group flex items-center gap-2.5 px-3.5 py-2 rounded-full transition-all duration-300 hover:scale-[1.04] active:scale-[0.97] ${
                 isActive("/")
-                  ? "bg-purple-500/15 text-purple-300 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
-                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/80 border border-transparent hover:border-border-secondary/60"
+                  ? "bg-accent/15 text-accent-light border border-accent/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
+                  : "text-ink-base hover:text-ink-strong hover:bg-surface-raised/80 border border-transparent hover:border-line-strong/60"
               }`}
             >
               <span className="font-bold text-lg">
-                <span className="text-purple-500">Lap</span>
-                <span className="text-text-primary">wise</span>
+                <span className="text-accent">Lap</span>
+                <span className="text-ink-strong">wise</span>
               </span>
             </Link>
           </div>
@@ -424,8 +424,8 @@ export default function Navigation() {
                   href={link.href}
                   className={`group flex items-center gap-2 px-3.5 py-2 rounded-full transition-all duration-300 hover:scale-[1.04] active:scale-[0.97] ${
                     active
-                      ? "bg-purple-500/15 text-purple-300 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
-                      : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/80 border border-transparent hover:border-border-secondary/60"
+                      ? "bg-accent/15 text-accent-light border border-accent/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
+                      : "text-ink-base hover:text-ink-strong hover:bg-surface-raised/80 border border-transparent hover:border-line-strong/60"
                   }`}
                 >
                   <NavIcon link={link} active={active} scrolled={false} />
@@ -448,8 +448,8 @@ export default function Navigation() {
                 type="button"
                 className={`group flex items-center gap-2 px-3.5 py-2 rounded-full transition-all duration-300 hover:scale-[1.04] active:scale-[0.97] ${
                   isArchiveActive
-                    ? "bg-purple-500/15 text-purple-300 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
-                    : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/80 border border-transparent hover:border-border-secondary/60"
+                    ? "bg-accent/15 text-accent-light border border-accent/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
+                    : "text-ink-base hover:text-ink-strong hover:bg-surface-raised/80 border border-transparent hover:border-line-strong/60"
                 }`}
               >
                 <DatabaseIcon active={isArchiveActive} scrolled={false} />
@@ -457,7 +457,7 @@ export default function Navigation() {
                   Data Archive
                 </span>
                 <svg
-                  className={`w-3 h-3 transition-transform duration-200 ${archiveOpen ? "rotate-180" : ""} ${isArchiveActive ? "text-purple-400" : "text-text-muted group-hover:text-text-primary"}`}
+                  className={`w-3 h-3 transition-transform duration-200 ${archiveOpen ? "rotate-180" : ""} ${isArchiveActive ? "text-accent-bright" : "text-ink-faint group-hover:text-ink-strong"}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -485,8 +485,8 @@ export default function Navigation() {
                   href={link.href}
                   className={`group flex items-center gap-2 px-3.5 py-2 rounded-full transition-all duration-300 hover:scale-[1.04] active:scale-[0.97] ${
                     active
-                      ? "bg-purple-500/15 text-purple-300 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
-                      : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/80 border border-transparent hover:border-border-secondary/60"
+                      ? "bg-accent/15 text-accent-light border border-accent/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
+                      : "text-ink-base hover:text-ink-strong hover:bg-surface-raised/80 border border-transparent hover:border-line-strong/60"
                   }`}
                 >
                   <NavIcon link={link} active={active} scrolled={false} />
@@ -501,21 +501,21 @@ export default function Navigation() {
           {/* Right side — desktop */}
           <div className="flex-1 hidden md:flex items-center justify-end gap-2 shrink-0">
             {isLoading ? (
-              <div className="w-8 h-8 rounded-full bg-bg-elevated animate-pulse" />
+              <div className="w-8 h-8 rounded-full bg-surface-raised animate-pulse" />
             ) : !isAuthenticated || !user ? (
               <Link
                 href="/login"
                 className={`group flex items-center gap-2 px-3.5 py-2 rounded-full transition-all duration-300 hover:scale-[1.04] active:scale-[0.97] ${
                   isActive("/login")
-                    ? "bg-purple-500/15 text-purple-300 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
-                    : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/80 border border-transparent hover:border-border-secondary/60"
+                    ? "bg-accent/15 text-accent-light border border-accent/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.08)]"
+                    : "text-ink-base hover:text-ink-strong hover:bg-surface-raised/80 border border-transparent hover:border-line-strong/60"
                 }`}
               >
                 <svg
                   className={`w-4 h-4 transition-all duration-500 ${
                     isActive("/login")
-                      ? "text-purple-400"
-                      : "text-text-muted group-hover:text-text-primary"
+                      ? "text-accent-bright"
+                      : "text-ink-faint group-hover:text-ink-strong"
                   }`}
                   fill="none"
                   stroke="currentColor"
@@ -547,7 +547,7 @@ export default function Navigation() {
                   className="group flex items-center"
                   aria-label="User menu"
                 >
-                  <div className="w-8 h-8 rounded-full bg-bg-elevated flex items-center justify-center text-xs font-bold text-text-muted group-hover:scale-[1.08] active:scale-95 transition-all duration-300 overflow-hidden">
+                  <div className="w-8 h-8 rounded-full bg-surface-raised flex items-center justify-center text-xs font-bold text-ink-faint group-hover:scale-[1.08] active:scale-95 transition-all duration-300 overflow-hidden">
                     {user.avatar_url ? (
                       // biome-ignore lint/performance/noImgElement: arbitrary avatar hosts
                       <img
@@ -636,12 +636,12 @@ export default function Navigation() {
               className="object-cover w-full h-full"
             />
           </div>
-          <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted whitespace-nowrap">
+          <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-ink-faint whitespace-nowrap">
             Home
           </span>
         </Link>
 
-        <div className="w-8 h-px bg-border-primary my-0.5" />
+        <div className="w-8 h-px bg-line-soft my-0.5" />
 
         {/* Nav icons — before archive */}
         {navLinksBefore.map((link) => {
@@ -653,12 +653,12 @@ export default function Navigation() {
               title={link.label}
               className={`group relative w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.12] active:scale-95 ${
                 active
-                  ? "bg-purple-500/15 border border-purple-500/25 shadow-[inset_0_0_10px_rgba(160,32,240,0.1)]"
-                  : "border border-transparent hover:bg-bg-elevated/80 hover:border-border-secondary/60"
+                  ? "bg-accent/15 border border-accent/25 shadow-[inset_0_0_10px_rgba(160,32,240,0.1)]"
+                  : "border border-transparent hover:bg-surface-raised/80 hover:border-line-strong/60"
               }`}
             >
               <NavIcon link={link} active={active} scrolled={true} />
-              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted whitespace-nowrap">
+              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-ink-faint whitespace-nowrap">
                 {link.label}
               </span>
             </Link>
@@ -676,14 +676,14 @@ export default function Navigation() {
             type="button"
             className={`group relative w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.12] active:scale-95 ${
               isArchiveActive
-                ? "bg-purple-500/15 border border-purple-500/25 shadow-[inset_0_0_10px_rgba(160,32,240,0.1)]"
-                : "border border-transparent hover:bg-bg-elevated/80 hover:border-border-secondary/60"
+                ? "bg-accent/15 border border-accent/25 shadow-[inset_0_0_10px_rgba(160,32,240,0.1)]"
+                : "border border-transparent hover:bg-surface-raised/80 hover:border-line-strong/60"
             }`}
             aria-label="Data Archive"
           >
             <DatabaseIcon active={isArchiveActive} scrolled={true} />
             {!archiveOpen && (
-              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted whitespace-nowrap">
+              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-ink-faint whitespace-nowrap">
                 Data Archive
               </span>
             )}
@@ -704,28 +704,28 @@ export default function Navigation() {
               title={link.label}
               className={`group relative w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.12] active:scale-95 ${
                 active
-                  ? "bg-purple-500/15 border border-purple-500/25 shadow-[inset_0_0_10px_rgba(160,32,240,0.1)]"
-                  : "border border-transparent hover:bg-bg-elevated/80 hover:border-border-secondary/60"
+                  ? "bg-accent/15 border border-accent/25 shadow-[inset_0_0_10px_rgba(160,32,240,0.1)]"
+                  : "border border-transparent hover:bg-surface-raised/80 hover:border-line-strong/60"
               }`}
             >
               <NavIcon link={link} active={active} scrolled={true} />
-              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted whitespace-nowrap">
+              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-ink-faint whitespace-nowrap">
                 {link.label}
               </span>
             </Link>
           );
         })}
 
-        <div className="w-8 h-px bg-border-primary my-0.5" />
+        <div className="w-8 h-px bg-line-soft my-0.5" />
 
         {/* User avatar */}
         {isLoading ? (
-          <div className="w-10 h-10 rounded-full bg-bg-elevated animate-pulse" />
+          <div className="w-10 h-10 rounded-full bg-surface-raised animate-pulse" />
         ) : !isAuthenticated || !user ? (
           <Link
             href="/login"
             title="Log in"
-            className="group relative w-12 h-12 flex items-center justify-center rounded-2xl text-text-muted hover:text-purple-300 hover:bg-purple-500/10 transition-all duration-200 hover:scale-[1.12] active:scale-95"
+            className="group relative w-12 h-12 flex items-center justify-center rounded-2xl text-ink-faint hover:text-accent-light hover:bg-accent/10 transition-all duration-200 hover:scale-[1.12] active:scale-95"
           >
             <svg
               className="w-6 h-6"
@@ -742,7 +742,7 @@ export default function Navigation() {
                 d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
               />
             </svg>
-            <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted whitespace-nowrap">
+            <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-ink-faint whitespace-nowrap">
               Log in
             </span>
           </Link>
@@ -761,7 +761,7 @@ export default function Navigation() {
               className="group relative w-12 h-12 flex items-center justify-center"
               aria-label="User menu"
             >
-              <div className="w-8 h-8 rounded-full bg-bg-elevated flex items-center justify-center text-sm font-bold text-text-muted group-hover:scale-[1.12] active:scale-95 transition-all duration-200 overflow-hidden">
+              <div className="w-8 h-8 rounded-full bg-surface-raised flex items-center justify-center text-sm font-bold text-ink-faint group-hover:scale-[1.12] active:scale-95 transition-all duration-200 overflow-hidden">
                 {user.avatar_url ? (
                   // biome-ignore lint/performance/noImgElement: arbitrary avatar hosts
                   <img
@@ -774,7 +774,7 @@ export default function Navigation() {
                   initial
                 )}
               </div>
-              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-text-muted whitespace-nowrap">
+              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 translate-x-1 opacity-0 scale-95 group-hover:opacity-100 group-hover:translate-x-2 group-hover:scale-100 transition-all duration-200 theme-glass-panel rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-ink-faint whitespace-nowrap">
                 Profile
               </span>
             </button>
@@ -794,7 +794,7 @@ export default function Navigation() {
 
       {/* Mobile app dock */}
       <div className="fixed inset-x-0 bottom-0 z-[1200] md:hidden">
-        <div className="grid grid-cols-4 gap-1 border-t border-border-primary bg-bg-secondary/95 p-1 shadow-[0_-12px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl pb-[calc(0.25rem+env(safe-area-inset-bottom))]">
+        <div className="grid grid-cols-4 gap-1 border-t border-line-soft bg-surface-band/95 p-1 shadow-[0_-12px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl pb-[calc(0.25rem+env(safe-area-inset-bottom))]">
           {[...navLinksBefore, ...navLinksAfter].map((link) => {
             const active = isActive(link.href);
             const mobileLabel = link.href === "/results" ? "Races" : link.label;
@@ -804,8 +804,8 @@ export default function Navigation() {
                 href={link.href}
                 className={`flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-md px-1 text-[10px] font-bold uppercase leading-tight transition-colors ${
                   active
-                    ? "bg-purple-500/15 text-purple-300"
-                    : "text-text-muted active:bg-bg-elevated/80"
+                    ? "bg-accent/15 text-accent-light"
+                    : "text-ink-faint active:bg-surface-raised/80"
                 }`}
                 aria-current={active ? "page" : undefined}
               >
@@ -819,8 +819,8 @@ export default function Navigation() {
             onClick={() => setMobileOpen((open) => !open)}
             className={`flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-md px-1 text-[10px] font-bold uppercase leading-tight transition-colors ${
               mobileOpen
-                ? "bg-purple-500/15 text-purple-300"
-                : "text-text-muted active:bg-bg-elevated/80"
+                ? "bg-accent/15 text-accent-light"
+                : "text-ink-faint active:bg-surface-raised/80"
             }`}
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileOpen}
@@ -863,15 +863,15 @@ export default function Navigation() {
           />
           <div className="theme-glass-panel fixed inset-x-3 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-[1220] max-h-[calc(100dvh-7rem)] overflow-y-auto overscroll-contain rounded-lg md:hidden animate-slideUp">
             <div className="px-4 pb-2 pt-3">
-              <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border-secondary" />
+              <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line-strong" />
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-ink-faint">
                   Navigate
                 </span>
                 <button
                   type="button"
                   onClick={() => setMobileOpen(false)}
-                  className="rounded-md px-2 py-1 text-xs font-bold text-text-muted active:bg-bg-elevated/80"
+                  className="rounded-md px-2 py-1 text-xs font-bold text-ink-faint active:bg-surface-raised/80"
                 >
                   Close
                 </button>
@@ -882,7 +882,7 @@ export default function Navigation() {
                 <Link
                   href="/login"
                   onClick={() => setMobileOpen(false)}
-                  className="group flex items-center gap-3 px-4 py-3 text-sm rounded-2xl transition-all duration-200 active:scale-[0.98] text-purple-300 bg-purple-500/10 border border-purple-500/20"
+                  className="group flex items-center gap-3 px-4 py-3 text-sm rounded-2xl transition-all duration-200 active:scale-[0.98] text-accent-light bg-accent/10 border border-accent/20"
                 >
                   <svg
                     className="w-4 h-4 flex-shrink-0"
@@ -911,8 +911,8 @@ export default function Navigation() {
                     onClick={() => setMobileOpen(false)}
                     className={`group flex items-center gap-3 px-4 py-3 text-sm rounded-2xl transition-all duration-200 active:scale-[0.98] ${
                       active
-                        ? "text-purple-300 bg-purple-500/12 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.06)]"
-                        : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 border border-transparent"
+                        ? "text-accent-light bg-accent/12 border border-accent/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.06)]"
+                        : "text-ink-base hover:text-ink-strong hover:bg-surface-raised/60 border border-transparent"
                     }`}
                   >
                     <NavIcon link={link} active={active} scrolled={false} />
@@ -928,14 +928,14 @@ export default function Navigation() {
                   onClick={() => setMobileArchiveOpen(!mobileArchiveOpen)}
                   className={`group w-full flex items-center gap-3 px-4 py-3 text-sm rounded-2xl transition-all duration-200 active:scale-[0.98] ${
                     isArchiveActive
-                      ? "text-purple-300 bg-purple-500/12 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.06)]"
-                      : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 border border-transparent"
+                      ? "text-accent-light bg-accent/12 border border-accent/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.06)]"
+                      : "text-ink-base hover:text-ink-strong hover:bg-surface-raised/60 border border-transparent"
                   }`}
                 >
                   <DatabaseIcon active={isArchiveActive} scrolled={false} />
                   <span className="flex-1 text-left">Data Archive</span>
                   <svg
-                    className={`w-4 h-4 transition-transform duration-200 ${mobileArchiveOpen ? "rotate-180" : ""} ${isArchiveActive ? "text-purple-400" : "text-text-muted"}`}
+                    className={`w-4 h-4 transition-transform duration-200 ${mobileArchiveOpen ? "rotate-180" : ""} ${isArchiveActive ? "text-accent-bright" : "text-ink-faint"}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -951,7 +951,7 @@ export default function Navigation() {
                 </button>
 
                 {mobileArchiveOpen && (
-                  <div className="mt-1 ml-4 space-y-1 border-l border-border-primary pl-3">
+                  <div className="mt-1 ml-4 space-y-1 border-l border-line-soft pl-3">
                     {archiveLinks.map((link) => {
                       const active = isActive(link.href);
                       return (
@@ -961,8 +961,8 @@ export default function Navigation() {
                           onClick={() => setMobileOpen(false)}
                           className={`group flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl transition-all duration-200 active:scale-[0.98] ${
                             active
-                              ? "text-purple-300 bg-purple-500/12 border border-purple-500/20"
-                              : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 border border-transparent"
+                              ? "text-accent-light bg-accent/12 border border-accent/20"
+                              : "text-ink-base hover:text-ink-strong hover:bg-surface-raised/60 border border-transparent"
                           }`}
                         >
                           <NavIcon
@@ -987,8 +987,8 @@ export default function Navigation() {
                     onClick={() => setMobileOpen(false)}
                     className={`group flex items-center gap-3 px-4 py-3 text-sm rounded-2xl transition-all duration-200 active:scale-[0.98] ${
                       active
-                        ? "text-purple-300 bg-purple-500/12 border border-purple-500/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.06)]"
-                        : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 border border-transparent"
+                        ? "text-accent-light bg-accent/12 border border-accent/20 shadow-[inset_0_0_12px_rgba(160,32,240,0.06)]"
+                        : "text-ink-base hover:text-ink-strong hover:bg-surface-raised/60 border border-transparent"
                     }`}
                   >
                     <NavIcon link={link} active={active} scrolled={false} />
@@ -998,21 +998,21 @@ export default function Navigation() {
               })}
             </div>
 
-            <div className="border-t border-border-primary px-4 py-3">
+            <div className="border-t border-line-soft px-4 py-3">
               {isLoading ? (
-                <div className="w-full h-11 bg-bg-elevated animate-pulse rounded-2xl" />
+                <div className="w-full h-11 bg-surface-raised animate-pulse rounded-2xl" />
               ) : !isAuthenticated || !user ? (
                 <Link
                   href="/login"
                   onClick={() => setMobileOpen(false)}
-                  className="block px-4 py-3 text-sm text-text-secondary hover:text-purple-300 rounded-2xl transition-colors"
+                  className="block px-4 py-3 text-sm text-ink-base hover:text-accent-light rounded-2xl transition-colors"
                 >
                   Log in
                 </Link>
               ) : (
                 <div className="space-y-1">
                   <div className="px-4 py-2 flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-xs font-bold text-purple-300 overflow-hidden">
+                    <div className="w-7 h-7 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center text-xs font-bold text-accent-light overflow-hidden">
                       {user.avatar_url ? (
                         // biome-ignore lint/performance/noImgElement: arbitrary avatar hosts
                         <img
@@ -1025,11 +1025,11 @@ export default function Navigation() {
                         initial
                       )}
                     </div>
-                    <span className="text-sm text-text-primary font-medium">
+                    <span className="text-sm text-ink-strong font-medium">
                       @{user.username}
                     </span>
                     {user.role !== "user" && (
-                      <span className="text-[10px] uppercase tracking-widest text-purple-300 font-mono">
+                      <span className="text-[10px] uppercase tracking-widest text-accent-light font-mono">
                         {user.role}
                       </span>
                     )}
@@ -1037,14 +1037,14 @@ export default function Navigation() {
                   <Link
                     href={`/profile/${user.username}`}
                     onClick={() => setMobileOpen(false)}
-                    className="block px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 rounded-2xl transition-colors"
+                    className="block px-4 py-2.5 text-sm text-ink-base hover:text-ink-strong hover:bg-surface-raised/60 rounded-2xl transition-colors"
                   >
                     Profile
                   </Link>
                   <Link
                     href="/settings"
                     onClick={() => setMobileOpen(false)}
-                    className="block px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60 rounded-2xl transition-colors"
+                    className="block px-4 py-2.5 text-sm text-ink-base hover:text-ink-strong hover:bg-surface-raised/60 rounded-2xl transition-colors"
                   >
                     Settings
                   </Link>
@@ -1052,7 +1052,7 @@ export default function Navigation() {
                     <Link
                       href="/admin"
                       onClick={() => setMobileOpen(false)}
-                      className="block px-4 py-2.5 text-sm text-purple-300 hover:text-purple-200 hover:bg-bg-elevated/60 rounded-2xl transition-colors"
+                      className="block px-4 py-2.5 text-sm text-accent-light hover:text-accent-light hover:bg-surface-raised/60 rounded-2xl transition-colors"
                     >
                       Admin
                     </Link>
@@ -1063,7 +1063,7 @@ export default function Navigation() {
                       setMobileOpen(false);
                       logout();
                     }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 rounded-2xl transition-colors"
+                    className="w-full text-left px-4 py-2.5 text-sm text-danger-bright hover:bg-danger/10 rounded-2xl transition-colors"
                   >
                     Log out
                   </button>
@@ -1071,12 +1071,12 @@ export default function Navigation() {
               )}
             </div>
 
-            <div className="border-t border-border-primary px-4 py-3">
+            <div className="border-t border-line-soft px-4 py-3">
               <div className="flex items-center gap-4">
                 <Link
                   href="/about"
                   onClick={() => setMobileOpen(false)}
-                  className="text-text-muted hover:text-text-primary text-xs transition-colors"
+                  className="text-ink-faint hover:text-ink-strong text-xs transition-colors"
                 >
                   About
                 </Link>

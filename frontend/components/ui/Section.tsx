@@ -24,10 +24,11 @@ export default function Section({
   };
 
   const backgroundStyles = {
-    primary: "bg-bg-primary",
-    secondary: "bg-bg-secondary",
-    tertiary: "bg-bg-tertiary",
-    gradient: "bg-gradient-to-b from-bg-primary via-bg-secondary to-bg-primary",
+    primary: "bg-surface-page",
+    secondary: "bg-surface-band",
+    tertiary: "bg-surface-panel",
+    gradient:
+      "bg-gradient-to-b from-surface-page via-surface-band to-surface-page",
   };
 
   return (

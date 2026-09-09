@@ -13,7 +13,7 @@ export default function MarkdownContent({
 
   return (
     <div
-      className={`markdown-content ${className}`}
+      className={`prose ${className}`}
       // biome-ignore lint/security/noDangerouslySetInnerHtml: markdownToHtml escapes HTML and only emits a limited safe subset.
       dangerouslySetInnerHTML={{ __html: html }}
     />

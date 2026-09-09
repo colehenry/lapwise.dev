@@ -165,7 +165,7 @@ export default function EntityHistoryGraph({
     }
 
     return (
-      <div className="bg-bg-tertiary border border-border-primary rounded-sm p-3 shadow-xl">
+      <div className="bg-surface-panel border border-line-soft rounded-sm p-3 shadow-xl">
         {config.renderRaceTooltip(data)}
       </div>
     );
@@ -173,7 +173,7 @@ export default function EntityHistoryGraph({
 
   if (loading) {
     return (
-      <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm p-6">
+      <div className="bg-surface-panel border border-line-soft rounded-sm shadow-sm p-6">
         <Skeleton variant="text" width="33%" height="24px" className="mb-4" />
         <Skeleton variant="rectangular" height="256px" />
       </div>
@@ -188,15 +188,15 @@ export default function EntityHistoryGraph({
     (graphMode === "race" && raceData?.races.length === 0)
   ) {
     return (
-      <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-        <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+      <div className="bg-surface-panel border border-line-soft rounded-sm shadow-sm overflow-hidden">
+        <div className="relative h-10 bg-surface-page border-b border-line-soft px-4 flex items-center overflow-hidden">
           <TrianglePattern id="championship-history-empty-triangles" />
           <span className={`relative z-10 ${CHART_TYPOGRAPHY.titleClassName}`}>
             Championship History
           </span>
         </div>
         <div className="p-6">
-          <p className="text-text-tertiary">No data available</p>
+          <p className="text-ink-soft">No data available</p>
         </div>
       </div>
     );
@@ -272,13 +272,13 @@ export default function EntityHistoryGraph({
   const toggleClass = (active: boolean) =>
     `px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
       active
-        ? "bg-purple-500/20 border border-purple-500 text-purple-300"
-        : "border border-transparent text-text-muted hover:text-text-secondary"
+        ? "bg-accent/20 border border-accent text-accent-light"
+        : "border border-transparent text-ink-faint hover:text-ink-base"
     }`;
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-      <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+    <div className="bg-surface-panel border border-line-soft rounded-sm shadow-sm overflow-hidden">
+      <div className="relative h-10 bg-surface-page border-b border-line-soft px-4 flex items-center overflow-hidden">
         <TrianglePattern id="championship-history-triangles" />
         <span className={`relative z-10 ${CHART_TYPOGRAPHY.titleClassName}`}>
           Championship History
@@ -322,9 +322,9 @@ export default function EntityHistoryGraph({
                         e.target.checked ? "points_per_race" : "points",
                       )
                     }
-                    className="accent-purple-500"
+                    className="accent-accent"
                   />
-                  <span className="text-xs font-bold font-mono uppercase tracking-widest text-text-secondary">
+                  <span className="text-xs font-bold font-mono uppercase tracking-widest text-ink-base">
                     Points/Race
                   </span>
                 </label>
@@ -350,7 +350,7 @@ export default function EntityHistoryGraph({
               <button
                 type="button"
                 onClick={() => setShowRangeSelector(true)}
-                className="px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 border border-border-secondary text-text-secondary hover:border-purple-500 hover:text-purple-300"
+                className="px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 border border-line-strong text-ink-base hover:border-accent hover:text-accent-light"
               >
                 {yearRange.start} - {yearRange.end}
               </button>

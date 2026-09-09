@@ -54,7 +54,7 @@ export default function AdminCommentsPage() {
         {["a", "b", "c"].map((k) => (
           <div
             key={k}
-            className="h-24 rounded-sm border border-border-primary bg-bg-tertiary animate-pulse"
+            className="h-24 rounded-sm border border-line-soft bg-surface-panel animate-pulse"
           />
         ))}
       </div>
@@ -64,13 +64,13 @@ export default function AdminCommentsPage() {
   return (
     <div className="space-y-4">
       {error && (
-        <div className="p-4 text-red-400 border border-red-400/20 bg-red-400/5 rounded-sm text-sm">
+        <div className="p-4 text-danger-bright border border-danger-bright/20 bg-danger-bright/5 rounded-sm text-sm">
           {error}
         </div>
       )}
 
       {comments.length === 0 ? (
-        <div className="border border-dashed border-border-primary rounded-sm p-8 text-center text-sm text-text-muted">
+        <div className="border border-dashed border-line-soft rounded-sm p-8 text-center text-sm text-ink-faint">
           No comments yet.
         </div>
       ) : (
@@ -83,8 +83,8 @@ export default function AdminCommentsPage() {
               key={comment.id}
               className={`border rounded-sm p-4 space-y-3 ${
                 isRemoved
-                  ? "border-red-500/30 bg-red-500/5"
-                  : "border-border-primary bg-bg-tertiary"
+                  ? "border-danger/30 bg-danger/5"
+                  : "border-line-soft bg-surface-panel"
               }`}
             >
               <div className="flex flex-wrap items-center gap-3">
@@ -93,26 +93,26 @@ export default function AdminCommentsPage() {
                   avatarUrl={comment.author.avatar_url}
                   size="sm"
                 />
-                <span className="text-xs font-mono uppercase tracking-wider text-text-secondary">
+                <span className="text-xs font-mono uppercase tracking-wider text-ink-base">
                   {comment.author.username}
                 </span>
                 <Link
                   href={`/results/${comment.year}/${comment.round}#comments`}
-                  className="text-[10px] font-mono uppercase tracking-widest text-purple-400 hover:text-purple-300"
+                  className="text-[10px] font-mono uppercase tracking-widest text-accent-bright hover:text-accent-light"
                 >
                   {comment.year} R{String(comment.round).padStart(2, "0")}
                 </Link>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-ink-faint">
                   {formatRelativeTime(comment.created_at)}
                 </span>
                 {isRemoved && (
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-red-400">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-danger-bright">
                     Removed
                   </span>
                 )}
               </div>
 
-              <p className="text-sm text-text-secondary whitespace-pre-line">
+              <p className="text-sm text-ink-base whitespace-pre-line">
                 {comment.body}
               </p>
 

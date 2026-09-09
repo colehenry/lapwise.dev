@@ -20,10 +20,10 @@ export default function ArchivePanel({
 }: ArchivePanelProps) {
   return (
     <div
-      className={`bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden ${className}`}
+      className={`bg-surface-panel border border-line-soft rounded-sm shadow-sm overflow-hidden ${className}`}
     >
       {(title || actions) && (
-        <div className="relative min-h-10 bg-bg-primary border-b border-border-primary px-4 py-2 flex items-center justify-between gap-3 overflow-hidden">
+        <div className="relative min-h-10 bg-surface-page border-b border-line-soft px-4 py-2 flex items-center justify-between gap-3 overflow-hidden">
           {title && (
             <>
               <TrianglePattern
@@ -32,7 +32,7 @@ export default function ArchivePanel({
                   `archive-panel-${title.replace(/\s+/g, "-").toLowerCase()}`
                 }
               />
-              <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+              <span className="relative z-10 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
                 {title}
               </span>
             </>

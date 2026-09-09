@@ -57,7 +57,7 @@ export default function SeasonStandingsPanels({
       <div className="mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Driver Standings */}
-          <div className="relative bg-bg-tertiary border border-border-primary rounded-sm shadow-sm flex flex-col">
+          <div className="relative bg-surface-panel border border-line-soft rounded-sm shadow-sm flex flex-col">
             {sessionType === "qualifying" && (
               <QualifyingPointsInfo
                 formulaBase={qualifyingStandings?.formula_base ?? 21}
@@ -89,10 +89,10 @@ export default function SeasonStandingsPanels({
                 ) => (
                   <div
                     key={`${driver.driver_code}-${driver.team_name}-${idx}`}
-                    className="flex items-center gap-2 py-2 px-4 border-b border-border-primary last:border-0 min-h-[60px]"
+                    className="flex items-center gap-2 py-2 px-4 border-b border-line-soft last:border-0 min-h-[60px]"
                   >
                     {/* Position */}
-                    <div className="text-lg font-bold text-text-muted w-8 font-mono">
+                    <div className="text-lg font-bold text-ink-faint w-8 font-mono">
                       {sessionType === "race"
                         ? displayedPosition(
                             driver as DriverStanding,
@@ -113,7 +113,7 @@ export default function SeasonStandingsPanels({
                     <div className="flex-1 flex flex-col justify-center">
                       <Link
                         href={driverHref(driver) ?? "/drivers"}
-                        className="font-semibold text-text-primary text-sm hover:text-purple-300 transition-colors duration-150"
+                        className="font-semibold text-ink-strong text-sm hover:text-accent-light transition-colors duration-150"
                       >
                         {driver.full_name}
                       </Link>
@@ -129,7 +129,7 @@ export default function SeasonStandingsPanels({
                           href={
                             constructorHref(driver.team_name) ?? "/constructors"
                           }
-                          className="hover:text-purple-300 transition-colors duration-150"
+                          className="hover:text-accent-light transition-colors duration-150"
                         >
                           {driver.team_name}
                         </Link>
@@ -182,7 +182,7 @@ export default function SeasonStandingsPanels({
           </div>
 
           {/* Constructor Standings */}
-          <div className="relative bg-bg-tertiary border border-border-primary rounded-sm shadow-sm flex flex-col">
+          <div className="relative bg-surface-panel border border-line-soft rounded-sm shadow-sm flex flex-col">
             {sessionType === "qualifying" && (
               <QualifyingPointsInfo
                 formulaBase={qualifyingStandings?.formula_base ?? 21}
@@ -214,11 +214,11 @@ export default function SeasonStandingsPanels({
                 ) => (
                   <div
                     key={`${team.team_name}-${idx}`}
-                    className="py-2 px-4 border-b border-border-primary last:border-0 min-h-[60px]"
+                    className="py-2 px-4 border-b border-line-soft last:border-0 min-h-[60px]"
                   >
                     <div className="flex items-center gap-2">
                       {/* Position */}
-                      <div className="text-lg font-bold text-text-muted w-8 font-mono">
+                      <div className="text-lg font-bold text-ink-faint w-8 font-mono">
                         {sessionType === "race"
                           ? displayedPosition(
                               team as ConstructorStanding,
@@ -230,7 +230,7 @@ export default function SeasonStandingsPanels({
 
                       {/* Team Logo */}
                       {isValidHeadshotUrl(team.logo_url) && (
-                        <div className="w-10 h-10 rounded-sm overflow-hidden border border-border-secondary bg-bg-secondary">
+                        <div className="w-10 h-10 rounded-sm overflow-hidden border border-line-strong bg-surface-band">
                           <Image
                             src={team.logo_url}
                             alt={team.team_name}
@@ -259,13 +259,13 @@ export default function SeasonStandingsPanels({
                               resolveReadableAccentColor(
                                 team.team_color,
                                 theme,
-                                "var(--text-primary)",
-                              ) ?? "var(--text-primary)",
+                                "var(--ink-strong)",
+                              ) ?? "var(--ink-strong)",
                           }}
                         >
                           <Link
                             href={constructorHref(team) ?? "/constructors"}
-                            className="hover:text-purple-300 transition-colors duration-150"
+                            className="hover:text-accent-light transition-colors duration-150"
                           >
                             {team.team_name}
                           </Link>
@@ -278,7 +278,7 @@ export default function SeasonStandingsPanels({
                             }
                           />
                         )}
-                        <div className="text-xs text-text-muted">
+                        <div className="text-xs text-ink-faint">
                           {(sessionType === "race"
                             ? getTeamDrivers(team.team_name)
                             : getTeamQualifyingDrivers(team.team_name)
@@ -291,7 +291,7 @@ export default function SeasonStandingsPanels({
                             >
                               <Link
                                 href={driverHref(driver) ?? "/drivers"}
-                                className="hover:text-purple-300 transition-colors duration-150"
+                                className="hover:text-accent-light transition-colors duration-150"
                               >
                                 {driver.full_name}
                               </Link>{" "}
@@ -351,7 +351,7 @@ export default function SeasonStandingsPanels({
           <button
             type="button"
             onClick={() => setExpandedStandings(!expandedStandings)}
-            className="border border-border-secondary rounded-sm text-text-secondary hover:border-purple-500 hover:text-purple-300 font-mono text-xs uppercase tracking-widest px-6 py-2 transition-colors duration-150 flex items-center gap-2"
+            className="border border-line-strong rounded-sm text-ink-base hover:border-accent hover:text-accent-light font-mono text-xs uppercase tracking-widest px-6 py-2 transition-colors duration-150 flex items-center gap-2"
           >
             {expandedStandings ? (
               <>

@@ -77,10 +77,10 @@ export default function VoteButton({
       title={label}
       className={`inline-flex items-center gap-1 font-mono text-[11px] tracking-wider transition-colors ${
         failed
-          ? "text-red-400"
+          ? "text-danger-bright"
           : voted
-            ? "text-purple-400"
-            : "text-text-muted hover:text-text-primary"
+            ? "text-accent-bright"
+            : "text-ink-faint hover:text-ink-strong"
       }`}
       disabled={isSubmitting}
     >

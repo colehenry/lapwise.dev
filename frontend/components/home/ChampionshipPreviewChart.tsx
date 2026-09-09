@@ -40,15 +40,15 @@ function PreviewTooltip({
     payload[0]?.payload?.event_name ?? `Round ${label}`
   ).replace("Grand Prix", "GP");
   return (
-    <div className="rounded-lg border border-border-primary bg-bg-tertiary p-3 shadow-xl">
-      <p className="mb-2 font-bold text-text-primary text-xs">{eventName}</p>
+    <div className="rounded-lg border border-line-soft bg-surface-panel p-3 shadow-xl">
+      <p className="mb-2 font-bold text-ink-strong text-xs">{eventName}</p>
       {payload.map((entry) => (
         <div key={entry.dataKey} className="mb-1 flex items-center gap-2">
           <div
             className="h-2.5 w-2.5 rounded-full"
             style={{ backgroundColor: entry.color }}
           />
-          <span className="text-xs font-bold text-text-primary">
+          <span className="text-xs font-bold text-ink-strong">
             {entry.name}: {entry.value} pts
           </span>
         </div>
@@ -91,7 +91,7 @@ function ChampionshipChart({
 
   return (
     <div className="animate-fadeIn rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-      <p className="mb-2 text-[9px] font-mono uppercase tracking-[0.1em] text-text-muted">
+      <p className="mb-2 text-[9px] font-mono uppercase tracking-[0.1em] text-ink-faint">
         Points Progression · R1–R24
       </p>
       <div className="relative" style={{ height: 220 }}>
@@ -172,7 +172,7 @@ function ChampionshipChart({
         </StableResponsiveContainer>
 
         {/* Legend — top-left overlay, same as PointsByRoundGraph */}
-        <div className="pointer-events-none absolute left-20 top-2 rounded-sm border border-border-primary bg-bg-primary/90 p-2 backdrop-blur-sm">
+        <div className="pointer-events-none absolute left-20 top-2 rounded-sm border border-line-soft bg-surface-page/90 p-2 backdrop-blur-sm">
           <div className="flex flex-col gap-1">
             {DRIVERS.map((d) => (
               <div key={d.key} className="flex items-center gap-2">
@@ -180,7 +180,7 @@ function ChampionshipChart({
                   className="h-2.5 w-2.5 rounded-full"
                   style={{ backgroundColor: driverColorMap[d.key] }}
                 />
-                <span className="font-mono text-[10px] font-bold text-text-primary">
+                <span className="font-mono text-[10px] font-bold text-ink-strong">
                   {d.name}
                 </span>
               </div>

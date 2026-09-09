@@ -42,12 +42,12 @@ function SummaryCell({
   detail: string;
 }) {
   return (
-    <div className="min-w-0 border border-border-primary bg-bg-primary/20 px-4 py-3">
+    <div className="min-w-0 border border-line-soft bg-surface-page/20 px-4 py-3">
       <MonoLabel className="block mb-1">{label}</MonoLabel>
-      <div className="truncate font-mono text-2xl font-bold tabular-nums text-text-primary">
+      <div className="truncate font-mono text-2xl font-bold tabular-nums text-ink-strong">
         {value}
       </div>
-      <div className="mt-1 truncate text-xs text-text-muted">{detail}</div>
+      <div className="mt-1 truncate text-xs text-ink-faint">{detail}</div>
     </div>
   );
 }
@@ -64,7 +64,7 @@ function BarTrack({
   const width = max > 0 ? Math.max((value / max) * 100, value > 0 ? 2 : 0) : 0;
 
   return (
-    <div className="h-2 overflow-hidden rounded-sm bg-bg-primary">
+    <div className="h-2 overflow-hidden rounded-sm bg-surface-page">
       <div
         className="h-full rounded-sm transition-all duration-500"
         style={{ width: `${width}%`, backgroundColor: color }}
@@ -83,13 +83,13 @@ function DistributionRow({
   const pct = total > 0 ? (stat.count / total) * 100 : 0;
 
   return (
-    <div className="grid grid-cols-[4rem_1fr_auto] items-center gap-4 border-b border-border-primary px-4 py-3 last:border-b-0">
-      <span className="font-mono text-sm font-bold text-text-secondary">
+    <div className="grid grid-cols-[4rem_1fr_auto] items-center gap-4 border-b border-line-soft px-4 py-3 last:border-b-0">
+      <span className="font-mono text-sm font-bold text-ink-base">
         {stat.label}
       </span>
       <BarTrack value={stat.count} max={total} color={stat.color} />
       <div className="text-right">
-        <div className="font-mono text-lg font-bold tabular-nums text-text-primary">
+        <div className="font-mono text-lg font-bold tabular-nums text-ink-strong">
           {stat.count.toLocaleString()}
         </div>
         <MonoLabel>{pct.toFixed(0)}%</MonoLabel>
@@ -126,7 +126,7 @@ export default function ConstructorStatisticsPanel({
   }
 
   const races = raceData?.races ?? [];
-  const barColor = accentColor ?? "var(--red-500)";
+  const barColor = accentColor ?? "var(--danger)";
   const seasonStats: Record<number, SeasonStat> = {};
 
   for (const race of races) {
@@ -224,7 +224,7 @@ export default function ConstructorStatisticsPanel({
         title="Finish Distribution"
         headerId="constructor-finish-dist"
       >
-        <div className="rounded-sm border border-border-primary bg-bg-primary/20">
+        <div className="rounded-sm border border-line-soft bg-surface-page/20">
           {distribution.map((stat) => (
             <DistributionRow
               key={stat.label}

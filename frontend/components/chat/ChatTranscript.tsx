@@ -99,7 +99,7 @@ export default function ChatTranscript({
       )}
       {error && (
         <div
-          className="mx-auto mb-4 w-[calc(100%_-_1.5rem)] max-w-4xl rounded-xl border border-red-500/20 bg-red-500/[0.08] px-4 py-3 text-sm text-red-400"
+          className="mx-auto mb-4 w-[calc(100%_-_1.5rem)] max-w-4xl rounded-xl border border-danger/20 bg-danger/[0.08] px-4 py-3 text-sm text-danger-bright"
           role="alert"
         >
           {error}

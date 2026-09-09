@@ -47,11 +47,11 @@ export default function ConfirmDialog({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto backdrop:bg-black/60 bg-bg-tertiary border border-border-primary rounded-sm p-0 max-w-sm w-full h-fit shadow-xl"
+      className="fixed inset-0 m-auto backdrop:bg-black/60 bg-surface-panel border border-line-soft rounded-sm p-0 max-w-sm w-full h-fit shadow-xl"
     >
       <div className="p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
-        <p className="text-sm text-text-secondary">{message}</p>
+        <h3 className="text-lg font-semibold text-ink-strong">{title}</h3>
+        <p className="text-sm text-ink-base">{message}</p>
         <div className="flex items-center justify-end gap-2 pt-2">
           <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
             {cancelLabel}

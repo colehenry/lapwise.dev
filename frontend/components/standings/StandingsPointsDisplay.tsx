@@ -9,15 +9,16 @@ export function QualifyingPointsInfo({ formulaBase }: { formulaBase: number }) {
       <button
         type="button"
         aria-label="How qualifying points are calculated"
-        className="w-4 h-4 rounded-full border border-border-secondary bg-bg-primary text-text-muted hover:text-purple-300 hover:border-purple-500 flex items-center justify-center text-[9px] font-bold font-mono transition-colors duration-150"
+        className="w-4 h-4 rounded-full border border-line-strong bg-surface-page text-ink-faint hover:text-accent-light hover:border-accent flex items-center justify-center text-[9px] font-bold font-mono transition-colors duration-150"
       >
         ?
       </button>
-      <div className="hidden group-hover:block group-focus-within:block absolute right-0 top-full mt-2 w-56 bg-bg-primary border border-border-secondary rounded-sm p-3 shadow-lg z-30">
-        <p className="text-[10px] text-text-secondary leading-relaxed normal-case tracking-normal font-sans">
-          Unofficial <span className="font-mono text-purple-300">Lapwise</span>{" "}
-          metric for one-lap pace. Each qualifying awards{" "}
-          <span className="font-mono text-purple-300">
+      <div className="hidden group-hover:block group-focus-within:block absolute right-0 top-full mt-2 w-56 bg-surface-page border border-line-strong rounded-sm p-3 shadow-lg z-30">
+        <p className="text-[10px] text-ink-base leading-relaxed normal-case tracking-normal font-sans">
+          Unofficial{" "}
+          <span className="font-mono text-accent-light">Lapwise</span> metric
+          for one-lap pace. Each qualifying awards{" "}
+          <span className="font-mono text-accent-light">
             {formulaBase}−position
           </span>{" "}
           points (P1 = {maxPoints}, P{maxPoints} = 1). Scales to grid size so
@@ -73,7 +74,7 @@ export function MedalsWithBreakdown({
           <span className="text-xs" title={medal.label}>
             {medal.icon}
           </span>
-          <span className="text-xs font-bold text-text-primary">
+          <span className="text-xs font-bold text-ink-strong">
             {medal.count}
           </span>
         </div>
@@ -88,34 +89,32 @@ export function MedalsWithBreakdown({
           onBlur={() => setTooltipPos(null)}
           className="flex items-baseline gap-1 cursor-help"
         >
-          <span className="text-[9px] text-text-muted tracking-widest font-mono">
+          <span className="text-[9px] text-ink-faint tracking-widest font-mono">
             PTS
           </span>
-          <span className="text-lg font-bold text-text-primary font-mono">
+          <span className="text-lg font-bold text-ink-strong font-mono">
             {total}
           </span>
         </button>
         {tooltipPos && (
           <div
-            className="fixed w-36 bg-bg-primary border border-border-secondary rounded-sm p-2 shadow-lg z-50 pointer-events-none"
+            className="fixed w-36 bg-surface-page border border-line-strong rounded-sm p-2 shadow-lg z-50 pointer-events-none"
             style={{ top: tooltipPos.top, right: tooltipPos.right }}
           >
-            <p className="text-[10px] font-bold text-text-primary mb-1.5 truncate">
+            <p className="text-[10px] font-bold text-ink-strong mb-1.5 truncate">
               {name}
             </p>
             {positions.length === 0 ? (
-              <p className="text-[10px] text-text-muted">No results</p>
+              <p className="text-[10px] text-ink-faint">No results</p>
             ) : (
               <div className="flex flex-col gap-0.5">
                 {positions.map(({ position, count }) => (
                   <div
                     key={position}
-                    className="flex items-center justify-between text-[10px] text-text-secondary font-mono"
+                    className="flex items-center justify-between text-[10px] text-ink-base font-mono"
                   >
                     <span>P{position}</span>
-                    <span className="text-text-primary font-bold">
-                      {count}x
-                    </span>
+                    <span className="text-ink-strong font-bold">{count}x</span>
                   </div>
                 ))}
               </div>

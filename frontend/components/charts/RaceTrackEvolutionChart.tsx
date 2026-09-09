@@ -230,7 +230,7 @@ export default function RaceTrackEvolutionChart({
   if (season < 2018) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           Telemetry data available from 2018 onwards.
         </p>
       </div>
@@ -240,8 +240,8 @@ export default function RaceTrackEvolutionChart({
   if (isLoading) {
     return (
       <div className="space-y-2">
-        <div className="h-5 bg-bg-elevated rounded w-56 animate-pulse" />
-        <div className="h-64 bg-bg-elevated rounded animate-pulse" />
+        <div className="h-5 bg-surface-raised rounded w-56 animate-pulse" />
+        <div className="h-64 bg-surface-raised rounded animate-pulse" />
       </div>
     );
   }
@@ -249,7 +249,7 @@ export default function RaceTrackEvolutionChart({
   if (!data || allActiveCompounds.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           No clean lap data available.
         </p>
       </div>
@@ -265,18 +265,18 @@ export default function RaceTrackEvolutionChart({
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+          <p className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
             Pace trend
           </p>
           {absImprovement >= 0.1 ? (
             <span
-              className={`text-sm font-bold font-mono ${improvement > 0 ? "text-green-400" : "text-red-400"}`}
+              className={`text-sm font-bold font-mono ${improvement > 0 ? "text-green-400" : "text-danger-bright"}`}
             >
               {improvement > 0 ? "+" : ""}
               {improvement.toFixed(3)}s evolution
             </span>
           ) : (
-            <span className="text-sm font-bold font-mono text-text-muted">
+            <span className="text-sm font-bold font-mono text-ink-faint">
               Steady
             </span>
           )}
@@ -293,7 +293,7 @@ export default function RaceTrackEvolutionChart({
                   type="checkbox"
                   checked={isOn}
                   onChange={() => toggleCompound(c)}
-                  className="w-3 h-3 accent-purple-500"
+                  className="w-3 h-3 accent-accent"
                 />
                 <div
                   className="w-2.5 h-2.5 rounded-full flex-shrink-0 transition-opacity"
@@ -324,12 +324,12 @@ export default function RaceTrackEvolutionChart({
             <button
               type="button"
               onClick={() => setShowDropdown((v) => !v)}
-              className="px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-border-primary text-text-secondary hover:border-purple-500 hover:text-purple-300 transition-colors"
+              className="px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-line-soft text-ink-base hover:border-accent hover:text-accent-light transition-colors"
             >
               Drivers ({selectedDrivers.length})
             </button>
             {showDropdown && (
-              <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-10 min-w-[220px] max-h-[280px] overflow-y-auto">
+              <div className="absolute right-0 top-full mt-1 bg-surface-panel border border-line-soft rounded-sm shadow-xl z-10 min-w-[220px] max-h-[280px] overflow-y-auto">
                 {dropdownDrivers.map((driver) => {
                   const key = driverKey(driver);
                   const isSelected = selectedDrivers.includes(key);
@@ -339,15 +339,15 @@ export default function RaceTrackEvolutionChart({
                   return (
                     <label
                       key={key}
-                      className="flex items-center gap-2 px-3 py-2 hover:bg-bg-elevated cursor-pointer"
+                      className="flex items-center gap-2 px-3 py-2 hover:bg-surface-raised cursor-pointer"
                     >
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleDriver(key)}
-                        className="w-4 h-4 accent-purple-500"
+                        className="w-4 h-4 accent-accent"
                       />
-                      <span className="text-[10px] font-mono text-text-muted w-5">
+                      <span className="text-[10px] font-mono text-ink-faint w-5">
                         {driver.final_position ?? "-"}
                       </span>
                       <span
@@ -407,7 +407,7 @@ export default function RaceTrackEvolutionChart({
                 const p = payload[0]?.payload as { x: number; y: number };
                 if (!p?.y) return null;
                 return (
-                  <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs">
+                  <div className="bg-surface-panel border border-line-soft rounded-sm p-2 shadow-lg text-xs">
                     <p
                       className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-0.5`}
                     >
@@ -454,7 +454,7 @@ export default function RaceTrackEvolutionChart({
         </ResponsiveContainer>
       </MobileChartFrame>
 
-      <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+      <p className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
         Green flag laps only · outlaps, pit laps, and lap 1 excluded · 110%
         filter applied
       </p>

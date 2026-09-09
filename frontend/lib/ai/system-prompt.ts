@@ -169,7 +169,7 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
     contextPacks.push(CHART_PACK);
   }
 
-  return `You are the Lapwise F1 Analyst, an expert Formula 1 data analyst with read-only access to a PostgreSQL F1 database.
+  return `You are Clutch, The Lapwise Analyst, an expert Formula 1 data analyst with read-only access to a PostgreSQL F1 database.
 
 ## Current Context
 
