@@ -3,17 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { CHART_TYPOGRAPHY } from "@/components/charts/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
-import { COMPOUND_COLORS as COMPOUND } from "@/lib/palette";
+import { getCompoundColor } from "@/lib/palette";
 import type { CircuitTyreStatsResponse } from "@/lib/types";
-
-const COMPOUND_COLORS: Record<string, { bar: string; text: string }> = {
-  SUPERSOFT: { bar: COMPOUND.SUPERSOFT, text: "text-purple-400" },
-  SOFT: { bar: COMPOUND.SOFT, text: "text-red-400" },
-  MEDIUM: { bar: COMPOUND.MEDIUM, text: "text-yellow-400" },
-  HARD: { bar: COMPOUND.HARD, text: "text-text-secondary" },
-  INTERMEDIATE: { bar: COMPOUND.INTERMEDIATE, text: "text-green-400" },
-  WET: { bar: COMPOUND.WET, text: "text-blue-400" },
-};
 
 interface CircuitTyreStatsProps {
   circuitId: string;
@@ -65,10 +56,7 @@ export default function CircuitTyreStats({ circuitId }: CircuitTyreStatsProps) {
 
       <div className="space-y-3">
         {data.compounds.map((compound) => {
-          const colors = COMPOUND_COLORS[compound.compound] || {
-            bar: "var(--delta-neutral)",
-            text: "text-text-muted",
-          };
+          const color = getCompoundColor(compound.compound);
           const widthPercent =
             maxPercent > 0 ? (compound.percentage / maxPercent) * 100 : 0;
 
@@ -78,10 +66,11 @@ export default function CircuitTyreStats({ circuitId }: CircuitTyreStatsProps) {
                 <div className="flex items-center gap-2">
                   <span
                     className="w-3 h-3 rounded-full shrink-0"
-                    style={{ backgroundColor: colors.bar }}
+                    style={{ backgroundColor: color }}
                   />
                   <span
-                    className={`text-xs font-bold font-mono uppercase tracking-widest ${colors.text}`}
+                    className="text-xs font-bold font-mono uppercase tracking-widest"
+                    style={{ color }}
                   >
                     {compound.compound}
                   </span>
@@ -102,7 +91,7 @@ export default function CircuitTyreStats({ circuitId }: CircuitTyreStatsProps) {
                   className="h-full rounded-full transition-all duration-700"
                   style={{
                     width: `${widthPercent}%`,
-                    backgroundColor: colors.bar,
+                    backgroundColor: color,
                     opacity: 0.72,
                   }}
                 />
