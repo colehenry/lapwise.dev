@@ -74,6 +74,37 @@ def record_issue(
     issue_db.close()
 
 
+def _resolve_by_season_entry(
+    db,
+    *,
+    year: int,
+    driver_code: str | None,
+    driver_number: int | None,
+) -> Driver | None:
+    """Resolve a driver through the season's registered number or code.
+
+    Sources that omit a DriverId — FastF1 derives Sprint Qualifying results from
+    timing data — carry only the number and code. Both are unique within a
+    season, so a single match identifies the canonical driver.
+    """
+    for column, value in (
+        (DriverSeason.driver_number, driver_number),
+        (DriverSeason.driver_code, driver_code),
+    ):
+        if value is None:
+            continue
+        matches = list(
+            db.execute(
+                select(Driver)
+                .join(DriverSeason, DriverSeason.driver_id == Driver.id)
+                .where(DriverSeason.year == year, column == value)
+            ).scalars()
+        )
+        if len(matches) == 1:
+            return matches[0]
+    return None
+
+
 def resolve_driver(
     db,
     *,
@@ -135,6 +166,13 @@ def resolve_driver(
                 DriverExternalId.external_id == provisional_id,
             )
         ).scalar_one_or_none()
+        if driver is None:
+            driver = _resolve_by_season_entry(
+                db,
+                year=year,
+                driver_code=driver_code,
+                driver_number=driver_number,
+            )
 
     if driver is None:
         driver = Driver(
@@ -215,6 +253,34 @@ def resolve_driver(
     return driver
 
 
+def _resolve_constructor_by_season_team(
+    db,
+    *,
+    year: int,
+    source_name: str,
+    display_name: str,
+) -> Constructor | None:
+    """Resolve a constructor through the season's registered team name.
+
+    Sources that omit a TeamId — FastF1 derives Sprint Qualifying results from
+    timing data, and practice reserve drivers have no Ergast entry — still name
+    the team as the season's registered team does.
+    """
+    for column, value in ((Team.source_name, source_name), (Team.name, display_name)):
+        if not value:
+            continue
+        matches = list(
+            db.execute(
+                select(Constructor)
+                .join(Team, Team.constructor_id == Constructor.id)
+                .where(Team.year == year, column == value)
+            ).scalars()
+        )
+        if len(matches) == 1:
+            return matches[0]
+    return None
+
+
 def resolve_constructor(
     db,
     *,
@@ -252,6 +318,10 @@ def resolve_constructor(
                     external_id=external_id,
                 )
             )
+    if constructor is None and not external_id:
+        constructor = _resolve_constructor_by_season_team(
+            db, year=year, source_name=source_name, display_name=display_name
+        )
     if constructor is None:
         constructor = Constructor(
             slug=unique_slug(db, Constructor, external_id or display_name),
