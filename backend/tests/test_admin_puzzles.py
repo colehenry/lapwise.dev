@@ -101,7 +101,9 @@ async def test_a_played_board_cannot_be_reverted(db_session):
     """A board someone has played is a record, not a proposal."""
     played = (
         await db_session.execute(
-            select(Puzzle).join(GameSession, GameSession.puzzle_id == Puzzle.id).limit(1)
+            select(Puzzle)
+            .join(GameSession, GameSession.puzzle_id == Puzzle.id)
+            .limit(1)
         )
     ).scalar_one_or_none()
     if played is None:
@@ -128,7 +130,9 @@ async def test_a_played_board_cannot_be_deleted(db_session):
     """Deleting a board with results behind it destroys those results."""
     played = (
         await db_session.execute(
-            select(Puzzle).join(GameSession, GameSession.puzzle_id == Puzzle.id).limit(1)
+            select(Puzzle)
+            .join(GameSession, GameSession.puzzle_id == Puzzle.id)
+            .limit(1)
         )
     ).scalar_one_or_none()
     if played is None:

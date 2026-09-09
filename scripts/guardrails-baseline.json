@@ -7,7 +7,7 @@
     "backend/app/services/circuit_service.py": 742,
     "backend/app/services/driver_service.py": 804,
     "backend/app/services/summary_service.py": 638,
-    "frontend/app/api/ai/ask/route.ts": 840,
+    "frontend/app/api/ai/ask/route.ts": 839,
     "frontend/app/replay/components/TelemetryPanel.tsx": 924,
     "frontend/app/replay/components/TrackCanvas.tsx": 782,
     "frontend/components/charts/FastestLapTimeline.tsx": 745,
@@ -18,7 +18,6 @@
     "frontend/components/charts/QualifyingSectorComparison.tsx": 790,
     "frontend/components/charts/TyreDegradationChart.tsx": 915,
     "frontend/components/layout/Navigation.tsx": 1091,
-    "frontend/lib/ai/router.ts": 371,
     "frontend/lib/ai/tools.ts": 751,
     "frontend/lib/types.ts": 744
   },

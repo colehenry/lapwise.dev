@@ -206,13 +206,14 @@ export function useAskChat(userId: number | null) {
             }
 
             if (event.type === "status") {
-              setStreamStatus(event.message);
-              if (!event.stepType) return;
+              const { message, stepType } = event;
+              setStreamStatus(message);
+              if (!stepType) return;
 
               setMessages((previous) =>
                 appendThinkingStep(previous, assistantMessageId, {
-                  message: event.message,
-                  stepType: event.stepType,
+                  message,
+                  stepType,
                   timestamp: Date.now(),
                 }),
               );
