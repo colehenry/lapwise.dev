@@ -355,10 +355,16 @@ class AdminPuzzleService:
     @staticmethod
     async def revert(db: AsyncSession, number: int) -> PuzzleStatusResponse:
         """Return a board to draft, so its date can be reassigned or its
-        content replaced. Refused once the board has been played."""
+        content replaced. Refused once the board has been played.
+
+        The date goes with the status. A draft that keeps the date it was
+        scheduled on reads as scheduled everywhere the queue is listed, and
+        holds a slot in the calendar that nothing serves.
+        """
         puzzle = await AdminPuzzleService._puzzle(db, number)
         await AdminPuzzleService._refuse_if_played(db, puzzle, "reverted")
         puzzle.status = "draft"
+        puzzle.published_on = None
         puzzle.reviewed_at = None
         puzzle.reviewed_by_id = None
         await db.commit()

@@ -10,12 +10,12 @@
  */
 
 import crypto from "node:crypto";
-import { anthropic } from "@ai-sdk/anthropic";
 import * as Sentry from "@sentry/nextjs";
 import { generateText, stepCountIs, streamText } from "ai";
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAIUser } from "@/lib/ai/auth";
 import { getConversationClient } from "@/lib/ai/db";
+import { anthropic } from "@/lib/ai/provider";
 import type { AIRoutingDecision } from "@/lib/ai/router";
 import { routeAIRequest } from "@/lib/ai/router";
 import { isSuggestedQuestion } from "@/lib/ai/suggestions";
@@ -33,7 +33,7 @@ const AI_TOTAL_QUERY_LIMIT = Number.parseInt(
   process.env.AI_TOTAL_QUERY_LIMIT || "3",
   10,
 );
-const AI_MODEL = process.env.AI_MODEL || "claude-sonnet-4-20250514";
+const AI_MODEL = process.env.AI_MODEL || "claude-sonnet-4-6";
 const AI_IP_RATE_LIMIT_PER_MINUTE = Number.parseInt(
   process.env.AI_IP_RATE_LIMIT_PER_MINUTE || "6",
   10,
@@ -215,7 +215,7 @@ async function writeCachedResponse(
   queries: string[],
   followUps: string[],
 ): Promise<void> {
-  if (!isSuggestedQuestion(question)) {
+  if (!isSuggestedQuestion(question) || !text.trim()) {
     return;
   }
 
@@ -576,7 +576,6 @@ export async function POST(request: NextRequest) {
     await saveMessage(conversationId, "user", question);
   }
 
-  // 8. Run the AI agent loop
   try {
     const routing = await routeAIRequest(question);
     const result = streamText({
@@ -632,7 +631,6 @@ export async function POST(request: NextRequest) {
         try {
           for await (const part of result.fullStream) {
             if (part.type === "text-delta") {
-              // Insert a separator when text resumes after a tool result
               if (lastEventWasToolResult && part.text.trim()) {
                 const separator = "\n\n";
                 answer += separator;
@@ -648,6 +646,7 @@ export async function POST(request: NextRequest) {
               continue;
             }
 
+            if (part.type === "error") throw part.error;
             if (part.type === "tool-call") {
               const input = part.input as Record<string, unknown>;
               if (part.toolName === "run_sql_query") {

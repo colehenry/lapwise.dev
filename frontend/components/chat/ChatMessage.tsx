@@ -7,7 +7,6 @@ import {
   isValidElement,
   type ReactElement,
   type ReactNode,
-  useEffect,
   useState,
 } from "react";
 import Markdown from "react-markdown";
@@ -160,16 +159,7 @@ function ThinkingSteps({
   steps: ThinkingStep[];
   isStreaming?: boolean;
 }) {
-  const [expanded, setExpanded] = useState(isStreaming ?? false);
-
-  useEffect(() => {
-    if (isStreaming) {
-      setExpanded(true);
-    } else if (steps.length > 0) {
-      const timer = setTimeout(() => setExpanded(false), 600);
-      return () => clearTimeout(timer);
-    }
-  }, [isStreaming, steps.length]);
+  const [expanded, setExpanded] = useState(false);
 
   if (steps.length === 0) return null;
 
@@ -185,7 +175,9 @@ function ThinkingSteps({
     <div className="mb-2">
       <button
         type="button"
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => setExpanded((current) => !current)}
+        disabled={isStreaming}
+        aria-expanded={!isStreaming && expanded}
         className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-text-tertiary transition-colors"
       >
         {isStreaming ? (
@@ -193,8 +185,8 @@ function ThinkingSteps({
             className="h-3 w-3 animate-spin text-purple-400"
             viewBox="0 0 24 24"
             fill="none"
+            aria-hidden="true"
           >
-            <title>Working</title>
             <circle
               className="opacity-25"
               cx="12"
@@ -214,8 +206,8 @@ function ThinkingSteps({
             className={`h-3 w-3 transition-transform ${expanded ? "rotate-90" : ""}`}
             viewBox="0 0 20 20"
             fill="currentColor"
+            aria-hidden="true"
           >
-            <title>Toggle</title>
             <path
               fillRule="evenodd"
               d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
@@ -242,6 +234,34 @@ function ThinkingSteps({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function WorkingStatus({ text }: { text: string }) {
+  return (
+    <div className="flex items-center gap-2 text-xs text-text-muted">
+      <svg
+        className="h-3.5 w-3.5 animate-spin"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+        />
+      </svg>
+      {text}
     </div>
   );
 }
@@ -288,40 +308,6 @@ export default function ChatMessage({
   }
   const isUser = messageRole === "user";
   const avatarSize = compact ? "sm" : "md";
-  if (isLoading) {
-    return (
-      <div className="flex min-w-0 max-w-full gap-3 py-3">
-        <AIAnalystAvatar size={avatarSize} />
-        <div className="min-w-0 flex-1 pt-0.5">
-          <div className="w-full max-w-full rounded-2xl border border-[var(--message-assistant-border)] bg-[var(--message-assistant-bg)] px-4 py-3">
-            <div className="flex items-center gap-2 text-xs text-text-muted">
-              <svg
-                className="animate-spin h-3.5 w-3.5"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <title>Thinking</title>
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              {statusText || "Analyzing..."}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div
@@ -348,36 +334,20 @@ export default function ChatMessage({
             {content}
           </div>
         ) : (
-          <div className="w-full min-w-0 max-w-full space-y-2 overflow-hidden rounded-xl border border-[var(--message-assistant-border)] bg-[var(--message-assistant-bg)] px-3 py-2.5 md:rounded-2xl md:px-5 md:py-3">
+          <article
+            className="w-full min-w-0 max-w-full space-y-2 overflow-hidden rounded-xl border border-[var(--message-assistant-border)] bg-[var(--message-assistant-bg)] px-3 py-2.5 md:rounded-2xl md:px-5 md:py-3"
+            aria-label="Clutch response"
+            aria-busy={isLoading || isStreaming}
+          >
             {steps && steps.length > 0 && (
               <ThinkingSteps steps={steps} isStreaming={isStreaming} />
             )}
 
             {statusText && (!steps || steps.length === 0) && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-purple-500/15 bg-purple-500/[0.06] px-3 py-1 text-[11px] text-purple-300">
-                <svg
-                  className="h-3 w-3 animate-spin"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
-                  <title>Working</title>
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                  />
-                </svg>
-                {statusText}
-              </div>
+              <WorkingStatus text={statusText} />
             )}
+
+            {isLoading && !statusText && <WorkingStatus text="Analyzing..." />}
 
             {content && (
               <div className="prose-chat min-w-0 max-w-full text-xs leading-relaxed text-text-secondary md:text-sm">
@@ -609,7 +579,7 @@ export default function ChatMessage({
                 </button>
               </div>
             )}
-          </div>
+          </article>
         )}
       </div>
     </div>

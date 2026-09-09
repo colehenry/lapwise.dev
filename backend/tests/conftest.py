@@ -130,6 +130,31 @@ async def published_boards(db_session):
 
 
 @pytest_asyncio.fixture
+async def scratch_puzzle(db_session):
+    """A throwaway board to mutate.
+
+    The session is otherwise read-only against a shared database, so anything
+    testing a state change owns its own row and removes it. It is numbered
+    above the editorial queue and never published on a real date.
+    """
+    puzzle = Puzzle(
+        number=900_000,
+        public_id="scratch-admin-puzzle",
+        status="draft",
+        row_categories=[],
+        column_categories=[],
+        answers={},
+    )
+    db_session.add(puzzle)
+    await db_session.commit()
+    try:
+        yield puzzle
+    finally:
+        await db_session.delete(puzzle)
+        await db_session.commit()
+
+
+@pytest_asyncio.fixture
 async def client():
     """Async HTTP test client."""
     transport = ASGITransport(app=app)

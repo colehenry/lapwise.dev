@@ -17,7 +17,6 @@
     "frontend/components/charts/PointsByRoundGraph.tsx": 716,
     "frontend/components/charts/QualifyingSectorComparison.tsx": 790,
     "frontend/components/charts/TyreDegradationChart.tsx": 915,
-    "frontend/components/chat/ChatMessage.tsx": 618,
     "frontend/components/layout/Navigation.tsx": 1091,
     "frontend/lib/ai/router.ts": 371,
     "frontend/lib/ai/tools.ts": 751,
@@ -29,7 +28,6 @@
       "auth.ts": 2
     },
     "inlineQueryKeys": {
-      "frontend/app/ask/AskContent.tsx": 4,
       "frontend/app/circuits/[id]/page.tsx": 1,
       "frontend/app/constructors/[teamName]/page.tsx": 1,
       "frontend/app/drivers/[driverCode]/page.tsx": 1,

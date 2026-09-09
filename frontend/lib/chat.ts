@@ -104,6 +104,13 @@ export interface StreamErrorEvent {
   error: string;
 }
 
+export interface CachedResponse {
+  text: string;
+  charts: ChartConfig[];
+  queries: string[];
+  followUps: string[];
+}
+
 export type AskStreamEvent =
   | StreamInitEvent
   | StreamTextDeltaEvent
@@ -188,6 +195,22 @@ export async function streamQuestion(
   }
 }
 
+export async function fetchCachedResponse(
+  question: string,
+  signal?: AbortSignal,
+): Promise<CachedResponse | null> {
+  try {
+    const res = await fetchWithAuth(
+      `${BASE}/cached-response?q=${encodeURIComponent(question)}`,
+      { signal },
+    );
+    if (!res.ok) return null;
+    return (await res.json()) as CachedResponse;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * List user's conversations.
  */
@@ -230,31 +253,6 @@ export async function deleteConversation(id: string): Promise<void> {
   if (!res.ok) {
     const data = await res.json();
     throw new Error(data.error || "Failed to delete conversation");
-  }
-}
-
-export interface CachedResponse {
-  text: string;
-  charts: ChartConfig[];
-  queries: string[];
-  followUps: string[];
-}
-
-/**
- * Fetch a cached AI response for a suggestion question.
- * Returns null on cache miss or any error.
- */
-export async function fetchCachedResponse(
-  question: string,
-): Promise<CachedResponse | null> {
-  try {
-    const res = await fetchWithAuth(
-      `${BASE}/cached-response?q=${encodeURIComponent(question)}`,
-    );
-    if (!res.ok) return null;
-    return (await res.json()) as CachedResponse;
-  } catch {
-    return null;
   }
 }
 

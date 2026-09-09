@@ -8,7 +8,6 @@ import type {
   PuzzleGenerateRequest,
   PuzzleGenerateResponse,
   PuzzleHeaderCatalogResponse,
-  PuzzleStatus,
 } from "./adminTypes";
 import { apiUrl } from "./api";
 import { fetchWithAuth } from "./auth";
@@ -120,12 +119,12 @@ export async function adminSetThreadLock(
 /**
  * Lists boards in the editorial queue. Returns complete answer sets, so every
  * call here is admin-only on the server.
+ *
+ * The whole queue, unfiltered: the page splits it into drafts, scheduled and
+ * live boards, and that split turns on dates the server does not filter on.
  */
-export async function fetchAdminPuzzles(
-  status?: PuzzleStatus,
-): Promise<AdminPuzzleListResponse> {
-  const query = status ? `?status=${status}` : "";
-  const res = await fetchWithAuth(apiUrl(`/api/admin/puzzles${query}`));
+export async function fetchAdminPuzzles(): Promise<AdminPuzzleListResponse> {
+  const res = await fetchWithAuth(apiUrl("/api/admin/puzzles"));
   if (!res.ok) throw new Error("Failed to fetch puzzles");
   return res.json();
 }

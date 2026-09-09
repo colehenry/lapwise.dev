@@ -54,6 +54,22 @@ describe("current-season color consumers", () => {
     expect(captured.colors?.teamColors.get("Red Bull Racing")).toBe("#3671C6");
   });
 
+  it("keys the same colors by the slugs the analyst links with", async () => {
+    installFetchRecorder({ [STANDINGS_PATH]: fixtures.standings });
+    const captured: { colors?: EntityColors } = {};
+
+    function Probe() {
+      captured.colors = useEntityLinkColors();
+      return null;
+    }
+
+    renderWithQueryClient(<Probe />);
+    await flushRequests();
+
+    expect(captured.colors?.driverColors.get("max-verstappen")).toBe("#3671C6");
+    expect(captured.colors?.teamColors.get("red-bull")).toBe("#3671C6");
+  });
+
   it("falls back to empty maps when standings are unavailable", async () => {
     installFetchRecorder({});
     const captured: { colors?: EntityColors } = {};

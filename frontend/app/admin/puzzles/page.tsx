@@ -10,40 +10,38 @@ import {
   fetchAdminPuzzle,
   fetchAdminPuzzles,
 } from "@/lib/admin";
-import type {
-  AdminPuzzleDetail,
-  AdminPuzzleSummary,
-  PuzzleStatus,
-} from "@/lib/adminTypes";
+import type { AdminPuzzleDetail, AdminPuzzleSummary } from "@/lib/adminTypes";
+import {
+  type PuzzlePhase,
+  puzzleDate,
+  puzzlePhase,
+} from "@/lib/puzzleSchedule";
 import GeneratePanel from "./GeneratePanel";
 import PuzzleReviewGrid from "./PuzzleReviewGrid";
+import RolloverNotice from "./RolloverNotice";
 
-const FILTERS: { value: PuzzleStatus | "all"; label: string }[] = [
+// Phases, not statuses: a published board is live only once its date arrives,
+// and both halves of that split read as "published" in the database.
+const FILTERS: { value: PuzzlePhase | "all"; label: string }[] = [
   { value: "all", label: "All" },
   { value: "draft", label: "Drafts" },
-  { value: "approved", label: "Scheduled" },
-  { value: "published", label: "Live" },
+  { value: "scheduled", label: "Scheduled" },
+  { value: "live", label: "Live" },
 ];
 
-const STATUS_STYLES: Record<PuzzleStatus, string> = {
+const PHASE_STYLES: Record<PuzzlePhase, string> = {
   draft: "bg-bg-elevated text-text-muted",
-  approved: "bg-amber-500/15 text-amber-300",
-  published: "bg-emerald-500/15 text-emerald-300",
+  scheduled: "bg-amber-500/15 text-amber-300",
+  live: "bg-emerald-500/15 text-emerald-300",
 };
 
-const STATUS_LABELS: Record<PuzzleStatus, string> = {
+const PHASE_LABELS: Record<PuzzlePhase, string> = {
   draft: "Draft",
-  approved: "Scheduled",
-  published: "Live",
+  scheduled: "Scheduled",
+  live: "Live",
 };
 
 const DEFAULT_FLOOR = 1990;
-
-function isoDate(offsetDays: number): string {
-  const day = new Date();
-  day.setDate(day.getDate() + offsetDays);
-  return day.toISOString().slice(0, 10);
-}
 
 /** The 0–100 score as the three words a reviewer actually sorts by. */
 function difficultyWord(score: number): string {
@@ -54,10 +52,12 @@ function difficultyWord(score: number): string {
 
 function PuzzleRow({
   puzzle,
+  phase,
   expanded,
   onToggle,
 }: {
   puzzle: AdminPuzzleSummary;
+  phase: PuzzlePhase;
   expanded: boolean;
   onToggle: () => void;
 }) {
@@ -71,9 +71,9 @@ function PuzzleRow({
         #{String(puzzle.number).padStart(3, "0")}
       </span>
       <span
-        className={`rounded-sm px-1.5 py-0.5 text-[11px] font-semibold ${STATUS_STYLES[puzzle.status]}`}
+        className={`rounded-sm px-1.5 py-0.5 text-[11px] font-semibold ${PHASE_STYLES[phase]}`}
       >
-        {STATUS_LABELS[puzzle.status]}
+        {PHASE_LABELS[phase]}
       </span>
       <span className="text-sm text-text-secondary">
         {puzzle.published_on ?? "No date"}
@@ -116,7 +116,7 @@ function PuzzleRow({
 
 export default function AdminPuzzlesPage() {
   const [puzzles, setPuzzles] = useState<AdminPuzzleSummary[]>([]);
-  const [filter, setFilter] = useState<PuzzleStatus | "all">("all");
+  const [filter, setFilter] = useState<PuzzlePhase | "all">("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [openNumber, setOpenNumber] = useState<number | null>(null);
@@ -125,6 +125,14 @@ export default function AdminPuzzlesPage() {
   const [scheduleDate, setScheduleDate] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const phases = new Map(
+    puzzles.map((puzzle) => [puzzle.number, puzzlePhase(puzzle)]),
+  );
+  // Filtered here rather than by the API: scheduled and live are one status
+  // server-side, and the date that separates them is the browser's to read.
+  const visible = puzzles.filter(
+    (puzzle) => filter === "all" || phases.get(puzzle.number) === filter,
+  );
   const draftCount = puzzles.filter(
     (puzzle) => puzzle.status === "draft",
   ).length;
@@ -133,16 +141,14 @@ export default function AdminPuzzlesPage() {
     setLoading(true);
     setError("");
     try {
-      const data = await fetchAdminPuzzles(
-        filter === "all" ? undefined : filter,
-      );
+      const data = await fetchAdminPuzzles();
       setPuzzles(data.puzzles);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load boards");
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, []);
 
   useEffect(() => {
     load();
@@ -208,6 +214,8 @@ export default function AdminPuzzlesPage() {
         )}
       </div>
 
+      <RolloverNotice />
+
       <div className="flex flex-wrap items-center gap-2">
         {FILTERS.map((option) => (
           <button
@@ -240,16 +248,17 @@ export default function AdminPuzzlesPage() {
             />
           ))}
         </div>
-      ) : puzzles.length === 0 ? (
+      ) : visible.length === 0 ? (
         <p className="rounded-sm border border-border-primary bg-bg-secondary px-3 py-8 text-center text-sm text-text-muted">
           Nothing here yet. Generate some boards.
         </p>
       ) : (
         <div className="divide-y divide-border-primary rounded-sm border border-border-primary bg-bg-secondary">
-          {puzzles.map((puzzle) => (
+          {visible.map((puzzle) => (
             <div key={puzzle.number}>
               <PuzzleRow
                 puzzle={puzzle}
+                phase={phases.get(puzzle.number) ?? "draft"}
                 expanded={openNumber === puzzle.number}
                 onToggle={() => toggle(puzzle)}
               />
@@ -282,14 +291,14 @@ export default function AdminPuzzlesPage() {
                             service is the whole difference. */}
                         <button
                           type="button"
-                          onClick={() => setScheduleDate(isoDate(0))}
+                          onClick={() => setScheduleDate(puzzleDate(0))}
                           className="rounded-sm border border-border-primary px-2 py-1 text-sm text-text-secondary hover:bg-bg-tertiary"
                         >
                           Today
                         </button>
                         <button
                           type="button"
-                          onClick={() => setScheduleDate(isoDate(1))}
+                          onClick={() => setScheduleDate(puzzleDate(1))}
                           className="rounded-sm border border-border-primary px-2 py-1 text-sm text-text-secondary hover:bg-bg-tertiary"
                         >
                           Tomorrow
@@ -308,7 +317,7 @@ export default function AdminPuzzlesPage() {
                             )
                           }
                         >
-                          {scheduleDate && scheduleDate <= isoDate(0)
+                          {scheduleDate && scheduleDate <= puzzleDate(0)
                             ? "Publish now"
                             : "Schedule"}
                         </Button>
@@ -332,7 +341,7 @@ export default function AdminPuzzlesPage() {
                           disabled={busy}
                           onClick={() => {
                             if (
-                              puzzle.status === "published" &&
+                              phases.get(puzzle.number) === "live" &&
                               !window.confirm(
                                 `Delete #${puzzle.number}? It is live at /daily and its date frees up.`,
                               )

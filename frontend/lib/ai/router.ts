@@ -12,8 +12,7 @@ export interface AIRoutingDecision {
   needsChart: boolean;
 }
 
-const GROQ_ROUTER_MODEL =
-  process.env.GROQ_ROUTER_MODEL || "llama-3.1-8b-instant";
+const GROQ_ROUTER_MODEL = process.env.GROQ_ROUTER_MODEL || "openai/gpt-oss-20b";
 const AI_ROUTER_LOGGING = process.env.AI_ROUTER_LOGGING === "true";
 
 const ROUTER_INTENTS: PromptIntent[] = [
@@ -221,7 +220,9 @@ async function routeWithGroq(
       body: JSON.stringify({
         model: GROQ_ROUTER_MODEL,
         temperature: 0,
-        max_tokens: 220,
+        // Reasoning models spend the budget before the JSON; 220 truncates them.
+        max_tokens: 1024,
+        reasoning_effort: "low",
         response_format: { type: "json_object" },
         messages: [
           {

@@ -4,11 +4,13 @@ The queue exists so a human reads the answers before a board publishes, so the
 tests care most about what it exposes and what it refuses.
 """
 
+from datetime import date
+
 import pytest
 from sqlalchemy import select
 
 from app.config import settings
-from app.models import Puzzle
+from app.models import GameSession, Puzzle
 from app.schemas.admin_puzzle import PuzzleScheduleRequest
 from app.services.admin_puzzle_service import AdminPuzzleService
 
@@ -95,34 +97,45 @@ async def test_scheduling_refuses_a_date_another_board_holds(db_session):
         )
 
 
-async def test_published_board_in_the_past_cannot_be_reverted(db_session):
+async def test_a_played_board_cannot_be_reverted(db_session):
     """A board someone has played is a record, not a proposal."""
-    published = (
+    played = (
         await db_session.execute(
-            select(Puzzle)
-            .where(Puzzle.status == "published")
-            .order_by(Puzzle.published_on)
-            .limit(1)
+            select(Puzzle).join(GameSession, GameSession.puzzle_id == Puzzle.id).limit(1)
         )
     ).scalar_one_or_none()
-    if published is None:
-        pytest.skip("no published boards")
+    if played is None:
+        pytest.skip("no played boards")
 
-    with pytest.raises(ValueError, match="already been published"):
-        await AdminPuzzleService.revert(db_session, published.number)
+    with pytest.raises(ValueError, match="cannot be reverted"):
+        await AdminPuzzleService.revert(db_session, played.number)
 
 
-async def test_only_drafts_can_be_deleted(db_session):
-    published = (
+async def test_reverting_frees_the_date(db_session, scratch_puzzle):
+    """A draft holding a date reads as scheduled in the queue and blocks the
+    calendar slot, so the date goes back when the status does."""
+    scratch_puzzle.status = "published"
+    scratch_puzzle.published_on = date(2999, 1, 1)
+    await db_session.commit()
+
+    result = await AdminPuzzleService.revert(db_session, scratch_puzzle.number)
+
+    assert result.status == "draft"
+    assert result.published_on is None
+
+
+async def test_a_played_board_cannot_be_deleted(db_session):
+    """Deleting a board with results behind it destroys those results."""
+    played = (
         await db_session.execute(
-            select(Puzzle).where(Puzzle.status == "published").limit(1)
+            select(Puzzle).join(GameSession, GameSession.puzzle_id == Puzzle.id).limit(1)
         )
     ).scalar_one_or_none()
-    if published is None:
-        pytest.skip("no published boards")
+    if played is None:
+        pytest.skip("no played boards")
 
-    with pytest.raises(ValueError, match="Only a draft"):
-        await AdminPuzzleService.delete_draft(db_session, published.number)
+    with pytest.raises(ValueError, match="cannot be deleted"):
+        await AdminPuzzleService.delete(db_session, played.number)
 
 
 async def test_queue_routes_require_an_admin(client):
