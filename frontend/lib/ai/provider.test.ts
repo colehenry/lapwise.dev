@@ -1,35 +1,68 @@
 import { describe, expect, it } from "vitest";
-import { resolveAnthropicBaseURL } from "./provider";
+import {
+  extractAIProviderUsage,
+  getAIModel,
+  resolveAIProviderConfig,
+} from "./provider";
 
-describe("resolveAnthropicBaseURL", () => {
-  it("defaults to the versioned Anthropic endpoint", () => {
-    expect(resolveAnthropicBaseURL(undefined)).toBe(
-      "https://api.anthropic.com/v1",
-    );
-    expect(resolveAnthropicBaseURL("   ")).toBe("https://api.anthropic.com/v1");
+describe("resolveAIProviderConfig", () => {
+  it("uses OpenRouter and DeepSeek by default", () => {
+    expect(resolveAIProviderConfig("analysis", {})).toEqual({
+      provider: "openrouter",
+      purpose: "analysis",
+      modelId: "deepseek/deepseek-v4-flash-0731",
+    });
   });
 
-  it("appends the version an agent shell leaves off", () => {
-    expect(resolveAnthropicBaseURL("https://api.anthropic.com")).toBe(
-      "https://api.anthropic.com/v1",
-    );
-    expect(resolveAnthropicBaseURL("https://api.anthropic.com/")).toBe(
-      "https://api.anthropic.com/v1",
-    );
+  it("uses the explicit OpenRouter analysis model", () => {
+    expect(
+      resolveAIProviderConfig("analysis", {
+        OPENROUTER_MODEL: "google/gemini-2.5-flash",
+      }),
+    ).toMatchObject({
+      provider: "openrouter",
+      modelId: "google/gemini-2.5-flash",
+    });
   });
 
-  it("leaves an already versioned base URL alone", () => {
-    expect(resolveAnthropicBaseURL("https://api.anthropic.com/v1")).toBe(
-      "https://api.anthropic.com/v1",
-    );
-    expect(resolveAnthropicBaseURL("https://proxy.internal/anthropic/v2")).toBe(
-      "https://proxy.internal/anthropic/v2",
-    );
+  it("rejects malformed model ids by using the default", () => {
+    expect(
+      resolveAIProviderConfig("analysis", {
+        OPENROUTER_MODEL: "invalid-model-id",
+      }).modelId,
+    ).toBe("deepseek/deepseek-v4-flash-0731");
   });
 
-  it("versions a proxy base URL that has a path", () => {
-    expect(resolveAnthropicBaseURL("https://proxy.internal/anthropic")).toBe(
-      "https://proxy.internal/anthropic/v1",
+  it("requires the one supported key name for model calls", () => {
+    expect(() => getAIModel("analysis", {})).toThrow(
+      /OPEN_ROUTER_API_KEY is required/,
     );
+  });
+});
+
+describe("extractAIProviderUsage", () => {
+  it("normalizes OpenRouter usage and upstream metadata", () => {
+    expect(
+      extractAIProviderUsage({
+        openrouter: {
+          provider: "DeepInfra",
+          usage: {
+            cost: 0.0123,
+            promptTokensDetails: { cachedTokens: 400 },
+            completionTokensDetails: { reasoningTokens: 20 },
+          },
+        },
+      }),
+    ).toEqual({
+      costUsd: 0.0123,
+      cachedInputTokens: 400,
+      reasoningTokens: 20,
+      upstreamProvider: "DeepInfra",
+    });
+  });
+
+  it("returns an empty object without OpenRouter metadata", () => {
+    expect(extractAIProviderUsage(undefined)).toEqual({});
+    expect(extractAIProviderUsage({ unknown: {} })).toEqual({});
   });
 });

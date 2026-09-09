@@ -1,27 +1,104 @@
-/**
- * Anthropic provider for the AI routes.
- *
- * The SDK reads ANTHROPIC_BASE_URL straight from the environment, and agent
- * shells export it without the /v1 suffix the Messages API lives under. An
- * inherited value like that turns every request into a bare 404, and it wins
- * over .env files because Next.js never overrides an exported variable.
- */
+/** Central OpenRouter model gateway for Clutch. */
 
-import { createAnthropic } from "@ai-sdk/anthropic";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import type { LanguageModel } from "ai";
 
-const DEFAULT_ANTHROPIC_BASE_URL = "https://api.anthropic.com/v1";
+const DEFAULT_OPENROUTER_ANALYSIS_MODEL = "deepseek/deepseek-v4-flash-0731";
 
-export function resolveAnthropicBaseURL(
-  configured: string | undefined = process.env.ANTHROPIC_BASE_URL,
-): string {
-  const trimmed = configured?.trim().replace(/\/+$/, "");
-  if (!trimmed) {
-    return DEFAULT_ANTHROPIC_BASE_URL;
+export type AIModelPurpose = "analysis";
+
+type AIEnvironment = Record<string, string | undefined>;
+
+function openRouterApiKey(env: AIEnvironment): string {
+  const apiKey = env.OPEN_ROUTER_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error("OPEN_ROUTER_API_KEY is required for Clutch model calls.");
   }
-
-  return /\/v\d+$/.test(trimmed) ? trimmed : `${trimmed}/v1`;
+  return apiKey;
 }
 
-export const anthropic = createAnthropic({
-  baseURL: resolveAnthropicBaseURL(),
-});
+export interface AIProviderConfig {
+  provider: "openrouter";
+  modelId: string;
+  purpose: AIModelPurpose;
+}
+
+export interface AIModelSelection extends AIProviderConfig {
+  model: LanguageModel;
+}
+
+export interface AIProviderUsage {
+  costUsd?: number;
+  cachedInputTokens?: number;
+  reasoningTokens?: number;
+  upstreamProvider?: string;
+}
+
+export function resolveAIProviderConfig(
+  purpose: AIModelPurpose,
+  env: AIEnvironment = process.env,
+): AIProviderConfig {
+  const configured = env.OPENROUTER_MODEL?.trim();
+
+  return {
+    provider: "openrouter",
+    purpose,
+    modelId:
+      configured?.includes("/") === true
+        ? configured
+        : DEFAULT_OPENROUTER_ANALYSIS_MODEL,
+  };
+}
+
+export function getAIModel(
+  purpose: AIModelPurpose,
+  env: AIEnvironment = process.env,
+): AIModelSelection {
+  const config = resolveAIProviderConfig(purpose, env);
+  const provider = createOpenRouter({
+    apiKey: openRouterApiKey(env),
+    compatibility: "strict",
+    appName: "Lapwise Clutch",
+    appUrl: env.NEXT_PUBLIC_APP_URL || "https://lapwise.dev",
+  });
+  return {
+    ...config,
+    model: provider(config.modelId, {
+      provider: {
+        data_collection: "deny",
+        require_parameters: true,
+      },
+      usage: { include: true },
+    }),
+  };
+}
+
+function objectValue(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function finiteNumber(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value)
+    ? value
+    : undefined;
+}
+
+export function extractAIProviderUsage(metadata: unknown): AIProviderUsage {
+  const root = objectValue(metadata);
+  const openrouter = objectValue(root?.openrouter);
+  if (!openrouter) return {};
+
+  const usage = objectValue(openrouter.usage);
+  const promptDetails = objectValue(usage?.promptTokensDetails);
+  const completionDetails = objectValue(usage?.completionTokensDetails);
+
+  return {
+    costUsd: finiteNumber(usage?.cost),
+    cachedInputTokens: finiteNumber(promptDetails?.cachedTokens),
+    reasoningTokens: finiteNumber(completionDetails?.reasoningTokens),
+    upstreamProvider:
+      typeof openrouter.provider === "string" ? openrouter.provider : undefined,
+  };
+}

@@ -9,6 +9,7 @@ interface ChatInputProps {
   disabled?: boolean;
   compact?: boolean;
   shellless?: boolean;
+  initialValue?: string;
 }
 
 const COMPOSER_MAX_HEIGHT_PX = 144;
@@ -21,8 +22,9 @@ export default function ChatInput({
   disabled = false,
   compact,
   shellless,
+  initialValue = "",
 }: ChatInputProps) {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialValue);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {

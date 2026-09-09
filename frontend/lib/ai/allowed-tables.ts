@@ -1,10 +1,7 @@
 /** Read-only F1 relations exposed to Clutch's SQL validator. */
 export const ALLOWED_AI_TABLES = [
   "drivers",
-  "driver_seasons",
-  "constructors",
   "teams",
-  "circuit_venues",
   "circuits",
   "sessions",
   "session_results",

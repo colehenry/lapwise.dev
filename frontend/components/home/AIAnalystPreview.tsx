@@ -231,7 +231,8 @@ export default function AIAnalystPreview() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    router.push("/ask");
+    const question = inputValue.trim();
+    router.push(question ? `/ask?q=${encodeURIComponent(question)}` : "/ask");
   }
 
   const entities: EntityToken[] = [
@@ -255,7 +256,6 @@ export default function AIAnalystPreview() {
   return (
     <section className="overflow-hidden border-b border-border-primary/40 bg-bg-primary px-6 py-10">
       <div className="mx-auto max-w-4xl">
-        {/* Section label */}
         <div className="mb-5 flex items-center gap-3">
           <div className="h-2 w-2 animate-pulse rounded-full bg-purple-500" />
           <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-text-muted">
@@ -263,9 +263,7 @@ export default function AIAnalystPreview() {
           </span>
         </div>
 
-        {/* Card */}
         <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] shadow-[0_16px_64px_-16px_rgba(0,0,0,0.6)]">
-          {/* Header */}
           <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-3.5">
             <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10 text-purple-300">
@@ -296,9 +294,7 @@ export default function AIAnalystPreview() {
             </Link>
           </div>
 
-          {/* Messages */}
           <div className="space-y-4 px-5 py-5">
-            {/* User message */}
             <div className="flex justify-end">
               <div className="max-w-[85%] rounded-2xl border border-[var(--message-user-border)] bg-[var(--message-user-bg)] px-4 py-2.5 text-sm text-text-primary">
                 {renderEntityText(QUESTION, entities, {
@@ -309,7 +305,6 @@ export default function AIAnalystPreview() {
               </div>
             </div>
 
-            {/* AI response */}
             {phase !== "idle" && (
               <div className="flex gap-3">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10 text-purple-300">
@@ -434,7 +429,6 @@ export default function AIAnalystPreview() {
             )}
           </div>
 
-          {/* Input */}
           <div className="border-t border-white/[0.06] px-4 py-3">
             <form
               onSubmit={handleSubmit}
@@ -449,6 +443,7 @@ export default function AIAnalystPreview() {
               />
               <button
                 type="submit"
+                disabled={!inputValue.trim()}
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-purple-500 text-white transition-all hover:bg-purple-600 active:scale-95"
               >
                 <svg

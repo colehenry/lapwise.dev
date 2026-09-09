@@ -45,6 +45,13 @@ const RESTRICTED_TABLES = [
   "ai_messages",
 ];
 
+const UNAVAILABLE_AI_RELATIONS = [
+  "driver_seasons",
+  "constructors",
+  "circuit_venues",
+  "pit_stops",
+];
+
 describe("validateSQL — accepts safe read-only queries", () => {
   it.each([
     "SELECT * FROM drivers",
@@ -100,6 +107,13 @@ describe("validateSQL — table access control", () => {
     const result = validateSQL(`SELECT * FROM ${table}`);
     expect(result.valid).toBe(false);
   });
+
+  it.each(UNAVAILABLE_AI_RELATIONS)(
+    "blocks relations the read-only AI role cannot access: %s",
+    (table) => {
+      expect(validateSQL(`SELECT * FROM ${table}`).valid).toBe(false);
+    },
+  );
 
   it("blocks the users table regardless of case", () => {
     expect(validateSQL("SELECT * FROM USERS").valid).toBe(false);

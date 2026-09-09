@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import ClutchContextActions from "@/components/chat/ClutchContextActions";
 import DriverHeadshot from "@/components/entities/DriverHeadshot";
 import JumpToRace from "@/components/layout/JumpToRace";
 import PageHeader from "@/components/layout/PageHeader";
@@ -163,6 +164,21 @@ export default function SeasonPageClient() {
       </PageHeader>
 
       <div className="max-w-6xl mx-auto p-3 md:p-6">
+        <div className="mb-4">
+          <ClutchContextActions
+            context={{ route: `/results/${season}`, season: seasonYear }}
+            actions={[
+              {
+                label: "Top standings",
+                question: `Show the top 5 in the ${season} drivers' championship`,
+              },
+              {
+                label: "Season story",
+                question: `What defined the ${season} Formula 1 season?`,
+              },
+            ]}
+          />
+        </div>
         <SeasonStandingsPanels
           sessionType={sessionType}
           standings={standings}

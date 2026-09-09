@@ -4,6 +4,7 @@
  * Wrappers around AI API endpoints using fetchWithAuth for authentication.
  */
 
+import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
 import { fetchWithAuth } from "@/lib/auth";
 
 const BASE = "/api/ai";
@@ -50,6 +51,9 @@ export interface AskResponse {
     inputTokens: number;
     outputTokens: number;
     totalTokens: number;
+    cachedInputTokens?: number;
+    reasoningTokens?: number;
+    costUsd?: number;
   };
 }
 
@@ -77,6 +81,12 @@ export interface StreamMetadataEvent {
   queries: string[];
   followUps: string[];
   usage: AskResponse["usage"];
+  model?: {
+    id: string;
+    provider: string;
+    upstreamProvider?: string;
+  };
+  plan?: unknown;
 }
 
 export type StepType =
@@ -124,11 +134,12 @@ export type AskStreamEvent =
 export async function askQuestion(
   question: string,
   conversationId?: string,
+  pageContext?: AnalysisPageContext,
 ): Promise<AskResponse> {
   const res = await fetchWithAuth(`${BASE}/ask`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question, conversationId }),
+    body: JSON.stringify({ question, conversationId, pageContext }),
   });
 
   const data = await res.json();
@@ -148,11 +159,12 @@ export async function streamQuestion(
   conversationId: string | undefined,
   onEvent: (event: AskStreamEvent) => void,
   signal?: AbortSignal,
+  pageContext?: AnalysisPageContext,
 ): Promise<void> {
   const res = await fetchWithAuth(`${BASE}/ask`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question, conversationId }),
+    body: JSON.stringify({ question, conversationId, pageContext }),
     signal,
   });
 

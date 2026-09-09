@@ -4,6 +4,24 @@ import { describe, expect, it, vi } from "vitest";
 import ChatInput from "./ChatInput";
 
 describe("ChatInput", () => {
+  it("prefills a question passed from another app surface", () => {
+    render(
+      <ChatInput
+        onSend={vi.fn()}
+        isLoading={false}
+        initialValue="Compare the 2025 title contenders"
+      />,
+    );
+
+    expect(
+      (
+        screen.getByRole("textbox", {
+          name: "Message Clutch",
+        }) as HTMLTextAreaElement
+      ).value,
+    ).toBe("Compare the 2025 title contenders");
+  });
+
   it("caps vertical growth and scrolls long drafts inside the composer", () => {
     render(<ChatInput onSend={vi.fn()} isLoading={false} shellless />);
     const textarea = screen.getByRole("textbox", {
