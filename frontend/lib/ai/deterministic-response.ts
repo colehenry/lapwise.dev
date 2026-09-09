@@ -23,11 +23,11 @@ function buildFollowUp(analysis: DeterministicAnalysisResult): string[] {
 function statusMessage(analysis: DeterministicAnalysisResult): string {
   const family = analysis.plan.facets[0]?.family;
   if (family === "qualifying_comparison") {
-    return "Verifying qualifying results and calculations...";
+    return "Comparing the qualifying laps...";
   }
-  if (family === "standings") return "Loading canonical standings...";
-  if (family === "results") return "Verifying the classification...";
-  return "Building a verified evidence summary...";
+  if (family === "standings") return "Checking the championship picture...";
+  if (family === "results") return "Checking the timing sheets...";
+  return "Piecing the race together...";
 }
 
 export function createDeterministicAnalysisResponse(params: {
@@ -49,7 +49,7 @@ export function createDeterministicAnalysisResponse(params: {
         encodeStreamLine({
           type: "status",
           message: statusMessage(analysis),
-          stepType: "sql",
+          stepType: "thinking",
         }),
       );
       controller.enqueue(

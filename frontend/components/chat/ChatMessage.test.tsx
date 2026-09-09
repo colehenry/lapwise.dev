@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import ChatMessage from "./ChatMessage";
 
@@ -41,10 +41,18 @@ describe("ChatMessage", () => {
     expect(screen.getByText("The answer is streaming.")).toBeTruthy();
   });
 
-  it("keeps completed thinking steps collapsed until the user opens them", () => {
+  it("shows friendly progress only while the answer is being prepared", () => {
     const steps = [
-      { message: "Planning", stepType: "thinking" as const, timestamp: 1000 },
-      { message: "Querying", stepType: "sql" as const, timestamp: 2000 },
+      {
+        message: "Warming up the tyres...",
+        stepType: "thinking" as const,
+        timestamp: 1000,
+      },
+      {
+        message: "Checking the timing sheets...",
+        stepType: "thinking" as const,
+        timestamp: 2000,
+      },
     ];
     const { rerender } = render(
       <ChatMessage
@@ -54,6 +62,8 @@ describe("ChatMessage", () => {
         isStreaming
       />,
     );
+    expect(screen.getByText("Checking the timing sheets...")).toBeTruthy();
+    expect(screen.queryByText("Warming up the tyres...")).toBeNull();
 
     rerender(
       <ChatMessage
@@ -64,9 +74,7 @@ describe("ChatMessage", () => {
       />,
     );
 
-    const toggle = screen.getByRole("button", { name: "2 steps · 1.0s" });
-    expect(screen.queryByText("Planning")).toBeNull();
-    fireEvent.click(toggle);
-    expect(screen.getByText("Planning")).toBeTruthy();
+    expect(screen.queryByText("Checking the timing sheets...")).toBeNull();
+    expect(screen.queryByRole("button", { name: /steps/i })).toBeNull();
   });
 });

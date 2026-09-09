@@ -64,20 +64,22 @@ export function summarizeToolOutput(
 
 export function legacyToolStatus(
   toolName: string,
-  queryCount: number,
 ): { message: string; stepType: StepType } | null {
   switch (toolName) {
     case "run_sql_query":
-      return { message: `Running SQL query ${queryCount}...`, stepType: "sql" };
+      return { message: "Checking the timing sheets...", stepType: "thinking" };
     case "resolve_session":
-      return { message: "Resolving the session...", stepType: "sql" };
+      return {
+        message: "Finding the right race weekend...",
+        stepType: "thinking",
+      };
     case "get_race_dynamics":
       return {
-        message: "Building race dynamics evidence...",
-        stepType: "sql",
+        message: "Going through the race lap by lap...",
+        stepType: "thinking",
       };
     case "generate_chart":
-      return { message: "Generating visualization...", stepType: "chart" };
+      return { message: "Drawing up the chart...", stepType: "chart" };
     default:
       return null;
   }

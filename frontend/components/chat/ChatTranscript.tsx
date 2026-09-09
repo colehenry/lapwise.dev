@@ -78,7 +78,6 @@ export default function ChatTranscript({
               messageRole={message.role}
               content={message.content}
               charts={message.charts}
-              queries={message.queries}
               steps={message.steps}
               followUps={message.followUps}
               onFollowUp={disabled ? undefined : onSend}

@@ -1,12 +1,11 @@
-import {
-  type AnalysisPageContext,
-  type AnalysisPlan,
-  type AnswerArtifact,
-  analysisPlanSchema,
-  answerArtifactSchema,
-} from "./analysis-contracts";
+import type { AnalysisPageContext } from "./analysis-contracts";
 import { executeAIParamQuery } from "./db";
 import { extractSeason, normalizeQuestionText } from "./question-parsing";
+import {
+  buildSessionResultExecution,
+  type SessionClassificationRow,
+  type SessionResultExecution,
+} from "./session-result-artifact";
 
 export const RESULT_SESSION_CANDIDATES_SQL = `
   SELECT id, event_name, round, date::text AS date
@@ -22,9 +21,13 @@ export const SESSION_CLASSIFICATION_SQL = `
     sr.position,
     sr.status,
     sr.grid_position,
-    sr.points
+    sr.points,
+    sr.time_seconds,
+    sr.fastest_lap,
+    t.name AS team_name
   FROM session_results sr
   JOIN drivers d ON d.id = sr.driver_id
+  JOIN teams t ON t.id = sr.team_id
   WHERE sr.session_id = $1
   ORDER BY sr.position NULLS LAST, d.full_name
 `;
@@ -36,23 +39,6 @@ export interface ResultSessionCandidate {
   date: string;
 }
 
-export interface SessionClassificationRow {
-  slug: string;
-  driverName: string;
-  position: number | null;
-  status: string;
-  gridPosition: number | null;
-  points: number | null;
-}
-
-export interface SessionResultExecution {
-  plan: AnalysisPlan;
-  artifact: AnswerArtifact;
-  queries: string[];
-  model: string;
-}
-
-type ResultMode = "winner" | "podium" | "classification";
 export type ResultSessionType = "race" | "sprint_race";
 
 function numberOrNull(value: unknown): number | null {
@@ -70,10 +56,8 @@ export function looksLikeSessionResultQuestion(question: string): boolean {
   );
 }
 
-function resultMode(question: string): ResultMode {
-  if (/\b(podium|top three|top 3)\b/i.test(question)) return "podium";
-  if (/\b(who won|winner)\b/i.test(question)) return "winner";
-  return "classification";
+export function looksLikeLatestResultQuestion(question: string): boolean {
+  return /\b(latest|most recent|last)\b.*\b(race|grand prix)\b/i.test(question);
 }
 
 export function resolveResultSession(
@@ -122,11 +106,22 @@ export function selectResultSession(
   question: string,
   candidates: ResultSessionCandidate[],
   pageContext?: AnalysisPageContext,
+  today = new Date().toISOString().slice(0, 10),
 ): ResultSessionCandidate | null {
-  return pageContext?.sessionId
-    ? (candidates.find((candidate) => candidate.id === pageContext.sessionId) ??
-        null)
-    : resolveResultSession(question, candidates);
+  if (pageContext?.sessionId) {
+    return (
+      candidates.find((candidate) => candidate.id === pageContext.sessionId) ??
+      null
+    );
+  }
+  if (looksLikeLatestResultQuestion(question)) {
+    return (
+      candidates
+        .filter((candidate) => candidate.date <= today)
+        .sort((a, b) => b.date.localeCompare(a.date))[0] ?? null
+    );
+  }
+  return resolveResultSession(question, candidates);
 }
 
 function parseClassification(
@@ -142,122 +137,9 @@ function parseClassification(
     status: String(row.status ?? "Unknown"),
     gridPosition: numberOrNull(row.grid_position),
     points: numberOrNull(row.points),
-  };
-}
-
-export function buildSessionResultExecution(params: {
-  question: string;
-  season: number;
-  sessionType: "race" | "sprint_race";
-  session: ResultSessionCandidate;
-  rows: SessionClassificationRow[];
-}): SessionResultExecution {
-  const { question, season, sessionType, session } = params;
-  const mode = resultMode(question);
-  const classified = params.rows.filter((row) => row.position !== null);
-  const visibleRows =
-    mode === "winner"
-      ? classified.slice(0, 1)
-      : mode === "podium"
-        ? classified.slice(0, 3)
-        : params.rows;
-  if (visibleRows.length === 0) throw new Error("No classification data found");
-
-  const names = visibleRows.map((row) => row.driverName);
-  const sessionLabel = sessionType === "sprint_race" ? "sprint" : "race";
-  const summary =
-    mode === "podium" && names.length === 3
-      ? `${names[0]} won the ${season} ${session.eventName}, ahead of ${names[1]} and ${names[2]} on the podium.`
-      : mode === "winner"
-        ? `${names[0]} won the ${season} ${session.eventName}.`
-        : `This is the canonical ${sessionLabel} classification for the ${season} ${session.eventName}.`;
-
-  const evidenceId = `session-${session.id}-classification`;
-  const plan = analysisPlanSchema.parse({
-    version: 1,
-    question,
-    entities: [
-      { kind: "event", id: session.id, name: session.eventName },
-      { kind: "season", id: season, name: String(season) },
-    ],
-    scope: { season, rounds: [session.round], sessionTypes: [sessionType] },
-    facets: [
-      {
-        family: "results",
-        objective: `Return the ${mode}`,
-        metrics: ["finishing_position", "status", "points"],
-        presentations: ["narrative", "table"],
-      },
-    ],
-    assumptions: [],
-    unresolvedTerms: [],
-  });
-  const artifact = answerArtifactSchema.parse({
-    version: 1,
-    family: "results",
-    title: `${season} ${session.eventName}${sessionType === "sprint_race" ? " sprint" : ""} result`,
-    summary,
-    metrics: visibleRows.map((row) => ({
-      id: `position-${row.position ?? row.slug}`,
-      label: row.position === 1 ? "Winner" : `Position ${row.position ?? "—"}`,
-      value: row.position ?? row.status,
-      displayValue: row.driverName,
-      evidenceIds: [evidenceId],
-    })),
-    tables: [
-      {
-        id: "classification",
-        title:
-          mode === "classification" ? "Classification" : "Requested result",
-        columns: [
-          { key: "position", label: "Pos" },
-          { key: "driver", label: "Driver" },
-          { key: "grid", label: "Grid" },
-          { key: "status", label: "Status" },
-          { key: "points", label: "Points" },
-        ],
-        rows: visibleRows.map((row) => ({
-          position: row.position ?? "—",
-          driver: row.driverName,
-          grid: row.gridPosition ?? "—",
-          status: row.status,
-          points: row.points ?? 0,
-        })),
-      },
-    ],
-    charts: [],
-    evidence: [
-      {
-        id: evidenceId,
-        kind: "database",
-        label: "Canonical session classification",
-        source: "sessions + session_results + drivers",
-        fields: {
-          sessionId: session.id,
-          season,
-          round: session.round,
-          sessionType,
-          rowCount: params.rows.length,
-        },
-      },
-    ],
-    caveats: [],
-    actions: [
-      {
-        label: `Open ${session.eventName} results`,
-        href: `/results/${season}/${session.round}${sessionType === "sprint_race" ? "?tab=sprint" : ""}`,
-      },
-    ],
-  });
-
-  return {
-    plan,
-    artifact,
-    queries: [
-      RESULT_SESSION_CANDIDATES_SQL.trim(),
-      SESSION_CLASSIFICATION_SQL.trim(),
-    ],
-    model: "deterministic/session-results-v1",
+    timeSeconds: numberOrNull(row.time_seconds),
+    fastestLap: row.fastest_lap === true,
+    teamName: String(row.team_name ?? "").trim() || undefined,
   };
 }
 
@@ -265,7 +147,12 @@ export async function tryRunSessionResultAnalysis(
   question: string,
   pageContext?: AnalysisPageContext,
 ): Promise<SessionResultExecution | null> {
-  const season = extractSeason(question) ?? pageContext?.season ?? null;
+  const season =
+    extractSeason(question) ??
+    pageContext?.season ??
+    (looksLikeLatestResultQuestion(question)
+      ? new Date().getUTCFullYear()
+      : null);
   if (season === null || !looksLikeSessionResultQuestion(question)) return null;
   const contextualSessionType =
     pageContext?.sessionType === "race" ||
@@ -291,5 +178,9 @@ export async function tryRunSessionResultAnalysis(
     sessionType,
     session,
     rows: classification,
+    queries: [
+      RESULT_SESSION_CANDIDATES_SQL.trim(),
+      SESSION_CLASSIFICATION_SQL.trim(),
+    ],
   });
 }

@@ -14,7 +14,7 @@ import remarkGfm from "remark-gfm";
 import UserAvatar from "@/components/comments/UserAvatar";
 import ClutchIcon from "@/components/ui/ClutchIcon";
 import { useEntityLinkColors } from "@/hooks/useEntityLinkColors";
-import type { ChartConfig, StepType, ThinkingStep } from "@/lib/chat";
+import type { ChartConfig, ThinkingStep } from "@/lib/chat";
 
 const AIChart = dynamic(() => import("./AIChart"), {
   ssr: false,
@@ -34,7 +34,6 @@ interface ChatMessageProps {
   messageRole: "user" | "assistant";
   content: string;
   charts?: ChartConfig[];
-  queries?: string[];
   steps?: ThinkingStep[];
   followUps?: string[];
   onFollowUp?: (question: string) => void;
@@ -90,154 +89,6 @@ function renderDeltaChildren(children: ReactNode): ReactNode {
         : children;
 }
 
-function StepIcon({ stepType }: { stepType: StepType }) {
-  const cls = "h-3 w-3 shrink-0";
-  switch (stepType) {
-    case "sql":
-      return (
-        <svg
-          className={cls}
-          viewBox="0 0 16 16"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M8 1C4.7 1 2 2.3 2 4v8c0 1.7 2.7 3 6 3s6-1.3 6-3V4c0-1.7-2.7-3-6-3zM8 3c2.8 0 4 .9 4 1s-1.2 1-4 1-4-.9-4-1 1.2-1 4-1zm4 9c0 .1-1.2 1-4 1s-4-.9-4-1V9.7c1 .5 2.4.8 4 .8s3-.3 4-.8V12zm0-4c0 .1-1.2 1-4 1s-4-.9-4-1V5.7c1 .5 2.4.8 4 .8s3-.3 4-.8V8z" />
-        </svg>
-      );
-    case "schema":
-    case "sample":
-      return (
-        <svg
-          className={cls}
-          viewBox="0 0 16 16"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v9a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 012 12.5v-9zM3.5 3a.5.5 0 00-.5.5V6h10V3.5a.5.5 0 00-.5-.5h-9zM13 7H3v2h10V7zm0 3H3v2.5a.5.5 0 00.5.5h9a.5.5 0 00.5-.5V10z" />
-        </svg>
-      );
-    case "chart":
-      return (
-        <svg
-          className={cls}
-          viewBox="0 0 16 16"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M1 14h14V2h-1v11H4V2H3v11H1v1zm3-7h2v6H4V7zm3-2h2v8H7V5zm3 4h2v4h-2V9z" />
-        </svg>
-      );
-    case "synthesizing":
-      return (
-        <svg
-          className={cls}
-          viewBox="0 0 16 16"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M4.5 2A2.5 2.5 0 002 4.5v2.879a2.5 2.5 0 00.732 1.767l4.5 4.5a2.5 2.5 0 003.536 0l2.879-2.879a2.5 2.5 0 000-3.536l-4.5-4.5A2.5 2.5 0 007.38 2H4.5zM5 6a1 1 0 110-2 1 1 0 010 2z" />
-        </svg>
-      );
-    default:
-      return (
-        <svg
-          className={cls}
-          viewBox="0 0 16 16"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M8 2a6 6 0 100 12A6 6 0 008 2zm0 1a5 5 0 11-.001 10.001A5 5 0 018 3zm-.5 2.5a.5.5 0 011 0v3a.5.5 0 01-.5.5H6a.5.5 0 010-1h1.5v-2.5z" />
-        </svg>
-      );
-  }
-}
-
-function ThinkingSteps({
-  steps,
-  isStreaming,
-}: {
-  steps: ThinkingStep[];
-  isStreaming?: boolean;
-}) {
-  const [expanded, setExpanded] = useState(false);
-
-  if (steps.length === 0) return null;
-
-  const duration =
-    steps.length >= 2
-      ? (
-          (steps[steps.length - 1].timestamp - steps[0].timestamp) /
-          1000
-        ).toFixed(1)
-      : null;
-
-  return (
-    <div className="mb-2">
-      <button
-        type="button"
-        onClick={() => setExpanded((current) => !current)}
-        disabled={isStreaming}
-        aria-expanded={!isStreaming && expanded}
-        className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-text-tertiary transition-colors"
-      >
-        {isStreaming ? (
-          <svg
-            className="h-3 w-3 animate-spin text-purple-400"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
-        ) : (
-          <svg
-            className={`h-3 w-3 transition-transform ${expanded ? "rotate-90" : ""}`}
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              fillRule="evenodd"
-              d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-              clipRule="evenodd"
-            />
-          </svg>
-        )}
-        <span>
-          {isStreaming
-            ? steps[steps.length - 1].message
-            : `${steps.length} step${steps.length === 1 ? "" : "s"}${duration ? ` · ${duration}s` : ""}`}
-        </span>
-      </button>
-      {expanded && !isStreaming && (
-        <div className="mt-1.5 ml-1 space-y-1 border-l border-white/[0.06] pl-3">
-          {steps.map((step, i) => (
-            <div
-              key={`${step.stepType}-${i}`}
-              className="flex items-center gap-2 text-[11px] text-text-muted"
-            >
-              <StepIcon stepType={step.stepType} />
-              <span>{step.message}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function WorkingStatus({ text }: { text: string }) {
   return (
     <div className="flex items-center gap-2 text-xs text-text-muted">
@@ -282,7 +133,6 @@ export default function ChatMessage({
   messageRole,
   content,
   charts,
-  queries,
   steps,
   followUps,
   onFollowUp,
@@ -294,7 +144,6 @@ export default function ChatMessage({
   compact,
 }: ChatMessageProps) {
   const { driverColors, teamColors } = useEntityLinkColors();
-  const [showSQL, setShowSQL] = useState(false);
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -339,8 +188,8 @@ export default function ChatMessage({
             aria-label="Clutch response"
             aria-busy={isLoading || isStreaming}
           >
-            {steps && steps.length > 0 && (
-              <ThinkingSteps steps={steps} isStreaming={isStreaming} />
+            {isStreaming && steps && steps.length > 0 && (
+              <WorkingStatus text={steps[steps.length - 1].message} />
             )}
 
             {statusText && (!steps || steps.length === 0) && (
@@ -489,43 +338,6 @@ export default function ChatMessage({
                 {charts.map((chart, i) => (
                   <AIChart key={`chart-${chart.title}-${i}`} config={chart} />
                 ))}
-              </div>
-            )}
-
-            {queries && queries.length > 0 && (
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setShowSQL(!showSQL)}
-                  className="text-[11px] text-text-muted hover:text-text-tertiary transition-colors flex items-center gap-1"
-                >
-                  <svg
-                    className={`h-3 w-3 transition-transform ${showSQL ? "rotate-90" : ""}`}
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <title>Toggle</title>
-                    <path
-                      fillRule="evenodd"
-                      d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {queries.length} SQL{" "}
-                  {queries.length === 1 ? "query" : "queries"} executed
-                </button>
-                {showSQL && (
-                  <div className="mt-2 space-y-2">
-                    {queries.map((sql) => (
-                      <pre
-                        key={sql}
-                        className="rounded-lg border border-[var(--message-query-border)] bg-[var(--message-query-bg)] p-3 text-xs text-text-tertiary font-mono whitespace-pre-wrap break-words"
-                      >
-                        {sql}
-                      </pre>
-                    ))}
-                  </div>
-                )}
               </div>
             )}
 

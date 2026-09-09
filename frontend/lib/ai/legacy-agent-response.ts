@@ -101,7 +101,7 @@ export async function createLegacyAgentResponse(params: {
       controller.enqueue(
         encodeStreamLine({
           type: "status",
-          message: "Planning the analysis...",
+          message: "Warming up the tyres...",
           stepType: "thinking",
         }),
       );
@@ -134,7 +134,7 @@ export async function createLegacyAgentResponse(params: {
             ) {
               queries.push(input.sql);
             }
-            const status = legacyToolStatus(part.toolName, queries.length);
+            const status = legacyToolStatus(part.toolName);
             if (status) {
               controller.enqueue(
                 encodeStreamLine({ type: "status", ...status }),
@@ -151,11 +151,10 @@ export async function createLegacyAgentResponse(params: {
             });
             if (output.type === "chart") charts.push(output.config);
             if (part.toolName === "run_sql_query") {
-              const count = typeof output.count === "number" ? output.count : 0;
               controller.enqueue(
                 encodeStreamLine({
                   type: "status",
-                  message: `Query returned ${count} rows`,
+                  message: "Checking the final details...",
                   stepType: "thinking",
                 }),
               );
@@ -193,7 +192,7 @@ export async function createLegacyAgentResponse(params: {
           controller.enqueue(
             encodeStreamLine({
               type: "status",
-              message: "Synthesizing the final report...",
+              message: "Bringing it over the line...",
               stepType: "synthesizing",
             }),
           );

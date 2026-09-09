@@ -7,7 +7,14 @@ function escapeCell(value: unknown): string {
 }
 
 export function renderArtifactMarkdown(artifact: AnswerArtifact): string {
-  const sections = [`## ${artifact.title}`, artifact.summary];
+  const hasDetailedContent =
+    artifact.metrics.length > 0 ||
+    artifact.tables.length > 0 ||
+    artifact.charts.length > 0 ||
+    artifact.caveats.length > 0;
+  const sections = hasDetailedContent
+    ? [`## ${artifact.title}`, artifact.summary]
+    : [artifact.summary];
 
   if (artifact.metrics.length > 0) {
     sections.push(
@@ -52,8 +59,5 @@ export function renderArtifactMarkdown(artifact: AnswerArtifact): string {
     );
   }
 
-  sections.push(
-    `*Evidence: ${artifact.evidence.map((record) => record.label).join("; ")}.*`,
-  );
   return sections.join("\n\n");
 }
