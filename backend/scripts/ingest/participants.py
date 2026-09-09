@@ -3,10 +3,11 @@ from pathlib import Path
 
 import pandas as pd
 
+from app.nationality import normalize_country_code
+
 from .identity import resolve_constructor, resolve_driver
 from .team_colors import enrich_team_color, normalize_team_name
 from .utils import safe_int
-
 
 IDENTITY_OVERRIDES_PATH = (
     Path(__file__).resolve().parents[2] / "data" / "identity_observation_overrides.json"
@@ -95,7 +96,9 @@ def ingest_driver(db, driver_data, year):
         full_name=full_name,
         driver_code=driver_code,
         driver_number=safe_int(driver_data.get("DriverNumber")),
-        country_code=_nan_to_none(driver_data.get("CountryCode")),
+        country_code=normalize_country_code(
+            _nan_to_none(driver_data.get("CountryCode"))
+        ),
     )
     return driver.id
 

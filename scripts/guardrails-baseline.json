@@ -7,7 +7,7 @@
     "backend/app/services/circuit_service.py": 742,
     "backend/app/services/driver_service.py": 804,
     "backend/app/services/summary_service.py": 638,
-    "frontend/app/api/ai/ask/route.ts": 840,
+    "frontend/app/api/ai/ask/route.ts": 839,
     "frontend/app/replay/components/TelemetryPanel.tsx": 924,
     "frontend/app/replay/components/TrackCanvas.tsx": 782,
     "frontend/components/charts/FastestLapTimeline.tsx": 745,
@@ -17,24 +17,16 @@
     "frontend/components/charts/PointsByRoundGraph.tsx": 716,
     "frontend/components/charts/QualifyingSectorComparison.tsx": 790,
     "frontend/components/charts/TyreDegradationChart.tsx": 915,
-    "frontend/components/chat/ChatMessage.tsx": 618,
-    "frontend/components/layout/Navigation.tsx": 1177,
-    "frontend/lib/ai/router.ts": 371,
+    "frontend/components/layout/Navigation.tsx": 1091,
     "frontend/lib/ai/tools.ts": 751,
-    "frontend/lib/types.ts": 791
+    "frontend/lib/types.ts": 744
   },
   "drift": {
-    "aiAttributionCommits": {
-      "18cff21ddcf2 Merge main into dev": 1,
-      "578c2b118e52 Autoplay the home replay from a downsampled artifact": 1,
-      "682cc60787ce Apply ruff formatting": 1,
-      "bf04b12a195c Classify endpoint freshness with cache headers": 1
-    },
+    "aiAttributionCommits": {},
     "duplicateBasenames": {
       "auth.ts": 2
     },
     "inlineQueryKeys": {
-      "frontend/app/ask/AskContent.tsx": 4,
       "frontend/app/circuits/[id]/page.tsx": 1,
       "frontend/app/constructors/[teamName]/page.tsx": 1,
       "frontend/app/drivers/[driverCode]/page.tsx": 1,

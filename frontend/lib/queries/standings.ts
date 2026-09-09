@@ -55,20 +55,29 @@ export const EMPTY_ENTITY_COLORS: EntityColors = {
   teamColors: new Map(),
 };
 
+/**
+ * Entities are keyed by both slug and legacy code/name. Profile routes
+ * canonicalize to slugs and the AI analyst links that way, while older callers
+ * still hold codes and team names.
+ */
 export function selectEntityColors(data: StandingsResponse): EntityColors {
   const driverColors = new Map<string, string>();
   const teamColors = new Map<string, string>();
 
   for (const driver of data.drivers ?? []) {
-    if (driver.driver_code && driver.team_color) {
-      driverColors.set(driver.driver_code, `#${driver.team_color}`);
-    }
+    if (!driver.team_color) continue;
+    const color = `#${driver.team_color}`;
+
+    if (driver.driver_code) driverColors.set(driver.driver_code, color);
+    if (driver.driver_slug) driverColors.set(driver.driver_slug, color);
   }
 
   for (const team of data.constructors ?? []) {
-    if (team.team_name && team.team_color) {
-      teamColors.set(team.team_name, `#${team.team_color}`);
-    }
+    if (!team.team_color) continue;
+    const color = `#${team.team_color}`;
+
+    if (team.team_name) teamColors.set(team.team_name, color);
+    if (team.constructor_slug) teamColors.set(team.constructor_slug, color);
   }
 
   return { driverColors, teamColors };

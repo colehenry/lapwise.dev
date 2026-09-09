@@ -1,0 +1,22 @@
+{
+  "overrides": [
+    {
+      "jolpica_id": "vergne",
+      "country_code": "FRA",
+      "source": "https://en.wikipedia.org/wiki/Jean-%C3%89ric_Vergne",
+      "reason": "Existing NED came from code-based matching against Verstappen (VER)."
+    },
+    {
+      "jolpica_id": "albers",
+      "country_code": "NED",
+      "source": "https://en.wikipedia.org/wiki/Christijan_Albers",
+      "reason": "Existing THA came from code-based matching against Albon (ALB)."
+    },
+    {
+      "jolpica_id": "doornbos",
+      "country_code": "NED",
+      "source": "https://en.wikipedia.org/wiki/Robert_Doornbos",
+      "reason": "Existing AUS came from code-based matching against Doohan (DOO)."
+    }
+  ]
+}

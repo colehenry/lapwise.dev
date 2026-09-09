@@ -29,17 +29,13 @@ export default function ConversationSidebar({
   isOpen,
   onClose,
 }: ConversationSidebarProps) {
-  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
 
   function handleDelete(e: React.MouseEvent, id: string) {
     e.stopPropagation();
-    if (deletingId === id || removingIds.has(id)) return;
-    setRemovingIds((prev) => new Set([...prev, id]));
-    setTimeout(() => {
-      onDelete(id);
-    }, 280);
+    if (deletingId === id) return;
+    onDelete(id);
   }
 
   function startEdit(e: React.MouseEvent, conv: ChatConversation) {
@@ -66,7 +62,11 @@ export default function ConversationSidebar({
   }
 
   return (
-    <div
+    <aside
+      id="conversation-history"
+      aria-label="Conversation history"
+      aria-hidden={!isOpen}
+      inert={!isOpen}
       className={`theme-glass-panel absolute inset-y-0 right-0 z-10 min-h-0 overflow-hidden border-l transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
         isOpen
           ? "w-72 translate-x-0 opacity-100"
@@ -133,14 +133,7 @@ export default function ConversationSidebar({
           ) : (
             <div className="space-y-0.5 p-2">
               {conversations.map((conv) => (
-                <div
-                  key={conv.id}
-                  className={`group relative overflow-hidden transition-all duration-300 ease-in-out ${
-                    removingIds.has(conv.id)
-                      ? "max-h-0 opacity-0 pointer-events-none"
-                      : "max-h-24 opacity-100"
-                  }`}
-                >
+                <div key={conv.id} className="group relative overflow-hidden">
                   {editingId === conv.id ? (
                     <div className="rounded-xl border border-purple-500/20 bg-purple-500/[0.08] px-3 py-2.5">
                       <input
@@ -225,9 +218,7 @@ export default function ConversationSidebar({
                         <button
                           type="button"
                           onClick={(e) => handleDelete(e, conv.id)}
-                          disabled={
-                            deletingId === conv.id || removingIds.has(conv.id)
-                          }
+                          disabled={deletingId === conv.id}
                           className={`rounded-lg p-1.5 transition-all ${
                             deletingId === conv.id
                               ? "cursor-not-allowed text-text-muted opacity-50"
@@ -280,6 +271,6 @@ export default function ConversationSidebar({
           )}
         </div>
       </div>
-    </div>
+    </aside>
   );
 }

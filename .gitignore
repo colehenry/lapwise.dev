@@ -8,6 +8,7 @@ CLAUDE.md
 # Personal learning docs (not for public repo)
 docs/*
 !docs/images/
+!docs/daily-grid-game-rules.md
 # ============================================================================
 # Python (Backend)
 # ============================================================================

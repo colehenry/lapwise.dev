@@ -1,9 +1,13 @@
 # Agent essentials
 
-- Preserve unrelated working-tree changes. Do not commit, push, merge, or
-  rewrite history unless explicitly asked.
-- Direct commits and pushes to `dev` are allowed. Production changes reach
-  `main` only through a PR with green CI; never push directly to `main`.
+- Never run `git commit` or `git push`. Stop when the work is done, report it,
+  and leave the working tree for the user. The same goes for merging and
+  rewriting history. Finishing a task, passing tests, and green CI are not
+  permission — only the user asking, in that turn, is. A PreToolUse hook in
+  `.claude/settings.json` enforces this; do not work around it.
+- Preserve unrelated working-tree changes.
+- When the user does ask for a commit, `dev` takes it directly. Production
+  changes reach `main` only through a PR with green CI; never push to `main`.
 - Frontend: routes in `frontend/app`, shared UI in `frontend/components`, and
   reusable data logic in `frontend/lib` or `frontend/hooks`. Reuse UI/chart
   primitives and semantic color tokens. Query keys, fetchers, and cache

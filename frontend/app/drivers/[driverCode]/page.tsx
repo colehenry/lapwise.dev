@@ -206,8 +206,10 @@ export default function DriverProfilePage() {
                   <Image
                     src={portraitUrl}
                     alt={data.full_name}
-                    width={180}
-                    height={180}
+                    width={540}
+                    height={720}
+                    sizes="(max-width: 768px) 50vw, 360px"
+                    quality={88}
                     className="h-full max-h-[360px] w-full object-contain object-bottom"
                   />
                 ) : (

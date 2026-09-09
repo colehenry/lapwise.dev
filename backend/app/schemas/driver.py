@@ -8,6 +8,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+from app.schemas.media import DriverMedia
+
 
 class DriverListItem(BaseModel):
     """Single driver in the all-time drivers listing."""
@@ -16,7 +18,9 @@ class DriverListItem(BaseModel):
     driver_slug: Optional[str] = None
     full_name: str
     country_code: Optional[str] = None
+    # Retained for compatibility while consumers migrate to `media`.
     headshot_url: Optional[str] = None
+    media: Optional[DriverMedia] = None
     total_wins: int
     total_races: int
     total_podiums: int

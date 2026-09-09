@@ -89,6 +89,13 @@ const nextConfig: NextConfig = {
         hostname: "upload.wikimedia.org",
         pathname: "/**",
       },
+      {
+        // Owned media. Path-scoped because the host is shared across every
+        // Backblaze bucket in the region.
+        protocol: "https",
+        hostname: "f005.backblazeb2.com",
+        pathname: "/file/lapwise-media-prod/**",
+      },
     ],
   },
   async headers() {

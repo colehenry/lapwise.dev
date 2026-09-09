@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lapwise media selection</title>
+<style>
+  :root {
+    --bg: #0d0f12; --panel: #15181d; --line: #262b33;
+    --text: #e8eaed; --muted: #8a929e; --ok: #37b47e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text); display: flex;
+    height: 100vh; overflow: hidden;
+    font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
+  }
+  aside {
+    width: 260px; flex-shrink: 0; border-right: 1px solid var(--line);
+    background: var(--panel); overflow-y: auto;
+  }
+  aside h2 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted); margin: 0; padding: 14px 16px 8px;
+  }
+  .gap {
+    padding: 8px 16px; cursor: pointer; border-left: 2px solid transparent;
+    display: flex; justify-content: space-between; gap: 8px;
+  }
+  .gap:hover { background: #1b2027; }
+  .gap.active { background: #1b2430; border-left-color: #4a7cd4; }
+  .gap.done { color: var(--ok); }
+  .gap code { color: var(--muted); font: 11px ui-monospace, monospace; }
+  section { flex: 1; overflow-y: auto; padding: 20px 24px; }
+  h1 { font-size: 22px; margin: 0 0 4px; font-weight: 600; }
+  .hint { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+  .warn {
+    background: #2a1f14; border: 1px solid #5c4321; color: #e0b878;
+    padding: 10px 14px; border-radius: 4px; font-size: 14px; margin-bottom: 18px;
+  }
+  .grid { display: grid; gap: 14px;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .cand {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 4px;
+    overflow: hidden; cursor: pointer; transition: border-color .12s;
+  }
+  .cand:hover { border-color: #4a7cd4; }
+  .cand.picked { border-color: var(--ok); opacity: .45; }
+  .cand .shot { aspect-ratio: 3/4; background: #000; }
+  .cand img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .cand .info { padding: 8px 10px; }
+  .cand .dims { font: 11px ui-monospace, monospace; color: var(--muted); }
+  .cand .lic {
+    font: 11px ui-monospace, monospace; color: #9fb4d4;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .cand .fn {
+    font-size: 11px; color: var(--muted); margin-top: 4px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .empty, .loading { color: var(--muted); padding: 40px 0; }
+  a { color: #7fa8e8; }
+</style>
+</head>
+<body>
+<aside>
+  <h2>Missing headshots</h2>
+  <div id="gaps"></div>
+</aside>
+<section id="pane">
+  <div class="loading">Select a driver on the left.</div>
+</section>
+
+<script>
+let gaps = [], current = null;
+
+async function loadGaps() {
+  gaps = await (await fetch('/api/gaps')).json();
+  document.getElementById('gaps').innerHTML = gaps.map((g, i) => `
+    <div class="gap" data-i="${i}" id="gap-${i}">
+      <span>${g.driver}</span><code>${g.code || ''}</code>
+    </div>`).join('');
+}
+
+async function openDriver(i) {
+  current = i;
+  document.querySelectorAll('.gap').forEach(el => el.classList.remove('active'));
+  document.getElementById('gap-' + i)?.classList.add('active');
+  const g = gaps[i];
+  const pane = document.getElementById('pane');
+  pane.innerHTML = `<h1>${g.driver}</h1><div class="loading">Searching Commons…</div>`;
+
+  const data = await (await fetch('/api/candidates/' + g.driver_id)).json();
+  if (!data.candidates.length) {
+    pane.innerHTML = `<h1>${g.driver}</h1>
+      <div class="empty">No candidates clearing the licence and 600px floor.</div>`;
+    return;
+  }
+  pane.innerHTML = `
+    <h1>${g.driver}</h1>
+    <div class="hint">${data.candidates.length} candidates · click one to ingest it</div>
+    <div class="warn">
+      Ranked by filename and shape only. Name searches return other people,
+      group shots and objects — check it is actually this driver before picking.
+    </div>
+    <div class="grid">${data.candidates.map((c, j) => `
+      <div class="cand" data-j="${j}">
+        <div class="shot"><img src="${c.thumb}" loading="lazy" alt=""></div>
+        <div class="info">
+          <div class="dims">${c.width}×${c.height}</div>
+          <div class="lic">${c.license}</div>
+          <div class="fn" title="${c.filename.replace(/"/g, '&quot;')}">${c.filename}</div>
+        </div>
+      </div>`).join('')}</div>`;
+  pane._candidates = data.candidates;
+}
+
+document.addEventListener('click', async (e) => {
+  const gap = e.target.closest('.gap');
+  if (gap) return openDriver(+gap.dataset.i);
+
+  const cand = e.target.closest('.cand');
+  if (!cand || cand.classList.contains('picked')) return;
+  const pane = document.getElementById('pane');
+  const chosen = pane._candidates[+cand.dataset.j];
+  cand.classList.add('picked');
+
+  const res = await (await fetch('/api/pick', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ driver_id: gaps[current].driver_id, filename: chosen.filename }),
+  })).json();
+
+  if (!res.ok) {
+    cand.classList.remove('picked');
+    alert('Could not ingest: ' + res.error);
+    return;
+  }
+  document.getElementById('gap-' + current)?.classList.add('done');
+  const next = current + 1;
+  if (next < gaps.length) openDriver(next);
+});
+
+loadGaps();
+</script>
+</body>
+</html>

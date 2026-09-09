@@ -3,7 +3,10 @@
 import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import { fetchAdminDashboardStats } from "@/lib/admin";
-import type { AdminDashboardPeriod, AdminDashboardStats } from "@/lib/types";
+import type {
+  AdminDashboardPeriod,
+  AdminDashboardStats,
+} from "@/lib/adminTypes";
 
 const PERIODS: { value: AdminDashboardPeriod; label: string }[] = [
   { value: "all", label: "All time" },

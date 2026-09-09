@@ -8,7 +8,6 @@ and password reset flows.
 import pytest
 from httpx import AsyncClient
 
-
 # ─── Registration ───────────────────────────────────────────────────
 
 

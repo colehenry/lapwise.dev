@@ -49,6 +49,13 @@ class Settings(BaseSettings):
     # FastF1
     fastf1_cache_dir: str = "./cache"
 
+    # Media storage (Backblaze B2, S3-compatible)
+    b2_key_id: str = ""
+    b2_application_key: str = ""
+    b2_bucket: str = ""
+    b2_endpoint: str = ""
+    b2_public_base_url: str = ""
+
     def get_cors_origins(self) -> list[str]:
         """Parse comma-separated CORS origins into a list."""
         origins: list[str] = []

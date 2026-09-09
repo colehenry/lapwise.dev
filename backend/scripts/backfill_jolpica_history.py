@@ -20,21 +20,16 @@ Usage:
 """
 
 import argparse
-import hashlib
-import io
-import os
 import sys
 import zipfile
 
 import pandas as pd
-import requests
 from sqlalchemy import select
 
 from app.models import Driver, Lap, PitStop, Session
 from scripts.ingest import get_db_session, write_failure_log
+from scripts.jolpica_dump import default_dump_path, download_dump, read_table
 
-DUMP_INDEX_URL = "https://api.jolpi.ca/data/dumps/download/"
-DUMP_TIER = "delayed"  # free tier: 14 days behind latest; historical data is static
 INSERT_CHUNK = 5000
 SOURCE = "jolpica"
 
@@ -49,35 +44,6 @@ def parse_years(spec):
         return int(start), int(end)
     year = int(spec)
     return year, year
-
-
-def download_dump(dest_path):
-    """Download the delayed CSV dump and verify its published SHA256."""
-    index = requests.get(DUMP_INDEX_URL, timeout=60)
-    index.raise_for_status()
-    meta = index.json()[f"{DUMP_TIER}_dumps"]["csv"]
-
-    size_mb = meta["file_size"] / 1e6
-    print(f"  ⬇️  Downloading dump ({size_mb:.1f} MB, uploaded {meta['uploaded_at']})")
-    resp = requests.get(meta["download_url"], timeout=600)
-    resp.raise_for_status()
-
-    digest = hashlib.sha256(resp.content).hexdigest()
-    if digest != meta["file_hash"]:
-        raise RuntimeError(
-            f"Dump hash mismatch: expected {meta['file_hash']}, got {digest}"
-        )
-
-    with open(dest_path, "wb") as f:
-        f.write(resp.content)
-    print(f"  ✓ Verified and saved to {dest_path}")
-    return dest_path
-
-
-def read_table(archive, name):
-    """Read one CSV table out of the dump archive."""
-    with archive.open(f"formula_one_{name}.csv") as f:
-        return pd.read_csv(io.BytesIO(f.read()))
 
 
 def build_frames(dump_path, start_year, end_year):
@@ -304,10 +270,7 @@ def main():
 
     dump_path = args.dump
     if not dump_path:
-        dump_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "../../cache/jolpica_dump.zip")
-        )
-        os.makedirs(os.path.dirname(dump_path), exist_ok=True)
+        dump_path = default_dump_path()
         download_dump(dump_path)
 
     lap_frame, pit_frame = build_frames(dump_path, start_year, end_year)

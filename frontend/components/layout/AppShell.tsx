@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import FavoritesPrompt from "@/components/favorites/FavoritesPrompt";
 import AuthProvider from "@/components/providers/AuthProvider";
@@ -9,15 +10,20 @@ import Navigation from "./Navigation";
 import ScrollbarHandler from "./ScrollbarHandler";
 
 export default function AppShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const isChatWorkspace = pathname === "/ask";
+
   return (
     <QueryProvider>
       <AuthProvider>
         <ScrollbarHandler />
         <Navigation />
-        <main className="pt-14 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
+        <main
+          className={`pt-14 ${isChatWorkspace ? "" : "pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0"}`}
+        >
           {children}
         </main>
-        <Footer />
+        {!isChatWorkspace && <Footer />}
         <FavoritesPrompt />
       </AuthProvider>
     </QueryProvider>

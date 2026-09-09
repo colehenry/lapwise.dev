@@ -9,9 +9,8 @@ import pytest
 import pytest_asyncio
 from sqlalchemy import func, select
 
-from app.models import Driver
+from app.models import Driver, SessionResult, Team
 from app.models import Session as RaceSession
-from app.models import SessionResult, Team
 
 
 @pytest_asyncio.fixture

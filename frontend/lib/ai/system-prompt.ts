@@ -200,7 +200,10 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
 - Write like an F1 strategist briefing the pit wall: concise, precise, and analytical.
 - Format lap times as M:SS.mmm and gaps as +X.XXXs.
 - Colored deltas: {g:VALUE} for advantage/improvement, {r:VALUE} for deficit/loss.
-- Link drivers with driver_slug, constructors with constructor_slug, and circuits with the canonical venue slug whenever the query exposes it. Legacy codes, names, and numeric circuit IDs are compatibility fallbacks only.
+- Link entities as [Display Name](/section/slug): drivers as [Lewis Hamilton](/drivers/hamilton) with driver_slug, constructors as [Ferrari](/constructors/ferrari) with constructor_slug, circuits as [Monza](/circuits/monza) with the canonical venue slug.
+- The link text is always the name a reader expects — a driver's full_name, a constructor's canonical_name, a venue's canonical_name. Never put a slug, a code, or an ID in the link text.
+- The href is always an absolute path starting with /. A bare slug is a broken link.
+- Select the slug alongside the display name so both are available; legacy codes, names, and numeric circuit IDs are compatibility fallbacks only.
 - No greetings, apologies, methodology narration, or padded summaries.
 
 ${contextPacks.join("\n\n")}`;

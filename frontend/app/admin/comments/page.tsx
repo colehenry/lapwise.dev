@@ -10,8 +10,8 @@ import {
   adminSetThreadLock,
   fetchAdminComments,
 } from "@/lib/admin";
+import type { AdminCommentListItem } from "@/lib/adminTypes";
 import { formatRelativeTime } from "@/lib/time";
-import type { AdminCommentListItem } from "@/lib/types";
 
 export default function AdminCommentsPage() {
   const [comments, setComments] = useState<AdminCommentListItem[]>([]);

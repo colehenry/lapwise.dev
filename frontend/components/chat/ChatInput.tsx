@@ -6,36 +6,40 @@ interface ChatInputProps {
   onSend: (message: string) => Promise<void>;
   onAbort?: () => void;
   isLoading: boolean;
-  remaining: number | null;
-  dailyLimit: number;
+  disabled?: boolean;
   compact?: boolean;
   shellless?: boolean;
 }
+
+const COMPOSER_MAX_HEIGHT_PX = 144;
+const COMPACT_COMPOSER_MAX_HEIGHT_PX = 80;
 
 export default function ChatInput({
   onSend,
   onAbort,
   isLoading,
-  remaining: _remaining,
-  dailyLimit: _dailyLimit,
+  disabled = false,
   compact,
   shellless,
 }: ChatInputProps) {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: resize when the value changes
   useEffect(() => {
     const el = textareaRef.current;
     if (el) {
+      const maxHeight = compact
+        ? COMPACT_COMPOSER_MAX_HEIGHT_PX
+        : COMPOSER_MAX_HEIGHT_PX;
       el.style.height = "auto";
-      el.style.height = `${compact ? Math.min(el.scrollHeight, 80) : el.scrollHeight}px`;
+      el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
+      el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
     }
-  }, [input, compact]);
+  });
 
   async function submitMessage() {
     const trimmed = input.trim();
-    if (!trimmed || isLoading) return;
+    if (!trimmed || isLoading || disabled) return;
     setInput("");
     await onSend(trimmed);
   }
@@ -55,7 +59,7 @@ export default function ChatInput({
   if (compact) {
     return (
       <div className="border-t border-[var(--glass-border)] bg-bg-primary/90 px-3 py-2.5">
-        <form onSubmit={handleSubmit} className="flex items-center gap-2">
+        <form onSubmit={handleSubmit} className="flex items-end gap-2">
           <textarea
             ref={textareaRef}
             value={input}
@@ -64,8 +68,9 @@ export default function ChatInput({
             placeholder="Ask about F1..."
             rows={1}
             maxLength={2000}
-            disabled={isLoading}
-            className="flex-1 resize-none rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-purple-500/40 focus:outline-none focus:ring-1 focus:ring-purple-500/20 disabled:opacity-50"
+            disabled={isLoading || disabled}
+            aria-label="Message Clutch"
+            className="max-h-20 min-h-9 flex-1 resize-none rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-purple-500/40 focus:outline-none focus:ring-1 focus:ring-purple-500/20 disabled:opacity-50"
           />
           {isLoading && onAbort ? (
             <button
@@ -73,6 +78,7 @@ export default function ChatInput({
               onClick={onAbort}
               className="shrink-0 rounded-xl bg-red-500/10 border border-red-500/20 p-2 text-red-400 transition-colors hover:bg-red-500/20"
               title="Stop"
+              aria-label="Stop generating"
             >
               <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <title>Stop</title>
@@ -82,8 +88,9 @@ export default function ChatInput({
           ) : (
             <button
               type="submit"
-              disabled={!input.trim() || isLoading}
+              disabled={!input.trim() || isLoading || disabled}
               className="shrink-0 rounded-xl bg-purple-500 p-2 text-text-primary transition-colors hover:bg-purple-600 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Send message"
             >
               <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <title>Send</title>
@@ -106,7 +113,7 @@ export default function ChatInput({
     >
       <form
         onSubmit={handleSubmit}
-        className="chat-input-glass mx-auto flex max-w-4xl items-center gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-surface)] px-4 py-2 backdrop-blur-xl transition-all duration-200 focus-within:border-purple-500/30 focus-within:shadow-[0_0_40px_-10px_rgba(160,32,240,0.15)]"
+        className="chat-input-glass mx-auto flex max-w-4xl items-end gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-surface)] px-4 py-2 backdrop-blur-xl transition-all duration-200 focus-within:border-purple-500/30 focus-within:shadow-[0_0_40px_-10px_rgba(160,32,240,0.15)]"
       >
         <textarea
           ref={textareaRef}
@@ -116,8 +123,9 @@ export default function ChatInput({
           placeholder="Ask anything about F1..."
           rows={1}
           maxLength={2000}
-          disabled={isLoading}
-          className="flex-1 resize-none overflow-hidden bg-transparent py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none disabled:opacity-50"
+          disabled={isLoading || disabled}
+          aria-label="Message Clutch"
+          className="max-h-36 min-h-10 flex-1 resize-none bg-transparent py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none disabled:opacity-50"
         />
         {isLoading && onAbort ? (
           <button
@@ -125,6 +133,7 @@ export default function ChatInput({
             onClick={onAbort}
             className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 transition-all hover:bg-red-500/20 active:scale-95"
             title="Stop generating"
+            aria-label="Stop generating"
           >
             <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <title>Stop</title>
@@ -134,8 +143,9 @@ export default function ChatInput({
         ) : (
           <button
             type="submit"
-            disabled={!input.trim() || isLoading}
+            disabled={!input.trim() || isLoading || disabled}
             className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500 text-text-primary transition-all hover:bg-purple-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Send message"
           >
             <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <title>Send</title>
