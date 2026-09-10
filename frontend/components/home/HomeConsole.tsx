@@ -125,10 +125,8 @@ export default function HomeConsole() {
           {map}
           {hasTelemetry && data.replay && (
             <RacePanel
-              replay={data.replay}
               season={data.season}
               round={data.replayRound}
-              latest={data.latest}
               clock={clock}
               className="home-console__race"
             />

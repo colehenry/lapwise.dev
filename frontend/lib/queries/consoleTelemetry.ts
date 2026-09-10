@@ -102,3 +102,55 @@ export function consoleTelemetryQuery(
     retry: false,
   });
 }
+
+/** The sample range covering one lap, or null if that lap was never run. */
+export function lapWindow(
+  telemetry: DriverTelemetry,
+  lap: number,
+): { from: number; to: number } | null {
+  const starts = telemetry.lapStarts;
+  const from = starts[lap - 1];
+  if (from == null || from < 0) return null;
+  let to = telemetry.speed.length;
+  for (let next = lap; next < starts.length; next++) {
+    if (starts[next] >= 0) {
+      to = starts[next];
+      break;
+    }
+  }
+  return to > from + 1 ? { from, to } : null;
+}
+
+export type ChannelReading = {
+  speed: number;
+  gear: number;
+  throttle: number;
+  brake: number;
+};
+
+/**
+ * What the car was doing a given fraction of the way through a lap.
+ *
+ * Shared so the header readout and the traces cannot disagree about which
+ * sample is current.
+ */
+export function sampleAt(
+  telemetry: DriverTelemetry,
+  lap: number,
+  through: number,
+): ChannelReading | null {
+  const window = lapWindow(telemetry, lap);
+  if (!window) return null;
+  const count = window.to - window.from;
+  const offset = Math.max(
+    0,
+    Math.min(count - 1, Math.round(through * count) - 1),
+  );
+  const index = window.from + offset;
+  return {
+    speed: telemetry.speed[index],
+    gear: telemetry.gear[index],
+    throttle: telemetry.throttle[index],
+    brake: telemetry.brake[index],
+  };
+}

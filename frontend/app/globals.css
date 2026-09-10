@@ -492,6 +492,29 @@ body {
   }
 }
 
+/* A feed line that does not fit walks to its end and back. `--roll` is the
+   measured overflow, so each line travels exactly as far as it needs to. */
+@keyframes feedRoll {
+  0%,
+  18% {
+    transform: translateX(0);
+  }
+  82%,
+  100% {
+    transform: translateX(calc(-1 * var(--roll, 0px)));
+  }
+}
+
+.feed-roll {
+  animation: feedRoll 7s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feed-roll {
+    animation: none;
+  }
+}
+
 @keyframes caretBlink {
   50% {
     opacity: 0;

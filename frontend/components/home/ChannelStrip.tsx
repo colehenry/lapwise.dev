@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import type { RaceClockController } from "@/hooks/useRaceClock";
-import type { DriverTelemetry } from "@/lib/queries/consoleTelemetry";
+import {
+  type DriverTelemetry,
+  lapWindow,
+} from "@/lib/queries/consoleTelemetry";
 import { PanelLabel } from "./ConsolePanel";
 
 const WIDTH = 1000;
@@ -30,23 +33,6 @@ function point(x: number, fraction: number): string {
 function area(body: string, first: string, last: string): string {
   if (!body) return "";
   return `${first.split(",")[0]},${TRACE_BOTTOM} ${body} ${last.split(",")[0]},${TRACE_BOTTOM}`;
-}
-
-function lapSlice(
-  telemetry: DriverTelemetry,
-  lap: number,
-): { from: number; to: number } | null {
-  const starts = telemetry.lapStarts;
-  const from = starts[lap - 1];
-  if (from == null || from < 0) return null;
-  let to = telemetry.speed.length;
-  for (let next = lap; next < starts.length; next++) {
-    if (starts[next] >= 0) {
-      to = starts[next];
-      break;
-    }
-  }
-  return to > from + 1 ? { from, to } : null;
 }
 
 function Lane({
@@ -92,15 +78,13 @@ export default function ChannelStrip({
   const { subscribe } = clock;
 
   const speedRef = useRef<Channel>({ line: null, fill: null });
-  const readoutRef = useRef<HTMLSpanElement | null>(null);
   const throttleRef = useRef<Channel>({ line: null, fill: null });
   const brakeRef = useRef<Channel>({ line: null, fill: null });
   const gearRef = useRef<Channel>({ line: null, fill: null });
-  const gearReadoutRef = useRef<HTMLSpanElement | null>(null);
 
   const chart = useMemo(() => {
     if (!telemetry) return null;
-    const window = lapSlice(telemetry, lap);
+    const window = lapWindow(telemetry, lap);
     if (!window) return null;
 
     const { from, to } = window;
@@ -188,13 +172,6 @@ export default function ChannelStrip({
       });
 
       drawn = upTo;
-
-      if (gearReadoutRef.current) {
-        gearReadoutRef.current.textContent = `G${current.gears[upTo - 1] ?? 0}`;
-      }
-      if (readoutRef.current) {
-        readoutRef.current.textContent = `${current.readings[upTo - 1] ?? 0} km/h`;
-      }
     });
   }, [subscribe, hasChart]);
 
@@ -268,17 +245,7 @@ export default function ChannelStrip({
         />
       </Lane>
 
-      <Lane
-        label={
-          <>
-            <PanelLabel>Speed</PanelLabel>
-            <span
-              ref={readoutRef}
-              className="font-mono text-[10px] tabular-nums text-ink-soft"
-            />
-          </>
-        }
-      >
+      <Lane label={<PanelLabel>Speed</PanelLabel>}>
         <polygon
           ref={(node) => {
             speedRef.current.fill = node;
@@ -298,18 +265,7 @@ export default function ChannelStrip({
         />
       </Lane>
 
-      <Lane
-        label={
-          <>
-            <PanelLabel>Gear</PanelLabel>
-            <span
-              ref={gearReadoutRef}
-              className="font-mono text-[10px] tabular-nums"
-              style={{ color: "var(--series-1)" }}
-            />
-          </>
-        }
-      >
+      <Lane label={<PanelLabel>Gear</PanelLabel>}>
         <polygon
           ref={(node) => {
             gearRef.current.fill = node;

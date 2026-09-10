@@ -10,14 +10,23 @@ import { fitTrack, trackPath } from "@/lib/consoleTrackGeometry";
 import type { ConsoleReplay } from "@/lib/queries/consoleReplay";
 import { pointAt } from "@/lib/raceClockMath";
 import { statusColor } from "./consoleStatus";
-import MapFeedToast from "./MapFeedToast";
+import MapRaceFeed from "./MapRaceFeed";
 import MapRunningOrder from "./MapRunningOrder";
+import MapTimeline from "./MapTimeline";
 
 /** How much of a lap the leading arc covers in the reduced map. */
 const TRACE_ARC = 0.16;
 
 /** Only the leader is captioned; three codes at once crowded the same corner. */
 const LABELLED_PLACES = 1;
+
+/** Left gutter added to the viewBox, so the circuit clears the overlay. */
+const OVERLAY_GUTTER = 0.2;
+
+/** "Italian Grand Prix" is the race; "Italian GP" fits the corner it sits in. */
+function shortEvent(name: string): string {
+  return name.replace("Grand Prix", "GP");
+}
 
 type RaceMapProps = {
   replay: ConsoleReplay;
@@ -127,7 +136,7 @@ export default function RaceMap({
     >
       <svg
         className="absolute inset-0 h-full w-full"
-        viewBox={`0 0 ${track.width.toFixed(1)} ${track.height.toFixed(1)}`}
+        viewBox={`${(-track.width * OVERLAY_GUTTER).toFixed(1)} 0 ${(track.width * (1 + OVERLAY_GUTTER)).toFixed(1)} ${track.height.toFixed(1)}`}
         preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label={`${replay.circuit_name} circuit map`}
@@ -212,7 +221,7 @@ export default function RaceMap({
         <div>
           <div className="flex items-center gap-2">
             <p className="m-0 truncate text-[15px] font-bold leading-tight tracking-[-0.02em] text-ink-strong">
-              {replay.circuit_name}; race replay
+              {shortEvent(replay.event_name)} Replay
             </p>
             {status && (
               <span
@@ -228,7 +237,7 @@ export default function RaceMap({
             )}
           </div>
           <p className="m-0 mt-[3px] font-mono text-[9px] uppercase tracking-[0.14em] text-ink-faint">
-            {utcDate(replay.date)} · Round {round}
+            {replay.circuit_name} · {utcDate(replay.date)} · Round {round}
           </p>
           {newerRound !== null && season !== null && (
             <Link
@@ -240,10 +249,15 @@ export default function RaceMap({
           )}
         </div>
 
-        {!reduced && <MapRunningOrder cars={replay.cars} clock={clock} />}
+        {!reduced && (
+          <>
+            <MapRunningOrder cars={replay.cars} clock={clock} />
+            <MapRaceFeed replay={replay} clock={clock} />
+          </>
+        )}
       </div>
 
-      {!reduced && <MapFeedToast replay={replay} clock={clock} />}
+      {!reduced && <MapTimeline replay={replay} clock={clock} />}
     </div>
   );
 }

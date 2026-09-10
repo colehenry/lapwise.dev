@@ -17,9 +17,6 @@ const ClutchProgressionChart = dynamic(
   { ssr: false },
 );
 
-/** What the send control says. Swapped here, not hunted for in the markup. */
-const SEND_LABEL = "Radio in";
-
 /** Reading pace, in characters per second. */
 export const TYPE_RATE = 52;
 /** A beat before the answer starts, so the question is read first. */
@@ -252,9 +249,24 @@ export default function ClutchBand({
           />
           <button
             type="submit"
-            className="flex-none rounded-sm border border-accent-bright bg-accent px-4 py-2 text-[13px] font-semibold text-ink-strong transition-colors hover:bg-accent-bright focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-bright"
+            aria-label="Send this question to Clutch"
+            className="flex h-9 w-9 flex-none items-center justify-center rounded-sm border border-accent-bright bg-accent text-ink-strong transition-colors hover:bg-accent-bright focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-bright"
           >
-            {SEND_LABEL}
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <title>Send</title>
+              <path d="M4 12h14" />
+              <path d="M13 6l6 6-6 6" />
+            </svg>
           </button>
         </form>
       </div>
