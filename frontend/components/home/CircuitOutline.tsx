@@ -20,11 +20,17 @@ export default function CircuitOutline({
   circuitName,
   className = "",
   opacity = 1,
+  stroke = "var(--line-strong)",
+  strokeWidth = 1.25,
 }: {
   circuitId: number | null | undefined;
   circuitName: string;
   className?: string;
   opacity?: number;
+  /** `--canvas-track` is tuned for a near-black canvas, not a panel. */
+  stroke?: string;
+  /** Screen pixels, not viewBox units — see the note on the path below. */
+  strokeWidth?: number;
 }) {
   const { data } = useQuery({
     ...replayTrackQuery(circuitId ?? 0),
@@ -48,13 +54,17 @@ export default function CircuitOutline({
         style={{ opacity }}
       >
         <title>{circuitName}</title>
+        {/* Circuits differ in shape, so a viewBox-relative stroke scaled to a
+            different width on every card — 0.19px for Budapest against 0.27px
+            for Monza. A non-scaling stroke draws them all at one weight. */}
         <path
           d={trackPath(track.polyline)}
           fill="none"
-          stroke="var(--canvas-track)"
-          strokeWidth={track.unit * 0.4}
+          stroke={stroke}
+          strokeWidth={strokeWidth}
           strokeLinejoin="round"
           strokeLinecap="round"
+          vectorEffect="non-scaling-stroke"
         />
       </svg>
     );

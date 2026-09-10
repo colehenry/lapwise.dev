@@ -38,8 +38,8 @@ export default function NextRaceCard() {
       <CircuitOutline
         circuitId={next.circuit_id}
         circuitName={next.circuit_name ?? next.location}
-        className="pointer-events-none absolute right-3 top-3 h-[104px] w-[150px]"
-        opacity={0.55}
+        className="pointer-events-none absolute right-3 top-3 h-[104px] w-[104px]"
+        opacity={0.7}
       />
 
       <div className="relative">

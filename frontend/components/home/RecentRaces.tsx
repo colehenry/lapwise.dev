@@ -55,11 +55,12 @@ function RaceCard({
             {round.circuit_name}
           </p>
         </div>
+        {/* A square box, so every circuit's longest dimension is drawn the
+            same length however differently shaped they are. */}
         <CircuitOutline
           circuitId={round.circuit_id}
           circuitName={round.circuit_name}
-          className="h-[46px] w-[74px] flex-none"
-          opacity={0.75}
+          className="h-[54px] w-[54px] flex-none"
         />
       </div>
 
