@@ -178,9 +178,14 @@ export default function ClutchBand({
         {/* One transcript, top to bottom: what was asked, what came back, and
             the rows it came from. A second column only stretched the answer to
             the chart's height and left a hole under two lines of text. */}
-        <p className="m-0 mt-7 flex max-w-[78ch] justify-end gap-2.5 text-right font-mono text-[15px] leading-relaxed text-ink-base">
+        <p className="m-0 mt-7 flex max-w-[78ch] justify-end gap-2.5 text-right text-[17px] font-medium leading-[1.6] text-ink-strong">
           <span className="min-w-0">{script.question}</span>
-          <span aria-hidden="true" className="shrink-0 text-accent-bright">
+          {/* Outfit has no glyph for the chevron, so it keeps the mono face
+              rather than falling back differently on every platform. */}
+          <span
+            aria-hidden="true"
+            className="shrink-0 font-mono text-accent-bright"
+          >
             ❮
           </span>
         </p>
