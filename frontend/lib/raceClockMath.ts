@@ -72,12 +72,21 @@ export function pointAt(
 ): [number, number] | null {
   if (polyline.length === 0) return null;
   const wrapped = frac - Math.floor(frac);
-  const index = Math.min(
-    polyline.length - 1,
-    Math.floor(wrapped * (polyline.length - 1)),
-  );
+
+  /* Interpolated, not snapped. Landing on the nearest vertex teleports a car
+     between the polyline's 600-odd points, and those are dense through corners
+     and sparse down straights — so the jumps were longest exactly where the car
+     should look fastest and smoothest. */
+  const scaled = wrapped * (polyline.length - 1);
+  const index = Math.min(polyline.length - 1, Math.floor(scaled));
+  const next = polyline[Math.min(polyline.length - 1, index + 1)];
   const point = polyline[index];
-  return [point[0], point[1]];
+  const t = scaled - index;
+
+  return [
+    point[0] + (next[0] - point[0]) * t,
+    point[1] + (next[1] - point[1]) * t,
+  ];
 }
 
 export function statusAt(
@@ -170,11 +179,16 @@ export function buildFrame(
  * What must change on screen before React re-renders. Positions, the tooltip
  * and the playhead move every tick and are written through refs instead.
  */
+/** Places the running order actually shows; a swap below them changes nothing. */
+const RANKED_PLACES = 6;
+
 export function frameSignature(frame: ClockFrame): string {
-  return [
-    frame.lap,
-    frame.feedCount,
-    frame.status?.code ?? "green",
-    frame.order.map((entry) => entry.key).join(","),
-  ].join("|");
+  /* Built by hand rather than with map/join: this runs on every animation
+     frame, and the intermediate array was garbage twenty-one entries at a
+     time. */
+  let ranked = "";
+  const places = Math.min(RANKED_PLACES, frame.order.length);
+  for (let i = 0; i < places; i++) ranked += `${frame.order[i].key},`;
+
+  return `${frame.lap}|${frame.feedCount}|${frame.status?.code ?? "green"}|${ranked}`;
 }

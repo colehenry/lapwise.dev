@@ -12,10 +12,7 @@ import {
   seasonStandingsQuery,
   selectEntityColors,
 } from "@/lib/queries/standings";
-import {
-  ConstructorChampionship,
-  DriverChampionship,
-} from "./ChampionshipTables";
+import ClutchAsk from "./ClutchAsk";
 import ClutchBand from "./ClutchBand";
 import ConsoleFrame from "./ConsoleFrame";
 import ConsolePanel, { PanelFailure } from "./ConsolePanel";
@@ -96,7 +93,6 @@ export default function HomeConsole() {
         <RaceMap
           replay={data.replay}
           polyline={track.polyline}
-          rotationDegrees={track.rotation_deg}
           round={data.replayRound ?? 0}
           newerRound={data.walkedBack ? (data.latest?.round ?? null) : null}
           season={data.season}
@@ -121,10 +117,7 @@ export default function HomeConsole() {
         <div className="page-frame flex flex-col gap-3 py-3">
           {gridCard}
           <div style={{ height: COMPACT_MAP_HEIGHT }}>{map}</div>
-          <DriverChampionship
-            standings={standings.data}
-            loading={standings.isPending}
-          />
+          <ClutchAsk replay={data.replay} />
         </div>
       ) : (
         <ConsoleFrame viewportRef={clock.viewportRef} quiet={!hasTelemetry}>
@@ -136,21 +129,11 @@ export default function HomeConsole() {
               season={data.season}
               round={data.replayRound}
               latest={data.latest}
-              classification={data.classification.data}
               clock={clock}
               className="home-console__race"
             />
           )}
-          <DriverChampionship
-            standings={standings.data}
-            loading={standings.isPending}
-            className="home-console__drivers"
-          />
-          <ConstructorChampionship
-            standings={standings.data}
-            loading={standings.isPending}
-            className="home-console__teams"
-          />
+          <ClutchAsk replay={data.replay} className="home-console__clutch" />
         </ConsoleFrame>
       )}
 
@@ -194,7 +177,6 @@ function TrackPlaceholder({
   return (
     <TrackOutline
       polyline={track?.polyline}
-      rotationDegrees={track?.rotation_deg}
       circuitName={circuitName ?? "Circuit"}
       message={
         loading

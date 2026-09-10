@@ -13,8 +13,11 @@ import {
 export const PLAYBACK_RATES = [1, 3, 10, 30] as const;
 const DEFAULT_RATE = 10;
 
-/** State churn beyond this is invisible; the refs still paint every frame. */
-const TICK_INTERVAL = 1 / 30;
+/**
+ * Positions are written every animation frame, because a car drawn at 30 Hz on
+ * a 60 Hz display moves in visible steps. React still re-renders only when
+ * `frameSignature` changes, so the state churn stays where it was.
+ */
 
 /** A tab restored after a minute must not integrate the minute it missed. */
 const MAX_DELTA = 0.25;
@@ -132,7 +135,6 @@ export function useRaceClock(
 
     let raf = 0;
     let last = performance.now();
-    let sinceTick = 0;
 
     const step = (now: number) => {
       raf = requestAnimationFrame(step);
@@ -147,10 +149,6 @@ export function useRaceClock(
       time = skipStoppages(time, replay.skips);
       if (time > replay.t_end) time = start;
       timeRef.current = time;
-
-      sinceTick += delta;
-      if (sinceTick < TICK_INTERVAL) return;
-      sinceTick = 0;
 
       const next = buildFrame(replay, time);
       if (next) publish(next);

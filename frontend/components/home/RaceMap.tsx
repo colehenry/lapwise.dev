@@ -10,20 +10,18 @@ import { fitTrack, trackPath } from "@/lib/consoleTrackGeometry";
 import type { ConsoleReplay } from "@/lib/queries/consoleReplay";
 import { pointAt } from "@/lib/raceClockMath";
 import { statusColor } from "./consoleStatus";
-import LeaderTooltip from "./LeaderTooltip";
 import MapFeedToast from "./MapFeedToast";
 import MapRunningOrder from "./MapRunningOrder";
 
 /** How much of a lap the leading arc covers in the reduced map. */
 const TRACE_ARC = 0.16;
 
-/** Codes ride the leading cars, which is what answers "who is in front". */
-const LABELLED_PLACES = 3;
+/** Only the leader is captioned; three codes at once crowded the same corner. */
+const LABELLED_PLACES = 1;
 
 type RaceMapProps = {
   replay: ConsoleReplay;
   polyline: number[][];
-  rotationDegrees: number | null | undefined;
   round: number;
   /** The newer round whose telemetry has not published yet. */
   newerRound: number | null;
@@ -36,7 +34,6 @@ type RaceMapProps = {
 export default function RaceMap({
   replay,
   polyline,
-  rotationDegrees,
   round,
   newerRound,
   season,
@@ -45,34 +42,15 @@ export default function RaceMap({
 }: RaceMapProps) {
   const tint = useTeamTint();
   const wrapRef = useRef<HTMLDivElement | null>(null);
-  const boxRef = useRef({ width: 0, height: 0 });
   const carsRef = useRef(new Map<string, SVGCircleElement>());
   const labelsRef = useRef(new Map<string, SVGTextElement>());
   const traceRef = useRef<SVGPathElement | null>(null);
   const lapRef = useRef<HTMLSpanElement | null>(null);
   const elapsedRef = useRef<HTMLSpanElement | null>(null);
 
-  const track = useMemo(
-    () => fitTrack(polyline, rotationDegrees),
-    [polyline, rotationDegrees],
-  );
+  const track = useMemo(() => fitTrack(polyline), [polyline]);
 
   const { subscribe, frame } = clock;
-
-  useEffect(() => {
-    const element = wrapRef.current;
-    if (!element) return;
-    const measure = () => {
-      boxRef.current = {
-        width: element.clientWidth,
-        height: element.clientHeight,
-      };
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
 
   /* Positions are written straight to the DOM: re-rendering these every tick
      would recreate the markers and the tooltip's photo with them. */
@@ -230,47 +208,42 @@ export default function RaceMap({
         elapsedRef={elapsedRef}
         reduced={reduced}
       />
-
-      {/* Title, round and flag share one strip, so the top-left is free for the
-          running order the way a broadcast lays it out. */}
-      <div className="pointer-events-none absolute bottom-3 left-3 max-w-[60%]">
-        <div className="flex items-center gap-2.5">
-          <p className="m-0 truncate text-[15px] font-bold leading-tight tracking-[-0.02em] text-ink-strong">
-            {replay.circuit_name} — race replay
-          </p>
-          {status && (
-            <span
-              className="flex flex-none items-center gap-[6px] rounded-sm border border-line-soft px-2 py-[3px] font-mono text-[9px] uppercase tracking-[0.14em] text-ink-base"
-              style={{ background: "var(--glass-surface)" }}
-            >
+      <div className="pointer-events-none absolute left-3 top-3 flex w-[196px] flex-col gap-2">
+        <div>
+          <div className="flex items-center gap-2">
+            <p className="m-0 truncate text-[15px] font-bold leading-tight tracking-[-0.02em] text-ink-strong">
+              {replay.circuit_name}; race replay
+            </p>
+            {status && (
               <span
-                className="block h-[6px] w-[6px] rounded-full"
-                style={{ background: statusColor(status.code) }}
-              />
-              {status.label ?? status.code}
-            </span>
+                className="flex flex-none items-center gap-[5px] rounded-sm border border-line-soft px-1.5 py-[2px] font-mono text-[8px] uppercase tracking-[0.12em] text-ink-base"
+                style={{ background: "var(--glass-surface)" }}
+              >
+                <span
+                  className="block h-[5px] w-[5px] rounded-full"
+                  style={{ background: statusColor(status.code) }}
+                />
+                {status.label ?? status.code}
+              </span>
+            )}
+          </div>
+          <p className="m-0 mt-[3px] font-mono text-[9px] uppercase tracking-[0.14em] text-ink-faint">
+            {utcDate(replay.date)} · Round {round}
+          </p>
+          {newerRound !== null && season !== null && (
+            <Link
+              href={`/results/${season}/${newerRound}`}
+              className="pointer-events-auto mt-1 inline-block font-mono text-[9px] uppercase tracking-[0.14em] text-accent-light underline-offset-2 hover:underline"
+            >
+              Round {newerRound} has no lap data yet
+            </Link>
           )}
         </div>
-        <p className="m-0 mt-[3px] font-mono text-[9px] uppercase tracking-[0.14em] text-ink-faint">
-          {utcDate(replay.date)} · Round {round} · {replay.total_laps} laps
-        </p>
-        {newerRound !== null && season !== null && (
-          <Link
-            href={`/results/${season}/${newerRound}`}
-            className="pointer-events-auto mt-1 inline-block font-mono text-[9px] uppercase tracking-[0.14em] text-accent-light underline-offset-2 hover:underline"
-          >
-            Round {newerRound} has no lap data yet — see the result
-          </Link>
-        )}
+
+        {!reduced && <MapRunningOrder cars={replay.cars} clock={clock} />}
       </div>
 
-      {!reduced && (
-        <>
-          <MapRunningOrder cars={replay.cars} clock={clock} />
-          <MapFeedToast replay={replay} clock={clock} />
-          <LeaderTooltip clock={clock} track={track} boxRef={boxRef} />
-        </>
-      )}
+      {!reduced && <MapFeedToast replay={replay} clock={clock} />}
     </div>
   );
 }

@@ -34,7 +34,7 @@ export default function CircuitOutline({
   const track = useMemo(() => {
     const polyline = data?.track?.polyline;
     if (!polyline) return null;
-    return fitTrack(polyline, data?.track?.rotation_deg);
+    return fitTrack(polyline);
   }, [data]);
 
   if (track) {

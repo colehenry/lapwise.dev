@@ -74,7 +74,7 @@ export default function MapRunningOrder({
 
   return (
     <div
-      className="pointer-events-none absolute left-3 top-3 flex w-[228px] flex-col overflow-hidden rounded-sm border border-line-soft"
+      className="pointer-events-none flex w-full flex-col overflow-hidden rounded-sm border border-line-soft"
       style={{ background: "var(--glass-surface)" }}
     >
       {cars.map((car) => {
@@ -95,7 +95,7 @@ export default function MapRunningOrder({
             key={key}
             hidden
             ref={set("root")}
-            className="grid grid-cols-[13px_22px_minmax(0,1fr)_auto_auto] items-center gap-2 border-b border-line-soft/40 px-2 py-1 last:border-b-0 [&[hidden]]:hidden"
+            className="grid grid-cols-[12px_20px_minmax(0,1fr)_auto_auto] items-center gap-1.5 border-b border-line-soft/40 px-1.5 py-1 last:border-b-0 [&[hidden]]:hidden"
           >
             <span
               ref={set("position")}
@@ -105,7 +105,7 @@ export default function MapRunningOrder({
               code={car.driver_code}
               fullName={car.full_name}
               src={car.headshot_url}
-              size={22}
+              size={20}
               shape="circle"
               bordered={false}
               focalY={0.12}
@@ -116,20 +116,20 @@ export default function MapRunningOrder({
             >
               {car.driver_code ?? car.full_name}
             </span>
+            <span
+              ref={set("gap")}
+              className="w-[46px] text-right font-mono text-[10px] tabular-nums"
+            />
             <span className="flex items-center gap-[3px]">
               <span
                 ref={set("compound")}
-                className="grid h-[14px] w-[14px] place-items-center rounded-full border font-mono text-[8px] font-bold"
+                className="grid h-[13px] w-[13px] place-items-center rounded-full border font-mono text-[7.5px] font-bold"
               />
               <span
                 ref={set("tyre")}
-                className="w-[13px] font-mono text-[9px] tabular-nums text-ink-faint"
+                className="w-[12px] font-mono text-[9px] tabular-nums text-ink-faint"
               />
             </span>
-            <span
-              ref={set("gap")}
-              className="w-[52px] text-right font-mono text-[10px] tabular-nums"
-            />
           </div>
         );
       })}

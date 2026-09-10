@@ -13,6 +13,9 @@ const LANE = 100;
 const TRACE_TOP = 20;
 const TRACE_BOTTOM = 92;
 const TRACE_RANGE = TRACE_BOTTOM - TRACE_TOP;
+/** Every car has eight forward gears, so the scale is fixed rather than fitted
+ *  to the lap — a gear trace that rescales between laps is unreadable. */
+const TOP_GEAR = 8;
 
 type Channel = {
   line: SVGPolylineElement | null;
@@ -23,12 +26,10 @@ function point(x: number, fraction: number): string {
   return `${x.toFixed(1)},${(TRACE_BOTTOM - fraction * TRACE_RANGE).toFixed(1)}`;
 }
 
-/** Closes a trace down to its baseline so it reads as a filled channel. */
-function area(points: string[]): string {
-  if (points.length < 2) return "";
-  const first = points[0].split(",")[0];
-  const last = points[points.length - 1].split(",")[0];
-  return `${first},${TRACE_BOTTOM} ${points.join(" ")} ${last},${TRACE_BOTTOM}`;
+/** Closes a drawn trace down to its baseline so it reads as a filled channel. */
+function area(body: string, first: string, last: string): string {
+  if (!body) return "";
+  return `${first.split(",")[0]},${TRACE_BOTTOM} ${body} ${last.split(",")[0]},${TRACE_BOTTOM}`;
 }
 
 function lapSlice(
@@ -57,7 +58,7 @@ function Lane({
 }) {
   return (
     <div className="flex min-h-0 flex-1 items-stretch gap-2">
-      <div className="flex w-[58px] shrink-0 flex-col justify-center gap-0.5">
+      <div className="flex w-[62px] shrink-0 flex-col justify-center leading-tight">
         {label}
       </div>
       <svg
@@ -91,8 +92,11 @@ export default function ChannelStrip({
   const { subscribe } = clock;
 
   const speedRef = useRef<Channel>({ line: null, fill: null });
+  const readoutRef = useRef<HTMLSpanElement | null>(null);
   const throttleRef = useRef<Channel>({ line: null, fill: null });
   const brakeRef = useRef<Channel>({ line: null, fill: null });
+  const gearRef = useRef<Channel>({ line: null, fill: null });
+  const gearReadoutRef = useRef<HTMLSpanElement | null>(null);
 
   const chart = useMemo(() => {
     if (!telemetry) return null;
@@ -104,17 +108,23 @@ export default function ChannelStrip({
     let peak = 1;
     for (let i = from; i < to; i++) peak = Math.max(peak, telemetry.speed[i]);
 
+    const readings: number[] = [];
+    const gears: number[] = [];
     const speed: string[] = [];
     const throttle: string[] = [];
     const brake: string[] = [];
+    const gear: string[] = [];
     for (let i = from; i < to; i++) {
       const x = ((i - from) / (count - 1)) * WIDTH;
+      readings.push(telemetry.speed[i]);
       speed.push(point(x, telemetry.speed[i] / peak));
       throttle.push(point(x, telemetry.throttle[i] / 100));
       brake.push(point(x, telemetry.brake[i]));
+      gears.push(telemetry.gear[i]);
+      gear.push(point(x, Math.min(1, telemetry.gear[i] / TOP_GEAR)));
     }
 
-    return { speed, throttle, brake, peak, count };
+    return { speed, throttle, brake, gear, readings, gears, peak, count };
   }, [telemetry, lap]);
 
   const chartRef = useRef(chart);
@@ -128,29 +138,65 @@ export default function ChannelStrip({
 
   useEffect(() => {
     if (!hasChart) return;
-    let lastDrawn = -1;
 
-    const paint = (channel: Channel, points: string[], upTo: number) => {
-      const visible = points.slice(0, upTo);
-      channel.line?.setAttribute("points", visible.join(" "));
-      channel.fill?.setAttribute("points", area(visible));
-    };
+    /* The trace only ever grows within a lap, so each tick appends the points
+       that are new. Re-slicing and re-joining the whole lap built four 4 KB
+       strings every frame, which is what made playback stutter once positions
+       started painting at the full frame rate. */
+    let lastChart: typeof chartRef.current = null;
+    let drawn = 0;
+    let bodies: string[] = ["", "", "", ""];
 
     return subscribe((frame) => {
       const current = chartRef.current;
       if (!current) return;
+      if (current !== lastChart) {
+        lastChart = current;
+        drawn = 0;
+        bodies = ["", "", "", ""];
+      }
+
       const through = frame.leader.progress - Math.floor(frame.leader.progress);
       const upTo = Math.max(
         2,
         Math.min(current.count, Math.round(through * current.count)),
       );
-      if (upTo === lastDrawn) return;
-      lastDrawn = upTo;
-      paint(speedRef.current, current.speed, upTo);
-      paint(throttleRef.current, current.throttle, upTo);
-      paint(brakeRef.current, current.brake, upTo);
+      if (upTo === drawn) return;
+      if (upTo < drawn) {
+        drawn = 0;
+        bodies = ["", "", "", ""];
+      }
+
+      const channels: [Channel, string[]][] = [
+        [speedRef.current, current.speed],
+        [throttleRef.current, current.throttle],
+        [brakeRef.current, current.brake],
+        [gearRef.current, current.gear],
+      ];
+
+      channels.forEach(([channel, points], index) => {
+        let body = bodies[index];
+        for (let i = drawn; i < upTo; i++) {
+          body += body ? ` ${points[i]}` : points[i];
+        }
+        bodies[index] = body;
+        channel.line?.setAttribute("points", body);
+        channel.fill?.setAttribute(
+          "points",
+          area(body, points[0], points[upTo - 1]),
+        );
+      });
+
+      drawn = upTo;
+
+      if (gearReadoutRef.current) {
+        gearReadoutRef.current.textContent = `G${current.gears[upTo - 1] ?? 0}`;
+      }
+      if (readoutRef.current) {
+        readoutRef.current.textContent = `${current.readings[upTo - 1] ?? 0} km/h`;
+      }
     });
-  }, [subscribe, hasChart, lap]);
+  }, [subscribe, hasChart]);
 
   /* The frame is drawn whether or not the channels arrived, so the panel is the
      same height either way. */
@@ -166,39 +212,10 @@ export default function ChannelStrip({
 
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col gap-4"
+      className="flex min-h-0 flex-1 flex-col gap-2"
       role="img"
-      aria-label={`Speed, throttle and brake through lap ${lap}, peaking at ${Math.round(chart.peak)} kilometres per hour`}
+      aria-label={`Throttle, brake, speed and gear through lap ${lap}, peaking at ${Math.round(chart.peak)} kilometres per hour`}
     >
-      <Lane
-        label={
-          <>
-            <PanelLabel>Speed</PanelLabel>
-            <span className="font-mono text-[10px] tabular-nums text-ink-soft">
-              {Math.round(chart.peak)} km/h
-            </span>
-          </>
-        }
-      >
-        <polygon
-          ref={(node) => {
-            speedRef.current.fill = node;
-          }}
-          fill="var(--chart-neutral-stroke)"
-          opacity={0.12}
-        />
-        <polyline
-          ref={(node) => {
-            speedRef.current.line = node;
-          }}
-          fill="none"
-          stroke="var(--chart-neutral-stroke)"
-          strokeWidth={1.4}
-          strokeLinejoin="round"
-          vectorEffect="non-scaling-stroke"
-        />
-      </Lane>
-
       <Lane
         label={
           <>
@@ -247,6 +264,67 @@ export default function ChannelStrip({
           fill="none"
           stroke="var(--status-red)"
           strokeWidth={1.3}
+          vectorEffect="non-scaling-stroke"
+        />
+      </Lane>
+
+      <Lane
+        label={
+          <>
+            <PanelLabel>Speed</PanelLabel>
+            <span
+              ref={readoutRef}
+              className="font-mono text-[10px] tabular-nums text-ink-soft"
+            />
+          </>
+        }
+      >
+        <polygon
+          ref={(node) => {
+            speedRef.current.fill = node;
+          }}
+          fill="var(--chart-neutral-stroke)"
+          opacity={0.12}
+        />
+        <polyline
+          ref={(node) => {
+            speedRef.current.line = node;
+          }}
+          fill="none"
+          stroke="var(--chart-neutral-stroke)"
+          strokeWidth={1.4}
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+        />
+      </Lane>
+
+      <Lane
+        label={
+          <>
+            <PanelLabel>Gear</PanelLabel>
+            <span
+              ref={gearReadoutRef}
+              className="font-mono text-[10px] tabular-nums"
+              style={{ color: "var(--series-1)" }}
+            />
+          </>
+        }
+      >
+        <polygon
+          ref={(node) => {
+            gearRef.current.fill = node;
+          }}
+          fill="var(--series-1)"
+          opacity={0.16}
+        />
+        <polyline
+          ref={(node) => {
+            gearRef.current.line = node;
+          }}
+          fill="none"
+          stroke="var(--series-1)"
+          strokeWidth={1.3}
+          strokeLinejoin="miter"
           vectorEffect="non-scaling-stroke"
         />
       </Lane>

@@ -10,22 +10,20 @@ import { fitTrack, trackPath } from "@/lib/consoleTrackGeometry";
  */
 export default function TrackOutline({
   polyline,
-  rotationDegrees,
   circuitName,
   message,
   href,
   linkLabel,
 }: {
   polyline: number[][] | undefined;
-  rotationDegrees: number | null | undefined;
   circuitName: string;
   message: string;
   href?: string;
   linkLabel?: string;
 }) {
   const track = useMemo(
-    () => (polyline ? fitTrack(polyline, rotationDegrees) : null),
-    [polyline, rotationDegrees],
+    () => (polyline ? fitTrack(polyline) : null),
+    [polyline],
   );
 
   return (

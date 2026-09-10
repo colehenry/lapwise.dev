@@ -388,9 +388,8 @@ body {
    rather than a pile of widgets.
    ========================================================================== */
 .home-console {
-  /* The race panel's two channel lanes and its result column, and nothing
-     more. It does not shrink when the telemetry is missing — the strip reserves
-     its frame either way — so the map above never changes size. */
+  /* Fixed. Adding a channel shortens the lanes rather than growing the box, so
+     the map above never loses height to the telemetry below it. */
   --console-row-two: 224px;
 
   display: grid;
@@ -410,8 +409,7 @@ body {
     grid-template-areas:
       "map map"
       "race race"
-      "grid drivers"
-      "teams teams";
+      "grid clutch";
   }
 }
 
@@ -427,12 +425,11 @@ body {
       minmax(0, 1fr)
       clamp(268px, 21vw, 336px);
     grid-template-rows: minmax(300px, 1fr) var(--console-row-two);
-    /* The board sits in the top row only, so it ends level with the map instead
-       of stretching a column of empty space under itself; the channels take the
-       width that frees up. */
+    /* The replay sits directly above its own telemetry, the board beside it,
+       and Clutch takes the corner the championship tables used to hold. */
     grid-template-areas:
-      "grid map drivers"
-      "race race teams";
+      "map map grid"
+      "race race clutch";
     height: clamp(660px, 76vh, 880px);
   }
 }
@@ -443,16 +440,15 @@ body {
   .home-console--quiet {
     grid-template-areas:
       "map map"
-      "grid drivers"
-      "teams teams";
+      "grid clutch";
   }
 }
 
 @media (min-width: 1180px) {
   .home-console--quiet {
     grid-template-areas:
-      "grid map drivers"
-      "grid map teams";
+      "map map grid"
+      "map map clutch";
   }
 }
 
@@ -466,11 +462,8 @@ body {
   .home-console__race {
     grid-area: race;
   }
-  .home-console__drivers {
-    grid-area: drivers;
-  }
-  .home-console__teams {
-    grid-area: teams;
+  .home-console__clutch {
+    grid-area: clutch;
   }
 }
 
