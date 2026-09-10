@@ -1,27 +1,30 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import DeferredSection from "@/components/ui/DeferredSection";
 import { useCompactViewport, useHomeConsole } from "@/hooks/useHomeConsole";
 import { useRaceClock } from "@/hooks/useRaceClock";
+import { resolveDemoCells } from "@/lib/dailyGridDemo";
 import type { ClutchContext } from "@/lib/homeClutchScript";
 import {
   EMPTY_ENTITY_COLORS,
   seasonStandingsQuery,
   selectEntityColors,
 } from "@/lib/queries/standings";
+import {
+  ConstructorChampionship,
+  DriverChampionship,
+} from "./ChampionshipTables";
 import ClutchBand from "./ClutchBand";
 import ConsoleFrame from "./ConsoleFrame";
 import ConsolePanel, { PanelFailure } from "./ConsolePanel";
 import DailyGridCard from "./DailyGridCard";
 import EntryTiles from "./EntryTiles";
-import HomeRunningOrder from "./HomeRunningOrder";
 import HomeTicker from "./HomeTicker";
-import LeaderPanel from "./LeaderPanel";
 import NextRaceCard from "./NextRaceCard";
-import PodiumCard from "./PodiumCard";
-import RaceFeed from "./RaceFeed";
 import RaceMap from "./RaceMap";
+import RacePanel from "./RacePanel";
 import RecentRaces from "./RecentRaces";
 import TrackOutline from "./TrackOutline";
 
@@ -45,31 +48,36 @@ export default function HomeConsole() {
     enabled: data.season !== null,
   });
 
-  const clutchContext: ClutchContext = {
-    season: data.season,
-    standings: standings.data,
-    latest: data.latest,
-    latestClassification: data.classification.data,
-  };
+  /* A fresh object here re-resolves the script on every render, which the
+     band's typewriter reads as a new answer. */
+  const clutchContext: ClutchContext = useMemo(
+    () => ({
+      season: data.season,
+      standings: standings.data,
+      latest: data.latest,
+      latestClassification: data.classification.data,
+      roundsRun: data.latest?.round,
+    }),
+    [data.season, standings.data, data.latest, data.classification.data],
+  );
 
   const track = data.track?.track;
   const hasTelemetry = data.replay != null && data.replayState === "ready";
+
+  /* The scripted round's faces, looked up in the championship the page already
+     holds rather than fetched. */
+  const demoCells = useMemo(
+    () => resolveDemoCells(standings.data),
+    [standings.data],
+  );
 
   const gridCard = (
     <DailyGridCard
       summary={data.daily.data ?? undefined}
       state={data.daily.state}
+      demoCells={demoCells}
+      animate={!clock.reducedMotion}
       className={compact ? "" : "home-console__grid"}
-    />
-  );
-
-  const podium = (
-    <PodiumCard
-      latest={data.latest}
-      state={data.latestState}
-      classification={data.classification.data}
-      fastestLap={data.replay?.fastest_lap}
-      className={compact ? "" : "home-console__podium"}
     />
   );
 
@@ -113,32 +121,36 @@ export default function HomeConsole() {
         <div className="page-frame flex flex-col gap-3 py-3">
           {gridCard}
           <div style={{ height: COMPACT_MAP_HEIGHT }}>{map}</div>
-          {podium}
+          <DriverChampionship
+            standings={standings.data}
+            loading={standings.isPending}
+          />
         </div>
       ) : (
         <ConsoleFrame viewportRef={clock.viewportRef} quiet={!hasTelemetry}>
           {gridCard}
-          {podium}
           {map}
           {hasTelemetry && data.replay && (
-            <>
-              <LeaderPanel
-                replay={data.replay}
-                clock={clock}
-                className="home-console__lead"
-              />
-              <HomeRunningOrder
-                cars={data.replay.cars}
-                clock={clock}
-                className="home-console__order"
-              />
-              <RaceFeed
-                replay={data.replay}
-                clock={clock}
-                className="home-console__feed"
-              />
-            </>
+            <RacePanel
+              replay={data.replay}
+              season={data.season}
+              round={data.replayRound}
+              latest={data.latest}
+              classification={data.classification.data}
+              clock={clock}
+              className="home-console__race"
+            />
           )}
+          <DriverChampionship
+            standings={standings.data}
+            loading={standings.isPending}
+            className="home-console__drivers"
+          />
+          <ConstructorChampionship
+            standings={standings.data}
+            loading={standings.isPending}
+            className="home-console__teams"
+          />
         </ConsoleFrame>
       )}
 

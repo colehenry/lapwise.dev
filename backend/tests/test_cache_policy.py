@@ -111,6 +111,10 @@ def test_a_finished_race_console_is_cached_as_hard_as_a_static_asset():
     assert max_age("/api/replay/console/2026/13") == 7 * 24 * 3600
 
 
+def test_a_telemetry_slice_is_cached_as_hard_as_the_console_it_serves():
+    assert max_age("/api/replay/console/2026/13/telemetry/ANT") == 7 * 24 * 3600
+
+
 def test_archive_counts_are_cached_for_a_day():
     assert max_age("/api/archive/counts") == 86400
 

@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { StandingsResponse } from "./championshipTypes";
+import { CLUTCH_SCRIPTS } from "./clutchScriptCatalogue";
 import type { ClutchContext, ClutchScript } from "./homeClutchScript";
-import {
-  CLUTCH_SCRIPTS,
-  pickClutchScript,
-  resolveScript,
-} from "./homeClutchScript";
+import { pickClutchScript, resolveScript } from "./homeClutchScript";
+import type { SessionResultsResponse } from "./types";
 
 function standings(): StandingsResponse {
   const scoring = {
@@ -64,14 +62,59 @@ function standings(): StandingsResponse {
     drivers: [
       driver(1, "ANT", "Kimi Antonelli", 267),
       driver(2, "RUS", "George Russell", 201),
+      driver(3, "HAM", "Lewis Hamilton", 191),
     ],
-    constructors: [team(1, "Mercedes", 468), team(2, "Ferrari", 346)],
+    constructors: [
+      team(1, "Mercedes", 468),
+      team(2, "Ferrari", 346),
+      team(3, "McLaren", 250),
+    ],
     driver_scoring: scoring,
     constructor_scoring: scoring,
   };
 }
 
-const full: ClutchContext = { season: 2026, standings: standings() };
+const classification = {
+  session: {},
+  results: [
+    {
+      position: 1,
+      grid_position: 19,
+      time_seconds: 6675.281,
+      status: "Finished",
+    },
+    { position: 2, grid_position: 2, time_seconds: 3.857, status: "Finished" },
+  ],
+} as unknown as SessionResultsResponse;
+
+const full: ClutchContext = {
+  season: 2026,
+  standings: standings(),
+  latest: {
+    round: 13,
+    event_name: "Italian Grand Prix",
+    date: "2026-09-06",
+    circuit_name: "Monza",
+    circuit_id: 16,
+    track_length_km: null,
+    session_type: "race",
+    podium: [
+      {
+        full_name: "Kimi Antonelli",
+        driver_code: "ANT",
+        driver_slug: "antonelli",
+        country_code: "ITA",
+        team_name: "Mercedes",
+        team_color: "00D7B6",
+        headshot_url: null,
+        fastest_lap: true,
+        time_seconds: 6675.281,
+      },
+    ],
+  },
+  latestClassification: classification,
+  roundsRun: 13,
+};
 
 describe("resolveScript", () => {
   it("fills every slot from the standings in hand", () => {
@@ -100,8 +143,10 @@ describe("resolveScript", () => {
     expect(tinted.map((s) => s.code)).toEqual([
       "ANT",
       "RUS",
+      "HAM",
       "Mercedes",
       "Ferrari",
+      "ANT",
     ]);
   });
 
@@ -120,7 +165,7 @@ describe("resolveScript", () => {
       id: "test",
       question: "A question about {season}",
       parts: [{ text: "An answer." }],
-      followups: ["What about {latest.margin}?"],
+      followups: ["What about {drivers.9.name}?"],
     };
     expect(resolveScript(script, full)).toBeNull();
   });

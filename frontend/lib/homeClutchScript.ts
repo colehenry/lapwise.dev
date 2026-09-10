@@ -1,4 +1,5 @@
 import type { StandingsResponse } from "@/lib/championshipTypes";
+import { CLUTCH_SCRIPTS } from "@/lib/clutchScriptCatalogue";
 import type { RoundSummary, SessionResultsResponse } from "@/lib/types";
 
 export type ScriptTint = "driver" | "team";
@@ -44,38 +45,6 @@ export type ResolvedScript = {
 };
 
 type SlotValue = { text: string; code: string | null };
-
-/**
- * The prose is authored; the numbers are live. One script today, and the
- * rotation picks by day-of-year once there are more.
- */
-export const CLUTCH_SCRIPTS: ClutchScript[] = [
-  {
-    id: "championship-state",
-    question: "Who is winning the {season} championship, and how close is it?",
-    parts: [
-      { slot: "drivers.1.name", tint: "driver" },
-      { text: " leads on " },
-      { slot: "drivers.1.points" },
-      { text: " points — " },
-      { slot: "gap.drivers.1_2" },
-      { text: " clear of " },
-      { slot: "drivers.2.name", tint: "driver" },
-      { text: ", with " },
-      { slot: "constructors.1.team", tint: "team" },
-      { text: " ahead of " },
-      { slot: "constructors.2.team", tint: "team" },
-      { text: " in the constructors'." },
-    ],
-    visual: { kind: "points_progression", mode: "drivers", entities: "top3" },
-    followups: [
-      "Can {drivers.2.surname} still win it?",
-      "Points swing by round",
-      "{constructors.1.team} vs {constructors.2.team}",
-      "Every result this season",
-    ],
-  },
-];
 
 function number(value: number | null | undefined): string | null {
   if (value == null || !Number.isFinite(value)) return null;

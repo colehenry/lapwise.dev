@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { utcDate } from "@/lib/consoleFormat";
 import { upcomingEventsQuery } from "@/lib/queries/events";
+import CircuitOutline from "./CircuitOutline";
 
 const DAY_MS = 86_400_000;
 
@@ -27,13 +28,21 @@ export default function NextRaceCard() {
 
   return (
     <section
-      className="flex flex-col rounded-sm border border-line-soft p-4"
+      className="relative flex flex-col overflow-hidden rounded-sm border border-line-soft p-4"
       style={{
         background:
           "radial-gradient(130% 100% at 100% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%), var(--surface-panel)",
       }}
     >
-      <div>
+      {/* The circuit sits in the top-right corner, where the card had nothing. */}
+      <CircuitOutline
+        circuitId={next.circuit_id}
+        circuitName={next.circuit_name ?? next.location}
+        className="pointer-events-none absolute right-3 top-3 h-[104px] w-[150px]"
+        opacity={0.55}
+      />
+
+      <div className="relative">
         <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft">
           Next race
         </span>
@@ -44,16 +53,16 @@ export default function NextRaceCard() {
           </span>
         </p>
       </div>
-      <h3 className="m-0 mt-3.5 text-[21px] font-bold tracking-[-0.025em] text-ink-strong">
+      <h3 className="relative m-0 mt-3.5 text-[21px] font-bold tracking-[-0.025em] text-ink-strong">
         {next.event_name}
       </h3>
-      <p className="m-0 mt-[5px] font-mono text-[10px] uppercase tracking-[0.12em] text-ink-base">
+      <p className="relative m-0 mt-[5px] font-mono text-[10px] uppercase tracking-[0.12em] text-ink-base">
         {next.location}
         {next.round_number != null && ` · Round ${next.round_number}`} ·{" "}
         {utcDate(next.event_date, { day: "numeric", month: "long" })}
       </p>
       {races.length > 1 && (
-        <div className="mt-auto border-t border-line-strong pt-3">
+        <div className="relative mt-auto border-t border-line-strong pt-3">
           {races.slice(1, 4).map((event) => (
             <div
               key={`${event.event_name}-${event.event_date}`}

@@ -60,6 +60,7 @@ describe("home console request inventory", () => {
       "/api/daily/summary",
       `/api/headlines?season=${SEASON}`,
       CONSOLE_PATH,
+      `${CONSOLE_PATH}/telemetry/VER`,
       "/api/replay/track/16",
       `/api/results/${SEASON}/${ROUND}`,
       `/api/results/${SEASON}/standings`,
@@ -81,6 +82,17 @@ describe("home console request inventory", () => {
     await flushRequests();
 
     expect(recorder.countMatching(`/api/results/${SEASON}/standings`)).toBe(1);
+  });
+
+  it("fetches telemetry for the leader alone, not for the whole field", async () => {
+    const recorder = installFetchRecorder(ROUTES);
+    renderWithQueryClient(<HomeConsole />);
+    await flushRequests();
+
+    const slices = recorder
+      .paths()
+      .filter((path) => path.includes("/telemetry/"));
+    expect(slices).toEqual([`${CONSOLE_PATH}/telemetry/VER`]);
   });
 
   it("leaves the tail's requests until the reader heads toward it", async () => {

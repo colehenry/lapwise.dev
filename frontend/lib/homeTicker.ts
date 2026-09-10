@@ -9,6 +9,36 @@ const PINNED_LAST = "next_race";
 /** Enough to read as a lane, few enough that one loop is not a chore. */
 const TARGET_COUNT = 9;
 
+/**
+ * Headlines the lane does not carry, by id prefix. Selection is the client's
+ * job (§5.3), so dropping one belongs here rather than in the service.
+ */
+const EXCLUDED_HEADLINES = ["last_race.fastest_lap"];
+
+/**
+ * Kickers the lane words differently from the service, by id prefix.
+ *
+ * This is copy, and copy is the service's to author. If this map grows past a
+ * handful, move the wording into the headlines service instead of forking it
+ * here.
+ */
+const KICKER_OVERRIDES: Record<string, string> = {
+  "championship.driver_gap": "Championship gap",
+  "next_race.up_next": "Next race",
+};
+
+function matches(id: string, prefixes: string[]): boolean {
+  return prefixes.some((prefix) => id.startsWith(prefix));
+}
+
+/** Applies the lane's own wording, leaving every other field untouched. */
+export function tickerCopy(headline: Headline): Headline {
+  const key = Object.keys(KICKER_OVERRIDES).find((prefix) =>
+    headline.id.startsWith(prefix),
+  );
+  return key ? { ...headline, kicker: KICKER_OVERRIDES[key] } : headline;
+}
+
 /** The order is stable across a re-render, so the lane never jumps. */
 function seedFrom(text: string): number {
   let hash = 2166136261;
@@ -72,11 +102,14 @@ export function selectHeadlines(
   seed: string,
   targetCount = TARGET_COUNT,
 ): Headline[] {
-  if (headlines.length === 0) return [];
+  const pool = headlines.filter(
+    (headline) => !matches(headline.id, EXCLUDED_HEADLINES),
+  );
+  if (pool.length === 0) return [];
   const next = randomiser(seedFrom(seed));
 
   const byCategory = new Map<string, Headline[]>();
-  for (const headline of headlines) {
+  for (const headline of pool) {
     const bucket = byCategory.get(headline.category);
     if (bucket) bucket.push(headline);
     else byCategory.set(headline.category, [headline]);
@@ -98,7 +131,9 @@ export function selectHeadlines(
     Math.max(0, targetCount - pinnedCount),
   );
 
-  return [...(first ? [first] : []), ...taken, ...(last ? [last] : [])];
+  return [...(first ? [first] : []), ...taken, ...(last ? [last] : [])].map(
+    tickerCopy,
+  );
 }
 
 export type HeadlineSegment = { text: string; code: string | null };

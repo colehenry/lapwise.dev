@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { headlineSegments, selectHeadlines, tickerSeed } from "./homeTicker";
+import {
+  headlineSegments,
+  selectHeadlines,
+  tickerCopy,
+  tickerSeed,
+} from "./homeTicker";
 import type { Headline } from "./queries/headlines";
 
 function headline(
@@ -21,6 +26,9 @@ function headline(
 }
 
 const POOL: Headline[] = [
+  headline("championship.driver_gap.2026", "championship", 1),
+  headline("last_race.fastest_lap.2026.13", "last_race", 0.9),
+  headline("next_race.up_next.2026-09-13", "next_race", 1),
   headline("c1", "championship", 1),
   headline("c2", "championship", 1),
   headline("s1", "streak"),
@@ -112,5 +120,45 @@ describe("headlineSegments", () => {
       tokens: [{ start: 0, end: 99, kind: "driver", code: "ANT" }],
     };
     expect(headlineSegments(item)).toEqual([{ text: "Short", code: null }]);
+  });
+});
+
+describe("what the lane says", () => {
+  it("drops the fastest lap, which the race panel already reports", () => {
+    const lane = selectHeadlines(POOL, "2026-09-09");
+    expect(
+      lane.some((item) => item.id.startsWith("last_race.fastest_lap")),
+    ).toBe(false);
+  });
+
+  it("still carries the rest of the last-race category", () => {
+    const pool = [
+      headline("last_race.fastest_lap.2026.13", "last_race"),
+      headline("last_race.win_margin.2026.13", "last_race"),
+    ];
+    const lane = selectHeadlines(pool, "2026-09-09");
+    expect(lane.map((item) => item.id)).toEqual([
+      "last_race.win_margin.2026.13",
+    ]);
+  });
+
+  it("words the championship gap and the next race the lane's way", () => {
+    // One candidate per pinned category, so the weighted pick cannot choose
+    // the other one and make this assert about nothing.
+    const lane = selectHeadlines(
+      [
+        headline("championship.driver_gap.2026", "championship", 1),
+        headline("next_race.up_next.2026-09-13", "next_race", 1),
+      ],
+      "2026-09-09",
+    );
+    expect(lane[0].kicker).toBe("Championship gap");
+    expect(lane[1].kicker).toBe("Next race");
+  });
+
+  it("leaves a kicker it has no opinion about alone", () => {
+    expect(tickerCopy(headline("streak.wins.ANT", "streak")).kicker).toBe(
+      "Kicker",
+    );
   });
 });

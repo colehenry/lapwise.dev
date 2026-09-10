@@ -42,6 +42,10 @@ _PUBLIC_RULES: list[tuple[re.Pattern[str], tuple[int, int]]] = [
     (re.compile(r"^/api/replay/(seasons|available)$"), _METADATA),
     (re.compile(r"^/api/replay/track/\d+$"), _STATIC_ASSET),
     (re.compile(r"^/api/replay/console/\d+/\d+$"), _STATIC_ASSET),
+    (
+        re.compile(r"^/api/replay/console/\d+/\d+/telemetry/[A-Za-z]{2,4}$"),
+        _STATIC_ASSET,
+    ),
     (re.compile(r"^/api/archive/counts$"), _DAILY),
     (re.compile(r"^/api/headlines$"), _LATEST),
     (re.compile(r"^/api/daily$"), _LATEST),

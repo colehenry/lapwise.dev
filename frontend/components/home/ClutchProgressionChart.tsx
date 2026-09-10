@@ -1,24 +1,46 @@
 "use client";
 
 import { useMemo } from "react";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  CHART_COLORS,
+  CHART_TYPOGRAPHY,
+  resolveChartSeriesColor,
+} from "@/components/charts/chart-primitives";
+import { useTheme } from "@/components/providers/ThemeProvider";
+import StableResponsiveContainer from "@/components/ui/StableResponsiveContainer";
 import { teamTint } from "@/lib/consoleFormat";
-import type { DriverProgression } from "@/lib/queries/pointsProgression";
-
-const WIDTH = 560;
-const HEIGHT = 220;
-const PADDING = { top: 12, right: 62, bottom: 22, left: 8 };
+import type { ProgressionChartPoint } from "@/lib/queries/pointsProgression";
 
 /** Two to four lines; more and the band stops being an illustration. */
 const MAX_LINES = 3;
 
-type Series = {
+/** One entity's line, already resolved to a colour and a key. */
+export type ProgressionSeries = {
   key: string;
-  label: string;
-  color: string;
-  points: string;
-  endX: number;
-  endY: number;
-  total: number;
+  /** The full name, as the season chart's key and tooltip both show. */
+  name: string;
+  color: string | null;
+  progression: {
+    round: string;
+    cumulative_points: number;
+    event_name: string | null;
+  }[];
+  finalPosition: number;
+};
+
+type TooltipEntry = {
+  dataKey?: string | number;
+  value?: number;
+  color?: string;
+  name?: string;
 };
 
 /** Sprint rounds are real points, so they are steps; only whole rounds label. */
@@ -26,112 +48,180 @@ function isWholeRound(round: string): boolean {
   return !round.includes("-") && round !== "0";
 }
 
-export default function ClutchProgressionChart({
-  drivers,
+function RoundTick({
+  x,
+  y,
+  payload,
 }: {
-  drivers: DriverProgression[] | undefined;
+  x?: number;
+  y?: number;
+  payload?: { value?: string };
 }) {
+  const value = payload?.value ?? "";
+  if (!isWholeRound(value)) return null;
+  return (
+    <text
+      x={x}
+      y={(y ?? 0) + 12}
+      textAnchor="middle"
+      fill={CHART_COLORS.textMuted}
+      fontSize={11}
+      className="font-mono"
+    >
+      {value}
+    </text>
+  );
+}
+
+function ProgressionTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: (TooltipEntry & { payload?: ProgressionChartPoint })[];
+  label?: string;
+}) {
+  if (!active || !payload?.length || label === "0") return null;
+
+  const raw = payload[0]?.payload?.event_name;
+  const event = (typeof raw === "string" ? raw : `Round ${label}`).replace(
+    "Grand Prix",
+    "GP",
+  );
+  const sprint = String(label ?? "").endsWith("-sprint") ? ": Sprint" : "";
+  const rows = payload.filter((entry) => entry.value != null);
+  if (rows.length === 0) return null;
+
+  return (
+    <div className="rounded-lg border border-line-soft bg-surface-panel p-3 shadow-xl">
+      <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-2`}>
+        {event}
+        {sprint}
+      </p>
+      {rows.map((entry) => (
+        <div
+          key={String(entry.dataKey)}
+          className="mb-1 flex items-center gap-2"
+        >
+          <span
+            className="h-3 w-3 rounded-full"
+            style={{ backgroundColor: entry.color }}
+          />
+          <span className="text-[12px] text-ink-base">{entry.name}</span>
+          <span className="ml-auto font-mono text-[12px] tabular-nums text-ink-strong">
+            {(entry.value ?? 0).toFixed(0)} pts
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function ClutchProgressionChart({
+  series,
+}: {
+  series: ProgressionSeries[] | undefined;
+}) {
+  const { theme } = useTheme();
+
   const chart = useMemo(() => {
-    if (!drivers || drivers.length === 0) return null;
-    const top = [...drivers]
-      .sort((a, b) => a.final_position - b.final_position)
-      .slice(0, MAX_LINES);
-    const steps = top[0]?.progression.length ?? 0;
-    if (steps < 2) return null;
+    if (!series || series.length === 0) return null;
+    const lines = [...series]
+      .sort((a, b) => a.finalPosition - b.finalPosition)
+      .slice(0, MAX_LINES)
+      .map((entity) => ({
+        ...entity,
+        color: resolveChartSeriesColor(
+          teamTint(entity.color),
+          theme,
+          CHART_COLORS.neutralStroke,
+        ),
+        total: Math.round(
+          entity.progression[entity.progression.length - 1]
+            ?.cumulative_points ?? 0,
+        ),
+      }));
+    if (lines[0].progression.length < 2) return null;
 
-    const peak = Math.max(
-      1,
-      ...top.flatMap((driver) =>
-        driver.progression.map((round) => round.cumulative_points),
-      ),
+    const rows: ProgressionChartPoint[] = lines[0].progression.map(
+      (round, index) => {
+        const point: ProgressionChartPoint = {
+          round: round.round,
+          event_name: round.event_name,
+        };
+        for (const line of lines) {
+          point[line.key] = line.progression[index]?.cumulative_points ?? null;
+        }
+        return point;
+      },
     );
-    const plotWidth = WIDTH - PADDING.left - PADDING.right;
-    const plotHeight = HEIGHT - PADDING.top - PADDING.bottom;
-    const x = (index: number) =>
-      PADDING.left + (index / (steps - 1)) * plotWidth;
-    const y = (value: number) =>
-      PADDING.top + plotHeight - (value / peak) * plotHeight;
 
-    const series: Series[] = top.map((driver) => {
-      const last = driver.progression[driver.progression.length - 1];
-      return {
-        key: driver.driver_slug ?? driver.driver_code ?? driver.full_name,
-        label: driver.driver_code ?? driver.full_name,
-        color: teamTint(driver.team_color) ?? "var(--delta-neutral)",
-        points: driver.progression
-          .map(
-            (round, index) =>
-              `${x(index).toFixed(1)},${y(round.cumulative_points).toFixed(1)}`,
-          )
-          .join(" "),
-        endX: x(driver.progression.length - 1),
-        endY: y(last?.cumulative_points ?? 0),
-        total: Math.round(last?.cumulative_points ?? 0),
-      };
-    });
-
-    const ticks = top[0].progression
-      .map((round, index) => ({ round: round.round, x: x(index) }))
-      .filter((tick) => isWholeRound(tick.round));
-
-    return { series, ticks, baselineY: y(0) };
-  }, [drivers]);
+    return { lines, rows };
+  }, [series, theme]);
 
   if (!chart) return null;
 
   return (
-    <svg
-      className="h-full w-full"
-      viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-      preserveAspectRatio="xMidYMid meet"
-      role="img"
-      aria-label={`Cumulative points by round: ${chart.series
-        .map((line) => `${line.label} ${line.total}`)
-        .join(", ")}`}
-    >
-      <title>Points by round</title>
-      <line
-        x1={PADDING.left}
-        y1={chart.baselineY}
-        x2={WIDTH - PADDING.right}
-        y2={chart.baselineY}
-        stroke="var(--line-soft)"
-        strokeWidth={1}
-      />
-      {chart.ticks.map((tick) => (
-        <text
-          key={tick.round}
-          x={tick.x}
-          y={HEIGHT - 6}
-          textAnchor="middle"
-          className="fill-ink-faint font-mono"
-          fontSize={8}
+    /* The key sits inside the plot, top-left, where cumulative points leave the
+       canvas empty. Below the chart it collided with the follow-up chips. */
+    <div className="relative h-full w-full">
+      <StableResponsiveContainer width="100%" height="100%">
+        <LineChart
+          data={chart.rows}
+          margin={{ top: 28, right: 16, bottom: 0, left: -14 }}
         >
-          {tick.round}
-        </text>
-      ))}
-      {chart.series.map((line) => (
-        <g key={line.key}>
-          <polyline
-            points={line.points}
-            fill="none"
-            stroke={line.color}
-            strokeWidth={2}
-            strokeLinejoin="round"
-            strokeLinecap="round"
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke={CHART_COLORS.borderPrimary}
           />
-          <circle cx={line.endX} cy={line.endY} r={3} fill={line.color} />
-          <text
-            x={line.endX + 7}
-            y={line.endY + 3.5}
-            className="font-mono"
-            fontSize={10}
-            fill={line.color}
-          >
-            {line.label} {line.total}
-          </text>
-        </g>
-      ))}
-    </svg>
+          <XAxis
+            dataKey="round"
+            stroke={CHART_COLORS.borderPrimary}
+            height={26}
+            interval={0}
+            tick={<RoundTick />}
+          />
+          <YAxis
+            stroke={CHART_COLORS.borderPrimary}
+            tick={{ fill: CHART_COLORS.textMuted, fontSize: 11 }}
+            width={44}
+          />
+          <Tooltip
+            content={<ProgressionTooltip />}
+            cursor={{ stroke: CHART_COLORS.borderPrimary }}
+          />
+          {chart.lines.map((line) => (
+            <Line
+              key={line.key}
+              type="linear"
+              dataKey={line.key}
+              name={line.name}
+              stroke={line.color}
+              strokeWidth={2.5}
+              dot={false}
+              activeDot={{ r: 4 }}
+              isAnimationActive={false}
+            />
+          ))}
+        </LineChart>
+      </StableResponsiveContainer>
+
+      {/* The same key the season chart uses: a swatch and the name, in a
+          panel over the top-left of the plot. Nothing else belongs in it. */}
+      <div className="pointer-events-none absolute left-14 top-2 rounded-sm border border-line-soft bg-surface-page/90 p-3 backdrop-blur-sm">
+        <div className="flex flex-col gap-1.5">
+          {chart.lines.map((line) => (
+            <div key={line.key} className="flex items-center gap-2">
+              <div
+                className="h-3 w-3 rounded-full"
+                style={{ backgroundColor: line.color }}
+              />
+              <span className={CHART_TYPOGRAPHY.keyClassName}>{line.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

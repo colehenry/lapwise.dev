@@ -388,6 +388,11 @@ body {
    rather than a pile of widgets.
    ========================================================================== */
 .home-console {
+  /* The race panel's two channel lanes and its result column, and nothing
+     more. It does not shrink when the telemetry is missing — the strip reserves
+     its frame either way — so the map above never changes size. */
+  --console-row-two: 224px;
+
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(0, 1fr);
@@ -404,25 +409,31 @@ body {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:
       "map map"
-      "lead lead"
-      "grid podium"
-      "order feed";
+      "race race"
+      "grid drivers"
+      "teams teams";
   }
 }
 
 @media (min-width: 1180px) {
+  /* Every track is set, not negotiated. Row two is a fixed height and row one
+     takes the rest, so a panel with no data in it occupies exactly the space it
+     will occupy once the data lands — nothing grows because a neighbour is
+     empty, and nothing shrinks because a neighbour is full. An `auto` row here
+     meant the drivers' table was silently dictating the height of the map. */
   .home-console {
-    /* The first row is as tall as the daily board needs; the second takes the
-       rest, so neither can clip its contents at any viewport height. */
     grid-template-columns:
       clamp(276px, 22vw, 348px)
       minmax(0, 1fr)
       clamp(268px, 21vw, 336px);
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: minmax(300px, 1fr) var(--console-row-two);
+    /* The board sits in the top row only, so it ends level with the map instead
+       of stretching a column of empty space under itself; the channels take the
+       width that frees up. */
     grid-template-areas:
-      "grid map order"
-      "podium lead feed";
-    min-height: clamp(620px, 68vh, 764px);
+      "grid map drivers"
+      "race race teams";
+    height: clamp(660px, 76vh, 880px);
   }
 }
 
@@ -432,16 +443,16 @@ body {
   .home-console--quiet {
     grid-template-areas:
       "map map"
-      "grid podium";
+      "grid drivers"
+      "teams teams";
   }
 }
 
 @media (min-width: 1180px) {
   .home-console--quiet {
-    grid-template-columns: clamp(276px, 22vw, 348px) minmax(0, 1fr);
     grid-template-areas:
-      "grid map"
-      "podium map";
+      "grid map drivers"
+      "grid map teams";
   }
 }
 
@@ -449,20 +460,17 @@ body {
   .home-console__grid {
     grid-area: grid;
   }
-  .home-console__podium {
-    grid-area: podium;
-  }
   .home-console__map {
     grid-area: map;
   }
-  .home-console__lead {
-    grid-area: lead;
+  .home-console__race {
+    grid-area: race;
   }
-  .home-console__order {
-    grid-area: order;
+  .home-console__drivers {
+    grid-area: drivers;
   }
-  .home-console__feed {
-    grid-area: feed;
+  .home-console__teams {
+    grid-area: teams;
   }
 }
 
