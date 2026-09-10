@@ -48,12 +48,12 @@ export default function AIDataTable({ headers, rows }: AIDataTableProps) {
         });
 
   return (
-    <div className="max-w-full overflow-hidden rounded-xl border border-[var(--glass-border)]">
-      <div className="divide-y divide-white/[0.06] md:hidden">
+    <div className="max-w-full overflow-hidden rounded-sm border border-line-soft">
+      <div className="divide-y divide-line-soft md:hidden">
         {sortedRows.map((row, rowIndex) => (
           <div
             key={`mobile-${row.map(nodeToSortKey).join("||") || rowIndex}`}
-            className="bg-[var(--glass-surface)] px-3 py-2.5"
+            className="bg-surface-panel px-3 py-2.5"
           >
             {row.map((cell, ci) => (
               <div
@@ -75,7 +75,7 @@ export default function AIDataTable({ headers, rows }: AIDataTableProps) {
       <div className="hidden overflow-x-auto md:block">
         <table className="w-max min-w-full text-[11px] md:text-xs">
           <thead>
-            <tr className="border-b border-[var(--glass-border)] bg-[var(--glass-surface-soft)]">
+            <tr className="border-b border-line-soft bg-surface-raised">
               {headers.map((h, i) => (
                 <th
                   key={nodeToSortKey(h) || String(i)}
@@ -128,7 +128,7 @@ export default function AIDataTable({ headers, rows }: AIDataTableProps) {
             {sortedRows.map((row) => (
               <tr
                 key={row.map(nodeToSortKey).join("||")}
-                className="border-b border-[var(--glass-border)] transition-colors hover:bg-[var(--glass-surface)]"
+                className="border-b border-line-soft transition-colors hover:bg-surface-raised"
               >
                 {row.map((cell, ci) => (
                   <td

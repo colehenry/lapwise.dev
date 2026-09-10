@@ -905,7 +905,8 @@ textarea {
   vertical-align: -0.15em;
 }
 
-/* Chat: a step tighter throughout, and links unadorned inside a dense bubble. */
+/* Chat: a step tighter throughout. Links go unadorned because an answer tints
+   them by driver or team, and an underline fights that tint. */
 .prose--chat {
   --prose-flow: 0.5rem;
   --prose-head-top: 1rem;
@@ -920,6 +921,25 @@ textarea {
 
 .prose--chat li {
   margin: 0.2rem 0;
+}
+
+/* The answer is still arriving. The caret rides the last line rather than
+   sitting in its own element, so nothing reflows when the text lands. */
+.prose--streaming > :last-child::after {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 0.9em;
+  margin-left: 0.15em;
+  vertical-align: -0.1em;
+  background: var(--accent-bright);
+  animation: caretBlink 1.1s steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prose--streaming > :last-child::after {
+    animation: none;
+  }
 }
 
 /* Comments read as prose, not chrome: larger, in primary ink, headings calm. */

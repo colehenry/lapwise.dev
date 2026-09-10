@@ -74,21 +74,17 @@ export default function ClutchProgress({
 
   const detail = formatClutchProgressMetrics(displayed.metrics);
   return (
-    <output
-      className="flex items-center gap-2.5 text-ink-faint"
-      aria-live="polite"
-    >
-      <div className="flex shrink-0 items-center gap-1" aria-hidden="true">
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" />
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-300 [animation-delay:180ms]" />
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-400 [animation-delay:360ms]" />
-      </div>
+    <output className="flex items-start gap-2.5" aria-live="polite">
+      <span
+        aria-hidden="true"
+        className="caret-blink mt-[3px] h-[13px] w-[7px] shrink-0 bg-accent-bright"
+      />
       <div className="min-w-0">
-        <div className="text-xs font-medium text-ink-base">
+        <div className="text-[13px] leading-[1.5] text-ink-soft">
           {displayed.message}
         </div>
         {detail && (
-          <div className="mt-0.5 text-[11px] tabular-nums text-ink-faint">
+          <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-faint tabular-nums">
             {detail}
           </div>
         )}

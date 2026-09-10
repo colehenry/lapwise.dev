@@ -23,7 +23,7 @@ describe("ChatInput", () => {
   });
 
   it("caps vertical growth and scrolls long drafts inside the composer", () => {
-    render(<ChatInput onSend={vi.fn()} isLoading={false} shellless />);
+    render(<ChatInput onSend={vi.fn()} isLoading={false} />);
     const textarea = screen.getByRole("textbox", {
       name: "Message Clutch",
     });
@@ -39,7 +39,7 @@ describe("ChatInput", () => {
   });
 
   it("prevents sends while conversation history is loading", () => {
-    render(<ChatInput onSend={vi.fn()} isLoading={false} disabled shellless />);
+    render(<ChatInput onSend={vi.fn()} isLoading={false} disabled />);
 
     expect(
       (

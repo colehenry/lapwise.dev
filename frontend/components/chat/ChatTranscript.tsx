@@ -13,8 +13,6 @@ interface ChatTranscriptProps {
   streamStatus: ClutchProgressStatus | null;
   isAsking: boolean;
   disabled: boolean;
-  userName: string;
-  userAvatarUrl?: string | null;
   onSend: (question: string) => void;
 }
 
@@ -27,8 +25,6 @@ export default function ChatTranscript({
   streamStatus,
   isAsking,
   disabled,
-  userName,
-  userAvatarUrl,
   onSend,
 }: ChatTranscriptProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -72,36 +68,38 @@ export default function ChatTranscript({
       {messages.length === 0 ? (
         <SuggestedQuestions onSelect={onSend} disabled={disabled} />
       ) : (
-        <div className="mx-auto w-full max-w-4xl min-w-0 px-3 py-4 md:px-4 md:py-6">
-          {messages.map((message) => (
-            <ChatMessage
-              key={message.id}
-              messageRole={message.role}
-              content={message.content}
-              charts={message.charts}
-              followUps={message.followUps}
-              onFollowUp={disabled ? undefined : onSend}
-              isLoading={
-                message.id === streamingAssistantId &&
-                !message.content &&
-                !(message.charts && message.charts.length > 0)
-              }
-              isStreaming={message.id === streamingAssistantId && isAsking}
-              progressStatus={
-                message.id === streamingAssistantId ? streamStatus : null
-              }
-              userName={userName}
-              userAvatarUrl={userAvatarUrl}
-            />
-          ))}
+        <div className="page-frame py-5 md:py-7">
+          <div className="mx-auto w-full min-w-0 max-w-3xl">
+            {messages.map((message) => (
+              <ChatMessage
+                key={message.id}
+                messageRole={message.role}
+                content={message.content}
+                charts={message.charts}
+                followUps={message.followUps}
+                onFollowUp={disabled ? undefined : onSend}
+                isLoading={
+                  message.id === streamingAssistantId &&
+                  !message.content &&
+                  !(message.charts && message.charts.length > 0)
+                }
+                isStreaming={message.id === streamingAssistantId && isAsking}
+                progressStatus={
+                  message.id === streamingAssistantId ? streamStatus : null
+                }
+              />
+            ))}
+          </div>
         </div>
       )}
       {error && (
-        <div
-          className="mx-auto mb-4 w-[calc(100%_-_1.5rem)] max-w-4xl rounded-xl border border-danger/20 bg-danger/[0.08] px-4 py-3 text-sm text-danger-bright"
-          role="alert"
-        >
-          {error}
+        <div className="page-frame pb-5">
+          <div
+            className="mx-auto w-full max-w-3xl rounded-sm border border-danger bg-surface-panel px-3 py-2.5 text-[13px] text-danger-bright"
+            role="alert"
+          >
+            {error}
+          </div>
         </div>
       )}
     </div>

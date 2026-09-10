@@ -3,8 +3,6 @@ import suggestionConfig from "./suggested-questions.json";
 export interface SuggestedQuestion {
   category: string;
   question: string;
-  color: string;
-  borderHover: string;
 }
 
 export const SUGGESTIONS = suggestionConfig as SuggestedQuestion[];

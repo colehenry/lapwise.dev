@@ -7,22 +7,21 @@ interface ChatInputProps {
   onAbort?: () => void;
   isLoading: boolean;
   disabled?: boolean;
-  compact?: boolean;
-  shellless?: boolean;
   /** Seeds the composer once, for a question carried in from another page. */
   initialValue?: string;
 }
 
 const COMPOSER_MAX_HEIGHT_PX = 144;
-const COMPACT_COMPOSER_MAX_HEIGHT_PX = 80;
 
+/**
+ * The prompt line, and the same one the homepage demo ends on: a caret, a
+ * field that grows with the draft, and one filled control on the right.
+ */
 export default function ChatInput({
   onSend,
   onAbort,
   isLoading,
   disabled = false,
-  compact,
-  shellless,
   initialValue = "",
 }: ChatInputProps) {
   const [input, setInput] = useState(initialValue);
@@ -38,12 +37,10 @@ export default function ChatInput({
   useEffect(() => {
     const el = textareaRef.current;
     if (el) {
-      const maxHeight = compact
-        ? COMPACT_COMPOSER_MAX_HEIGHT_PX
-        : COMPOSER_MAX_HEIGHT_PX;
       el.style.height = "auto";
-      el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
-      el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
+      el.style.height = `${Math.min(el.scrollHeight, COMPOSER_MAX_HEIGHT_PX)}px`;
+      el.style.overflowY =
+        el.scrollHeight > COMPOSER_MAX_HEIGHT_PX ? "auto" : "hidden";
     }
   });
 
@@ -66,104 +63,68 @@ export default function ChatInput({
     }
   }
 
-  if (compact) {
-    return (
-      <div className="border-t border-[var(--glass-border)] bg-surface-page/90 px-3 py-2.5">
-        <form onSubmit={handleSubmit} className="flex items-end gap-2">
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask about F1..."
-            rows={1}
-            maxLength={2000}
-            disabled={isLoading || disabled}
-            aria-label="Message Clutch"
-            className="max-h-20 min-h-9 flex-1 resize-none rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] px-3 py-2 text-sm text-ink-strong placeholder:text-ink-faint focus:border-accent/40 focus:outline-none focus:ring-1 focus:ring-accent/20 disabled:opacity-50"
-          />
-          {isLoading && onAbort ? (
-            <button
-              type="button"
-              onClick={onAbort}
-              className="shrink-0 rounded-xl bg-danger/10 border border-danger/20 p-2 text-danger-bright transition-colors hover:bg-danger/20"
-              title="Stop"
-              aria-label="Stop generating"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <title>Stop</title>
-                <rect x="4" y="4" width="12" height="12" rx="1" />
-              </svg>
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={!input.trim() || isLoading || disabled}
-              className="shrink-0 rounded-xl bg-accent p-2 text-ink-strong transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label="Send message"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <title>Send</title>
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-              </svg>
-            </button>
-          )}
-        </form>
-      </div>
-    );
-  }
-
   return (
-    <div
-      className={
-        shellless
-          ? ""
-          : "border-t border-[var(--glass-border)] px-4 py-4 md:px-6"
-      }
+    <form
+      onSubmit={handleSubmit}
+      className="flex items-center gap-3 rounded-sm border border-line-strong bg-surface-panel py-2.5 pl-[15px] pr-2.5 transition-colors focus-within:border-accent"
     >
-      <form
-        onSubmit={handleSubmit}
-        className="chat-input-glass mx-auto flex max-w-4xl items-end gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-surface)] px-4 py-2 backdrop-blur-xl transition-all duration-200 focus-within:border-accent/30 focus-within:shadow-[0_0_40px_-10px_rgba(160,32,240,0.15)]"
+      <span
+        aria-hidden="true"
+        className={`shrink-0 font-mono text-[14px] leading-none text-accent-bright ${
+          !isLoading && input.length === 0 ? "caret-blink" : ""
+        }`}
       >
-        <textarea
-          ref={textareaRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask anything about F1..."
-          rows={1}
-          maxLength={2000}
-          disabled={isLoading || disabled}
-          aria-label="Message Clutch"
-          className="max-h-36 min-h-10 flex-1 resize-none bg-transparent py-2 text-sm text-ink-strong placeholder:text-ink-faint focus:outline-none disabled:opacity-50"
-        />
-        {isLoading && onAbort ? (
-          <button
-            type="button"
-            onClick={onAbort}
-            className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-danger/10 border border-danger/20 text-danger-bright transition-all hover:bg-danger/20 active:scale-95"
-            title="Stop generating"
-            aria-label="Stop generating"
+        ❯
+      </span>
+      <textarea
+        ref={textareaRef}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Ask about any race, driver or season…"
+        rows={1}
+        maxLength={2000}
+        disabled={isLoading || disabled}
+        aria-label="Message Clutch"
+        className="max-h-36 min-h-6 flex-1 resize-none self-center bg-transparent text-[14.5px] leading-[1.6] text-ink-strong outline-none placeholder:text-ink-faint disabled:opacity-50"
+      />
+      {isLoading && onAbort ? (
+        <button
+          type="button"
+          onClick={onAbort}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-danger text-danger-bright transition-colors hover:bg-danger/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-bright"
+          title="Stop generating"
+          aria-label="Stop generating"
+        >
+          <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+            <title>Stop</title>
+            <rect x="4" y="4" width="12" height="12" rx="1" />
+          </svg>
+        </button>
+      ) : (
+        <button
+          type="submit"
+          disabled={!input.trim() || isLoading || disabled}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-accent-bright bg-accent text-ink-strong transition-colors hover:bg-accent-bright disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-bright"
+          aria-label="Send message"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
           >
-            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-              <title>Stop</title>
-              <rect x="4" y="4" width="12" height="12" rx="1" />
-            </svg>
-          </button>
-        ) : (
-          <button
-            type="submit"
-            disabled={!input.trim() || isLoading || disabled}
-            className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-ink-strong transition-all hover:bg-accent active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label="Send message"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-              <title>Send</title>
-              <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-            </svg>
-          </button>
-        )}
-      </form>
-    </div>
+            <title>Send</title>
+            <path d="M4 12h14" />
+            <path d="M13 6l6 6-6 6" />
+          </svg>
+        </button>
+      )}
+    </form>
   );
 }

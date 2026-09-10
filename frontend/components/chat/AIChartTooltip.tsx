@@ -43,7 +43,7 @@ export default function AIChartTooltip({
         : String(label);
 
   return (
-    <div className="min-w-36 rounded-lg border border-line-soft bg-surface-panel p-3 shadow-xl">
+    <div className="min-w-36 rounded-sm border border-line-soft bg-surface-panel p-3 shadow-floating-soft">
       {heading && (
         <p className="mb-2 font-semibold text-ink-strong text-xs">{heading}</p>
       )}

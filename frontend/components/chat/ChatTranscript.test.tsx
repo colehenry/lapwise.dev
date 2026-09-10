@@ -25,7 +25,6 @@ function renderTranscript(messages: DisplayMessage[]) {
       streamStatus={null}
       isAsking
       disabled
-      userName="driver"
       onSend={vi.fn()}
     />,
   );
@@ -49,7 +48,6 @@ describe("ChatTranscript", () => {
         streamStatus={null}
         isAsking
         disabled
-        userName="driver"
         onSend={vi.fn()}
       />,
     );
@@ -75,7 +73,6 @@ describe("ChatTranscript", () => {
         streamStatus={null}
         isAsking
         disabled
-        userName="driver"
         onSend={vi.fn()}
       />,
     );
