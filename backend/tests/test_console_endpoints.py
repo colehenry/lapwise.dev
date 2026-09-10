@@ -64,11 +64,13 @@ async def test_the_stoppage_is_emitted_as_a_skip(monza):
     assert monza.t0 < start < end < monza.t_end
 
 
-async def test_the_red_flag_appears_as_a_status_window_and_a_feed_event(monza):
+async def test_flag_periods_are_status_windows_and_never_feed_lines(monza):
+    """The timeline draws every flag, so a feed line would repeat it."""
     assert any(window.code == "red" for window in monza.status)
     assert all(window.to_seconds > window.from_seconds for window in monza.status)
     kinds = {event.kind for event in monza.feed}
-    assert {"red", "pit", "out", "lead", "fast"} <= kinds
+    assert {"pit", "out", "lead", "fast"} <= kinds
+    assert kinds.isdisjoint({"red", "yellow", "sc", "vsc"})
 
 
 async def test_the_feed_is_ordered_and_labelled_by_the_leaders_laps(monza):

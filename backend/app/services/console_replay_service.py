@@ -53,13 +53,6 @@ STATUS_CODES = {
     "7": "vsc",
 }
 
-STATUS_TEXT = {
-    "yellow": "Yellow flag",
-    "sc": "Safety car deployed",
-    "red": "Red flag — session suspended",
-    "vsc": "Virtual safety car",
-}
-
 _INCIDENT_CAR = re.compile(r"CAR \d+ \(([A-Z]{3})\)")
 _TRAILING_CLOCK = re.compile(r"\s*\(\d{2}:\d{2}:\d{2}\)\s*$")
 
@@ -130,9 +123,7 @@ class ConsoleReplayService:
             skips=ConsoleReplayService._skips(cars),
             status=ConsoleReplayService._status(status_events, t_end),
             cars=cars,
-            feed=ConsoleReplayService._feed(
-                drivers, total_laps, status_events, race_control
-            ),
+            feed=ConsoleReplayService._feed(drivers, total_laps, race_control),
         )
 
     @staticmethod
@@ -339,10 +330,12 @@ class ConsoleReplayService:
         )
 
     @staticmethod
-    def _feed(
-        drivers, total_laps, status_events, race_control
-    ) -> list[ConsoleFeedEvent]:
-        """Events that actually happened, on the clock the replay runs on."""
+    def _feed(drivers, total_laps, race_control) -> list[ConsoleFeedEvent]:
+        """Events that actually happened, on the clock the replay runs on.
+
+        Flag periods are not among them: the timeline draws every one of them
+        as a band, so a feed line would say the same thing twice.
+        """
         leader = next(
             (d for d in drivers if d["final_position"] == 1),
             drivers[0],
@@ -370,17 +363,6 @@ class ConsoleReplayService:
         ConsoleReplayService._car_events(drivers, total_laps, lap_at, push)
         ConsoleReplayService._lead_events(drivers, total_laps, push)
         ConsoleReplayService._fastest_lap_event(drivers, lap_at, push)
-
-        for event in status_events:
-            kind = STATUS_CODES.get(event.status)
-            if kind is None or kind == "green":
-                continue
-            push(
-                event.session_time_seconds,
-                lap_at(event.session_time_seconds),
-                kind,
-                STATUS_TEXT[kind],
-            )
 
         ConsoleReplayService._steward_events(race_control, lap_at, push)
 
@@ -463,14 +445,14 @@ class ConsoleReplayService:
 
     @staticmethod
     def _steward_events(race_control, lap_at, push) -> None:
-        """Safety-car calls and the first stewards' note per incident."""
+        """The first stewards' note per incident.
+
+        Safety-car calls are left out: they are flag periods, and the timeline
+        already draws each one.
+        """
         seen: set[str] = set()
         for event in race_control:
             lap = event.lap_number or lap_at(event.session_time_seconds)
-            if event.category == "SafetyCar":
-                text = event.message.lower()
-                push(event.session_time_seconds, lap, "sc", text[:1].upper() + text[1:])
-                continue
             if event.category != "Other" or "INCIDENT" not in event.message:
                 continue
             match = _INCIDENT_CAR.search(event.message)
