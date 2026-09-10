@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import AggDriverCareer, Driver, Puzzle, Session, SessionResult
 from app.schemas.daily_grid import (
     DailyGameResponse,
+    DailySummaryResponse,
     GameCategory,
     GameDriver,
     GameDriverCatalogItem,
@@ -86,6 +87,43 @@ def _escaped_like(value: str) -> str:
 
 class DailyGridService:
     """Serve one immutable puzzle snapshot without exposing its answer sets."""
+
+    @staticmethod
+    async def summary(db: AsyncSession) -> DailySummaryResponse:
+        """The board in play, reduced to what the homepage card may show.
+
+        Only the shape of the board travels — its size and its numbering. The
+        headers are the puzzle, so selecting the category payload here would
+        hand the answer to anyone who read the homepage's network tab.
+
+        The aggregate and personal fields stay null: nothing writes
+        `game_sessions` yet, and an invented count is a claim the database
+        cannot support.
+        """
+        row = (
+            await db.execute(
+                select(
+                    Puzzle.number,
+                    Puzzle.published_on,
+                    Puzzle.max_guesses,
+                    func.jsonb_array_length(Puzzle.row_categories).label("rows"),
+                    func.jsonb_array_length(Puzzle.column_categories).label("columns"),
+                )
+                .where(_published())
+                .order_by(Puzzle.published_on.desc(), Puzzle.number.desc())
+                .limit(1)
+            )
+        ).one_or_none()
+        if row is None:
+            raise ValueError("Grid not found")
+
+        return DailySummaryResponse(
+            number=row.number,
+            published_on=row.published_on,
+            max_guesses=row.max_guesses,
+            rows=row.rows,
+            columns=row.columns,
+        )
 
     @staticmethod
     async def puzzle(db: AsyncSession, number: int | None = None) -> DailyGameResponse:

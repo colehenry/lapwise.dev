@@ -9,12 +9,14 @@ from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.schemas.console import ConsoleReplayResponse
 from app.schemas.replay import (
     ReplayListResponse,
     ReplaySeasonsResponse,
     ReplayTrackResponse,
 )
 from app.security import verify_api_key
+from app.services.console_replay_service import ConsoleReplayService
 from app.services.replay_service import ReplayService
 
 router = APIRouter()
@@ -64,6 +66,29 @@ async def get_latest_replay_preview(
             "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
         },
     )
+
+
+@router.get("/console/{season}/{round}", response_model=ConsoleReplayResponse)
+async def get_console_replay(
+    season: int,
+    round: int,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(verify_api_key),
+):
+    """
+    Get everything the homepage console draws for one race.
+
+    Reshapes the ingested lap rows into a single payload: the session clock,
+    per-car lap traces, track-status windows, stoppage skips and the event
+    feed. A finished race never changes, so this caches hard.
+    """
+    data = await ConsoleReplayService.get_console_replay(db, season, round)
+    if data is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No console replay data found for {season} round {round}",
+        )
+    return data
 
 
 @router.get("/track/{circuit_id}", response_model=ReplayTrackResponse)

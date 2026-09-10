@@ -60,7 +60,11 @@ async def test_null_driver_codes_do_not_merge_historical_lap_series(monkeypatch)
     monkeypatch.setattr(
         SessionDataService, "get_race_control_events", AsyncMock(return_value=[])
     )
-    monkeypatch.setattr(LapsService, "_pit_durations", AsyncMock(return_value={}))
+    # Patched where `laps` imported it, not where it is defined: the lookup
+    # that matters is the module-level name the service actually calls.
+    monkeypatch.setattr(
+        "app.services.results.laps.pit_durations", AsyncMock(return_value={})
+    )
 
     response = await LapsService.get_lap_times(db, 1996, 1)
 

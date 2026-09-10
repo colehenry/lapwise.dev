@@ -5,9 +5,10 @@ from types import SimpleNamespace
 from typing import Optional
 
 from sqlalchemy import func, literal_column, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
-from app.models import Driver, Session, SessionResult
+from app.models import Driver, PitStop, Session, SessionResult
 
 
 def json_rows(model, alias_name: str, conditions):
@@ -73,3 +74,21 @@ def sanitize_float(value: Optional[float]) -> Optional[float]:
     if math.isnan(value) or math.isinf(value):
         return None
     return value
+
+
+async def pit_durations(db: AsyncSession, session_id: int) -> dict:
+    """
+    Map (driver_id, entry lap) -> pit lane time for a session.
+
+    Sourced from `pit_stops` because a stop spans two lap rows: FastF1 puts
+    PitInTime on the in-lap and PitOutTime on the out-lap.
+    """
+    rows = await db.execute(
+        select(PitStop.driver_id, PitStop.lap_number, PitStop.duration_seconds).where(
+            PitStop.session_id == session_id
+        )
+    )
+    return {
+        (driver_id, lap_number): sanitize_float(duration)
+        for driver_id, lap_number, duration in rows.all()
+    }

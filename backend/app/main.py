@@ -126,6 +126,7 @@ async def health_check():
 from app.routers import (
     admin,
     admin_puzzles,
+    archive,
     auth,
     circuits,
     comments,
@@ -133,6 +134,7 @@ from app.routers import (
     daily_grid,
     drivers,
     events,
+    headlines,
     oauth,
     replay,
     season_results,
@@ -158,3 +160,5 @@ app.include_router(daily_grid.router, prefix="/api/daily", tags=["daily-grid"])
 app.include_router(circuits.router, prefix="/api/circuits", tags=["circuits"])
 app.include_router(comments.router, prefix="/api/comments", tags=["comments"])
 app.include_router(replay.router, prefix="/api/replay", tags=["replay"])
+app.include_router(archive.router, prefix="/api/archive", tags=["archive"])
+app.include_router(headlines.router, prefix="/api/headlines", tags=["headlines"])
