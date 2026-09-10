@@ -6,6 +6,7 @@
 
 import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
 import { fetchWithAuth } from "@/lib/auth";
+import type { ClutchProgressStatus } from "@/lib/clutch-progress";
 
 const BASE = "/api/ai";
 
@@ -39,6 +40,8 @@ export interface ChartConfig {
   yKeys: string[];
   colors: string[];
   seriesLabels?: string[];
+  seriesColors?: Record<string, string>;
+  categoryColors?: Record<string, string>;
 }
 
 export interface AskResponse {
@@ -89,24 +92,8 @@ export interface StreamMetadataEvent {
   plan?: unknown;
 }
 
-export type StepType =
-  | "sql"
-  | "schema"
-  | "sample"
-  | "chart"
-  | "thinking"
-  | "synthesizing";
-
-export interface StreamStatusEvent {
+export interface StreamStatusEvent extends ClutchProgressStatus {
   type: "status";
-  message: string;
-  stepType?: StepType;
-}
-
-export interface ThinkingStep {
-  message: string;
-  stepType: StepType;
-  timestamp: number;
 }
 
 export interface StreamErrorEvent {

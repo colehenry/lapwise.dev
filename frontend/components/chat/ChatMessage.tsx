@@ -14,7 +14,9 @@ import remarkGfm from "remark-gfm";
 import UserAvatar from "@/components/comments/UserAvatar";
 import ClutchIcon from "@/components/ui/ClutchIcon";
 import { useEntityLinkColors } from "@/hooks/useEntityLinkColors";
-import type { ChartConfig, ThinkingStep } from "@/lib/chat";
+import type { ChartConfig } from "@/lib/chat";
+import type { ClutchProgressStatus } from "@/lib/clutch-progress";
+import ClutchProgress from "./ClutchProgress";
 
 const AIChart = dynamic(() => import("./AIChart"), {
   ssr: false,
@@ -34,12 +36,11 @@ interface ChatMessageProps {
   messageRole: "user" | "assistant";
   content: string;
   charts?: ChartConfig[];
-  steps?: ThinkingStep[];
   followUps?: string[];
   onFollowUp?: (question: string) => void;
   isLoading?: boolean;
   isStreaming?: boolean;
-  statusText?: string | null;
+  progressStatus?: ClutchProgressStatus | null;
   userName?: string;
   userAvatarUrl?: string | null;
   compact?: boolean;
@@ -89,34 +90,6 @@ function renderDeltaChildren(children: ReactNode): ReactNode {
         : children;
 }
 
-function WorkingStatus({ text }: { text: string }) {
-  return (
-    <div className="flex items-center gap-2 text-xs text-text-muted">
-      <svg
-        className="h-3.5 w-3.5 animate-spin"
-        viewBox="0 0 24 24"
-        fill="none"
-        aria-hidden="true"
-      >
-        <circle
-          className="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          strokeWidth="4"
-        />
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-        />
-      </svg>
-      {text}
-    </div>
-  );
-}
-
 function AIAnalystAvatar({ size = "md" }: { size?: "sm" | "md" }) {
   const dim = size === "sm" ? "h-7 w-7" : "h-9 w-9";
   const icon = size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
@@ -133,12 +106,11 @@ export default function ChatMessage({
   messageRole,
   content,
   charts,
-  steps,
   followUps,
   onFollowUp,
   isLoading,
   isStreaming,
-  statusText,
+  progressStatus,
   userName,
   userAvatarUrl,
   compact,
@@ -188,15 +160,11 @@ export default function ChatMessage({
             aria-label="Clutch response"
             aria-busy={isLoading || isStreaming}
           >
-            {isStreaming && steps && steps.length > 0 && (
-              <WorkingStatus text={steps[steps.length - 1].message} />
+            {(isStreaming || isLoading) && (
+              <ClutchProgress
+                status={progressStatus ?? { stage: "starting" }}
+              />
             )}
-
-            {statusText && (!steps || steps.length === 0) && (
-              <WorkingStatus text={statusText} />
-            )}
-
-            {isLoading && !statusText && <WorkingStatus text="Analyzing..." />}
 
             {content && (
               <div className="prose-chat min-w-0 max-w-full text-xs leading-relaxed text-text-secondary md:text-sm">

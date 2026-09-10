@@ -1,32 +1,36 @@
 import { tool } from "ai";
 import { z } from "zod";
 import type { ChartConfig } from "../chat";
+import { darken, normalizeHexColor } from "../color-utils";
 import { executeAIParamQuery } from "./db";
 
 const SEASON_STANDINGS_SQL = `
   SELECT
     'driver' AS entity_type,
-    championship_position AS position,
-    driver_name AS entrant_name,
-    driver_slug AS entrant_slug,
-    team_name,
-    points,
-    wins,
-    podiums
-  FROM v_driver_standings
-  WHERE year = $1 AND championship_position <= 5
+    standings.championship_position AS position,
+    standings.driver_name AS entrant_name,
+    standings.driver_slug AS entrant_slug,
+    standings.team_name,
+    (SELECT MAX(team.team_color) FROM teams team
+      WHERE team.year = standings.year AND team.name = standings.team_name) AS team_color,
+    standings.points,
+    standings.wins,
+    standings.podiums
+  FROM v_driver_standings standings
+  WHERE standings.year = $1 AND standings.championship_position <= 5
   UNION ALL
   SELECT
     'constructor' AS entity_type,
-    championship_position AS position,
-    team_name AS entrant_name,
-    constructor_slug AS entrant_slug,
-    team_name,
-    points,
-    wins,
-    podiums
-  FROM v_constructor_standings
-  WHERE year = $1 AND championship_position <= 5
+    standings.championship_position AS position,
+    standings.team_name AS entrant_name,
+    standings.constructor_slug AS entrant_slug,
+    standings.team_name,
+    standings.team_color,
+    standings.points,
+    standings.wins,
+    standings.podiums
+  FROM v_constructor_standings standings
+  WHERE standings.year = $1 AND standings.championship_position <= 5
 `;
 
 const SEASON_RESULTS_SQL = `
@@ -36,11 +40,13 @@ const SEASON_RESULTS_SQL = `
     s.session_type,
     d.slug AS driver_slug,
     d.full_name AS driver_name,
+    t.team_color,
     sr.position,
     sr.points
   FROM sessions s
   JOIN session_results sr ON sr.session_id = s.id
   JOIN drivers d ON d.id = sr.driver_id
+  LEFT JOIN teams t ON t.id = sr.team_id
   WHERE s.year = $1
     AND s.session_type IN ('race', 'sprint_race')
     AND s.date <= CURRENT_DATE
@@ -53,6 +59,7 @@ interface Standing {
   name: string;
   slug: string;
   team: string | null;
+  teamColor: string | null;
   points: number;
   wins: number;
   podiums: number;
@@ -65,6 +72,7 @@ interface Result {
   sessionType: "race" | "sprint_race";
   driverSlug: string;
   driverName: string;
+  teamColor: string | null;
   position: number | null;
   points: number;
 }
@@ -93,6 +101,7 @@ function parseStanding(row: Record<string, unknown>): Standing | null {
     name,
     slug,
     team: typeof row.team_name === "string" ? row.team_name : null,
+    teamColor: normalizeHexColor(String(row.team_color ?? "")),
     points: numberValue(row.points),
     wins: numberValue(row.wins),
     podiums: numberValue(row.podiums),
@@ -120,6 +129,7 @@ function parseResult(row: Record<string, unknown>): Result | null {
     sessionType,
     driverSlug,
     driverName,
+    teamColor: normalizeHexColor(String(row.team_color ?? "")),
     position: position > 0 ? position : null,
     points: numberValue(row.points),
   };
@@ -129,6 +139,7 @@ function buildCumulativeChart(
   season: number,
   drivers: Standing[],
   results: Result[],
+  seriesColors: Record<string, string>,
 ): ChartConfig {
   const slugs = new Set(drivers.map((driver) => driver.slug));
   const rounds = [...new Set(results.map((result) => result.round))].sort(
@@ -154,8 +165,26 @@ function buildCumulativeChart(
     xKey: "round",
     yKeys: drivers.map((driver) => driver.slug),
     seriesLabels: drivers.map((driver) => driver.name),
+    seriesColors,
     colors: [],
   };
+}
+
+function driverChartColors(drivers: Standing[]): Record<string, string> {
+  const teamUses = new Map<string, number>();
+  return Object.fromEntries(
+    drivers.flatMap((driver) => {
+      if (!driver.teamColor) return [];
+      const use = teamUses.get(driver.teamColor) ?? 0;
+      teamUses.set(driver.teamColor, use + 1);
+      return [
+        [
+          driver.slug,
+          use === 0 ? driver.teamColor : darken(driver.teamColor, 0.3),
+        ],
+      ];
+    }),
+  );
 }
 
 function buildCharts(
@@ -164,18 +193,23 @@ function buildCharts(
   constructors: Standing[],
   results: Result[],
 ): ChartConfig[] {
-  const winCounts = new Map<string, { driver: string; wins: number }>();
+  const seriesColors = driverChartColors(drivers);
+  const winCounts = new Map<
+    string,
+    { driver: string; wins: number; color: string | null }
+  >();
   for (const result of results) {
     if (result.sessionType !== "race" || result.position !== 1) continue;
     const current = winCounts.get(result.driverSlug) ?? {
       driver: result.driverName,
       wins: 0,
+      color: seriesColors[result.driverSlug] ?? result.teamColor,
     };
     current.wins += 1;
     winCounts.set(result.driverSlug, current);
   }
   return [
-    buildCumulativeChart(season, drivers, results),
+    buildCumulativeChart(season, drivers, results, seriesColors),
     {
       chartType: "pie",
       title: `${season} race wins`,
@@ -184,6 +218,11 @@ function buildCharts(
       data: [...winCounts.values()].sort((a, b) => b.wins - a.wins),
       xKey: "driver",
       yKeys: ["wins"],
+      categoryColors: Object.fromEntries(
+        [...winCounts.values()].flatMap((driver) =>
+          driver.color ? [[driver.driver, driver.color]] : [],
+        ),
+      ),
       colors: [],
     },
     {
@@ -197,6 +236,11 @@ function buildCharts(
       })),
       xKey: "constructor",
       yKeys: ["points"],
+      categoryColors: Object.fromEntries(
+        constructors.flatMap((team) =>
+          team.teamColor ? [[team.name, team.teamColor]] : [],
+        ),
+      ),
       colors: [],
     },
   ];

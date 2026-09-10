@@ -9,6 +9,7 @@ import { executeAIQuery } from "./db";
 import {
   ensureLimit,
   extractReferencedTables,
+  generateChart,
   runSQLQuery,
   validateSQL,
   validateWhereClause,
@@ -241,7 +242,50 @@ describe("runSQLQuery tool — the execution boundary", () => {
     expect(mockedExecuteAIQuery).toHaveBeenCalledTimes(1);
     const executedSql = mockedExecuteAIQuery.mock.calls[0][0];
     expect(executedSql).toContain("ai_limited_query");
-    expect(executedSql).toContain("LIMIT 500");
-    expect(result).toMatchObject({ count: 1 });
+    expect(executedSql).toContain("LIMIT 100");
+    expect(result).toMatchObject({ count: 1, truncated: false });
+  });
+
+  it("caps the serialized rows returned to the model", async () => {
+    mockedExecuteAIQuery.mockResolvedValue(
+      Array.from({ length: 100 }, (_, index) => ({
+        id: index,
+        message: "x".repeat(1_000),
+      })),
+    );
+
+    // biome-ignore lint/style/noNonNullAssertion: tool always defines execute
+    const result = await runSQLQuery.execute!(
+      { sql: "SELECT id, message FROM race_control_messages" },
+      options,
+    );
+
+    expect(result.truncated).toBe(true);
+    expect(JSON.stringify(result.rows).length).toBeLessThanOrEqual(24_000);
+  });
+});
+
+describe("generateChart tool", () => {
+  it("preserves semantic series and category colors", async () => {
+    // biome-ignore lint/style/noNonNullAssertion: tool always defines execute
+    const result = await generateChart.execute!(
+      {
+        chart_type: "bar",
+        title: "Constructors",
+        x_label: "Team",
+        y_label: "Points",
+        data: [{ team: "Mercedes", points: 468 }],
+        x_key: "team",
+        y_keys: ["points"],
+        series_colors: { points: "#ffffff" },
+        category_colors: { Mercedes: "#27F4D2" },
+      },
+      { toolCallId: "test", messages: [] } as never,
+    );
+
+    expect(result.config).toMatchObject({
+      seriesColors: { points: "#ffffff" },
+      categoryColors: { Mercedes: "#27F4D2" },
+    });
   });
 });

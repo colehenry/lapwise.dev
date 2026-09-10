@@ -3,6 +3,7 @@ import {
   extractAIProviderUsage,
   getAIModel,
   resolveAIProviderConfig,
+  resolveOpenRouterProviderRouting,
 } from "./provider";
 
 describe("resolveAIProviderConfig", () => {
@@ -37,6 +38,26 @@ describe("resolveAIProviderConfig", () => {
     expect(() => getAIModel("analysis", {})).toThrow(
       /OPEN_ROUTER_API_KEY is required/,
     );
+  });
+});
+
+describe("resolveOpenRouterProviderRouting", () => {
+  it("avoids the DeepSeek endpoint that emits raw tool syntax", () => {
+    expect(
+      resolveOpenRouterProviderRouting("deepseek/deepseek-v4-flash-0731"),
+    ).toMatchObject({
+      order: ["deepinfra"],
+      ignore: ["wafer"],
+      require_parameters: true,
+      data_collection: "deny",
+    });
+  });
+
+  it("does not constrain alternate OpenRouter models", () => {
+    expect(resolveOpenRouterProviderRouting("google/another-model")).toEqual({
+      require_parameters: true,
+      data_collection: "deny",
+    });
   });
 });
 

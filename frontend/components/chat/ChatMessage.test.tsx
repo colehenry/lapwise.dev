@@ -18,7 +18,7 @@ describe("ChatMessage", () => {
         content=""
         isLoading
         isStreaming
-        statusText="Starting analysis..."
+        progressStatus={{ stage: "starting" }}
       />,
     );
     const loadingRegion = screen.getByRole("article", {
@@ -42,39 +42,29 @@ describe("ChatMessage", () => {
   });
 
   it("shows friendly progress only while the answer is being prepared", () => {
-    const steps = [
-      {
-        message: "Warming up the tyres...",
-        stepType: "thinking" as const,
-        timestamp: 1000,
-      },
-      {
-        message: "Checking the timing sheets...",
-        stepType: "thinking" as const,
-        timestamp: 2000,
-      },
-    ];
     const { rerender } = render(
       <ChatMessage
         messageRole="assistant"
         content="Answer"
-        steps={steps}
         isStreaming
+        progressStatus={{
+          stage: "more_data",
+          metrics: [{ value: 84, label: "records checked" }],
+        }}
       />,
     );
-    expect(screen.getByText("Checking the timing sheets...")).toBeTruthy();
-    expect(screen.queryByText("Warming up the tyres...")).toBeNull();
+    expect(screen.getByText("84 records checked")).toBeTruthy();
+    expect(screen.getByRole("status")).toBeTruthy();
 
     rerender(
       <ChatMessage
         messageRole="assistant"
         content="Answer"
-        steps={steps}
         isStreaming={false}
+        progressStatus={{ stage: "more_data" }}
       />,
     );
 
-    expect(screen.queryByText("Checking the timing sheets...")).toBeNull();
-    expect(screen.queryByRole("button", { name: /steps/i })).toBeNull();
+    expect(screen.queryByRole("status")).toBeNull();
   });
 });

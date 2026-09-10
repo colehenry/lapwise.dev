@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef } from "react";
 import type { DisplayMessage } from "@/lib/chatMessages";
+import type { ClutchProgressStatus } from "@/lib/clutch-progress";
 import ChatMessage from "./ChatMessage";
 import SuggestedQuestions from "./SuggestedQuestions";
 
@@ -9,7 +10,7 @@ interface ChatTranscriptProps {
   messages: DisplayMessage[];
   error: string | null;
   streamingAssistantId: string | null;
-  streamStatus: string | null;
+  streamStatus: ClutchProgressStatus | null;
   isAsking: boolean;
   disabled: boolean;
   userName: string;
@@ -78,7 +79,6 @@ export default function ChatTranscript({
               messageRole={message.role}
               content={message.content}
               charts={message.charts}
-              steps={message.steps}
               followUps={message.followUps}
               onFollowUp={disabled ? undefined : onSend}
               isLoading={
@@ -87,7 +87,7 @@ export default function ChatTranscript({
                 !(message.charts && message.charts.length > 0)
               }
               isStreaming={message.id === streamingAssistantId && isAsking}
-              statusText={
+              progressStatus={
                 message.id === streamingAssistantId ? streamStatus : null
               }
               userName={userName}

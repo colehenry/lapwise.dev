@@ -1,6 +1,9 @@
 /** Central OpenRouter model gateway for Clutch. */
 
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import {
+  createOpenRouter,
+  type OpenRouterChatSettings,
+} from "@openrouter/ai-sdk-provider";
 import type { LanguageModel } from "ai";
 
 const DEFAULT_OPENROUTER_ANALYSIS_MODEL = "deepseek/deepseek-v4-flash-0731";
@@ -34,6 +37,23 @@ export interface AIProviderUsage {
   upstreamProvider?: string;
 }
 
+export function resolveOpenRouterProviderRouting(
+  modelId: string,
+): NonNullable<OpenRouterChatSettings["provider"]> {
+  const privacyAndToolSupport = {
+    data_collection: "deny" as const,
+    require_parameters: true,
+  };
+  if (modelId !== DEFAULT_OPENROUTER_ANALYSIS_MODEL) {
+    return privacyAndToolSupport;
+  }
+  return {
+    ...privacyAndToolSupport,
+    order: ["deepinfra"],
+    ignore: ["wafer"],
+  };
+}
+
 export function resolveAIProviderConfig(
   purpose: AIModelPurpose,
   env: AIEnvironment = process.env,
@@ -64,10 +84,7 @@ export function getAIModel(
   return {
     ...config,
     model: provider(config.modelId, {
-      provider: {
-        data_collection: "deny",
-        require_parameters: true,
-      },
+      provider: resolveOpenRouterProviderRouting(config.modelId),
       usage: { include: true },
     }),
   };

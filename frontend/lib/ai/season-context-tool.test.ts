@@ -13,6 +13,7 @@ const standingRows = [
     entrant_name: "Kimi Antonelli",
     entrant_slug: "antonelli",
     team_name: "Mercedes",
+    team_color: "27F4D2",
     points: 267,
     wins: 7,
     podiums: 11,
@@ -23,6 +24,7 @@ const standingRows = [
     entrant_name: "George Russell",
     entrant_slug: "russell",
     team_name: "Mercedes",
+    team_color: "27F4D2",
     points: 201,
     wins: 2,
     podiums: 7,
@@ -33,6 +35,7 @@ const standingRows = [
     entrant_name: "Mercedes",
     entrant_slug: "mercedes",
     team_name: "Mercedes",
+    team_color: "27F4D2",
     points: 468,
     wins: 9,
     podiums: 18,
@@ -43,6 +46,7 @@ const standingRows = [
     entrant_name: "Ferrari",
     entrant_slug: "ferrari",
     team_name: "Ferrari",
+    team_color: "E8002D",
     points: 346,
     wins: 2,
     podiums: 9,
@@ -56,6 +60,7 @@ const resultRows = [
     session_type: "race",
     driver_slug: "antonelli",
     driver_name: "Kimi Antonelli",
+    team_color: "27F4D2",
     position: 1,
     points: 25,
   },
@@ -65,6 +70,7 @@ const resultRows = [
     session_type: "race",
     driver_slug: "russell",
     driver_name: "George Russell",
+    team_color: "27F4D2",
     position: 2,
     points: 18,
   },
@@ -74,6 +80,7 @@ const resultRows = [
     session_type: "race",
     driver_slug: "antonelli",
     driver_name: "Kimi Antonelli",
+    team_color: "27F4D2",
     position: 1,
     points: 25,
   },
@@ -83,6 +90,7 @@ const resultRows = [
     session_type: "race",
     driver_slug: "russell",
     driver_name: "George Russell",
+    team_color: "27F4D2",
     position: 2,
     points: 18,
   },
@@ -106,6 +114,8 @@ describe("getSeasonContext", () => {
     } as never);
 
     expect(mockedQuery).toHaveBeenCalledTimes(2);
+    expect(mockedQuery.mock.calls[0][0]).toContain("MAX(team.team_color)");
+    expect(mockedQuery.mock.calls[0][0]).not.toContain("JOIN teams");
     expect(result).toMatchObject({
       type: "season_context",
       completedRaces: 2,
@@ -118,6 +128,17 @@ describe("getSeasonContext", () => {
     expect(result.charts[0]).toMatchObject({
       chartType: "line",
       yKeys: ["antonelli", "russell"],
+      seriesColors: {
+        antonelli: "#27F4D2",
+        russell: "#1bab93",
+      },
+    });
+    expect(result.charts[1].categoryColors).toEqual({
+      "Kimi Antonelli": "#27F4D2",
+    });
+    expect(result.charts[2].categoryColors).toEqual({
+      Mercedes: "#27F4D2",
+      Ferrari: "#E8002D",
     });
   });
 });

@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import type { ClutchProgressStage } from "../clutch-progress";
 import type { DeterministicAnalysisResult } from "./analysis-engine";
 import {
   saveConversationMessage,
@@ -20,14 +21,18 @@ function buildFollowUp(analysis: DeterministicAnalysisResult): string[] {
   ];
 }
 
-function statusMessage(analysis: DeterministicAnalysisResult): string {
+function progressStage(
+  analysis: DeterministicAnalysisResult,
+): ClutchProgressStage {
   const family = analysis.plan.facets[0]?.family;
-  if (family === "qualifying_comparison") {
-    return "Comparing the qualifying laps...";
-  }
-  if (family === "standings") return "Checking the championship picture...";
-  if (family === "results") return "Checking the timing sheets...";
-  return "Piecing the race together...";
+  if (family === "qualifying_comparison") return "qualifying";
+  if (family === "standings") return "season";
+  if (family === "results") return "results";
+  if (family === "weather") return "weather";
+  if (family === "strategy") return "strategy";
+  if (family === "race_narrative") return "race";
+  if (family === "rules") return "rules";
+  return "planning";
 }
 
 export function createDeterministicAnalysisResponse(params: {
@@ -48,8 +53,7 @@ export function createDeterministicAnalysisResponse(params: {
       controller.enqueue(
         encodeStreamLine({
           type: "status",
-          message: statusMessage(analysis),
-          stepType: "thinking",
+          stage: progressStage(analysis),
         }),
       );
       controller.enqueue(

@@ -3,7 +3,6 @@ import type {
   ChartConfig,
   ChatMessage,
   StreamMetadataEvent,
-  ThinkingStep,
 } from "@/lib/chat";
 
 export interface DisplayMessage {
@@ -12,7 +11,6 @@ export interface DisplayMessage {
   content: string;
   charts?: ChartConfig[];
   queries?: string[];
-  steps?: ThinkingStep[];
   followUps?: string[];
 }
 
@@ -48,18 +46,6 @@ export function appendStreamText(
   return messages.map((message) =>
     message.id === assistantMessageId
       ? { ...message, content: message.content + text }
-      : message,
-  );
-}
-
-export function appendThinkingStep(
-  messages: DisplayMessage[],
-  assistantMessageId: string,
-  step: ThinkingStep,
-): DisplayMessage[] {
-  return messages.map((message) =>
-    message.id === assistantMessageId
-      ? { ...message, steps: [...(message.steps ?? []), step] }
       : message,
   );
 }

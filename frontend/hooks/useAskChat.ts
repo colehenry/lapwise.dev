@@ -14,13 +14,13 @@ import {
 } from "@/lib/chat";
 import {
   appendStreamText,
-  appendThinkingStep,
   attachCachedResponse,
   attachStreamMetadata,
   type DisplayMessage,
   removeEmptyAssistant,
   toDisplayMessages,
 } from "@/lib/chatMessages";
+import type { ClutchProgressStatus } from "@/lib/clutch-progress";
 import {
   conversationsQuery,
   invalidateConversations,
@@ -44,7 +44,9 @@ export function useAskChat(
   const [streamingAssistantId, setStreamingAssistantId] = useState<
     string | null
   >(null);
-  const [streamStatus, setStreamStatus] = useState<string | null>(null);
+  const [streamStatus, setStreamStatus] = useState<ClutchProgressStatus | null>(
+    null,
+  );
   const [remaining, setRemaining] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingConversationId, setPendingConversationId] = useState<
@@ -159,7 +161,7 @@ export function useAskChat(
       abortRef.current = controller;
 
       setStreamingAssistantId(assistantMessageId);
-      setStreamStatus("Starting analysis...");
+      setStreamStatus({ stage: "starting" });
       setMessages((previous) => [
         ...previous,
         { id: `user-${messageSequence}`, role: "user", content: question },
@@ -167,7 +169,6 @@ export function useAskChat(
           id: assistantMessageId,
           role: "assistant",
           content: "",
-          steps: [],
         },
       ]);
 
@@ -205,17 +206,10 @@ export function useAskChat(
             }
 
             if (event.type === "status") {
-              const { message, stepType } = event;
-              setStreamStatus(message);
-              if (!stepType) return;
-
-              setMessages((previous) =>
-                appendThinkingStep(previous, assistantMessageId, {
-                  message,
-                  stepType,
-                  timestamp: Date.now(),
-                }),
-              );
+              setStreamStatus({
+                stage: event.stage,
+                metrics: event.metrics,
+              });
               return;
             }
 

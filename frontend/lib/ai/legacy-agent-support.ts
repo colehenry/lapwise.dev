@@ -1,134 +1,67 @@
-import { generateText, type LanguageModel } from "ai";
-import type { StepType } from "../chat";
-import type { AnalysisPageContext } from "./analysis-contracts";
-import { buildSystemPrompt } from "./system-prompt";
+import type {
+  ClutchProgressMetric,
+  ClutchProgressStage,
+  ClutchProgressStatus,
+} from "../clutch-progress";
 
-export interface ToolSummary {
-  toolName: string;
-  summary: string;
-}
-
-export function summarizeToolOutput(
-  toolName: string,
-  output: Record<string, unknown>,
-): string {
-  if (toolName === "run_sql_query") {
-    const columns = Array.isArray(output.columns)
-      ? output.columns.filter(
-          (column): column is string => typeof column === "string",
-        )
-      : [];
-    return JSON.stringify({
-      type: "sql_result",
-      error: typeof output.error === "string" ? output.error : null,
-      count: typeof output.count === "number" ? output.count : null,
-      columns,
-      sampleRows: Array.isArray(output.rows) ? output.rows.slice(0, 5) : [],
-    });
-  }
-
-  if (toolName === "generate_chart") {
-    return JSON.stringify({ type: "chart_result", config: output.config });
-  }
-
-  if (toolName === "resolve_session") {
-    return JSON.stringify({
-      type: "session_resolution",
-      error: typeof output.error === "string" ? output.error : null,
-      count: typeof output.count === "number" ? output.count : null,
-      rows: Array.isArray(output.rows) ? output.rows.slice(0, 10) : [],
-      note: output.note,
-    });
-  }
-
-  if (toolName === "get_race_dynamics") {
-    return JSON.stringify({
-      type: "race_dynamics",
-      sessionId: output.sessionId,
-      leaderTimeline: output.leaderTimeline,
-      lapsLed: output.lapsLed,
-      neutralizedLaps: output.neutralizedLaps,
-      positionPaths: output.positionPaths,
-      pitStops: output.pitStops,
-      raceControl: Array.isArray(output.raceControl)
-        ? output.raceControl.slice(0, 10)
-        : output.raceControl,
-      evidenceRules: output.evidenceRules,
-      error: output.error,
-    });
-  }
-
-  return JSON.stringify(output);
-}
-
-export function legacyToolStatus(
-  toolName: string,
-): { message: string; stepType: StepType } | null {
+function toolStage(toolName: string): ClutchProgressStage | null {
   switch (toolName) {
     case "run_sql_query":
-      return { message: "Checking the timing sheets...", stepType: "thinking" };
+      return "more_data";
     case "get_season_context":
-      return {
-        message: "Reading the championship picture...",
-        stepType: "thinking",
-      };
+      return "season";
     case "resolve_session":
-      return {
-        message: "Finding the right race weekend...",
-        stepType: "thinking",
-      };
+      return "event";
     case "get_race_dynamics":
-      return {
-        message: "Going through the race lap by lap...",
-        stepType: "thinking",
-      };
+      return "race";
     case "generate_chart":
-      return { message: "Drawing up the chart...", stepType: "chart" };
+      return "chart";
     default:
       return null;
   }
 }
 
-export async function buildFallbackAnswer(params: {
-  question: string;
-  queries: string[];
-  toolSummaries: ToolSummary[];
-  model: LanguageModel;
-  abortSignal?: AbortSignal;
-  pageContext?: AnalysisPageContext;
-}): Promise<string> {
-  const synthesisPrompt = `The agent collected data for this user question but did not finish the final report.
+function arrayLength(value: unknown): number {
+  return Array.isArray(value) ? value.length : 0;
+}
 
-User question:
-${params.question}
-
-Executed SQL queries:
-${params.queries.length > 0 ? params.queries.map((query, index) => `${index + 1}. ${query}`).join("\n\n") : "None"}
-
-Tool outputs:
-${params.toolSummaries
-  .map((tool, index) => `${index + 1}. ${tool.toolName}\n${tool.summary}`)
-  .join("\n\n")}
-
-Write the final answer now. Use only retrieved data, state failed queries, and do not narrate internal tool usage.`;
-  const timeoutController = new AbortController();
-  const timeoutId = setTimeout(() => timeoutController.abort(), 30_000);
-  const abortSignal = params.abortSignal
-    ? AbortSignal.any([params.abortSignal, timeoutController.signal])
-    : timeoutController.signal;
-
-  try {
-    const fallback = await generateText({
-      model: params.model,
-      system: buildSystemPrompt({
-        question: params.question,
-        pageContext: params.pageContext,
-      }),
-      prompt: synthesisPrompt,
-      abortSignal,
-    });
-    return fallback.text;
-  } finally {
-    clearTimeout(timeoutId);
+function toolMetrics(
+  toolName: string,
+  output: Record<string, unknown>,
+): ClutchProgressMetric[] {
+  switch (toolName) {
+    case "get_season_context":
+      return [
+        { value: Number(output.completedRaces) || 0, label: "rounds checked" },
+        { value: arrayLength(output.charts), label: "visuals ready" },
+      ];
+    case "resolve_session":
+      return [{ value: Number(output.count) || 0, label: "sessions found" }];
+    case "get_race_dynamics":
+      return [
+        { value: arrayLength(output.positionPaths), label: "drivers traced" },
+        {
+          value: arrayLength(output.neutralizedLaps),
+          label: "neutralized laps",
+        },
+      ];
+    case "generate_chart": {
+      const config = output.config as Record<string, unknown> | undefined;
+      return [{ value: arrayLength(config?.data), label: "points plotted" }];
+    }
+    case "run_sql_query":
+      return [{ value: Number(output.count) || 0, label: "records checked" }];
+    default:
+      return [];
   }
+}
+
+export function agentToolProgress(
+  toolName: string,
+  output?: Record<string, unknown>,
+): ClutchProgressStatus | null {
+  const stage = toolStage(toolName);
+  if (!stage) return null;
+  const metrics = output ? toolMetrics(toolName, output) : [];
+  return { stage, metrics: metrics.length > 0 ? metrics : undefined };
 }

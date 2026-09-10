@@ -1,5 +1,11 @@
 import * as Sentry from "@sentry/nextjs";
 import { stepCountIs, streamText } from "ai";
+import {
+  AGENT_MAX_OUTPUT_TOKENS,
+  AGENT_MAX_STEPS,
+  AGENT_TOTAL_TIMEOUT_MS,
+  shouldForceFinalAnswer,
+} from "./agent-budget";
 import type { AnalysisPageContext } from "./analysis-contracts";
 import {
   collectEntityReferences,
@@ -11,12 +17,7 @@ import {
   writeCachedResponse,
 } from "./conversation-store";
 import { encodeStreamLine } from "./deterministic-response";
-import {
-  buildFallbackAnswer,
-  legacyToolStatus,
-  summarizeToolOutput,
-  type ToolSummary,
-} from "./legacy-agent-support";
+import { agentToolProgress } from "./legacy-agent-support";
 import { type AIModelSelection, extractAIProviderUsage } from "./provider";
 import { getSeasonContext } from "./season-context-tool";
 import { buildSystemPrompt } from "./system-prompt";
@@ -67,7 +68,14 @@ export async function createLegacyAgentResponse(params: {
     messages: params.messages,
     tools,
     toolChoice: "auto",
-    stopWhen: stepCountIs(6),
+    maxOutputTokens: AGENT_MAX_OUTPUT_TOKENS,
+    maxRetries: 1,
+    timeout: { totalMs: AGENT_TOTAL_TIMEOUT_MS, stepMs: 20_000 },
+    stopWhen: stepCountIs(AGENT_MAX_STEPS),
+    prepareStep: ({ steps, stepNumber }) =>
+      shouldForceFinalAnswer(steps, stepNumber)
+        ? { toolChoice: "none", activeTools: [] }
+        : undefined,
     abortSignal: params.abortSignal,
   });
 
@@ -76,9 +84,7 @@ export async function createLegacyAgentResponse(params: {
       const charts: unknown[] = [];
       const entityReferences: EntityReference[] = [];
       const queries: string[] = [];
-      const toolSummaries: ToolSummary[] = [];
       let answer = "";
-      let finishReason: string | null = null;
       let actualModelId = params.model.modelId;
       let upstreamProvider: string | undefined;
       let usage: StreamUsage = {
@@ -97,8 +103,7 @@ export async function createLegacyAgentResponse(params: {
       controller.enqueue(
         encodeStreamLine({
           type: "status",
-          message: "Warming up the tyres...",
-          stepType: "thinking",
+          stage: "starting",
         }),
       );
 
@@ -120,10 +125,10 @@ export async function createLegacyAgentResponse(params: {
             ) {
               queries.push(input.sql);
             }
-            const status = legacyToolStatus(part.toolName);
-            if (status) {
+            const progress = agentToolProgress(part.toolName);
+            if (progress) {
               controller.enqueue(
-                encodeStreamLine({ type: "status", ...status }),
+                encodeStreamLine({ type: "status", ...progress }),
               );
             }
             continue;
@@ -131,19 +136,15 @@ export async function createLegacyAgentResponse(params: {
 
           if (part.type === "tool-result") {
             const output = part.output as Record<string, unknown>;
-            toolSummaries.push({
-              toolName: part.toolName,
-              summary: summarizeToolOutput(part.toolName, output),
-            });
             if (output.type === "chart") charts.push(output.config);
             if (Array.isArray(output.charts)) charts.push(...output.charts);
             entityReferences.push(...collectEntityReferences(output));
-            if (part.toolName === "run_sql_query") {
+            const progress = agentToolProgress(part.toolName, output);
+            if (progress?.metrics) {
               controller.enqueue(
                 encodeStreamLine({
                   type: "status",
-                  message: "Checking the final details...",
-                  stepType: "thinking",
+                  ...progress,
                 }),
               );
             }
@@ -160,7 +161,6 @@ export async function createLegacyAgentResponse(params: {
           }
 
           if (part.type === "finish") {
-            finishReason = part.finishReason;
             usage = {
               ...usage,
               inputTokens: part.totalUsage.inputTokens ?? 0,
@@ -169,32 +169,6 @@ export async function createLegacyAgentResponse(params: {
                 (part.totalUsage.inputTokens ?? 0) +
                 (part.totalUsage.outputTokens ?? 0),
             };
-          }
-        }
-
-        if (
-          (finishReason === "tool-calls" || answer.trim().length < 80) &&
-          toolSummaries.length > 0
-        ) {
-          controller.enqueue(
-            encodeStreamLine({
-              type: "status",
-              message: "Bringing it over the line...",
-              stepType: "synthesizing",
-            }),
-          );
-          const fallback = await buildFallbackAnswer({
-            question: params.question,
-            queries,
-            toolSummaries,
-            model: params.model.model,
-            abortSignal: params.abortSignal,
-            pageContext: params.pageContext,
-          });
-          if (fallback.trim()) {
-            answer = answer.trim()
-              ? `${answer.trim()}\n\n${fallback.trim()}`
-              : fallback.trim();
           }
         }
 

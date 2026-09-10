@@ -70,6 +70,7 @@ export function selectEntityColors(data: StandingsResponse): EntityColors {
 
     if (driver.driver_code) driverColors.set(driver.driver_code, color);
     if (driver.driver_slug) driverColors.set(driver.driver_slug, color);
+    if (driver.full_name) driverColors.set(driver.full_name, color);
   }
 
   for (const team of data.constructors ?? []) {

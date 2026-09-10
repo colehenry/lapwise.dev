@@ -111,6 +111,8 @@ export const artifactChartSchema = z.object({
   yKeys: z.array(z.string().min(1)).min(1),
   seriesLabels: z.array(z.string().min(1)).optional(),
   colors: z.array(z.string()),
+  seriesColors: z.record(z.string(), z.string()).optional(),
+  categoryColors: z.record(z.string(), z.string()).optional(),
 });
 
 export const answerArtifactSchema = z.object({
