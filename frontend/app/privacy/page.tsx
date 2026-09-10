@@ -13,7 +13,7 @@ export default function PrivacyPage() {
         <h1 className="text-3xl font-bold text-ink-strong mb-2">
           Privacy Policy
         </h1>
-        <p className="text-ink-faint text-sm">Last updated: May 2026</p>
+        <p className="text-ink-faint text-sm">Last updated: September 2026</p>
       </div>
 
       <Section title="1. What We Collect">
@@ -55,20 +55,24 @@ export default function PrivacyPage() {
 
       <Section title="3. AI Usage">
         <p>
-          When you use Clutch (the AI analyst), your question and relevant
-          conversation history are sent to Anthropic&rsquo;s API to generate a
-          response. Anthropic&rsquo;s{" "}
+          When a Clutch answer requires a language model, your question and
+          relevant conversation history are sent through OpenRouter to the
+          configured model provider. Some data lookups and calculations are
+          completed directly by Lapwise without sending them to a language
+          model. OpenRouter&rsquo;s{" "}
           <a
-            href="https://www.anthropic.com/privacy"
+            href="https://openrouter.ai/privacy"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-accent-bright hover:text-accent-light transition-colors"
+            className="text-purple-400 hover:text-purple-300 transition-colors"
           >
             privacy policy
           </a>{" "}
-          applies to that processing. We store your AI conversation history in
-          our database so you can review past chats. You can delete your account
-          to remove this data.
+          and the selected upstream model provider&rsquo;s policy apply to
+          model-backed processing. Clutch and generated session summaries use
+          OpenRouter rather than a direct model-provider integration. We store
+          your AI conversation history in our database so you can review past
+          chats. You can delete your account to remove this data.
         </p>
         <p className="mt-3">
           AI queries are counted against per-account limits. Counts are stored
@@ -101,7 +105,7 @@ export default function PrivacyPage() {
             href="https://sentry.io/privacy/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-accent-bright hover:text-accent-light transition-colors"
+            className="text-purple-400 hover:text-purple-300 transition-colors"
           >
             Sentry&rsquo;s privacy policy
           </a>
@@ -145,8 +149,9 @@ export default function PrivacyPage() {
             email
           </li>
           <li>
-            <strong className="text-ink-strong">Anthropic</strong> — AI
-            processing
+            <strong className="text-ink-strong">OpenRouter</strong> — AI model
+            routing for Clutch and generated session summaries; selected
+            upstream inference providers also process model requests
           </li>
           <li>
             <strong className="text-ink-strong">Sentry</strong> — error
@@ -164,7 +169,7 @@ export default function PrivacyPage() {
           For privacy questions or data deletion requests, email us at{" "}
           <a
             href="mailto:support@lapwise.dev"
-            className="text-accent-bright hover:text-accent-light transition-colors"
+            className="text-purple-400 hover:text-purple-300 transition-colors"
           >
             support@lapwise.dev
           </a>
@@ -175,7 +180,7 @@ export default function PrivacyPage() {
       <div className="pt-4 border-t border-line-soft">
         <Link
           href="/terms"
-          className="text-accent-bright hover:text-accent-light text-sm transition-colors"
+          className="text-purple-400 hover:text-purple-300 text-sm transition-colors"
         >
           Terms of Service →
         </Link>

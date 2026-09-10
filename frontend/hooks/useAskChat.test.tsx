@@ -101,8 +101,33 @@ describe("useAskChat", () => {
       undefined,
       expect.any(Function),
       expect.any(AbortSignal),
+      undefined,
     );
     await act(async () => stream.resolve());
+  });
+
+  it("sends page context with a question", async () => {
+    chatApi.streamQuestion.mockResolvedValue(undefined);
+    const pageContext = {
+      route: "/results/2024/8",
+      season: 2024,
+      round: 8,
+      sessionId: 79,
+      sessionType: "race" as const,
+    };
+    const { result } = renderHook(() => useAskChat(null, pageContext), {
+      wrapper,
+    });
+
+    await act(async () => result.current.sendMessage("Who won this race?"));
+
+    expect(chatApi.streamQuestion).toHaveBeenCalledWith(
+      "Who won this race?",
+      undefined,
+      expect.any(Function),
+      expect.any(AbortSignal),
+      pageContext,
+    );
   });
 
   it("ignores stream events after starting a new conversation", async () => {

@@ -23,9 +23,9 @@ export default function ChatInput({
   disabled = false,
   compact,
   shellless,
-  initialValue,
+  initialValue = "",
 }: ChatInputProps) {
-  const [input, setInput] = useState(initialValue ?? "");
+  const [input, setInput] = useState(initialValue);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const seeded = useRef(initialValue ?? "");
 

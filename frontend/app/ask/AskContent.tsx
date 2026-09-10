@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ChatInput from "@/components/chat/ChatInput";
 import ChatTranscript from "@/components/chat/ChatTranscript";
 import ConversationSidebar from "@/components/chat/ConversationSidebar";
@@ -10,6 +10,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { useAuth } from "@/components/providers/AuthProvider";
 import ClutchIcon from "@/components/ui/ClutchIcon";
 import { useAskChat } from "@/hooks/useAskChat";
+import { pageContextFromSearchParams } from "@/lib/ai/page-context";
 
 const TOTAL_LIMIT = 3;
 
@@ -17,6 +18,11 @@ export default function AskContent() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const prefilledQuestion = searchParams.get("q") ?? undefined;
+  const pageContext = useMemo(
+    () => pageContextFromSearchParams(searchParams),
+    [searchParams],
+  );
+  const askReturnUrl = `/ask${searchParams.size > 0 ? `?${searchParams.toString()}` : ""}`;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const requestedConversationRef = useRef<string | null>(null);
   const {
@@ -36,7 +42,7 @@ export default function AskContent() {
     renameConversationTitle,
     removeConversation,
     sendMessage,
-  } = useAskChat(isAuthenticated && user ? user.id : null);
+  } = useAskChat(isAuthenticated && user ? user.id : null, pageContext);
 
   // Load conversation from ?c= query param (e.g. from widget expand)
   useEffect(() => {
@@ -79,8 +85,8 @@ export default function AskContent() {
               powered by AI.
             </p>
             <Link
-              href="/login?redirect=/ask"
-              className="bg-accent text-ink-strong px-6 py-2.5 rounded-2xl font-mono text-xs font-bold uppercase tracking-widest hover:bg-accent transition-colors"
+              href={`/login?redirect=${encodeURIComponent(askReturnUrl)}`}
+              className="bg-accent text-ink-strong px-6 py-2.5 rounded-2xl font-mono text-xs font-bold uppercase tracking-widest hover:bg-accent-bright transition-colors"
             >
               Sign In
             </Link>

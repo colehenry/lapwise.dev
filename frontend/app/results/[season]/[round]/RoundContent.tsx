@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import ClutchContextActions from "@/components/chat/ClutchContextActions";
 import RaceComments from "@/components/comments/RaceComments";
 import JumpToRace from "@/components/layout/JumpToRace";
 import SessionDetail from "@/components/session/SessionDetail";
@@ -172,6 +173,32 @@ export default function RoundContent() {
   const activeSummary = summariesData?.summaries.find(
     (summary) => summary.session_type === activeSessionType,
   ) as SessionSummary | undefined;
+  const clutchSessionType =
+    resolvedTab === "race"
+      ? "race"
+      : resolvedTab === "sprint"
+        ? "sprint_race"
+        : resolvedTab === "qualifying"
+          ? "qualifying"
+          : resolvedTab === "sprint-qualifying"
+            ? "sprint_qualifying"
+            : undefined;
+  const clutchActions =
+    sessionTypeForDetail === "race"
+      ? [
+          { label: "Key story", question: "What decided this race?" },
+          { label: "Show winner", question: "Who won this race?" },
+        ]
+      : [
+          {
+            label: "Explain qualifying",
+            question: "What decided this qualifying session?",
+          },
+          {
+            label: "Front-row gap",
+            question: "How close was the fight for the front row?",
+          },
+        ];
 
   return (
     <main className="min-h-screen bg-surface-band">
@@ -243,6 +270,18 @@ export default function RoundContent() {
 
       {/* Tab Content */}
       <div className="max-w-6xl mx-auto">
+        <div className="px-3 pt-4 md:px-6">
+          <ClutchContextActions
+            context={{
+              route: `/results/${season}/${round}${resolvedTab === "race" ? "" : `?tab=${resolvedTab}`}`,
+              season: seasonNum,
+              round: roundNum,
+              sessionId: activeSessionData.session.id,
+              sessionType: clutchSessionType,
+            }}
+            actions={clutchActions}
+          />
+        </div>
         {/* Race / Qualifying / Sprint tabs — show SessionDetail */}
         {isResultsTab && (
           <>

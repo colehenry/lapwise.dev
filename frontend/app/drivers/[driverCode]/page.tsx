@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
 import ArchiveMetricBar from "@/components/archive/ArchiveMetricBar";
 import ArchivePanel from "@/components/archive/ArchivePanel";
+import ClutchContextActions from "@/components/chat/ClutchContextActions";
 import DriverSuperlativesCard from "@/components/entities/DriverSuperlativesCard";
 import PageHeader from "@/components/layout/PageHeader";
 import DeferredSection from "@/components/ui/DeferredSection";
@@ -176,7 +177,21 @@ export default function DriverProfilePage() {
             </div>
           </div>
         }
-      />
+      >
+        <ClutchContextActions
+          compact
+          context={{
+            route: `/drivers/${data.driver_slug ?? driverCode}`,
+            driverSlugs: data.driver_slug ? [data.driver_slug] : undefined,
+          }}
+          actions={[
+            {
+              label: "Analyze career",
+              question: `What stands out about ${data.full_name}'s career?`,
+            },
+          ]}
+        />
+      </PageHeader>
 
       {/* Tab Content */}
       <div

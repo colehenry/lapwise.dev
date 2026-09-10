@@ -14,7 +14,9 @@ import remarkGfm from "remark-gfm";
 import UserAvatar from "@/components/comments/UserAvatar";
 import ClutchIcon from "@/components/ui/ClutchIcon";
 import { useEntityLinkColors } from "@/hooks/useEntityLinkColors";
-import type { ChartConfig, StepType, ThinkingStep } from "@/lib/chat";
+import type { ChartConfig } from "@/lib/chat";
+import type { ClutchProgressStatus } from "@/lib/clutch-progress";
+import ClutchProgress from "./ClutchProgress";
 
 const AIChart = dynamic(() => import("./AIChart"), {
   ssr: false,
@@ -34,13 +36,11 @@ interface ChatMessageProps {
   messageRole: "user" | "assistant";
   content: string;
   charts?: ChartConfig[];
-  queries?: string[];
-  steps?: ThinkingStep[];
   followUps?: string[];
   onFollowUp?: (question: string) => void;
   isLoading?: boolean;
   isStreaming?: boolean;
-  statusText?: string | null;
+  progressStatus?: ClutchProgressStatus | null;
   userName?: string;
   userAvatarUrl?: string | null;
   compact?: boolean;
@@ -90,188 +90,12 @@ function renderDeltaChildren(children: ReactNode): ReactNode {
         : children;
 }
 
-function StepIcon({ stepType }: { stepType: StepType }) {
-  const cls = "h-3 w-3 shrink-0";
-  switch (stepType) {
-    case "sql":
-      return (
-        <svg
-          className={cls}
-          viewBox="0 0 16 16"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M8 1C4.7 1 2 2.3 2 4v8c0 1.7 2.7 3 6 3s6-1.3 6-3V4c0-1.7-2.7-3-6-3zM8 3c2.8 0 4 .9 4 1s-1.2 1-4 1-4-.9-4-1 1.2-1 4-1zm4 9c0 .1-1.2 1-4 1s-4-.9-4-1V9.7c1 .5 2.4.8 4 .8s3-.3 4-.8V12zm0-4c0 .1-1.2 1-4 1s-4-.9-4-1V5.7c1 .5 2.4.8 4 .8s3-.3 4-.8V8z" />
-        </svg>
-      );
-    case "schema":
-    case "sample":
-      return (
-        <svg
-          className={cls}
-          viewBox="0 0 16 16"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v9a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 012 12.5v-9zM3.5 3a.5.5 0 00-.5.5V6h10V3.5a.5.5 0 00-.5-.5h-9zM13 7H3v2h10V7zm0 3H3v2.5a.5.5 0 00.5.5h9a.5.5 0 00.5-.5V10z" />
-        </svg>
-      );
-    case "chart":
-      return (
-        <svg
-          className={cls}
-          viewBox="0 0 16 16"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M1 14h14V2h-1v11H4V2H3v11H1v1zm3-7h2v6H4V7zm3-2h2v8H7V5zm3 4h2v4h-2V9z" />
-        </svg>
-      );
-    case "synthesizing":
-      return (
-        <svg
-          className={cls}
-          viewBox="0 0 16 16"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M4.5 2A2.5 2.5 0 002 4.5v2.879a2.5 2.5 0 00.732 1.767l4.5 4.5a2.5 2.5 0 003.536 0l2.879-2.879a2.5 2.5 0 000-3.536l-4.5-4.5A2.5 2.5 0 007.38 2H4.5zM5 6a1 1 0 110-2 1 1 0 010 2z" />
-        </svg>
-      );
-    default:
-      return (
-        <svg
-          className={cls}
-          viewBox="0 0 16 16"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M8 2a6 6 0 100 12A6 6 0 008 2zm0 1a5 5 0 11-.001 10.001A5 5 0 018 3zm-.5 2.5a.5.5 0 011 0v3a.5.5 0 01-.5.5H6a.5.5 0 010-1h1.5v-2.5z" />
-        </svg>
-      );
-  }
-}
-
-function ThinkingSteps({
-  steps,
-  isStreaming,
-}: {
-  steps: ThinkingStep[];
-  isStreaming?: boolean;
-}) {
-  const [expanded, setExpanded] = useState(false);
-
-  if (steps.length === 0) return null;
-
-  const duration =
-    steps.length >= 2
-      ? (
-          (steps[steps.length - 1].timestamp - steps[0].timestamp) /
-          1000
-        ).toFixed(1)
-      : null;
-
-  return (
-    <div className="mb-2">
-      <button
-        type="button"
-        onClick={() => setExpanded((current) => !current)}
-        disabled={isStreaming}
-        aria-expanded={!isStreaming && expanded}
-        className="flex items-center gap-1.5 text-[11px] text-ink-faint hover:text-ink-soft transition-colors"
-      >
-        {isStreaming ? (
-          <svg
-            className="h-3 w-3 animate-spin text-accent-bright"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
-        ) : (
-          <svg
-            className={`h-3 w-3 transition-transform ${expanded ? "rotate-90" : ""}`}
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              fillRule="evenodd"
-              d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-              clipRule="evenodd"
-            />
-          </svg>
-        )}
-        <span>
-          {isStreaming
-            ? steps[steps.length - 1].message
-            : `${steps.length} step${steps.length === 1 ? "" : "s"}${duration ? ` · ${duration}s` : ""}`}
-        </span>
-      </button>
-      {expanded && !isStreaming && (
-        <div className="mt-1.5 ml-1 space-y-1 border-l border-white/[0.06] pl-3">
-          {steps.map((step, i) => (
-            <div
-              key={`${step.stepType}-${i}`}
-              className="flex items-center gap-2 text-[11px] text-ink-faint"
-            >
-              <StepIcon stepType={step.stepType} />
-              <span>{step.message}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function WorkingStatus({ text }: { text: string }) {
-  return (
-    <div className="flex items-center gap-2 text-xs text-ink-faint">
-      <svg
-        className="h-3.5 w-3.5 animate-spin"
-        viewBox="0 0 24 24"
-        fill="none"
-        aria-hidden="true"
-      >
-        <circle
-          className="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          strokeWidth="4"
-        />
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-        />
-      </svg>
-      {text}
-    </div>
-  );
-}
-
 function AIAnalystAvatar({ size = "md" }: { size?: "sm" | "md" }) {
   const dim = size === "sm" ? "h-7 w-7" : "h-9 w-9";
   const icon = size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
   return (
     <div
-      className={`flex ${dim} items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent-light`}
+      className={`flex ${dim} items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10 text-purple-300`}
     >
       <ClutchIcon className={icon} />
     </div>
@@ -282,19 +106,16 @@ export default function ChatMessage({
   messageRole,
   content,
   charts,
-  queries,
-  steps,
   followUps,
   onFollowUp,
   isLoading,
   isStreaming,
-  statusText,
+  progressStatus,
   userName,
   userAvatarUrl,
   compact,
 }: ChatMessageProps) {
   const { driverColors, teamColors } = useEntityLinkColors();
-  const [showSQL, setShowSQL] = useState(false);
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -330,27 +151,23 @@ export default function ChatMessage({
         className={`min-w-0 flex-1 overflow-hidden ${isUser ? "text-right" : ""}`}
       >
         {isUser ? (
-          <div className="inline-block w-fit max-w-[min(90%,calc(100vw-2rem))] whitespace-pre-wrap break-words rounded-xl border border-[var(--chat-user-border)] bg-[var(--chat-user-bg)] px-3 py-2 text-left text-xs leading-relaxed text-ink-strong md:max-w-[85%] md:rounded-2xl md:px-4 md:py-2.5 md:text-sm">
+          <div className="inline-block w-fit max-w-[min(90%,calc(100vw-2rem))] whitespace-pre-wrap break-words rounded-xl border border-[var(--message-user-border)] bg-[var(--message-user-bg)] px-3 py-2 text-left text-xs leading-relaxed text-ink-strong md:max-w-[85%] md:rounded-2xl md:px-4 md:py-2.5 md:text-sm">
             {content}
           </div>
         ) : (
           <article
-            className="w-full min-w-0 max-w-full space-y-2 overflow-hidden rounded-xl border border-[var(--chat-assistant-border)] bg-[var(--chat-assistant-bg)] px-3 py-2.5 md:rounded-2xl md:px-5 md:py-3"
+            className="w-full min-w-0 max-w-full space-y-2 overflow-hidden rounded-xl border border-[var(--message-assistant-border)] bg-[var(--message-assistant-bg)] px-3 py-2.5 md:rounded-2xl md:px-5 md:py-3"
             aria-label="Clutch response"
             aria-busy={isLoading || isStreaming}
           >
-            {steps && steps.length > 0 && (
-              <ThinkingSteps steps={steps} isStreaming={isStreaming} />
+            {(isStreaming || isLoading) && (
+              <ClutchProgress
+                status={progressStatus ?? { stage: "starting" }}
+              />
             )}
-
-            {statusText && (!steps || steps.length === 0) && (
-              <WorkingStatus text={statusText} />
-            )}
-
-            {isLoading && !statusText && <WorkingStatus text="Analyzing..." />}
 
             {content && (
-              <div className="prose prose--chat min-w-0 max-w-full text-xs leading-relaxed text-ink-base md:text-sm">
+              <div className="prose-chat min-w-0 max-w-full text-xs leading-relaxed text-ink-base md:text-sm">
                 <Markdown
                   remarkPlugins={[remarkGfm]}
                   components={{
@@ -374,7 +191,7 @@ export default function ChatMessage({
                             href={href}
                             target="_blank"
                             rel="noreferrer noopener"
-                            className="font-semibold transition-colors hover:text-accent-light"
+                            className="font-semibold transition-colors hover:text-purple-200"
                           >
                             {renderDeltaChildren(children)}
                           </a>
@@ -385,7 +202,7 @@ export default function ChatMessage({
                         <Link
                           href={href}
                           className="font-semibold no-underline transition-opacity hover:opacity-80"
-                          style={{ color: linkColor ?? "var(--ink-strong)" }}
+                          style={{ color: linkColor ?? "var(--text-primary)" }}
                         >
                           {renderDeltaChildren(children)}
                         </Link>
@@ -492,43 +309,6 @@ export default function ChatMessage({
               </div>
             )}
 
-            {queries && queries.length > 0 && (
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setShowSQL(!showSQL)}
-                  className="text-[11px] text-ink-faint hover:text-ink-soft transition-colors flex items-center gap-1"
-                >
-                  <svg
-                    className={`h-3 w-3 transition-transform ${showSQL ? "rotate-90" : ""}`}
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <title>Toggle</title>
-                    <path
-                      fillRule="evenodd"
-                      d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {queries.length} SQL{" "}
-                  {queries.length === 1 ? "query" : "queries"} executed
-                </button>
-                {showSQL && (
-                  <div className="mt-2 space-y-2">
-                    {queries.map((sql) => (
-                      <pre
-                        key={sql}
-                        className="rounded-lg border border-[var(--chat-query-border)] bg-[var(--chat-query-bg)] p-3 text-xs text-ink-soft font-mono whitespace-pre-wrap break-words"
-                      >
-                        {sql}
-                      </pre>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
             {!isStreaming && content && (
               <div className="flex items-center justify-between pt-1">
                 <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
@@ -540,7 +320,7 @@ export default function ChatMessage({
                         key={q}
                         type="button"
                         onClick={() => onFollowUp(q)}
-                        className="max-w-full break-words rounded-full border border-accent/20 bg-accent/[0.06] px-2.5 py-1 text-left text-[11px] text-accent-light transition-all hover:border-accent/30 hover:bg-accent/10"
+                        className="max-w-full break-words rounded-full border border-purple-500/20 bg-purple-500/[0.06] px-2.5 py-1 text-left text-[11px] text-purple-300 transition-all hover:border-purple-500/30 hover:bg-purple-500/10"
                       >
                         {q}
                       </button>

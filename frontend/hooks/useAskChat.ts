@@ -2,6 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
 import { isSuggestedQuestion } from "@/lib/ai/suggestions";
 import {
   type AskStreamEvent,
@@ -13,13 +14,13 @@ import {
 } from "@/lib/chat";
 import {
   appendStreamText,
-  appendThinkingStep,
   attachCachedResponse,
   attachStreamMetadata,
   type DisplayMessage,
   removeEmptyAssistant,
   toDisplayMessages,
 } from "@/lib/chatMessages";
+import type { ClutchProgressStatus } from "@/lib/clutch-progress";
 import {
   conversationsQuery,
   invalidateConversations,
@@ -30,7 +31,10 @@ function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === "AbortError";
 }
 
-export function useAskChat(userId: number | null) {
+export function useAskChat(
+  userId: number | null,
+  pageContext?: AnalysisPageContext,
+) {
   const queryClient = useQueryClient();
   const [activeConversationId, setActiveConversationId] = useState<
     string | null
@@ -40,7 +44,9 @@ export function useAskChat(userId: number | null) {
   const [streamingAssistantId, setStreamingAssistantId] = useState<
     string | null
   >(null);
-  const [streamStatus, setStreamStatus] = useState<string | null>(null);
+  const [streamStatus, setStreamStatus] = useState<ClutchProgressStatus | null>(
+    null,
+  );
   const [remaining, setRemaining] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingConversationId, setPendingConversationId] = useState<
@@ -54,7 +60,6 @@ export function useAskChat(userId: number | null) {
   const conversationLoadSequenceRef = useRef(0);
   const sessionUserIdRef = useRef(userId);
   const { data: conversations = [] } = useQuery(conversationsQuery(userId));
-
   const cancelActiveStream = useCallback(() => {
     requestSequenceRef.current += 1;
     abortRef.current?.abort();
@@ -64,7 +69,6 @@ export function useAskChat(userId: number | null) {
     setStreamingAssistantId(null);
     setStreamStatus(null);
   }, []);
-
   const startNewConversation = useCallback(() => {
     conversationLoadSequenceRef.current += 1;
     cancelActiveStream();
@@ -73,7 +77,6 @@ export function useAskChat(userId: number | null) {
     setMessages([]);
     setError(null);
   }, [cancelActiveStream]);
-
   const loadConversation = useCallback(
     async (conversationId: string) => {
       const loadSequence = ++conversationLoadSequenceRef.current;
@@ -102,9 +105,7 @@ export function useAskChat(userId: number | null) {
     },
     [cancelActiveStream],
   );
-
   const abortResponse = useCallback(() => abortRef.current?.abort(), []);
-
   const renameConversationTitle = useCallback(
     async (id: string, title: string) => {
       try {
@@ -160,7 +161,7 @@ export function useAskChat(userId: number | null) {
       abortRef.current = controller;
 
       setStreamingAssistantId(assistantMessageId);
-      setStreamStatus("Starting analysis...");
+      setStreamStatus({ stage: "starting" });
       setMessages((previous) => [
         ...previous,
         { id: `user-${messageSequence}`, role: "user", content: question },
@@ -168,7 +169,6 @@ export function useAskChat(userId: number | null) {
           id: assistantMessageId,
           role: "assistant",
           content: "",
-          steps: [],
         },
       ]);
 
@@ -206,17 +206,10 @@ export function useAskChat(userId: number | null) {
             }
 
             if (event.type === "status") {
-              const { message, stepType } = event;
-              setStreamStatus(message);
-              if (!stepType) return;
-
-              setMessages((previous) =>
-                appendThinkingStep(previous, assistantMessageId, {
-                  message,
-                  stepType,
-                  timestamp: Date.now(),
-                }),
-              );
+              setStreamStatus({
+                stage: event.stage,
+                metrics: event.metrics,
+              });
               return;
             }
 
@@ -233,6 +226,7 @@ export function useAskChat(userId: number | null) {
             if (event.type === "error") throw new Error(event.error);
           },
           controller.signal,
+          pageContext,
         );
       } catch (streamError) {
         if (requestSequenceRef.current !== requestSequence) return;
@@ -262,7 +256,7 @@ export function useAskChat(userId: number | null) {
         }
       }
     },
-    [activeConversationId, queryClient, userId],
+    [activeConversationId, pageContext, queryClient, userId],
   );
 
   useEffect(() => {

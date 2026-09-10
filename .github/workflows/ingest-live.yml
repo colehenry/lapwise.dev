@@ -65,7 +65,7 @@ jobs:
           fi
           echo "LAPWISE_API_KEY=${{ secrets.LAPWISE_API_KEY }}" >> $GITHUB_ENV
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> $GITHUB_ENV
-          echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> $GITHUB_ENV
+          echo "OPEN_ROUTER_API_KEY=${{ secrets.OPEN_ROUTER_API_KEY }}" >> $GITHUB_ENV
 
       - name: Create cache directory
         run: mkdir -p backend/.fastf1_cache

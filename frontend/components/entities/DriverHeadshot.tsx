@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { isValidHeadshotUrl } from "@/lib/api";
 
 type DriverHeadshotProps = {
@@ -49,8 +49,8 @@ export default function DriverHeadshot({
 }: DriverHeadshotProps) {
   /* Headshot URLs 404 intermittently, so an empty circle is never acceptable:
      a failed load falls back to the code like a missing URL does. */
-  const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [src]);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const failed = failedSrc !== null && failedSrc === src;
 
   const objectPosition = `${((focalX ?? DEFAULT_FOCAL_X) * 100).toFixed(1)}% ${(
     (focalY ?? DEFAULT_FOCAL_Y) * 100
@@ -76,7 +76,7 @@ export default function DriverHeadshot({
           quality={HEADSHOT_QUALITY}
           className="object-cover"
           style={{ objectPosition }}
-          onError={() => setFailed(true)}
+          onError={() => setFailedSrc(src ?? null)}
         />
       ) : (
         <span className="flex h-full w-full items-center justify-center text-[10px] font-bold font-mono text-ink-faint">
