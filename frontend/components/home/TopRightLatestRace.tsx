@@ -39,7 +39,7 @@ export default function TopRightLatestRace() {
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-2xl">
+      <div className="w-full lg:max-w-2xl">
         <Skeleton className="h-[260px] w-full rounded-sm md:h-[300px]" />
       </div>
     );
@@ -52,7 +52,7 @@ export default function TopRightLatestRace() {
   const gpName = data.event_name.replace("Grand Prix", "GP");
 
   return (
-    <div className="w-full max-w-2xl group relative">
+    <div className="w-full lg:max-w-2xl group relative">
       <div className="absolute -inset-1 bg-gradient-to-r from-accent/20 to-danger/20 rounded-sm blur opacity-20 group-hover:opacity-30 transition duration-500" />
 
       <div className="relative overflow-visible bg-surface-panel border border-line-soft rounded-sm flex flex-col md:flex-row min-h-[260px] md:min-h-[300px]">

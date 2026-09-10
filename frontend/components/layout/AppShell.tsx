@@ -19,7 +19,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <ScrollbarHandler />
         <Navigation />
         <main
-          className={`pt-14 ${isChatWorkspace ? "" : "pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0"}`}
+          className={`pt-[52px] ${isChatWorkspace ? "" : "pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0"}`}
         >
           {children}
         </main>

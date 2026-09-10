@@ -24,46 +24,48 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
+function systemTheme(): AppTheme {
+  if (typeof window.matchMedia !== "function") return DEFAULT_THEME;
+  return window.matchMedia("(prefers-color-scheme: light)").matches
+    ? "light"
+    : "dark";
+}
+
 function applyTheme(theme: AppTheme) {
   const root = document.documentElement;
   root.dataset.theme = theme;
   root.style.colorScheme = theme;
 
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) {
-    meta.setAttribute("content", THEME_META_COLORS[theme]);
-  }
+  if (meta) meta.setAttribute("content", THEME_META_COLORS[theme]);
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<AppTheme>(DEFAULT_THEME);
 
   useEffect(() => {
-    let nextTheme = DEFAULT_THEME;
-
+    let stored: string | null = null;
     try {
-      const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-      if (isAppTheme(stored)) {
-        nextTheme = stored;
-      } else if (isAppTheme(document.documentElement.dataset.theme)) {
-        nextTheme = document.documentElement.dataset.theme;
-      }
-    } catch {
-      if (isAppTheme(document.documentElement.dataset.theme)) {
-        nextTheme = document.documentElement.dataset.theme;
-      }
-    }
+      stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    } catch {}
 
-    applyTheme(nextTheme);
-    setThemeState(nextTheme);
+    // The init script already resolved this before paint; read it back rather
+    // than deciding twice and risking the two disagreeing.
+    const next = isAppTheme(stored)
+      ? stored
+      : isAppTheme(document.documentElement.dataset.theme)
+        ? document.documentElement.dataset.theme
+        : systemTheme();
+
+    setThemeState(next);
+    applyTheme(next);
   }, []);
 
-  const setTheme = useCallback((nextTheme: AppTheme) => {
-    setThemeState(nextTheme);
-    applyTheme(nextTheme);
-
+  const setTheme = useCallback((next: AppTheme) => {
+    setThemeState(next);
+    applyTheme(next);
     try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+      window.localStorage.setItem(THEME_STORAGE_KEY, next);
     } catch {}
   }, []);
 
@@ -83,10 +85,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 export function useTheme() {
   const context = useContext(ThemeContext);
-
   if (!context) {
-    throw new Error("useTheme must be used within ThemeProvider");
+    throw new Error("useTheme must be used within a ThemeProvider");
   }
-
   return context;
 }

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { ReactNode } from "react";
 import ClutchIcon from "@/components/ui/ClutchIcon";
 
@@ -5,23 +6,22 @@ export interface NavLink {
   href: string;
   label: string;
   icon?: string;
-  renderIcon?: (active: boolean, scrolled: boolean) => ReactNode;
+  renderIcon?: (active: boolean) => ReactNode;
   imageSrc?: string;
 }
 
-function iconClass(active: boolean, scrolled: boolean): string {
-  return `shrink-0 transition-all duration-500 ${
-    scrolled ? "w-6 h-6" : "w-4 h-4"
-  } ${active ? "text-accent-bright" : "text-ink-faint group-hover:text-ink-strong"}`;
+/** One size, inheriting the link's colour so it follows every state for free. */
+function iconClass(_active: boolean): string {
+  return "h-4 w-4 shrink-0";
 }
 
 export const archiveLinks: NavLink[] = [
   {
     href: "/drivers",
     label: "Drivers",
-    renderIcon: (active, scrolled) => (
+    renderIcon: (active) => (
       <svg
-        className={iconClass(active, scrolled)}
+        className={iconClass(active)}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 512 512"
         fill="none"
@@ -46,9 +46,9 @@ export const archiveLinks: NavLink[] = [
   {
     href: "/circuits",
     label: "Circuits",
-    renderIcon: (active, scrolled) => (
+    renderIcon: (active) => (
       <svg
-        className={iconClass(active, scrolled)}
+        className={iconClass(active)}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 431.76266 282.2795"
         fill="none"
@@ -87,8 +87,64 @@ export const navLinksAfter: NavLink[] = [
   {
     href: "/ask",
     label: "Ask",
-    renderIcon: (active, scrolled) => (
-      <ClutchIcon className={iconClass(active, scrolled)} title="Clutch" />
+    renderIcon: (active) => (
+      <ClutchIcon className={iconClass(active)} title="Clutch" />
     ),
   },
 ];
+
+/** Renders whichever icon form a link declares. */
+export function NavIcon({ link, active }: { link: NavLink; active: boolean }) {
+  if (link.renderIcon) return <>{link.renderIcon(active)}</>;
+
+  if (link.imageSrc) {
+    return (
+      <Image
+        src={link.imageSrc}
+        alt=""
+        width={16}
+        height={16}
+        className="h-4 w-4 shrink-0"
+        aria-hidden="true"
+      />
+    );
+  }
+
+  if (!link.icon) return null;
+
+  return (
+    <svg
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d={link.icon} />
+    </svg>
+  );
+}
+
+export function DatabaseIcon() {
+  return (
+    <svg
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <ellipse cx="12" cy="6" rx="8" ry="3" />
+      <path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6" />
+      <path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" />
+    </svg>
+  );
+}
+
+/** The home link matches exactly; every other section matches its subtree. */
+export function isActiveHref(pathname: string, href: string): boolean {
+  if (href === "/") return pathname === "/";
+  return pathname.startsWith(href);
+}

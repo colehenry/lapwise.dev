@@ -143,7 +143,7 @@ export default function Home() {
           <div className="absolute bottom-1/4 left-1/3 w-48 h-48 bg-danger rounded-full blur-[120px] opacity-10" />
         </div>
 
-        <div className="relative z-10 max-w-6xl mx-auto px-4 py-10 md:px-6 md:py-16 lg:py-20 w-full">
+        <div className="page-frame relative z-10 py-10 md:py-16 lg:py-20">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 lg:gap-12">
             {/* Left Column: Branding & Selector */}
             <div className="space-y-6 md:space-y-8 lg:space-y-10">
@@ -212,7 +212,7 @@ export default function Home() {
 
       {/* Feature Cards */}
       <section className="overflow-hidden bg-surface-band py-14 px-4 md:px-6 border-y border-line-soft/60">
-        <div className="max-w-4xl mx-auto">
+        <div className="page-frame">
           <div className="mb-8 flex flex-col items-center text-center">
             <div className="space-y-3">
               <div className="flex items-center justify-center gap-3">

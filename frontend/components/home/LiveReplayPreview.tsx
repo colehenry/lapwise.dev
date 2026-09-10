@@ -148,7 +148,7 @@ export default function LiveReplayPreview() {
 
   return (
     <section className="overflow-hidden border-b border-line-soft/40 bg-surface-page px-6 py-10">
-      <div className="mx-auto max-w-4xl">
+      <div className="page-frame">
         {/* Section label */}
         <div className="mb-5 flex items-center gap-3">
           <div className="h-2 w-2 animate-pulse rounded-full bg-accent" />

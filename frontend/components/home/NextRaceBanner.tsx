@@ -78,7 +78,7 @@ export default function NextRaceBanner() {
         className="absolute inset-0 w-full h-full text-accent opacity-[0.03] pointer-events-none"
       />
 
-      <div className="max-w-6xl mx-auto relative z-10">
+      <div className="page-frame relative z-10">
         <div className="flex items-center justify-between mb-5 md:mb-6">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />

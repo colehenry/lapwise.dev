@@ -353,7 +353,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: rgba(160, 32, 240, 0.18);
-  overscroll-behavior-y: none;
   transition:
     background-color var(--transition-base),
     color var(--transition-base);
@@ -363,10 +362,34 @@ body {
   box-sizing: border-box;
 }
 
+/* The one page frame. Content spans the screen with a constant gutter, so the
+   nav and everything beneath it share the same edge at any width. */
+.page-frame {
+  width: 100%;
+  padding-inline: clamp(0.75rem, 2.5vw, 2rem);
+}
+
 html {
   /* clip (not hidden) avoids creating a scroll container, so vertical scrolling is unaffected on iOS */
   overflow-x: clip;
-  background: var(--surface-page);
+
+  /* The canvas is what an overscroll bounce reveals at either end. The nav and
+     the footer are both `--surface-band`, so pulling past the top or the bottom
+     shows the same colour as the thing you pulled away from. The page ground
+     lives on body. */
+  background: var(--surface-band);
+
+  /* The page scrollbar reserves no width, so content reaches the window edge
+     instead of stopping 10px short behind a lane no element can paint into.
+     The thumb was already transparent until a scroll, so nothing visible is
+     lost; wheel, trackpad and keyboard scrolling are untouched, and inner
+     scrollers keep their own scrollbars. */
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 html[data-theme="dark"] {
