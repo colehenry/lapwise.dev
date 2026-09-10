@@ -192,15 +192,14 @@ export default function DailyGridCard({
 
   return (
     <ConsolePanel
-      title="Daily Grid - Guessing Game"
+      title="Daily Grid"
       label={
         summary ? (
           <PanelLabel>
             {utcDate(summary.published_on, {
               day: "numeric",
               month: "short",
-            })}{" "}
-            · No. {summary.number}
+            })}
           </PanelLabel>
         ) : (
           <ValueSkeleton width={44} height={10} />

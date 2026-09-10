@@ -55,3 +55,20 @@ export function trackPath(polyline: number[][]): string {
     .map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`)
     .join(" L ")} Z`;
 }
+
+/**
+ * Left gutter added to the viewBox so the circuit clears the running order.
+ *
+ * Shared because the loading outline and the live map must agree: drawn without
+ * it, the placeholder rendered the track twenty percent larger and it visibly
+ * shrank the moment the replay arrived.
+ */
+export const OVERLAY_GUTTER = 0.2;
+
+export function trackViewBox(
+  track: FittedTrack,
+  gutter = OVERLAY_GUTTER,
+): string {
+  const width = track.width * (1 + gutter);
+  return `${(-track.width * gutter).toFixed(1)} 0 ${width.toFixed(1)} ${track.height.toFixed(1)}`;
+}

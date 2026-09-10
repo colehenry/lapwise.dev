@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import DriverHeadshot from "@/components/entities/DriverHeadshot";
 import type { RaceClockController } from "@/hooks/useRaceClock";
 import { useTeamTint } from "@/hooks/useTeamTint";
 import { gapLabel } from "@/lib/consoleFormat";
+import { driverHref } from "@/lib/entityLinks";
 import { compoundFromInitial, getCompoundColor } from "@/lib/palette";
 import type { ConsoleCar } from "@/lib/queries/consoleReplay";
 import { carKey } from "@/lib/raceClockMath";
@@ -110,12 +112,15 @@ export default function MapRunningOrder({
               bordered={false}
               focalY={0.12}
             />
-            <span
-              className="truncate font-mono text-[11px] font-bold tracking-[0.04em]"
+            <Link
+              href={driverHref(car) ?? "/drivers"}
+              /* The overlay ignores the pointer so the map can be used; each
+                 driver opts back in. */
+              className="pointer-events-auto truncate font-mono text-[11px] font-bold tracking-[0.04em] underline-offset-2 hover:underline"
               style={{ color: tint(car.team_color) }}
             >
               {car.driver_code ?? car.full_name}
-            </span>
+            </Link>
             <span
               ref={set("gap")}
               className="w-[46px] text-right font-mono text-[10px] tabular-nums"

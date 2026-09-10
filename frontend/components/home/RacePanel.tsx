@@ -1,10 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import DriverHeadshot from "@/components/entities/DriverHeadshot";
 import type { RaceClockController } from "@/hooks/useRaceClock";
 import { useTeamTint } from "@/hooks/useTeamTint";
+import { driverHref } from "@/lib/entityLinks";
 import { compoundFromInitial, getCompoundColor } from "@/lib/palette";
 import {
   type ChannelReading,
@@ -121,12 +123,13 @@ export default function RacePanel({
             focalY={0.12}
           />
           <span className="min-w-0">
-            <span
-              className="block truncate text-[14px] font-bold tracking-[-0.01em]"
+            <Link
+              href={driverHref(leader.car) ?? "/drivers"}
+              className="block truncate text-[14px] font-bold tracking-[-0.01em] underline-offset-2 hover:underline"
               style={{ color: tint(leader.car.team_color) }}
             >
               {leader.car.full_name}
-            </span>
+            </Link>
             <span className="mt-px block truncate font-mono text-[9px] uppercase tracking-[0.12em] text-ink-faint">
               {leader.car.team_name}
             </span>

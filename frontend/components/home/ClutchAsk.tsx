@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { formatLapTime } from "@/lib/chart-utils";
 import { seconds3, teamTint } from "@/lib/consoleFormat";
+import { driverHref } from "@/lib/entityLinks";
 import type { ConsoleReplay } from "@/lib/queries/consoleReplay";
 import ConsolePanel from "./ConsolePanel";
 
 type Answer = {
   question: string;
-  segments: { text: string; tint?: string | null }[];
+  segments: { text: string; tint?: string | null; href?: string | null }[];
 };
 
 /**
@@ -32,7 +33,11 @@ function buildAnswer(replay: ConsoleReplay): Answer | null {
   return {
     question: `Who had the fastest lap at ${replay.circuit_name} in ${replay.date.slice(0, 4)}?`,
     segments: [
-      { text: car.full_name, tint: teamTint(car.team_color) },
+      {
+        text: car.full_name,
+        tint: teamTint(car.team_color),
+        href: driverHref(car),
+      },
       { text: ` set it on lap ${fastest.lap} of ${replay.total_laps}` },
       { text: onTheLast ? " — the last lap of the race — in " : " in " },
       { text: formatLapTime(fastest.seconds) },
@@ -70,18 +75,25 @@ export default function ClutchAsk({
           </p>
 
           <p className="m-0 mt-2.5 text-[13.5px] leading-[1.65] text-ink-base">
-            {answer.segments.map((segment) => (
-              <span
-                key={segment.text}
-                style={
-                  segment.tint
-                    ? { color: segment.tint, fontWeight: 600 }
-                    : undefined
-                }
-              >
-                {segment.text}
-              </span>
-            ))}
+            {answer.segments.map((segment) => {
+              const style = segment.tint
+                ? { color: segment.tint, fontWeight: 600 }
+                : undefined;
+              return segment.href ? (
+                <Link
+                  key={segment.text}
+                  href={segment.href}
+                  className="underline decoration-transparent underline-offset-2 transition-colors hover:decoration-current"
+                  style={style}
+                >
+                  {segment.text}
+                </Link>
+              ) : (
+                <span key={segment.text} style={style}>
+                  {segment.text}
+                </span>
+              );
+            })}
           </p>
 
           <Link

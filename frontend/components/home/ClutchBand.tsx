@@ -2,8 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { constructorHref, driverHref } from "@/lib/entityLinks";
 import type { ClutchContext, ResolvedScript } from "@/lib/homeClutchScript";
 import { pickClutchScript } from "@/lib/homeClutchScript";
 import { pointsProgressionQuery } from "@/lib/queries/pointsProgression";
@@ -22,6 +24,14 @@ export const TYPE_RATE = 52;
 /** A beat before the answer starts, so the question is read first. */
 export const LEAD_IN = 0.7;
 
+/** Where a named entity in an answer points. */
+function hrefFor(segment: ResolvedScript["segments"][number]): string | null {
+  if (!segment.code) return null;
+  return segment.tint === "team"
+    ? constructorHref(segment.code)
+    : driverHref({ driver_code: segment.code });
+}
+
 function tintFor(
   segment: ResolvedScript["segments"][number],
   colors: EntityColors,
@@ -36,10 +46,10 @@ function useTypedAnswer(
   script: ResolvedScript | null,
   enabled: boolean,
 ): {
-  spanRefs: React.RefObject<(HTMLSpanElement | null)[]>;
+  spanRefs: React.RefObject<(HTMLElement | null)[]>;
   finished: boolean;
 } {
-  const spanRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const spanRefs = useRef<(HTMLElement | null)[]>([]);
   const [finished, setFinished] = useState(false);
 
   /* Keyed on the answer's text, never on the script's identity. Every render
@@ -176,18 +186,29 @@ export default function ClutchBand({
         </p>
 
         <p className="m-0 mt-3 max-w-[78ch] whitespace-pre-line text-[16px] leading-[1.7] text-ink-base">
-          {script.segments.map((segment, index) => (
-            <span
-              key={`${script.id}-${index}`}
-              ref={(node) => {
-                spanRefs.current[index] = node;
-              }}
-              style={{
-                color: tintFor(segment, colors),
-                fontWeight: segment.tint ? 600 : undefined,
-              }}
-            />
-          ))}
+          {script.segments.map((segment, index) => {
+            const href = hrefFor(segment);
+            const style = {
+              color: tintFor(segment, colors),
+              fontWeight: segment.tint ? 600 : undefined,
+            };
+            const attach = (node: HTMLElement | null) => {
+              spanRefs.current[index] = node;
+            };
+            /* The typewriter writes into whichever element this is, so a named
+               entity can be an anchor without the typing changing. */
+            return href ? (
+              <Link
+                key={`${script.id}-${index}`}
+                href={href}
+                ref={attach}
+                className="underline decoration-transparent underline-offset-2 transition-colors hover:decoration-current"
+                style={style}
+              />
+            ) : (
+              <span key={`${script.id}-${index}`} ref={attach} style={style} />
+            );
+          })}
           {!finished && (
             <span
               aria-hidden="true"

@@ -134,7 +134,7 @@ describe("the walk-back", () => {
     expect(recorder.paths()).toContain(
       `/api/replay/console/${SEASON}/${LATEST - 2}`,
     );
-    expect(container.textContent).toContain(`Round ${LATEST - 2}`);
+    expect(container.textContent).toContain(`R${LATEST - 2}`);
   });
 
   it("says on screen which newer round is still missing its lap data", async () => {
@@ -142,9 +142,7 @@ describe("the walk-back", () => {
     const { container } = renderWithQueryClient(<HomeConsole />);
     await flushRequests(20);
 
-    expect(container.textContent).toContain(
-      `Round ${LATEST} has no lap data yet`,
-    );
+    expect(container.textContent).toContain(`R${LATEST} has no lap data yet`);
   });
 
   it("stops after four rounds rather than walking the whole season", async () => {

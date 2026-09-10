@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { fitTrack, trackPath } from "@/lib/consoleTrackGeometry";
+import { fitTrack, trackPath, trackViewBox } from "@/lib/consoleTrackGeometry";
 
 /**
  * The circuit, drawn still. Stands in for the replay when no recent round has
@@ -37,7 +37,7 @@ export default function TrackOutline({
       {track && (
         <svg
           className="absolute inset-0 h-full w-full opacity-70"
-          viewBox={`0 0 ${track.width.toFixed(1)} ${track.height.toFixed(1)}`}
+          viewBox={trackViewBox(track)}
           preserveAspectRatio="xMidYMid meet"
           role="img"
           aria-label={`${circuitName} circuit map`}

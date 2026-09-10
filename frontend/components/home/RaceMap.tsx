@@ -6,7 +6,7 @@ import type { RaceClockController } from "@/hooks/useRaceClock";
 import { PLAYBACK_RATES } from "@/hooks/useRaceClock";
 import { useTeamTint } from "@/hooks/useTeamTint";
 import { sessionClock, utcDate } from "@/lib/consoleFormat";
-import { fitTrack, trackPath } from "@/lib/consoleTrackGeometry";
+import { fitTrack, trackPath, trackViewBox } from "@/lib/consoleTrackGeometry";
 import type { ConsoleReplay } from "@/lib/queries/consoleReplay";
 import { pointAt } from "@/lib/raceClockMath";
 import { statusColor } from "./consoleStatus";
@@ -19,9 +19,6 @@ const TRACE_ARC = 0.16;
 
 /** Only the leader is captioned; three codes at once crowded the same corner. */
 const LABELLED_PLACES = 1;
-
-/** Left gutter added to the viewBox, so the circuit clears the overlay. */
-const OVERLAY_GUTTER = 0.2;
 
 /** "Italian Grand Prix" is the race; "Italian GP" fits the corner it sits in. */
 function shortEvent(name: string): string {
@@ -136,7 +133,7 @@ export default function RaceMap({
     >
       <svg
         className="absolute inset-0 h-full w-full"
-        viewBox={`${(-track.width * OVERLAY_GUTTER).toFixed(1)} 0 ${(track.width * (1 + OVERLAY_GUTTER)).toFixed(1)} ${track.height.toFixed(1)}`}
+        viewBox={trackViewBox(track)}
         preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label={`${replay.circuit_name} circuit map`}
@@ -237,14 +234,14 @@ export default function RaceMap({
             )}
           </div>
           <p className="m-0 mt-[3px] font-mono text-[9px] uppercase tracking-[0.14em] text-ink-faint">
-            {replay.circuit_name} · {utcDate(replay.date)} · Round {round}
+            {replay.circuit_name} · {utcDate(replay.date)} · R{round}
           </p>
           {newerRound !== null && season !== null && (
             <Link
               href={`/results/${season}/${newerRound}`}
               className="pointer-events-auto mt-1 inline-block font-mono text-[9px] uppercase tracking-[0.14em] text-accent-light underline-offset-2 hover:underline"
             >
-              Round {newerRound} has no lap data yet
+              R{newerRound} has no lap data yet
             </Link>
           )}
         </div>
@@ -256,6 +253,24 @@ export default function RaceMap({
           </>
         )}
       </div>
+
+      {!reduced && season !== null && (
+        <Link
+          href={`/replay?season=${season}&round=${round}`}
+          /* Directly under the transport it belongs with, sharing its right
+             edge — the two are the map's controls. */
+          className="group/replay absolute right-2.5 top-[50px] flex items-center gap-1.5 rounded-sm border border-line-soft px-2.5 py-1.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-ink-base transition-colors hover:border-accent hover:text-ink-strong"
+          style={{ background: "var(--glass-surface)" }}
+        >
+          Full replay
+          <span
+            aria-hidden="true"
+            className="text-accent-bright transition-transform group-hover/replay:translate-x-0.5"
+          >
+            →
+          </span>
+        </Link>
+      )}
 
       {!reduced && <MapTimeline replay={replay} clock={clock} />}
     </div>
