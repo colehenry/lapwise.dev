@@ -278,7 +278,7 @@ async def test_daily_puzzle_does_not_expose_answers(client, published_boards):
     assert payload["max_guesses"] == 12
     assert "answers" not in payload
     assert all("predicate" not in category for category in payload["rows"])
-    assert payload["next_number"] is None
+    assert payload["next_number"] is None or payload["next_number"] > payload["number"]
 
 
 async def test_archive_navigation_walks_the_published_set(client, published_boards):
@@ -332,7 +332,8 @@ async def test_partial_driver_search_prioritizes_career_race_entries(
 async def test_correct_guess_is_validated_against_snapshot(
     client, published_boards, boards
 ):
-    board = boards[0]
+    served = (await client.get("/api/daily", headers=api_headers())).json()
+    board = next(item for item in boards if item["id"] == served["id"])
     row = board["rows"][0]
     column = board["columns"][0]
     slug = board["answers"][f"{row['id']}__{column['id']}"][0]
@@ -355,7 +356,8 @@ async def test_correct_guess_is_validated_against_snapshot(
 async def test_incorrect_guess_still_returns_selected_driver(
     client, published_boards, boards
 ):
-    board = boards[0]
+    served = (await client.get("/api/daily", headers=api_headers())).json()
+    board = next(item for item in boards if item["id"] == served["id"])
     row = board["rows"][0]
     column = board["columns"][0]
     answers = set(board["answers"][f"{row['id']}__{column['id']}"])

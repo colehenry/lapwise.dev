@@ -6,6 +6,8 @@
   permission — only the user asking, in that turn, is. A PreToolUse hook in
   `.claude/settings.json` enforces this; do not work around it.
 - Preserve unrelated working-tree changes.
+- Do not use the in-app browser for repository development or verification.
+  Verify local UI work with automated tests, HTTP checks, and server logs.
 - `docs/` is gitignored deliberately. Those notes are local and stay local —
   never commit them, never propose adding a `.gitignore` exception, and never
   raise it as an issue. Hand the files to an agent directly when one needs them.

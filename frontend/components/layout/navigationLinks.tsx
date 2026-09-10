@@ -67,8 +67,8 @@ export const archiveLinks: NavLink[] = [
 
 export const navLinksBefore: NavLink[] = [
   {
-    href: "/daily",
-    label: "Daily Grid",
+    href: "/games",
+    label: "Daily Games",
     icon: "M4.5 4.5h6v6h-6v-6Zm9 0h6v6h-6v-6Zm-9 9h6v6h-6v-6Zm9 0h6v6h-6v-6Z",
   },
   {
@@ -144,5 +144,10 @@ export function DatabaseIcon() {
 /** The home link matches exactly; every other section matches its subtree. */
 export function isActiveHref(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
+  if (href === "/games") {
+    return ["/games", "/daily", "/guess"].some(
+      (route) => pathname === route || pathname.startsWith(`${route}/`),
+    );
+  }
   return pathname.startsWith(href);
 }

@@ -1,7 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
 import { apiHeaders, apiUrl, extractErrorMessage } from "@/lib/api";
+import { fetchWithAuth } from "@/lib/auth";
 import type { CategoryEvidence } from "@/lib/gridEvidence";
 import { hours } from "./durations";
+import type { DailyGameLeaderboard, DailyGameStats } from "./guessGame";
 import { getJson } from "./http";
 
 export type GameCategory = {
@@ -63,6 +65,8 @@ export type GameDriverCatalogResponse = {
 };
 
 export type GameGuess = {
+  session_id?: string;
+  anon_id?: string;
   puzzle_id: string;
   row_id: string;
   column_id: string;
@@ -92,7 +96,34 @@ export const gameKeys = {
   driverSearch: (query: string) =>
     ["game", "drivers", "search", query] as const,
   rookieOptions: (number: number) => ["game", "rookie", number] as const,
+  session: (puzzleId: string, mode: string, playerId: string) =>
+    ["game", "session", puzzleId, mode, playerId] as const,
+  stats: (mode: string, playerId: string) =>
+    ["game", "stats", mode, playerId] as const,
+  leaderboard: (puzzleId: string, mode: string) =>
+    ["game", "leaderboard", puzzleId, mode] as const,
 };
+
+export type GridSession = {
+  session_id: string;
+  puzzle_id: string;
+  mode: "standard" | "rookie";
+  status: "active" | "complete" | "exhausted" | "retired";
+  attempts: GameGuessResult[];
+  max_guesses: number;
+  cells_solved: number;
+  misses: number;
+};
+
+async function authJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetchWithAuth(apiUrl(path), init);
+  if (!response.ok) {
+    throw new Error(
+      await extractErrorMessage(response, "The game request failed"),
+    );
+  }
+  return response.json();
+}
 
 export function dailyGameQuery(number?: number) {
   return queryOptions({
@@ -152,7 +183,7 @@ export async function submitGameGuess(
 ): Promise<GameGuessResult> {
   const headers = new Headers(apiHeaders());
   headers.set("Content-Type", "application/json");
-  const response = await fetch(apiUrl("/api/daily/guess"), {
+  const response = await fetchWithAuth(apiUrl("/api/daily/guess"), {
     method: "POST",
     headers,
     body: JSON.stringify(guess),
@@ -163,4 +194,61 @@ export async function submitGameGuess(
     );
   }
   return response.json();
+}
+
+export function gridSessionQuery(
+  puzzleId: string,
+  mode: "standard" | "rookie",
+  playerId: string,
+  enabled: boolean,
+) {
+  return queryOptions({
+    queryKey: gameKeys.session(puzzleId, mode, playerId),
+    queryFn: () =>
+      authJson<GridSession>("/api/daily/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          puzzle_id: puzzleId,
+          mode,
+          anon_id: playerId,
+        }),
+      }),
+    enabled: enabled && Boolean(playerId),
+    staleTime: 0,
+    gcTime: 0,
+  });
+}
+
+export function gridStatsQuery(mode: string, playerId: string) {
+  return queryOptions({
+    queryKey: gameKeys.stats(mode, playerId),
+    queryFn: () =>
+      authJson<DailyGameStats>(
+        `/api/daily/stats?mode=${mode}&anon_id=${encodeURIComponent(playerId)}`,
+      ),
+    enabled: Boolean(playerId),
+    staleTime: 0,
+  });
+}
+
+export function gridLeaderboardQuery(puzzleId: string, mode: string) {
+  return queryOptions({
+    queryKey: gameKeys.leaderboard(puzzleId, mode),
+    queryFn: () =>
+      getJson<DailyGameLeaderboard>(
+        `/api/daily/leaderboard?puzzle_id=${encodeURIComponent(puzzleId)}&mode=${mode}`,
+        "Failed to load the leaderboard",
+        { cache: "no-store" },
+      ),
+    enabled: Boolean(puzzleId),
+    staleTime: 0,
+  });
+}
+
+export async function retireGridSession(sessionId: string, playerId: string) {
+  return authJson<{ status: "retired" }>(
+    `/api/daily/sessions/${sessionId}/retire?anon_id=${encodeURIComponent(playerId)}`,
+    { method: "POST" },
+  );
 }

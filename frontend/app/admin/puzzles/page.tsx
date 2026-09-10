@@ -16,7 +16,9 @@ import {
   puzzleDate,
   puzzlePhase,
 } from "@/lib/puzzleSchedule";
+import DailyGameAdminTabs from "./DailyGameAdminTabs";
 import GeneratePanel from "./GeneratePanel";
+import GuessGameAdmin from "./GuessGameAdmin";
 import PuzzleReviewGrid from "./PuzzleReviewGrid";
 import RolloverNotice from "./RolloverNotice";
 
@@ -115,6 +117,7 @@ function PuzzleRow({
 }
 
 export default function AdminPuzzlesPage() {
+  const [game, setGame] = useState<"grid" | "guess">("grid");
   const [puzzles, setPuzzles] = useState<AdminPuzzleSummary[]>([]);
   const [filter, setFilter] = useState<PuzzlePhase | "all">("all");
   const [loading, setLoading] = useState(true);
@@ -189,183 +192,193 @@ export default function AdminPuzzlesPage() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-start gap-3">
-        <GeneratePanel onGenerated={load} />
-        {draftCount > 0 && (
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={busy}
-            onClick={() => {
-              if (
-                !window.confirm(
-                  `Delete all ${draftCount} draft${draftCount === 1 ? "" : "s"}? Scheduled and live boards are untouched.`,
-                )
-              )
-                return;
-              act(async () => {
-                await adminDeleteAllDrafts();
-              });
-            }}
-          >
-            Delete {draftCount} draft{draftCount === 1 ? "" : "s"}
-          </Button>
-        )}
-      </div>
-
-      <RolloverNotice />
-
-      <div className="flex flex-wrap items-center gap-2">
-        {FILTERS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => setFilter(option.value)}
-            className={`rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors ${
-              filter === option.value
-                ? "border-accent/30 bg-accent/15 text-accent-light"
-                : "border-transparent text-ink-base hover:bg-surface-panel"
-            }`}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-
-      {error && (
-        <p className="rounded-sm border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger-bright">
-          {error}
-        </p>
-      )}
-
-      {loading ? (
-        <div className="space-y-2">
-          {["a", "b", "c"].map((key) => (
-            <div
-              key={key}
-              className="h-12 animate-pulse rounded-sm border border-line-soft bg-surface-panel"
-            />
-          ))}
-        </div>
-      ) : visible.length === 0 ? (
-        <p className="rounded-sm border border-line-soft bg-surface-band px-3 py-8 text-center text-sm text-ink-faint">
-          Nothing here yet. Generate some boards.
-        </p>
+    <>
+      <DailyGameAdminTabs game={game} onChange={setGame} />
+      {game === "guess" ? (
+        <GuessGameAdmin />
       ) : (
-        <div className="divide-y divide-line-soft rounded-sm border border-line-soft bg-surface-band">
-          {visible.map((puzzle) => (
-            <div key={puzzle.number}>
-              <PuzzleRow
-                puzzle={puzzle}
-                phase={phases.get(puzzle.number) ?? "draft"}
-                expanded={openNumber === puzzle.number}
-                onToggle={() => toggle(puzzle)}
-              />
-              {openNumber === puzzle.number && (
-                <div className="border-t border-line-soft bg-surface-page p-3">
-                  {detailLoading || !detail ? (
-                    <div className="h-40 animate-pulse rounded-sm bg-surface-panel" />
-                  ) : (
-                    <div className="space-y-4">
-                      <PuzzleReviewGrid puzzle={detail} />
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-start gap-3">
+            <GeneratePanel onGenerated={load} />
+            {draftCount > 0 && (
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={busy}
+                onClick={() => {
+                  if (
+                    !window.confirm(
+                      `Delete all ${draftCount} draft${draftCount === 1 ? "" : "s"}? Scheduled and live boards are untouched.`,
+                    )
+                  )
+                    return;
+                  act(async () => {
+                    await adminDeleteAllDrafts();
+                  });
+                }}
+              >
+                Delete {draftCount} draft{draftCount === 1 ? "" : "s"}
+              </Button>
+            )}
+          </div>
 
-                      <div className="flex flex-wrap items-center gap-2 border-t border-line-soft pt-3">
-                        <label
-                          htmlFor={`date-${puzzle.number}`}
-                          className="text-sm text-ink-base"
-                        >
-                          Run on
-                        </label>
-                        <input
-                          id={`date-${puzzle.number}`}
-                          type="date"
-                          value={scheduleDate}
-                          onChange={(event) =>
-                            setScheduleDate(event.target.value)
-                          }
-                          className="rounded-sm border border-line-soft bg-surface-band px-2 py-1 text-sm text-ink-strong"
-                        />
-                        {/* A past date goes live at once and a future one waits:
+          <RolloverNotice />
+
+          <div className="flex flex-wrap items-center gap-2">
+            {FILTERS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setFilter(option.value)}
+                className={`rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  filter === option.value
+                    ? "border-accent/30 bg-accent/15 text-accent-light"
+                    : "border-transparent text-ink-base hover:bg-surface-panel"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          {error && (
+            <p className="rounded-sm border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger-bright">
+              {error}
+            </p>
+          )}
+
+          {loading ? (
+            <div className="space-y-2">
+              {["a", "b", "c"].map((key) => (
+                <div
+                  key={key}
+                  className="h-12 animate-pulse rounded-sm border border-line-soft bg-surface-panel"
+                />
+              ))}
+            </div>
+          ) : visible.length === 0 ? (
+            <p className="rounded-sm border border-line-soft bg-surface-band px-3 py-8 text-center text-sm text-ink-faint">
+              Nothing here yet. Generate some boards.
+            </p>
+          ) : (
+            <div className="divide-y divide-line-soft rounded-sm border border-line-soft bg-surface-band">
+              {visible.map((puzzle) => (
+                <div key={puzzle.number}>
+                  <PuzzleRow
+                    puzzle={puzzle}
+                    phase={phases.get(puzzle.number) ?? "draft"}
+                    expanded={openNumber === puzzle.number}
+                    onToggle={() => toggle(puzzle)}
+                  />
+                  {openNumber === puzzle.number && (
+                    <div className="border-t border-line-soft bg-surface-page p-3">
+                      {detailLoading || !detail ? (
+                        <div className="h-40 animate-pulse rounded-sm bg-surface-panel" />
+                      ) : (
+                        <div className="space-y-4">
+                          <PuzzleReviewGrid puzzle={detail} />
+
+                          <div className="flex flex-wrap items-center gap-2 border-t border-line-soft pt-3">
+                            <label
+                              htmlFor={`date-${puzzle.number}`}
+                              className="text-sm text-ink-base"
+                            >
+                              Run on
+                            </label>
+                            <input
+                              id={`date-${puzzle.number}`}
+                              type="date"
+                              value={scheduleDate}
+                              onChange={(event) =>
+                                setScheduleDate(event.target.value)
+                              }
+                              className="rounded-sm border border-line-soft bg-surface-band px-2 py-1 text-sm text-ink-strong"
+                            />
+                            {/* A past date goes live at once and a future one waits:
                             same endpoint, and the date gate in the player
                             service is the whole difference. */}
-                        <button
-                          type="button"
-                          onClick={() => setScheduleDate(puzzleDate(0))}
-                          className="rounded-sm border border-line-soft px-2 py-1 text-sm text-ink-base hover:bg-surface-panel"
-                        >
-                          Today
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setScheduleDate(puzzleDate(1))}
-                          className="rounded-sm border border-line-soft px-2 py-1 text-sm text-ink-base hover:bg-surface-panel"
-                        >
-                          Tomorrow
-                        </button>
-                        <Button
-                          size="sm"
-                          disabled={
-                            busy ||
-                            !scheduleDate ||
-                            detail.error_count > 0 ||
-                            puzzle.status === "published"
-                          }
-                          onClick={() =>
-                            act(() =>
-                              adminSchedulePuzzle(puzzle.number, scheduleDate),
-                            )
-                          }
-                        >
-                          {scheduleDate && scheduleDate <= puzzleDate(0)
-                            ? "Publish now"
-                            : "Schedule"}
-                        </Button>
-                        {puzzle.status !== "draft" && (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            disabled={busy}
-                            onClick={() =>
-                              act(() => adminRevertPuzzle(puzzle.number))
-                            }
-                          >
-                            Unschedule
-                          </Button>
-                        )}
-                        {/* Allowed at any status: the gate is whether anyone has
+                            <button
+                              type="button"
+                              onClick={() => setScheduleDate(puzzleDate(0))}
+                              className="rounded-sm border border-line-soft px-2 py-1 text-sm text-ink-base hover:bg-surface-panel"
+                            >
+                              Today
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setScheduleDate(puzzleDate(1))}
+                              className="rounded-sm border border-line-soft px-2 py-1 text-sm text-ink-base hover:bg-surface-panel"
+                            >
+                              Tomorrow
+                            </button>
+                            <Button
+                              size="sm"
+                              disabled={
+                                busy ||
+                                !scheduleDate ||
+                                detail.error_count > 0 ||
+                                puzzle.status === "published"
+                              }
+                              onClick={() =>
+                                act(() =>
+                                  adminSchedulePuzzle(
+                                    puzzle.number,
+                                    scheduleDate,
+                                  ),
+                                )
+                              }
+                            >
+                              {scheduleDate && scheduleDate <= puzzleDate(0)
+                                ? "Publish now"
+                                : "Schedule"}
+                            </Button>
+                            {puzzle.status !== "draft" && (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={busy}
+                                onClick={() =>
+                                  act(() => adminRevertPuzzle(puzzle.number))
+                                }
+                              >
+                                Unschedule
+                              </Button>
+                            )}
+                            {/* Allowed at any status: the gate is whether anyone has
                             played the board, which the server enforces. */}
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          disabled={busy}
-                          onClick={() => {
-                            if (
-                              phases.get(puzzle.number) === "live" &&
-                              !window.confirm(
-                                `Delete #${puzzle.number}? It is live at /daily and its date frees up.`,
-                              )
-                            )
-                              return;
-                            act(() => adminDeletePuzzle(puzzle.number));
-                          }}
-                        >
-                          Delete
-                        </Button>
-                        {detail.error_count > 0 && (
-                          <span className="text-sm text-danger-bright">
-                            Fix the errors above first.
-                          </span>
-                        )}
-                      </div>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              disabled={busy}
+                              onClick={() => {
+                                if (
+                                  phases.get(puzzle.number) === "live" &&
+                                  !window.confirm(
+                                    `Delete #${puzzle.number}? It is live at /daily and its date frees up.`,
+                                  )
+                                )
+                                  return;
+                                act(() => adminDeletePuzzle(puzzle.number));
+                              }}
+                            >
+                              Delete
+                            </Button>
+                            {detail.error_count > 0 && (
+                              <span className="text-sm text-danger-bright">
+                                Fix the errors above first.
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
+              ))}
             </div>
-          ))}
+          )}
         </div>
       )}
-    </div>
+    </>
   );
 }

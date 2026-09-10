@@ -2,6 +2,7 @@
 
 from datetime import date
 from typing import Any, Literal
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -41,11 +42,9 @@ class DailySummaryResponse(BaseModel):
 
     The board is concealed on the homepage, so no headers, categories or
     answers appear here. Every aggregate and personal field is nullable by
-    contract and all of them are null today: `game_sessions` is migrated but
-    nothing writes to it, so there is no play count, perfect rate, streak or
-    "played today" to report. They fill in on their own once the session
-    lifecycle lands; a client that renders the all-null response correctly
-    needs no further change.
+    contract. New viewer-specific state is served by ``/api/games/summary``;
+    these legacy fields remain null so existing public consumers keep the same
+    response and cache behavior.
     """
 
     number: int
@@ -82,6 +81,8 @@ class GameDriverCatalogResponse(BaseModel):
 
 
 class GameGuessRequest(BaseModel):
+    session_id: UUID | None = None
+    anon_id: str | None = Field(default=None, min_length=16, max_length=64)
     puzzle_id: str = Field(min_length=1, max_length=40)
     row_id: str = Field(min_length=1, max_length=80)
     column_id: str = Field(min_length=1, max_length=80)
@@ -110,3 +111,25 @@ class GameGuessResponse(BaseModel):
     # correct/incorrect result alone.
     row_evidence: dict[str, Any] | None = None
     column_evidence: dict[str, Any] | None = None
+
+
+class GridSessionRequest(BaseModel):
+    puzzle_id: str = Field(min_length=1, max_length=40)
+    mode: Literal["standard", "rookie"]
+    anon_id: str | None = Field(default=None, min_length=16, max_length=64)
+    ranked: bool = True
+
+
+class GridSessionResponse(BaseModel):
+    session_id: UUID
+    puzzle_id: str
+    mode: Literal["standard", "rookie"]
+    status: Literal["active", "complete", "exhausted", "retired"]
+    attempts: list[GameGuessResponse]
+    max_guesses: int
+    cells_solved: int
+    misses: int
+
+
+class GridRetireResponse(BaseModel):
+    status: Literal["retired"]

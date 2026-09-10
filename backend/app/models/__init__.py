@@ -26,6 +26,11 @@ from app.models.comment import Comment
 from app.models.driver import Driver
 from app.models.email_verification_token import EmailVerificationToken
 from app.models.game import GameSession, GameSessionGuess, Puzzle
+from app.models.guess_game import (
+    GuessGameGuess,
+    GuessGamePuzzle,
+    GuessGameSession,
+)
 from app.models.identity import (
     CircuitVenue,
     CircuitVenueExternalId,
@@ -57,6 +62,9 @@ from app.models.weather import Weather
 # Export all models
 __all__ = [
     "Driver",
+    "GuessGamePuzzle",
+    "GuessGameSession",
+    "GuessGameGuess",
     "MediaAsset",
     "DriverMediaAssignment",
     "DriverExternalId",
