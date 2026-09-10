@@ -531,6 +531,76 @@ body {
   }
 }
 
+/* Clutch is working: the start gantry. Lights fill left to right, hold, then
+   go out together — three separate keyframes because one shared keyframe with
+   per-lamp delays would stagger the extinguish too, and going out at once is
+   the whole gesture. */
+@keyframes startLight1 {
+  0%,
+  9% {
+    opacity: 0.16;
+  }
+  10%,
+  69% {
+    opacity: 1;
+  }
+  70%,
+  100% {
+    opacity: 0.16;
+  }
+}
+
+@keyframes startLight2 {
+  0%,
+  21% {
+    opacity: 0.16;
+  }
+  22%,
+  69% {
+    opacity: 1;
+  }
+  70%,
+  100% {
+    opacity: 0.16;
+  }
+}
+
+@keyframes startLight3 {
+  0%,
+  33% {
+    opacity: 0.16;
+  }
+  34%,
+  69% {
+    opacity: 1;
+  }
+  70%,
+  100% {
+    opacity: 0.16;
+  }
+}
+
+.start-lights > span {
+  opacity: 0.16;
+  animation: 2s linear infinite;
+}
+.start-lights > span:nth-child(1) {
+  animation-name: startLight1;
+}
+.start-lights > span:nth-child(2) {
+  animation-name: startLight2;
+}
+.start-lights > span:nth-child(3) {
+  animation-name: startLight3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .start-lights > span {
+    animation: none;
+    opacity: 1;
+  }
+}
+
 /* The circuit and its link lift on hover; stillness is honoured here too. */
 @media (prefers-reduced-motion: reduce) {
   .group:hover .group-hover\:scale-110 {

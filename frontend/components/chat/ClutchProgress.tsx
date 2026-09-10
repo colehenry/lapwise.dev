@@ -75,10 +75,16 @@ export default function ClutchProgress({
   const detail = formatClutchProgressMetrics(displayed.metrics);
   return (
     <output className="flex items-start gap-2.5" aria-live="polite">
+      {/* Red because these are the start lights, not because anything is
+          wrong. --danger is F1's own red. */}
       <span
         aria-hidden="true"
-        className="caret-blink mt-[3px] h-[13px] w-[7px] shrink-0 bg-accent-bright"
-      />
+        className="start-lights mt-[5px] flex shrink-0 items-center gap-1"
+      >
+        <span className="h-2 w-2 rounded-full bg-danger" />
+        <span className="h-2 w-2 rounded-full bg-danger" />
+        <span className="h-2 w-2 rounded-full bg-danger" />
+      </span>
       <div className="min-w-0">
         <div className="text-[13px] leading-[1.5] text-ink-soft">
           {displayed.message}

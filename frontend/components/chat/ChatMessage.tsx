@@ -56,11 +56,16 @@ export default function ChatMessage({
 
   if (messageRole === "user") {
     return (
-      <p className="m-0 flex min-w-0 max-w-full justify-end gap-2.5 border-t border-line-soft pt-5 text-right font-mono text-[13.5px] leading-[1.6] text-ink-strong first:border-t-0 first:pt-0 md:text-[14.5px]">
+      <p className="m-0 flex min-w-0 max-w-full justify-end gap-2.5 border-t border-line-soft pt-5 text-right text-[15px] font-medium leading-[1.6] text-ink-strong first:border-t-0 first:pt-0 md:text-[16px]">
         <span className="min-w-0 whitespace-pre-wrap break-words">
           {content}
         </span>
-        <span aria-hidden="true" className="shrink-0 text-accent-bright">
+        {/* The chevron keeps the mono face: Outfit has no glyph for it, so an
+            unstyled fallback would render at a different weight each platform. */}
+        <span
+          aria-hidden="true"
+          className="shrink-0 font-mono text-accent-bright"
+        >
           ❮
         </span>
       </p>
