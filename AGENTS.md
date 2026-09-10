@@ -6,6 +6,9 @@
   permission — only the user asking, in that turn, is. A PreToolUse hook in
   `.claude/settings.json` enforces this; do not work around it.
 - Preserve unrelated working-tree changes.
+- `docs/` is gitignored deliberately. Those notes are local and stay local —
+  never commit them, never propose adding a `.gitignore` exception, and never
+  raise it as an issue. Hand the files to an agent directly when one needs them.
 - When the user does ask for a commit, `dev` takes it directly. Production
   changes reach `main` only through a PR with green CI; never push to `main`.
 - Frontend: routes in `frontend/app`, shared UI in `frontend/components`, and

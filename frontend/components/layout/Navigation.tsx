@@ -67,7 +67,7 @@ export default function Navigation() {
             {navLinksBefore.map((l) =>
               link(
                 l.href,
-                l.label === "Race Weekend Hub" ? "Race Hub" : l.label,
+                l.label,
                 <NavIcon link={l} active={isActiveHref(pathname, l.href)} />,
               ),
             )}

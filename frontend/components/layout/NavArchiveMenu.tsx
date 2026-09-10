@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   archiveLinks,
   DatabaseIcon,
@@ -15,25 +15,55 @@ import {
  */
 export default function NavArchiveMenu({ pathname }: { pathname: string }) {
   const [open, setOpen] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const active = archiveLinks.some((link) => isActiveHref(pathname, link.href));
+
+  /** A short grace period: the pointer often clips a corner on the way down. */
+  const cancelClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = null;
+  };
+  const scheduleClose = () => {
+    cancelClose();
+    closeTimer.current = setTimeout(() => setOpen(false), 260);
+  };
+
+  useEffect(
+    () => () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    },
+    [],
+  );
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: the wrapper only opens the menu on hover; the trigger inside it is a real button
     <div
       className="relative h-full"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-      onFocus={() => setOpen(true)}
+      onMouseEnter={() => {
+        cancelClose();
+        setOpen(true);
+      }}
+      onMouseLeave={scheduleClose}
+      onFocus={() => {
+        cancelClose();
+        setOpen(true);
+      }}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+          cancelClose();
           setOpen(false);
         }
       }}
       onKeyDown={(event) => {
-        if (event.key === "Escape") setOpen(false);
+        if (event.key !== "Escape") return;
+        cancelClose();
+        setOpen(false);
+        triggerRef.current?.focus();
       }}
     >
       <button
+        ref={triggerRef}
         type="button"
         aria-expanded={open}
         aria-haspopup="true"

@@ -39,7 +39,7 @@ export default function SeasonRoundSelector() {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 max-w-xl">
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
       <div className="flex-1 flex gap-2">
         {/* Season Selector */}
         <div className="relative flex-1">
