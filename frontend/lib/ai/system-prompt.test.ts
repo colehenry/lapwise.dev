@@ -20,7 +20,6 @@ describe("buildSystemPrompt", () => {
 
     expect(prompt).toContain("## Capability answer");
     expect(prompt).toContain("Do not list data sources, output formats");
-    expect(prompt).toContain("Selected knowledge nodes: none");
     expect(prompt).not.toContain("sessions identifies event sessions");
   });
 });

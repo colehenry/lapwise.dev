@@ -1,7 +1,11 @@
 import * as Sentry from "@sentry/nextjs";
 import { stepCountIs, streamText } from "ai";
 import type { AnalysisPageContext } from "./analysis-contracts";
-import { buildAnalysisGuidance } from "./analysis-guidance";
+import {
+  collectEntityReferences,
+  type EntityReference,
+  presentAgentAnswer,
+} from "./answer-presentation";
 import {
   saveConversationMessage,
   writeCachedResponse,
@@ -14,6 +18,7 @@ import {
   type ToolSummary,
 } from "./legacy-agent-support";
 import { type AIModelSelection, extractAIProviderUsage } from "./provider";
+import { getSeasonContext } from "./season-context-tool";
 import { buildSystemPrompt } from "./system-prompt";
 import {
   generateChart,
@@ -46,38 +51,30 @@ export async function createLegacyAgentResponse(params: {
   abortSignal?: AbortSignal;
   pageContext?: AnalysisPageContext;
 }): Promise<Response> {
-  const guidance = buildAnalysisGuidance(params.question, params.pageContext);
   const tools = {
+    get_season_context: getSeasonContext,
+    resolve_session: resolveSession,
+    get_race_dynamics: getRaceDynamics,
+    generate_chart: generateChart,
     run_sql_query: runSQLQuery,
-    ...(guidance.requiredTools.includes("resolve_session")
-      ? { resolve_session: resolveSession }
-      : {}),
-    ...(guidance.requiredTools.includes("get_race_dynamics")
-      ? { get_race_dynamics: getRaceDynamics }
-      : {}),
-    ...(/\b(chart|graph|plot|visuali[sz]e|trend)\b/i.test(params.question)
-      ? { generate_chart: generateChart }
-      : {}),
   };
   const result = streamText({
     model: params.model.model,
     system: buildSystemPrompt({
       question: params.question,
-      analysisFamilies: guidance.families,
-      requiredTools: guidance.requiredTools,
-      planningSource: guidance.source,
       pageContext: params.pageContext,
     }),
     messages: params.messages,
     tools,
     toolChoice: "auto",
-    stopWhen: stepCountIs(12),
+    stopWhen: stepCountIs(6),
     abortSignal: params.abortSignal,
   });
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const charts: unknown[] = [];
+      const entityReferences: EntityReference[] = [];
       const queries: string[] = [];
       const toolSummaries: ToolSummary[] = [];
       let answer = "";
@@ -89,7 +86,6 @@ export async function createLegacyAgentResponse(params: {
         outputTokens: 0,
         totalTokens: 0,
       };
-      let lastEventWasToolResult = false;
 
       controller.enqueue(
         encodeStreamLine({
@@ -109,17 +105,7 @@ export async function createLegacyAgentResponse(params: {
       try {
         for await (const part of result.fullStream) {
           if (part.type === "text-delta") {
-            if (lastEventWasToolResult && part.text.trim()) {
-              answer += "\n\n";
-              controller.enqueue(
-                encodeStreamLine({ type: "text-delta", text: "\n\n" }),
-              );
-              lastEventWasToolResult = false;
-            }
             answer += part.text;
-            controller.enqueue(
-              encodeStreamLine({ type: "text-delta", text: part.text }),
-            );
             continue;
           }
 
@@ -150,6 +136,8 @@ export async function createLegacyAgentResponse(params: {
               summary: summarizeToolOutput(part.toolName, output),
             });
             if (output.type === "chart") charts.push(output.config);
+            if (Array.isArray(output.charts)) charts.push(...output.charts);
+            entityReferences.push(...collectEntityReferences(output));
             if (part.toolName === "run_sql_query") {
               controller.enqueue(
                 encodeStreamLine({
@@ -159,7 +147,6 @@ export async function createLegacyAgentResponse(params: {
                 }),
               );
             }
-            lastEventWasToolResult = true;
             continue;
           }
 
@@ -198,7 +185,6 @@ export async function createLegacyAgentResponse(params: {
           );
           const fallback = await buildFallbackAnswer({
             question: params.question,
-            guidance,
             queries,
             toolSummaries,
             model: params.model.model,
@@ -206,14 +192,17 @@ export async function createLegacyAgentResponse(params: {
             pageContext: params.pageContext,
           });
           if (fallback.trim()) {
-            const delta = answer.trim() ? `\n\n${fallback}` : fallback;
             answer = answer.trim()
               ? `${answer.trim()}\n\n${fallback.trim()}`
               : fallback.trim();
-            controller.enqueue(
-              encodeStreamLine({ type: "text-delta", text: delta }),
-            );
           }
+        }
+
+        answer = presentAgentAnswer(answer, entityReferences);
+        if (answer) {
+          controller.enqueue(
+            encodeStreamLine({ type: "text-delta", text: answer }),
+          );
         }
 
         const followUps: string[] = [];
@@ -251,7 +240,6 @@ export async function createLegacyAgentResponse(params: {
               provider: params.model.provider,
               upstreamProvider,
             },
-            guidance,
           }),
         );
       } catch (error) {

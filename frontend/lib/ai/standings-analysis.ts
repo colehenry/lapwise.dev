@@ -112,6 +112,11 @@ export function standingsEntrantType(question: string): StandingsEntrantType {
     : "driver";
 }
 
+function entrantLink(type: StandingsEntrantType, row: StandingsRow): string {
+  const path = type === "driver" ? "drivers" : "constructors";
+  return `[${row.entrantName}](/${path}/${row.entrantSlug})`;
+}
+
 export function buildStandingsExecution(params: {
   question: string;
   season: number;
@@ -128,12 +133,22 @@ export function buildStandingsExecution(params: {
   );
   const source = rows[0].standingsSource;
   const label = entrantType === "driver" ? "Drivers" : "Constructors";
+  const leader = rankedRows[0];
+  const runnerUp = rankedRows[1];
+  const leaderName = leader ? entrantLink(entrantType, leader) : "";
+  const tense = season === new Date().getFullYear() ? "leads" : "led";
+  const margin =
+    leader?.points !== null && runnerUp?.points !== null
+      ? (leader?.points ?? 0) - (runnerUp?.points ?? 0)
+      : null;
   const summary =
     rankedRows.length === 0
       ? `Canonical ${season} ${label.toLowerCase()} standings are unavailable. The on-track points shown below are not an official championship classification.`
       : limit === 1
-        ? `${rankedRows[0].entrantName} was first in the ${season} ${label}' Championship with ${rankedRows[0].points} points.`
-        : `${rankedRows[0].entrantName} led the ${season} ${label}' Championship with ${rankedRows[0].points} points. The requested top ${Math.min(limit, rankedRows.length)} is shown below.`;
+        ? `${leaderName} was first in the ${season} ${label}' Championship with ${leader.points} points.`
+        : margin !== null && runnerUp
+          ? `${leaderName} ${tense} the ${season} ${label}' Championship by +${margin} points over ${entrantLink(entrantType, runnerUp)}. The requested top ${Math.min(limit, rankedRows.length)} is shown below.`
+          : `${leaderName} ${tense} the ${season} ${label}' Championship with ${leader.points} points. The requested top ${Math.min(limit, rankedRows.length)} is shown below.`;
   const evidenceId = `${entrantType}-standings-${season}`;
   const plan = analysisPlanSchema.parse({
     version: 1,
@@ -199,7 +214,7 @@ export function buildStandingsExecution(params: {
         ],
         rows: displayRows.map((row) => ({
           position: row.championshipPosition ?? "—",
-          entrant: row.entrantName,
+          entrant: entrantLink(entrantType, row),
           team: row.teamName ?? "—",
           points: row.points ?? row.pointsScored,
           wins: row.wins,

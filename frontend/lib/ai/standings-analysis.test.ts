@@ -64,7 +64,7 @@ describe("standings analysis", () => {
       expected?.fifth,
     ]);
     expect(renderArtifactMarkdown(execution.artifact)).toContain(
-      "Max Verstappen led the 2023 Drivers' Championship with 575 points",
+      "[Max Verstappen](/drivers/max-verstappen) led the 2023 Drivers' Championship by +290 points over [Sergio Perez](/drivers/sergio-perez)",
     );
     expect(execution.artifact.charts[0].data).toHaveLength(5);
   });

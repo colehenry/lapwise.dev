@@ -1,7 +1,6 @@
 import { generateText, type LanguageModel } from "ai";
 import type { StepType } from "../chat";
 import type { AnalysisPageContext } from "./analysis-contracts";
-import type { AnalysisGuidance } from "./analysis-guidance";
 import { buildSystemPrompt } from "./system-prompt";
 
 export interface ToolSummary {
@@ -68,6 +67,11 @@ export function legacyToolStatus(
   switch (toolName) {
     case "run_sql_query":
       return { message: "Checking the timing sheets...", stepType: "thinking" };
+    case "get_season_context":
+      return {
+        message: "Reading the championship picture...",
+        stepType: "thinking",
+      };
     case "resolve_session":
       return {
         message: "Finding the right race weekend...",
@@ -87,7 +91,6 @@ export function legacyToolStatus(
 
 export async function buildFallbackAnswer(params: {
   question: string;
-  guidance: AnalysisGuidance;
   queries: string[];
   toolSummaries: ToolSummary[];
   model: LanguageModel;
@@ -119,9 +122,6 @@ Write the final answer now. Use only retrieved data, state failed queries, and d
       model: params.model,
       system: buildSystemPrompt({
         question: params.question,
-        analysisFamilies: params.guidance.families,
-        requiredTools: params.guidance.requiredTools,
-        planningSource: params.guidance.source,
         pageContext: params.pageContext,
       }),
       prompt: synthesisPrompt,
