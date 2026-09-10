@@ -16,6 +16,7 @@ const TOTAL_LIMIT = 3;
 export default function AskContent() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const searchParams = useSearchParams();
+  const prefilledQuestion = searchParams.get("q") ?? undefined;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const requestedConversationRef = useRef<string | null>(null);
   const {
@@ -172,6 +173,7 @@ export default function AskContent() {
                 onAbort={abortResponse}
                 isLoading={isAsking}
                 disabled={pendingConversationId !== null}
+                initialValue={prefilledQuestion}
                 shellless
               />
             </div>

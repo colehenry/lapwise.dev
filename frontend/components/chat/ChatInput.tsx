@@ -9,6 +9,8 @@ interface ChatInputProps {
   disabled?: boolean;
   compact?: boolean;
   shellless?: boolean;
+  /** Seeds the composer once, for a question carried in from another page. */
+  initialValue?: string;
 }
 
 const COMPOSER_MAX_HEIGHT_PX = 144;
@@ -21,9 +23,17 @@ export default function ChatInput({
   disabled = false,
   compact,
   shellless,
+  initialValue,
 }: ChatInputProps) {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialValue ?? "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const seeded = useRef(initialValue ?? "");
+
+  useEffect(() => {
+    if (!initialValue || seeded.current === initialValue) return;
+    seeded.current = initialValue;
+    setInput(initialValue);
+  }, [initialValue]);
 
   useEffect(() => {
     const el = textareaRef.current;

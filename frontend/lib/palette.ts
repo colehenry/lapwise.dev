@@ -27,6 +27,19 @@ export const COMPOUND_NAMES_ALL = Object.keys(COMPOUND_COLORS);
 export const getCompoundColor = (compound: string | null | undefined): string =>
   COMPOUND_COLORS[compound ?? ""] ?? "var(--delta-neutral)";
 
+/** The console replay carries compound initials rather than names. */
+const COMPOUND_BY_INITIAL: Record<string, string> = {
+  S: "SOFT",
+  M: "MEDIUM",
+  H: "HARD",
+  I: "INTERMEDIATE",
+  W: "WET",
+};
+
+export const compoundFromInitial = (
+  initial: string | null | undefined,
+): string | null => COMPOUND_BY_INITIAL[initial?.toUpperCase() ?? ""] ?? null;
+
 export const POSITION_COLORS = {
   gold: "var(--pos-gold)",
   silver: "var(--pos-silver)",

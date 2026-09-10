@@ -103,6 +103,10 @@
   --status-vsc: #a78bfa;
   --status-red: #ef4444;
   --status-pit: #60a5fa;
+  /* Purple for a fastest lap is Formula 1's own convention, not the brand
+     accent, so it carries its own value in the data half. */
+  --status-fastest: #a855f7;
+  --status-steward: #8891a5;
 
   /* Replay canvas */
   --canvas-bg-start: #080809;
@@ -125,6 +129,10 @@
   --series-6: #facc15;
   --series-7: #a1a1aa;
   --series-8: #2dd4bf;
+
+  /* A trace whose colour carries no meaning of its own, so the compounds
+     beside it can. */
+  --chart-neutral-stroke: rgba(255, 255, 255, 0.8);
 }
 
 [data-theme="light"] {
@@ -173,6 +181,8 @@
 
   --status-yellow: #ca8a04;
   --status-red: #dc2626;
+  --status-fastest: #8b34d8;
+  --status-steward: #64748b;
 
   --canvas-bg-start: #fbfbff;
   --canvas-bg-end: #eceff8;
@@ -188,6 +198,8 @@
   --series-6: #ca8a04;
   --series-7: #64748b;
   --series-8: #0f766e;
+
+  --chart-neutral-stroke: rgba(42, 48, 64, 0.72);
 }
 
 @theme inline {
@@ -367,6 +379,132 @@ body {
 .page-frame {
   width: 100%;
   padding-inline: clamp(0.75rem, 2.5vw, 2rem);
+}
+
+/* ==========================================================================
+   HOME CONSOLE
+   Three columns sharing one pair of row lines. Every panel in a row ends on
+   the same edge, which is what makes the console read as one instrument
+   rather than a pile of widgets.
+   ========================================================================== */
+.home-console {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.home-console > * {
+  min-width: 0;
+  min-height: 0;
+}
+
+@media (min-width: 768px) {
+  .home-console {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "map map"
+      "lead lead"
+      "grid podium"
+      "order feed";
+  }
+}
+
+@media (min-width: 1180px) {
+  .home-console {
+    /* The first row is as tall as the daily board needs; the second takes the
+       rest, so neither can clip its contents at any viewport height. */
+    grid-template-columns:
+      clamp(276px, 22vw, 348px)
+      minmax(0, 1fr)
+      clamp(268px, 21vw, 336px);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "grid map order"
+      "podium lead feed";
+    min-height: clamp(620px, 68vh, 764px);
+  }
+}
+
+/* With no telemetry to draw, the instruments that need it are removed rather
+   than left hollow, and the rest of the row closes up. */
+@media (min-width: 768px) and (max-width: 1179px) {
+  .home-console--quiet {
+    grid-template-areas:
+      "map map"
+      "grid podium";
+  }
+}
+
+@media (min-width: 1180px) {
+  .home-console--quiet {
+    grid-template-columns: clamp(276px, 22vw, 348px) minmax(0, 1fr);
+    grid-template-areas:
+      "grid map"
+      "podium map";
+  }
+}
+
+@media (min-width: 768px) {
+  .home-console__grid {
+    grid-area: grid;
+  }
+  .home-console__podium {
+    grid-area: podium;
+  }
+  .home-console__map {
+    grid-area: map;
+  }
+  .home-console__lead {
+    grid-area: lead;
+  }
+  .home-console__order {
+    grid-area: order;
+  }
+  .home-console__feed {
+    grid-area: feed;
+  }
+}
+
+/* The lane runs unless the reader is hovering it or has asked for stillness. */
+@keyframes tickerRoll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-lane {
+  animation: tickerRoll var(--ticker-duration, 74s) linear infinite;
+}
+
+.ticker-rail:hover .ticker-lane,
+.ticker-rail:focus-within .ticker-lane {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-lane {
+    animation: none;
+  }
+}
+
+@keyframes caretBlink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.caret-blink {
+  animation: caretBlink 1.1s steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret-blink {
+    animation: none;
+  }
 }
 
 html {

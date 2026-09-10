@@ -13,14 +13,13 @@ import {
 import { useTheme } from "@/components/providers/ThemeProvider";
 import MobileChartFrame from "@/components/ui/MobileChartFrame";
 import StableResponsiveContainer from "@/components/ui/StableResponsiveContainer";
-import { apiHeaders, apiUrl } from "@/lib/api";
 import {
   type ConstructorProgression,
   type DriverProgression,
   driverSeriesKey,
   type ProgressionChartPoint,
-  type ProgressionResponse,
-} from "@/lib/pointsProgression";
+  pointsProgressionQuery,
+} from "@/lib/queries/pointsProgression";
 import {
   CHART_COLORS,
   CHART_TYPOGRAPHY,
@@ -182,18 +181,9 @@ export default function PointsByRoundGraph({
     };
   }, []);
 
-  const { data, isLoading: loading } = useQuery({
-    queryKey: ["points-progression", season, mode, pointsType],
-    queryFn: async () => {
-      const response = await fetch(
-        apiUrl(
-          `/api/results/${season}/points-progression?mode=${mode}&points_type=${pointsType}`,
-        ),
-        { headers: apiHeaders() },
-      );
-      return response.json() as Promise<ProgressionResponse>;
-    },
-  });
+  const { data, isLoading: loading } = useQuery(
+    pointsProgressionQuery(Number(season), mode, pointsType),
+  );
 
   useEffect(() => {
     if (!data) return;

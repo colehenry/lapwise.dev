@@ -4,7 +4,7 @@ import type {
   ConstructorListResponse,
   DriverListResponse,
 } from "@/lib/types";
-import { minutes } from "./durations";
+import { hours, minutes } from "./durations";
 import { DEFAULT_REVALIDATE_SECONDS, getJson } from "./http";
 
 /**
@@ -17,6 +17,16 @@ export const archiveKeys = {
   constructors: (includeSprint: boolean) =>
     ["constructors-all", includeSprint] as const,
   circuits: () => ["circuits-all"] as const,
+  counts: () => ["archive-counts"] as const,
+};
+
+/** The four entry-tile numbers, counted server-side. */
+export type ArchiveCounts = {
+  drivers: number;
+  constructors: number;
+  circuits: number;
+  races: number;
+  first_season: number | null;
 };
 
 export type CircuitsResponse = {
@@ -69,4 +79,17 @@ export function circuitsQuery() {
 
 export function selectCircuitList(data: CircuitsResponse): CircuitInfo[] {
   return data.circuits ?? [];
+}
+
+export function archiveCountsQuery() {
+  return queryOptions({
+    queryKey: archiveKeys.counts(),
+    queryFn: () =>
+      getJson<ArchiveCounts>(
+        "/api/archive/counts",
+        "Failed to fetch archive counts",
+        { revalidate: DEFAULT_REVALIDATE_SECONDS },
+      ),
+    staleTime: hours(12),
+  });
 }

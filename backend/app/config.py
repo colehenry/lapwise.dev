@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     # AI
     ai_daily_query_limit: int = 20
     anthropic_api_key: str = ""
+    open_router_api_key: str = ""
 
     # FastF1
     fastf1_cache_dir: str = "./cache"
