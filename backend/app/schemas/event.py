@@ -21,6 +21,13 @@ class UpcomingEventResponse(BaseModel):
     event_name: str  # "Australian Grand Prix" or "Pre-Season Testing"
     event_type: str  # "race" or "testing"
     event_date: str  # ISO date string (YYYY-MM-DD)
+    # When the race itself starts, in UTC. Null for testing weekends, which have
+    # no race, and for any schedule that omits the session times.
+    race_start_utc: str | None = None
+    # The most recent race already run at this circuit, for a "see last time"
+    # link. Null for a venue making its debut, which has no last time.
+    last_raced_season: int | None = None
+    last_raced_round: int | None = None
 
     # Location
     location: str  # "Melbourne", "Bahrain"

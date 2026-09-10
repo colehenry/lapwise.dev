@@ -5,8 +5,8 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="overflow-hidden bg-bg-secondary border-t border-border-primary">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:py-8">
+    <footer className="overflow-hidden bg-surface-band border-t border-line-soft">
+      <div className="page-frame pt-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:py-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Brand */}
           <div className="flex items-center gap-3">
@@ -20,10 +20,10 @@ export default function Footer() {
               />
             </div>
             <span className="text-sm font-bold">
-              <span className="text-purple-500">Lap</span>
-              <span className="text-text-primary">wise</span>
+              <span className="text-accent">Lap</span>
+              <span className="text-ink-strong">wise</span>
             </span>
-            <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold">
+            <span className="text-ink-faint text-[10px] tracking-widest uppercase font-bold">
               &copy; {currentYear}
             </span>
           </div>
@@ -32,19 +32,19 @@ export default function Footer() {
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:gap-x-6 md:gap-y-0">
             <Link
               href="/results"
-              className="text-text-muted hover:text-purple-300 text-xs tracking-wide transition-colors duration-150"
+              className="text-ink-faint hover:text-accent-light text-xs tracking-wide transition-colors duration-150"
             >
               Results
             </Link>
             <Link
               href="/drivers"
-              className="text-text-muted hover:text-purple-300 text-xs tracking-wide transition-colors duration-150"
+              className="text-ink-faint hover:text-accent-light text-xs tracking-wide transition-colors duration-150"
             >
               Drivers
             </Link>
             <Link
               href="/about"
-              className="text-text-muted hover:text-purple-300 text-xs tracking-wide transition-colors duration-150"
+              className="text-ink-faint hover:text-accent-light text-xs tracking-wide transition-colors duration-150"
             >
               About
             </Link>
@@ -52,7 +52,7 @@ export default function Footer() {
               href="https://github.com/colehenry/lapwise.dev"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-text-muted hover:text-purple-300 text-xs tracking-wide transition-colors duration-150 flex items-center gap-1"
+              className="text-ink-faint hover:text-accent-light text-xs tracking-wide transition-colors duration-150 flex items-center gap-1"
             >
               <svg
                 className="w-3.5 h-3.5"
@@ -69,7 +69,7 @@ export default function Footer() {
               href="https://buymeacoffee.com/colehenry"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium tracking-wide text-text-muted border border-border-secondary rounded-full hover:text-purple-300 hover:border-purple-500/40 transition-colors duration-150"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium tracking-wide text-ink-faint border border-line-strong rounded-full hover:text-accent-light hover:border-accent/40 transition-colors duration-150"
             >
               <span aria-hidden="true">&#9749;</span>
               Support
@@ -78,28 +78,28 @@ export default function Footer() {
         </div>
 
         <div className="mt-4 text-center space-y-1.5">
-          <p className="text-text-muted text-[10px] tracking-wide">
+          <p className="text-ink-faint text-[10px] tracking-wide">
             Not affiliated with Formula 1, FIA, or any F1 constructors. All
             trademarks are property of their respective owners.
           </p>
-          <div className="flex items-center justify-center gap-3 text-[10px] text-text-muted tracking-wide">
+          <div className="flex items-center justify-center gap-3 text-[10px] text-ink-faint tracking-wide">
             <Link
               href="/rules"
-              className="hover:text-purple-300 transition-colors duration-150"
+              className="hover:text-accent-light transition-colors duration-150"
             >
               Rules
             </Link>
             <span aria-hidden="true">·</span>
             <Link
               href="/terms"
-              className="hover:text-purple-300 transition-colors duration-150"
+              className="hover:text-accent-light transition-colors duration-150"
             >
               Terms
             </Link>
             <span aria-hidden="true">·</span>
             <Link
               href="/privacy"
-              className="hover:text-purple-300 transition-colors duration-150"
+              className="hover:text-accent-light transition-colors duration-150"
             >
               Privacy
             </Link>

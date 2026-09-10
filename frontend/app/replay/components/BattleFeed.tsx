@@ -261,7 +261,7 @@ const EVENT_STYLES: Record<
 > = {
   overtake: {
     icon: "⇅",
-    accent: "text-purple-400",
+    accent: "text-accent-bright",
     bg: "border-l-purple-500",
   },
   pit_stop: {
@@ -281,7 +281,7 @@ const EVENT_STYLES: Record<
   },
   red_flag: {
     icon: "🛑",
-    accent: "text-red-400",
+    accent: "text-danger-bright",
     bg: "border-l-red-500",
   },
   weather: {
@@ -296,7 +296,7 @@ const EVENT_STYLES: Record<
   },
   race_control: {
     icon: "📢",
-    accent: "text-text-secondary",
+    accent: "text-ink-base",
     bg: "border-l-border-primary",
   },
 };
@@ -385,7 +385,7 @@ export default function BattleFeed({
   return (
     <div ref={scrollRef} className="overflow-y-auto flex-1">
       {displayEvents.length === 0 ? (
-        <p className="text-xs text-text-muted p-4 text-center">
+        <p className="text-xs text-ink-faint p-4 text-center">
           Waiting for race events...
         </p>
       ) : (
@@ -400,11 +400,11 @@ export default function BattleFeed({
               key={event.id}
               className={`w-full text-left border-l-2 ${style.bg} px-3 py-1.5 transition-all duration-300 ${
                 isVeryRecent
-                  ? "bg-bg-elevated/50"
+                  ? "bg-surface-raised/50"
                   : isRecent
                     ? "opacity-90"
                     : "opacity-75"
-              } ${event.driver ? "cursor-pointer hover:bg-bg-elevated/30" : "cursor-default"}`}
+              } ${event.driver ? "cursor-pointer hover:bg-surface-raised/30" : "cursor-default"}`}
               onClick={() => {
                 if (event.driver && onSelectDriver) {
                   onSelectDriver(event.driver);
@@ -415,7 +415,7 @@ export default function BattleFeed({
               <div className="flex items-center gap-1.5 mb-0.5">
                 <span className="text-[10px]">{style.icon}</span>
                 {event.lap > 0 && (
-                  <span className="text-[10px] font-mono text-text-muted">
+                  <span className="text-[10px] font-mono text-ink-faint">
                     L{event.lap}
                   </span>
                 )}
@@ -430,7 +430,7 @@ export default function BattleFeed({
                       driver={replayData.drivers[event.driver]}
                       small
                     />
-                    <span className="text-text-muted">→</span>
+                    <span className="text-ink-faint">→</span>
                     <DriverBadge
                       code={event.driver2}
                       driver={replayData.drivers[event.driver2]}

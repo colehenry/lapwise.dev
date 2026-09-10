@@ -40,9 +40,9 @@ export default function CircuitRecentRace({
 
   if (isLoading) {
     return (
-      <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-        <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
-          <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+      <div className="bg-surface-panel border border-line-soft rounded-sm shadow-sm overflow-hidden">
+        <div className="relative h-10 bg-surface-page border-b border-line-soft px-4 flex items-center overflow-hidden">
+          <span className="relative z-10 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
             Most Recent Race
           </span>
         </div>
@@ -56,10 +56,10 @@ export default function CircuitRecentRace({
   if (!data || data.podium.length === 0) return null;
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-      <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+    <div className="bg-surface-panel border border-line-soft rounded-sm shadow-sm overflow-hidden">
+      <div className="relative h-10 bg-surface-page border-b border-line-soft px-4 flex items-center overflow-hidden">
         <TrianglePattern id="recent-race-triangles" />
-        <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+        <span className="relative z-10 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
           Most Recent Race
         </span>
       </div>
@@ -67,16 +67,16 @@ export default function CircuitRecentRace({
         {/* Event header */}
         <div className="flex items-baseline justify-between mb-4">
           <div>
-            <h3 className="text-lg font-bold text-text-primary">
+            <h3 className="text-lg font-bold text-ink-strong">
               {data.event_name}
             </h3>
-            <span className="text-xs text-text-muted font-mono">
+            <span className="text-xs text-ink-faint font-mono">
               {data.year} Round {data.round}
             </span>
           </div>
           <Link
             href={`/results/${data.year}/${data.round}`}
-            className="text-xs text-purple-400 hover:text-purple-300 font-mono uppercase tracking-widest transition-colors"
+            className="text-xs text-accent-bright hover:text-accent-light font-mono uppercase tracking-widest transition-colors"
           >
             Full Results
           </Link>
@@ -102,7 +102,7 @@ export default function CircuitRecentRace({
               <div key={entry.position} className="flex items-center gap-3">
                 <span
                   className={`w-6 text-center font-bold font-mono text-sm ${
-                    entry.position === 1 ? "text-yellow-400" : "text-text-muted"
+                    entry.position === 1 ? "text-yellow-400" : "text-ink-faint"
                   }`}
                 >
                   {entry.position}
@@ -114,18 +114,18 @@ export default function CircuitRecentRace({
                 {driverUrl ? (
                   <Link
                     href={driverUrl}
-                    className="text-sm text-text-secondary hover:text-purple-300 transition-colors font-medium"
+                    className="text-sm text-ink-base hover:text-accent-light transition-colors font-medium"
                   >
                     {entry.driver_name}
                   </Link>
                 ) : (
-                  <span className="text-sm text-text-secondary font-medium">
+                  <span className="text-sm text-ink-base font-medium">
                     {entry.driver_name}
                   </span>
                 )}
                 <Link
                   href={constructorHref(entry.team_name) ?? "/constructors"}
-                  className="text-xs text-text-muted ml-auto hover:text-purple-300 transition-colors"
+                  className="text-xs text-ink-faint ml-auto hover:text-accent-light transition-colors"
                 >
                   {entry.team_name}
                 </Link>
@@ -135,20 +135,20 @@ export default function CircuitRecentRace({
         </div>
 
         {/* Conditions row */}
-        <div className="flex flex-wrap gap-x-4 gap-y-1 pt-3 border-t border-border-primary">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 pt-3 border-t border-line-soft">
           {data.fastest_lap_time && (
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+              <span className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
                 FL
               </span>
-              <span className="text-xs text-purple-300 font-mono font-bold">
+              <span className="text-xs text-accent-light font-mono font-bold">
                 {formatLapTime(data.fastest_lap_time)}
               </span>
             </div>
           )}
           {data.avg_air_temp != null && (
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+              <span className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
                 Air
               </span>
               <span className="text-xs text-orange-400 font-mono font-bold">
@@ -158,10 +158,10 @@ export default function CircuitRecentRace({
           )}
           {data.avg_track_temp != null && (
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+              <span className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
                 Track
               </span>
-              <span className="text-xs text-red-400 font-mono font-bold">
+              <span className="text-xs text-danger-bright font-mono font-bold">
                 {data.avg_track_temp}°C
               </span>
             </div>

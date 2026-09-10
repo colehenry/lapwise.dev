@@ -4,7 +4,9 @@
  * Wrappers around AI API endpoints using fetchWithAuth for authentication.
  */
 
+import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
 import { fetchWithAuth } from "@/lib/auth";
+import type { ClutchProgressStatus } from "@/lib/clutch-progress";
 
 const BASE = "/api/ai";
 
@@ -38,6 +40,8 @@ export interface ChartConfig {
   yKeys: string[];
   colors: string[];
   seriesLabels?: string[];
+  seriesColors?: Record<string, string>;
+  categoryColors?: Record<string, string>;
 }
 
 export interface AskResponse {
@@ -50,6 +54,9 @@ export interface AskResponse {
     inputTokens: number;
     outputTokens: number;
     totalTokens: number;
+    cachedInputTokens?: number;
+    reasoningTokens?: number;
+    costUsd?: number;
   };
 }
 
@@ -77,26 +84,16 @@ export interface StreamMetadataEvent {
   queries: string[];
   followUps: string[];
   usage: AskResponse["usage"];
+  model?: {
+    id: string;
+    provider: string;
+    upstreamProvider?: string;
+  };
+  plan?: unknown;
 }
 
-export type StepType =
-  | "sql"
-  | "schema"
-  | "sample"
-  | "chart"
-  | "thinking"
-  | "synthesizing";
-
-export interface StreamStatusEvent {
+export interface StreamStatusEvent extends ClutchProgressStatus {
   type: "status";
-  message: string;
-  stepType?: StepType;
-}
-
-export interface ThinkingStep {
-  message: string;
-  stepType: StepType;
-  timestamp: number;
 }
 
 export interface StreamErrorEvent {
@@ -124,11 +121,12 @@ export type AskStreamEvent =
 export async function askQuestion(
   question: string,
   conversationId?: string,
+  pageContext?: AnalysisPageContext,
 ): Promise<AskResponse> {
   const res = await fetchWithAuth(`${BASE}/ask`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question, conversationId }),
+    body: JSON.stringify({ question, conversationId, pageContext }),
   });
 
   const data = await res.json();
@@ -148,11 +146,12 @@ export async function streamQuestion(
   conversationId: string | undefined,
   onEvent: (event: AskStreamEvent) => void,
   signal?: AbortSignal,
+  pageContext?: AnalysisPageContext,
 ): Promise<void> {
   const res = await fetchWithAuth(`${BASE}/ask`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question, conversationId }),
+    body: JSON.stringify({ question, conversationId, pageContext }),
     signal,
   });
 

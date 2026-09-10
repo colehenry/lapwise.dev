@@ -66,7 +66,7 @@ export default function ReplayPage() {
   }
 
   return (
-    <main className="min-h-screen bg-bg-secondary">
+    <main className="min-h-screen bg-surface-band">
       <PageHeader
         title="Race Replay"
         subtitle="Telemetry Replay"
@@ -76,7 +76,7 @@ export default function ReplayPage() {
             <select
               value={activeSeason ?? ""}
               onChange={(e) => setSelectedSeason(Number(e.target.value))}
-              className="h-10 w-24 bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-3 py-2 rounded-sm focus:outline-none focus:border-purple-500 transition-colors duration-150 cursor-pointer uppercase tracking-widest"
+              className="h-10 w-24 bg-surface-page border border-line-soft text-ink-strong font-mono text-xs font-bold px-3 py-2 rounded-sm focus:outline-none focus:border-accent transition-colors duration-150 cursor-pointer uppercase tracking-widest"
             >
               {seasons.map((year) => (
                 <option key={year} value={year}>

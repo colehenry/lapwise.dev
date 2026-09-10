@@ -308,7 +308,7 @@ export default function LapTimeDistributionChart({
   // ── Early returns ─────────────────────────────────────────────────────────
   if (season < DATA_FROM.laps) {
     return (
-      <p className="text-sm text-text-muted font-mono text-center py-8">
+      <p className="text-sm text-ink-faint font-mono text-center py-8">
         Lap time data not available before {DATA_FROM.laps}
       </p>
     );
@@ -327,7 +327,7 @@ export default function LapTimeDistributionChart({
 
   if (!data || data.drivers.length === 0) {
     return (
-      <p className="text-sm text-text-muted font-mono text-center py-8">
+      <p className="text-sm text-ink-faint font-mono text-center py-8">
         No lap time data available for this race
       </p>
     );
@@ -343,8 +343,8 @@ export default function LapTimeDistributionChart({
             onClick={() => setSelectedCompound(null)}
             className={`px-3 py-1 rounded-sm text-[10px] font-bold font-mono uppercase tracking-widest border transition-colors duration-150 ${
               selectedCompound === null
-                ? "border-border-secondary text-text-secondary opacity-100"
-                : "border-border-secondary text-text-muted opacity-40 hover:opacity-70"
+                ? "border-line-strong text-ink-base opacity-100"
+                : "border-line-strong text-ink-faint opacity-40 hover:opacity-70"
             }`}
           >
             All
@@ -379,9 +379,9 @@ export default function LapTimeDistributionChart({
             type="checkbox"
             checked={removeOutliers}
             onChange={(e) => setRemoveOutliers(e.target.checked)}
-            className="accent-purple-500"
+            className="accent-accent"
           />
-          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-muted">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-ink-faint">
             Exclude outliers
           </span>
         </label>
@@ -390,14 +390,14 @@ export default function LapTimeDistributionChart({
           <button
             type="button"
             onClick={() => setShowDropdown((v) => !v)}
-            className="px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-border-secondary text-text-secondary hover:border-purple-500 hover:text-purple-300 transition-colors duration-150"
+            className="px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-line-strong text-ink-base hover:border-accent hover:text-accent-light transition-colors duration-150"
           >
             Select ({selectedDrivers.length})
           </button>
 
           {showDropdown && (
-            <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-10 min-w-[200px] max-h-[280px] overflow-y-auto">
-              <div className="p-2 border-b border-border-primary flex gap-3">
+            <div className="absolute right-0 top-full mt-1 bg-surface-panel border border-line-soft rounded-sm shadow-xl z-10 min-w-[200px] max-h-[280px] overflow-y-auto">
+              <div className="p-2 border-b border-line-soft flex gap-3">
                 <button
                   type="button"
                   onClick={() =>
@@ -405,14 +405,14 @@ export default function LapTimeDistributionChart({
                       allDriversSorted.map((d) => distDriverKey(d)),
                     )
                   }
-                  className="flex-1 text-[10px] font-mono font-bold uppercase tracking-widest text-text-muted hover:text-text-secondary transition-colors"
+                  className="flex-1 text-[10px] font-mono font-bold uppercase tracking-widest text-ink-faint hover:text-ink-base transition-colors"
                 >
                   All
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedDrivers([])}
-                  className="flex-1 text-[10px] font-mono font-bold uppercase tracking-widest text-text-muted hover:text-text-secondary transition-colors"
+                  className="flex-1 text-[10px] font-mono font-bold uppercase tracking-widest text-ink-faint hover:text-ink-base transition-colors"
                 >
                   None
                 </button>
@@ -424,7 +424,7 @@ export default function LapTimeDistributionChart({
                 return (
                   <label
                     key={key}
-                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-bg-elevated cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-surface-raised cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -436,7 +436,7 @@ export default function LapTimeDistributionChart({
                             : [...prev, key],
                         )
                       }
-                      className="accent-purple-500"
+                      className="accent-accent"
                     />
                     <span
                       className="w-2 h-2 rounded-full flex-shrink-0"
@@ -445,7 +445,7 @@ export default function LapTimeDistributionChart({
                     <span className={CHART_TYPOGRAPHY.keyClassName}>
                       {driver.driver_code ?? driver.full_name}
                     </span>
-                    <span className="ml-auto text-[10px] font-mono text-text-muted">
+                    <span className="ml-auto text-[10px] font-mono text-ink-faint">
                       P{driver.final_position}
                     </span>
                   </label>
@@ -458,7 +458,7 @@ export default function LapTimeDistributionChart({
 
       {/* ── Ridge Plot ── */}
       {curves.length === 0 ? (
-        <p className="text-sm text-text-muted font-mono text-center py-8">
+        <p className="text-sm text-ink-faint font-mono text-center py-8">
           Select drivers to display
         </p>
       ) : (
@@ -676,7 +676,7 @@ export default function LapTimeDistributionChart({
 
                 {/* X axis */}
                 <div
-                  className="relative border-t border-border-primary"
+                  className="relative border-t border-line-soft"
                   style={{ height: X_AXIS_H }}
                 >
                   {xTicks.map((tick) => {
@@ -727,7 +727,7 @@ export default function LapTimeDistributionChart({
       {/* ── Tooltip (fixed so it escapes overflow containers) ── */}
       {tooltip && curves[tooltip.rowIdx] && (
         <div
-          className="pointer-events-none fixed z-50 px-3 py-2 rounded-sm shadow-xl border border-border-primary bg-bg-tertiary"
+          className="pointer-events-none fixed z-50 px-3 py-2 rounded-sm shadow-xl border border-line-soft bg-surface-panel"
           style={{
             left: tooltip.clientX + 14,
             top: tooltip.clientY - 36,

@@ -82,19 +82,19 @@ export default function DriverSearchPanel({
         ref={panelRef}
         role="dialog"
         aria-labelledby="driver-search-title"
-        className="pointer-events-auto relative z-10 w-full max-w-md rounded-lg border border-border-secondary bg-bg-secondary/95 p-4 shadow-2xl sm:p-5"
+        className="pointer-events-auto relative z-10 w-full max-w-md rounded-lg border border-line-strong bg-surface-band/95 p-4 shadow-2xl sm:p-5"
       >
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <h2
               id="driver-search-title"
-              className="text-sm font-bold text-text-primary sm:text-base"
+              className="text-sm font-bold text-ink-strong sm:text-base"
             >
-              {rowLabel} <span className="mx-1 text-text-muted">•</span>{" "}
+              {rowLabel} <span className="mx-1 text-ink-faint">•</span>{" "}
               {columnLabel}
             </h2>
             {misses.length > 0 && (
-              <p className="mt-1 truncate text-[10px] text-text-muted">
+              <p className="mt-1 truncate text-[10px] text-ink-faint">
                 Previous:{" "}
                 {misses
                   .map((miss) => `not ${miss.driver.full_name}`)
@@ -106,7 +106,7 @@ export default function DriverSearchPanel({
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-lg text-text-muted transition-colors hover:bg-bg-elevated hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-400"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-lg text-ink-faint transition-colors hover:bg-surface-raised hover:text-ink-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-bright"
           >
             ×
           </button>
@@ -131,14 +131,14 @@ export default function DriverSearchPanel({
         {normalizedQuery.length >= 2 && (
           <div
             id="driver-game-results"
-            className="mt-2 max-h-72 overflow-y-auto rounded-md border border-border-primary bg-bg-primary"
+            className="mt-2 max-h-72 overflow-y-auto rounded-md border border-line-soft bg-surface-page"
             role="listbox"
           >
             {(searching || loading) && (
-              <p className="px-3 py-4 text-sm text-text-muted">Searching…</p>
+              <p className="px-3 py-4 text-sm text-ink-faint">Searching…</p>
             )}
             {searchError && (
-              <p className="px-3 py-4 text-sm text-red-400">
+              <p className="px-3 py-4 text-sm text-danger-bright">
                 Driver search is unavailable.
               </p>
             )}
@@ -150,7 +150,7 @@ export default function DriverSearchPanel({
                   role="option"
                   aria-selected="false"
                   onClick={() => onSubmit(driver)}
-                  className="flex w-full items-center gap-3 border-b border-border-primary px-3 py-2 text-left transition-colors last:border-b-0 hover:bg-bg-tertiary focus-visible:bg-bg-tertiary focus-visible:outline-none"
+                  className="flex w-full items-center gap-3 border-b border-line-soft px-3 py-2 text-left transition-colors last:border-b-0 hover:bg-surface-panel focus-visible:bg-surface-panel focus-visible:outline-none"
                 >
                   <DriverHeadshot
                     code={driver.driver_code}
@@ -161,7 +161,7 @@ export default function DriverSearchPanel({
                     focalY={driver.media?.focal_y}
                     className="rounded-md"
                   />
-                  <span className="truncate text-sm font-semibold text-text-primary">
+                  <span className="truncate text-sm font-semibold text-ink-strong">
                     {driver.full_name}
                   </span>
                 </button>
@@ -170,7 +170,7 @@ export default function DriverSearchPanel({
               !searchError &&
               !loading &&
               availableDrivers.length === 0 && (
-                <p className="px-3 py-4 text-sm text-text-muted">
+                <p className="px-3 py-4 text-sm text-ink-faint">
                   No matching drivers.
                 </p>
               )}

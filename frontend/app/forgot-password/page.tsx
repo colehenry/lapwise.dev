@@ -28,18 +28,18 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-text-primary mb-1">
+        <h1 className="text-2xl font-bold text-ink-strong mb-1">
           Reset password
         </h1>
-        <p className="text-text-muted text-sm mb-8">
+        <p className="text-ink-faint text-sm mb-8">
           Enter your email and we&apos;ll send you a reset link.
         </p>
 
         {sent ? (
           <div className="text-center">
-            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-purple-500/15 flex items-center justify-center">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-accent/15 flex items-center justify-center">
               <svg
-                className="w-7 h-7 text-purple-400"
+                className="w-7 h-7 text-accent-bright"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -54,13 +54,13 @@ export default function ForgotPasswordPage() {
                 />
               </svg>
             </div>
-            <p className="text-text-secondary text-sm mb-4">
+            <p className="text-ink-base text-sm mb-4">
               If an account exists for that email, we sent a password reset
               link.
             </p>
             <Link
               href="/login"
-              className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+              className="text-sm text-accent-bright hover:text-accent-light transition-colors"
             >
               Back to login
             </Link>
@@ -70,7 +70,7 @@ export default function ForgotPasswordPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm text-text-secondary mb-1.5"
+                className="block text-sm text-ink-base mb-1.5"
               >
                 Email
               </label>
@@ -95,7 +95,7 @@ export default function ForgotPasswordPage() {
             <p className="text-center">
               <Link
                 href="/login"
-                className="text-sm text-text-muted hover:text-text-secondary transition-colors"
+                className="text-sm text-ink-faint hover:text-ink-base transition-colors"
               >
                 Back to login
               </Link>

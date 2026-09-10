@@ -55,7 +55,7 @@ function DriverAvatar({
           alt={driver.full_name}
           width={32}
           height={32}
-          className="rounded-sm object-cover border border-border-secondary flex-shrink-0"
+          className="rounded-sm object-cover border border-line-strong flex-shrink-0"
         />
       ) : (
         <div
@@ -76,7 +76,7 @@ function DriverAvatar({
         <p className="text-xs font-bold font-mono" style={{ color }}>
           {driver.code ?? driver.full_name.split(" ").pop()}
         </p>
-        <p className="text-[10px] text-text-muted font-mono">
+        <p className="text-[10px] text-ink-faint font-mono">
           {driver.wins}
           {winsLabel}
         </p>
@@ -144,7 +144,7 @@ export default function TeammateHeadToHead({
         {["a", "b", "c", "d", "e", "f"].map((id) => (
           <div
             key={`skel-h2h-${id}`}
-            className="h-14 bg-bg-elevated rounded animate-pulse"
+            className="h-14 bg-surface-raised rounded animate-pulse"
           />
         ))}
       </div>
@@ -154,7 +154,7 @@ export default function TeammateHeadToHead({
   if (!data || data.teams.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           No race data available.
         </p>
       </div>
@@ -176,20 +176,20 @@ export default function TeammateHeadToHead({
     <div className="space-y-3">
       {/* Selector row */}
       <div className="flex items-center justify-between" ref={dropdownRef}>
-        <p className="text-xs font-bold font-mono text-text-secondary uppercase tracking-widest">
+        <p className="text-xs font-bold font-mono text-ink-base uppercase tracking-widest">
           Head to Head {mode === "qualifying" ? "Qualifying" : "Race"} Results
         </p>
         <div className="relative">
           <button
             type="button"
             onClick={() => setShowDropdown((v) => !v)}
-            className="px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-border-secondary text-text-secondary hover:border-purple-500 hover:text-purple-300 transition-colors duration-150"
+            className="px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-line-strong text-ink-base hover:border-accent hover:text-accent-light transition-colors duration-150"
           >
             Constructors ({selectedTeams.length})
           </button>
 
           {showDropdown && (
-            <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-10 min-w-[220px] max-h-[300px] overflow-y-auto">
+            <div className="absolute right-0 top-full mt-1 bg-surface-panel border border-line-soft rounded-sm shadow-xl z-10 min-w-[220px] max-h-[300px] overflow-y-auto">
               {sorted.map((team) => {
                 const color = team.team_color
                   ? `#${team.team_color}`
@@ -198,13 +198,13 @@ export default function TeammateHeadToHead({
                 return (
                   <label
                     key={team.team_name}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-bg-elevated cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-surface-raised cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggleTeam(team.team_name)}
-                      className="w-4 h-4 accent-purple-500"
+                      className="w-4 h-4 accent-accent"
                     />
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
@@ -216,7 +216,7 @@ export default function TeammateHeadToHead({
                     >
                       {team.team_name}
                     </span>
-                    <span className="text-[10px] text-text-muted font-mono ml-auto">
+                    <span className="text-[10px] text-ink-faint font-mono ml-auto">
                       {team.rounds_compared}R
                     </span>
                   </label>
@@ -250,7 +250,7 @@ export default function TeammateHeadToHead({
           return (
             <div
               key={team.team_name}
-              className="bg-bg-primary/40 border border-border-primary/60 rounded-sm p-3"
+              className="bg-surface-page/40 border border-line-soft/60 rounded-sm p-3"
             >
               <div className="flex items-center justify-between mb-2">
                 <span
@@ -259,7 +259,7 @@ export default function TeammateHeadToHead({
                 >
                   {team.team_name}
                 </span>
-                <span className="text-[9px] text-text-muted font-mono">
+                <span className="text-[9px] text-ink-faint font-mono">
                   {team.rounds_compared}{" "}
                   {mode === "qualifying" ? "sessions" : "races"}
                 </span>
@@ -274,7 +274,7 @@ export default function TeammateHeadToHead({
                 />
 
                 <div className="flex-1 flex flex-col gap-1">
-                  <div className="flex items-center h-5 rounded-sm overflow-hidden bg-bg-elevated/60">
+                  <div className="flex items-center h-5 rounded-sm overflow-hidden bg-surface-raised/60">
                     <div
                       className="h-full flex items-center justify-end pr-2 transition-all duration-500"
                       style={{
@@ -302,7 +302,7 @@ export default function TeammateHeadToHead({
                       }}
                     >
                       {rightPct >= 20 && (
-                        <span className="text-[10px] font-bold font-mono text-text-muted">
+                        <span className="text-[10px] font-bold font-mono text-ink-faint">
                           {rightPct}%
                         </span>
                       )}
@@ -316,10 +316,10 @@ export default function TeammateHeadToHead({
                     >
                       {driverLeft.wins}
                     </span>
-                    <span className="text-text-muted font-mono text-xs mx-1.5">
+                    <span className="text-ink-faint font-mono text-xs mx-1.5">
                       –
                     </span>
-                    <span className="text-base font-bold font-mono text-text-secondary">
+                    <span className="text-base font-bold font-mono text-ink-base">
                       {driverRight.wins}
                     </span>
                   </div>

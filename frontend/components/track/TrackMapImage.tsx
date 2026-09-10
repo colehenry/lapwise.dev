@@ -21,7 +21,7 @@ export default function TrackMapImage({
   if (typeof circuitId !== "number" || !hasStaticTrackMap(circuitId)) {
     const fallback = (
       <div
-        className={`flex items-center justify-center text-center text-[10px] font-mono uppercase tracking-widest text-text-muted ${fallbackClassName}`}
+        className={`flex items-center justify-center text-center text-[10px] font-mono uppercase tracking-widest text-ink-faint ${fallbackClassName}`}
       >
         No map available
       </div>

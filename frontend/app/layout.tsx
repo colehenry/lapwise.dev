@@ -49,10 +49,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="dark" suppressHydrationWarning>
-      <body
-        className={`antialiased ${outfit.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable}`}
-      >
+    // The font variables must sit on <html>: `--font-sans` is declared on :root
+    // and resolves `var(--font-outfit, …)` there, so a variable defined only on
+    // <body> arrives too late and every page falls back to Segoe UI.
+    <html
+      lang="en"
+      data-theme="dark"
+      suppressHydrationWarning
+      className={`${outfit.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable}`}
+    >
+      <body className="antialiased">
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: inline theme-init script must run before first paint to prevent a flash of the wrong theme */}
         <script dangerouslySetInnerHTML={{ __html: getThemeInitScript() }} />
         <ThemeProvider>

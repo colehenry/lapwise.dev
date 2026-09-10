@@ -27,13 +27,13 @@ function DriverCard({ driver }: { driver: DriverListItem }) {
 
   return (
     <TiltCard>
-      <div className="relative border border-border-primary rounded-sm p-4 hover:border-purple-500 transition-all duration-200 bg-bg-tertiary h-full">
+      <div className="relative border border-line-soft rounded-sm p-4 hover:border-accent transition-all duration-200 bg-surface-panel h-full">
         <Link href={driverUrl ?? "/drivers"} className="block">
           <div className="flex items-center gap-3">
             {/* Headshot */}
             {isValidHeadshotUrl(headshotUrl) ? (
               <div
-                className="w-14 h-14 rounded-sm overflow-hidden border-2 flex-shrink-0 bg-bg-secondary"
+                className="w-14 h-14 rounded-sm overflow-hidden border-2 flex-shrink-0 bg-surface-band"
                 style={{
                   borderColor: driver.current_team_color
                     ? `#${driver.current_team_color}`
@@ -51,7 +51,7 @@ function DriverCard({ driver }: { driver: DriverListItem }) {
               </div>
             ) : (
               <div
-                className="w-14 h-14 rounded-sm flex items-center justify-center text-xs font-bold text-text-tertiary border-2 bg-bg-secondary flex-shrink-0 font-mono"
+                className="w-14 h-14 rounded-sm flex items-center justify-center text-xs font-bold text-ink-soft border-2 bg-surface-band flex-shrink-0 font-mono"
                 style={{
                   borderColor: driver.current_team_color
                     ? `#${driver.current_team_color}`
@@ -65,18 +65,18 @@ function DriverCard({ driver }: { driver: DriverListItem }) {
             {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="text-text-primary font-bold truncate">
+                <h3 className="text-ink-strong font-bold truncate">
                   {driver.full_name}
                 </h3>
                 {isActive && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-purple-500 flex-shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
                 )}
               </div>
-              <div className="flex items-center gap-2 text-xs text-text-muted font-mono tracking-wider uppercase mt-0.5">
+              <div className="flex items-center gap-2 text-xs text-ink-faint font-mono tracking-wider uppercase mt-0.5">
                 {driver.driver_code && <span>{driver.driver_code}</span>}
                 {driver.country_code && (
                   <>
-                    <span className="text-border-secondary">/</span>
+                    <span className="text-line-strong">/</span>
                     <span className="flex items-center gap-1">
                       <span>{getDriverFlagEmoji(driver.country_code)}</span>
                       <span className="hidden sm:inline">
@@ -90,10 +90,10 @@ function DriverCard({ driver }: { driver: DriverListItem }) {
 
             {/* Wins */}
             <div className="flex-shrink-0 text-right">
-              <div className="text-2xl font-bold text-text-primary tabular-nums">
+              <div className="text-2xl font-bold text-ink-strong tabular-nums">
                 {driver.total_wins}
               </div>
-              <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase">
+              <div className="text-[10px] text-ink-faint font-mono tracking-widest uppercase">
                 wins
               </div>
             </div>
@@ -101,24 +101,24 @@ function DriverCard({ driver }: { driver: DriverListItem }) {
         </Link>
 
         {/* Bottom bar */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-border-primary">
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-line-soft">
           {driver.current_team && constructorUrl ? (
             <Link
               href={constructorUrl}
-              className="text-xs text-text-muted hover:text-purple-300 transition-colors truncate"
+              className="text-xs text-ink-faint hover:text-accent-light transition-colors truncate"
             >
               {driver.current_team}
             </Link>
           ) : (
             <span />
           )}
-          <div className="flex items-center gap-3 text-[10px] text-text-muted font-mono tracking-wider">
+          <div className="flex items-center gap-3 text-[10px] text-ink-faint font-mono tracking-wider">
             <span>{driver.total_races} races</span>
-            <span className="text-border-secondary">/</span>
+            <span className="text-line-strong">/</span>
             <span>{driver.total_podiums} podiums</span>
             {driver.first_season && (
               <>
-                <span className="text-border-secondary">/</span>
+                <span className="text-line-strong">/</span>
                 <span>
                   {driver.first_season}–{isActive ? "" : driver.latest_season}
                 </span>

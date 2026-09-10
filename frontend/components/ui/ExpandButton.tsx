@@ -16,7 +16,7 @@ export default function ExpandButton({
       <button
         type="button"
         onClick={onToggle}
-        className="border border-border-secondary rounded-sm text-text-secondary hover:border-purple-500 hover:text-purple-300 font-mono text-xs uppercase tracking-widest px-6 py-2 transition-colors duration-150 flex items-center gap-2"
+        className="border border-line-strong rounded-sm text-ink-base hover:border-accent hover:text-accent-light font-mono text-xs uppercase tracking-widest px-6 py-2 transition-colors duration-150 flex items-center gap-2"
       >
         {isExpanded ? "COLLAPSE" : `SHOW ALL (${remainingCount} more)`}
         <svg

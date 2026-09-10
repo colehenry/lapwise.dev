@@ -31,7 +31,7 @@ function ProofLine({ evidence }: { evidence: GridAttempt["rowEvidence"] }) {
   return (
     <p
       className={`text-[10px] leading-snug ${
-        evidence?.satisfied ? "text-success" : "text-red-400"
+        evidence?.satisfied ? "text-success" : "text-danger-bright"
       }`}
     >
       <span aria-hidden="true">{evidence?.satisfied ? "✓" : "✗"}</span> {proof}
@@ -71,15 +71,15 @@ export default function GameDriverCell({
       >
         <div className="game-card-inner">
           <div
-            className={`game-card-face flex items-center justify-center border border-dashed transition-colors group-hover:border-text-muted group-hover:bg-bg-tertiary ${
+            className={`game-card-face flex items-center justify-center border border-dashed transition-colors group-hover:border-ink-faint group-hover:bg-surface-panel ${
               selected
-                ? "border-text-muted bg-bg-tertiary"
-                : "border-border-secondary bg-bg-primary/60"
+                ? "border-ink-faint bg-surface-panel"
+                : "border-line-strong bg-surface-page/60"
             } ${cornerClass ?? ""}`}
           >
             <DriverSilhouette
-              className={`w-[46%] max-w-16 transition-colors group-hover:text-text-secondary/55 ${
-                selected ? "text-text-secondary/55" : ""
+              className={`w-[46%] max-w-16 transition-colors group-hover:text-ink-base/55 ${
+                selected ? "text-ink-base/55" : ""
               }`}
             />
           </div>
@@ -97,7 +97,7 @@ export default function GameDriverCell({
                   focalY={driver.media?.focal_y}
                   className="aspect-square w-[68%] rounded-md"
                 />
-                <span className="mt-1.5 line-clamp-2 text-center text-[9px] font-semibold leading-tight text-text-primary sm:text-xs">
+                <span className="mt-1.5 line-clamp-2 text-center text-[9px] font-semibold leading-tight text-ink-strong sm:text-xs">
                   {driver.full_name}
                 </span>
               </>
@@ -112,7 +112,7 @@ export default function GameDriverCell({
           aria-label={label}
           disabled={disabled}
           onClick={onSelect}
-          className="absolute inset-0 z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-purple-400 disabled:cursor-default"
+          className="absolute inset-0 z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent-bright disabled:cursor-default"
         />
       )}
 
@@ -120,28 +120,27 @@ export default function GameDriverCell({
         <Link
           href={`/drivers/${driver.driver_slug}`}
           aria-label={`View ${driver.full_name}'s profile`}
-          className="absolute inset-0 z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-purple-400"
+          className="absolute inset-0 z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent-bright"
         />
       )}
 
       {!driver && !finished && (
         <>
           {misses.length > 0 && (
-            <span className="pointer-events-none absolute right-1.5 top-1.5 z-10 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[8px] font-bold text-text-primary">
+            <span className="pointer-events-none absolute right-1.5 top-1.5 z-10 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[8px] font-bold text-ink-strong">
               {misses.length}
             </span>
           )}
-          <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-48 -translate-x-1/2 translate-y-1 rounded-md border border-border-primary bg-bg-elevated px-3 py-2 opacity-0 shadow-xl transition-all group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100">
-            <p className="text-[10px] font-semibold text-text-primary">
-              {rowLabel} <span className="text-text-muted">•</span>{" "}
-              {columnLabel}
+          <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-48 -translate-x-1/2 translate-y-1 rounded-md border border-line-soft bg-surface-raised px-3 py-2 opacity-0 shadow-xl transition-all group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100">
+            <p className="text-[10px] font-semibold text-ink-strong">
+              {rowLabel} <span className="text-ink-faint">•</span> {columnLabel}
             </p>
             {misses
               .slice()
               .reverse()
               .map((miss, index) => (
                 <div key={`${miss.driver.driver_slug}-${index}`}>
-                  <p className="mt-1 text-[10px] text-text-secondary">
+                  <p className="mt-1 text-[10px] text-ink-base">
                     Not {miss.driver.full_name}
                   </p>
                   {/* Proof only for the most recent miss: the whole history
@@ -155,17 +154,15 @@ export default function GameDriverCell({
                 </div>
               ))}
             {misses.length === 0 && !finished && (
-              <p className="mt-1 text-[10px] text-text-muted">
-                Click to search
-              </p>
+              <p className="mt-1 text-[10px] text-ink-faint">Click to search</p>
             )}
           </div>
         </>
       )}
 
       {driver && (solved?.rowEvidence || solved?.columnEvidence) && (
-        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-52 -translate-x-1/2 translate-y-1 rounded-md border border-border-primary bg-bg-elevated px-3 py-2 opacity-0 shadow-xl transition-all group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100">
-          <p className="text-[10px] font-semibold text-text-primary">
+        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-52 -translate-x-1/2 translate-y-1 rounded-md border border-line-soft bg-surface-raised px-3 py-2 opacity-0 shadow-xl transition-all group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100">
+          <p className="text-[10px] font-semibold text-ink-strong">
             {driver.full_name}
           </p>
           <ProofLine evidence={solved.rowEvidence} />

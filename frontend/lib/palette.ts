@@ -1,16 +1,44 @@
 // Values resolve per theme from the CSS custom properties in app/globals.css.
 
+/**
+ * Pirelli's compound colours, from FastF1's `compound_colors` — the same
+ * library the ingest reads. A compound colour is a fact about the tyre, so it
+ * is never restyled to suit the palette.
+ *
+ * The modern set applies to every season. Hypersoft, ultrasoft, supersoft and
+ * superhard ran only in 2018 and have no modern equivalent, so they keep their
+ * own colours.
+ */
 export const COMPOUND_COLORS: Record<string, string> = {
+  HYPERSOFT: "var(--compound-hypersoft)",
+  ULTRASOFT: "var(--compound-ultrasoft)",
   SUPERSOFT: "var(--compound-supersoft)",
   SOFT: "var(--compound-soft)",
   MEDIUM: "var(--compound-medium)",
   HARD: "var(--compound-hard)",
+  SUPERHARD: "var(--compound-superhard)",
   INTERMEDIATE: "var(--compound-inter)",
   WET: "var(--compound-wet)",
 };
 
+/** Every compound name the `laps.compound` column holds. */
+export const COMPOUND_NAMES_ALL = Object.keys(COMPOUND_COLORS);
+
 export const getCompoundColor = (compound: string | null | undefined): string =>
   COMPOUND_COLORS[compound ?? ""] ?? "var(--delta-neutral)";
+
+/** The console replay carries compound initials rather than names. */
+const COMPOUND_BY_INITIAL: Record<string, string> = {
+  S: "SOFT",
+  M: "MEDIUM",
+  H: "HARD",
+  I: "INTERMEDIATE",
+  W: "WET",
+};
+
+export const compoundFromInitial = (
+  initial: string | null | undefined,
+): string | null => COMPOUND_BY_INITIAL[initial?.toUpperCase() ?? ""] ?? null;
 
 export const POSITION_COLORS = {
   gold: "var(--pos-gold)",

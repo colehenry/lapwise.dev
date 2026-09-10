@@ -11,8 +11,8 @@ export default function AskPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-bg-secondary flex items-center justify-center">
-          <span className="text-text-muted text-sm font-mono">Loading...</span>
+        <div className="page-frame min-h-[calc(100dvh-3.25rem)] py-16">
+          <p className="m-0 font-mono text-[12px] text-ink-faint">Loading…</p>
         </div>
       }
     >

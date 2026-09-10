@@ -38,15 +38,15 @@ function Callback() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="w-full max-w-sm text-center">
-          <h1 className="text-xl font-bold text-text-primary mb-2">
+          <h1 className="text-xl font-bold text-ink-strong mb-2">
             Sign-in didn&apos;t complete
           </h1>
-          <p className="text-text-muted text-sm mb-6">
+          <p className="text-ink-faint text-sm mb-6">
             We couldn&apos;t finish signing you in. Please try again.
           </p>
           <Link
             href="/login"
-            className="text-purple-400 hover:text-purple-300 transition-colors text-sm"
+            className="text-accent-bright hover:text-accent-light transition-colors text-sm"
           >
             Back to login
           </Link>
@@ -62,10 +62,10 @@ function CallbackPending() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm text-center">
-        <h1 className="text-xl font-bold text-text-primary mb-2">
+        <h1 className="text-xl font-bold text-ink-strong mb-2">
           Signing you in…
         </h1>
-        <p className="text-text-muted text-sm mb-6">
+        <p className="text-ink-faint text-sm mb-6">
           Just a moment while we set up your session.
         </p>
         <Skeleton className="h-2 w-full" />

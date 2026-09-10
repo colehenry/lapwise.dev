@@ -3,17 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { CHART_TYPOGRAPHY } from "@/components/charts/chart-primitives";
 import { apiHeaders, apiUrl } from "@/lib/api";
-import { COMPOUND_COLORS as COMPOUND } from "@/lib/palette";
+import { getCompoundColor } from "@/lib/palette";
 import type { CircuitTyreStatsResponse } from "@/lib/types";
-
-const COMPOUND_COLORS: Record<string, { bar: string; text: string }> = {
-  SUPERSOFT: { bar: COMPOUND.SUPERSOFT, text: "text-purple-400" },
-  SOFT: { bar: COMPOUND.SOFT, text: "text-red-400" },
-  MEDIUM: { bar: COMPOUND.MEDIUM, text: "text-yellow-400" },
-  HARD: { bar: COMPOUND.HARD, text: "text-text-secondary" },
-  INTERMEDIATE: { bar: COMPOUND.INTERMEDIATE, text: "text-green-400" },
-  WET: { bar: COMPOUND.WET, text: "text-blue-400" },
-};
 
 interface CircuitTyreStatsProps {
   circuitId: string;
@@ -34,8 +25,8 @@ export default function CircuitTyreStats({ circuitId }: CircuitTyreStatsProps) {
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <div className="h-6 bg-bg-elevated rounded w-40 animate-pulse" />
-        <div className="h-48 bg-bg-elevated rounded animate-pulse" />
+        <div className="h-6 bg-surface-raised rounded w-40 animate-pulse" />
+        <div className="h-48 bg-surface-raised rounded animate-pulse" />
       </div>
     );
   }
@@ -43,7 +34,7 @@ export default function CircuitTyreStats({ circuitId }: CircuitTyreStatsProps) {
   if (!data || data.compounds.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           Tyre data not available for this circuit.
         </p>
       </div>
@@ -65,10 +56,7 @@ export default function CircuitTyreStats({ circuitId }: CircuitTyreStatsProps) {
 
       <div className="space-y-3">
         {data.compounds.map((compound) => {
-          const colors = COMPOUND_COLORS[compound.compound] || {
-            bar: "var(--delta-neutral)",
-            text: "text-text-muted",
-          };
+          const color = getCompoundColor(compound.compound);
           const widthPercent =
             maxPercent > 0 ? (compound.percentage / maxPercent) * 100 : 0;
 
@@ -78,31 +66,32 @@ export default function CircuitTyreStats({ circuitId }: CircuitTyreStatsProps) {
                 <div className="flex items-center gap-2">
                   <span
                     className="w-3 h-3 rounded-full shrink-0"
-                    style={{ backgroundColor: colors.bar }}
+                    style={{ backgroundColor: color }}
                   />
                   <span
-                    className={`text-xs font-bold font-mono uppercase tracking-widest ${colors.text}`}
+                    className="text-xs font-bold font-mono uppercase tracking-widest"
+                    style={{ color }}
                   >
                     {compound.compound}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
                   {compound.avg_stint_length != null && (
-                    <span className="text-[10px] text-text-muted font-mono">
+                    <span className="text-[10px] text-ink-faint font-mono">
                       ~{compound.avg_stint_length} laps/stint
                     </span>
                   )}
-                  <span className="text-xs font-bold text-text-primary font-mono w-12 text-right">
+                  <span className="text-xs font-bold text-ink-strong font-mono w-12 text-right">
                     {compound.percentage}%
                   </span>
                 </div>
               </div>
-              <div className="h-2 bg-bg-primary rounded-full overflow-hidden">
+              <div className="h-2 bg-surface-page rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-700"
                   style={{
                     width: `${widthPercent}%`,
-                    backgroundColor: colors.bar,
+                    backgroundColor: color,
                     opacity: 0.72,
                   }}
                 />
@@ -113,11 +102,11 @@ export default function CircuitTyreStats({ circuitId }: CircuitTyreStatsProps) {
       </div>
 
       {/* Total laps summary */}
-      <div className="mt-4 pt-3 border-t border-border-primary flex items-center justify-between">
-        <span className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+      <div className="mt-4 pt-3 border-t border-line-soft flex items-center justify-between">
+        <span className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
           Total Laps Analyzed
         </span>
-        <span className="text-xs font-bold text-text-tertiary font-mono">
+        <span className="text-xs font-bold text-ink-soft font-mono">
           {data.compounds
             .reduce((sum, c) => sum + c.total_laps, 0)
             .toLocaleString()}

@@ -122,10 +122,10 @@ function ChooseUsernameForm() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-text-primary mb-1">
+        <h1 className="text-2xl font-bold text-ink-strong mb-1">
           Choose a username
         </h1>
-        <p className="text-text-muted text-sm mb-8">
+        <p className="text-ink-faint text-sm mb-8">
           This is the name that will appear on discussion boards.
         </p>
 
@@ -133,7 +133,7 @@ function ChooseUsernameForm() {
           <div>
             <label
               htmlFor="username"
-              className="block text-sm text-text-secondary mb-1.5"
+              className="block text-sm text-ink-base mb-1.5"
             >
               Username
             </label>
@@ -150,12 +150,12 @@ function ChooseUsernameForm() {
               placeholder="cool_racer"
             />
             {usernameStatus === "idle" && (
-              <p className="text-xs text-text-muted mt-1">
+              <p className="text-xs text-ink-faint mt-1">
                 3-20 characters, lowercase letters, numbers, and underscores
               </p>
             )}
             {usernameStatus === "checking" && (
-              <p className="text-xs text-text-muted mt-1">
+              <p className="text-xs text-ink-faint mt-1">
                 Checking availability...
               </p>
             )}
@@ -164,7 +164,7 @@ function ChooseUsernameForm() {
                 className={`text-xs mt-1 ${
                   usernameStatus === "available"
                     ? "text-green-400"
-                    : "text-red-400"
+                    : "text-danger-bright"
                 }`}
               >
                 {usernameMessage}
@@ -173,7 +173,7 @@ function ChooseUsernameForm() {
           </div>
 
           {error && (
-            <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-sm px-3 py-2">
+            <p className="text-danger-bright text-sm bg-danger/10 border border-danger/20 rounded-sm px-3 py-2">
               {error}
             </p>
           )}

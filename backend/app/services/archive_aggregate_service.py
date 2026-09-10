@@ -11,7 +11,8 @@ from datetime import datetime, timezone
 from sqlalchemy import delete, func, insert, literal, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import AggConstructorCareer, AggDriverCareer
+from app.models import AggConstructorCareer, AggDriverCareer, Circuit, Session
+from app.schemas.archive import ArchiveCountsResponse
 from app.schemas.constructor import ConstructorListResponse
 from app.schemas.driver import DriverListResponse
 from app.services.constructor_catalog_service import ConstructorCatalogService
@@ -22,6 +23,45 @@ VARIANTS = (True, False)
 
 class ArchiveAggregateService:
     """Aggregate-backed archive listings with a live fallback."""
+
+    @staticmethod
+    async def counts(db: AsyncSession) -> ArchiveCountsResponse:
+        """How much the archive holds, as five scalars.
+
+        Circuits are counted as venues rather than layout rows, because that is
+        what the archive listing shows: Monza's several layouts are one circuit
+        to a reader, and a tile that disagreed with the page behind it would
+        read as a bug.
+        """
+        raced = Session.session_type == "race"
+        drivers = await db.scalar(
+            select(func.count())
+            .select_from(AggDriverCareer)
+            .where(AggDriverCareer.include_sprint.is_(True))
+        )
+        constructors = await db.scalar(
+            select(func.count())
+            .select_from(AggConstructorCareer)
+            .where(AggConstructorCareer.include_sprint.is_(True))
+        )
+        circuits = await db.scalar(
+            select(func.count(func.distinct(Circuit.venue_id)))
+            .join(Session, Session.circuit_id == Circuit.id)
+            .where(raced)
+        )
+        races, first_season = (
+            await db.execute(
+                select(func.count(Session.id), func.min(Session.year)).where(raced)
+            )
+        ).one()
+
+        return ArchiveCountsResponse(
+            drivers=drivers or 0,
+            constructors=constructors or 0,
+            circuits=circuits or 0,
+            races=races or 0,
+            first_season=first_season,
+        )
 
     @staticmethod
     async def driver_list(

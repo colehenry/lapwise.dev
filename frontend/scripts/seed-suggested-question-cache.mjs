@@ -65,9 +65,10 @@ async function readNdjson(response) {
 }
 
 function questionHash(question) {
+  const version = process.env.AI_RESPONSE_CACHE_VERSION || "clutch-v3";
   return crypto
-    .createHash("md5")
-    .update(question.toLowerCase().trim())
+    .createHash("sha256")
+    .update(`${version}:${question.toLowerCase().trim()}`)
     .digest("hex");
 }
 

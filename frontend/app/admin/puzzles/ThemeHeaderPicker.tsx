@@ -99,10 +99,10 @@ export default function ThemeHeaderPicker({
               key={id}
               type="button"
               onClick={() => toggle(id)}
-              className="flex items-center gap-1 rounded-sm border border-purple-500/30 bg-purple-500/10 px-1.5 py-0.5 text-[11px] text-text-primary hover:border-red-500/40 hover:bg-red-500/10"
+              className="flex items-center gap-1 rounded-sm border border-accent/30 bg-accent/10 px-1.5 py-0.5 text-[11px] text-ink-strong hover:border-danger/40 hover:bg-danger/10"
             >
               {labelFor(id)}
-              <span aria-hidden="true" className="text-text-muted">
+              <span aria-hidden="true" className="text-ink-faint">
                 ×
               </span>
               <span className="sr-only">Remove</span>
@@ -119,12 +119,12 @@ export default function ThemeHeaderPicker({
           loading ? "Loading headers…" : `Search ${headers.length} headers`
         }
         disabled={loading || headers.length === 0}
-        className="w-full rounded-sm border border-border-primary bg-bg-primary px-2 py-1 text-xs text-text-primary"
+        className="w-full rounded-sm border border-line-soft bg-surface-page px-2 py-1 text-xs text-ink-strong"
       />
 
-      {error && <p className="text-[11px] text-red-400">{error}</p>}
+      {error && <p className="text-[11px] text-danger-bright">{error}</p>}
 
-      <div className="max-h-56 overflow-y-auto rounded-sm border border-border-primary">
+      <div className="max-h-56 overflow-y-auto rounded-sm border border-line-soft">
         {byKind.map(([kind, options]) => {
           const open = openKind === kind || query.trim().length > 0;
           const chosen = options.filter((option) =>
@@ -133,38 +133,38 @@ export default function ThemeHeaderPicker({
           return (
             <div
               key={kind}
-              className="border-b border-border-primary last:border-b-0"
+              className="border-b border-line-soft last:border-b-0"
             >
               <button
                 type="button"
                 onClick={() => setOpenKind(open && !query ? null : kind)}
-                className="flex w-full items-center justify-between px-2 py-1.5 text-left hover:bg-bg-tertiary"
+                className="flex w-full items-center justify-between px-2 py-1.5 text-left hover:bg-surface-panel"
               >
-                <span className="text-[11px] font-medium text-text-secondary">
+                <span className="text-[11px] font-medium text-ink-base">
                   {kindLabel(kind)}
                 </span>
-                <span className="font-mono text-[10px] text-text-muted">
+                <span className="font-mono text-[10px] text-ink-faint">
                   {chosen > 0 && (
-                    <span className="text-purple-300">{chosen} · </span>
+                    <span className="text-accent-light">{chosen} · </span>
                   )}
                   {options.length}
                 </span>
               </button>
               {open && (
-                <ul className="border-t border-border-primary/60 bg-bg-primary">
+                <ul className="border-t border-line-soft/60 bg-surface-page">
                   {options.map((option) => (
                     <li key={option.id}>
                       <button
                         type="button"
                         onClick={() => toggle(option.id)}
-                        className={`flex w-full items-center justify-between gap-2 px-3 py-1 text-left text-[11px] hover:bg-bg-tertiary ${
+                        className={`flex w-full items-center justify-between gap-2 px-3 py-1 text-left text-[11px] hover:bg-surface-panel ${
                           selected.includes(option.id)
-                            ? "text-purple-300"
-                            : "text-text-primary"
+                            ? "text-accent-light"
+                            : "text-ink-strong"
                         }`}
                       >
                         <span className="truncate">{option.label}</span>
-                        <span className="shrink-0 font-mono text-[10px] text-text-muted">
+                        <span className="shrink-0 font-mono text-[10px] text-ink-faint">
                           {option.depth}
                         </span>
                       </button>

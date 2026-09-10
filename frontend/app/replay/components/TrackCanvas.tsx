@@ -118,7 +118,8 @@ export default function TrackCanvas({
       const usableH = height - PADDING * 2;
       const scale = Math.min(usableW / trackW, usableH / trackH);
       const offsetX = (width - trackW * scale) / 2 - minX * scale;
-      const offsetY = (height - trackH * scale) / 2 - minY * scale;
+      // y runs upward in track coordinates, downward on a canvas.
+      const offsetY = (height - trackH * scale) / 2 + maxY * scale;
 
       return { scale, offsetX, offsetY };
     },
@@ -222,10 +223,9 @@ export default function TrackCanvas({
 
     const { scale, offsetX, offsetY } = getTransform(width, height);
 
-    // Apply transform
     ctx.save();
     ctx.translate(offsetX, offsetY);
-    ctx.scale(scale, scale);
+    ctx.scale(scale, -scale);
 
     // Draw track polyline with outer glow
     if (trackPathRef.current) {
@@ -329,7 +329,7 @@ export default function TrackCanvas({
         const hData = frame.d[highlightedDriver];
         const hColor = drivers[highlightedDriver]
           ? `#${drivers[highlightedDriver].color}`
-          : resolveToken("--text-primary");
+          : resolveToken("--ink-strong");
         // Pulsing ring
         const ringRadius = 14 / scale;
         ctx.strokeStyle = hColor;
@@ -413,7 +413,7 @@ export default function TrackCanvas({
 
       // Convert mouse to track coords
       const trackX = (mouseX - offsetX) / scale;
-      const trackY = (mouseY - offsetY) / scale;
+      const trackY = (offsetY - mouseY) / scale;
 
       // Hit test each driver
       let closest: string | null = null;
@@ -438,7 +438,7 @@ export default function TrackCanvas({
         const driverData = frame.d[tooltipCode];
         onTooltipChange?.({
           screenX: driverData[0] * scale + offsetX,
-          screenY: driverData[1] * scale + offsetY,
+          screenY: offsetY - driverData[1] * scale,
           code: tooltipCode,
           driver: drivers[tooltipCode],
           data: driverData,
@@ -475,7 +475,7 @@ export default function TrackCanvas({
       const driverData = frame.d[selectedDriver];
       onTooltipChange?.({
         screenX: driverData[0] * scale + offsetX,
-        screenY: driverData[1] * scale + offsetY,
+        screenY: offsetY - driverData[1] * scale,
         code: selectedDriver,
         driver: drivers[selectedDriver],
         data: driverData,
@@ -516,7 +516,7 @@ export default function TrackCanvas({
     lastEmittedRef.current = selectedDriver;
     onTooltipChange?.({
       screenX: driverData[0] * scale + offsetX,
-      screenY: driverData[1] * scale + offsetY,
+      screenY: offsetY - driverData[1] * scale,
       code: selectedDriver,
       driver: drivers[selectedDriver],
       data: driverData,
@@ -562,7 +562,7 @@ function drawCornerLabels(
     seen.add(corner.number);
 
     const label = `T${corner.number}`;
-    ctx.fillText(label, corner.x, corner.y);
+    drawUprightText(ctx, label, corner.x, corner.y);
   }
 }
 
@@ -607,10 +607,10 @@ function drawDriver(
   // Label for highlighted drivers
   if (isHighlighted) {
     ctx.font = `bold ${11 / scale}px monospace`;
-    ctx.fillStyle = resolveToken("--text-primary");
+    ctx.fillStyle = resolveToken("--ink-strong");
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
-    ctx.fillText(code, x, y - radius - 3 / scale);
+    drawUprightText(ctx, code, x, y + radius + 3 / scale);
   }
 }
 
@@ -647,23 +647,25 @@ function drawSafetyCar(
   ctx.globalAlpha = 0.8;
   ctx.fillStyle = scColor;
   ctx.beginPath();
-  ctx.arc(leaderX + 15 / scale, leaderY - 15 / scale, radius, 0, Math.PI * 2);
+  ctx.arc(leaderX + 15 / scale, leaderY + 15 / scale, radius, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.font = `bold ${9 / scale}px monospace`;
-  ctx.fillStyle = resolveToken("--text-primary");
+  ctx.fillStyle = resolveToken("--ink-strong");
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   const scLabels: Record<number, string> = { 1: "SC", 2: "VSC", 3: "RED" };
-  ctx.fillText(
+  drawUprightText(
+    ctx,
     scLabels[frame.sc] ?? "SC",
     leaderX + 15 / scale,
-    leaderY - 15 / scale,
+    leaderY + 15 / scale,
   );
 
   ctx.globalAlpha = 1;
 }
 
+import { drawUprightText } from "@/lib/chart-utils";
 import { COMPOUND_COLORS as COMPOUND, resolveToken } from "@/lib/palette";
 
 const COMPOUND_COLORS: Record<number, string> = {
@@ -716,7 +718,7 @@ export function DriverTooltip({
 
   return (
     <div
-      className="absolute pointer-events-none bg-bg-primary/95 backdrop-blur-sm border border-border-primary rounded-sm px-3 py-2 text-xs z-10"
+      className="absolute pointer-events-none bg-surface-page/95 backdrop-blur-sm border border-line-soft rounded-sm px-3 py-2 text-xs z-10"
       style={{
         left: flipX ? x - 170 : x + 12,
         top: Math.max(y - 60, 8),
@@ -738,26 +740,24 @@ export function DriverTooltip({
             style={{ backgroundColor: `#${driver.color}` }}
           />
         )}
-        <span className="font-semibold text-text-primary font-mono">
-          {code}
-        </span>
-        <span className="text-text-muted">P{position}</span>
+        <span className="font-semibold text-ink-strong font-mono">{code}</span>
+        <span className="text-ink-faint">P{position}</span>
       </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-text-secondary font-mono">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-ink-base font-mono">
         <span>Speed</span>
-        <span className="text-text-primary">{Math.round(speed)} km/h</span>
+        <span className="text-ink-strong">{Math.round(speed)} km/h</span>
         <span>Gear</span>
-        <span className="text-text-primary">{gear}</span>
+        <span className="text-ink-strong">{gear}</span>
         <span>Throttle</span>
-        <span className="text-text-primary">{Math.round(throttle ?? 0)}%</span>
+        <span className="text-ink-strong">{Math.round(throttle ?? 0)}%</span>
         <span>Brake</span>
-        <span className={brake ? "text-red-400" : "text-text-muted"}>
+        <span className={brake ? "text-danger-bright" : "text-ink-faint"}>
           {brake ? "ON" : "OFF"}
         </span>
         {hasDrs && (
           <>
             <span>DRS</span>
-            <span className={drs ? "text-green-400" : "text-text-muted"}>
+            <span className={drs ? "text-green-400" : "text-ink-faint"}>
               {drs ? "OPEN" : "OFF"}
             </span>
           </>
@@ -771,7 +771,7 @@ export function DriverTooltip({
                 COMPOUND_COLORS[compound] ?? "var(--delta-neutral)",
             }}
           />
-          <span className="text-text-primary">
+          <span className="text-ink-strong">
             {COMPOUND_LABELS[compound] ?? "?"} ({tyreLife}L)
           </span>
         </span>

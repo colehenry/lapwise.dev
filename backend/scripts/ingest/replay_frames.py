@@ -27,7 +27,17 @@ NORMALIZED_RANGE = 1000.0
 # a longest chord under ~61 units, and repeat ~31% of position samples across a race.
 MAX_DUPLICATE_SEGMENT_FRACTION = 0.10
 MAX_SEGMENT_UNITS = 80.0
-MAX_FROZEN_SAMPLE_FRACTION = 0.50
+# Repeats while a car is moving. Good rounds measure 0.4-0.8% and the one
+# genuinely corrupt feed measures 38%, so anything in between is a wide margin.
+MAX_FROZEN_SAMPLE_FRACTION = 0.10
+
+# A run of identical coordinates this long is a stopped car, not a dead feed.
+# The position feed samples about five times a second, so this is a few seconds
+# of genuine stillness: a red-flag queue, a retirement, the grid before lights
+# out. Counting those as frozen rejected Monza 2026 at 51% for the crime of
+# being red-flagged, while Hungary's actually broken feed sat at 77% — the two
+# were indistinguishable until the stationary runs came out of the measure.
+PARKED_RUN_SAMPLES = 30
 
 # Tyre compound encoding
 COMPOUND_MAP = {
@@ -121,8 +131,34 @@ def polyline_defect(polyline):
     return None
 
 
+def _moving_frozen_fraction(coords):
+    """Fraction of samples repeating the previous ones while the car moves."""
+    repeated = np.abs(np.diff(coords, axis=0)).sum(axis=1) == 0
+    if not repeated.any():
+        return 0.0
+
+    parked = 0
+    run = 0
+    for is_repeat in repeated:
+        if is_repeat:
+            run += 1
+            continue
+        if run >= PARKED_RUN_SAMPLES:
+            parked += run
+        run = 0
+    if run >= PARKED_RUN_SAMPLES:
+        parked += run
+
+    return float((repeated.sum() - parked) / len(repeated))
+
+
 def frozen_sample_fraction(fastf1_session):
-    """Mean fraction of position samples repeating the previous coordinates."""
+    """Mean fraction of position samples that repeat while the car is moving.
+
+    A stopped car legitimately reports the same coordinates for as long as it
+    stands there, so time spent stationary is excluded rather than counted
+    against the feed.
+    """
     fractions = []
     for driver in fastf1_session.drivers:
         try:
@@ -131,7 +167,7 @@ def frozen_sample_fraction(fastf1_session):
             continue
         if len(coords) < 2:
             continue
-        fractions.append((np.abs(np.diff(coords, axis=0)).sum(axis=1) == 0).mean())
+        fractions.append(_moving_frozen_fraction(coords))
 
     return float(np.mean(fractions)) if fractions else 0.0
 

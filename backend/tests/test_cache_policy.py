@@ -107,6 +107,28 @@ def test_replay_track_geometry_is_treated_as_a_static_asset():
     assert max_age("/api/replay/track/14") == 7 * 24 * 3600
 
 
+def test_a_finished_race_console_is_cached_as_hard_as_a_static_asset():
+    assert max_age("/api/replay/console/2026/13") == 7 * 24 * 3600
+
+
+def test_a_telemetry_slice_is_cached_as_hard_as_the_console_it_serves():
+    assert max_age("/api/replay/console/2026/13/telemetry/ANT") == 7 * 24 * 3600
+
+
+def test_archive_counts_are_cached_for_a_day():
+    assert max_age("/api/archive/counts") == 86400
+
+
+def test_headlines_refresh_at_the_rate_results_land():
+    assert max_age("/api/headlines") == 300
+
+
+def test_the_daily_summary_stays_out_of_shared_caches():
+    """Its streak and "played today" fields become per-viewer the moment they
+    carry a value."""
+    assert directive("/api/daily/summary") == NO_STORE
+
+
 def test_daily_grid_refreshes_without_caching_guess_submissions():
     assert max_age("/api/daily") == 300
     assert directive("/api/daily/guess") == NO_STORE

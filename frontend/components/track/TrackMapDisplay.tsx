@@ -18,7 +18,7 @@ function DotGridPattern({ id = "dot-grid" }: { id?: string }) {
             cy="1"
             r="0.8"
             fill="currentColor"
-            className="text-purple-400"
+            className="text-accent-bright"
           />
         </pattern>
       </defs>
@@ -92,7 +92,7 @@ export function TrackMapFull({
 
   return (
     <div
-      className="w-full md:w-72 border-t md:border-t-0 md:border-l border-border-primary relative flex items-center justify-center overflow-hidden min-h-[180px]"
+      className="w-full md:w-72 border-t md:border-t-0 md:border-l border-line-soft relative flex items-center justify-center overflow-hidden min-h-[180px]"
       style={
         theme === "dark"
           ? {
@@ -110,17 +110,17 @@ export function TrackMapFull({
       {/* Callout labels */}
       {trackLengthKm && (
         <div className="absolute top-3 left-4 z-20 flex items-center gap-1.5">
-          <span className="text-[9px] font-mono font-bold tracking-widest text-purple-400/80 uppercase">
+          <span className="text-[9px] font-mono font-bold tracking-widest text-accent-bright/80 uppercase">
             {trackLengthKm.toFixed(3)} km
           </span>
-          <div className="h-px w-6 bg-purple-500/30" />
+          <div className="h-px w-6 bg-accent/30" />
         </div>
       )}
 
       {location && (
         <div className="absolute bottom-3 right-4 z-20 flex items-center gap-1.5">
-          <div className="h-px w-6 bg-purple-500/30" />
-          <span className="text-[9px] font-mono font-bold tracking-widest text-purple-400/80 uppercase">
+          <div className="h-px w-6 bg-accent/30" />
+          <span className="text-[9px] font-mono font-bold tracking-widest text-accent-bright/80 uppercase">
             {location}
           </span>
         </div>
@@ -128,7 +128,7 @@ export function TrackMapFull({
 
       {/* S/F marker — positioned top-right area */}
       <div className="absolute top-3 right-4 z-20">
-        <span className="text-[8px] font-mono font-bold tracking-widest text-text-muted/50 border border-border-secondary/50 px-1.5 py-0.5 rounded-sm">
+        <span className="text-[8px] font-mono font-bold tracking-widest text-ink-faint/50 border border-line-strong/50 px-1.5 py-0.5 rounded-sm">
           S/F
         </span>
       </div>

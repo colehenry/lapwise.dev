@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
+import ClutchContextActions from "@/components/chat/ClutchContextActions";
 import { TrianglePattern } from "@/components/layout/Patterns";
 import DeferredSection from "@/components/ui/DeferredSection";
 import { DATA_FROM } from "@/lib/data-coverage";
@@ -10,7 +11,7 @@ import type { SessionResultsResponse } from "@/lib/types";
 const PANEL_MIN_HEIGHT = 256;
 
 const ChartLoading = () => (
-  <div className="h-64 animate-pulse rounded-sm bg-bg-elevated" />
+  <div className="h-64 animate-pulse rounded-sm bg-surface-raised" />
 );
 
 const PracticeComparisonPanel = dynamic(
@@ -94,10 +95,10 @@ function ChartPanel({
   if (availableFrom && season < availableFrom) return null;
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-      <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+    <div className="bg-surface-panel border border-line-soft rounded-sm shadow-sm overflow-hidden">
+      <div className="relative h-10 bg-surface-page border-b border-line-soft px-4 flex items-center overflow-hidden">
         <TrianglePattern id={patternId} />
-        <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+        <span className="relative z-10 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
           {title}
         </span>
       </div>
@@ -130,9 +131,44 @@ export default function RoundAnalysisCharts({
   sessionData,
   practiceNumbers,
 }: RoundAnalysisChartsProps) {
+  const sessionType =
+    activeTab === "race"
+      ? "race"
+      : activeTab === "sprint"
+        ? "sprint_race"
+        : activeTab === "qualifying"
+          ? "qualifying"
+          : activeTab === "sprint-qualifying"
+            ? "sprint_qualifying"
+            : undefined;
+  const chartActions = (
+    <ClutchContextActions
+      context={{
+        route: `/results/${season}/${round}${activeTab === "race" ? "" : `?tab=${activeTab}`}`,
+        season,
+        round,
+        sessionId: sessionData?.session.id,
+        sessionType,
+        activeFilters: {
+          section: "analysis-charts",
+          ...(activeTab === "practice"
+            ? { practiceSession: `FP${practiceSession}` }
+            : {}),
+        },
+      }}
+      actions={[
+        {
+          label: "Explain these charts",
+          question: "What do the analysis charts on this page reveal?",
+        },
+      ]}
+    />
+  );
+
   if (activeTab === "qualifying" || activeTab === "sprint-qualifying") {
     return (
       <div className="p-3 md:p-6 space-y-4 md:space-y-6">
+        {chartActions}
         <ChartPanel
           title="Q1 → Q2 → Q3 Progression"
           patternId="quali-prog-triangles"
@@ -163,6 +199,7 @@ export default function RoundAnalysisCharts({
   if (activeTab === "race") {
     return (
       <div className="p-3 md:p-6 space-y-4 md:space-y-6">
+        {chartActions}
         <ChartPanel
           title="Lap Time Distribution"
           patternId="lap-dist-triangles"
@@ -211,6 +248,7 @@ export default function RoundAnalysisCharts({
 
   return (
     <div className="p-3 md:p-6 space-y-4 md:space-y-6">
+      {chartActions}
       <ChartPanel
         title={`FP${practiceSession} Long Run Pace`}
         patternId="long-run-triangles"

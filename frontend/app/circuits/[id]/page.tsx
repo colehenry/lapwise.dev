@@ -61,9 +61,9 @@ function CircuitProfileRow({
       : value;
 
   return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-border-primary py-3 last:border-b-0">
+    <div className="flex items-baseline justify-between gap-4 border-b border-line-soft py-3 last:border-b-0">
       <MonoLabel>{label}</MonoLabel>
-      <span className="text-right font-mono text-base font-bold tabular-nums text-text-primary">
+      <span className="text-right font-mono text-base font-bold tabular-nums text-ink-strong">
         {formattedValue}
       </span>
     </div>
@@ -111,7 +111,7 @@ export default function CircuitDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg-secondary p-4 md:p-8">
+      <div className="min-h-screen bg-surface-band p-4 md:p-8">
         <div className="max-w-6xl mx-auto space-y-6">
           <Skeleton variant="text" width="160px" />
           <Skeleton variant="text" width="400px" height="48px" />
@@ -129,18 +129,18 @@ export default function CircuitDetailPage() {
 
   if (error || !circuit) {
     return (
-      <div className="min-h-screen bg-bg-secondary p-4 md:p-8">
+      <div className="min-h-screen bg-surface-band p-4 md:p-8">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl font-bold text-text-primary mb-4">
+          <h1 className="text-3xl font-bold text-ink-strong mb-4">
             Circuit Not Found
           </h1>
-          <p className="text-text-tertiary mb-8">
+          <p className="text-ink-soft mb-8">
             The circuit you are looking for does not exist or could not be
             loaded.
           </p>
           <Link
             href="/circuits"
-            className="inline-block px-6 py-3 bg-red-500 text-white rounded-sm hover:bg-red-600 transition-colors"
+            className="inline-block px-6 py-3 bg-danger text-white rounded-sm hover:bg-danger transition-colors"
           >
             Back to Circuits
           </Link>
@@ -152,7 +152,7 @@ export default function CircuitDetailPage() {
   const hasCoordinates = circuit.latitude != null && circuit.longitude != null;
 
   return (
-    <div className="min-h-screen bg-bg-secondary">
+    <div className="min-h-screen bg-surface-band">
       {/* Sticky Header */}
       <PageHeader
         title={circuit.name}
@@ -193,7 +193,7 @@ export default function CircuitDetailPage() {
               <div className="lg:col-span-1 flex flex-col gap-4">
                 <ArchivePanel title="Circuit Profile">
                   <div className="space-y-4">
-                    <div className="rounded-sm border border-border-primary bg-bg-primary/20 px-4">
+                    <div className="rounded-sm border border-line-soft bg-surface-page/20 px-4">
                       <CircuitProfileRow
                         label="Length"
                         value={
@@ -217,11 +217,11 @@ export default function CircuitDetailPage() {
                     </div>
 
                     {hasCoordinates && (
-                      <div className="pt-4 border-t border-border-primary">
-                        <div className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-1">
+                      <div className="pt-4 border-t border-line-soft">
+                        <div className="text-[10px] font-mono uppercase tracking-widest text-ink-faint mb-1">
                           Coordinates
                         </div>
-                        <div className="text-xs font-mono text-text-tertiary">
+                        <div className="text-xs font-mono text-ink-soft">
                           {circuit.latitude?.toFixed(4)},{" "}
                           {circuit.longitude?.toFixed(4)}
                         </div>
@@ -229,7 +229,7 @@ export default function CircuitDetailPage() {
                           href={`https://www.google.com/maps/search/?api=1&query=${circuit.latitude},${circuit.longitude}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-3 inline-flex items-center rounded-sm border border-border-primary bg-bg-primary px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-secondary transition-colors hover:border-purple-500 hover:text-purple-300"
+                          className="mt-3 inline-flex items-center rounded-sm border border-line-soft bg-surface-page px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-base transition-colors hover:border-accent hover:text-accent-light"
                         >
                           View Map
                         </a>

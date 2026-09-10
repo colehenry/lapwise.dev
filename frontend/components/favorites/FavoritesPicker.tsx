@@ -223,21 +223,21 @@ export default function FavoritesPicker({
         }}
         aria-label="Close modal"
       />
-      <div className="relative w-full max-w-2xl max-h-[90vh] mx-4 sm:mx-auto bg-bg-secondary border border-border-primary rounded-sm flex flex-col overflow-hidden">
+      <div className="relative w-full max-w-2xl max-h-[90vh] mx-4 sm:mx-auto bg-surface-band border border-line-soft rounded-sm flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border-primary">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-line-soft">
           <div>
-            <p className="text-text-muted text-xs mb-1">
+            <p className="text-ink-faint text-xs mb-1">
               Step {stepIndex + 1} of {STEPS.length}
             </p>
-            <h2 className="text-lg font-bold text-text-primary">
+            <h2 className="text-lg font-bold text-ink-strong">
               {STEP_LABELS[step]}
             </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-text-muted hover:text-text-primary transition-colors p-1"
+            className="text-ink-faint hover:text-ink-strong transition-colors p-1"
             aria-label="Close"
           >
             <svg
@@ -260,7 +260,7 @@ export default function FavoritesPicker({
             <div
               key={s}
               className={`h-1 flex-1 rounded-full transition-colors ${
-                i <= stepIndex ? "bg-purple-500" : "bg-bg-elevated"
+                i <= stepIndex ? "bg-accent" : "bg-surface-raised"
               }`}
             />
           ))}
@@ -273,7 +273,7 @@ export default function FavoritesPicker({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={`Search ${step}s...`}
-            className="w-full px-3 py-2 text-sm bg-bg-primary border border-border-primary rounded-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500 transition-colors"
+            className="w-full px-3 py-2 text-sm bg-surface-page border border-line-soft rounded-sm text-ink-strong placeholder:text-ink-faint focus:outline-none focus:border-accent transition-colors"
           />
         </div>
 
@@ -308,7 +308,7 @@ export default function FavoritesPicker({
                 />
               ))}
               {filteredTeams.length === 0 && (
-                <p className="col-span-full text-text-muted text-sm text-center py-8">
+                <p className="col-span-full text-ink-faint text-sm text-center py-8">
                   No teams found
                 </p>
               )}
@@ -331,7 +331,7 @@ export default function FavoritesPicker({
                 );
               })}
               {filteredDrivers.length === 0 && (
-                <p className="col-span-full text-text-muted text-sm text-center py-8">
+                <p className="col-span-full text-ink-faint text-sm text-center py-8">
                   No drivers found
                 </p>
               )}
@@ -351,7 +351,7 @@ export default function FavoritesPicker({
                 />
               ))}
               {filteredCircuits.length === 0 && (
-                <p className="text-text-muted text-sm text-center py-8">
+                <p className="text-ink-faint text-sm text-center py-8">
                   No circuits found
                 </p>
               )}
@@ -360,7 +360,7 @@ export default function FavoritesPicker({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-4 border-t border-border-primary">
+        <div className="flex items-center justify-between px-5 py-4 border-t border-line-soft">
           <div>
             {stepIndex > 0 ? (
               <Button variant="ghost" size="sm" onClick={handleBack}>
@@ -407,7 +407,7 @@ function TeamCard({
   const { theme } = useTheme();
   const borderColor = team.team_color
     ? `#${team.team_color}`
-    : "var(--border-primary)";
+    : "var(--line-soft)";
 
   return (
     <button
@@ -415,8 +415,8 @@ function TeamCard({
       onClick={onSelect}
       className={`relative flex flex-col items-center gap-2 p-4 rounded-sm border-2 transition-all text-left ${
         selected
-          ? "border-purple-500 bg-purple-500/10"
-          : "border-border-primary bg-bg-tertiary hover:border-border-secondary"
+          ? "border-accent bg-accent/10"
+          : "border-line-soft bg-surface-panel hover:border-line-strong"
       }`}
     >
       {selected && <CheckBadge />}
@@ -440,10 +440,10 @@ function TeamCard({
           }
         />
       )}
-      <span className="text-sm font-medium text-text-primary text-center leading-tight">
+      <span className="text-sm font-medium text-ink-strong text-center leading-tight">
         {team.team_name}
       </span>
-      <span className="text-xs text-text-muted">{team.total_wins} wins</span>
+      <span className="text-xs text-ink-faint">{team.total_wins} wins</span>
     </button>
   );
 }
@@ -463,8 +463,8 @@ function DriverCard({
       onClick={onSelect}
       className={`relative flex flex-col items-center gap-2 p-4 rounded-sm border-2 transition-all text-left ${
         selected
-          ? "border-purple-500 bg-purple-500/10"
-          : "border-border-primary bg-bg-tertiary hover:border-border-secondary"
+          ? "border-accent bg-accent/10"
+          : "border-line-soft bg-surface-panel hover:border-line-strong"
       }`}
     >
       {selected && <CheckBadge />}
@@ -473,16 +473,16 @@ function DriverCard({
         <img
           src={driver.headshot_url}
           alt={driver.full_name}
-          className="w-12 h-12 rounded-full object-cover bg-bg-elevated"
+          className="w-12 h-12 rounded-full object-cover bg-surface-raised"
           loading="lazy"
           referrerPolicy="no-referrer"
         />
       ) : (
-        <div className="w-12 h-12 rounded-full bg-bg-elevated flex items-center justify-center text-text-muted text-sm font-mono">
+        <div className="w-12 h-12 rounded-full bg-surface-raised flex items-center justify-center text-ink-faint text-sm font-mono">
           {driver.driver_code ?? driver.full_name.slice(0, 3).toUpperCase()}
         </div>
       )}
-      <span className="text-sm font-medium text-text-primary text-center leading-tight">
+      <span className="text-sm font-medium text-ink-strong text-center leading-tight">
         {driver.full_name}
       </span>
       {driver.current_team && (
@@ -491,7 +491,7 @@ function DriverCard({
           style={{
             color: driver.current_team_color
               ? `#${driver.current_team_color}`
-              : "var(--text-muted)",
+              : "var(--ink-faint)",
           }}
         >
           {driver.current_team}
@@ -516,8 +516,8 @@ function CircuitCard({
       onClick={onSelect}
       className={`relative w-full flex items-center gap-4 px-4 py-3 rounded-sm border-2 transition-all text-left ${
         selected
-          ? "border-purple-500 bg-purple-500/10"
-          : "border-border-primary bg-bg-tertiary hover:border-border-secondary"
+          ? "border-accent bg-accent/10"
+          : "border-line-soft bg-surface-panel hover:border-line-strong"
       }`}
     >
       <TrackMapImage
@@ -529,14 +529,14 @@ function CircuitCard({
         fallbackClassName="h-12 w-12 shrink-0"
       />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-text-primary truncate">
+        <p className="text-sm font-medium text-ink-strong truncate">
           {circuit.name}
         </p>
-        <p className="text-xs text-text-muted truncate">
+        <p className="text-xs text-ink-faint truncate">
           {circuit.location}, {circuit.country}
         </p>
       </div>
-      <div className="text-xs text-text-muted shrink-0">
+      <div className="text-xs text-ink-faint shrink-0">
         {circuit.total_races} races
       </div>
       {selected && <CheckBadge />}
@@ -546,7 +546,7 @@ function CircuitCard({
 
 function CheckBadge() {
   return (
-    <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center">
+    <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-accent flex items-center justify-center">
       <svg
         width="12"
         height="12"

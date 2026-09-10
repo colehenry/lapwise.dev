@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.schemas.daily_grid import (
     DailyGameResponse,
+    DailySummaryResponse,
     GameDriverCatalogResponse,
     GameDriverSearchResponse,
     GameGuessRequest,
@@ -25,6 +26,24 @@ async def get_daily_game(
 ):
     try:
         return await DailyGridService.puzzle(db)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail="Grid not found") from error
+
+
+@router.get("/summary", response_model=DailySummaryResponse)
+async def get_daily_summary(
+    db: AsyncSession = Depends(get_db),
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Get the homepage grid card: the board's shape, never its headers.
+
+    Auth-optional. Every aggregate and personal field is null until the game
+    session lifecycle is wired, so this stays out of shared caches — the
+    personal fields become per-viewer the moment they carry a value.
+    """
+    try:
+        return await DailyGridService.summary(db)
     except ValueError as error:
         raise HTTPException(status_code=404, detail="Grid not found") from error
 

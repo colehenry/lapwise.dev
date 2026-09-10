@@ -5,9 +5,20 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from sqlalchemy import text
+from sqlalchemy import create_engine, func, select, text
+from sqlalchemy.orm import Session as OrmSession
 
+from app.models import (
+    Constructor,
+    ConstructorExternalId,
+    Driver,
+    DriverExternalId,
+    DriverSeason,
+    IngestIdentityIssue,
+    Team,
+)
 from scripts.ingest.circuits import _stable_circuit_id
+from scripts.ingest.identity import resolve_constructor, resolve_driver
 from scripts.ingest.participants import apply_participant_identity_override
 
 
@@ -156,3 +167,146 @@ async def test_unrepaired_collisions_are_still_unrepaired(ingested_data):
         f"repaired but still listed: {sorted(repaired)} — "
         "remove them from UNREPAIRED_IDENTITY_COLLISIONS"
     )
+
+
+def _season_registry_session():
+    """A minimal driver registry: one canonical driver with a 2026 season entry."""
+    engine = create_engine("sqlite://")
+    for table in (
+        Driver.__table__,
+        DriverExternalId.__table__,
+        DriverSeason.__table__,
+        IngestIdentityIssue.__table__,
+    ):
+        table.create(engine)
+
+    db = OrmSession(engine)
+    driver = Driver(
+        slug="russell",
+        full_name="George Russell",
+        driver_code="RUS",
+        driver_number=63,
+        jolpica_id="russell",
+    )
+    db.add(driver)
+    db.flush()
+    db.add(
+        DriverExternalId(driver_id=driver.id, source="jolpica", external_id="russell")
+    )
+    db.add(
+        DriverSeason(
+            driver_id=driver.id,
+            year=2026,
+            driver_code="RUS",
+            driver_number=63,
+            display_name="George Russell",
+        )
+    )
+    db.commit()
+    return db, driver.id
+
+
+def test_missing_driver_id_resolves_through_the_season_entry():
+    """Sprint Qualifying results carry no DriverId. The season's number and code
+    must still reach the canonical driver rather than mint a duplicate."""
+    db, driver_id = _season_registry_session()
+
+    resolved = resolve_driver(
+        db,
+        year=2026,
+        external_id=None,
+        full_name="George Russell",
+        driver_code="RUS",
+        driver_number=63,
+        country_code="GBR",
+    )
+
+    assert resolved.id == driver_id
+    assert db.execute(select(func.count()).select_from(Driver)).scalar() == 1
+
+
+def test_unknown_driver_without_driver_id_is_still_provisional():
+    """A genuinely new entrant has no season entry and keeps the provisional path."""
+    db, driver_id = _season_registry_session()
+
+    resolved = resolve_driver(
+        db,
+        year=2026,
+        external_id=None,
+        full_name="Ada Lovelace",
+        driver_code="LOV",
+        driver_number=99,
+        country_code="GBR",
+    )
+
+    assert resolved.id != driver_id
+    assert db.execute(select(func.count()).select_from(Driver)).scalar() == 2
+
+
+def _season_team_session():
+    """A minimal constructor registry: one canonical team for 2026."""
+    engine = create_engine("sqlite://")
+    for table in (
+        Constructor.__table__,
+        ConstructorExternalId.__table__,
+        Team.__table__,
+        IngestIdentityIssue.__table__,
+    ):
+        table.create(engine)
+
+    db = OrmSession(engine)
+    constructor = Constructor(slug="mercedes", canonical_name="Mercedes")
+    db.add(constructor)
+    db.flush()
+    db.add(
+        ConstructorExternalId(
+            constructor_id=constructor.id, source="jolpica", external_id="mercedes"
+        )
+    )
+    db.add(
+        Team(
+            year=2026,
+            constructor_id=constructor.id,
+            name="Mercedes",
+            source_name="Mercedes",
+            team_color="00D7B6",
+        )
+    )
+    db.commit()
+    return db, constructor.id
+
+
+def test_missing_team_id_resolves_through_the_season_team():
+    """Sprint Qualifying results carry no TeamId. The season's team name must
+    still reach the canonical constructor rather than mint a duplicate."""
+    db, constructor_id = _season_team_session()
+
+    team = resolve_constructor(
+        db,
+        year=2026,
+        external_id=None,
+        source_name="Mercedes",
+        display_name="Mercedes",
+        color="00D7B6",
+    )
+
+    assert team.constructor_id == constructor_id
+    assert db.execute(select(func.count()).select_from(Constructor)).scalar() == 1
+    assert db.execute(select(func.count()).select_from(Team)).scalar() == 1
+
+
+def test_unknown_team_without_team_id_is_still_provisional():
+    """A genuinely new entrant has no season team and keeps the provisional path."""
+    db, constructor_id = _season_team_session()
+
+    team = resolve_constructor(
+        db,
+        year=2026,
+        external_id=None,
+        source_name="Analytical Engine",
+        display_name="Analytical Engine",
+        color="FFFFFF",
+    )
+
+    assert team.constructor_id != constructor_id
+    assert db.execute(select(func.count()).select_from(Constructor)).scalar() == 2

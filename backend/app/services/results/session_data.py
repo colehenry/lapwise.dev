@@ -139,6 +139,7 @@ class SessionDataService:
                 Team.team_color,
                 Team.logo_url,
                 SessionResult.fastest_lap,
+                SessionResult.time_seconds,
             )
             .join(SessionResult, Session.id == SessionResult.session_id)
             .join(Driver, SessionResult.driver_id == Driver.id)
@@ -187,6 +188,8 @@ class SessionDataService:
                     logo_url=row.logo_url,
                     headshot_url=row.headshot_url,
                     fastest_lap=row.fastest_lap,
+                    # Early seasons carry NaN here, which will not serialise.
+                    time_seconds=sanitize_float(row.time_seconds),
                 )
             )
 

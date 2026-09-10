@@ -202,7 +202,7 @@ export default function QualifyingSectorComparison({
         <button
           type="button"
           onClick={() => setShowDropdown(!showDropdown)}
-          className="flex items-center gap-2 px-3 py-2 bg-bg-tertiary border border-border-primary rounded-sm hover:border-purple-500 transition-colors min-w-[180px]"
+          className="flex items-center gap-2 px-3 py-2 bg-surface-panel border border-line-soft rounded-sm hover:border-accent transition-colors min-w-[180px]"
         >
           {isValidHeadshotUrl(selectedDriver?.headshot_url) ? (
             <Image
@@ -210,11 +210,11 @@ export default function QualifyingSectorComparison({
               alt={selectedDriver.full_name}
               width={32}
               height={32}
-              className="rounded-sm object-cover border border-border-secondary shrink-0"
+              className="rounded-sm object-cover border border-line-strong shrink-0"
             />
           ) : (
             <div
-              className="w-8 h-8 rounded-sm shrink-0 flex items-center justify-center text-[10px] font-mono font-bold text-text-muted"
+              className="w-8 h-8 rounded-sm shrink-0 flex items-center justify-center text-[10px] font-mono font-bold text-ink-faint"
               style={{
                 backgroundColor: `${teamColor}33`,
                 borderLeft: `2px solid ${teamColor}`,
@@ -224,15 +224,15 @@ export default function QualifyingSectorComparison({
             </div>
           )}
           <div className="flex flex-col items-start">
-            <span className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+            <span className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
               {label}
             </span>
-            <span className="text-sm font-bold text-text-primary truncate">
+            <span className="text-sm font-bold text-ink-strong truncate">
               {selectedDriver?.full_name ?? "Select Driver"}
             </span>
           </div>
           <svg
-            className="w-3 h-3 text-text-muted ml-auto shrink-0"
+            className="w-3 h-3 text-ink-faint ml-auto shrink-0"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -248,7 +248,7 @@ export default function QualifyingSectorComparison({
         </button>
 
         {showDropdown && data && (
-          <div className="absolute top-full mt-1 left-0 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-20 min-w-[220px] max-h-[260px] overflow-y-auto">
+          <div className="absolute top-full mt-1 left-0 bg-surface-panel border border-line-soft rounded-sm shadow-xl z-20 min-w-[220px] max-h-[260px] overflow-y-auto">
             {data.sectors
               .filter((s) => s.driver_code !== otherCode)
               .map((driver) => {
@@ -263,9 +263,9 @@ export default function QualifyingSectorComparison({
                       onSelect(driver.driver_code ?? "");
                       setShowDropdown(false);
                     }}
-                    className={`flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-bg-elevated transition-colors ${
+                    className={`flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-surface-raised transition-colors ${
                       driver.driver_code === selectedCode
-                        ? "bg-bg-elevated"
+                        ? "bg-surface-raised"
                         : ""
                     }`}
                   >
@@ -283,11 +283,11 @@ export default function QualifyingSectorComparison({
                         style={{ backgroundColor: color }}
                       />
                     )}
-                    <span className="text-sm text-text-primary">
+                    <span className="text-sm text-ink-strong">
                       {driver.full_name}
                     </span>
                     {driver.best_lap_time != null && (
-                      <span className="text-xs font-mono text-text-muted ml-auto">
+                      <span className="text-xs font-mono text-ink-faint ml-auto">
                         {formatLapTime(driver.best_lap_time)}
                       </span>
                     )}
@@ -305,11 +305,11 @@ export default function QualifyingSectorComparison({
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <div className="h-10 bg-bg-elevated rounded w-44 animate-pulse" />
-          <div className="text-text-muted text-xs font-mono">VS</div>
-          <div className="h-10 bg-bg-elevated rounded w-44 animate-pulse" />
+          <div className="h-10 bg-surface-raised rounded w-44 animate-pulse" />
+          <div className="text-ink-faint text-xs font-mono">VS</div>
+          <div className="h-10 bg-surface-raised rounded w-44 animate-pulse" />
         </div>
-        <div className="h-48 bg-bg-elevated rounded animate-pulse" />
+        <div className="h-48 bg-surface-raised rounded animate-pulse" />
       </div>
     );
   }
@@ -318,7 +318,7 @@ export default function QualifyingSectorComparison({
   if (!data || data.sectors.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm">
+        <p className="text-ink-faint text-sm">
           {season < 2018
             ? "Qualifying sector data is only available from 2018 onwards."
             : "No qualifying sector data available for this session."}
@@ -444,7 +444,7 @@ export default function QualifyingSectorComparison({
             dropdown1Ref,
             "Driver 1",
           )}
-          <span className="text-text-muted text-xs font-mono font-bold tracking-widest">
+          <span className="text-ink-faint text-xs font-mono font-bold tracking-widest">
             VS
           </span>
           {renderDriverSelector(
@@ -463,7 +463,7 @@ export default function QualifyingSectorComparison({
       {driver1 && driver2 && deltas ? (
         <div className="space-y-4">
           {/* Sector Bars Visualization */}
-          <div className="bg-bg-secondary/50 border border-border-primary rounded-sm p-4 space-y-3">
+          <div className="bg-surface-band/50 border border-line-soft rounded-sm p-4 space-y-3">
             {/* Driver 1 Bar */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 w-20 shrink-0 justify-end">
@@ -476,7 +476,7 @@ export default function QualifyingSectorComparison({
                     className="rounded-sm object-cover hidden sm:block"
                   />
                 )}
-                <span className="text-xs font-mono font-bold text-text-secondary">
+                <span className="text-xs font-mono font-bold text-ink-base">
                   {driver1.driver_code}
                 </span>
               </div>
@@ -532,7 +532,7 @@ export default function QualifyingSectorComparison({
                     className="rounded-sm object-cover hidden sm:block"
                   />
                 )}
-                <span className="text-xs font-mono font-bold text-text-secondary">
+                <span className="text-xs font-mono font-bold text-ink-base">
                   {driver2.driver_code}
                 </span>
               </div>
@@ -578,9 +578,9 @@ export default function QualifyingSectorComparison({
           </div>
 
           {/* Sector Breakdown Table */}
-          <div className="bg-bg-secondary/50 border border-border-primary rounded-sm overflow-hidden">
+          <div className="bg-surface-band/50 border border-line-soft rounded-sm overflow-hidden">
             {/* Header */}
-            <div className="grid grid-cols-5 gap-0 text-[10px] font-mono uppercase tracking-widest text-text-muted border-b border-border-primary">
+            <div className="grid grid-cols-5 gap-0 text-[10px] font-mono uppercase tracking-widest text-ink-faint border-b border-line-soft">
               <div className="px-3 py-2">Sector</div>
               <div className="px-3 py-2 flex items-center gap-1.5 justify-end">
                 {isValidHeadshotUrl(driver1.headshot_url) && (
@@ -637,9 +637,9 @@ export default function QualifyingSectorComparison({
               return (
                 <div
                   key={sector}
-                  className="grid grid-cols-5 gap-0 border-b border-border-primary/50 last:border-b-0"
+                  className="grid grid-cols-5 gap-0 border-b border-line-soft/50 last:border-b-0"
                 >
-                  <div className="px-3 py-2.5 text-xs font-mono font-bold text-text-secondary">
+                  <div className="px-3 py-2.5 text-xs font-mono font-bold text-ink-base">
                     S{sIdx + 1}
                   </div>
                   <div
@@ -695,7 +695,7 @@ export default function QualifyingSectorComparison({
                       </span>
                     )}
                     {!d1Faster && !d2Faster && (
-                      <span className="text-text-muted">-</span>
+                      <span className="text-ink-faint">-</span>
                     )}
                   </div>
                 </div>
@@ -703,8 +703,8 @@ export default function QualifyingSectorComparison({
             })}
 
             {/* Total Lap Time */}
-            <div className="grid grid-cols-5 gap-0 bg-bg-tertiary/50 border-t border-border-primary">
-              <div className="px-3 py-3 text-xs font-mono font-bold text-text-primary uppercase tracking-widest">
+            <div className="grid grid-cols-5 gap-0 bg-surface-panel/50 border-t border-line-soft">
+              <div className="px-3 py-3 text-xs font-mono font-bold text-ink-strong uppercase tracking-widest">
                 Total
               </div>
               <div
@@ -779,7 +779,7 @@ export default function QualifyingSectorComparison({
         </div>
       ) : (
         <div className="flex items-center justify-center py-8">
-          <p className="text-text-muted text-sm">
+          <p className="text-ink-faint text-sm">
             Select two drivers to compare qualifying sectors.
           </p>
         </div>

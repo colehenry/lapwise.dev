@@ -86,7 +86,7 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-12 text-center">
-        <p className="text-text-muted">User not found.</p>
+        <p className="text-ink-faint">User not found.</p>
       </div>
     );
   }
@@ -111,25 +111,25 @@ export default function ProfilePage() {
           size="xl"
         />
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold text-text-primary">
+          <h1 className="text-xl font-bold text-ink-strong">
             @{profile.username}
           </h1>
           {profile.role !== "user" && (
-            <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+            <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-full bg-accent/20 text-accent-light border border-accent/30">
               {profile.role}
             </span>
           )}
           {profile.bio && (
-            <p className="text-text-secondary text-sm mt-2">{profile.bio}</p>
+            <p className="text-ink-base text-sm mt-2">{profile.bio}</p>
           )}
-          <p className="text-text-muted text-xs mt-2">
+          <p className="text-ink-faint text-xs mt-2">
             Member since {memberSince}
           </p>
         </div>
         {isOwnProfile && (
           <Link
             href="/settings"
-            className="text-sm text-purple-400 hover:text-purple-300 transition-colors shrink-0"
+            className="text-sm text-accent-bright hover:text-accent-light transition-colors shrink-0"
           >
             Edit profile
           </Link>
@@ -140,14 +140,12 @@ export default function ProfilePage() {
       {hasFavorites && (
         <section className="mb-8">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-text-secondary">
-              Favorites
-            </h2>
+            <h2 className="text-sm font-semibold text-ink-base">Favorites</h2>
             {isOwnProfile && (
               <button
                 type="button"
                 onClick={() => setShowPicker(true)}
-                className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                className="text-xs text-accent-bright hover:text-accent-light transition-colors"
               >
                 Edit favorites
               </button>
@@ -157,14 +155,14 @@ export default function ProfilePage() {
             {profile.favorite_team && (
               <Link
                 href={constructorHref(profile.favorite_team) ?? "/constructors"}
-                className="flex items-center gap-3 p-3 rounded-sm bg-bg-tertiary border border-border-primary hover:border-purple-500/50 transition-colors"
+                className="flex items-center gap-3 p-3 rounded-sm bg-surface-panel border border-line-soft hover:border-accent/50 transition-colors"
               >
                 <div
                   className="w-1 h-10 rounded-full shrink-0"
                   style={{
                     backgroundColor: profile.favorite_team.team_color
                       ? `#${profile.favorite_team.team_color}`
-                      : "var(--border-primary)",
+                      : "var(--line-soft)",
                   }}
                 />
                 {profile.favorite_team.logo_url && (
@@ -178,8 +176,8 @@ export default function ProfilePage() {
                   />
                 )}
                 <div className="min-w-0">
-                  <p className="text-xs text-text-muted">Team</p>
-                  <p className="text-sm font-medium text-text-primary truncate">
+                  <p className="text-xs text-ink-faint">Team</p>
+                  <p className="text-sm font-medium text-ink-strong truncate">
                     {profile.favorite_team.team_name}
                   </p>
                 </div>
@@ -189,19 +187,19 @@ export default function ProfilePage() {
             {profile.favorite_driver && (
               <Link
                 href={driverHref(profile.favorite_driver) ?? "/drivers"}
-                className="flex items-center gap-3 p-3 rounded-sm bg-bg-tertiary border border-border-primary hover:border-purple-500/50 transition-colors"
+                className="flex items-center gap-3 p-3 rounded-sm bg-surface-panel border border-line-soft hover:border-accent/50 transition-colors"
               >
                 {isValidHeadshotUrl(profile.favorite_driver.headshot_url) ? (
                   // biome-ignore lint/performance/noImgElement: external headshot URL
                   <img
                     src={profile.favorite_driver.headshot_url}
                     alt={profile.favorite_driver.full_name}
-                    className="w-10 h-10 rounded-full object-cover bg-bg-elevated shrink-0"
+                    className="w-10 h-10 rounded-full object-cover bg-surface-raised shrink-0"
                     loading="lazy"
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-bg-elevated flex items-center justify-center text-text-muted text-xs font-mono shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-surface-raised flex items-center justify-center text-ink-faint text-xs font-mono shrink-0">
                     {profile.favorite_driver.driver_code ??
                       profile.favorite_driver.full_name
                         .slice(0, 3)
@@ -209,8 +207,8 @@ export default function ProfilePage() {
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="text-xs text-text-muted">Driver</p>
-                  <p className="text-sm font-medium text-text-primary truncate">
+                  <p className="text-xs text-ink-faint">Driver</p>
+                  <p className="text-sm font-medium text-ink-strong truncate">
                     {profile.favorite_driver.full_name}
                   </p>
                 </div>
@@ -225,7 +223,7 @@ export default function ProfilePage() {
                       profile.favorite_circuit.circuit_id,
                   ) ?? "/circuits"
                 }
-                className="flex items-center gap-3 p-3 rounded-sm bg-bg-tertiary border border-border-primary hover:border-purple-500/50 transition-colors"
+                className="flex items-center gap-3 p-3 rounded-sm bg-surface-panel border border-line-soft hover:border-accent/50 transition-colors"
               >
                 <TrackMapImage
                   circuitId={profile.favorite_circuit.circuit_id}
@@ -236,11 +234,11 @@ export default function ProfilePage() {
                   fallbackClassName="h-10 w-10 shrink-0"
                 />
                 <div className="min-w-0">
-                  <p className="text-xs text-text-muted">Circuit</p>
-                  <p className="text-sm font-medium text-text-primary truncate">
+                  <p className="text-xs text-ink-faint">Circuit</p>
+                  <p className="text-sm font-medium text-ink-strong truncate">
                     {profile.favorite_circuit.name}
                   </p>
-                  <p className="text-xs text-text-muted truncate">
+                  <p className="text-xs text-ink-faint truncate">
                     {profile.favorite_circuit.country}
                   </p>
                 </div>
@@ -252,8 +250,8 @@ export default function ProfilePage() {
 
       {/* Set favorites CTA (own profile, no favorites) */}
       {isOwnProfile && !hasFavorites && (
-        <div className="mb-8 p-4 rounded-sm bg-bg-tertiary border border-border-primary border-dashed">
-          <p className="text-sm text-text-secondary mb-3">
+        <div className="mb-8 p-4 rounded-sm bg-surface-panel border border-line-soft border-dashed">
+          <p className="text-sm text-ink-base mb-3">
             Personalize your profile — pick your favorite team, driver, and
             circuit.
           </p>
@@ -269,10 +267,10 @@ export default function ProfilePage() {
 
       {/* Comments */}
       <section>
-        <h2 className="text-sm font-semibold text-text-secondary mb-3">
+        <h2 className="text-sm font-semibold text-ink-base mb-3">
           Comments
           {comments.length > 0 && (
-            <span className="ml-2 text-text-muted font-normal">
+            <span className="ml-2 text-ink-faint font-normal">
               ({comments.length})
             </span>
           )}
@@ -297,25 +295,25 @@ export default function ProfilePage() {
               <Link
                 key={comment.id}
                 href={`/results/${comment.year}/${comment.round}#comments`}
-                className="block border border-border-primary rounded-sm bg-bg-tertiary p-4 hover:border-purple-500/50 transition-colors"
+                className="block border border-line-soft rounded-sm bg-surface-panel p-4 hover:border-accent/50 transition-colors"
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-purple-400">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-accent-bright">
                     {comment.year} R{String(comment.round).padStart(2, "0")}
                   </span>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-ink-faint">
                     {comment.vote_count}{" "}
                     {comment.vote_count === 1 ? "vote" : "votes"}
                   </span>
                 </div>
-                <p className="text-sm text-text-secondary line-clamp-3">
+                <p className="text-sm text-ink-base line-clamp-3">
                   {comment.body}
                 </p>
               </Link>
             ))}
           </div>
         ) : (
-          <p className="text-text-muted text-sm py-4">No comments yet.</p>
+          <p className="text-ink-faint text-sm py-4">No comments yet.</p>
         )}
       </section>
 

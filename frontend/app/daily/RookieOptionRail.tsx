@@ -33,12 +33,12 @@ function ProofRow({
 
   return (
     <div className="mt-2 first:mt-0">
-      <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-text-muted">
+      <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-ink-faint">
         {label}
       </p>
       <p
         className={`text-[11px] leading-snug ${
-          satisfied ? "text-text-secondary" : "text-red-400"
+          satisfied ? "text-ink-base" : "text-danger-bright"
         }`}
       >
         {proof}
@@ -57,8 +57,8 @@ function MissProof({
   rowLabel: string;
 }) {
   return (
-    <div className="border-l-2 border-border-secondary pl-2.5">
-      <p className="text-xs font-semibold text-text-primary">
+    <div className="border-l-2 border-line-strong pl-2.5">
+      <p className="text-xs font-semibold text-ink-strong">
         {attempt.driver.full_name}
       </p>
       <div className="mt-1.5">
@@ -89,12 +89,12 @@ export default function RookieOptionRail({
       // Absolutely placed beside the grid from xl up, so opening it never
       // shifts the board off centre. Height tracks the grid rather than the
       // contents, so the panel does not resize as squares are answered.
-      className="relative mt-3 min-h-[22rem] w-full rounded-sm border border-border-primary bg-bg-secondary xl:absolute xl:left-full xl:top-0 xl:ml-3 xl:mt-0 xl:h-full xl:min-h-0 xl:w-72"
+      className="relative mt-3 min-h-[22rem] w-full rounded-sm border border-line-soft bg-surface-band xl:absolute xl:left-full xl:top-0 xl:ml-3 xl:mt-0 xl:h-full xl:min-h-0 xl:w-72"
     >
       <div className="absolute inset-0 flex flex-col overflow-hidden p-3">
-        <header className="shrink-0 border-b border-border-primary pb-2">
-          <p className="text-[10px] font-bold uppercase leading-snug tracking-[0.08em] text-text-primary">
-            {rowLabel} <span className="text-text-muted">·</span> {columnLabel}
+        <header className="shrink-0 border-b border-line-soft pb-2">
+          <p className="text-[10px] font-bold uppercase leading-snug tracking-[0.08em] text-ink-strong">
+            {rowLabel} <span className="text-ink-faint">·</span> {columnLabel}
           </p>
         </header>
 
@@ -110,10 +110,10 @@ export default function RookieOptionRail({
 
         <div className="min-h-0 flex-1 overflow-y-auto pt-2.5">
           {loading && (
-            <p className="text-xs text-text-muted">Loading drivers…</p>
+            <p className="text-xs text-ink-faint">Loading drivers…</p>
           )}
           {error && (
-            <p className="text-xs text-red-400">
+            <p className="text-xs text-danger-bright">
               Driver options are unavailable. Switch to Standard to search
               instead.
             </p>
@@ -129,7 +129,7 @@ export default function RookieOptionRail({
                   type="button"
                   disabled={used || submitting}
                   onClick={() => onSelect(driver)}
-                  className="group flex flex-col items-center gap-1 rounded-sm border border-border-primary bg-bg-primary p-1 transition-colors hover:border-text-muted hover:bg-bg-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-400 disabled:pointer-events-none disabled:opacity-35"
+                  className="group flex flex-col items-center gap-1 rounded-sm border border-line-soft bg-surface-page p-1 transition-colors hover:border-ink-faint hover:bg-surface-panel focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-bright disabled:pointer-events-none disabled:opacity-35"
                 >
                   <DriverHeadshot
                     responsive
@@ -143,8 +143,8 @@ export default function RookieOptionRail({
                   <span
                     className={`line-clamp-2 text-center text-[9px] font-semibold leading-tight ${
                       used
-                        ? "text-text-muted line-through"
-                        : "text-text-secondary group-hover:text-text-primary"
+                        ? "text-ink-faint line-through"
+                        : "text-ink-base group-hover:text-ink-strong"
                     }`}
                   >
                     {driver.full_name}

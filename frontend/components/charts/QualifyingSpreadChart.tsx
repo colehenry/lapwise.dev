@@ -227,7 +227,7 @@ export default function QualifyingSpreadChart({
     <div>
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
-          <h3 className="text-sm font-bold text-text-primary uppercase tracking-wider font-mono">
+          <h3 className="text-sm font-bold text-ink-strong uppercase tracking-wider font-mono">
             Qualifying Spread
           </h3>
         </div>
@@ -235,12 +235,12 @@ export default function QualifyingSpreadChart({
           <button
             type="button"
             onClick={() => setShowDropdown(!showDropdown)}
-            className="px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-border-primary text-text-secondary hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer"
+            className="px-4 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-line-soft text-ink-base hover:border-accent hover:text-accent-light transition-colors duration-150 cursor-pointer"
           >
             Select ({selectedDrivers.length})
           </button>
           {showDropdown && (
-            <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-lg z-30 max-h-80 overflow-y-auto min-w-[240px]">
+            <div className="absolute right-0 top-full mt-1 bg-surface-panel border border-line-soft rounded-sm shadow-lg z-30 max-h-80 overflow-y-auto min-w-[240px]">
               {results.map((result) => {
                 const driverKey =
                   result.driver.driver_code || result.driver.full_name;
@@ -252,7 +252,7 @@ export default function QualifyingSpreadChart({
                 return (
                   <label
                     key={driverKey}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-bg-elevated cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-surface-raised cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -264,9 +264,9 @@ export default function QualifyingSpreadChart({
                             : [...prev, driverKey],
                         );
                       }}
-                      className="w-4 h-4 accent-purple-500"
+                      className="w-4 h-4 accent-accent"
                     />
-                    <span className="text-sm text-text-muted w-5 font-mono">
+                    <span className="text-sm text-ink-faint w-5 font-mono">
                       {result.position || "-"}
                     </span>
                     <span
@@ -284,46 +284,46 @@ export default function QualifyingSpreadChart({
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-5">
-        <div className="border border-border-primary rounded-sm bg-bg-primary/30 px-3 py-2">
-          <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+        <div className="border border-line-soft rounded-sm bg-surface-page/30 px-3 py-2">
+          <p className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
             Pole
           </p>
-          <p className="text-sm text-text-primary font-mono font-bold">
+          <p className="text-sm text-ink-strong font-mono font-bold">
             {formatTime(spread.poleTime)}
           </p>
         </div>
-        <div className="border border-border-primary rounded-sm bg-bg-primary/30 px-3 py-2">
-          <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+        <div className="border border-line-soft rounded-sm bg-surface-page/30 px-3 py-2">
+          <p className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
             Top 10
           </p>
-          <p className="text-sm text-text-primary font-mono font-bold">
+          <p className="text-sm text-ink-strong font-mono font-bold">
             {spread.topTenGap != null
               ? `+${spread.topTenGap.toFixed(3)}s`
               : "-"}
           </p>
         </div>
-        <div className="border border-border-primary rounded-sm bg-bg-primary/30 px-3 py-2">
-          <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+        <div className="border border-line-soft rounded-sm bg-surface-page/30 px-3 py-2">
+          <p className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
             Median
           </p>
-          <p className="text-sm text-text-primary font-mono font-bold">
+          <p className="text-sm text-ink-strong font-mono font-bold">
             {spread.medianGap != null
               ? `+${spread.medianGap.toFixed(3)}s`
               : "-"}
           </p>
         </div>
-        <div className="border border-border-primary rounded-sm bg-bg-primary/30 px-3 py-2">
-          <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+        <div className="border border-line-soft rounded-sm bg-surface-page/30 px-3 py-2">
+          <p className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
             Spread
           </p>
-          <p className="text-sm text-text-primary font-mono font-bold">
+          <p className="text-sm text-ink-strong font-mono font-bold">
             +{spread.maxGap.toFixed(3)}s
           </p>
         </div>
       </div>
 
       {spread.points.length > 0 ? (
-        <div className="rounded-sm border border-border-primary bg-bg-primary/30 px-5 py-4 overflow-hidden">
+        <div className="rounded-sm border border-line-soft bg-surface-page/30 px-5 py-4 overflow-hidden">
           <div className="relative" style={{ height: CHART_HEIGHT }}>
             <svg
               className="absolute inset-0 w-full h-full overflow-visible"
@@ -371,7 +371,7 @@ export default function QualifyingSpreadChart({
             {[0, 0.25, 0.5, 0.75, 1].map((tick) => (
               <span
                 key={tick}
-                className="absolute bottom-0 -translate-x-1/2 text-[10px] text-text-muted font-mono"
+                className="absolute bottom-0 -translate-x-1/2 text-[10px] text-ink-faint font-mono"
                 style={{ left: `${tick * 100}%` }}
               >
                 +{(spread.maxGap * tick).toFixed(spread.maxGap < 1 ? 2 : 1)}s
@@ -381,7 +381,7 @@ export default function QualifyingSpreadChart({
             {spread.points.map((point) => (
               <div
                 key={`${point.key}-dot`}
-                className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-bg-tertiary border-2 shadow-sm ${
+                className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-surface-panel border-2 shadow-sm ${
                   point.gap === 0 ? "w-3 h-3" : "w-2.5 h-2.5"
                 }`}
                 style={{
@@ -408,8 +408,8 @@ export default function QualifyingSpreadChart({
                   title={title}
                 >
                   <div
-                    className={`h-6 min-w-11 px-1.5 rounded-sm border bg-bg-tertiary/95 shadow-sm flex items-center justify-center transition-transform group-hover:scale-110 ${
-                      isPole ? "text-text-primary" : "text-text-secondary"
+                    className={`h-6 min-w-11 px-1.5 rounded-sm border bg-surface-panel/95 shadow-sm flex items-center justify-center transition-transform group-hover:scale-110 ${
+                      isPole ? "text-ink-strong" : "text-ink-base"
                     }`}
                     style={{ borderColor: point.teamColor }}
                   >
@@ -423,8 +423,8 @@ export default function QualifyingSpreadChart({
           </div>
         </div>
       ) : (
-        <div className="rounded-sm border border-border-primary bg-bg-primary/30 px-4 py-8 text-center">
-          <p className="text-text-muted text-sm font-mono">
+        <div className="rounded-sm border border-line-soft bg-surface-page/30 px-4 py-8 text-center">
+          <p className="text-ink-faint text-sm font-mono">
             Select timed drivers to view the qualifying spread.
           </p>
         </div>
@@ -434,16 +434,16 @@ export default function QualifyingSpreadChart({
         {spread.points.slice(0, 12).map((point) => (
           <div
             key={`${point.key}-chip`}
-            className="flex items-center gap-2 border border-border-primary rounded-sm bg-bg-primary/20 px-2 py-1"
+            className="flex items-center gap-2 border border-line-soft rounded-sm bg-surface-page/20 px-2 py-1"
           >
             <span
               className="w-1.5 h-5 rounded-sm"
               style={{ backgroundColor: point.teamColor }}
             />
-            <span className="text-[10px] text-text-primary font-mono font-bold">
+            <span className="text-[10px] text-ink-strong font-mono font-bold">
               {point.driverCode}
             </span>
-            <span className="text-[10px] text-text-muted font-mono">
+            <span className="text-[10px] text-ink-faint font-mono">
               {point.gap === 0 ? "POLE" : `+${(point.gap ?? 0).toFixed(3)}s`}
             </span>
           </div>
@@ -451,12 +451,14 @@ export default function QualifyingSpreadChart({
         {spread.noTimePoints.map((point) => (
           <div
             key={`${point.key}-notime`}
-            className="flex items-center gap-2 border border-red-500/30 rounded-sm bg-red-500/5 px-2 py-1"
+            className="flex items-center gap-2 border border-danger/30 rounded-sm bg-danger/5 px-2 py-1"
           >
-            <span className="text-[10px] text-red-400 font-mono font-bold">
+            <span className="text-[10px] text-danger-bright font-mono font-bold">
               {point.driverCode}
             </span>
-            <span className="text-[10px] text-red-300 font-mono">NO TIME</span>
+            <span className="text-[10px] text-danger-bright font-mono">
+              NO TIME
+            </span>
           </div>
         ))}
       </div>

@@ -87,7 +87,7 @@ const DegradationTooltip = ({
     .find((entry): entry is CleanSample => isCleanSample(entry));
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-lg p-3 shadow-xl">
+    <div className="bg-surface-panel border border-line-soft rounded-lg p-3 shadow-xl">
       <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-1 text-sm`}>
         Tyre Age: {label} {label === 1 ? "lap" : "laps"}
       </p>
@@ -670,8 +670,8 @@ export default function TyreDegradationChart({
   if (loading) {
     return (
       <div className="space-y-3">
-        <div className="h-6 bg-bg-elevated rounded w-56 animate-pulse" />
-        <div className="h-64 bg-bg-elevated rounded animate-pulse" />
+        <div className="h-6 bg-surface-raised rounded w-56 animate-pulse" />
+        <div className="h-64 bg-surface-raised rounded animate-pulse" />
       </div>
     );
   }
@@ -679,7 +679,7 @@ export default function TyreDegradationChart({
   if (!data || data.drivers.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm">
+        <p className="text-ink-faint text-sm">
           {season < 2018
             ? "Tyre data is only available from 2018 onwards."
             : "No tyre degradation data available for this session."}
@@ -695,7 +695,7 @@ export default function TyreDegradationChart({
           <h3 className={CHART_TYPOGRAPHY.titleClassName}>
             {data.event_name.replace("Grand Prix", "GP")} - Tyre Degradation
           </h3>
-          <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest mt-1">
+          <p className="text-[10px] text-ink-faint font-mono uppercase tracking-widest mt-1">
             clean laps only · dots = stint-normalized laps · line = fitted
             compound curve
           </p>
@@ -734,16 +734,16 @@ export default function TyreDegradationChart({
             <button
               type="button"
               onClick={() => setShowDriverDropdown(!showDriverDropdown)}
-              className="px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-border-secondary text-text-secondary hover:border-purple-500 hover:text-purple-300 transition-colors"
+              className="px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest border border-line-strong text-ink-base hover:border-accent hover:text-accent-light transition-colors"
             >
               Drivers ({selectedDrivers.length})
             </button>
             {showDriverDropdown && (
-              <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-10 min-w-[220px] max-h-[260px] overflow-y-auto">
+              <div className="absolute right-0 top-full mt-1 bg-surface-panel border border-line-soft rounded-sm shadow-xl z-10 min-w-[220px] max-h-[260px] overflow-y-auto">
                 {sortedDrivers.map((driver) => (
                   <label
                     key={driverKey(driver)}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-bg-elevated cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-surface-raised cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -756,9 +756,9 @@ export default function TyreDegradationChart({
                             : [...prev, dk],
                         );
                       }}
-                      className="w-3.5 h-3.5 accent-purple-500"
+                      className="w-3.5 h-3.5 accent-accent"
                     />
-                    <span className="text-xs text-text-muted w-4 font-mono">
+                    <span className="text-xs text-ink-faint w-4 font-mono">
                       {driver.final_position || "-"}
                     </span>
                     <span
@@ -784,7 +784,7 @@ export default function TyreDegradationChart({
           {chartData.summaries.map((summary) => (
             <div
               key={summary.compound}
-              className="border border-border-primary rounded-sm p-3 bg-bg-tertiary/40"
+              className="border border-line-soft rounded-sm p-3 bg-surface-panel/40"
             >
               <div className="flex items-center justify-between gap-2">
                 <p
@@ -793,31 +793,31 @@ export default function TyreDegradationChart({
                 >
                   {summary.compound}
                 </p>
-                <p className="text-[10px] text-text-muted font-mono">
+                <p className="text-[10px] text-ink-faint font-mono">
                   {summary.sampleCount} laps
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-[10px] font-mono">
-                <span className="text-text-muted">Peak</span>
-                <span className="text-text-primary text-right">
+                <span className="text-ink-faint">Peak</span>
+                <span className="text-ink-strong text-right">
                   {summary.peakLap != null
                     ? `lap ${summary.peakLap} (${formatDelta(summary.peakDelta)})`
                     : "-"}
                 </span>
-                <span className="text-text-muted">Falloff</span>
-                <span className="text-text-primary text-right">
+                <span className="text-ink-faint">Falloff</span>
+                <span className="text-ink-strong text-right">
                   {summary.falloffLap != null
                     ? `lap ${summary.falloffLap}`
                     : "-"}
                 </span>
-                <span className="text-text-muted">Deg/lap</span>
-                <span className="text-text-primary text-right">
+                <span className="text-ink-faint">Deg/lap</span>
+                <span className="text-ink-strong text-right">
                   {summary.postFalloffSlope != null
                     ? formatDelta(summary.postFalloffSlope)
                     : "-"}
                 </span>
-                <span className="text-text-muted">+1.0s</span>
-                <span className="text-text-primary text-right">
+                <span className="text-ink-faint">+1.0s</span>
+                <span className="text-ink-strong text-right">
                   {summary.plusOneLap != null
                     ? `lap ${summary.plusOneLap}`
                     : "-"}
@@ -902,7 +902,7 @@ export default function TyreDegradationChart({
           </MobileChartFrame>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-text-muted text-sm font-mono">
+            <p className="text-ink-faint text-sm font-mono">
               Select compounds and drivers with clean stints to view degradation
               curves.
             </p>

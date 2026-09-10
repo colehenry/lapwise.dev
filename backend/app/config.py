@@ -44,7 +44,8 @@ class Settings(BaseSettings):
 
     # AI
     ai_daily_query_limit: int = 20
-    anthropic_api_key: str = ""
+    open_router_api_key: str = ""
+    open_router_summary_model: str = "deepseek/deepseek-v4-flash-0731"
 
     # FastF1
     fastf1_cache_dir: str = "./cache"

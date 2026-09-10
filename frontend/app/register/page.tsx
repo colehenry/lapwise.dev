@@ -104,10 +104,10 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-text-primary mb-1">
-          Join <span className="text-purple-500">Lapwise</span>
+        <h1 className="text-2xl font-bold text-ink-strong mb-1">
+          Join <span className="text-accent">Lapwise</span>
         </h1>
-        <p className="text-text-muted text-sm mb-3">
+        <p className="text-ink-faint text-sm mb-3">
           Join Lapwise to discuss races, ask Clutch, and track your favorites.
         </p>
         <ul className="flex flex-col gap-1 mb-6">
@@ -118,9 +118,9 @@ export default function RegisterPage() {
           ].map((item) => (
             <li
               key={item}
-              className="flex items-center gap-2 text-[11px] font-mono text-text-muted"
+              className="flex items-center gap-2 text-[11px] font-mono text-ink-faint"
             >
-              <span className="w-1 h-1 rounded-full bg-purple-500 flex-shrink-0" />
+              <span className="w-1 h-1 rounded-full bg-accent flex-shrink-0" />
               {item}
             </li>
           ))}
@@ -145,7 +145,7 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm text-text-secondary mb-1.5"
+              className="block text-sm text-ink-base mb-1.5"
             >
               Email
             </label>
@@ -163,7 +163,7 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="username"
-              className="block text-sm text-text-secondary mb-1.5"
+              className="block text-sm text-ink-base mb-1.5"
             >
               Username
             </label>
@@ -179,12 +179,12 @@ export default function RegisterPage() {
               placeholder="cool_racer"
             />
             {usernameStatus === "idle" && (
-              <p className="text-xs text-text-muted mt-1">
+              <p className="text-xs text-ink-faint mt-1">
                 3-20 characters, lowercase letters, numbers, and underscores
               </p>
             )}
             {usernameStatus === "checking" && (
-              <p className="text-xs text-text-muted mt-1">
+              <p className="text-xs text-ink-faint mt-1">
                 Checking availability...
               </p>
             )}
@@ -193,7 +193,7 @@ export default function RegisterPage() {
                 className={`text-xs mt-1 ${
                   usernameStatus === "available"
                     ? "text-green-400"
-                    : "text-red-400"
+                    : "text-danger-bright"
                 }`}
               >
                 {usernameMessage}
@@ -204,7 +204,7 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm text-text-secondary mb-1.5"
+              className="block text-sm text-ink-base mb-1.5"
             >
               Password
             </label>
@@ -217,7 +217,7 @@ export default function RegisterPage() {
               minLength={8}
               autoComplete="new-password"
             />
-            <p className="text-xs text-text-muted mt-1">
+            <p className="text-xs text-ink-faint mt-1">
               Min 8 characters with uppercase, lowercase, and a number
             </p>
           </div>
@@ -225,7 +225,7 @@ export default function RegisterPage() {
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-sm text-text-secondary mb-1.5"
+              className="block text-sm text-ink-base mb-1.5"
             >
               Confirm password
             </label>
@@ -240,7 +240,7 @@ export default function RegisterPage() {
           </div>
 
           {error && (
-            <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-sm px-3 py-2">
+            <p className="text-danger-bright text-sm bg-danger/10 border border-danger/20 rounded-sm px-3 py-2">
               {error}
             </p>
           )}
@@ -249,18 +249,18 @@ export default function RegisterPage() {
             Create account
           </Button>
 
-          <p className="text-[11px] text-text-muted text-center leading-relaxed">
+          <p className="text-[11px] text-ink-faint text-center leading-relaxed">
             By creating an account you agree to our{" "}
             <Link
               href="/terms"
-              className="text-purple-400 hover:text-purple-300 transition-colors"
+              className="text-accent-bright hover:text-accent-light transition-colors"
             >
               Terms of Service
             </Link>{" "}
             and{" "}
             <Link
               href="/privacy"
-              className="text-purple-400 hover:text-purple-300 transition-colors"
+              className="text-accent-bright hover:text-accent-light transition-colors"
             >
               Privacy Policy
             </Link>
@@ -268,11 +268,11 @@ export default function RegisterPage() {
           </p>
         </form>
 
-        <p className="text-center text-sm text-text-muted mt-6">
+        <p className="text-center text-sm text-ink-faint mt-6">
           Already have an account?{" "}
           <Link
             href="/login"
-            className="text-purple-400 hover:text-purple-300 transition-colors"
+            className="text-accent-bright hover:text-accent-light transition-colors"
           >
             Log in
           </Link>

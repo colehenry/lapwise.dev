@@ -11,8 +11,8 @@ export default function ReplayPageRoute() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-bg-secondary flex items-center justify-center">
-          <span className="text-text-muted text-sm font-mono">Loading...</span>
+        <div className="min-h-screen bg-surface-band flex items-center justify-center">
+          <span className="text-ink-faint text-sm font-mono">Loading...</span>
         </div>
       }
     >

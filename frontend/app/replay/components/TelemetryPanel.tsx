@@ -691,7 +691,7 @@ export default function TelemetryPanel({
   if (!selectedDriver || !driverInfo) return null;
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
+    <div className="bg-surface-panel border border-line-soft rounded-sm shadow-sm overflow-hidden">
       <div
         role="toolbar"
         onClick={() => setCollapsed((c) => !c)}
@@ -701,7 +701,7 @@ export default function TelemetryPanel({
             setCollapsed((c) => !c);
           }
         }}
-        className="relative w-full h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center justify-between overflow-hidden cursor-pointer hover:bg-bg-elevated/30 transition-colors"
+        className="relative w-full h-10 bg-surface-page border-b border-line-soft px-4 flex items-center justify-between overflow-hidden cursor-pointer hover:bg-surface-raised/30 transition-colors"
       >
         <TrianglePattern id="replay-telemetry-triangles" />
         <div className="relative z-10 flex items-center gap-2">
@@ -709,25 +709,25 @@ export default function TelemetryPanel({
             className="w-2 h-2 rounded-full"
             style={{ backgroundColor: driverColor }}
           />
-          <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+          <span className="text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
             {selectedDriver}
           </span>
           {compareDriver && compareInfo && (
             <>
-              <span className="text-[10px] text-text-muted/50 font-mono">
+              <span className="text-[10px] text-ink-faint/50 font-mono">
                 vs
               </span>
               <span
                 className="w-2 h-2 rounded-full"
                 style={{ backgroundColor: compareColor }}
               />
-              <span className="text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+              <span className="text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
                 {compareDriver}
               </span>
             </>
           )}
           {currentLap > 0 && (
-            <span className="text-[10px] font-mono text-text-muted/60">
+            <span className="text-[10px] font-mono text-ink-faint/60">
               Lap {currentLap}
             </span>
           )}
@@ -740,12 +740,12 @@ export default function TelemetryPanel({
                 e.stopPropagation();
                 onClearCompare();
               }}
-              className="text-[10px] font-mono text-text-muted hover:text-red-400 transition-colors px-1"
+              className="text-[10px] font-mono text-ink-faint hover:text-danger-bright transition-colors px-1"
             >
               Clear compare
             </button>
           )}
-          <span className="text-text-muted text-[10px] font-mono">
+          <span className="text-ink-faint text-[10px] font-mono">
             {collapsed ? "+" : "-"}
           </span>
         </div>
@@ -779,7 +779,7 @@ export default function TelemetryPanel({
               {/* Tooltip */}
               {tooltip && (
                 <div
-                  className="absolute pointer-events-none bg-bg-primary/95 backdrop-blur-sm border border-border-primary rounded-sm px-2.5 py-1.5 text-[10px] font-mono z-20"
+                  className="absolute pointer-events-none bg-surface-page/95 backdrop-blur-sm border border-line-soft rounded-sm px-2.5 py-1.5 text-[10px] font-mono z-20"
                   style={{
                     left: Math.min(
                       tooltip.snappedX + 12,
@@ -788,7 +788,7 @@ export default function TelemetryPanel({
                     top: 8,
                   }}
                 >
-                  <div className="text-text-muted mb-1">
+                  <div className="text-ink-faint mb-1">
                     {tooltip.pct}% through lap
                   </div>
                   {tooltip.compare ? (
@@ -811,20 +811,20 @@ export default function TelemetryPanel({
                       </div>
                       {/* Speed */}
                       <div className="grid grid-cols-3 gap-x-2">
-                        <span className="text-text-secondary">Speed</span>
-                        <span className="text-text-primary text-center">
+                        <span className="text-ink-base">Speed</span>
+                        <span className="text-ink-strong text-center">
                           {Math.round(tooltip.primary.speed)}
                         </span>
-                        <span className="text-text-primary text-center">
+                        <span className="text-ink-strong text-center">
                           {Math.round(tooltip.compare.speed)}
                         </span>
                       </div>
                       {/* Delta */}
                       {tooltip.speedDelta !== null && (
                         <div className="grid grid-cols-3 gap-x-2">
-                          <span className="text-text-secondary">Delta</span>
+                          <span className="text-ink-base">Delta</span>
                           <span
-                            className={`col-span-2 text-center font-bold ${tooltip.speedDelta > 0 ? "text-green-400" : tooltip.speedDelta < 0 ? "text-red-400" : "text-text-muted"}`}
+                            className={`col-span-2 text-center font-bold ${tooltip.speedDelta > 0 ? "text-green-400" : tooltip.speedDelta < 0 ? "text-danger-bright" : "text-ink-faint"}`}
                           >
                             {tooltip.speedDelta > 0 ? "+" : ""}
                             {Math.round(tooltip.speedDelta)} km/h
@@ -833,61 +833,61 @@ export default function TelemetryPanel({
                       )}
                       {/* Throttle */}
                       <div className="grid grid-cols-3 gap-x-2">
-                        <span className="text-text-secondary">Throttle</span>
-                        <span className="text-text-primary text-center">
+                        <span className="text-ink-base">Throttle</span>
+                        <span className="text-ink-strong text-center">
                           {Math.round(tooltip.primary.throttle)}%
                         </span>
-                        <span className="text-text-primary text-center">
+                        <span className="text-ink-strong text-center">
                           {Math.round(tooltip.compare.throttle)}%
                         </span>
                       </div>
                       {/* Brake */}
                       <div className="grid grid-cols-3 gap-x-2">
-                        <span className="text-text-secondary">Brake</span>
+                        <span className="text-ink-base">Brake</span>
                         <span
-                          className={`text-center ${tooltip.primary.brake ? "text-red-400" : "text-text-muted"}`}
+                          className={`text-center ${tooltip.primary.brake ? "text-danger-bright" : "text-ink-faint"}`}
                         >
                           {tooltip.primary.brake ? "ON" : "OFF"}
                         </span>
                         <span
-                          className={`text-center ${tooltip.compare.brake ? "text-red-400" : "text-text-muted"}`}
+                          className={`text-center ${tooltip.compare.brake ? "text-danger-bright" : "text-ink-faint"}`}
                         >
                           {tooltip.compare.brake ? "ON" : "OFF"}
                         </span>
                       </div>
                       {/* Gear */}
                       <div className="grid grid-cols-3 gap-x-2">
-                        <span className="text-text-secondary">Gear</span>
-                        <span className="text-text-primary text-center">
+                        <span className="text-ink-base">Gear</span>
+                        <span className="text-ink-strong text-center">
                           {tooltip.primary.gear}
                         </span>
-                        <span className="text-text-primary text-center">
+                        <span className="text-ink-strong text-center">
                           {tooltip.compare.gear}
                         </span>
                       </div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-0 text-text-secondary">
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-0 text-ink-base">
                       <span>Speed</span>
-                      <span className="text-text-primary">
+                      <span className="text-ink-strong">
                         {Math.round(tooltip.primary.speed)} km/h
                       </span>
                       <span>Throttle</span>
-                      <span className="text-text-primary">
+                      <span className="text-ink-strong">
                         {Math.round(tooltip.primary.throttle)}%
                       </span>
                       <span>Brake</span>
                       <span
                         className={
                           tooltip.primary.brake
-                            ? "text-red-400"
-                            : "text-text-muted"
+                            ? "text-danger-bright"
+                            : "text-ink-faint"
                         }
                       >
                         {tooltip.primary.brake ? "ON" : "OFF"}
                       </span>
                       <span>Gear</span>
-                      <span className="text-text-primary">
+                      <span className="text-ink-strong">
                         {tooltip.primary.gear}
                       </span>
                       {hasDrs && (
@@ -897,7 +897,7 @@ export default function TelemetryPanel({
                             className={
                               tooltip.primary.drs
                                 ? "text-green-400"
-                                : "text-text-muted"
+                                : "text-ink-faint"
                             }
                           >
                             {tooltip.primary.drs ? "OPEN" : "OFF"}
@@ -911,7 +911,7 @@ export default function TelemetryPanel({
             </>
           ) : (
             <div className="h-20 flex items-center justify-center">
-              <span className="text-xs text-text-muted font-mono">
+              <span className="text-xs text-ink-faint font-mono">
                 No telemetry for lap {currentLap}
               </span>
             </div>

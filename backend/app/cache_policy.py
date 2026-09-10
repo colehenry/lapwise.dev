@@ -20,6 +20,7 @@ NO_STORE = "private, no-store"
 _COMPLETED_SEASON = (7 * 24 * 3600, 30 * 24 * 3600)
 _RUNNING_SEASON = (60, 300)
 _ARCHIVE = (600, 3600)
+_DAILY = (86400, 7 * 24 * 3600)
 _METADATA = (3600, 86400)
 _LATEST = (300, 3600)
 _STATIC_ASSET = (7 * 24 * 3600, 30 * 24 * 3600)
@@ -40,6 +41,13 @@ _PUBLIC_RULES: list[tuple[re.Pattern[str], tuple[int, int]]] = [
     (re.compile(r"^/api/results/latest$"), _LATEST),
     (re.compile(r"^/api/replay/(seasons|available)$"), _METADATA),
     (re.compile(r"^/api/replay/track/\d+$"), _STATIC_ASSET),
+    (re.compile(r"^/api/replay/console/\d+/\d+$"), _STATIC_ASSET),
+    (
+        re.compile(r"^/api/replay/console/\d+/\d+/telemetry/[A-Za-z]{2,4}$"),
+        _STATIC_ASSET,
+    ),
+    (re.compile(r"^/api/archive/counts$"), _DAILY),
+    (re.compile(r"^/api/headlines$"), _LATEST),
     (re.compile(r"^/api/daily$"), _LATEST),
     (re.compile(r"^/api/daily/\d+$"), _ARCHIVE),
     (re.compile(r"^/api/daily/drivers$"), _ARCHIVE),

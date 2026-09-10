@@ -50,9 +50,9 @@ function VerifyEmailContent() {
       <div className="w-full max-w-sm text-center">
         {justRegistered && status === "idle" && (
           <>
-            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-purple-500/15 flex items-center justify-center">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-accent/15 flex items-center justify-center">
               <svg
-                className="w-7 h-7 text-purple-400"
+                className="w-7 h-7 text-accent-bright"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -67,16 +67,16 @@ function VerifyEmailContent() {
                 />
               </svg>
             </div>
-            <h1 className="text-xl font-bold text-text-primary mb-2">
+            <h1 className="text-xl font-bold text-ink-strong mb-2">
               Check your email
             </h1>
-            <p className="text-text-muted text-sm mb-6">
+            <p className="text-ink-faint text-sm mb-6">
               We sent a verification link to your email address. Click the link
               to verify your account.
             </p>
             <Link
               href="/login"
-              className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+              className="text-sm text-accent-bright hover:text-accent-light transition-colors"
             >
               Back to login
             </Link>
@@ -84,7 +84,7 @@ function VerifyEmailContent() {
         )}
 
         {status === "verifying" && (
-          <p className="text-text-secondary">Verifying your email...</p>
+          <p className="text-ink-base">Verifying your email...</p>
         )}
 
         {status === "success" && (
@@ -106,10 +106,10 @@ function VerifyEmailContent() {
                 />
               </svg>
             </div>
-            <h1 className="text-xl font-bold text-text-primary mb-2">
+            <h1 className="text-xl font-bold text-ink-strong mb-2">
               Email verified
             </h1>
-            <p className="text-text-muted text-sm mb-6">
+            <p className="text-ink-faint text-sm mb-6">
               Your email has been verified. You can now log in.
             </p>
             <Link href="/login">
@@ -120,9 +120,9 @@ function VerifyEmailContent() {
 
         {status === "error" && (
           <>
-            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-red-500/15 flex items-center justify-center">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-danger/15 flex items-center justify-center">
               <svg
-                className="w-7 h-7 text-red-400"
+                className="w-7 h-7 text-danger-bright"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -137,10 +137,10 @@ function VerifyEmailContent() {
                 />
               </svg>
             </div>
-            <h1 className="text-xl font-bold text-text-primary mb-2">
+            <h1 className="text-xl font-bold text-ink-strong mb-2">
               Verification failed
             </h1>
-            <p className="text-text-muted text-sm mb-6">
+            <p className="text-ink-faint text-sm mb-6">
               This link may be expired or already used.
             </p>
             <form onSubmit={handleResend} className="space-y-3">
@@ -150,7 +150,7 @@ function VerifyEmailContent() {
                 onChange={(e) => setResendEmail(e.target.value)}
                 required
                 placeholder="Enter your email to resend"
-                className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors text-sm"
+                className="w-full px-3 py-2 bg-surface-panel border border-line-soft rounded-lg text-ink-strong placeholder:text-ink-faint focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-colors text-sm"
               />
               {resendSent ? (
                 <p className="text-green-400 text-sm">
@@ -167,10 +167,10 @@ function VerifyEmailContent() {
 
         {status === "idle" && !justRegistered && (
           <>
-            <h1 className="text-xl font-bold text-text-primary mb-2">
+            <h1 className="text-xl font-bold text-ink-strong mb-2">
               Verify your email
             </h1>
-            <p className="text-text-muted text-sm mb-6">
+            <p className="text-ink-faint text-sm mb-6">
               Enter your email to receive a new verification link.
             </p>
             <form onSubmit={handleResend} className="space-y-3">
@@ -180,7 +180,7 @@ function VerifyEmailContent() {
                 onChange={(e) => setResendEmail(e.target.value)}
                 required
                 placeholder="you@example.com"
-                className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors text-sm"
+                className="w-full px-3 py-2 bg-surface-panel border border-line-soft rounded-lg text-ink-strong placeholder:text-ink-faint focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-colors text-sm"
               />
               {resendSent ? (
                 <p className="text-green-400 text-sm">

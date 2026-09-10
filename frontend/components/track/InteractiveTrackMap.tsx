@@ -21,7 +21,7 @@ function DotGridPattern({ id = "track-dot-grid" }: { id?: string }) {
             cy="1"
             r="0.8"
             fill="currentColor"
-            className="text-purple-400"
+            className="text-accent-bright"
           />
         </pattern>
       </defs>
@@ -76,7 +76,7 @@ export default function InteractiveTrackMap({
 
   return (
     <div
-      className="bg-bg-tertiary rounded-sm border border-border-primary relative overflow-hidden min-h-[350px] md:min-h-[400px]"
+      className="bg-surface-panel rounded-sm border border-line-soft relative overflow-hidden min-h-[350px] md:min-h-[400px]"
       style={
         theme === "dark"
           ? {
@@ -92,14 +92,14 @@ export default function InteractiveTrackMap({
         <div className="absolute top-4 left-5 z-20 flex items-center gap-1.5">
           <span
             className={`text-[9px] font-mono font-bold tracking-widest uppercase ${
-              theme === "dark" ? "text-purple-400/80" : "text-text-tertiary"
+              theme === "dark" ? "text-accent-bright/80" : "text-ink-soft"
             }`}
           >
             {trackLengthKm.toFixed(3)} km
           </span>
           <div
             className={`h-px w-6 ${
-              theme === "dark" ? "bg-purple-500/30" : "bg-border-secondary"
+              theme === "dark" ? "bg-accent/30" : "bg-line-strong"
             }`}
           />
         </div>
@@ -109,12 +109,12 @@ export default function InteractiveTrackMap({
         <div className="absolute bottom-4 right-5 z-20 flex items-center gap-1.5">
           <div
             className={`h-px w-6 ${
-              theme === "dark" ? "bg-purple-500/30" : "bg-border-secondary"
+              theme === "dark" ? "bg-accent/30" : "bg-line-strong"
             }`}
           />
           <span
             className={`text-[9px] font-mono font-bold tracking-widest uppercase ${
-              theme === "dark" ? "text-purple-400/80" : "text-text-tertiary"
+              theme === "dark" ? "text-accent-bright/80" : "text-ink-soft"
             }`}
           >
             {location}

@@ -41,11 +41,9 @@ export default function RolloverNotice() {
   const rollover = nextRollover(now);
 
   return (
-    <p className="text-sm text-text-muted">
-      <span className="text-text-secondary">
-        Playing now: {puzzleDate(0, now)}
-      </span>{" "}
-      · next board takes over at 0{PUZZLE_ROLLOVER_UTC_HOUR}:00 UTC (
+    <p className="text-sm text-ink-faint">
+      <span className="text-ink-base">Playing now: {puzzleDate(0, now)}</span> ·
+      next board takes over at 0{PUZZLE_ROLLOVER_UTC_HOUR}:00 UTC (
       {localTime(rollover)} local), in {countdown(now, rollover)}
     </p>
   );

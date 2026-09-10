@@ -48,10 +48,10 @@ export default function SessionAnalysisPanels({
     <>
       {/* ── Lap Time Graph (Race) or Gap Chart (Qualifying) ── */}
       {!isPractice && (
-        <div className="bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-visible">
-          <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden rounded-t-sm">
+        <div className="bg-surface-panel border border-line-soft rounded-sm shadow-sm overflow-visible">
+          <div className="relative h-10 bg-surface-page border-b border-line-soft px-4 flex items-center overflow-hidden rounded-t-sm">
             <TrianglePattern id="analysis-triangles" />
-            <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+            <span className="relative z-10 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
               {isQualifying ? "Qualifying Analysis" : "Race Performance"}
             </span>
           </div>
@@ -74,10 +74,10 @@ export default function SessionAnalysisPanels({
 
       {/* ── Tyre Strategy (Race only) ── */}
       {!isQualifying && !isPractice && (
-        <div className="mt-6 bg-bg-tertiary border border-border-primary rounded-sm shadow-sm overflow-hidden">
-          <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden">
+        <div className="mt-6 bg-surface-panel border border-line-soft rounded-sm shadow-sm overflow-hidden">
+          <div className="relative h-10 bg-surface-page border-b border-line-soft px-4 flex items-center overflow-hidden">
             <TrianglePattern id="tyre-triangles" />
-            <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono">
+            <span className="relative z-10 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono">
               Tyre Strategy
             </span>
           </div>

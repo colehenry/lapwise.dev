@@ -8,7 +8,7 @@ export default function DriverSilhouette({
   return (
     <div
       aria-hidden="true"
-      className={`aspect-square overflow-hidden rounded-md border border-border-primary bg-bg-secondary text-text-muted/45 ${className}`}
+      className={`aspect-square overflow-hidden rounded-md border border-line-soft bg-surface-band text-ink-faint/45 ${className}`}
     >
       <svg
         viewBox="0 0 64 64"

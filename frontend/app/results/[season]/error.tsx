@@ -16,11 +16,11 @@ export default function ResultsError({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-bg-secondary flex items-center justify-center p-8">
-      <div className="bg-bg-tertiary rounded-sm border border-border-primary p-8 max-w-md text-center">
-        <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+    <div className="min-h-screen bg-surface-band flex items-center justify-center p-8">
+      <div className="bg-surface-panel rounded-sm border border-line-soft p-8 max-w-md text-center">
+        <div className="w-16 h-16 bg-danger/10 border border-danger/20 rounded-full flex items-center justify-center mx-auto mb-4">
           <svg
-            className="w-8 h-8 text-red-400"
+            className="w-8 h-8 text-danger-bright"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -38,7 +38,7 @@ export default function ResultsError({
         <h2 className="text-xl font-bold text-white mb-2">
           Failed to load results
         </h2>
-        <p className="text-text-tertiary mb-6">
+        <p className="text-ink-soft mb-6">
           We encountered an error while loading the season results. Please try
           again.
         </p>
@@ -53,8 +53,8 @@ export default function ResultsError({
         </div>
 
         {process.env.NODE_ENV === "development" && error.message && (
-          <div className="mt-6 p-4 bg-bg-secondary rounded border border-red-500/20 text-left">
-            <p className="text-xs text-red-400 font-mono break-all">
+          <div className="mt-6 p-4 bg-surface-band rounded border border-danger/20 text-left">
+            <p className="text-xs text-danger-bright font-mono break-all">
               {error.message}
             </p>
           </div>

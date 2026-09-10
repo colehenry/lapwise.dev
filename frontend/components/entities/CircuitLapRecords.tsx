@@ -26,7 +26,7 @@ function RecordRow({
 }) {
   const teamColor =
     resolveReadableAccentColor(
-      record.team_color ? `#${record.team_color}` : "var(--purple-500)",
+      record.team_color ? `#${record.team_color}` : "var(--accent)",
       theme,
       "var(--delta-neutral)",
     ) ?? "var(--delta-neutral)";
@@ -38,11 +38,11 @@ function RecordRow({
 
   return (
     <div>
-      <div className="text-xs text-text-muted uppercase tracking-wider mb-2 font-mono font-bold">
+      <div className="text-xs text-ink-faint uppercase tracking-wider mb-2 font-mono font-bold">
         {label}
       </div>
       <div className="flex items-baseline gap-2 mb-1">
-        <span className="text-2xl font-bold text-text-primary font-mono">
+        <span className="text-2xl font-bold text-ink-strong font-mono">
           {formatLapTime(record.time_seconds)}
         </span>
       </div>
@@ -54,18 +54,18 @@ function RecordRow({
         {driverUrl ? (
           <Link
             href={driverUrl}
-            className="text-text-secondary hover:text-purple-300 transition-colors"
+            className="text-ink-base hover:text-accent-light transition-colors"
           >
             {record.driver_name}
           </Link>
         ) : (
-          <span className="text-text-secondary">{record.driver_name}</span>
+          <span className="text-ink-base">{record.driver_name}</span>
         )}
-        <span className="text-text-muted">({record.year})</span>
+        <span className="text-ink-faint">({record.year})</span>
       </div>
       <Link
         href={constructorHref(record.team_name) ?? "/constructors"}
-        className="mt-0.5 inline-flex text-xs text-text-muted hover:text-purple-300 transition-colors"
+        className="mt-0.5 inline-flex text-xs text-ink-faint hover:text-accent-light transition-colors"
       >
         {record.team_name}
       </Link>

@@ -25,7 +25,7 @@ export default function Skeleton({
 
   return (
     <div
-      className={`bg-gradient-to-r from-bg-tertiary via-bg-elevated to-bg-tertiary bg-[length:200%_100%] animate-shimmer ${variantStyles[variant]} ${height ? "" : defaultHeight[variant]} ${className}`}
+      className={`bg-gradient-to-r from-surface-panel via-surface-raised to-surface-panel bg-[length:200%_100%] animate-shimmer ${variantStyles[variant]} ${height ? "" : defaultHeight[variant]} ${className}`}
       style={{
         width,
         height: height || undefined,

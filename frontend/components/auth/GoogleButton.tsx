@@ -31,7 +31,7 @@ export default function GoogleButton({
   return (
     <a
       href={href}
-      className="flex items-center justify-center gap-3 w-full px-4 py-2.5 rounded-sm border border-border-primary bg-bg-secondary hover:bg-bg-tertiary text-text-primary text-sm font-medium transition-colors"
+      className="flex items-center justify-center gap-3 w-full px-4 py-2.5 rounded-sm border border-line-soft bg-surface-band hover:bg-surface-panel text-ink-strong text-sm font-medium transition-colors"
     >
       <GoogleLogo />
       <span>{label}</span>
@@ -73,11 +73,9 @@ function GoogleLogo() {
 export function OrDivider() {
   return (
     <div className="flex items-center gap-3 my-5">
-      <div className="flex-1 h-px bg-border-primary" />
-      <span className="text-xs text-text-muted uppercase tracking-wide">
-        or
-      </span>
-      <div className="flex-1 h-px bg-border-primary" />
+      <div className="flex-1 h-px bg-line-soft" />
+      <span className="text-xs text-ink-faint uppercase tracking-wide">or</span>
+      <div className="flex-1 h-px bg-line-soft" />
     </div>
   );
 }

@@ -12,7 +12,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Flag: "text-yellow-400",
   Drs: "text-green-400",
   SafetyCar: "text-yellow-300",
-  CarEvent: "text-red-400",
+  CarEvent: "text-danger-bright",
 };
 
 function formatTime(seconds: number): string {
@@ -42,9 +42,9 @@ export default function RaceControlFeed({
   }, [visibleMessages.length]);
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm">
-      <div className="px-3 py-2 border-b border-border-primary">
-        <h3 className="text-[10px] font-mono tracking-widest text-text-muted uppercase font-bold">
+    <div className="bg-surface-panel border border-line-soft rounded-sm">
+      <div className="px-3 py-2 border-b border-line-soft">
+        <h3 className="text-[10px] font-mono tracking-widest text-ink-faint uppercase font-bold">
           Race Control
         </h3>
       </div>
@@ -53,13 +53,13 @@ export default function RaceControlFeed({
         className="max-h-[200px] overflow-y-auto p-2 space-y-1"
       >
         {visibleMessages.length === 0 ? (
-          <p className="text-xs text-text-muted p-2 text-center">
+          <p className="text-xs text-ink-faint p-2 text-center">
             No messages yet
           </p>
         ) : (
           visibleMessages.slice(-20).map((msg, i) => {
             const colorClass =
-              CATEGORY_COLORS[msg.category ?? ""] ?? "text-text-secondary";
+              CATEGORY_COLORS[msg.category ?? ""] ?? "text-ink-base";
             const isRecent = currentTime - msg.t < 10;
 
             return (
@@ -69,7 +69,7 @@ export default function RaceControlFeed({
                   isRecent ? "opacity-100" : "opacity-60"
                 }`}
               >
-                <span className="font-mono text-text-muted mr-1.5">
+                <span className="font-mono text-ink-faint mr-1.5">
                   {formatTime(msg.t)}
                 </span>
                 <span className={colorClass}>{msg.message}</span>

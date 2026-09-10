@@ -18,11 +18,11 @@ export default function Card({
   const baseStyles = "rounded-sm overflow-hidden";
 
   const variantStyles = {
-    default: "bg-bg-tertiary border border-border-primary",
-    elevated: "bg-bg-tertiary shadow-lg",
-    bordered: "bg-bg-secondary border-2 border-border-secondary",
+    default: "bg-surface-panel border border-line-soft",
+    elevated: "bg-surface-panel shadow-lg",
+    bordered: "bg-surface-band border-2 border-line-strong",
     interactive:
-      "bg-bg-tertiary border border-border-primary hover:border-purple-500 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-200 cursor-pointer",
+      "bg-surface-panel border border-line-soft hover:border-accent hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-200 cursor-pointer",
   };
 
   const paddingStyles = {

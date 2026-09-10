@@ -36,10 +36,14 @@ export default function EntityHistorySeasonTooltip({
       : null;
 
   const changeColor = (value: number) =>
-    value > 0 ? "text-green-400" : value < 0 ? "text-red-400" : "text-blue-400";
+    value > 0
+      ? "text-green-400"
+      : value < 0
+        ? "text-danger-bright"
+        : "text-blue-400";
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm p-3 shadow-xl">
+    <div className="bg-surface-panel border border-line-soft rounded-sm p-3 shadow-xl">
       <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-2`}>
         {data.year}
       </p>
@@ -106,7 +110,7 @@ export default function EntityHistorySeasonTooltip({
           </p>
         )}
         {data.scoring_explanation && (
-          <p className="mt-2 max-w-64 text-[10px] leading-relaxed text-text-muted">
+          <p className="mt-2 max-w-64 text-[10px] leading-relaxed text-ink-faint">
             {data.scoring_explanation}
           </p>
         )}

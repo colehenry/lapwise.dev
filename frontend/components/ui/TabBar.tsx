@@ -27,10 +27,10 @@ export default function TabBar<T extends string>({
             disabled={tab.disabled}
             className={`px-4 py-2.5 text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 border-b-2 whitespace-nowrap ${
               isActive
-                ? "border-purple-500 text-purple-300"
+                ? "border-accent text-accent-light"
                 : tab.disabled
-                  ? "border-transparent text-text-muted/40 cursor-not-allowed"
-                  : "border-transparent text-text-muted hover:text-text-secondary hover:border-border-primary"
+                  ? "border-transparent text-ink-faint/40 cursor-not-allowed"
+                  : "border-transparent text-ink-faint hover:text-ink-base hover:border-line-soft"
             }`}
           >
             {tab.label}

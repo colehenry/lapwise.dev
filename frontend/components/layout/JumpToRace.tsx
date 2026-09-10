@@ -96,7 +96,7 @@ export default function JumpToRace({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full sm:w-auto bg-bg-primary border border-border-primary text-text-primary font-mono text-[11px] sm:text-xs font-bold px-3 sm:px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center justify-center gap-2 uppercase tracking-widest whitespace-nowrap"
+        className="w-full sm:w-auto bg-surface-page border border-line-soft text-ink-strong font-mono text-[11px] sm:text-xs font-bold px-3 sm:px-4 py-2 rounded-sm hover:border-accent hover:text-accent-light transition-colors duration-150 cursor-pointer flex items-center justify-center gap-2 uppercase tracking-widest whitespace-nowrap"
       >
         <span>{label}</span>
         <svg
@@ -117,11 +117,11 @@ export default function JumpToRace({
       </button>
 
       {isOpen && (
-        <div className="fixed left-3 right-3 top-32 sm:absolute sm:left-auto sm:right-0 sm:top-auto mt-2 sm:w-80 bg-bg-tertiary border border-border-primary rounded-sm shadow-xl z-50 p-4">
+        <div className="fixed left-3 right-3 top-32 sm:absolute sm:left-auto sm:right-0 sm:top-auto mt-2 sm:w-80 bg-surface-panel border border-line-soft rounded-sm shadow-xl z-50 p-4">
           <div className="mb-4">
             <label
               htmlFor="jump-season"
-              className="block text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono mb-2"
+              className="block text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono mb-2"
             >
               Season
             </label>
@@ -129,7 +129,7 @@ export default function JumpToRace({
               id="jump-season"
               value={selectedSeason}
               onChange={(e) => setSelectedSeason(e.target.value)}
-              className="w-full px-3 py-2 bg-bg-primary border border-border-primary rounded-sm text-text-primary font-mono text-sm focus:outline-none focus:border-purple-500 transition-colors duration-150"
+              className="w-full px-3 py-2 bg-surface-page border border-line-soft rounded-sm text-ink-strong font-mono text-sm focus:outline-none focus:border-accent transition-colors duration-150"
             >
               {availableSeasons.map((year) => (
                 <option key={year} value={year}>
@@ -140,7 +140,7 @@ export default function JumpToRace({
           </div>
 
           <div className="mb-4">
-            <span className="block text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono mb-2">
+            <span className="block text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono mb-2">
               Session Type
             </span>
             <div className="flex items-center gap-1">
@@ -149,8 +149,8 @@ export default function JumpToRace({
                 onClick={() => setSessionType("race")}
                 className={`flex-1 px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                   sessionType === "race"
-                    ? "bg-purple-500/20 border border-purple-500 text-purple-300"
-                    : "border border-transparent text-text-muted hover:text-text-secondary"
+                    ? "bg-accent/20 border border-accent text-accent-light"
+                    : "border border-transparent text-ink-faint hover:text-ink-base"
                 }`}
               >
                 Race
@@ -160,8 +160,8 @@ export default function JumpToRace({
                 onClick={() => setSessionType("qualifying")}
                 className={`flex-1 px-3 py-1.5 rounded-sm text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                   sessionType === "qualifying"
-                    ? "bg-purple-500/20 border border-purple-500 text-purple-300"
-                    : "border border-transparent text-text-muted hover:text-text-secondary"
+                    ? "bg-accent/20 border border-accent text-accent-light"
+                    : "border border-transparent text-ink-faint hover:text-ink-base"
                 }`}
               >
                 Qualifying
@@ -172,12 +172,12 @@ export default function JumpToRace({
           <div className="mb-4">
             <label
               htmlFor="jump-round"
-              className="block text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono mb-2"
+              className="block text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono mb-2"
             >
               Round
             </label>
             {loadingRounds ? (
-              <div className="flex items-center justify-center py-8 text-text-muted font-mono text-xs tracking-widest uppercase">
+              <div className="flex items-center justify-center py-8 text-ink-faint font-mono text-xs tracking-widest uppercase">
                 Loading rounds...
               </div>
             ) : rounds.length > 0 ? (
@@ -185,7 +185,7 @@ export default function JumpToRace({
                 id="jump-round"
                 value={selectedRound}
                 onChange={(e) => setSelectedRound(e.target.value)}
-                className="w-full px-3 py-2 bg-bg-primary border border-border-primary rounded-sm text-text-primary font-mono text-sm focus:outline-none focus:border-purple-500 transition-colors duration-150"
+                className="w-full px-3 py-2 bg-surface-page border border-line-soft rounded-sm text-ink-strong font-mono text-sm focus:outline-none focus:border-accent transition-colors duration-150"
               >
                 <option value="">Select a round...</option>
                 {rounds
@@ -211,7 +211,7 @@ export default function JumpToRace({
                   })}
               </select>
             ) : (
-              <div className="text-text-muted font-mono text-xs py-2 text-center tracking-widest uppercase">
+              <div className="text-ink-faint font-mono text-xs py-2 text-center tracking-widest uppercase">
                 No rounds available
               </div>
             )}
@@ -221,7 +221,7 @@ export default function JumpToRace({
             type="button"
             onClick={handleJump}
             disabled={!selectedRound}
-            className="w-full bg-purple-500/15 border border-purple-500 text-purple-300 font-mono text-xs font-bold tracking-widest uppercase px-4 py-2.5 rounded-sm hover:bg-purple-500/25 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-accent/15 border border-accent text-accent-light font-mono text-xs font-bold tracking-widest uppercase px-4 py-2.5 rounded-sm hover:bg-accent/25 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <span>Go</span>
             <svg

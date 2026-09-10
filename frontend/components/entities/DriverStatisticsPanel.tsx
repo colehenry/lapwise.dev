@@ -99,10 +99,10 @@ export default function DriverStatisticsPanel({
             const pct = races.length > 0 ? (d.count / races.length) * 100 : 0;
             return (
               <div key={d.label} className="flex items-center gap-3">
-                <span className="text-xs font-mono text-text-secondary w-12 text-right">
+                <span className="text-xs font-mono text-ink-base w-12 text-right">
                   {d.label}
                 </span>
-                <div className="flex-1 h-6 bg-bg-elevated rounded-sm overflow-hidden">
+                <div className="flex-1 h-6 bg-surface-raised rounded-sm overflow-hidden">
                   <div
                     className="h-full rounded-sm transition-all duration-500"
                     style={{
@@ -112,7 +112,7 @@ export default function DriverStatisticsPanel({
                     }}
                   />
                 </div>
-                <span className="text-xs font-mono text-text-muted w-16">
+                <span className="text-xs font-mono text-ink-faint w-16">
                   {d.count} ({pct.toFixed(0)}%)
                 </span>
               </div>
@@ -123,18 +123,18 @@ export default function DriverStatisticsPanel({
 
       {/* Status Breakdown */}
       <ArchivePanel title="Race Outcomes" headerId="stats-status-breakdown">
-        <div className="rounded-sm border border-border-primary bg-bg-primary/20 p-4 md:p-5">
+        <div className="rounded-sm border border-line-soft bg-surface-page/20 p-4 md:p-5">
           <div className="mb-4 flex items-baseline justify-between gap-4">
             {primaryStatus && (
               <div>
-                <div className="font-mono text-2xl font-bold tabular-nums text-text-primary">
+                <div className="font-mono text-2xl font-bold tabular-nums text-ink-strong">
                   {primaryStatus.pct.toFixed(0)}%
                 </div>
                 <MonoLabel>{primaryStatus.status}</MonoLabel>
               </div>
             )}
             <div className="text-right">
-              <div className="font-mono text-2xl font-bold tabular-nums text-text-primary">
+              <div className="font-mono text-2xl font-bold tabular-nums text-ink-strong">
                 {races.length.toLocaleString()}
               </div>
               <MonoLabel>Total Starts</MonoLabel>
@@ -143,27 +143,27 @@ export default function DriverStatisticsPanel({
 
           <div className="relative">
             {activeStatus && hoveredStatus && (
-              <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-3 min-w-48 -translate-x-1/2 rounded-sm border border-border-primary bg-bg-tertiary px-3 py-2 shadow-xl">
+              <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-3 min-w-48 -translate-x-1/2 rounded-sm border border-line-soft bg-surface-panel px-3 py-2 shadow-xl">
                 <div className="mb-1 flex items-center gap-2">
                   <span
                     className="h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: activeStatus.color }}
                   />
-                  <span className="text-sm font-semibold text-text-primary">
+                  <span className="text-sm font-semibold text-ink-strong">
                     {activeStatus.status}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-4 font-mono text-xs tabular-nums">
-                  <span className="text-text-muted">
+                  <span className="text-ink-faint">
                     {activeStatus.count.toLocaleString()} starts
                   </span>
-                  <span className="font-bold text-text-primary">
+                  <span className="font-bold text-ink-strong">
                     {activeStatus.pct.toFixed(1)}%
                   </span>
                 </div>
               </div>
             )}
-            <div className="flex h-5 overflow-hidden rounded-sm bg-bg-primary">
+            <div className="flex h-5 overflow-hidden rounded-sm bg-surface-page">
               {statusSegments.map((segment) => (
                 <button
                   key={segment.status}
@@ -193,12 +193,12 @@ export default function DriverStatisticsPanel({
                   className="h-2.5 w-2.5 rounded-full"
                   style={{ backgroundColor: segment.color }}
                 />
-                <span className="truncate text-sm font-semibold text-text-primary">
+                <span className="truncate text-sm font-semibold text-ink-strong">
                   {segment.status}
                 </span>
-                <span className="font-mono text-sm font-bold tabular-nums text-text-secondary">
+                <span className="font-mono text-sm font-bold tabular-nums text-ink-base">
                   {segment.count.toLocaleString()}
-                  <span className="ml-2 text-text-muted">
+                  <span className="ml-2 text-ink-faint">
                     {segment.pct.toFixed(0)}%
                   </span>
                 </span>

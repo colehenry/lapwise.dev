@@ -59,7 +59,7 @@ export default function ArchiveDataHeader({
   return (
     <ArchivePanel bodyClassName="p-0">
       <div
-        className="h-1 w-full bg-border-secondary"
+        className="h-1 w-full bg-line-strong"
         style={accentColor ? { backgroundColor: accentColor } : undefined}
       />
       <div className={`relative grid ${gridCols} gap-0 overflow-hidden`}>
@@ -69,10 +69,10 @@ export default function ArchiveDataHeader({
               className="absolute inset-0 bg-cover bg-center opacity-15"
               style={{ backgroundImage: `url(${bannerImageUrl})` }}
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-bg-tertiary via-bg-tertiary/95 to-bg-tertiary/75" />
+            <div className="absolute inset-0 bg-gradient-to-r from-surface-panel via-surface-panel/95 to-surface-panel/75" />
           </>
         )}
-        <div className="bg-bg-primary/70 border-b lg:border-b-0 lg:border-r border-border-primary h-[220px] lg:h-auto lg:max-h-[360px] flex items-end justify-center overflow-hidden">
+        <div className="bg-surface-page/70 border-b lg:border-b-0 lg:border-r border-line-soft h-[220px] lg:h-auto lg:max-h-[360px] flex items-end justify-center overflow-hidden">
           <div className="relative z-10 h-full w-full flex items-center justify-center">
             {media}
           </div>
@@ -82,11 +82,11 @@ export default function ArchiveDataHeader({
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div className="min-w-0">
               <MonoLabel className="block mb-2">{eyebrow}</MonoLabel>
-              <h2 className="text-3xl md:text-4xl font-bold text-text-primary leading-tight break-words">
+              <h2 className="text-3xl md:text-4xl font-bold text-ink-strong leading-tight break-words">
                 {title}
               </h2>
               {subtitle && (
-                <p className="mt-2 text-sm md:text-base text-text-tertiary">
+                <p className="mt-2 text-sm md:text-base text-ink-soft">
                   {subtitle}
                 </p>
               )}
@@ -100,7 +100,7 @@ export default function ArchiveDataHeader({
                 <div key={stat.label} className="min-w-0">
                   <MonoLabel className="block mb-2">{stat.label}</MonoLabel>
                   <div
-                    className={`${headlineTextSize} font-bold font-mono tabular-nums text-text-primary truncate`}
+                    className={`${headlineTextSize} font-bold font-mono tabular-nums text-ink-strong truncate`}
                   >
                     {formatStatValue(stat.value)}
                   </div>
@@ -110,18 +110,18 @@ export default function ArchiveDataHeader({
           )}
 
           <div
-            className={`grid ${statGridClass} border-y border-border-primary bg-bg-primary/20`}
+            className={`grid ${statGridClass} border-y border-line-soft bg-surface-page/20`}
           >
             {stats.map((stat) => (
               <div
                 key={stat.label}
-                className="min-w-0 border border-border-primary px-3 py-2.5"
+                className="min-w-0 border border-line-soft px-3 py-2.5"
               >
                 <MonoLabel className="block mb-1 break-words">
                   {stat.label}
                 </MonoLabel>
                 <div
-                  className={`${statTextSize} font-bold font-mono tabular-nums text-text-primary truncate`}
+                  className={`${statTextSize} font-bold font-mono tabular-nums text-ink-strong truncate`}
                 >
                   {formatStatValue(stat.value)}
                 </div>
@@ -131,7 +131,7 @@ export default function ArchiveDataHeader({
         </div>
 
         {aside && (
-          <div className="relative z-10 border-t lg:border-t-0 lg:border-l border-border-primary p-5 md:p-6 flex flex-col gap-3 lg:max-h-[360px] overflow-y-auto">
+          <div className="relative z-10 border-t lg:border-t-0 lg:border-l border-line-soft p-5 md:p-6 flex flex-col gap-3 lg:max-h-[360px] overflow-y-auto">
             {aside}
           </div>
         )}

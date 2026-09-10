@@ -22,7 +22,7 @@ function GridLink({
   return (
     <Link
       href={`/daily?grid=${number}`}
-      className="text-xs font-semibold text-text-secondary underline decoration-border-secondary underline-offset-4 transition-colors hover:text-text-primary"
+      className="text-xs font-semibold text-ink-base underline decoration-line-strong underline-offset-4 transition-colors hover:text-ink-strong"
     >
       {direction === "previous" && `${arrow} `}
       Grid {String(number).padStart(3, "0")}

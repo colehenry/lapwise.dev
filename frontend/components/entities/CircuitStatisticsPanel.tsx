@@ -23,8 +23,8 @@ function LeaderboardRow({
   href: string | null;
 }) {
   return (
-    <div className="grid grid-cols-[2rem_1fr_auto] items-center gap-4 border-b border-border-primary px-4 py-2.5 last:border-b-0">
-      <span className="font-mono text-xs font-bold tabular-nums text-text-muted text-right">
+    <div className="grid grid-cols-[2rem_1fr_auto] items-center gap-4 border-b border-line-soft px-4 py-2.5 last:border-b-0">
+      <span className="font-mono text-xs font-bold tabular-nums text-ink-faint text-right">
         {String(rank).padStart(2, "0")}
       </span>
 
@@ -38,18 +38,18 @@ function LeaderboardRow({
         {href ? (
           <Link
             href={href}
-            className="truncate text-sm font-semibold text-text-primary transition-colors hover:text-purple-300"
+            className="truncate text-sm font-semibold text-ink-strong transition-colors hover:text-accent-light"
           >
             {item.name}
           </Link>
         ) : (
-          <span className="truncate text-sm font-semibold text-text-primary">
+          <span className="truncate text-sm font-semibold text-ink-strong">
             {item.name}
           </span>
         )}
       </div>
 
-      <span className="font-mono text-sm font-bold tabular-nums text-text-secondary">
+      <span className="font-mono text-sm font-bold tabular-nums text-ink-base">
         {item.count.toLocaleString()}
       </span>
     </div>
@@ -124,7 +124,7 @@ function SummaryCell({
         : null
     : null;
   return (
-    <div className="min-w-0 border border-border-primary bg-bg-primary/20 px-4 py-3">
+    <div className="min-w-0 border border-line-soft bg-surface-page/20 px-4 py-3">
       <MonoLabel className="block mb-1">{label}</MonoLabel>
       {leader ? (
         <div className="flex items-baseline justify-between gap-3">
@@ -138,22 +138,22 @@ function SummaryCell({
             {leaderHref ? (
               <Link
                 href={leaderHref}
-                className="truncate text-sm font-semibold text-text-primary transition-colors hover:text-purple-300"
+                className="truncate text-sm font-semibold text-ink-strong transition-colors hover:text-accent-light"
               >
                 {leader.name}
               </Link>
             ) : (
-              <span className="truncate text-sm font-semibold text-text-primary">
+              <span className="truncate text-sm font-semibold text-ink-strong">
                 {leader.name}
               </span>
             )}
           </div>
-          <span className="font-mono text-xl font-bold tabular-nums text-text-primary shrink-0">
+          <span className="font-mono text-xl font-bold tabular-nums text-ink-strong shrink-0">
             {leader.count.toLocaleString()}
           </span>
         </div>
       ) : (
-        <span className="text-sm text-text-muted">No data</span>
+        <span className="text-sm text-ink-faint">No data</span>
       )}
     </div>
   );
@@ -195,7 +195,7 @@ export default function CircuitStatisticsPanel({
 
   if (!data) {
     return (
-      <div className="text-center py-12 text-text-muted">
+      <div className="text-center py-12 text-ink-faint">
         No statistics available for this circuit.
       </div>
     );

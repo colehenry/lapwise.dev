@@ -163,19 +163,14 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-12">
-      <h1 className="text-2xl font-bold text-text-primary mb-8">Settings</h1>
+      <h1 className="text-2xl font-bold text-ink-strong mb-8">Settings</h1>
 
       {/* Profile Section */}
       <section className="mb-10">
-        <h2 className="text-lg font-semibold text-text-primary mb-4">
-          Profile
-        </h2>
+        <h2 className="text-lg font-semibold text-ink-strong mb-4">Profile</h2>
         <form onSubmit={handleProfileSave} className="space-y-4">
           <div>
-            <label
-              htmlFor="bio"
-              className="block text-sm text-text-secondary mb-1.5"
-            >
+            <label htmlFor="bio" className="block text-sm text-ink-base mb-1.5">
               Bio
             </label>
             <Textarea
@@ -185,14 +180,14 @@ export default function SettingsPage() {
               maxLength={200}
               rows={3}
             />
-            <p className="text-xs text-text-muted mt-1">
+            <p className="text-xs text-ink-faint mt-1">
               {bio.length}/200 characters
             </p>
           </div>
           <div>
             <label
               htmlFor="avatarUrl"
-              className="block text-sm text-text-secondary mb-1.5"
+              className="block text-sm text-ink-base mb-1.5"
             >
               Avatar URL
             </label>
@@ -203,7 +198,7 @@ export default function SettingsPage() {
               onChange={(e) => setAvatarUrl(e.target.value)}
               placeholder="https://example.com/avatar.png"
             />
-            <p className="text-xs text-text-muted mt-1">
+            <p className="text-xs text-ink-faint mt-1">
               Recommended: square image, at least 256x256
             </p>
           </div>
@@ -221,43 +216,43 @@ export default function SettingsPage() {
 
       {/* Favorites Section */}
       <section className="mb-10">
-        <h2 className="text-lg font-semibold text-text-primary mb-4">
+        <h2 className="text-lg font-semibold text-ink-strong mb-4">
           Favorites
         </h2>
         <div className="space-y-2 mb-4">
-          <div className="flex items-center justify-between p-3 rounded-sm bg-bg-tertiary border border-border-primary">
+          <div className="flex items-center justify-between p-3 rounded-sm bg-surface-panel border border-line-soft">
             <div>
-              <p className="text-xs text-text-muted">Favorite Team</p>
+              <p className="text-xs text-ink-faint">Favorite Team</p>
               {user.favorite_team ? (
                 <Link
                   href={constructorHref(user.favorite_team) ?? "/constructors"}
-                  className="text-sm text-text-primary hover:text-purple-300 transition-colors"
+                  className="text-sm text-ink-strong hover:text-accent-light transition-colors"
                 >
                   {user.favorite_team.team_name}
                 </Link>
               ) : (
-                <p className="text-sm text-text-primary">Not set</p>
+                <p className="text-sm text-ink-strong">Not set</p>
               )}
             </div>
           </div>
-          <div className="flex items-center justify-between p-3 rounded-sm bg-bg-tertiary border border-border-primary">
+          <div className="flex items-center justify-between p-3 rounded-sm bg-surface-panel border border-line-soft">
             <div>
-              <p className="text-xs text-text-muted">Favorite Driver</p>
+              <p className="text-xs text-ink-faint">Favorite Driver</p>
               {user.favorite_driver ? (
                 <Link
                   href={driverHref(user.favorite_driver) ?? "/drivers"}
-                  className="text-sm text-text-primary hover:text-purple-300 transition-colors"
+                  className="text-sm text-ink-strong hover:text-accent-light transition-colors"
                 >
                   {user.favorite_driver.full_name}
                 </Link>
               ) : (
-                <p className="text-sm text-text-primary">Not set</p>
+                <p className="text-sm text-ink-strong">Not set</p>
               )}
             </div>
           </div>
-          <div className="flex items-center justify-between p-3 rounded-sm bg-bg-tertiary border border-border-primary">
+          <div className="flex items-center justify-between p-3 rounded-sm bg-surface-panel border border-line-soft">
             <div>
-              <p className="text-xs text-text-muted">Favorite Circuit</p>
+              <p className="text-xs text-ink-faint">Favorite Circuit</p>
               {user.favorite_circuit ? (
                 <Link
                   href={
@@ -266,12 +261,12 @@ export default function SettingsPage() {
                         user.favorite_circuit.circuit_id,
                     ) ?? "/circuits"
                   }
-                  className="text-sm text-text-primary hover:text-purple-300 transition-colors"
+                  className="text-sm text-ink-strong hover:text-accent-light transition-colors"
                 >
                   {user.favorite_circuit.name}
                 </Link>
               ) : (
-                <p className="text-sm text-text-primary">Not set</p>
+                <p className="text-sm text-ink-strong">Not set</p>
               )}
             </div>
           </div>
@@ -302,11 +297,11 @@ export default function SettingsPage() {
 
       {/* Password Section */}
       <section className="mb-10">
-        <h2 className="text-lg font-semibold text-text-primary mb-4">
+        <h2 className="text-lg font-semibold text-ink-strong mb-4">
           {user.has_password ? "Change password" : "Set password"}
         </h2>
         {!user.has_password && (
-          <p className="text-sm text-text-muted mb-4">
+          <p className="text-sm text-ink-faint mb-4">
             You signed up with Google. Set a password to enable email/username
             login or to disconnect Google later.
           </p>
@@ -316,7 +311,7 @@ export default function SettingsPage() {
             <div>
               <label
                 htmlFor="oldPassword"
-                className="block text-sm text-text-secondary mb-1.5"
+                className="block text-sm text-ink-base mb-1.5"
               >
                 Current password
               </label>
@@ -333,7 +328,7 @@ export default function SettingsPage() {
           <div>
             <label
               htmlFor="newPassword"
-              className="block text-sm text-text-secondary mb-1.5"
+              className="block text-sm text-ink-base mb-1.5"
             >
               New password
             </label>
@@ -351,7 +346,7 @@ export default function SettingsPage() {
             <p className="text-sm text-green-400">{passwordMsg}</p>
           )}
           {passwordError && (
-            <p className="text-sm text-red-400">{passwordError}</p>
+            <p className="text-sm text-danger-bright">{passwordError}</p>
           )}
           <Button
             type="submit"
@@ -366,9 +361,11 @@ export default function SettingsPage() {
 
       {/* Danger Zone */}
       <section>
-        <h2 className="text-lg font-semibold text-red-400 mb-4">Danger zone</h2>
-        <div className="border border-red-500/20 rounded-sm p-4">
-          <p className="text-sm text-text-muted mb-3">
+        <h2 className="text-lg font-semibold text-danger-bright mb-4">
+          Danger zone
+        </h2>
+        <div className="border border-danger/20 rounded-sm p-4">
+          <p className="text-sm text-ink-faint mb-3">
             Log out from all devices. This will revoke all active sessions.
           </p>
           <Button
@@ -385,8 +382,8 @@ export default function SettingsPage() {
             Log out everywhere
           </Button>
         </div>
-        <div className="border border-red-500/20 rounded-sm p-4 mt-4">
-          <p className="text-sm text-text-muted mb-3">
+        <div className="border border-danger/20 rounded-sm p-4 mt-4">
+          <p className="text-sm text-ink-faint mb-3">
             Delete your account. This is a soft delete and will immediately
             revoke all active sessions.
           </p>
@@ -401,7 +398,7 @@ export default function SettingsPage() {
               variant="danger"
             />
             {deleteError && (
-              <p className="text-sm text-red-400">{deleteError}</p>
+              <p className="text-sm text-danger-bright">{deleteError}</p>
             )}
             <Button
               type="submit"

@@ -97,18 +97,18 @@ export default function ConnectedAccounts() {
 
   return (
     <section className="mb-10">
-      <h2 className="text-lg font-semibold text-text-primary mb-4">
+      <h2 className="text-lg font-semibold text-ink-strong mb-4">
         Connected accounts
       </h2>
 
       {message && <p className="text-sm text-green-400 mb-3">{message}</p>}
-      {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
+      {error && <p className="text-sm text-danger-bright mb-3">{error}</p>}
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between p-3 rounded-sm bg-bg-tertiary border border-border-primary">
+        <div className="flex items-center justify-between p-3 rounded-sm bg-surface-panel border border-line-soft">
           <div>
-            <p className="text-sm text-text-primary">Google</p>
-            <p className="text-xs text-text-muted">
+            <p className="text-sm text-ink-strong">Google</p>
+            <p className="text-xs text-ink-faint">
               {googleLinked
                 ? googleLinked.email || "Connected"
                 : "Not connected"}

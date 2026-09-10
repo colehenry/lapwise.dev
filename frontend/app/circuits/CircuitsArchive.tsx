@@ -19,10 +19,10 @@ function CircuitCard({ circuit }: { circuit: CircuitInfo }) {
   return (
     <TiltCard>
       <Link href={`/circuits/${circuit.venue_slug}`} className="block h-full">
-        <div className="relative border border-border-primary rounded-sm p-4 hover:border-purple-500 transition-all duration-200 bg-bg-tertiary h-full">
+        <div className="relative border border-line-soft rounded-sm p-4 hover:border-accent transition-all duration-200 bg-surface-panel h-full">
           <div className="flex items-center gap-4">
             {/* Track map */}
-            <div className="flex-shrink-0 w-20 h-20 rounded-sm bg-bg-secondary flex items-center justify-center border border-border-primary p-2">
+            <div className="flex-shrink-0 w-20 h-20 rounded-sm bg-surface-band flex items-center justify-center border border-line-soft p-2">
               <TrackMapImage
                 circuitId={circuit.id}
                 circuitName={circuit.name}
@@ -35,24 +35,24 @@ function CircuitCard({ circuit }: { circuit: CircuitInfo }) {
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <h3 className="text-text-primary font-bold truncate">
+              <h3 className="text-ink-strong font-bold truncate">
                 {circuit.name}
               </h3>
-              <div className="flex items-center gap-2 text-xs text-text-muted mt-0.5">
+              <div className="flex items-center gap-2 text-xs text-ink-faint mt-0.5">
                 <span>{circuit.location}</span>
-                <span className="text-border-secondary">/</span>
+                <span className="text-line-strong">/</span>
                 <span className="flex items-center gap-1">
                   <span>{getCircuitFlagEmoji(circuit.country)}</span>
                   <span>{circuit.country}</span>
                 </span>
               </div>
-              <div className="flex items-center gap-3 text-[10px] text-text-muted font-mono tracking-wider mt-2">
+              <div className="flex items-center gap-3 text-[10px] text-ink-faint font-mono tracking-wider mt-2">
                 {circuit.track_length_km && (
                   <>
-                    <span className="text-purple-400">
+                    <span className="text-accent-bright">
                       {circuit.track_length_km.toFixed(3)} km
                     </span>
-                    <span className="text-border-secondary">/</span>
+                    <span className="text-line-strong">/</span>
                   </>
                 )}
                 <span>
@@ -67,10 +67,10 @@ function CircuitCard({ circuit }: { circuit: CircuitInfo }) {
 
             {/* Race count */}
             <div className="flex-shrink-0 text-right">
-              <div className="text-2xl font-bold text-text-primary tabular-nums">
+              <div className="text-2xl font-bold text-ink-strong tabular-nums">
                 {circuit.total_races}
               </div>
-              <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase">
+              <div className="text-[10px] text-ink-faint font-mono tracking-widest uppercase">
                 races
               </div>
             </div>

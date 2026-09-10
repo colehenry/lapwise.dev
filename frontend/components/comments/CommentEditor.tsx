@@ -55,13 +55,13 @@ export default function CommentEditor({
         placeholder={placeholder}
         // biome-ignore lint/a11y/noAutofocus: only set when the user opens a reply box.
         autoFocus={autoFocus}
-        className="w-full resize-y rounded-sm border border-border-primary bg-bg-secondary px-3 py-2.5 text-[15px] leading-relaxed text-text-primary placeholder:text-text-muted transition-colors focus:border-purple-500 focus:outline-none"
+        className="w-full resize-y rounded-sm border border-line-soft bg-surface-band px-3 py-2.5 text-[15px] leading-relaxed text-ink-strong placeholder:text-ink-faint transition-colors focus:border-accent focus:outline-none"
       />
 
       {(hasContent || onCancel) && (
         <div className="flex flex-wrap items-center justify-between gap-3">
           {body.length > maxLength - 500 ? (
-            <span className="text-[11px] font-mono uppercase tracking-wider text-text-muted">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-ink-faint">
               {maxLength - body.length} left
             </span>
           ) : (
@@ -92,7 +92,7 @@ export default function CommentEditor({
         </div>
       )}
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs text-danger-bright">{error}</p>}
     </form>
   );
 }

@@ -64,7 +64,7 @@ const CustomTooltip = ({
   const d = payload[0]?.payload;
   if (!d) return null;
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs space-y-1">
+    <div className="bg-surface-panel border border-line-soft rounded-sm p-2 shadow-lg text-xs space-y-1">
       <p className={CHART_TYPOGRAPHY.tooltipTitleClassName}>{d.driverCode}</p>
       <p
         className={CHART_TYPOGRAPHY.tooltipValueClassName}
@@ -72,17 +72,17 @@ const CustomTooltip = ({
       >
         {d.compound}
       </p>
-      <div className="border-t border-border-primary/50 pt-1 space-y-0.5">
+      <div className="border-t border-line-soft/50 pt-1 space-y-0.5">
         <p className={CHART_TYPOGRAPHY.tooltipValueClassName}>
           Median&nbsp;&nbsp;{formatLapTime(d.median)}
         </p>
-        <p className="text-text-muted font-mono text-[10px]">
+        <p className="text-ink-faint font-mono text-[10px]">
           Min&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{formatLapTime(d.min)}
         </p>
-        <p className="text-text-muted font-mono text-[10px]">
+        <p className="text-ink-faint font-mono text-[10px]">
           Max&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{formatLapTime(d.max)}
         </p>
-        <p className="text-text-muted font-mono text-[10px]">
+        <p className="text-ink-faint font-mono text-[10px]">
           {d.lapCount} laps
         </p>
       </div>
@@ -224,7 +224,7 @@ export default function LongRunPaceChart({
   if (season < 2018) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           Telemetry data available from 2018 onwards.
         </p>
       </div>
@@ -234,8 +234,8 @@ export default function LongRunPaceChart({
   if (isLoading) {
     return (
       <div className="space-y-2">
-        <div className="h-5 bg-bg-elevated rounded w-56 animate-pulse" />
-        <div className="h-64 bg-bg-elevated rounded animate-pulse" />
+        <div className="h-5 bg-surface-raised rounded w-56 animate-pulse" />
+        <div className="h-64 bg-surface-raised rounded animate-pulse" />
       </div>
     );
   }
@@ -243,7 +243,7 @@ export default function LongRunPaceChart({
   if (!data || allDriverOrder.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           No long run stints found (minimum {MIN_STINT_LAPS} consecutive laps on
           green flag).
         </p>
@@ -267,7 +267,7 @@ export default function LongRunPaceChart({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+        <p className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
           Stints ≥{MIN_STINT_LAPS} laps · green flag only · line = range · dot =
           median
         </p>
@@ -295,7 +295,7 @@ export default function LongRunPaceChart({
 
       {visibleDriverOrder.length === 0 ? (
         <div className="flex items-center justify-center py-12">
-          <p className="text-text-muted text-sm font-mono">
+          <p className="text-ink-faint text-sm font-mono">
             No drivers selected.
           </p>
         </div>

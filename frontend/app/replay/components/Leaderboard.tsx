@@ -280,10 +280,10 @@ export default function Leaderboard({
   const gaps = computeGaps(sorted, track.polyline, arcLengths, circuitLengthM);
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm flex flex-col flex-1 min-h-0 overflow-hidden">
-      <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center overflow-hidden shrink-0">
+    <div className="bg-surface-panel border border-line-soft rounded-sm flex flex-col flex-1 min-h-0 overflow-hidden">
+      <div className="relative h-10 bg-surface-page border-b border-line-soft px-4 flex items-center overflow-hidden shrink-0">
         <TrianglePattern id="replay-leaderboard-triangles" />
-        <h3 className="relative z-10 text-[10px] font-mono tracking-widest text-text-muted uppercase font-bold">
+        <h3 className="relative z-10 text-[10px] font-mono tracking-widest text-ink-faint uppercase font-bold">
           Positions
         </h3>
       </div>
@@ -307,13 +307,13 @@ export default function Leaderboard({
               key={code}
               type="button"
               onClick={() => onSelectDriver(code)}
-              className={`w-full flex items-center gap-1.5 px-3 py-1.5 text-left transition-colors hover:bg-bg-elevated ${
+              className={`w-full flex items-center gap-1.5 px-3 py-1.5 text-left transition-colors hover:bg-surface-raised ${
                 isSelected
-                  ? "bg-bg-elevated"
+                  ? "bg-surface-raised"
                   : isCompare
-                    ? "bg-bg-elevated/50"
+                    ? "bg-surface-raised/50"
                     : ""
-              } ${isFastestLap ? "border-l-2 border-purple-500" : ""}`}
+              } ${isFastestLap ? "border-l-2 border-accent" : ""}`}
             >
               {/* Position + change indicator */}
               <div className="flex items-center w-8 shrink-0 justify-end gap-0.5">
@@ -323,11 +323,11 @@ export default function Leaderboard({
                   </span>
                 )}
                 {posChange < 0 && (
-                  <span className="text-[8px] text-red-400">
+                  <span className="text-[8px] text-danger-bright">
                     ▼{Math.abs(posChange)}
                   </span>
                 )}
-                <span className="text-xs font-mono text-text-muted w-5 text-right">
+                <span className="text-xs font-mono text-ink-faint w-5 text-right">
                   {position || "–"}
                 </span>
               </div>
@@ -353,25 +353,25 @@ export default function Leaderboard({
                   unoptimized
                 />
               ) : (
-                <div className="w-5 h-5 rounded-full bg-bg-primary shrink-0" />
+                <div className="w-5 h-5 rounded-full bg-surface-page shrink-0" />
               )}
 
               {/* Driver number + code */}
               <div className="flex items-baseline gap-1 flex-1 min-w-0">
                 {info && (
-                  <span className="text-[9px] font-mono text-text-muted">
+                  <span className="text-[9px] font-mono text-ink-faint">
                     {info.number}
                   </span>
                 )}
                 <span
                   className={`text-xs font-mono font-semibold truncate ${
-                    isSelected ? "text-text-primary" : "text-text-secondary"
+                    isSelected ? "text-ink-strong" : "text-ink-base"
                   }`}
                 >
                   {code}
                 </span>
                 {isFastestLap && (
-                  <span className="text-[8px] text-purple-400 font-mono">
+                  <span className="text-[8px] text-accent-bright font-mono">
                     FL
                   </span>
                 )}
@@ -379,7 +379,7 @@ export default function Leaderboard({
 
               {/* Gap interval */}
               {gap && (
-                <span className="text-[10px] font-mono text-text-muted shrink-0">
+                <span className="text-[10px] font-mono text-ink-faint shrink-0">
                   {gap}
                 </span>
               )}
@@ -393,7 +393,7 @@ export default function Leaderboard({
                       COMPOUND_COLORS[compound] ?? "var(--delta-neutral)",
                   }}
                 />
-                <span className="text-[10px] font-mono text-text-muted">
+                <span className="text-[10px] font-mono text-ink-faint">
                   {COMPOUND_LABELS[compound] ?? "?"}
                   {tyreLife > 0 ? tyreLife : ""}
                 </span>

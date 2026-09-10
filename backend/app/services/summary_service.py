@@ -1,7 +1,7 @@
 """
 Summary Service
 
-Generates AI summaries for F1 sessions using Claude Haiku.
+Generates AI summaries for F1 sessions through OpenRouter.
 Designed for sync usage in ingestion scripts.
 """
 
@@ -24,8 +24,9 @@ from app.models import (
     TrackStatus,
     Weather,
 )
+from app.services.openrouter_json import generate_openrouter_json
 
-MODEL_ID = "claude-haiku-4-5-20251001"
+MODEL_ID = settings.open_router_summary_model
 
 logger = logging.getLogger(__name__)
 
@@ -130,8 +131,7 @@ class SummaryService:
             transcript_text,
         )
 
-        # Call Claude
-        summary_data = SummaryService._call_claude(prompt)
+        summary_data = generate_openrouter_json(prompt, model=MODEL_ID)
         if not summary_data:
             return None
 
@@ -579,49 +579,6 @@ Race Dynamics Evidence (use this to fact-check the narrative):
     @staticmethod
     def _is_finite_number(value) -> bool:
         return isinstance(value, (int, float)) and math.isfinite(value)
-
-    @staticmethod
-    def _call_claude(prompt: str) -> dict | None:
-        """Call Claude Haiku and parse the JSON response."""
-        if not settings.anthropic_api_key:
-            logger.warning("ANTHROPIC_API_KEY not set, skipping summary generation")
-            return None
-
-        try:
-            import anthropic
-
-            client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-            response = client.messages.create(
-                model=MODEL_ID,
-                max_tokens=1500,
-                messages=[{"role": "user", "content": prompt}],
-            )
-
-            text = response.content[0].text
-            tokens_used = response.usage.input_tokens + response.usage.output_tokens
-
-            # Parse JSON from response
-            parsed = json.loads(text)
-            parsed["tokens_used"] = tokens_used
-            return parsed
-
-        except json.JSONDecodeError:
-            # Try to extract JSON from markdown code blocks
-            try:
-                import re
-
-                match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
-                if match:
-                    parsed = json.loads(match.group(1))
-                    parsed["tokens_used"] = tokens_used
-                    return parsed
-            except Exception:
-                pass
-            logger.error("Failed to parse Claude response as JSON")
-            return None
-        except Exception as e:
-            logger.error("Claude API error: %s", e)
-            return None
 
     @staticmethod
     def _fetch_transcript(video_id: str) -> str | None:

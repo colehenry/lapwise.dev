@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import { isValidHeadshotUrl } from "@/lib/api";
 
 type DriverHeadshotProps = {
@@ -12,6 +13,10 @@ type DriverHeadshotProps = {
   responsive?: boolean;
   focalX?: number | null;
   focalY?: number | null;
+  /** Circular framing, as the console and its lists use. */
+  shape?: "square" | "circle";
+  /** The console draws no ring around a face. */
+  bordered?: boolean;
 };
 
 // Faces occupy a small part of the frame, so the default quality of 75 shows
@@ -39,17 +44,26 @@ export default function DriverHeadshot({
   responsive = false,
   focalX,
   focalY,
+  shape = "square",
+  bordered = true,
 }: DriverHeadshotProps) {
+  /* Headshot URLs 404 intermittently, so an empty circle is never acceptable:
+     a failed load falls back to the code like a missing URL does. */
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const failed = failedSrc !== null && failedSrc === src;
+
   const objectPosition = `${((focalX ?? DEFAULT_FOCAL_X) * 100).toFixed(1)}% ${(
     (focalY ?? DEFAULT_FOCAL_Y) * 100
   ).toFixed(1)}%`;
 
   return (
     <div
-      className={`relative shrink-0 overflow-hidden rounded-sm border border-border-secondary bg-bg-secondary ${className}`}
+      className={`relative shrink-0 overflow-hidden bg-surface-band ${
+        shape === "circle" ? "rounded-full" : "rounded-sm"
+      } ${bordered ? "border border-line-strong" : ""} ${className}`}
       style={responsive ? undefined : { width: size, height: size }}
     >
-      {isValidHeadshotUrl(src) ? (
+      {isValidHeadshotUrl(src) && !failed ? (
         <Image
           src={src ?? ""}
           alt={fullName}
@@ -62,9 +76,10 @@ export default function DriverHeadshot({
           quality={HEADSHOT_QUALITY}
           className="object-cover"
           style={{ objectPosition }}
+          onError={() => setFailedSrc(src ?? null)}
         />
       ) : (
-        <span className="flex h-full w-full items-center justify-center text-[10px] font-bold font-mono text-text-muted">
+        <span className="flex h-full w-full items-center justify-center text-[10px] font-bold font-mono text-ink-faint">
           {code ?? initials(fullName)}
         </span>
       )}

@@ -7,11 +7,11 @@ import {
 type InputVariant = "default" | "danger";
 
 const base =
-  "w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-colors";
+  "w-full px-3 py-2 bg-surface-panel border border-line-soft rounded-sm text-ink-strong placeholder:text-ink-faint focus:outline-none transition-colors";
 
 const focusStyles: Record<InputVariant, string> = {
-  default: "focus:border-purple-500 focus:ring-1 focus:ring-purple-500/40",
-  danger: "focus:border-red-500 focus:ring-1 focus:ring-red-500/40",
+  default: "focus:border-accent focus:ring-1 focus:ring-accent/40",
+  danger: "focus:border-danger focus:ring-1 focus:ring-danger/40",
 };
 
 type InputProps = {

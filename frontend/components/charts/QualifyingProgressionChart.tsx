@@ -73,7 +73,7 @@ export default function QualifyingProgressionChart({
   if (!qualifyingData || drivers.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           No qualifying data available.
         </p>
       </div>
@@ -96,7 +96,7 @@ export default function QualifyingProgressionChart({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+        <p className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
           Lap time per segment · slope shows improvement
         </p>
         <button
@@ -104,8 +104,8 @@ export default function QualifyingProgressionChart({
           onClick={() => setHighlightQ3Only((v) => !v)}
           className={`px-3 py-1.5 rounded-sm text-[10px] font-bold font-mono uppercase tracking-widest border transition-colors duration-150 ${
             highlightQ3Only
-              ? "bg-purple-500/20 border-purple-500 text-purple-300"
-              : "border-border-primary text-text-muted hover:text-text-secondary"
+              ? "bg-accent/20 border-accent text-accent-light"
+              : "border-line-soft text-ink-faint hover:text-ink-base"
           }`}
         >
           {highlightQ3Only ? "Q3 bright" : "All equal"}
@@ -147,7 +147,7 @@ export default function QualifyingProgressionChart({
                 .filter((p) => p.value != null)
                 .sort((a, b) => (a.value as number) - (b.value as number));
               return (
-                <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs space-y-0.5">
+                <div className="bg-surface-panel border border-line-soft rounded-sm p-2 shadow-lg text-xs space-y-0.5">
                   <p
                     className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-1`}
                   >

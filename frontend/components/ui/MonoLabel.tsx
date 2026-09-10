@@ -15,7 +15,7 @@ export default function MonoLabel({
 }: MonoLabelProps) {
   return (
     <Tag
-      className={`text-[10px] font-mono uppercase tracking-widest text-text-muted ${className}`}
+      className={`text-[10px] font-mono uppercase tracking-widest text-ink-faint ${className}`}
       {...(Tag === "label" && htmlFor ? { htmlFor } : {})}
     >
       {children}

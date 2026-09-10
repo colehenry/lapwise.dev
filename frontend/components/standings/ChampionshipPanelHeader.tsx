@@ -22,9 +22,9 @@ export default function ChampionshipPanelHeader({
   onModeChange: (mode: ChampionshipPointsMode) => void;
 }) {
   return (
-    <div className="relative h-10 bg-bg-primary border-b border-border-primary px-4 flex items-center gap-2">
+    <div className="relative h-10 bg-surface-page border-b border-line-soft px-4 flex items-center gap-2">
       <GridPattern id={patternId} />
-      <span className="relative z-10 text-[10px] tracking-widest text-text-muted font-bold uppercase font-mono text-nowrap">
+      <span className="relative z-10 text-[10px] tracking-widest text-ink-faint font-bold uppercase font-mono text-nowrap">
         {sessionType === "race" ? raceTitle : qualifyingTitle}
       </span>
       {sessionType === "race" && (

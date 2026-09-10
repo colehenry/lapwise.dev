@@ -45,27 +45,27 @@ export default function CircuitRaceHistoryTable({
 
   if (!data || data.races.length === 0) {
     return (
-      <div className="text-center py-12 text-text-muted">
+      <div className="text-center py-12 text-ink-faint">
         No race history available for this circuit.
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-sm border border-border-primary bg-bg-tertiary">
+    <div className="overflow-x-auto rounded-sm border border-line-soft bg-surface-panel">
       <table className="w-full text-sm">
         <thead>
-          <tr className="bg-bg-primary border-b border-border-primary">
-            <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+          <tr className="bg-surface-page border-b border-line-soft">
+            <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
               Year
             </th>
-            <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+            <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
               Race
             </th>
-            <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+            <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
               Winner
             </th>
-            <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+            <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
               Team
             </th>
           </tr>
@@ -74,15 +74,15 @@ export default function CircuitRaceHistoryTable({
           {data.races.map((race) => (
             <tr
               key={`${race.year}-${race.round}`}
-              className="border-b border-border-primary/50 hover:bg-bg-elevated/50 transition-colors"
+              className="border-b border-line-soft/50 hover:bg-surface-raised/50 transition-colors"
             >
-              <td className="px-3 py-2 text-text-secondary font-mono text-xs">
+              <td className="px-3 py-2 text-ink-base font-mono text-xs">
                 {race.year}
               </td>
               <td className="px-3 py-2">
                 <Link
                   href={`/results/${race.year}/${race.round}`}
-                  className="text-text-primary hover:text-purple-300 transition-colors"
+                  className="text-ink-strong hover:text-accent-light transition-colors"
                 >
                   {race.race_name.replace("Grand Prix", "GP")}
                 </Link>
@@ -111,7 +111,7 @@ export default function CircuitRaceHistoryTable({
                   )}
                   <Link
                     href={constructorHref(race.team_name) ?? "/constructors"}
-                    className="text-text-secondary text-xs hover:text-purple-300 transition-colors"
+                    className="text-ink-base text-xs hover:text-accent-light transition-colors"
                   >
                     {race.team_name}
                   </Link>

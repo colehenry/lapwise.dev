@@ -43,7 +43,7 @@ function ConstructorCard({ team }: { team: ConstructorListItem }) {
   return (
     <TiltCard>
       <Link href={teamUrl} className="block h-full">
-        <div className="relative border border-border-primary rounded-sm hover:border-purple-500 transition-all duration-200 bg-bg-tertiary h-full overflow-hidden">
+        <div className="relative border border-line-soft rounded-sm hover:border-accent transition-all duration-200 bg-surface-panel h-full overflow-hidden">
           {/* Team color accent bar */}
           <div
             className="absolute left-0 top-0 bottom-0 w-1"
@@ -54,7 +54,7 @@ function ConstructorCard({ team }: { team: ConstructorListItem }) {
             {/* Team logo or initials circle */}
             {logoUrl ? (
               <div
-                className="w-14 h-14 rounded-sm overflow-hidden border-2 bg-bg-secondary flex-shrink-0"
+                className="w-14 h-14 rounded-sm overflow-hidden border-2 bg-surface-band flex-shrink-0"
                 style={{ borderColor: teamColor }}
               >
                 <Image
@@ -79,26 +79,26 @@ function ConstructorCard({ team }: { team: ConstructorListItem }) {
             {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="text-text-primary font-bold truncate">
+                <h3 className="text-ink-strong font-bold truncate">
                   {team.team_name}
                 </h3>
                 {isActive && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-purple-500 flex-shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
                 )}
               </div>
-              <div className="flex items-center gap-3 text-[10px] text-text-muted font-mono tracking-wider mt-0.5">
+              <div className="flex items-center gap-3 text-[10px] text-ink-faint font-mono tracking-wider mt-0.5">
                 <span>{team.total_races} races</span>
-                <span className="text-border-secondary">/</span>
+                <span className="text-line-strong">/</span>
                 <span>{team.total_podiums} podiums</span>
               </div>
             </div>
 
             {/* Wins */}
             <div className="flex-shrink-0 text-right">
-              <div className="text-2xl font-bold text-text-primary tabular-nums">
+              <div className="text-2xl font-bold text-ink-strong tabular-nums">
                 {team.total_wins}
               </div>
-              <div className="text-[10px] text-text-muted font-mono tracking-widest uppercase">
+              <div className="text-[10px] text-ink-faint font-mono tracking-widest uppercase">
                 wins
               </div>
             </div>
@@ -107,11 +107,11 @@ function ConstructorCard({ team }: { team: ConstructorListItem }) {
           {/* Bottom bar */}
           <div className="flex items-center justify-between px-4 pl-5 pb-3">
             <span />
-            <div className="flex items-center gap-3 text-[10px] text-text-muted font-mono tracking-wider">
+            <div className="flex items-center gap-3 text-[10px] text-ink-faint font-mono tracking-wider">
               <span>{team.total_points.toLocaleString()} pts</span>
               {team.first_season && (
                 <>
-                  <span className="text-border-secondary">/</span>
+                  <span className="text-line-strong">/</span>
                   <span>
                     {team.first_season}–{isActive ? "" : team.latest_season}
                   </span>

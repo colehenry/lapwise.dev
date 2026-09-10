@@ -36,6 +36,30 @@ class DailyGameResponse(BaseModel):
     columns: list[GameCategory]
 
 
+class DailySummaryResponse(BaseModel):
+    """Response for GET /api/daily/summary — the homepage grid card.
+
+    The board is concealed on the homepage, so no headers, categories or
+    answers appear here. Every aggregate and personal field is nullable by
+    contract and all of them are null today: `game_sessions` is migrated but
+    nothing writes to it, so there is no play count, perfect rate, streak or
+    "played today" to report. They fill in on their own once the session
+    lifecycle lands; a client that renders the all-null response correctly
+    needs no further change.
+    """
+
+    number: int
+    published_on: date
+    max_guesses: int
+    rows: int
+    columns: int
+    play_count: int | None = None
+    perfect_rate: float | None = None
+    has_played: bool | None = None
+    streak: int | None = None
+    last_seven: list[bool] | None = None
+
+
 class GameDriver(BaseModel):
     driver_slug: str
     full_name: str

@@ -58,7 +58,7 @@ export default function GeneratePanel({
   }
 
   return (
-    <div className="w-full space-y-3 rounded-sm border border-border-primary bg-bg-secondary p-3">
+    <div className="w-full space-y-3 rounded-sm border border-line-soft bg-surface-band p-3">
       <div className="flex flex-wrap items-end gap-4">
         <Field htmlFor="generate-count" label="Boards">
           <input
@@ -96,12 +96,12 @@ export default function GeneratePanel({
       </div>
 
       <div className="max-w-md">
-        <p className="mb-1.5 text-xs font-medium text-text-secondary">Theme</p>
+        <p className="mb-1.5 text-xs font-medium text-ink-base">Theme</p>
         <ThemeHeaderPicker floor={floor} selected={theme} onChange={setTheme} />
       </div>
 
       {error && (
-        <p className="rounded-sm border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+        <p className="rounded-sm border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger-bright">
           {error}
         </p>
       )}
@@ -120,7 +120,7 @@ export default function GeneratePanel({
           Cancel
         </Button>
         {busy && (
-          <span className="text-xs text-text-muted">Takes a few seconds.</span>
+          <span className="text-xs text-ink-faint">Takes a few seconds.</span>
         )}
       </div>
     </div>
@@ -128,7 +128,7 @@ export default function GeneratePanel({
 }
 
 const INPUT =
-  "rounded-sm border border-border-primary bg-bg-primary px-2 py-1 text-sm text-text-primary";
+  "rounded-sm border border-line-soft bg-surface-page px-2 py-1 text-sm text-ink-strong";
 
 function Field({
   htmlFor,
@@ -141,10 +141,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label
-        htmlFor={htmlFor}
-        className="text-xs font-medium text-text-secondary"
-      >
+      <label htmlFor={htmlFor} className="text-xs font-medium text-ink-base">
         {label}
       </label>
       {children}

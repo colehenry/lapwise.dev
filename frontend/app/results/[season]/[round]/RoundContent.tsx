@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import ClutchContextActions from "@/components/chat/ClutchContextActions";
 import RaceComments from "@/components/comments/RaceComments";
 import JumpToRace from "@/components/layout/JumpToRace";
 import SessionDetail from "@/components/session/SessionDetail";
@@ -135,9 +136,9 @@ export default function RoundContent() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-bg-secondary p-8">
+      <main className="min-h-screen bg-surface-band p-8">
         <div className="max-w-6xl mx-auto">
-          <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
+          <p className="text-center text-ink-faint font-mono tracking-widest text-xs uppercase">
             Loading race weekend...
           </p>
         </div>
@@ -147,9 +148,9 @@ export default function RoundContent() {
 
   if (!availability || !sessionData) {
     return (
-      <main className="min-h-screen bg-bg-secondary p-8">
+      <main className="min-h-screen bg-surface-band p-8">
         <div className="max-w-6xl mx-auto">
-          <p className="text-center text-red-400 font-mono tracking-widest text-xs uppercase">
+          <p className="text-center text-danger-bright font-mono tracking-widest text-xs uppercase">
             Failed to load race details.
           </p>
         </div>
@@ -172,20 +173,46 @@ export default function RoundContent() {
   const activeSummary = summariesData?.summaries.find(
     (summary) => summary.session_type === activeSessionType,
   ) as SessionSummary | undefined;
+  const clutchSessionType =
+    resolvedTab === "race"
+      ? "race"
+      : resolvedTab === "sprint"
+        ? "sprint_race"
+        : resolvedTab === "qualifying"
+          ? "qualifying"
+          : resolvedTab === "sprint-qualifying"
+            ? "sprint_qualifying"
+            : undefined;
+  const clutchActions =
+    sessionTypeForDetail === "race"
+      ? [
+          { label: "Key story", question: "What decided this race?" },
+          { label: "Show winner", question: "Who won this race?" },
+        ]
+      : [
+          {
+            label: "Explain qualifying",
+            question: "What decided this qualifying session?",
+          },
+          {
+            label: "Front-row gap",
+            question: "How close was the fight for the front row?",
+          },
+        ];
 
   return (
-    <main className="min-h-screen bg-bg-secondary">
+    <main className="min-h-screen bg-surface-band">
       {/* Sticky Header with Tabs */}
       <div className="sticky top-0 z-40">
         <div className="px-2 md:px-4">
           <div className="mx-auto w-full max-w-full md:max-w-[calc(72rem+40px)]">
-            <div className="bg-bg-secondary/95 backdrop-blur-xl border-x border-b border-border-primary rounded-b-lg md:rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)]">
-              <div className="min-h-14 px-3 py-2 md:h-16 md:px-6 md:py-0 grid grid-cols-[44px_minmax(0,1fr)_112px] items-center gap-2 md:flex md:items-center md:justify-between border-b border-border-primary/60">
+            <div className="bg-surface-band/95 backdrop-blur-xl border-x border-b border-line-soft rounded-b-lg md:rounded-b-3xl rounded-t-none shadow-[0_10px_36px_rgba(0,0,0,0.35)]">
+              <div className="min-h-14 px-3 py-2 md:h-16 md:px-6 md:py-0 grid grid-cols-[44px_minmax(0,1fr)_112px] items-center gap-2 md:flex md:items-center md:justify-between border-b border-line-soft/60">
                 <div className="md:flex-1 flex items-center">
                   <button
                     type="button"
                     onClick={() => router.push(`/results/${season}`)}
-                    className="h-10 w-11 md:w-auto bg-bg-primary border border-border-primary text-text-primary font-mono text-xs font-bold px-0 md:px-4 py-2 rounded-sm hover:border-purple-500 hover:text-purple-300 transition-colors duration-150 cursor-pointer flex items-center justify-center gap-2"
+                    className="h-10 w-11 md:w-auto bg-surface-page border border-line-soft text-ink-strong font-mono text-xs font-bold px-0 md:px-4 py-2 rounded-sm hover:border-accent hover:text-accent-light transition-colors duration-150 cursor-pointer flex items-center justify-center gap-2"
                   >
                     <span>←</span>
                     <span className="hidden sm:inline">BACK TO {season}</span>
@@ -193,10 +220,10 @@ export default function RoundContent() {
                 </div>
 
                 <div className="min-w-0 flex flex-col items-center text-center">
-                  <span className="text-text-primary font-mono text-sm font-bold leading-none truncate w-full">
+                  <span className="text-ink-strong font-mono text-sm font-bold leading-none truncate w-full">
                     ROUND {String(availability.round).padStart(2, "0")}
                   </span>
-                  <span className="text-text-muted text-[10px] tracking-widest uppercase font-bold truncate w-full">
+                  <span className="text-ink-faint text-[10px] tracking-widest uppercase font-bold truncate w-full">
                     {availability.event_name.replace("Grand Prix", "GP")}
                   </span>
                 </div>
@@ -226,8 +253,8 @@ export default function RoundContent() {
                         onFocus={() => prefetchTab(tab)}
                         className={`px-4 py-2.5 text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 border-b-2 whitespace-nowrap ${
                           isActive
-                            ? "border-purple-500 text-purple-300"
-                            : "border-transparent text-text-muted hover:text-text-secondary hover:border-border-primary"
+                            ? "border-accent text-accent-light"
+                            : "border-transparent text-ink-faint hover:text-ink-base hover:border-line-soft"
                         }`}
                       >
                         {TAB_LABELS[tab]}
@@ -243,13 +270,25 @@ export default function RoundContent() {
 
       {/* Tab Content */}
       <div className="max-w-6xl mx-auto">
+        <div className="px-3 pt-4 md:px-6">
+          <ClutchContextActions
+            context={{
+              route: `/results/${season}/${round}${resolvedTab === "race" ? "" : `?tab=${resolvedTab}`}`,
+              season: seasonNum,
+              round: roundNum,
+              sessionId: activeSessionData.session.id,
+              sessionType: clutchSessionType,
+            }}
+            actions={clutchActions}
+          />
+        </div>
         {/* Race / Qualifying / Sprint tabs — show SessionDetail */}
         {isResultsTab && (
           <>
             {/* Practice sub-toggle (FP1/FP2/FP3) */}
             {resolvedTab === "practice" && (
               <div className="px-6 pt-6 flex justify-center">
-                <div className="inline-flex bg-bg-primary border border-border-primary rounded-sm overflow-hidden">
+                <div className="inline-flex bg-surface-page border border-line-soft rounded-sm overflow-hidden">
                   {([1, 2, 3] as const).map((num) => {
                     const hasData = practiceNumbers.includes(num);
                     const isActive = activePractice === num;
@@ -261,10 +300,10 @@ export default function RoundContent() {
                         disabled={!hasData}
                         className={`px-5 py-2 text-xs font-bold font-mono uppercase tracking-widest transition-colors duration-150 ${
                           isActive
-                            ? "bg-purple-500/20 text-purple-300 border-b-2 border-purple-500"
+                            ? "bg-accent/20 text-accent-light border-b-2 border-accent"
                             : !hasData
-                              ? "text-text-muted/30 cursor-not-allowed"
-                              : "text-text-muted hover:text-text-secondary hover:bg-bg-secondary"
+                              ? "text-ink-faint/30 cursor-not-allowed"
+                              : "text-ink-faint hover:text-ink-base hover:bg-surface-band"
                         }`}
                       >
                         FP{num}

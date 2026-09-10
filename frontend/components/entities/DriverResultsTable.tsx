@@ -9,11 +9,11 @@ import { driverRaceHistoryQuery } from "@/lib/queries/entities";
 
 function positionColor(pos: number | null, status: string): string {
   if (!pos || status === "DNF" || status === "DNS" || status === "DSQ")
-    return "text-red-400";
+    return "text-danger-bright";
   if (pos === 1) return "text-yellow-400";
   if (pos === 2) return "text-gray-300";
   if (pos === 3) return "text-amber-600";
-  return "text-text-primary";
+  return "text-ink-strong";
 }
 
 function positionDelta(
@@ -30,8 +30,8 @@ function positionDelta(
 function deltaColor(delta: string | null): string {
   if (!delta) return "";
   if (delta.startsWith("+")) return "text-green-400";
-  if (delta.startsWith("-")) return "text-red-400";
-  return "text-text-muted";
+  if (delta.startsWith("-")) return "text-danger-bright";
+  return "text-ink-faint";
 }
 
 interface DriverResultsTableProps {
@@ -67,7 +67,7 @@ export default function DriverResultsTable({
 
   if (!data || data.races.length === 0) {
     return (
-      <div className="text-center py-12 text-text-muted">
+      <div className="text-center py-12 text-ink-faint">
         No race results available.
       </div>
     );
@@ -88,7 +88,7 @@ export default function DriverResultsTable({
       <div className="mb-4 flex items-center gap-3">
         <label
           htmlFor="year-filter"
-          className="text-xs font-mono font-bold uppercase tracking-widest text-text-muted"
+          className="text-xs font-mono font-bold uppercase tracking-widest text-ink-faint"
         >
           Season
         </label>
@@ -100,7 +100,7 @@ export default function DriverResultsTable({
               e.target.value === "all" ? "all" : Number(e.target.value),
             )
           }
-          className="bg-bg-tertiary border border-border-primary rounded-sm px-3 py-1.5 text-sm text-text-primary focus:border-purple-500 focus:outline-none"
+          className="bg-surface-panel border border-line-soft rounded-sm px-3 py-1.5 text-sm text-ink-strong focus:border-accent focus:outline-none"
         >
           <option value="all">All Seasons</option>
           {data.available_years.map((y) => (
@@ -109,41 +109,41 @@ export default function DriverResultsTable({
             </option>
           ))}
         </select>
-        <span className="text-xs text-text-muted ml-auto">
+        <span className="text-xs text-ink-faint ml-auto">
           {sortedRaces.length} race{sortedRaces.length !== 1 ? "s" : ""}
         </span>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-sm border border-border-primary bg-bg-tertiary">
+      <div className="overflow-x-auto rounded-sm border border-line-soft bg-surface-panel">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-bg-primary border-b border-border-primary">
-              <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+            <tr className="bg-surface-page border-b border-line-soft">
+              <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
                 Year
               </th>
-              <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+              <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
                 Race
               </th>
-              <th className="text-center px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+              <th className="text-center px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
                 Grid
               </th>
-              <th className="text-center px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+              <th className="text-center px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
                 Finish
               </th>
-              <th className="text-center px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+              <th className="text-center px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
                 +/-
               </th>
-              <th className="text-right px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+              <th className="text-right px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
                 Pts
               </th>
-              <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted hidden md:table-cell">
+              <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint hidden md:table-cell">
                 Team
               </th>
-              <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted hidden lg:table-cell">
+              <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint hidden lg:table-cell">
                 Status
               </th>
-              <th className="text-center px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+              <th className="text-center px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
                 FL
               </th>
             </tr>
@@ -154,9 +154,9 @@ export default function DriverResultsTable({
               return (
                 <tr
                   key={`${race.year}-${race.round}-${idx}`}
-                  className="border-b border-border-primary/50 hover:bg-bg-elevated/50 transition-colors"
+                  className="border-b border-line-soft/50 hover:bg-surface-raised/50 transition-colors"
                 >
-                  <td className="px-3 py-2 text-text-secondary font-mono text-xs">
+                  <td className="px-3 py-2 text-ink-base font-mono text-xs">
                     {race.year}
                   </td>
                   <td className="px-3 py-2">
@@ -166,7 +166,7 @@ export default function DriverResultsTable({
                           ? `/results/${race.year}/${race.round}/sprint`
                           : `/results/${race.year}/${race.round}`
                       }
-                      className="text-text-primary hover:text-purple-300 transition-colors flex items-center gap-1.5"
+                      className="text-ink-strong hover:text-accent-light transition-colors flex items-center gap-1.5"
                     >
                       {race.race_name.replace("Grand Prix", "GP")}
                       {race.session_type === "sprint_race" && (
@@ -176,7 +176,7 @@ export default function DriverResultsTable({
                       )}
                     </Link>
                   </td>
-                  <td className="px-3 py-2 text-center text-text-secondary font-mono">
+                  <td className="px-3 py-2 text-center text-ink-base font-mono">
                     {race.grid_position ?? "-"}
                   </td>
                   <td
@@ -189,7 +189,7 @@ export default function DriverResultsTable({
                   >
                     {delta ?? "-"}
                   </td>
-                  <td className="px-3 py-2 text-right font-mono text-text-secondary">
+                  <td className="px-3 py-2 text-right font-mono text-ink-base">
                     {race.points ?? 0}
                   </td>
                   <td className="px-3 py-2 hidden md:table-cell">
@@ -204,18 +204,18 @@ export default function DriverResultsTable({
                         href={
                           constructorHref(race.team_name) ?? "/constructors"
                         }
-                        className="text-text-secondary text-xs hover:text-purple-300 transition-colors"
+                        className="text-ink-base text-xs hover:text-accent-light transition-colors"
                       >
                         {race.team_name}
                       </Link>
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-text-muted text-xs hidden lg:table-cell">
+                  <td className="px-3 py-2 text-ink-faint text-xs hidden lg:table-cell">
                     {race.status}
                   </td>
                   <td className="px-3 py-2 text-center">
                     {race.fastest_lap && (
-                      <span className="text-purple-400" title="Fastest Lap">
+                      <span className="text-accent-bright" title="Fastest Lap">
                         &#9889;
                       </span>
                     )}

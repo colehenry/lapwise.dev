@@ -154,7 +154,7 @@ export default function TyreProgrammeChart({
   if (season < 2018) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           Telemetry data available from 2018 onwards.
         </p>
       </div>
@@ -167,7 +167,7 @@ export default function TyreProgrammeChart({
         {["a", "b", "c", "d", "e"].map((id) => (
           <div
             key={`skel-${id}`}
-            className="h-8 bg-bg-elevated rounded animate-pulse"
+            className="h-8 bg-surface-raised rounded animate-pulse"
           />
         ))}
       </div>
@@ -177,7 +177,7 @@ export default function TyreProgrammeChart({
   if (!data || allProgrammes.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           No tyre data available.
         </p>
       </div>
@@ -190,11 +190,11 @@ export default function TyreProgrammeChart({
     <div className="space-y-4">
       {/* Compound pace delta summary */}
       {compoundPace.length >= 2 && (
-        <div className="flex items-center gap-2 flex-wrap border border-border-primary/50 rounded-sm px-3 py-2 bg-bg-primary/30">
+        <div className="flex items-center gap-2 flex-wrap border border-line-soft/50 rounded-sm px-3 py-2 bg-surface-page/30">
           <span className={`${CHART_TYPOGRAPHY.keyClassName} flex-shrink-0`}>
             Compound pace
           </span>
-          <div className="w-px h-3 bg-border-primary flex-shrink-0" />
+          <div className="w-px h-3 bg-line-soft flex-shrink-0" />
           {compoundPace.map((cp) => {
             const color =
               COMPOUND_COLORS[cp.compound] ?? "var(--delta-neutral)";
@@ -254,7 +254,7 @@ export default function TyreProgrammeChart({
                 {prog.driverCode}
               </span>
             </div>
-            <div className="flex-1 flex items-center h-7 rounded-sm overflow-hidden bg-bg-primary/40 border border-border-primary/40">
+            <div className="flex-1 flex items-center h-7 rounded-sm overflow-hidden bg-surface-page/40 border border-line-soft/40">
               {prog.compounds.map((seg) => {
                 const pct = maxLaps > 0 ? (seg.laps / maxLaps) * 100 : 0;
                 const color =
@@ -283,7 +283,7 @@ export default function TyreProgrammeChart({
               })}
             </div>
             <div className="w-12 text-left flex-shrink-0">
-              <span className="text-[10px] font-mono text-text-muted">
+              <span className="text-[10px] font-mono text-ink-faint">
                 {prog.totalLaps}L
               </span>
             </div>
@@ -291,7 +291,7 @@ export default function TyreProgrammeChart({
         ))}
       </div>
 
-      <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+      <p className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
         Bar width proportional to laps vs session leader · hover for exact
         counts
       </p>

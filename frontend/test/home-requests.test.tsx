@@ -1,15 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import AIAnalystPreview from "@/components/home/AIAnalystPreview";
-import LiveReplayPreview from "@/components/home/LiveReplayPreview";
-import NextRaceBanner from "@/components/home/NextRaceBanner";
-import SeasonRoundSelector from "@/components/home/SeasonRoundSelector";
-import TopRightLatestRace from "@/components/home/TopRightLatestRace";
+import HomeConsole from "@/components/home/HomeConsole";
 import * as fixtures from "./fixtures";
 import {
   flushRequests,
   installFetchRecorder,
-  msgpackBody,
   renderWithQueryClient,
 } from "./requestRecorder";
 
@@ -19,88 +14,150 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-vi.mock("@/app/replay/components/TrackCanvas", () => ({
-  default: () => null,
-}));
+const SEASON = fixtures.FIXTURE_SEASON;
+const ROUND = fixtures.FIXTURE_ROUND;
+const CONSOLE_PATH = `/api/replay/console/${SEASON}/${ROUND}`;
+const REPLAY_BLOB_PATH = `/api/replay/${SEASON}/${ROUND}`;
 
-const REPLAY_BLOB_PATH = `/api/replay/${fixtures.FIXTURE_SEASON}/${fixtures.FIXTURE_ROUND}`;
-const REPLAY_PREVIEW_PATH = "/api/replay/preview/latest";
-
-const ROUTES = {
-  [REPLAY_PREVIEW_PATH]: msgpackBody(fixtures.replayPreviewArtifact),
-  [`/api/replay/${fixtures.FIXTURE_SEASON}/${fixtures.FIXTURE_ROUND}`]:
-    msgpackBody(fixtures.replayData),
-  [`/api/results/${fixtures.FIXTURE_SEASON}/standings`]: fixtures.standings,
-  "/api/results/seasons": [fixtures.FIXTURE_SEASON],
+const ROUTES: Record<string, unknown> = {
   "/api/results/latest": fixtures.latestRound,
-  [`/api/results/${fixtures.FIXTURE_SEASON}`]: fixtures.seasonRounds,
-  "/api/events/upcoming": fixtures.upcomingEvents,
-  "/api/circuits/": fixtures.circuits,
+  [CONSOLE_PATH]: fixtures.consoleReplay,
+  "/api/replay/track/16": {
+    season: SEASON,
+    round: ROUND,
+    event_name: "Fixture Grand Prix",
+    circuit_id: 16,
+    circuit_name: "Fixture Park",
+    track: {
+      polyline: [
+        [0, 0],
+        [10, 0],
+        [10, 10],
+        [0, 10],
+      ],
+      rotation_deg: 0,
+      corners: [],
+      drs_zones: [],
+    },
+  },
+  [`/api/results/${SEASON}/${ROUND}`]: { session: {}, results: [] },
+  [`/api/results/${SEASON}/standings`]: fixtures.standings,
+  "/api/daily/summary": fixtures.dailySummary,
+  [`/api/headlines?season=${SEASON}`]: fixtures.headlines,
 };
-
-function HomeClientSections() {
-  return (
-    <>
-      <TopRightLatestRace />
-      <SeasonRoundSelector />
-      <LiveReplayPreview />
-      <AIAnalystPreview />
-      <NextRaceBanner />
-    </>
-  );
-}
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("home initial request inventory", () => {
-  it("records the endpoints home requests before any interaction", async () => {
+describe("home console request inventory", () => {
+  it("records the endpoints the console requests before any interaction", async () => {
     const recorder = installFetchRecorder(ROUTES);
-    renderWithQueryClient(<HomeClientSections />);
+    renderWithQueryClient(<HomeConsole />);
     await flushRequests();
 
-    const paths = [...new Set(recorder.paths())].sort();
-    expect(paths).toEqual([
-      "/api/circuits/",
-      "/api/events/upcoming?limit=10",
-      REPLAY_PREVIEW_PATH,
-      `/api/results/${fixtures.FIXTURE_SEASON}`,
-      `/api/results/${fixtures.FIXTURE_SEASON}/standings`,
+    expect([...new Set(recorder.paths())].sort()).toEqual([
+      "/api/daily/summary",
+      `/api/headlines?season=${SEASON}`,
+      CONSOLE_PATH,
+      `${CONSOLE_PATH}/telemetry/VER`,
+      "/api/replay/track/16",
+      `/api/results/${SEASON}/${ROUND}`,
+      `/api/results/${SEASON}/standings`,
       "/api/results/latest",
-      "/api/results/seasons",
     ]);
   });
 
   it("never requests the full replay blob", async () => {
     const recorder = installFetchRecorder(ROUTES);
-    renderWithQueryClient(<HomeClientSections />);
+    renderWithQueryClient(<HomeConsole />);
     await flushRequests();
 
     expect(recorder.countMatching(REPLAY_BLOB_PATH)).toBe(0);
   });
 
-  it("resolves the autoplaying preview in a single request", async () => {
+  it("requests standings once for every colour consumer on the page", async () => {
     const recorder = installFetchRecorder(ROUTES);
-    renderWithQueryClient(<HomeClientSections />);
+    renderWithQueryClient(<HomeConsole />);
     await flushRequests();
 
-    expect(recorder.countMatching(REPLAY_PREVIEW_PATH)).toBe(1);
-    // The artifact carries the latest race, so home does not chain
-    // seasons -> available to find it.
-    expect(recorder.countMatching("/api/replay/seasons")).toBe(0);
-    expect(recorder.countMatching("/api/replay/available")).toBe(0);
+    expect(recorder.countMatching(`/api/results/${SEASON}/standings`)).toBe(1);
   });
 
-  it("requests current standings once for the color consumers", async () => {
+  it("fetches telemetry for the leader alone, not for the whole field", async () => {
     const recorder = installFetchRecorder(ROUTES);
-    renderWithQueryClient(<HomeClientSections />);
+    renderWithQueryClient(<HomeConsole />);
     await flushRequests();
 
-    expect(
-      recorder.countMatching(
-        `/api/results/${fixtures.FIXTURE_SEASON}/standings`,
-      ),
-    ).toBe(1);
+    const slices = recorder
+      .paths()
+      .filter((path) => path.includes("/telemetry/"));
+    expect(slices).toEqual([`${CONSOLE_PATH}/telemetry/VER`]);
+  });
+
+  it("leaves the tail's requests until the reader heads toward it", async () => {
+    const recorder = installFetchRecorder(ROUTES);
+    renderWithQueryClient(<HomeConsole />);
+    await flushRequests();
+
+    expect(recorder.countMatching("/api/events/upcoming")).toBe(0);
+    expect(recorder.countMatching("/api/archive/counts")).toBe(0);
+    expect(recorder.paths()).not.toContain(`/api/results/${SEASON}`);
+    expect(recorder.paths()).not.toContain(
+      `/api/results/${SEASON}/points-progression`,
+    );
+  });
+});
+
+describe("the walk-back", () => {
+  const LATEST = 4;
+
+  function walkBackRoutes(): Record<string, unknown> {
+    return {
+      ...ROUTES,
+      "/api/results/latest": { ...fixtures.latestRound, round: LATEST },
+      [`/api/replay/console/${SEASON}/${LATEST}`]: null,
+      [`/api/replay/console/${SEASON}/${LATEST - 1}`]: null,
+      [`/api/replay/console/${SEASON}/${LATEST - 2}`]: fixtures.consoleReplay,
+      [`/api/results/${SEASON}/${LATEST}`]: { session: {}, results: [] },
+    };
+  }
+
+  it("walks back past rounds with no lap data and replays the first that answers", async () => {
+    const recorder = installFetchRecorder(walkBackRoutes());
+    const { container } = renderWithQueryClient(<HomeConsole />);
+    await flushRequests(20);
+
+    expect(recorder.paths()).toContain(
+      `/api/replay/console/${SEASON}/${LATEST}`,
+    );
+    expect(recorder.paths()).toContain(
+      `/api/replay/console/${SEASON}/${LATEST - 2}`,
+    );
+    expect(container.textContent).toContain(`R${LATEST - 2}`);
+  });
+
+  it("says on screen which newer round is still missing its lap data", async () => {
+    installFetchRecorder(walkBackRoutes());
+    const { container } = renderWithQueryClient(<HomeConsole />);
+    await flushRequests(20);
+
+    expect(container.textContent).toContain(`R${LATEST} has no lap data yet`);
+  });
+
+  it("stops after four rounds rather than walking the whole season", async () => {
+    const { [CONSOLE_PATH]: _unused, ...rest } = ROUTES;
+    const recorder = installFetchRecorder({
+      ...rest,
+      "/api/results/latest": { ...fixtures.latestRound, round: 20 },
+      "/api/replay/console/": null,
+    });
+    renderWithQueryClient(<HomeConsole />);
+    await flushRequests(20);
+
+    const attempts = recorder
+      .paths()
+      .filter((path) => path.startsWith("/api/replay/console/"));
+    expect(attempts).toHaveLength(5);
   });
 });

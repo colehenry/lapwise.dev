@@ -45,13 +45,15 @@ export default function ReplayBrowser({
 
   if (error) {
     return (
-      <p className="text-red-400 font-mono text-xs">Failed to load replays.</p>
+      <p className="text-danger-bright font-mono text-xs">
+        Failed to load replays.
+      </p>
     );
   }
 
   if (!replaysData?.replays.length) {
     return (
-      <p className="text-text-muted font-mono text-xs tracking-widest uppercase text-center py-16">
+      <p className="text-ink-faint font-mono text-xs tracking-widest uppercase text-center py-16">
         No replays available for {season}.
       </p>
     );
@@ -82,23 +84,23 @@ function ReplayCard({
       <button
         type="button"
         onClick={onSelect}
-        className="w-full bg-bg-tertiary border border-border-primary rounded-sm shadow-sm transition-all duration-150 cursor-pointer text-left min-h-[132px] md:h-[140px] relative overflow-hidden hover:border-purple-500 hover:shadow-purple"
+        className="w-full bg-surface-panel border border-line-soft rounded-sm shadow-sm transition-all duration-150 cursor-pointer text-left min-h-[132px] md:h-[140px] relative overflow-hidden hover:border-accent hover:shadow-purple"
       >
         <div className="flex h-full flex-col gap-2 p-3 md:flex-row md:items-center md:gap-4 md:p-4">
           {/* Left side: Race info */}
           <div className="relative z-10 flex-1 min-w-0 flex flex-col pr-28 md:h-full md:pr-0">
             {/* Round + Race name */}
             <div className="mb-1">
-              <span className="text-[10px] text-text-muted tracking-widest uppercase font-mono font-bold">
+              <span className="text-[10px] text-ink-faint tracking-widest uppercase font-mono font-bold">
                 RND {String(replay.round).padStart(2, "0")}
               </span>
-              <h3 className="font-semibold text-text-primary text-sm truncate">
+              <h3 className="font-semibold text-ink-strong text-sm truncate">
                 {replay.event_name.replace("Grand Prix", "GP")}
               </h3>
             </div>
 
             {/* Circuit + date */}
-            <p className="text-text-muted text-[10px] tracking-wide truncate">
+            <p className="text-ink-faint text-[10px] tracking-wide truncate">
               {replay.circuit_name} &middot;{" "}
               {new Date(replay.date).toLocaleDateString("en-US", {
                 month: "short",
@@ -108,13 +110,13 @@ function ReplayCard({
             </p>
 
             {/* Divider */}
-            <div className="border-b border-border-primary my-1.5 md:my-2" />
+            <div className="border-b border-line-soft my-1.5 md:my-2" />
 
             {/* Stats row */}
             <div className="flex items-center gap-2 mt-auto">
               <div className="flex items-center gap-1">
                 <svg
-                  className="w-3 h-3 text-text-muted"
+                  className="w-3 h-3 text-ink-faint"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -128,13 +130,13 @@ function ReplayCard({
                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                   />
                 </svg>
-                <span className="text-[10px] font-mono text-text-muted tracking-wider">
+                <span className="text-[10px] font-mono text-ink-faint tracking-wider">
                   {replay.total_laps} LAPS
                 </span>
               </div>
               <div className="flex items-center gap-1">
                 <svg
-                  className="w-3 h-3 text-text-muted"
+                  className="w-3 h-3 text-ink-faint"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -148,13 +150,13 @@ function ReplayCard({
                     d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
-                <span className="text-[10px] font-mono text-text-muted tracking-wider">
+                <span className="text-[10px] font-mono text-ink-faint tracking-wider">
                   {replay.driver_count}
                 </span>
               </div>
               <div className="flex items-center gap-1">
                 <svg
-                  className="w-3 h-3 text-text-muted"
+                  className="w-3 h-3 text-ink-faint"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -168,7 +170,7 @@ function ReplayCard({
                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <span className="text-[10px] font-mono text-text-muted tracking-wider">
+                <span className="text-[10px] font-mono text-ink-faint tracking-wider">
                   {formatDuration(replay.total_duration_seconds)}
                 </span>
               </div>

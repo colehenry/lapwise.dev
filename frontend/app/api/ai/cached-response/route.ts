@@ -7,11 +7,16 @@
  * Used by the frontend to serve suggestion question responses instantly.
  */
 
-import crypto from "node:crypto";
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyAIUser } from "@/lib/ai/auth";
 import { getConversationClient } from "@/lib/ai/db";
+import { createResponseCacheHash } from "@/lib/ai/response-cache-key";
 import type { ChartConfig } from "@/lib/chat";
+
+const AI_RESPONSE_CACHE_TTL_HOURS = Number.parseInt(
+  process.env.AI_RESPONSE_CACHE_TTL_HOURS || "168",
+  10,
+);
 
 function isMissingRelationError(error: unknown, relation: string): boolean {
   if (!error || typeof error !== "object") return false;
@@ -44,10 +49,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const hash = crypto
-    .createHash("md5")
-    .update(question.toLowerCase().trim())
-    .digest("hex");
+  const hash = createResponseCacheHash(question);
 
   try {
     const sql = getConversationClient();
@@ -55,6 +57,7 @@ export async function GET(request: NextRequest) {
       SELECT response_text, charts_json, queries_json, follow_ups_json
       FROM ai_response_cache
       WHERE question_hash = ${hash}
+        AND cached_at >= NOW() - (${AI_RESPONSE_CACHE_TTL_HOURS} * INTERVAL '1 hour')
       LIMIT 1
     `;
 

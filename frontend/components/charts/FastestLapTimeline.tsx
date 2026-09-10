@@ -302,7 +302,7 @@ const TimelineTooltip = ({
   if (!point) return null;
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs">
+    <div className="bg-surface-panel border border-line-soft rounded-sm p-2 shadow-lg text-xs">
       <p className={CHART_TYPOGRAPHY.tooltipTitleClassName}>
         Lap {point.lapNumber}
       </p>
@@ -333,7 +333,7 @@ const AverageTooltip = ({
   if (!point || point.averageLapTime == null) return null;
 
   return (
-    <div className="bg-bg-tertiary border border-border-primary rounded-sm p-2 shadow-lg text-xs">
+    <div className="bg-surface-panel border border-line-soft rounded-sm p-2 shadow-lg text-xs">
       <p className={CHART_TYPOGRAPHY.tooltipTitleClassName}>
         Lap {point.lapNumber}
       </p>
@@ -526,7 +526,7 @@ export default function FastestLapTimeline({
   if (season < DATA_FROM.laps) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           Lap time data available from {DATA_FROM.laps} onwards.
         </p>
       </div>
@@ -536,9 +536,9 @@ export default function FastestLapTimeline({
   if (isLoading) {
     return (
       <div className="space-y-2">
-        <div className="h-5 bg-bg-elevated rounded w-40 animate-pulse" />
-        <div className="h-44 bg-bg-elevated rounded animate-pulse" />
-        <div className="h-56 bg-bg-elevated rounded animate-pulse" />
+        <div className="h-5 bg-surface-raised rounded w-40 animate-pulse" />
+        <div className="h-44 bg-surface-raised rounded animate-pulse" />
+        <div className="h-56 bg-surface-raised rounded animate-pulse" />
       </div>
     );
   }
@@ -546,7 +546,7 @@ export default function FastestLapTimeline({
   if (!data || timelinePoints.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-text-muted text-sm font-mono">
+        <p className="text-ink-faint text-sm font-mono">
           No lap data available.
         </p>
       </div>
@@ -560,7 +560,7 @@ export default function FastestLapTimeline({
 
   return (
     <div className="space-y-5">
-      <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+      <p className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
         Fastest lap by driver
       </p>
 
@@ -632,7 +632,7 @@ export default function FastestLapTimeline({
       </MobileChartFrame>
 
       <div className="flex items-center justify-between gap-4">
-        <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
+        <p className="text-[10px] text-ink-faint font-mono uppercase tracking-widest">
           Average lap time by lap
         </p>
         <button
@@ -641,8 +641,8 @@ export default function FastestLapTimeline({
           onClick={() => setRemoveOutliers((value) => !value)}
           className={`px-3 py-1.5 rounded-sm text-[10px] font-bold font-mono uppercase tracking-widest border transition-colors duration-150 ${
             removeOutliers
-              ? "border-purple-500 bg-purple-500/15 text-purple-300"
-              : "border-border-primary text-text-muted hover:text-text-secondary"
+              ? "border-accent bg-accent/15 text-accent-light"
+              : "border-line-soft text-ink-faint hover:text-ink-base"
           }`}
         >
           Remove outliers

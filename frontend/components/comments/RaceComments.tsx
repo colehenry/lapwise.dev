@@ -38,13 +38,13 @@ export default function RaceComments({ season, round }: RaceCommentsProps) {
       id="comments"
       className="scroll-mt-32 px-3 pb-12 pt-8 md:px-6 md:pt-10"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-primary pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft pb-3">
         <div className="flex items-baseline gap-3">
-          <h2 className="text-xl font-bold tracking-tight text-text-primary">
+          <h2 className="text-xl font-bold tracking-tight text-ink-strong">
             Discussion
           </h2>
           {commentCount > 0 && (
-            <span className="font-mono text-xs tabular-nums text-text-muted">
+            <span className="font-mono text-xs tabular-nums text-ink-faint">
               {commentCount} {commentCount === 1 ? "comment" : "comments"}
             </span>
           )}
@@ -59,8 +59,8 @@ export default function RaceComments({ season, round }: RaceCommentsProps) {
                 onClick={() => setSort(option.key)}
                 className={`font-mono text-[11px] uppercase tracking-wider transition-colors ${
                   sort === option.key
-                    ? "text-purple-400"
-                    : "text-text-muted hover:text-text-primary"
+                    ? "text-accent-bright"
+                    : "text-ink-faint hover:text-ink-strong"
                 }`}
               >
                 {option.label}
@@ -72,14 +72,14 @@ export default function RaceComments({ season, round }: RaceCommentsProps) {
 
       <div className="mt-5">
         {isLocked ? (
-          <p className="text-sm text-text-muted">
+          <p className="text-sm text-ink-faint">
             This thread is locked. No new comments can be added.
           </p>
         ) : isAuthenticated ? (
           <CommentEditor onSubmit={(body) => addComment(body)} />
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-text-muted">
+            <p className="text-sm text-ink-faint">
               Log in to join the conversation.
             </p>
             <Button
@@ -98,7 +98,7 @@ export default function RaceComments({ season, round }: RaceCommentsProps) {
       </div>
 
       {isLoading ? (
-        <div className="mt-6 h-20 animate-pulse rounded-sm bg-bg-tertiary" />
+        <div className="mt-6 h-20 animate-pulse rounded-sm bg-surface-panel" />
       ) : (
         <div className="mt-2">
           <CommentThread

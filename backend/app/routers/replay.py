@@ -9,12 +9,15 @@ from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.schemas.console import ConsoleReplayResponse
 from app.schemas.replay import (
     ReplayListResponse,
     ReplaySeasonsResponse,
     ReplayTrackResponse,
 )
 from app.security import verify_api_key
+from app.services.console_replay_service import ConsoleReplayService
+from app.services.console_telemetry import build_driver_telemetry
 from app.services.replay_service import ReplayService
 
 router = APIRouter()
@@ -63,6 +66,66 @@ async def get_latest_replay_preview(
             "Content-Encoding": "gzip",
             "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
         },
+    )
+
+
+@router.get("/console/{season}/{round}", response_model=ConsoleReplayResponse)
+async def get_console_replay(
+    season: int,
+    round: int,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(verify_api_key),
+):
+    """
+    Get everything the homepage console draws for one race.
+
+    Reshapes the ingested lap rows into a single payload: the session clock,
+    per-car lap traces, track-status windows, stoppage skips and the event
+    feed. A finished race never changes, so this caches hard.
+    """
+    data = await ConsoleReplayService.get_console_replay(db, season, round)
+    if data is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No console replay data found for {season} round {round}",
+        )
+    return data
+
+
+@router.get("/console/{season}/{round}/telemetry/{driver_code}")
+async def get_console_telemetry(
+    season: int,
+    round: int,
+    driver_code: str,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(verify_api_key),
+):
+    """
+    Get one driver's speed, gear, throttle and brake for a race.
+
+    Returns a gzip-compressed MessagePack artifact of about 34 KB. The channels
+    exist only inside the replay blob, so this slices them out of it rather
+    than querying: the console payload stays small and this arrives after the
+    page has drawn.
+    """
+    blob = await ReplayService.get_replay_data(db, season, round)
+    if blob is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No replay data found for {season} round {round}",
+        )
+
+    artifact = build_driver_telemetry(blob, driver_code.upper())
+    if artifact is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No telemetry for {driver_code} in {season} round {round}",
+        )
+
+    return Response(
+        content=artifact,
+        media_type="application/x-msgpack",
+        headers={"Content-Encoding": "gzip"},
     )
 
 

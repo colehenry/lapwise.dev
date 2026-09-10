@@ -14,9 +14,9 @@ export default function SprintRedirectPage() {
   }, [season, round, router]);
 
   return (
-    <main className="min-h-screen bg-bg-secondary p-8">
+    <main className="min-h-screen bg-surface-band p-8">
       <div className="max-w-6xl mx-auto">
-        <p className="text-center text-text-muted font-mono tracking-widest text-xs uppercase">
+        <p className="text-center text-ink-faint font-mono tracking-widest text-xs uppercase">
           Redirecting to race weekend...
         </p>
       </div>

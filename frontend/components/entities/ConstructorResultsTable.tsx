@@ -12,11 +12,11 @@ import type {
 } from "@/lib/types";
 
 function positionColor(pos: number | null): string {
-  if (!pos) return "text-text-muted";
+  if (!pos) return "text-ink-faint";
   if (pos === 1) return "text-yellow-400";
   if (pos === 2) return "text-gray-300";
   if (pos === 3) return "text-amber-600";
-  return "text-text-primary";
+  return "text-ink-strong";
 }
 
 interface ConstructorResultsTableProps {
@@ -50,12 +50,12 @@ function DriverResultCell({
       {href ? (
         <Link
           href={href}
-          className="text-text-secondary text-xs hover:text-purple-300 transition-colors"
+          className="text-ink-base text-xs hover:text-accent-light transition-colors"
         >
           {name}
         </Link>
       ) : (
-        <span className="text-text-secondary text-xs">{name}</span>
+        <span className="text-ink-base text-xs">{name}</span>
       )}
     </span>
   );
@@ -103,7 +103,7 @@ export default function ConstructorResultsTable({
 
   if (!data || data.races.length === 0) {
     return (
-      <div className="text-center py-12 text-text-muted">
+      <div className="text-center py-12 text-ink-faint">
         No race results available.
       </div>
     );
@@ -122,7 +122,7 @@ export default function ConstructorResultsTable({
       <div className="mb-4 flex items-center gap-3">
         <label
           htmlFor="year-filter"
-          className="text-xs font-mono font-bold uppercase tracking-widest text-text-muted"
+          className="text-xs font-mono font-bold uppercase tracking-widest text-ink-faint"
         >
           Season
         </label>
@@ -134,7 +134,7 @@ export default function ConstructorResultsTable({
               e.target.value === "all" ? "all" : Number(e.target.value),
             )
           }
-          className="bg-bg-tertiary border border-border-primary rounded-sm px-3 py-1.5 text-sm text-text-primary focus:border-purple-500 focus:outline-none"
+          className="bg-surface-panel border border-line-soft rounded-sm px-3 py-1.5 text-sm text-ink-strong focus:border-accent focus:outline-none"
         >
           <option value="all">All Seasons</option>
           {data.available_years.map((y) => (
@@ -143,32 +143,32 @@ export default function ConstructorResultsTable({
             </option>
           ))}
         </select>
-        <span className="text-xs text-text-muted ml-auto">
+        <span className="text-xs text-ink-faint ml-auto">
           {sortedRaces.length} race{sortedRaces.length !== 1 ? "s" : ""}
         </span>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-sm border border-border-primary bg-bg-tertiary">
+      <div className="overflow-x-auto rounded-sm border border-line-soft bg-surface-panel">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-bg-primary border-b border-border-primary">
-              <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+            <tr className="bg-surface-page border-b border-line-soft">
+              <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
                 Year
               </th>
-              <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+              <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
                 Race
               </th>
-              <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+              <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
                 Driver 1
               </th>
-              <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+              <th className="text-left px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
                 Driver 2
               </th>
-              <th className="text-center px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+              <th className="text-center px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
                 Best
               </th>
-              <th className="text-right px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-text-muted">
+              <th className="text-right px-3 py-2 text-xs font-mono font-bold uppercase tracking-widest text-ink-faint">
                 Pts
               </th>
             </tr>
@@ -177,15 +177,15 @@ export default function ConstructorResultsTable({
             {sortedRaces.map((race, idx) => (
               <tr
                 key={`${race.year}-${race.round}-${idx}`}
-                className="border-b border-border-primary/50 hover:bg-bg-elevated/50 transition-colors"
+                className="border-b border-line-soft/50 hover:bg-surface-raised/50 transition-colors"
               >
-                <td className="px-3 py-2 text-text-secondary font-mono text-xs">
+                <td className="px-3 py-2 text-ink-base font-mono text-xs">
                   {race.year}
                 </td>
                 <td className="px-3 py-2">
                   <Link
                     href={`/results/${race.year}/${race.round}`}
-                    className="text-text-primary hover:text-purple-300 transition-colors"
+                    className="text-ink-strong hover:text-accent-light transition-colors"
                   >
                     {race.race_name.replace("Grand Prix", "GP")}
                   </Link>
@@ -201,7 +201,7 @@ export default function ConstructorResultsTable({
                 >
                   {race.best_position ? `P${race.best_position}` : "-"}
                 </td>
-                <td className="px-3 py-2 text-right font-mono text-text-secondary">
+                <td className="px-3 py-2 text-right font-mono text-ink-base">
                   {race.total_points}
                 </td>
               </tr>
