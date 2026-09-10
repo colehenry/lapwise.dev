@@ -67,11 +67,11 @@ export default function ClutchAsk({
     >
       {answer ? (
         <div className="flex min-h-0 flex-1 flex-col px-3 py-3">
-          <p className="m-0 flex gap-2 font-mono text-[11.5px] leading-relaxed text-ink-soft">
-            <span aria-hidden="true" className="text-accent-bright">
-              ❯
+          <p className="m-0 flex justify-end gap-2 text-right font-mono text-[11.5px] leading-relaxed text-ink-soft">
+            <span className="min-w-0">{answer.question}</span>
+            <span aria-hidden="true" className="shrink-0 text-accent-bright">
+              ❮
             </span>
-            {answer.question}
           </p>
 
           <p className="m-0 mt-2.5 text-[13.5px] leading-[1.65] text-ink-base">

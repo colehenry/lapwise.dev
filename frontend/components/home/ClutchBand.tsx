@@ -178,11 +178,11 @@ export default function ClutchBand({
         {/* One transcript, top to bottom: what was asked, what came back, and
             the rows it came from. A second column only stretched the answer to
             the chart's height and left a hole under two lines of text. */}
-        <p className="m-0 mt-7 flex gap-2.5 font-mono text-[15px] leading-relaxed text-ink-base">
-          <span aria-hidden="true" className="text-accent-bright">
-            ❯
+        <p className="m-0 mt-7 flex max-w-[78ch] justify-end gap-2.5 text-right font-mono text-[15px] leading-relaxed text-ink-base">
+          <span className="min-w-0">{script.question}</span>
+          <span aria-hidden="true" className="shrink-0 text-accent-bright">
+            ❮
           </span>
-          {script.question}
         </p>
 
         <p className="m-0 mt-3 max-w-[78ch] whitespace-pre-line text-[16px] leading-[1.7] text-ink-base">
