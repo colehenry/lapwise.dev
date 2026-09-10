@@ -508,6 +508,13 @@ body {
   }
 }
 
+/* The circuit and its link lift on hover; stillness is honoured here too. */
+@media (prefers-reduced-motion: reduce) {
+  .group:hover .group-hover\:scale-110 {
+    transform: none;
+  }
+}
+
 html {
   /* clip (not hidden) avoids creating a scroll container, so vertical scrolling is unaffected on iOS */
   overflow-x: clip;

@@ -6,6 +6,11 @@ export type UpcomingEvent = {
   event_name: string;
   event_type: string;
   event_date: string;
+  /** The race's own start, in UTC. Null for testing weekends. */
+  race_start_utc: string | null;
+  /** The last running at this circuit, when recent enough to be the same track. */
+  last_raced_season: number | null;
+  last_raced_round: number | null;
   location: string;
   country: string;
   round_number: number | null;

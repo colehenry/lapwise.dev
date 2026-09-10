@@ -154,15 +154,24 @@ export default function ClutchBand({
   return (
     <section className="border-y border-line-soft bg-surface-band px-3 pb-12 pt-10">
       <div className="mx-auto max-w-[1060px] px-2">
-        <h2 className="m-0 text-[30px] font-bold leading-[1.08] tracking-[-0.035em] text-ink-strong">
-          <span className="text-accent-bright">Ask Clutch</span> anything about
-          Formula 1.
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h2 className="m-0 text-[30px] font-bold leading-[1.08] tracking-[-0.035em] text-ink-strong">
+            <span className="text-accent-bright">Ask Clutch</span> anything
+            about Formula 1.
+          </h2>
+          <button
+            type="button"
+            onClick={() => goToAsk(script.question)}
+            className="flex-none rounded-sm border border-accent-bright bg-accent px-5 py-2.5 text-[14px] font-semibold text-ink-strong transition-colors hover:bg-accent-bright focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-bright"
+          >
+            Try it out
+          </button>
+        </div>
 
         {/* One transcript, top to bottom: what was asked, what came back, and
             the rows it came from. A second column only stretched the answer to
             the chart's height and left a hole under two lines of text. */}
-        <p className="m-0 mt-7 flex gap-2.5 font-mono text-[13px] leading-relaxed text-ink-soft">
+        <p className="m-0 mt-7 flex gap-2.5 font-mono text-[15px] leading-relaxed text-ink-base">
           <span aria-hidden="true" className="text-accent-bright">
             ❯
           </span>
@@ -196,7 +205,7 @@ export default function ClutchBand({
               finished ? "opacity-100" : "opacity-0"
             }`}
           >
-            <figcaption className="mb-3 font-mono text-[9.5px] uppercase tracking-[0.14em] text-ink-faint">
+            <figcaption className="mb-3 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-ink-soft">
               Cumulative {mode === "constructors" ? "constructor" : "driver"}{" "}
               points by round
               {context.season ? ` · ${context.season}` : ""}

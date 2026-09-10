@@ -147,9 +147,11 @@ export default function HomeConsole() {
 
       <DeferredSection minHeight={520}>
         <div className="page-frame grid gap-3 py-3">
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <RecentRaces season={data.season} />
+          {/* Next race leads on the left; the rounds already run fill the rest
+              and end on its bottom edge. */}
+          <div className="grid items-stretch gap-3 lg:grid-cols-[344px_minmax(0,1fr)]">
             <NextRaceCard />
+            <RecentRaces season={data.season} />
           </div>
           <EntryTiles
             season={data.season}

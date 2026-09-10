@@ -43,11 +43,6 @@ type TooltipEntry = {
   name?: string;
 };
 
-/** Sprint rounds are real points, so they are steps; only whole rounds label. */
-function isWholeRound(round: string): boolean {
-  return !round.includes("-") && round !== "0";
-}
-
 function RoundTick({
   x,
   y,
@@ -57,8 +52,11 @@ function RoundTick({
   y?: number;
   payload?: { value?: string };
 }) {
-  const value = payload?.value ?? "";
-  if (!isWholeRound(value)) return null;
+  const raw = payload?.value ?? "";
+  if (raw === "0") return null;
+  /* Sprints read `12-s`, the way the season chart writes them, rather than
+     being hidden — they are real points and real steps on this axis. */
+  const value = raw.replace("-sprint", "-s");
   return (
     <text
       x={x}
