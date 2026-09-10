@@ -22,7 +22,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           className={
             isChatWorkspace
               ? ""
-              : "pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0"
+              : "pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0"
           }
         >
           {children}

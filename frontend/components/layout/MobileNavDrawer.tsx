@@ -149,7 +149,7 @@ export default function MobileNavDrawer({
                 type="button"
                 aria-pressed={theme === option}
                 onClick={() => setTheme(option)}
-                className={`flex-1 rounded-sm border px-2 py-1.5 text-xs transition-colors ${
+                className={`min-h-10 flex-1 rounded-sm border px-2 text-xs transition-colors ${
                   theme === option
                     ? "border-accent bg-accent/10 text-accent-light"
                     : "border-line-soft text-ink-soft"

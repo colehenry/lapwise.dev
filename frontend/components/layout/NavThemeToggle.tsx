@@ -40,7 +40,7 @@ export default function NavThemeToggle() {
       onClick={toggleTheme}
       title={`Switch to ${next} mode`}
       aria-label={`Switch to ${next} mode`}
-      className="flex h-7 w-7 items-center justify-center rounded-sm text-ink-soft transition-colors hover:text-ink-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-bright"
+      className="flex h-10 w-10 items-center justify-center rounded-sm text-ink-soft md:h-7 md:w-7 transition-colors hover:text-ink-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-bright"
     >
       <ThemeIcon theme={theme} />
     </button>
