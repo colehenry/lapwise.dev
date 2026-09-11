@@ -5,9 +5,12 @@ export function GET() {
   if (process.env.CLUTCH_RUNTIME !== "true") {
     return NextResponse.json({ status: "ok", service: "frontend" });
   }
-  const configured = missingClutchEnvironment().length === 0;
-  return NextResponse.json(
-    { status: configured ? "ok" : "misconfigured", service: "clutch" },
-    { status: configured ? 200 : 503 },
-  );
+  const missing = missingClutchEnvironment();
+  if (missing.length > 0) {
+    return NextResponse.json(
+      { status: "misconfigured", service: "clutch", missing },
+      { status: 503 },
+    );
+  }
+  return NextResponse.json({ status: "ok", service: "clutch" });
 }
