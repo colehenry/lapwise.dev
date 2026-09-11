@@ -8,14 +8,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import GuessGamePuzzle, GuessGameSession
 from app.schemas.admin_guess_game import (
-    AdminGuessPuzzleGenerateRequest,
-    AdminGuessPuzzleGenerateResponse,
     AdminGuessPuzzleListResponse,
+    AdminGuessPuzzleManualRequest,
+    AdminGuessPuzzleRandomizeRequest,
+    AdminGuessPuzzleRandomizeResponse,
     AdminGuessPuzzleScheduleRequest,
     AdminGuessPuzzleStatusResponse,
     AdminGuessPuzzleSummary,
 )
 from app.services.driver_fact_service import FACT_ALGORITHM_VERSION
+from app.services.game_driver_catalog_service import GameDriverCatalogService
 from app.services.guess_game_generation_service import choose_driver, eligible_drivers
 
 
@@ -41,6 +43,13 @@ def _summary(puzzle: GuessGamePuzzle) -> AdminGuessPuzzleSummary:
 
 
 class AdminGuessGameService:
+    @staticmethod
+    async def catalog(db: AsyncSession):
+        eligible, _ = await eligible_drivers(db)
+        return await GameDriverCatalogService.catalog(
+            db, {driver.driver_id for driver in eligible}
+        )
+
     @staticmethod
     async def _puzzle(db: AsyncSession, number: int) -> GuessGamePuzzle:
         puzzle = await db.scalar(
@@ -82,9 +91,9 @@ class AdminGuessGameService:
         )
 
     @staticmethod
-    async def generate(
-        db: AsyncSession, request: AdminGuessPuzzleGenerateRequest
-    ) -> AdminGuessPuzzleGenerateResponse:
+    async def randomize(
+        db: AsyncSession, request: AdminGuessPuzzleRandomizeRequest
+    ) -> AdminGuessPuzzleRandomizeResponse:
         eligible, _ = await eligible_drivers(db)
         if not eligible:
             raise ValueError("No eligible drivers have complete game data and media")
@@ -120,10 +129,80 @@ class AdminGuessGameService:
         await db.commit()
         for puzzle in created:
             await db.refresh(puzzle)
-        return AdminGuessPuzzleGenerateResponse(
+        return AdminGuessPuzzleRandomizeResponse(
             requested=request.count,
             eligible=len(eligible),
             created=[_summary(puzzle) for puzzle in created],
+        )
+
+    @staticmethod
+    async def add_manual(
+        db: AsyncSession,
+        request: AdminGuessPuzzleManualRequest,
+        reviewer_id: int,
+    ) -> AdminGuessPuzzleStatusResponse:
+        eligible, _ = await eligible_drivers(db)
+        candidate = next(
+            (
+                item
+                for item in eligible
+                if item.driver_slug == request.driver_slug.strip().lower()
+            ),
+            None,
+        )
+        if candidate is None:
+            raise ValueError("That driver is not eligible for Guess Game")
+        clash = await db.scalar(
+            select(GuessGamePuzzle.number).where(
+                GuessGamePuzzle.published_on == request.published_on,
+                GuessGamePuzzle.status == "published",
+            )
+        )
+        if clash is not None:
+            raise ValueError(f"Guess Game #{clash} is already published on that date")
+        next_number = (
+            int(await db.scalar(select(func.max(GuessGamePuzzle.number))) or 0) + 1
+        )
+        reviewed_at = datetime.now(timezone.utc)
+        puzzle = GuessGamePuzzle(
+            public_id=f"guess-{next_number:04d}",
+            number=next_number,
+            status="published",
+            published_on=request.published_on,
+            max_guesses=10,
+            answer_driver_id=candidate.driver_id,
+            answer_snapshot=candidate.snapshot(),
+            fact_algorithm_version=FACT_ALGORITHM_VERSION,
+            reviewed_by_id=reviewer_id,
+            reviewed_at=reviewed_at,
+        )
+        db.add(puzzle)
+        await db.commit()
+        return AdminGuessPuzzleStatusResponse(
+            number=puzzle.number,
+            status=puzzle.status,
+            published_on=puzzle.published_on,
+            reviewed_at=puzzle.reviewed_at,
+            reviewed_by_id=puzzle.reviewed_by_id,
+        )
+
+    @staticmethod
+    async def approve(
+        db: AsyncSession, number: int, reviewer_id: int
+    ) -> AdminGuessPuzzleStatusResponse:
+        puzzle = await AdminGuessGameService._puzzle(db, number)
+        if puzzle.status != "draft":
+            raise ValueError("Only draft Guess Games can be approved")
+        puzzle.status = "approved"
+        puzzle.reviewed_at = datetime.now(timezone.utc)
+        puzzle.reviewed_by_id = reviewer_id
+        await db.commit()
+        return AdminGuessPuzzleStatusResponse(
+            number=puzzle.number,
+            status=puzzle.status,
+            published_on=puzzle.published_on,
+            reviewed_at=puzzle.reviewed_at,
+            reviewed_by_id=puzzle.reviewed_by_id,
         )
 
     @staticmethod
@@ -134,6 +213,8 @@ class AdminGuessGameService:
         reviewer_id: int,
     ) -> AdminGuessPuzzleStatusResponse:
         puzzle = await AdminGuessGameService._puzzle(db, number)
+        if puzzle.status != "approved":
+            raise ValueError("Approve this Guess Game before scheduling it")
         clash = await db.scalar(
             select(GuessGamePuzzle.number).where(
                 GuessGamePuzzle.published_on == request.published_on,

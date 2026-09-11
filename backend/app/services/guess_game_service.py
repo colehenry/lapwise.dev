@@ -44,6 +44,7 @@ from app.services.game_driver_catalog_service import GameDriverCatalogService
 from app.services.media_service import MediaService
 
 GLOBAL_DISTRIBUTION_MINIMUM = 10
+WINNER_HIGHLIGHT_LIMIT = 5
 
 
 def _published():
@@ -74,7 +75,14 @@ class GuessGameService:
     """All database reads and mutations behind ``/api/guess``."""
 
     @staticmethod
-    async def puzzle(db: AsyncSession) -> GuessGamePuzzleResponse:
+    async def puzzle(
+        db: AsyncSession, number: int | None = None
+    ) -> GuessGamePuzzleResponse:
+        target = (
+            GuessGamePuzzle.published_on == puzzle_date()
+            if number is None
+            else GuessGamePuzzle.number == number
+        )
         row = (
             await db.execute(
                 select(
@@ -86,7 +94,7 @@ class GuessGameService:
                 )
                 .where(
                     _published(),
-                    GuessGamePuzzle.published_on == puzzle_date(),
+                    target,
                 )
                 .order_by(
                     GuessGamePuzzle.published_on.desc(),
@@ -109,6 +117,17 @@ class GuessGameService:
                 ).where(_published())
             )
         ).one()
+        history = (
+            await db.execute(
+                select(GuessGamePuzzle.number, GuessGamePuzzle.published_on)
+                .where(_published())
+                .order_by(
+                    GuessGamePuzzle.published_on.desc(),
+                    GuessGamePuzzle.number.desc(),
+                )
+                .limit(5)
+            )
+        ).all()
         return GuessGamePuzzleResponse(
             id=row.public_id,
             number=row.number,
@@ -116,6 +135,10 @@ class GuessGameService:
             max_guesses=row.max_guesses,
             previous_number=neighbours[0],
             next_number=neighbours[1],
+            history=[
+                {"number": item.number, "published_on": item.published_on}
+                for item in history
+            ],
         )
 
     @staticmethod
@@ -136,7 +159,6 @@ class GuessGameService:
         puzzle = await db.scalar(
             select(GuessGamePuzzle).where(
                 _published(),
-                GuessGamePuzzle.published_on == puzzle_date(),
                 GuessGamePuzzle.public_id == puzzle_id,
             )
         )
@@ -245,7 +267,11 @@ class GuessGameService:
         correct = guessed.driver_id == puzzle.answer_driver_id
         sequence = session.guesses_used + 1
         exhausted = not correct and sequence >= puzzle.max_guesses
-        highlights = await DriverFactService.highlights(db, guessed) if correct else []
+        highlights = (
+            (await DriverFactService.highlights(db, guessed))[:WINNER_HIGHLIGHT_LIMIT]
+            if correct
+            else []
+        )
         snapshot = {
             "values": guessed.snapshot(),
             "comparisons": DriverAttributeService.compare(
@@ -307,7 +333,8 @@ class GuessGameService:
     ) -> GuessGameGuessResponse:
         frozen = guess.comparison_snapshot
         highlights = [
-            GuessGameHighlight(**item) for item in frozen.get("highlights", [])
+            GuessGameHighlight(**item)
+            for item in frozen.get("highlights", [])[:WINNER_HIGHLIGHT_LIMIT]
         ]
         return GuessGameGuessResponse(
             sequence=guess.sequence,

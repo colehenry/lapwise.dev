@@ -16,6 +16,7 @@ export type GuessGamePuzzle = {
   max_guesses: number;
   previous_number: number | null;
   next_number: number | null;
+  history: Array<{ number: number; published_on: string }>;
 };
 
 export type ComparisonState = "exact" | "close" | "miss";
@@ -81,10 +82,16 @@ export type DailyGameLeaderboard = {
 };
 
 export const guessGameKeys = {
-  puzzle: ["guess-game", "puzzle"] as const,
+  puzzle: (number?: number) =>
+    ["guess-game", "puzzle", number ?? "daily"] as const,
   catalog: ["guess-game", "catalog"] as const,
-  session: (puzzleId: string, playerId: string) =>
-    ["guess-game", "session", puzzleId, playerId] as const,
+  session: (
+    puzzleId: string,
+    playerId: string,
+    ranked: boolean,
+    replayRun: number,
+  ) =>
+    ["guess-game", "session", puzzleId, playerId, ranked, replayRun] as const,
   stats: (playerId: string) => ["guess-game", "stats", playerId] as const,
   leaderboard: (puzzleId: string) =>
     ["guess-game", "leaderboard", puzzleId] as const,
@@ -100,11 +107,14 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json();
 }
 
-export function guessGamePuzzleQuery() {
+export function guessGamePuzzleQuery(number?: number) {
   return queryOptions({
-    queryKey: guessGameKeys.puzzle,
+    queryKey: guessGameKeys.puzzle(number),
     queryFn: () =>
-      getJson<GuessGamePuzzle>("/api/guess", "Failed to load game"),
+      getJson<GuessGamePuzzle>(
+        number ? `/api/guess?number=${number}` : "/api/guess",
+        "Failed to load game",
+      ),
     staleTime: minutes(5),
   });
 }
@@ -121,14 +131,23 @@ export function guessGameCatalogQuery() {
   });
 }
 
-export function guessGameSessionQuery(puzzleId: string, playerId: string) {
+export function guessGameSessionQuery(
+  puzzleId: string,
+  playerId: string,
+  ranked = true,
+  replayRun = 0,
+) {
   return queryOptions({
-    queryKey: guessGameKeys.session(puzzleId, playerId),
+    queryKey: guessGameKeys.session(puzzleId, playerId, ranked, replayRun),
     queryFn: () =>
       requestJson<GuessGameSession>("/api/guess/sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ puzzle_id: puzzleId, anon_id: playerId }),
+        body: JSON.stringify({
+          puzzle_id: puzzleId,
+          anon_id: playerId,
+          ranked,
+        }),
       }),
     enabled: Boolean(puzzleId && playerId),
     staleTime: 0,

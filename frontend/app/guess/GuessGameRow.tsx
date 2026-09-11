@@ -54,9 +54,7 @@ function Clue({
       >
         {year && <span aria-hidden="true" />}
         <strong className="text-[16px] leading-[1.05]">{value}</strong>
-        {year && (
-          <span className="text-right text-xs text-white/80">{arrow}</span>
-        )}
+        {year && <span className="text-right text-xs opacity-80">{arrow}</span>}
       </span>
     </div>
   );
@@ -165,7 +163,7 @@ export default function GuessGameRow({
         </p>
         {guess.correct && guess.highlights && (
           <div className="mt-[13px] grid gap-[7px]">
-            {guess.highlights.map((highlight) => (
+            {guess.highlights.slice(0, 5).map((highlight) => (
               <div key={highlight.id} className="text-xs text-ink-soft">
                 <strong className="mr-[5px] text-sm text-ink-strong">
                   {highlight.value}

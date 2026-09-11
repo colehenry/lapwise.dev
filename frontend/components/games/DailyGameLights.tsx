@@ -8,7 +8,7 @@ export default function DailyGameLights({
   const columns = Math.ceil(total / 2);
   return (
     <div
-      className="grid gap-[3px] rounded-[5px] bg-black px-[7px] py-[5px]"
+      className="grid gap-[3px] rounded-[5px] bg-[var(--game-light-housing)] px-[7px] py-[5px]"
       style={{ gridTemplateColumns: `repeat(${columns}, 8px)` }}
       role="img"
       aria-label={`${spent} of ${total} guesses used`}

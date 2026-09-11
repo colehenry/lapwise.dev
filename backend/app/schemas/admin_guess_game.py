@@ -29,15 +29,20 @@ class AdminGuessPuzzleListResponse(BaseModel):
     puzzles: list[AdminGuessPuzzleSummary]
 
 
-class AdminGuessPuzzleGenerateRequest(BaseModel):
+class AdminGuessPuzzleRandomizeRequest(BaseModel):
     count: int = Field(default=7, ge=1, le=30)
     seed: int | None = None
 
 
-class AdminGuessPuzzleGenerateResponse(BaseModel):
+class AdminGuessPuzzleRandomizeResponse(BaseModel):
     requested: int
     eligible: int
     created: list[AdminGuessPuzzleSummary]
+
+
+class AdminGuessPuzzleManualRequest(BaseModel):
+    driver_slug: str = Field(min_length=1, max_length=120)
+    published_on: date
 
 
 class AdminGuessPuzzleScheduleRequest(BaseModel):

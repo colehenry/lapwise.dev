@@ -36,6 +36,8 @@
      game surface; named here so React never embeds a second palette. */
   --game-light-ring: #491111;
   --game-light-off: #260909;
+  --game-light-housing: #000000;
+  --game-close-ink: #161a23;
   --game-search-bg: #fafafa;
   --game-search-border: #d7d7dc;
   --game-search-ink: #202027;
@@ -170,6 +172,12 @@
   --shadow-purple: 0 0 18px rgba(160, 32, 240, 0.12);
   --shadow-red: 0 0 18px rgba(225, 6, 0, 0.12);
 
+  /* Keep the physical starting-light treatment visible without dropping a
+     near-black slab onto the light interface. */
+  --game-light-housing: #d7dbe3;
+  --game-light-ring: #9ca3af;
+  --game-light-off: #eef0f4;
+
   --chat-user-bg: rgba(160, 32, 240, 0.08);
   --chat-user-border: rgba(160, 32, 240, 0.16);
   --chat-assistant-bg: rgba(232, 236, 245, 0.92);
@@ -277,7 +285,6 @@
   align-items: center;
   justify-content: center;
   border-radius: 7px;
-  color: white;
   padding: 7px 5px;
   text-align: center;
 }
@@ -295,15 +302,18 @@
 }
 
 .game-clue--exact {
-  background: var(--success);
+  background: var(--compound-inter);
+  color: white;
 }
 
 .game-clue--close {
-  background: var(--warning);
+  background: var(--compound-medium);
+  color: var(--game-close-ink);
 }
 
 .game-clue--miss {
   background: var(--surface-raised);
+  color: var(--ink-strong);
 }
 
 .game-clue--close::after {

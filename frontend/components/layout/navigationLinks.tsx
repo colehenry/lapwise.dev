@@ -65,12 +65,20 @@ export const archiveLinks: NavLink[] = [
   },
 ];
 
-export const navLinksBefore: NavLink[] = [
+export const gamesLinks: NavLink[] = [
   {
-    href: "/games",
-    label: "Daily Games",
+    href: "/daily",
+    label: "Daily Grid",
     icon: "M4.5 4.5h6v6h-6v-6Zm9 0h6v6h-6v-6Zm-9 9h6v6h-6v-6Zm9 0h6v6h-6v-6Z",
   },
+  {
+    href: "/guess",
+    label: "Who's on Pole?",
+    icon: "M12 3a7 7 0 0 0-7 7c0 5 7 11 7 11s7-6 7-11a7 7 0 0 0-7-7Zm0 4a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z",
+  },
+];
+
+export const navLinksBefore: NavLink[] = [
   {
     href: "/results",
     label: "Race Weekend Hub",
@@ -141,13 +149,26 @@ export function DatabaseIcon() {
   );
 }
 
+export function GamesIcon() {
+  return (
+    <svg
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <rect x="3.5" y="3.5" width="7" height="7" rx="1" />
+      <rect x="13.5" y="3.5" width="7" height="7" rx="1" />
+      <rect x="3.5" y="13.5" width="7" height="7" rx="1" />
+      <rect x="13.5" y="13.5" width="7" height="7" rx="1" />
+    </svg>
+  );
+}
+
 /** The home link matches exactly; every other section matches its subtree. */
 export function isActiveHref(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
-  if (href === "/games") {
-    return ["/games", "/daily", "/guess"].some(
-      (route) => pathname === route || pathname.startsWith(`${route}/`),
-    );
-  }
   return pathname.startsWith(href);
 }

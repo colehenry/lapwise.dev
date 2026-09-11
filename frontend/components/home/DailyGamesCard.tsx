@@ -61,12 +61,6 @@ export default function DailyGamesCard({
               <div className="flex-1 animate-pulse rounded-sm bg-surface-raised" />
             </>
           )}
-          <Link
-            href="/games"
-            className="mt-auto flex w-full items-center justify-center rounded-sm border border-accent-bright bg-accent px-4 py-2.5 text-[14px] font-semibold text-ink-strong hover:bg-accent-bright focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-bright"
-          >
-            Play Daily Games
-          </Link>
         </div>
       )}
     </ConsolePanel>

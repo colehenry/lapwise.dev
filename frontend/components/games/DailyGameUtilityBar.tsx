@@ -24,10 +24,12 @@ function StatsIcon() {
 
 function HelpIcon() {
   return (
-    <svg viewBox="0 0 24 24" className={iconClass} aria-hidden="true">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M9.8 9a2.4 2.4 0 1 1 3.7 2c-1 .6-1.5 1.1-1.5 2.2M12 17h.01" />
-    </svg>
+    <span
+      aria-hidden="true"
+      className="grid h-[19px] w-[19px] place-items-center rounded-full border-[1.5px] border-current text-[13px] font-bold leading-none"
+    >
+      ?
+    </span>
   );
 }
 

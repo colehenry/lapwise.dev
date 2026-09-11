@@ -9,10 +9,16 @@ import {
   submitGuessGameGuess,
 } from "@/lib/queries/guessGame";
 
-export function useGuessGameProgress(puzzleId: string) {
+export function useGuessGameProgress(
+  puzzleId: string,
+  ranked = true,
+  replayRun = 0,
+) {
   const playerId = useDailyGamePlayer();
   const client = useQueryClient();
-  const session = useQuery(guessGameSessionQuery(puzzleId, playerId));
+  const session = useQuery(
+    guessGameSessionQuery(puzzleId, playerId, ranked, replayRun),
+  );
   const submit = useMutation({
     mutationFn: (driverSlug: string) => {
       if (!session.data) throw new Error("The game session is still loading");
@@ -24,7 +30,7 @@ export function useGuessGameProgress(puzzleId: string) {
     },
     onSuccess: (guess) => {
       client.setQueryData(
-        guessGameKeys.session(puzzleId, playerId),
+        guessGameKeys.session(puzzleId, playerId, ranked, replayRun),
         session.data
           ? {
               ...session.data,

@@ -283,15 +283,30 @@ function GameBoard({
               selectedRow !== null &&
               selectedColumn !== null &&
               !finished && (
-                <div className="pointer-events-none absolute inset-x-3 top-3 z-[60] flex justify-center">
-                  <div className="pointer-events-auto w-[370px] max-w-full">
+                <div className="pointer-events-none absolute inset-x-2 top-3 z-[60] flex justify-center sm:inset-x-6">
+                  <div className="pointer-events-auto w-[400px] max-w-full rounded-xl border border-line-strong bg-surface-panel p-3 shadow-[var(--shadow-floating)]">
+                    <div className="mb-2 flex items-center justify-between gap-3 px-1">
+                      <p className="min-w-0 truncate text-xs font-semibold text-ink-strong">
+                        {puzzle.rows[selectedRow].prompt_label}
+                        <span className="mx-1.5 text-ink-faint">×</span>
+                        {puzzle.columns[selectedColumn].prompt_label}
+                      </p>
+                      <button
+                        type="button"
+                        aria-label="Close driver search"
+                        onClick={closeSearch}
+                        className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-lg leading-none text-ink-soft hover:bg-surface-raised hover:text-ink-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-bright"
+                      >
+                        ×
+                      </button>
+                    </div>
                     <DailyGameDriverSearch
                       catalog={catalog}
                       loading={guessMutation.isPending}
                       disabled={catalogError || catalogLoading}
                       onSelect={submitDriver}
                       excluded={progress.placedDriverSlugs}
-                      placeholder={`${puzzle.rows[selectedRow].prompt_label} · ${puzzle.columns[selectedColumn].prompt_label}`}
+                      placeholder="Type a driver name..."
                     />
                   </div>
                 </div>

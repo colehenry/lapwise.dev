@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import {
+  GamesIcon,
+  gamesLinks,
   isActiveHref,
   NavIcon,
   navLinksAfter,
@@ -12,10 +14,14 @@ import {
 export default function MobileNavDock({
   pathname,
   menuOpen,
+  gamesOpen,
+  onToggleGames,
   onToggleMenu,
 }: {
   pathname: string;
   menuOpen: boolean;
+  gamesOpen: boolean;
+  onToggleGames: () => void;
   onToggleMenu: () => void;
 }) {
   const cell =
@@ -26,6 +32,23 @@ export default function MobileNavDock({
   return (
     <div className="fixed inset-x-0 bottom-0 z-[1200] md:hidden">
       <div className="grid grid-cols-5 border-t border-line-soft bg-surface-band pb-[env(safe-area-inset-bottom)]">
+        <button
+          type="button"
+          onClick={onToggleGames}
+          aria-label={
+            gamesOpen ? "Close Daily Games menu" : "Open Daily Games menu"
+          }
+          aria-expanded={menuOpen && gamesOpen}
+          className={`${cell} ${
+            gamesLinks.some((link) => isActiveHref(pathname, link.href)) ||
+            (menuOpen && gamesOpen)
+              ? `text-accent-light ${marker}`
+              : "text-ink-soft"
+          }`}
+        >
+          <GamesIcon />
+          <span>Games</span>
+        </button>
         {[...navLinksBefore, ...navLinksAfter].map((link) => {
           const active = isActiveHref(pathname, link.href);
           const label = link.href === "/results" ? "Races" : link.label;

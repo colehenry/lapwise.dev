@@ -1,6 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
 import { apiUrl, extractErrorMessage } from "@/lib/api";
 import { fetchWithAuth } from "@/lib/auth";
+import type { GameDriverCatalogResponse } from "./dailyGrid";
+import { hours } from "./durations";
 
 export type AdminGuessPuzzle = {
   number: number;
@@ -21,6 +23,7 @@ export type AdminGuessPuzzle = {
 
 export const adminGuessGameKeys = {
   queue: ["admin", "guess-game", "queue"] as const,
+  catalog: ["admin", "guess-game", "catalog"] as const,
 };
 
 async function adminRequest<T>(path: string, init?: RequestInit): Promise<T> {
@@ -41,15 +44,46 @@ export function adminGuessGameQueueQuery() {
   });
 }
 
+export function adminGuessGameCatalogQuery() {
+  return queryOptions({
+    queryKey: adminGuessGameKeys.catalog,
+    queryFn: () =>
+      adminRequest<GameDriverCatalogResponse>(
+        "/api/admin/guess-puzzles/drivers/catalog",
+      ),
+    staleTime: hours(1),
+  });
+}
+
 export function adminGuessGameInvalidation() {
   return { queryKey: adminGuessGameKeys.queue };
 }
 
-export function generateAdminGuessPuzzles(count: number) {
-  return adminRequest("/api/admin/guess-puzzles/generate", {
+export function randomizeAdminGuessPuzzles(count: number) {
+  return adminRequest("/api/admin/guess-puzzles/randomize", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ count }),
+  });
+}
+
+export function addManualAdminGuessPuzzle(
+  driverSlug: string,
+  publishedOn: string,
+) {
+  return adminRequest("/api/admin/guess-puzzles/manual", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      driver_slug: driverSlug,
+      published_on: publishedOn,
+    }),
+  });
+}
+
+export function approveAdminGuessPuzzle(number: number) {
+  return adminRequest(`/api/admin/guess-puzzles/${number}/approve`, {
+    method: "PUT",
   });
 }
 

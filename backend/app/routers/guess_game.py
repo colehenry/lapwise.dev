@@ -24,11 +24,12 @@ router = APIRouter()
 
 @router.get("", response_model=GuessGamePuzzleResponse)
 async def get_guess_game(
+    number: int | None = Query(default=None, ge=1),
     db: AsyncSession = Depends(get_db),
     api_key: str = Depends(verify_api_key),
 ):
     try:
-        return await GuessGameService.puzzle(db)
+        return await GuessGameService.puzzle(db, number)
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 

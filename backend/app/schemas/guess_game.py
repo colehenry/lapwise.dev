@@ -13,6 +13,11 @@ from app.schemas.daily_games import (
 from app.schemas.daily_grid import GameDriver, GameDriverCatalogResponse
 
 
+class GuessGameHistoryItem(BaseModel):
+    number: int
+    published_on: date
+
+
 class GuessGamePuzzleResponse(BaseModel):
     id: str
     number: int
@@ -20,6 +25,7 @@ class GuessGamePuzzleResponse(BaseModel):
     max_guesses: int
     previous_number: int | None
     next_number: int | None
+    history: list[GuessGameHistoryItem] = Field(default_factory=list)
 
 
 class GuessGameComparison(BaseModel):
