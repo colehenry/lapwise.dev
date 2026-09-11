@@ -872,6 +872,22 @@ textarea {
   }
 }
 
+/* Brand logo: dark asset shows by default, light asset shows under
+   [data-theme="light"]. Two <img> tags, one always display:none, rather than
+   a CSS filter — the wordmark mixes white ink with brand purple, and
+   filter: invert() would flip the purple's hue along with the white. */
+.brand-logo-light {
+  display: none;
+}
+
+[data-theme="light"] .brand-logo-dark {
+  display: none;
+}
+
+[data-theme="light"] .brand-logo-light {
+  display: inline-block;
+}
+
 /* Shadow Utilities */
 .shadow-purple {
   box-shadow: var(--shadow-purple);

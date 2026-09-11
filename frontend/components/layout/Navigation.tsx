@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { LapwiseWordmark } from "@/components/ui/BrandLogo";
 import MobileNavDock from "./MobileNavDock";
 import MobileNavDrawer from "./MobileNavDrawer";
 import NavLinkMenu from "./NavLinkMenu";
@@ -87,9 +88,10 @@ export default function Navigation() {
         <div className={FRAME}>
           <Link
             href="/"
-            className="col-start-1 shrink-0 justify-self-start text-[17px] font-extrabold tracking-[-0.03em] text-ink-strong"
+            className="col-start-1 flex h-full shrink-0 items-center justify-self-start"
+            aria-label="Lapwise home"
           >
-            Lap<span className="text-accent-bright">wise</span>
+            <LapwiseWordmark className="relative top-[2px] h-8" priority />
           </Link>
 
           <div className="col-start-2 hidden h-full items-center gap-5 md:flex">

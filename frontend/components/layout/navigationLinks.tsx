@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
-import ClutchIcon from "@/components/ui/ClutchIcon";
+import { ClutchNavIcon } from "@/components/ui/BrandLogo";
 
 export interface NavLink {
   href: string;
@@ -95,7 +95,7 @@ export const navLinksAfter: NavLink[] = [
   {
     href: "/ask",
     label: "Ask",
-    renderIcon: (active) => <ClutchIcon className={iconClass(active)} />,
+    renderIcon: () => <ClutchNavIcon className="h-5 w-5 shrink-0" />,
   },
 ];
 

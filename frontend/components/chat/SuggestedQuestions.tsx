@@ -1,6 +1,6 @@
 "use client";
 
-import ClutchIcon from "@/components/ui/ClutchIcon";
+import { ClutchNavIcon } from "@/components/ui/BrandLogo";
 import { SUGGESTIONS } from "@/lib/ai/suggestions";
 
 interface SuggestedQuestionsProps {
@@ -21,7 +21,7 @@ export default function SuggestedQuestions({
       <div className="mx-auto w-full max-w-3xl">
         <h2 className="m-0 whitespace-nowrap text-center text-[clamp(1rem,4.9vw,1.625rem)] font-bold leading-[1.12] tracking-[-0.03em] text-ink-strong">
           Ask <span className="text-accent-bright">Clutch</span>
-          <ClutchIcon className="mx-[0.22em] inline-block h-[0.82em] w-[0.82em] align-[-0.08em] text-accent-bright" />
+          <ClutchNavIcon className="mx-[0.15em] inline-flex h-[1.1em] w-[1.1em] align-[-0.18em]" />
           anything about Formula 1.
         </h2>
 

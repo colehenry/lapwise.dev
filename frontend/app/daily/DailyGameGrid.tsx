@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import Image from "next/image";
 import { useCallback, useState } from "react";
 import GameCategoryHeader from "@/components/daily/GameCategoryHeader";
 import DailyGameDriverSearch from "@/components/games/DailyGameDriverSearch";
@@ -9,6 +8,7 @@ import DailyGameLights from "@/components/games/DailyGameLights";
 import DailyGameSettingsPanel from "@/components/games/DailyGameSettingsPanel";
 import DailyGameStatsPanel from "@/components/games/DailyGameStatsPanel";
 import DailyGameUtilityBar from "@/components/games/DailyGameUtilityBar";
+import { LapwiseIcon } from "@/components/ui/BrandLogo";
 import { useDailyGameSettings } from "@/hooks/useDailyGameSettings";
 import {
   GRID_MODES,
@@ -213,13 +213,7 @@ function GameBoard({
           <div className="relative">
             <div className="grid grid-cols-[4.5rem_repeat(3,minmax(0,1fr))] sm:grid-cols-[6rem_repeat(3,minmax(0,1fr))]">
               <div className="flex min-h-16 items-center justify-center rounded-tl-sm border border-line-soft bg-surface-band sm:min-h-20">
-                <Image
-                  src="/favicon.ico"
-                  alt="Lapwise"
-                  width={44}
-                  height={44}
-                  className="h-9 w-9 rounded-md sm:h-11 sm:w-11"
-                />
+                <LapwiseIcon className="h-9 w-9 sm:h-11 sm:w-11" />
               </div>
 
               {puzzle.columns.map((column, columnIndex) => (
