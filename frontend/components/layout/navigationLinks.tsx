@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
-import ClutchIcon from "@/components/ui/ClutchIcon";
+import { ClutchNavIcon } from "@/components/ui/BrandLogo";
 
 export interface NavLink {
   href: string;
@@ -65,12 +65,20 @@ export const archiveLinks: NavLink[] = [
   },
 ];
 
-export const navLinksBefore: NavLink[] = [
+export const gamesLinks: NavLink[] = [
   {
     href: "/daily",
     label: "Daily Grid",
     icon: "M4.5 4.5h6v6h-6v-6Zm9 0h6v6h-6v-6Zm-9 9h6v6h-6v-6Zm9 0h6v6h-6v-6Z",
   },
+  {
+    href: "/guess",
+    label: "Who's on Pole?",
+    icon: "M12 3a7 7 0 0 0-7 7c0 5 7 11 7 11s7-6 7-11a7 7 0 0 0-7-7Zm0 4a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z",
+  },
+];
+
+export const navLinksBefore: NavLink[] = [
   {
     href: "/results",
     label: "Race Weekend Hub",
@@ -87,7 +95,7 @@ export const navLinksAfter: NavLink[] = [
   {
     href: "/ask",
     label: "Ask",
-    renderIcon: (active) => <ClutchIcon className={iconClass(active)} />,
+    renderIcon: () => <ClutchNavIcon className="h-5 w-5 shrink-0" />,
   },
 ];
 
@@ -137,6 +145,24 @@ export function DatabaseIcon() {
       <ellipse cx="12" cy="6" rx="8" ry="3" />
       <path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6" />
       <path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" />
+    </svg>
+  );
+}
+
+export function GamesIcon() {
+  return (
+    <svg
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <rect x="3.5" y="3.5" width="7" height="7" rx="1" />
+      <rect x="13.5" y="3.5" width="7" height="7" rx="1" />
+      <rect x="3.5" y="13.5" width="7" height="7" rx="1" />
+      <rect x="13.5" y="13.5" width="7" height="7" rx="1" />
     </svg>
   );
 }

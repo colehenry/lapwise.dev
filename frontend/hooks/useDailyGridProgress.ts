@@ -1,8 +1,15 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useDailyGamePlayer } from "@/hooks/useDailyGamePlayer";
 import type { CategoryEvidence } from "@/lib/gridEvidence";
-import type { GameDriver, GameGuessResult } from "@/lib/queries/dailyGrid";
+import {
+  type GameDriver,
+  type GameGuessResult,
+  gridSessionQuery,
+  retireGridSession,
+} from "@/lib/queries/dailyGrid";
 
 export type GridMode = "standard" | "rookie";
 
@@ -70,6 +77,8 @@ function isAttempt(value: unknown): value is GridAttempt {
 export function useDailyGridProgress(puzzleId: string, mode: GridMode) {
   const [attempts, setAttempts] = useState<GridAttempt[]>([]);
   const [ready, setReady] = useState(false);
+  const [localOnly, setLocalOnly] = useState(false);
+  const playerId = useDailyGamePlayer();
   const puzzleStorageKey = storageKey(puzzleId, mode);
 
   useEffect(() => {
@@ -77,12 +86,31 @@ export function useDailyGridProgress(puzzleId: string, mode: GridMode) {
     try {
       const stored = window.localStorage.getItem(puzzleStorageKey);
       const parsed: unknown = stored ? JSON.parse(stored) : [];
-      setAttempts(Array.isArray(parsed) ? parsed.filter(isAttempt) : []);
+      const restored = Array.isArray(parsed) ? parsed.filter(isAttempt) : [];
+      setAttempts(restored);
+      setLocalOnly(restored.length > 0);
     } catch {
       setAttempts([]);
     }
     setReady(true);
   }, [puzzleStorageKey]);
+
+  const serverSession = useQuery(
+    gridSessionQuery(puzzleId, mode, playerId, ready && !localOnly),
+  );
+
+  useEffect(() => {
+    if (!serverSession.data || localOnly) return;
+    setAttempts(
+      serverSession.data.attempts.map((attempt) => ({
+        cellId: `${attempt.row_id}__${attempt.column_id}`,
+        correct: attempt.correct,
+        driver: attempt.driver,
+        rowEvidence: attempt.row_evidence,
+        columnEvidence: attempt.column_evidence,
+      })),
+    );
+  }, [localOnly, serverSession.data]);
 
   useEffect(() => {
     if (!ready) return;
@@ -107,8 +135,12 @@ export function useDailyGridProgress(puzzleId: string, mode: GridMode) {
   }, []);
 
   const restart = useCallback(() => {
+    if (serverSession.data?.session_id) {
+      void retireGridSession(serverSession.data.session_id, playerId);
+    }
+    setLocalOnly(true);
     setAttempts([]);
-  }, []);
+  }, [playerId, serverSession.data?.session_id]);
 
   const { filledCells, missesByCell, placedDriverSlugs, solvedByCell } =
     useMemo(() => deriveGridProgress(attempts), [attempts]);
@@ -121,6 +153,9 @@ export function useDailyGridProgress(puzzleId: string, mode: GridMode) {
     ready,
     recordAttempt,
     restart,
+    playerId,
+    sessionId: localOnly ? undefined : serverSession.data?.session_id,
+    sessionLoading: serverSession.isLoading,
     solvedByCell,
   };
 }

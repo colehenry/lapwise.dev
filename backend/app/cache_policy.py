@@ -48,6 +48,8 @@ _PUBLIC_RULES: list[tuple[re.Pattern[str], tuple[int, int]]] = [
     ),
     (re.compile(r"^/api/archive/counts$"), _DAILY),
     (re.compile(r"^/api/headlines$"), _LATEST),
+    (re.compile(r"^/api/guess$"), _LATEST),
+    (re.compile(r"^/api/guess/drivers/catalog$"), _ARCHIVE),
     (re.compile(r"^/api/daily$"), _LATEST),
     (re.compile(r"^/api/daily/\d+$"), _ARCHIVE),
     (re.compile(r"^/api/daily/drivers$"), _ARCHIVE),

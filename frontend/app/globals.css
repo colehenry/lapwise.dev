@@ -32,6 +32,18 @@
   --danger: #e10600;
   --danger-bright: #ff3333;
 
+  /* Daily game controls. Fixed physical light/search colours from the approved
+     game surface; named here so React never embeds a second palette. */
+  --game-light-ring: #491111;
+  --game-light-off: #260909;
+  --game-light-housing: #000000;
+  --game-close-ink: #161a23;
+  --game-search-bg: #fafafa;
+  --game-search-border: #d7d7dc;
+  --game-search-ink: #202027;
+  --game-search-placeholder: #777780;
+  --game-search-icon: #384176;
+
   /* States */
   --success: #00d084;
   --warning: #ffa500;
@@ -160,6 +172,12 @@
   --shadow-purple: 0 0 18px rgba(160, 32, 240, 0.12);
   --shadow-red: 0 0 18px rgba(225, 6, 0, 0.12);
 
+  /* Keep the physical starting-light treatment visible without dropping a
+     near-black slab onto the light interface. */
+  --game-light-housing: #d7dbe3;
+  --game-light-ring: #9ca3af;
+  --game-light-off: #eef0f4;
+
   --chat-user-bg: rgba(160, 32, 240, 0.08);
   --chat-user-border: rgba(160, 32, 240, 0.16);
   --chat-assistant-bg: rgba(232, 236, 245, 0.92);
@@ -256,6 +274,87 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+.game-clue {
+  position: relative;
+  display: flex;
+  min-height: 64px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  padding: 7px 5px;
+  text-align: center;
+}
+
+.game-clue:nth-child(1) {
+  grid-column: 2 / span 2;
+}
+
+.game-clue:nth-child(2) {
+  grid-column: 4 / span 2;
+}
+
+.game-clue:nth-child(n + 3) {
+  grid-column: span 2;
+}
+
+.game-clue--exact {
+  background: var(--compound-inter);
+  color: white;
+}
+
+.game-clue--close {
+  background: var(--compound-medium);
+  color: var(--game-close-ink);
+}
+
+.game-clue--miss {
+  background: var(--surface-raised);
+  color: var(--ink-strong);
+}
+
+.game-clue--close::after {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 7px);
+  left: 50%;
+  width: max-content;
+  max-width: 230px;
+  translate: -50% -3px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  background: var(--surface-band);
+  box-shadow: var(--shadow-floating-soft);
+  color: var(--ink-base);
+  content: attr(data-tooltip);
+  font-size: 11px;
+  line-height: 1.35;
+  opacity: 0;
+  padding: 7px 9px;
+  pointer-events: none;
+  text-align: left;
+  transition:
+    opacity 120ms ease,
+    translate 120ms ease;
+}
+
+.game-clue--close:hover::after,
+.game-clue--close:focus::after {
+  translate: -50% 0;
+  opacity: 1;
+}
+
+.game-clue--close:focus {
+  outline: 2px solid var(--ink-strong);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-clue--close::after {
+    transition: none;
   }
 }
 
@@ -771,6 +870,22 @@ textarea {
     opacity: 1;
     transform: scale(1) translateY(0);
   }
+}
+
+/* Brand logo: dark asset shows by default, light asset shows under
+   [data-theme="light"]. Two <img> tags, one always display:none, rather than
+   a CSS filter — the wordmark mixes white ink with brand purple, and
+   filter: invert() would flip the purple's hue along with the white. */
+.brand-logo-light {
+  display: none;
+}
+
+[data-theme="light"] .brand-logo-dark {
+  display: none;
+}
+
+[data-theme="light"] .brand-logo-light {
+  display: inline-block;
 }
 
 /* Shadow Utilities */

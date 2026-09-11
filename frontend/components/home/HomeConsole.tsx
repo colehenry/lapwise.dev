@@ -5,7 +5,6 @@ import { useMemo } from "react";
 import DeferredSection from "@/components/ui/DeferredSection";
 import { useCompactViewport, useHomeConsole } from "@/hooks/useHomeConsole";
 import { useRaceClock } from "@/hooks/useRaceClock";
-import { resolveDemoCells } from "@/lib/dailyGridDemo";
 import type { ClutchContext } from "@/lib/homeClutchScript";
 import {
   EMPTY_ENTITY_COLORS,
@@ -16,7 +15,7 @@ import ClutchAsk from "./ClutchAsk";
 import ClutchBand from "./ClutchBand";
 import ConsoleFrame from "./ConsoleFrame";
 import ConsolePanel, { PanelFailure } from "./ConsolePanel";
-import DailyGridCard from "./DailyGridCard";
+import DailyGamesCard from "./DailyGamesCard";
 import EntryTiles from "./EntryTiles";
 import HomeTicker from "./HomeTicker";
 import NextRaceCard from "./NextRaceCard";
@@ -61,19 +60,10 @@ export default function HomeConsole() {
   const track = data.track?.track;
   const hasTelemetry = data.replay != null && data.replayState === "ready";
 
-  /* The scripted round's faces, looked up in the championship the page already
-     holds rather than fetched. */
-  const demoCells = useMemo(
-    () => resolveDemoCells(standings.data),
-    [standings.data],
-  );
-
   const gridCard = (
-    <DailyGridCard
-      summary={data.daily.data ?? undefined}
-      state={data.daily.state}
-      demoCells={demoCells}
-      animate={!clock.reducedMotion}
+    <DailyGamesCard
+      summary={data.dailyGames.data ?? undefined}
+      state={data.dailyGames.state}
       className={compact ? "" : "home-console__grid"}
     />
   );

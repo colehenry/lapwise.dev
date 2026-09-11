@@ -226,6 +226,9 @@ class GameSessionGuess(Base):
     column_id = Column(String(80), nullable=False)
     driver_slug = Column(String(120), nullable=False)
     correct = Column(Boolean, nullable=False)
+    # Added when server-ranked play was connected. Older unranked rows may be
+    # null; every new row freezes the exact evidence returned to the player.
+    result_snapshot = Column(JSONB, nullable=True)
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

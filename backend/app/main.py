@@ -125,15 +125,18 @@ async def health_check():
 
 from app.routers import (
     admin,
+    admin_guess_game,
     admin_puzzles,
     archive,
     auth,
     circuits,
     comments,
     constructors,
+    daily_games,
     daily_grid,
     drivers,
     events,
+    guess_game,
     headlines,
     oauth,
     replay,
@@ -148,6 +151,11 @@ app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(
     admin_puzzles.router, prefix="/api/admin/puzzles", tags=["admin", "daily-grid"]
 )
+app.include_router(
+    admin_guess_game.router,
+    prefix="/api/admin/guess-puzzles",
+    tags=["admin", "daily-games"],
+)
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(season_results.router, prefix="/api/results", tags=["results"])
 app.include_router(weekend.router, prefix="/api/results", tags=["results"])
@@ -156,6 +164,8 @@ app.include_router(
     constructors.router, prefix="/api/constructors", tags=["constructors"]
 )
 app.include_router(events.router, prefix="/api/events", tags=["events"])
+app.include_router(guess_game.router, prefix="/api/guess", tags=["daily-games"])
+app.include_router(daily_games.router, prefix="/api/games", tags=["daily-games"])
 app.include_router(daily_grid.router, prefix="/api/daily", tags=["daily-grid"])
 app.include_router(circuits.router, prefix="/api/circuits", tags=["circuits"])
 app.include_router(comments.router, prefix="/api/comments", tags=["comments"])

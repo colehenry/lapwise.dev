@@ -4,12 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { LapwiseWordmark } from "@/components/ui/BrandLogo";
 import MobileNavDock from "./MobileNavDock";
 import MobileNavDrawer from "./MobileNavDrawer";
-import NavArchiveMenu from "./NavArchiveMenu";
+import NavLinkMenu from "./NavLinkMenu";
 import NavThemeToggle from "./NavThemeToggle";
 import NavUserMenu from "./NavUserMenu";
 import {
+  archiveLinks,
+  DatabaseIcon,
+  GamesIcon,
+  gamesLinks,
   isActiveHref,
   NavIcon,
   navLinksAfter,
@@ -27,12 +32,14 @@ export default function Navigation() {
   const pathname = usePathname();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileGamesOpen, setMobileGamesOpen] = useState(false);
   const [barHidden, setBarHidden] = useState(false);
   const lastScroll = useRef(0);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: closing on navigation is the point
   useEffect(() => {
     setMobileOpen(false);
+    setMobileGamesOpen(false);
     setBarHidden(false);
   }, [pathname]);
 
@@ -81,12 +88,19 @@ export default function Navigation() {
         <div className={FRAME}>
           <Link
             href="/"
-            className="col-start-1 shrink-0 justify-self-start text-[17px] font-extrabold tracking-[-0.03em] text-ink-strong"
+            className="col-start-1 flex h-full shrink-0 items-center justify-self-start"
+            aria-label="Lapwise home"
           >
-            Lap<span className="text-accent-bright">wise</span>
+            <LapwiseWordmark className="relative top-[2px] h-8" priority />
           </Link>
 
           <div className="col-start-2 hidden h-full items-center gap-5 md:flex">
+            <NavLinkMenu
+              pathname={pathname}
+              label="Daily Games"
+              icon={<GamesIcon />}
+              links={gamesLinks}
+            />
             {navLinksBefore.map((l) =>
               link(
                 l.href,
@@ -94,7 +108,12 @@ export default function Navigation() {
                 <NavIcon link={l} active={isActiveHref(pathname, l.href)} />,
               ),
             )}
-            <NavArchiveMenu pathname={pathname} />
+            <NavLinkMenu
+              pathname={pathname}
+              label="Archive"
+              icon={<DatabaseIcon />}
+              links={archiveLinks}
+            />
             {navLinksAfter.map((l) =>
               link(
                 l.href,
@@ -125,7 +144,24 @@ export default function Navigation() {
       <MobileNavDock
         pathname={pathname}
         menuOpen={mobileOpen}
-        onToggleMenu={() => setMobileOpen((open) => !open)}
+        gamesOpen={mobileGamesOpen}
+        onToggleGames={() => {
+          if (mobileOpen && mobileGamesOpen) {
+            setMobileOpen(false);
+            setMobileGamesOpen(false);
+          } else {
+            setMobileGamesOpen(true);
+            setMobileOpen(true);
+          }
+        }}
+        onToggleMenu={() => {
+          if (mobileOpen && !mobileGamesOpen) {
+            setMobileOpen(false);
+          } else {
+            setMobileGamesOpen(false);
+            setMobileOpen(true);
+          }
+        }}
       />
 
       {mobileOpen && (
@@ -134,6 +170,8 @@ export default function Navigation() {
           user={user ?? null}
           isAuthenticated={isAuthenticated}
           isLoading={isLoading}
+          gamesOpen={mobileGamesOpen}
+          onToggleGames={() => setMobileGamesOpen((open) => !open)}
           onClose={() => setMobileOpen(false)}
           onLogout={logout}
         />

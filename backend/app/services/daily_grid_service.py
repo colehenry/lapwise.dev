@@ -1,38 +1,35 @@
 """Daily grid discovery, driver search, and snapshot-based validation."""
 
-from datetime import date, datetime, timedelta, timezone
+from uuid import UUID
 
-from sqlalchemy import case, func, or_, select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import AggDriverCareer, Driver, Puzzle, Session, SessionResult
+from app.models import Driver, Puzzle, Session, SessionResult
 from app.schemas.daily_grid import (
     DailyGameResponse,
     DailySummaryResponse,
     GameCategory,
     GameDriver,
-    GameDriverCatalogItem,
     GameDriverCatalogResponse,
     GameDriverSearchResponse,
     GameGuessResponse,
     RookieOptionsResponse,
 )
 from app.schemas.media import DriverMedia
-from app.services.driver_catalog_service import DriverCatalogService
+from app.services.daily_game_clock import (
+    PUZZLE_ROLLOVER_UTC_HOUR as SHARED_ROLLOVER_UTC_HOUR,
+)
+from app.services.daily_game_clock import puzzle_date
+from app.services.game_driver_catalog_service import GameDriverCatalogService
 from app.services.media_service import MediaService
 
 # One fixed hour worldwide, not each viewer's local midnight: a leaderboard
 # needs one field racing one board over one window. 07:00 UTC is midnight on
 # the US west coast and 8am in the UK through the summer, so the change lands
 # overnight across the Americas and before the European morning.
-PUZZLE_ROLLOVER_UTC_HOUR = 7
-
-
-def _puzzle_date() -> date:
-    """The date of the board currently in play."""
-    return (
-        datetime.now(timezone.utc) - timedelta(hours=PUZZLE_ROLLOVER_UTC_HOUR)
-    ).date()
+_puzzle_date = puzzle_date
+PUZZLE_ROLLOVER_UTC_HOUR = SHARED_ROLLOVER_UTC_HOUR
 
 
 def _published():
@@ -41,7 +38,7 @@ def _published():
     A future-dated published row is scheduled, not live, so the editorial queue
     can run ahead of the calendar without exposing tomorrow's board.
     """
-    return (Puzzle.status == "published") & (Puzzle.published_on <= _puzzle_date())
+    return (Puzzle.status == "published") & (Puzzle.published_on <= puzzle_date())
 
 
 def _public_category(raw: dict) -> GameCategory:
@@ -96,9 +93,9 @@ class DailyGridService:
         headers are the puzzle, so selecting the category payload here would
         hand the answer to anyone who read the homepage's network tab.
 
-        The aggregate and personal fields stay null: nothing writes
-        `game_sessions` yet, and an invented count is a claim the database
-        cannot support.
+        Legacy aggregate and personal fields stay null for compatibility. New
+        Daily Games callers use the viewer-aware ``/api/games/summary`` and
+        dedicated statistics endpoints instead.
         """
         row = (
             await db.execute(
@@ -197,52 +194,7 @@ class DailyGridService:
 
     @staticmethod
     async def driver_catalog(db: AsyncSession) -> GameDriverCatalogResponse:
-        rows = (
-            await db.execute(
-                select(AggDriverCareer)
-                .where(
-                    AggDriverCareer.include_sprint.is_(False),
-                    AggDriverCareer.driver_slug.is_not(None),
-                )
-                .order_by(AggDriverCareer.full_name)
-            )
-        ).scalars()
-        rows = list(rows)
-        # The dropdown and the grid cell both read this catalog, so resolving
-        # here is what keeps the two showing the same photograph.
-        media = await _resolve_media(db, [row.driver_id for row in rows])
-        drivers = [
-            GameDriverCatalogItem(
-                driver_slug=row.driver_slug,
-                full_name=row.full_name,
-                driver_code=row.driver_code,
-                headshot_url=(
-                    media[row.driver_id].url
-                    if row.driver_id in media
-                    else row.headshot_url
-                ),
-                media=media.get(row.driver_id),
-                race_entries=row.total_races,
-            )
-            for row in rows
-        ]
-        if drivers:
-            return GameDriverCatalogResponse(drivers=drivers)
-
-        live_rows = await DriverCatalogService.compute_rows(db, include_sprint=False)
-        return GameDriverCatalogResponse(
-            drivers=[
-                GameDriverCatalogItem(
-                    driver_slug=row["driver_slug"],
-                    full_name=row["full_name"],
-                    driver_code=row["driver_code"],
-                    headshot_url=row["headshot_url"],
-                    race_entries=row["total_races"],
-                )
-                for row in live_rows
-                if row["driver_slug"]
-            ]
-        )
+        return await GameDriverCatalogService.catalog(db)
 
     @staticmethod
     async def rookie_options(db: AsyncSession, number: int) -> RookieOptionsResponse:
@@ -292,53 +244,7 @@ class DailyGridService:
     async def search_drivers(
         db: AsyncSession, query: str, limit: int = 12
     ) -> GameDriverSearchResponse:
-        normalized = query.strip()
-        if len(normalized) < 2:
-            return GameDriverSearchResponse(drivers=[])
-
-        lowered = normalized.lower()
-        pattern = f"%{_escaped_like(normalized)}%"
-        race_entry_counts = (
-            select(
-                SessionResult.driver_id.label("driver_id"),
-                func.count(SessionResult.id).label("race_entries"),
-            )
-            .join(Session, Session.id == SessionResult.session_id)
-            .where(Session.session_type == "race")
-            .group_by(SessionResult.driver_id)
-            .subquery()
-        )
-        latest_headshot = DailyGridService._latest_headshot()
-        statement = (
-            select(Driver, latest_headshot.label("headshot_url"))
-            .join(race_entry_counts, race_entry_counts.c.driver_id == Driver.id)
-            .where(
-                or_(
-                    Driver.full_name.ilike(pattern, escape="\\"),
-                    Driver.slug.ilike(pattern, escape="\\"),
-                    Driver.driver_code.ilike(pattern, escape="\\"),
-                ),
-            )
-            .order_by(
-                case(
-                    (func.lower(Driver.full_name) == lowered, 0),
-                    (func.lower(Driver.slug) == lowered, 1),
-                    (func.lower(Driver.driver_code) == lowered, 2),
-                    else_=3,
-                ),
-                race_entry_counts.c.race_entries.desc(),
-                Driver.full_name,
-            )
-            .limit(limit)
-        )
-        drivers = (await db.execute(statement)).all()
-        media = await _resolve_media(db, [row.Driver.id for row in drivers])
-        return GameDriverSearchResponse(
-            drivers=[
-                _driver_response(row.Driver, row.headshot_url, media.get(row.Driver.id))
-                for row in drivers
-            ]
-        )
+        return await GameDriverCatalogService.search(db, query, limit)
 
     @staticmethod
     async def submit_guess(
@@ -347,6 +253,9 @@ class DailyGridService:
         row_id: str,
         column_id: str,
         driver_slug: str,
+        session_id: UUID | None = None,
+        user_id: int | None = None,
+        anon_id: str | None = None,
     ) -> GameGuessResponse | None:
         cell_id = f"{row_id}__{column_id}"
         normalized_slug = driver_slug.strip().lower()
@@ -374,7 +283,7 @@ class DailyGridService:
                     "row_key": f"{normalized_slug}__{row_id}",
                     "column_key": f"{normalized_slug}__{column_id}",
                     "public_id": puzzle_id,
-                    "today": _puzzle_date(),
+                    "today": puzzle_date(),
                 },
             )
         ).one_or_none()
@@ -394,7 +303,7 @@ class DailyGridService:
         if row is None:
             return None
 
-        return GameGuessResponse(
+        response = GameGuessResponse(
             correct=bool(verdict.correct),
             row_id=row_id,
             column_id=column_id,
@@ -406,3 +315,12 @@ class DailyGridService:
             row_evidence=verdict.row_evidence,
             column_evidence=verdict.column_evidence,
         )
+        if session_id is not None:
+            from app.services.daily_grid_session_service import (
+                DailyGridSessionService,
+            )
+
+            await DailyGridSessionService.record_guess(
+                db, session_id, puzzle_id, response, user_id, anon_id
+            )
+        return response

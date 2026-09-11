@@ -1,25 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import {
-  archiveLinks,
-  DatabaseIcon,
-  isActiveHref,
-  NavIcon,
-} from "./navigationLinks";
+import { type ReactNode, useEffect, useRef, useState } from "react";
+import { isActiveHref, NavIcon, type NavLink } from "./navigationLinks";
 
-/**
- * Opens on hover, as it always has. Focus opens it too, so the keyboard is not
- * left out, and it closes on Escape.
- */
-export default function NavArchiveMenu({ pathname }: { pathname: string }) {
+/** Shared hover/focus dropdown for small groups of primary navigation links. */
+export default function NavLinkMenu({
+  icon,
+  label,
+  links,
+  pathname,
+}: {
+  icon: ReactNode;
+  label: string;
+  links: NavLink[];
+  pathname: string;
+}) {
   const [open, setOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const active = archiveLinks.some((link) => isActiveHref(pathname, link.href));
-
-  /** A short grace period: the pointer often clips a corner on the way down. */
+  const active = links.some((link) => isActiveHref(pathname, link.href));
   const cancelClose = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
     closeTimer.current = null;
@@ -37,7 +37,7 @@ export default function NavArchiveMenu({ pathname }: { pathname: string }) {
   );
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: the wrapper only opens the menu on hover; the trigger inside it is a real button
+    // biome-ignore lint/a11y/noStaticElementInteractions: hover augments the real button and focus behavior
     <div
       className="relative h-full"
       onMouseEnter={() => {
@@ -74,8 +74,8 @@ export default function NavArchiveMenu({ pathname }: { pathname: string }) {
             : "text-ink-soft hover:text-ink-base"
         }`}
       >
-        <DatabaseIcon />
-        Archive
+        {icon}
+        {label}
         <svg
           className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
           fill="none"
@@ -93,9 +93,9 @@ export default function NavArchiveMenu({ pathname }: { pathname: string }) {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-10 w-44 pt-2">
+        <div className="absolute left-0 top-full z-10 w-48 pt-2">
           <div className="overflow-hidden rounded-sm border border-line-soft bg-surface-panel shadow-floating-soft">
-            {archiveLinks.map((link) => {
+            {links.map((link) => {
               const linkActive = isActiveHref(pathname, link.href);
               return (
                 <Link
