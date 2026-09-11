@@ -89,8 +89,10 @@ aligned.
 
 ## AI and security
 
-- **AI-1 `[review]`** Clutch/text-to-SQL runs in Next.js; race summaries run in
-  the backend. Do not add a third AI boundary without documenting it.
+- **AI-1 `[review]`** Clutch/text-to-SQL runs in Next.js from its long-running
+  Railway service; race summaries run in the Python backend. Netlify hosts the
+  UI but is not the production Clutch execution boundary. Do not add a third AI
+  boundary without documenting it.
 - **AI-2 `[review]`** AI database access is read-only and cannot reach community
   or auth tables. Generated SQL always passes validation, row limits, and query
   timeouts. Schema knowledge has one maintained source.
@@ -113,8 +115,9 @@ aligned.
   bodies describe intent and exit gates only. Changing what a function computes
   means updating its docstring and its callers' — an explanation left behind
   after a behavior change teaches the old bug.
-- **OPS-1 `[review]`** Backend deploys to Railway and frontend to Netlify from
-  `main`. Validate migrations before dependent code and retain rollback paths.
+- **OPS-1 `[review]`** The Python backend and long-running Clutch Next.js service
+  deploy to Railway; the frontend deploys to Netlify from `main`. Validate
+  migrations before dependent code and retain rollback paths.
 
 ## Enforcement and existing debt
 

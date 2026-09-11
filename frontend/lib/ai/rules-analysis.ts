@@ -14,10 +14,100 @@ export interface RulesAnalysisExecution {
   model: string;
 }
 
+function asksAboutChampionshipScoring(question: string): boolean {
+  return /\b(points? system|scoring (?:work|system|change|history)|how (?:do|does|did)\b[^?]*\b(?:points? work|scor)|score points|scoring changed)\b/i.test(
+    question,
+  );
+}
+
+function buildScoringAnalysis(question: string): RulesAnalysisExecution {
+  const node = KNOWLEDGE_NODES.find(
+    (candidate) => candidate.id === "championship-points-system",
+  );
+  if (!node)
+    throw new Error("Championship-points knowledge node is unavailable");
+
+  const evidenceId = `${node.id}-current`;
+  const plan = analysisPlanSchema.parse({
+    version: 1,
+    question,
+    entities: [],
+    scope: {},
+    facets: [
+      {
+        family: "rules",
+        objective: "Explain current Formula 1 scoring and its major changes",
+        metrics: ["grand_prix_points", "sprint_points", "historical_changes"],
+        presentations: ["narrative", "table"],
+      },
+    ],
+    assumptions: [],
+    unresolvedTerms: [],
+  });
+  const artifact = answerArtifactSchema.parse({
+    version: 1,
+    family: "rules",
+    title: "How F1 scoring works",
+    summary:
+      "In a Grand Prix, the top 10 score **25–18–15–12–10–8–6–4–2–1**. A Sprint pays the top eight **8–7–6–5–4–3–2–1**. Drivers keep the points they score, while each team gets the combined points from both cars. The highest total at the end of the season wins—there are no playoffs.\n\nThe points system has changed several times, but it does not automatically change with new car or engine regulations. Scoring belongs to F1's sporting rules, so it can be revised on its own even when a major technical-rule change happens in the same season.",
+    metrics: [],
+    tables: [
+      {
+        id: "points-history",
+        title: "The biggest scoring changes",
+        columns: [
+          { key: "era", label: "From" },
+          { key: "change", label: "What changed" },
+        ],
+        rows: [
+          { era: "1950", change: "Top five scored; a win was worth 8 points" },
+          { era: "1960", change: "Points expanded to the top six" },
+          {
+            era: "1991",
+            change:
+              "Every result counted instead of only a driver's best results",
+          },
+          { era: "2003", change: "Points expanded to the top eight" },
+          {
+            era: "2010",
+            change: "The current top-10 scale was introduced",
+          },
+          {
+            era: "2019–2024",
+            change: "A top-10 finisher could earn a fastest-lap bonus point",
+          },
+        ],
+      },
+    ],
+    charts: [],
+    evidence: [
+      {
+        id: evidenceId,
+        kind: "knowledge_node",
+        label: "Formula 1 championship points rules and history",
+        source: node.id,
+        fields: { tags: node.tags },
+      },
+    ],
+    caveats: [],
+  });
+
+  return {
+    plan,
+    artifact,
+    queries: [],
+    model: "deterministic/rules-scoring-v1",
+  };
+}
+
 export function tryRunRulesAnalysis(
   question: string,
 ): RulesAnalysisExecution | null {
-  if (!/\bfastest[- ]lap point\b/i.test(question)) return null;
+  const asksAboutFastestLapPoint = /\bfastest[- ]lap point\b/i.test(question);
+  if (!asksAboutFastestLapPoint && asksAboutChampionshipScoring(question)) {
+    return buildScoringAnalysis(question);
+  }
+  if (!asksAboutFastestLapPoint) return null;
   const season = extractSeason(question);
   if (season === null) return null;
   const eligible = season >= 2019 && season <= 2024;

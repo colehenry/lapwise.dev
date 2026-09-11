@@ -8,6 +8,7 @@
 # Required variables:
 #   - NEXT_PUBLIC_API_URL (production: https://api.lapwise.dev)
 #   - NEXT_PUBLIC_API_KEY (set in Netlify dashboard)
+#   - NEXT_PUBLIC_CLUTCH_API_URL (Railway Clutch service origin)
 
 # Disable secrets scanning - NEXT_PUBLIC_* vars are intentionally bundled in client JS
 [build.environment]

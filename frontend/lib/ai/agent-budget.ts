@@ -1,8 +1,9 @@
 export const AGENT_MAX_STEPS = 4;
-export const AGENT_MAX_OUTPUT_TOKENS = 900;
+export const AGENT_MAX_OUTPUT_TOKENS = 1_800;
 export const AGENT_CONTINUATION_TOKEN_BUDGET = 10_000;
 export const AGENT_MAX_SQL_CALLS = 2;
-export const AGENT_TOTAL_TIMEOUT_MS = 45_000;
+export const AGENT_STEP_TIMEOUT_MS = 90_000;
+export const AGENT_TOTAL_TIMEOUT_MS = 180_000;
 
 interface BudgetToolCall {
   toolName: string;

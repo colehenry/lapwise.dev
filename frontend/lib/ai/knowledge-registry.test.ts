@@ -46,6 +46,17 @@ describe("knowledge registry", () => {
     expect(nodes.map((node) => node.id)).toContain("fastest-lap-bonus");
   });
 
+  it("retrieves the championship scoring node for natural phrasing", () => {
+    const question = "How does F1 scoring work and how has it changed?";
+    const topics = inferKnowledgeTopics(question);
+    const nodes = selectKnowledgeNodes(topics, question);
+
+    expect(topics).toContain("rules");
+    expect(nodes.map((node) => node.id)).toContain(
+      "championship-points-system",
+    );
+  });
+
   it("retrieves terminology by exact keyword even for a general question", () => {
     const question = "What does parc ferme mean in Formula 1?";
     const nodes = selectKnowledgeNodes(

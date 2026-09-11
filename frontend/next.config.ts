@@ -39,6 +39,15 @@ if (!isProd) {
   );
 }
 
+const clutchApiUrl = process.env.NEXT_PUBLIC_CLUTCH_API_URL?.trim();
+if (clutchApiUrl) {
+  try {
+    csp["connect-src"].push(new URL(clutchApiUrl).origin);
+  } catch {
+    // Deployment validation catches malformed public environment variables.
+  }
+}
+
 const contentSecurityPolicy = Object.entries(csp)
   .map(([key, values]) => `${key} ${values.join(" ")}`)
   .join("; ");
