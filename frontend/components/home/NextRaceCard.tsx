@@ -118,14 +118,16 @@ export default function NextRaceCard() {
       }}
     >
       {/* The circuit sits in the top-right corner, where the card had nothing. */}
-      <CircuitOutline
-        circuitId={next.circuit_id}
-        circuitName={next.circuit_name ?? next.location}
-        className="pointer-events-none absolute right-4 top-4 h-[110px] w-[110px]"
-        stroke="var(--ink-soft)"
-        strokeWidth={1.5}
-        opacity={0.8}
-      />
+      <div className="pointer-events-none absolute right-4 top-4 h-[110px] w-[110px]">
+        <CircuitOutline
+          circuitId={next.circuit_id}
+          circuitName={next.circuit_name ?? next.location}
+          className="h-full w-full"
+          stroke="var(--ink-soft)"
+          strokeWidth={1.5}
+          opacity={0.8}
+        />
+      </div>
 
       <div className="relative">
         <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft">
