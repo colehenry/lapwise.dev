@@ -192,7 +192,7 @@ export function inferKnowledgeTopics(question: string): KnowledgeTopic[] {
   const q = question.toLowerCase();
   const topics: KnowledgeTopic[] = [];
   if (
-    /\b(rule|allowed|eligible|scoring|points? system|points? work|score points|could .* earn|fastest[- ]lap point)\b/.test(
+    /\b(rule|allowed|eligible|scoring|points? system|points? work|score points|could .* earn|fastest[- ]lap\b.*\b(?:points?|bonus))\b/.test(
       q,
     )
   )

@@ -5,6 +5,7 @@ import {
   saveConversationMessage,
   writeCachedResponse,
 } from "./conversation-store";
+import type { RequestLog } from "./request-log";
 
 export function encodeStreamLine(payload: Record<string, unknown>): Uint8Array {
   return new TextEncoder().encode(`${JSON.stringify(payload)}\n`);
@@ -41,9 +42,12 @@ export function createDeterministicAnalysisResponse(params: {
   question: string;
   remaining: number | null;
   seedMode: boolean;
+  log: RequestLog;
 }): Response {
-  const { analysis, conversationId, question, remaining, seedMode } = params;
+  const { analysis, conversationId, question, remaining, seedMode, log } =
+    params;
   const followUps = buildFollowUp(analysis);
+  log.path = "deterministic";
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -59,10 +63,12 @@ export function createDeterministicAnalysisResponse(params: {
       controller.enqueue(
         encodeStreamLine({ type: "text-delta", text: analysis.markdown }),
       );
+      log.markFirstToken();
 
+      let messageId: string | null = null;
       try {
         if (!seedMode) {
-          await saveConversationMessage(
+          messageId = await saveConversationMessage(
             conversationId,
             "assistant",
             analysis.markdown,
@@ -95,6 +101,13 @@ export function createDeterministicAnalysisResponse(params: {
             plan: analysis.plan,
           }),
         );
+        await log.finish({
+          status: "ok",
+          httpStatus: 200,
+          messageId,
+          analysisModel: analysis.model,
+          sqlCalls: analysis.queries.length,
+        });
       } catch (error) {
         Sentry.captureException(error);
         controller.enqueue(
@@ -104,6 +117,14 @@ export function createDeterministicAnalysisResponse(params: {
               "The analysis completed, but its conversation could not be saved.",
           }),
         );
+        await log.finish({
+          status: "error",
+          stage: "persist",
+          httpStatus: 200,
+          error,
+          analysisModel: analysis.model,
+          sqlCalls: analysis.queries.length,
+        });
       } finally {
         controller.close();
       }
@@ -114,7 +135,6 @@ export function createDeterministicAnalysisResponse(params: {
     headers: {
       "Content-Type": "application/x-ndjson; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
       "X-Accel-Buffering": "no",
     },
   });

@@ -26,6 +26,12 @@ import { createDeterministicAnalysisResponse } from "@/lib/ai/deterministic-resp
 import { createLegacyAgentResponse } from "@/lib/ai/legacy-agent-response";
 import { getAIModel } from "@/lib/ai/provider";
 import { checkIpRateLimit, getClientIp } from "@/lib/ai/request-limits";
+import {
+  beginRequestLog,
+  noopRequestLogWriter,
+  type RequestLog,
+  type RequestLogStage,
+} from "@/lib/ai/request-log";
 import { resolveClutchRequestRedirect } from "@/lib/clutch-endpoint";
 
 export const maxDuration = 300;
@@ -57,12 +63,24 @@ async function authenticate(
   return verifyAIUser(request.headers.get("authorization"));
 }
 
-async function handlePost(request: NextRequest) {
+function rejected(
+  log: RequestLog,
+  stage: RequestLogStage,
+  body: Record<string, unknown>,
+  init: ResponseInit & { status: number },
+): NextResponse {
+  void log.finish({ status: "rejected", stage, httpStatus: init.status });
+  return NextResponse.json(body, init);
+}
+
+async function handlePost(request: NextRequest, log: RequestLog) {
   const seedMode = isSeedModeRequest(request);
   if (!seedMode) {
     const ipLimit = checkIpRateLimit(getClientIp(request));
     if (!ipLimit.allowed) {
-      return NextResponse.json(
+      return rejected(
+        log,
+        "ip_limit",
         {
           error:
             "Too many AI requests. Please slow down and try again shortly.",
@@ -77,19 +95,24 @@ async function handlePost(request: NextRequest) {
 
   const user = await authenticate(request, seedMode);
   if (!user) {
-    return NextResponse.json(
+    return rejected(
+      log,
+      "auth",
       {
         error: "Authentication required. Please log in to use the AI analyst.",
       },
       { status: 401 },
     );
   }
+  log.userId = seedMode ? null : user.id;
 
   let rawBody: unknown;
   try {
     rawBody = await request.json();
   } catch {
-    return NextResponse.json(
+    return rejected(
+      log,
+      "body",
       { error: "Invalid request body." },
       { status: 400 },
     );
@@ -97,18 +120,24 @@ async function handlePost(request: NextRequest) {
 
   const parsedBody = analysisRequestSchema.safeParse(rawBody);
   if (!parsedBody.success) {
-    return NextResponse.json(
+    return rejected(
+      log,
+      "body",
       { error: "Invalid request body." },
       { status: 400 },
     );
   }
   const { question, pageContext } = parsedBody.data;
+  log.question = question;
+  log.pageContext = pageContext ?? null;
 
   const rateLimit = seedMode
     ? { allowed: true, remaining: null }
     : await checkUserQueryLimit(user.id, user.role, AI_TOTAL_QUERY_LIMIT);
   if (!rateLimit.allowed) {
-    return NextResponse.json(
+    return rejected(
+      log,
+      "user_limit",
       {
         error: `Total query limit reached (${AI_TOTAL_QUERY_LIMIT} total).`,
         remaining: 0,
@@ -124,11 +153,14 @@ async function handlePost(request: NextRequest) {
     conversationId &&
     !(await verifyConversationOwnership(conversationId, user.id))
   ) {
-    return NextResponse.json(
+    return rejected(
+      log,
+      "ownership",
       { error: "Conversation not found." },
       { status: 404 },
     );
   }
+  log.conversationId = seedMode ? null : conversationId || null;
 
   try {
     const deterministicAnalysis = await tryRunDeterministicAnalysis(
@@ -143,6 +175,7 @@ async function handlePost(request: NextRequest) {
         buildConversationTitle(question),
         deterministicAnalysis?.model ?? analysisModel?.modelId ?? "unknown",
       );
+      log.conversationId = conversationId;
     }
 
     const history =
@@ -160,6 +193,7 @@ async function handlePost(request: NextRequest) {
         question,
         remaining: rateLimit.remaining,
         seedMode,
+        log,
       });
     }
     if (!analysisModel) throw new Error("No analysis model is configured");
@@ -173,9 +207,16 @@ async function handlePost(request: NextRequest) {
       model: analysisModel,
       abortSignal: request.signal,
       pageContext,
+      log,
     });
   } catch (error) {
     Sentry.captureException(error);
+    void log.finish({
+      status: "error",
+      stage: "planning",
+      httpStatus: 500,
+      error,
+    });
     const message =
       error instanceof Error ? error.message : "An unexpected error occurred";
     return NextResponse.json(
@@ -193,7 +234,28 @@ export async function POST(request: NextRequest) {
   if (redirect) {
     return NextResponse.redirect(redirect, 307);
   }
-  return withClutchCors(request, await handlePost(request));
+  const log = beginRequestLog(
+    request,
+    getClientIp(request),
+    isSeedModeRequest(request) ? { write: noopRequestLogWriter } : {},
+  );
+  let response: Response;
+  try {
+    response = await handlePost(request, log);
+  } catch (error) {
+    Sentry.captureException(error);
+    void log.finish({
+      status: "error",
+      stage: "unknown",
+      httpStatus: 503,
+      error,
+    });
+    response = NextResponse.json(
+      { error: "Clutch is temporarily unavailable. Please try again." },
+      { status: 503 },
+    );
+  }
+  return withClutchCors(request, response);
 }
 
 export function OPTIONS(request: NextRequest) {

@@ -679,18 +679,20 @@ body {
   }
 }
 
+/* Each lamp carries the full shorthand: a nameless `animation: 2s …` base
+   rule minifies to `animation: none` in production, which zeroes the duration
+   before the per-lamp names apply. */
 .start-lights > span {
   opacity: 0.16;
-  animation: 2s linear infinite;
 }
 .start-lights > span:nth-child(1) {
-  animation-name: startLight1;
+  animation: startLight1 2s linear infinite;
 }
 .start-lights > span:nth-child(2) {
-  animation-name: startLight2;
+  animation: startLight2 2s linear infinite;
 }
 .start-lights > span:nth-child(3) {
-  animation-name: startLight3;
+  animation: startLight3 2s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,6 +1,8 @@
 import type { AnalysisPageContext } from "./analysis-contracts";
 import {
   inferKnowledgeTopics,
+  type KnowledgeNode,
+  type KnowledgeTopic,
   selectKnowledgeNodes,
 } from "./knowledge-registry";
 
@@ -9,21 +11,33 @@ interface SystemPromptOptions {
   pageContext?: AnalysisPageContext;
 }
 
+export function isCapabilityQuestion(question: string): boolean {
+  return /\b(what can you do|how can you help|what (?:kind|types?) of questions|what should i ask|your capabilities)\b/i.test(
+    question,
+  );
+}
+
+/** Knowledge injected into the prompt; capability questions get none. */
+export function selectPromptKnowledge(question: string): {
+  topics: KnowledgeTopic[];
+  nodes: KnowledgeNode[];
+} {
+  const topics = inferKnowledgeTopics(question);
+  const nodes = isCapabilityQuestion(question)
+    ? []
+    : selectKnowledgeNodes(topics, question);
+  return { topics, nodes };
+}
+
 export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
   const question = options.question ?? "";
-  const capabilityQuestion =
-    /\b(what can you do|how can you help|what (?:kind|types?) of questions|what should i ask|your capabilities)\b/i.test(
-      question,
-    );
+  const capabilityQuestion = isCapabilityQuestion(question);
   const currentDate = new Intl.DateTimeFormat("en-US", {
     dateStyle: "long",
     timeZone: "UTC",
   }).format(new Date());
   const currentSeason = new Date().getUTCFullYear();
-  const topics = inferKnowledgeTopics(question);
-  const nodes = capabilityQuestion
-    ? []
-    : selectKnowledgeNodes(topics, question);
+  const { nodes } = selectPromptKnowledge(question);
   const pageContext = options.pageContext
     ? `\nValidated page state for resolving references such as "this race" or "these drivers":\n${JSON.stringify(options.pageContext)}`
     : "";

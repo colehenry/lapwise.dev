@@ -46,6 +46,15 @@ describe("knowledge registry", () => {
     expect(nodes.map((node) => node.id)).toContain("fastest-lap-bonus");
   });
 
+  it("retrieves the fastest-lap node when the bonus is asked about loosely", () => {
+    const question = "does fastest lap still award a bonus point?";
+    const topics = inferKnowledgeTopics(question);
+    const nodes = selectKnowledgeNodes(topics, question);
+
+    expect(topics).toContain("rules");
+    expect(nodes.map((node) => node.id)).toContain("fastest-lap-bonus");
+  });
+
   it("retrieves the championship scoring node for natural phrasing", () => {
     const question = "How does F1 scoring work and how has it changed?";
     const topics = inferKnowledgeTopics(question);

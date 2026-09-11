@@ -14,6 +14,7 @@ Usage:
 
 from app.models.ai_conversation import AIConversation
 from app.models.ai_message import AIMessage
+from app.models.ai_request_log import AIRequestLog
 from app.models.archive_aggregate import AggConstructorCareer, AggDriverCareer
 from app.models.championship import (
     ChampionshipClassificationException,
@@ -101,6 +102,7 @@ __all__ = [
     "Vote",
     "AIConversation",
     "AIMessage",
+    "AIRequestLog",
     "ReplayData",
     "SessionSummary",
     "Puzzle",

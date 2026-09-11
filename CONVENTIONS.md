@@ -97,6 +97,10 @@ aligned.
   or auth tables. Generated SQL always passes validation, row limits, and query
   timeouts. Schema knowledge has one maintained source.
 - **AI-3 `[review]`** Preserve AI spend caps and user/IP throttles.
+- **AI-4 `[review]`** Every `/api/ai/ask` request writes one `ai_request_logs`
+  row, for every outcome, via `lib/ai/request-log.ts`. New rejection or failure
+  paths in the ask route record a status and stage; ledger writes never fail
+  the request. `ai_messages` is the transcript, not the audit trail.
 - **SEC-1 `[review]`** Frontend middleware is UX-only; authentication is enforced
   server-side. Preserve rate limits, CSP/HSTS/frame protections, and Sentry error
   reporting. New external origins require explicit CSP updates.
