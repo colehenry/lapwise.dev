@@ -4,8 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ClutchBand, { LEAD_IN, TYPE_RATE } from "@/components/home/ClutchBand";
-import type { ClutchContext } from "@/lib/clutch/script";
-import { pickClutchScript } from "@/lib/clutch/script";
+import { type HomeContext, pickHomeScript } from "@/lib/clutch/scripts/home";
 import { EMPTY_ENTITY_COLORS } from "@/lib/queries/standings";
 import type { SessionResultsResponse } from "@/lib/types";
 import * as fixtures from "./fixtures";
@@ -38,7 +37,7 @@ function installClock() {
   };
 }
 
-const context: ClutchContext = {
+const context: HomeContext = {
   season: fixtures.FIXTURE_SEASON,
   standings: fixtures.standings,
   latest: fixtures.latestRound,
@@ -47,7 +46,7 @@ const context: ClutchContext = {
   roundsRun: fixtures.FIXTURE_ROUND,
 };
 
-function renderBand(ctx: ClutchContext = context) {
+function renderBand(ctx: HomeContext = context) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
@@ -62,7 +61,7 @@ function renderBand(ctx: ClutchContext = context) {
  *  same way the band runs it, so the rotation's day-of-year pick cannot make
  *  this assert against a script that is not on screen. */
 function fullAnswer(): string {
-  const resolved = pickClutchScript(context);
+  const resolved = pickHomeScript(context);
   if (!resolved) throw new Error("the fixture standings must resolve a script");
   return resolved.segments.map((segment) => segment.text).join("");
 }

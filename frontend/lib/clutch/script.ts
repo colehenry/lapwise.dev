@@ -1,6 +1,8 @@
-import type { StandingsResponse } from "@/lib/championshipTypes";
-import { CLUTCH_SCRIPTS } from "@/lib/clutch/scripts/home";
-import type { RoundSummary, SessionResultsResponse } from "@/lib/types";
+/**
+ * The unit Clutch speaks in: an authored question, an answer written as prose
+ * with slots, and follow-ups. A surface owns its slot grammar; this module
+ * only fills templates and refuses to render a sentence it cannot complete.
+ */
 
 export type ScriptTint = "driver" | "team";
 
@@ -12,21 +14,39 @@ export type ClutchVisual = {
   entities: "top3";
 };
 
+/**
+ * `script` names another script in the same surface and answers in place if
+ * it resolves; `ask` is a question for the dock and may carry slots.
+ */
+export type Followup = { script: string } | { ask: string };
+
 export type ClutchScript = {
   id: string;
   question: string;
   parts: ScriptPart[];
   visual?: ClutchVisual;
-  followups: string[];
+  followups: Followup[];
 };
 
-export type ClutchContext = {
-  season: number | null;
-  standings?: StandingsResponse;
-  latest?: RoundSummary;
-  latestClassification?: SessionResultsResponse | null;
-  roundsRun?: number;
-  roundsUpcoming?: number;
+export type SlotValue = { text: string; code: string | null };
+
+export type SlotResolver<C> = (context: C, slot: string) => SlotValue | null;
+
+/** What the dock is told about the panel a hand-off came from. */
+export type SurfaceDigest = {
+  kind: "standings";
+  season: number;
+  mode: "drivers" | "constructors";
+  leader: string | null;
+  gap: number | null;
+  roundsRun: number | null;
+  roundsLeft: number | null;
+};
+
+export type Surface<C> = {
+  scripts: ClutchScript[];
+  resolveSlot: SlotResolver<C>;
+  digest: (context: C) => SurfaceDigest | null;
 };
 
 export type ResolvedSegment = {
@@ -36,135 +56,27 @@ export type ResolvedSegment = {
   tint: ScriptTint | null;
 };
 
+export type ResolvedFollowup =
+  | { kind: "script"; id: string; question: string }
+  | { kind: "ask"; question: string };
+
 export type ResolvedScript = {
   id: string;
   question: string;
   segments: ResolvedSegment[];
   visual?: ClutchVisual;
-  followups: string[];
+  followups: ResolvedFollowup[];
 };
 
-type SlotValue = { text: string; code: string | null };
-
-function number(value: number | null | undefined): string | null {
-  if (value == null || !Number.isFinite(value)) return null;
-  return Number.isInteger(value) ? String(value) : value.toFixed(1);
-}
-
-function surnameOf(fullName: string): string {
-  const parts = fullName.trim().split(/\s+/);
-  return parts.length > 1 ? parts.slice(1).join(" ") : fullName;
-}
-
-function driverSlot(
-  context: ClutchContext,
-  rank: number,
-  field: string,
-): SlotValue | null {
-  const driver = context.standings?.drivers?.[rank - 1];
-  if (!driver) return null;
-  const code = driver.driver_code ?? driver.full_name;
-  if (field === "name") return { text: driver.full_name, code };
-  if (field === "surname") return { text: surnameOf(driver.full_name), code };
-  if (field === "code")
-    return driver.driver_code ? { text: driver.driver_code, code } : null;
-  if (field === "points") {
-    const points = number(driver.total_points);
-    return points ? { text: points, code: null } : null;
-  }
-  if (field === "wins") {
-    const wins = number(driver.wins);
-    return wins ? { text: wins, code: null } : null;
-  }
-  return null;
-}
-
-function constructorSlot(
-  context: ClutchContext,
-  rank: number,
-  field: string,
-): SlotValue | null {
-  const team = context.standings?.constructors?.[rank - 1];
-  if (!team) return null;
-  if (field === "team") return { text: team.team_name, code: team.team_name };
-  if (field === "points") {
-    const points = number(team.total_points);
-    return points ? { text: points, code: null } : null;
-  }
-  if (field === "wins") {
-    const wins = number(team.wins);
-    return wins ? { text: wins, code: null } : null;
-  }
-  return null;
-}
-
-function gapSlot(context: ClutchContext, path: string): SlotValue | null {
-  const [kind, pair] = path.split(".");
-  const [a, b] = (pair ?? "").split("_").map(Number);
-  if (!a || !b) return null;
-  const table =
-    kind === "drivers"
-      ? context.standings?.drivers
-      : context.standings?.constructors;
-  const first = table?.[a - 1];
-  const second = table?.[b - 1];
-  if (!first || !second) return null;
-  const gap = number(first.total_points - second.total_points);
-  return gap ? { text: `${gap} points`, code: null } : null;
-}
-
-function latestSlot(context: ClutchContext, field: string): SlotValue | null {
-  const latest = context.latest;
-  if (!latest) return null;
-  if (field === "event") return { text: latest.event_name, code: null };
-  const winner = latest.podium?.[0];
-  if (field === "winner") {
-    return winner
-      ? { text: winner.full_name, code: winner.driver_code ?? winner.full_name }
-      : null;
-  }
-  const results = context.latestClassification?.results ?? [];
-  const first = results.find((row) => row.position === 1);
-  if (field === "winnerGrid") {
-    const grid = number(first?.grid_position);
-    return grid ? { text: `P${grid}`, code: null } : null;
-  }
-  if (field === "margin") {
-    const second = results.find((row) => row.position === 2);
-    const margin = number(second?.time_seconds);
-    return margin ? { text: `${margin}s`, code: null } : null;
-  }
-  return null;
-}
-
-function resolveSlot(context: ClutchContext, slot: string): SlotValue | null {
-  if (slot === "season") {
-    return context.season ? { text: String(context.season), code: null } : null;
-  }
-  if (slot === "rounds.run") {
-    const run = number(context.roundsRun);
-    return run ? { text: run, code: null } : null;
-  }
-  if (slot === "rounds.upcoming") {
-    const upcoming = number(context.roundsUpcoming);
-    return upcoming ? { text: upcoming, code: null } : null;
-  }
-  if (slot.startsWith("gap.")) return gapSlot(context, slot.slice(4));
-  if (slot.startsWith("latest.")) return latestSlot(context, slot.slice(7));
-
-  const [group, rank, field] = slot.split(".");
-  const index = Number(rank);
-  if (!index || !field) return null;
-  if (group === "drivers") return driverSlot(context, index, field);
-  if (group === "constructors") return constructorSlot(context, index, field);
-  return null;
-}
-
 /** Replaces `{slot}` occurrences, or returns null if any of them is unknown. */
-function fillTemplate(context: ClutchContext, template: string): string | null {
+function fillTemplate<C>(
+  surface: Surface<C>,
+  context: C,
+  template: string,
+): string | null {
   let failed = false;
   const filled = template.replace(/\{([^}]+)\}/g, (_, slot: string) => {
-    const value = resolveSlot(context, slot.trim());
+    const value = surface.resolveSlot(context, slot.trim());
     if (!value) {
       failed = true;
       return "";
@@ -174,21 +86,48 @@ function fillTemplate(context: ClutchContext, template: string): string | null {
   return failed ? null : filled;
 }
 
-/** An unresolvable slot drops the whole script; a literal never reaches screen. */
-export function resolveScript(
+/**
+ * A `script` follow-up that cannot resolve is dropped, never downgraded to an
+ * `ask`; an `ask` follow-up with an unfillable slot fails the whole script.
+ * Returns null for the latter, and an empty array is a valid result.
+ */
+function resolveFollowups<C>(
+  surface: Surface<C>,
+  context: C,
   script: ClutchScript,
-  context: ClutchContext,
-): ResolvedScript | null {
-  const question = fillTemplate(context, script.question);
-  if (question === null) return null;
+): ResolvedFollowup[] | null {
+  const followups: ResolvedFollowup[] = [];
+  for (const followup of script.followups) {
+    if ("ask" in followup) {
+      const question = fillTemplate(surface, context, followup.ask);
+      if (question === null) return null;
+      followups.push({ kind: "ask", question });
+      continue;
+    }
+    const target = surface.scripts.find(
+      (entry) => entry.id === followup.script,
+    );
+    if (!target || target.id === script.id) continue;
+    const question = fillTemplate(surface, context, target.question);
+    if (question === null) continue;
+    if (!resolveParts(surface, context, target)) continue;
+    followups.push({ kind: "script", id: target.id, question });
+  }
+  return followups;
+}
 
+function resolveParts<C>(
+  surface: Surface<C>,
+  context: C,
+  script: ClutchScript,
+): ResolvedSegment[] | null {
   const segments: ResolvedSegment[] = [];
   for (const part of script.parts) {
     if ("text" in part) {
       segments.push({ text: part.text, code: null, tint: null });
       continue;
     }
-    const value = resolveSlot(context, part.slot);
+    const value = surface.resolveSlot(context, part.slot);
     if (!value) return null;
     segments.push({
       text: value.text,
@@ -196,13 +135,23 @@ export function resolveScript(
       tint: part.tint ?? null,
     });
   }
+  return segments;
+}
 
-  const followups: string[] = [];
-  for (const followup of script.followups) {
-    const filled = fillTemplate(context, followup);
-    if (filled === null) return null;
-    followups.push(filled);
-  }
+/** An unresolvable slot drops the whole script; a literal never reaches screen. */
+export function resolveScript<C>(
+  surface: Surface<C>,
+  script: ClutchScript,
+  context: C,
+): ResolvedScript | null {
+  const question = fillTemplate(surface, context, script.question);
+  if (question === null) return null;
+
+  const segments = resolveParts(surface, context, script);
+  if (!segments) return null;
+
+  const followups = resolveFollowups(surface, context, script);
+  if (!followups) return null;
 
   return {
     id: script.id,
@@ -222,15 +171,17 @@ function dayOfYear(now: Date): number {
  * The script of the day, or the next one that resolves. Returns null when no
  * script can be filled from the data in hand.
  */
-export function pickClutchScript(
-  context: ClutchContext,
+export function pickScript<C>(
+  surface: Surface<C>,
+  context: C,
   now: Date = new Date(),
-  scripts: ClutchScript[] = CLUTCH_SCRIPTS,
 ): ResolvedScript | null {
+  const { scripts } = surface;
   if (scripts.length === 0) return null;
   const offset = dayOfYear(now) % scripts.length;
   for (let i = 0; i < scripts.length; i++) {
     const resolved = resolveScript(
+      surface,
       scripts[(offset + i) % scripts.length],
       context,
     );

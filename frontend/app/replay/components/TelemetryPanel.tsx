@@ -51,11 +51,6 @@ function getTotalHeight(showDelta: boolean, showDrs: boolean) {
 
 const LABEL_FONT = "bold 8px monospace";
 const TICK_FONT = "8px monospace";
-/* Axis, grid and label ink follow the page theme; a fixed white vanishes on
-   the light surface. */
-const AXIS_ALPHA = 0.15;
-const GRID_ALPHA = 0.06;
-const PROGRESS_LINE_ALPHA = 0.4;
 
 /**
  * Precompute per-driver, per-lap telemetry data from replay frames.
@@ -145,7 +140,7 @@ function drawTraces(
   // --- Y-axis labels and grid ---
   ctx.font = TICK_FONT;
   ctx.fillStyle = ink(0.3);
-  ctx.strokeStyle = ink(GRID_ALPHA);
+  ctx.strokeStyle = ink(0.06);
   ctx.lineWidth = 1;
 
   // Speed Y-axis ticks
@@ -172,7 +167,7 @@ function drawTraces(
   ctx.fillText("100%", CHART_PADDING_LEFT - 6, tbY0 + 4);
   ctx.fillText("100%", CHART_PADDING_LEFT - 6, tbY0 + tbH - 4);
   // Center divider
-  ctx.strokeStyle = ink(AXIS_ALPHA);
+  ctx.strokeStyle = ink(0.15);
   ctx.setLineDash([2, 2]);
   ctx.beginPath();
   ctx.moveTo(CHART_PADDING_LEFT, tbY0 + tbH / 2);
@@ -367,7 +362,7 @@ function drawTraces(
     ctx.fillText(`-${deltaCeil}`, CHART_PADDING_LEFT - 6, deltaY0 + deltaH - 2);
 
     // Zero line
-    ctx.strokeStyle = ink(AXIS_ALPHA);
+    ctx.strokeStyle = ink(0.15);
     ctx.setLineDash([2, 2]);
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -437,7 +432,7 @@ function drawTraces(
     const xScale = chartWidth / (maxSamples - 1);
     const sampleScale = (maxSamples - 1) / Math.max(totalSamples - 1, 1);
     const px = CHART_PADDING_LEFT + primaryProgressIdx * sampleScale * xScale;
-    ctx.strokeStyle = ink(PROGRESS_LINE_ALPHA);
+    ctx.strokeStyle = ink(0.4);
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
@@ -448,7 +443,7 @@ function drawTraces(
   }
 
   // Bottom axis
-  ctx.strokeStyle = ink(AXIS_ALPHA);
+  ctx.strokeStyle = ink(0.15);
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(CHART_PADDING_LEFT, chartBottomY);
@@ -776,8 +771,8 @@ export default function TelemetryPanel({
                     left: tooltip.snappedX,
                     height: getTotalHeight(!!compareLapData, hasDrs),
                     width: 1,
-                    background: "var(--ink-strong)",
-                    opacity: 0.2,
+                    background:
+                      "color-mix(in srgb, var(--ink-strong) 20%, transparent)",
                   }}
                 />
               )}

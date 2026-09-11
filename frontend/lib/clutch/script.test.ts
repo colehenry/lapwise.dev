@@ -1,9 +1,20 @@
 import { describe, expect, it } from "vitest";
 import type { StandingsResponse } from "../championshipTypes";
-import { CLUTCH_SCRIPTS } from "./scripts/home";
-import type { ClutchContext, ClutchScript } from "./script";
-import { pickClutchScript, resolveScript } from "./script";
 import type { SessionResultsResponse } from "../types";
+import {
+  type ClutchScript,
+  pickScript,
+  resolveScript,
+  type Surface,
+} from "./script";
+import { HOME_SURFACE, type HomeContext, pickHomeScript } from "./scripts/home";
+
+const CLUTCH_SCRIPTS = HOME_SURFACE.scripts;
+
+/** The home slot grammar over a different catalogue. */
+function homeWith(scripts: ClutchScript[]): Surface<HomeContext> {
+  return { ...HOME_SURFACE, scripts };
+}
 
 function standings(): StandingsResponse {
   const scoring = {
@@ -87,7 +98,7 @@ const classification = {
   ],
 } as unknown as SessionResultsResponse;
 
-const full: ClutchContext = {
+const full: HomeContext = {
   season: 2026,
   standings: standings(),
   latest: {
@@ -118,7 +129,7 @@ const full: ClutchContext = {
 
 describe("resolveScript", () => {
   it("fills every slot from the standings in hand", () => {
-    const resolved = resolveScript(CLUTCH_SCRIPTS[0], full);
+    const resolved = resolveScript(HOME_SURFACE, CLUTCH_SCRIPTS[0], full);
     expect(resolved).not.toBeNull();
     const text = resolved?.segments.map((s) => s.text).join("") ?? "";
     expect(text).toContain("Kimi Antonelli");
@@ -128,17 +139,17 @@ describe("resolveScript", () => {
   });
 
   it("never lets a literal slot reach the screen", () => {
-    const resolved = resolveScript(CLUTCH_SCRIPTS[0], full);
+    const resolved = resolveScript(HOME_SURFACE, CLUTCH_SCRIPTS[0], full);
     const rendered = [
       resolved?.question ?? "",
       ...(resolved?.segments.map((s) => s.text) ?? []),
-      ...(resolved?.followups ?? []),
+      ...(resolved?.followups.map((f) => f.question) ?? []),
     ].join(" ");
     expect(rendered).not.toMatch(/[{}]/);
   });
 
   it("tints only the segments the script asked to tint", () => {
-    const resolved = resolveScript(CLUTCH_SCRIPTS[0], full);
+    const resolved = resolveScript(HOME_SURFACE, CLUTCH_SCRIPTS[0], full);
     const tinted = resolved?.segments.filter((s) => s.code) ?? [];
     expect(tinted.map((s) => s.code)).toEqual([
       "ANT",
@@ -151,42 +162,108 @@ describe("resolveScript", () => {
   });
 
   it("drops the whole script when a slot cannot be resolved", () => {
-    expect(resolveScript(CLUTCH_SCRIPTS[0], { season: 2026 })).toBeNull();
     expect(
-      resolveScript(CLUTCH_SCRIPTS[0], {
+      resolveScript(HOME_SURFACE, CLUTCH_SCRIPTS[0], { season: 2026 }),
+    ).toBeNull();
+    expect(
+      resolveScript(HOME_SURFACE, CLUTCH_SCRIPTS[0], {
         season: null,
         standings: standings(),
       }),
     ).toBeNull();
   });
 
-  it("drops a script whose follow-up chip is the unresolvable part", () => {
+  it("drops a script whose ask follow-up is the unresolvable part", () => {
     const script: ClutchScript = {
       id: "test",
       question: "A question about {season}",
       parts: [{ text: "An answer." }],
-      followups: ["What about {drivers.9.name}?"],
+      followups: [{ ask: "What about {drivers.9.name}?" }],
     };
-    expect(resolveScript(script, full)).toBeNull();
+    expect(resolveScript(HOME_SURFACE, script, full)).toBeNull();
+  });
+
+  it("labels a script follow-up with the target's filled question", () => {
+    const scripts: ClutchScript[] = [
+      {
+        id: "first",
+        question: "Who leads?",
+        parts: [{ text: "Someone." }],
+        followups: [{ script: "second" }, { ask: "And {drivers.2.surname}?" }],
+      },
+      {
+        id: "second",
+        question: "How far ahead is {drivers.1.surname}?",
+        parts: [{ slot: "gap.drivers.1_2" }],
+        followups: [],
+      },
+    ];
+    const resolved = resolveScript(homeWith(scripts), scripts[0], full);
+    expect(resolved?.followups).toEqual([
+      { kind: "script", id: "second", question: "How far ahead is Antonelli?" },
+      { kind: "ask", question: "And Russell?" },
+    ]);
+  });
+
+  it("drops a script follow-up that cannot resolve, and keeps the script", () => {
+    const scripts: ClutchScript[] = [
+      {
+        id: "first",
+        question: "Who leads?",
+        parts: [{ text: "Someone." }],
+        followups: [
+          { script: "needs-margin" },
+          { script: "missing" },
+          { script: "first" },
+        ],
+      },
+      {
+        id: "needs-margin",
+        question: "By how much?",
+        parts: [{ slot: "latest.margin" }],
+        followups: [],
+      },
+    ];
+    const surface = homeWith(scripts);
+    const withMargin = resolveScript(surface, scripts[0], full);
+    expect(withMargin?.followups.map((f) => f.kind)).toEqual(["script"]);
+
+    const noMargin = resolveScript(surface, scripts[0], {
+      ...full,
+      latestClassification: null,
+    });
+    expect(noMargin).not.toBeNull();
+    expect(noMargin?.followups).toEqual([]);
   });
 });
 
-describe("pickClutchScript", () => {
+describe("HOME_SURFACE.digest", () => {
+  it("names the leader, the gap and the rounds from the same context", () => {
+    expect(HOME_SURFACE.digest(full)).toEqual({
+      kind: "standings",
+      season: 2026,
+      mode: "drivers",
+      leader: "ANT",
+      gap: 66,
+      roundsRun: 13,
+      roundsLeft: null,
+    });
+  });
+
+  it("is nothing without a season", () => {
+    expect(HOME_SURFACE.digest({ season: null })).toBeNull();
+  });
+});
+
+describe("pickScript", () => {
   it("rotates by day of year", () => {
     const scripts: ClutchScript[] = [
       { id: "a", question: "A", parts: [{ text: "a" }], followups: [] },
       { id: "b", question: "B", parts: [{ text: "b" }], followups: [] },
     ];
-    const first = pickClutchScript(
-      full,
-      new Date("2026-01-01T12:00:00Z"),
-      scripts,
-    );
-    const second = pickClutchScript(
-      full,
-      new Date("2026-01-02T12:00:00Z"),
-      scripts,
-    );
+    const surface = homeWith(scripts);
+    const first = pickScript(surface, full, new Date("2026-01-01T12:00:00Z"));
+    const second = pickScript(surface, full, new Date("2026-01-02T12:00:00Z"));
     expect(first?.id).not.toBe(second?.id);
   });
 
@@ -201,11 +278,11 @@ describe("pickClutchScript", () => {
       { id: "plain", question: "Q", parts: [{ text: "ok" }], followups: [] },
     ];
     expect(
-      pickClutchScript(full, new Date("2026-01-01T12:00:00Z"), scripts)?.id,
+      pickScript(homeWith(scripts), full, new Date("2026-01-01T12:00:00Z"))?.id,
     ).toBe("plain");
   });
 
   it("returns nothing rather than a half-filled sentence", () => {
-    expect(pickClutchScript({ season: null })).toBeNull();
+    expect(pickHomeScript({ season: null })).toBeNull();
   });
 });

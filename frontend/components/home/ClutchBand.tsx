@@ -5,9 +5,9 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import type { ResolvedScript } from "@/lib/clutch/script";
+import { type HomeContext, pickHomeScript } from "@/lib/clutch/scripts/home";
 import { constructorHref, driverHref } from "@/lib/entityLinks";
-import type { ClutchContext, ResolvedScript } from "@/lib/clutch/script";
-import { pickClutchScript } from "@/lib/clutch/script";
 import { pointsProgressionQuery } from "@/lib/queries/pointsProgression";
 import type { EntityColors } from "@/lib/queries/standings";
 import type { ProgressionSeries } from "./ClutchProgressionChart";
@@ -111,12 +111,12 @@ export default function ClutchBand({
   colors,
   animate,
 }: {
-  context: ClutchContext;
+  context: HomeContext;
   colors: EntityColors;
   animate: boolean;
 }) {
   const router = useRouter();
-  const script = useMemo(() => pickClutchScript(context), [context]);
+  const script = useMemo(() => pickHomeScript(context), [context]);
   const { spanRefs, finished } = useTypedAnswer(script, animate);
   const [draft, setDraft] = useState("");
 
@@ -242,12 +242,12 @@ export default function ClutchBand({
         <div className="mt-6 flex flex-wrap gap-2">
           {script.followups.map((followup) => (
             <button
-              key={followup}
+              key={followup.question}
               type="button"
-              onClick={() => goToAsk(followup)}
+              onClick={() => goToAsk(followup.question)}
               className="rounded-sm border border-line-soft bg-surface-panel px-3 py-[7px] text-[13px] text-ink-soft transition-colors hover:border-accent hover:text-ink-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-bright"
             >
-              {followup}
+              {followup.question}
             </button>
           ))}
         </div>
