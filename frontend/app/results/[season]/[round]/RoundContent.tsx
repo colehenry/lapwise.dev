@@ -7,12 +7,14 @@ import {
 } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import ClutchContextActions from "@/components/chat/ClutchContextActions";
+import ClutchCorner from "@/components/clutch/ClutchCorner";
 import RaceComments from "@/components/comments/RaceComments";
 import JumpToRace from "@/components/layout/JumpToRace";
 import SessionDetail from "@/components/session/SessionDetail";
 import type { SessionSummary } from "@/components/session/SessionSummaryCard";
 import DeferredSection from "@/components/ui/DeferredSection";
+import { buildClutchHref } from "@/lib/ai/clutch-links";
+import { SESSION_SURFACE } from "@/lib/clutch/scripts/session";
 import { seasonsQuery } from "@/lib/queries/seasons";
 import {
   defaultPracticeNumber,
@@ -183,22 +185,19 @@ export default function RoundContent() {
           : resolvedTab === "sprint-qualifying"
             ? "sprint_qualifying"
             : undefined;
-  const clutchActions =
-    sessionTypeForDetail === "race"
-      ? [
-          { label: "Key story", question: "What decided this race?" },
-          { label: "Show winner", question: "Who won this race?" },
-        ]
-      : [
-          {
-            label: "Explain qualifying",
-            question: "What decided this qualifying session?",
-          },
-          {
-            label: "Front-row gap",
-            question: "How close was the fight for the front row?",
-          },
-        ];
+  /* Until the dock lands, a question the corner cannot answer opens /ask
+     with the same page context the old action bar carried. */
+  const askClutch = (question: string) => {
+    router.push(
+      buildClutchHref(question, {
+        route: `/results/${season}/${round}${resolvedTab === "race" ? "" : `?tab=${resolvedTab}`}`,
+        season: seasonNum,
+        round: roundNum,
+        sessionId: activeSessionData.session.id,
+        sessionType: clutchSessionType,
+      }),
+    );
+  };
 
   return (
     <main className="min-h-screen bg-surface-band">
@@ -228,12 +227,19 @@ export default function RoundContent() {
                   </span>
                 </div>
 
-                <div className="min-w-0 md:flex-1 flex justify-end">
+                <div className="min-w-0 md:flex-1 flex items-center justify-end gap-2">
                   <JumpToRace
                     currentSeason={season}
                     availableSeasons={availableYears}
                     label="Jump"
                     excludeRound={roundNum}
+                  />
+                  <ClutchCorner
+                    surface={SESSION_SURFACE}
+                    context={activeSessionData}
+                    label={`the ${TAB_LABELS[resolvedTab].toLowerCase()} at the ${availability.event_name}`}
+                    place="page"
+                    onAsk={askClutch}
                   />
                 </div>
               </div>
@@ -270,18 +276,6 @@ export default function RoundContent() {
 
       {/* Tab Content */}
       <div className="max-w-6xl mx-auto">
-        <div className="px-3 pt-4 md:px-6">
-          <ClutchContextActions
-            context={{
-              route: `/results/${season}/${round}${resolvedTab === "race" ? "" : `?tab=${resolvedTab}`}`,
-              season: seasonNum,
-              round: roundNum,
-              sessionId: activeSessionData.session.id,
-              sessionType: clutchSessionType,
-            }}
-            actions={clutchActions}
-          />
-        </div>
         {/* Race / Qualifying / Sprint tabs — show SessionDetail */}
         {isResultsTab && (
           <>

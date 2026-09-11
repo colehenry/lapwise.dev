@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
-import ClutchContextActions from "@/components/chat/ClutchContextActions";
 import { TrianglePattern } from "@/components/layout/Patterns";
 import DeferredSection from "@/components/ui/DeferredSection";
 import { DATA_FROM } from "@/lib/data-coverage";
@@ -131,44 +130,9 @@ export default function RoundAnalysisCharts({
   sessionData,
   practiceNumbers,
 }: RoundAnalysisChartsProps) {
-  const sessionType =
-    activeTab === "race"
-      ? "race"
-      : activeTab === "sprint"
-        ? "sprint_race"
-        : activeTab === "qualifying"
-          ? "qualifying"
-          : activeTab === "sprint-qualifying"
-            ? "sprint_qualifying"
-            : undefined;
-  const chartActions = (
-    <ClutchContextActions
-      context={{
-        route: `/results/${season}/${round}${activeTab === "race" ? "" : `?tab=${activeTab}`}`,
-        season,
-        round,
-        sessionId: sessionData?.session.id,
-        sessionType,
-        activeFilters: {
-          section: "analysis-charts",
-          ...(activeTab === "practice"
-            ? { practiceSession: `FP${practiceSession}` }
-            : {}),
-        },
-      }}
-      actions={[
-        {
-          label: "Explain these charts",
-          question: "What do the analysis charts on this page reveal?",
-        },
-      ]}
-    />
-  );
-
   if (activeTab === "qualifying" || activeTab === "sprint-qualifying") {
     return (
       <div className="p-3 md:p-6 space-y-4 md:space-y-6">
-        {chartActions}
         <ChartPanel
           title="Q1 → Q2 → Q3 Progression"
           patternId="quali-prog-triangles"
@@ -199,7 +163,6 @@ export default function RoundAnalysisCharts({
   if (activeTab === "race") {
     return (
       <div className="p-3 md:p-6 space-y-4 md:space-y-6">
-        {chartActions}
         <ChartPanel
           title="Lap Time Distribution"
           patternId="lap-dist-triangles"
@@ -248,7 +211,6 @@ export default function RoundAnalysisCharts({
 
   return (
     <div className="p-3 md:p-6 space-y-4 md:space-y-6">
-      {chartActions}
       <ChartPanel
         title={`FP${practiceSession} Long Run Pace`}
         patternId="long-run-triangles"

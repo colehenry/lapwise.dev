@@ -630,6 +630,14 @@ body {
   }
 }
 
+/* A Clutch bubble arrives with a short rise; `motion-safe:` gates it. */
+@keyframes clutchRise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
 /* Clutch is working: the start gantry. Lights fill left to right, hold, then
    go out together — three separate keyframes because one shared keyframe with
    per-lamp delays would stagger the extinguish too, and going out at once is

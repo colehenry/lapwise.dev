@@ -28,20 +28,33 @@ export type ClutchScript = {
   followups: Followup[];
 };
 
-export type SlotValue = { text: string; code: string | null };
+/** `color` is the entity's own tint when the surface knows it; the home band
+ *  looks colours up separately and leaves it unset. */
+export type SlotValue = { text: string; code: string | null; color?: string };
 
 export type SlotResolver<C> = (context: C, slot: string) => SlotValue | null;
 
 /** What the dock is told about the panel a hand-off came from. */
-export type SurfaceDigest = {
-  kind: "standings";
-  season: number;
-  mode: "drivers" | "constructors";
-  leader: string | null;
-  gap: number | null;
-  roundsRun: number | null;
-  roundsLeft: number | null;
-};
+export type SurfaceDigest =
+  | {
+      kind: "standings";
+      season: number;
+      mode: "drivers" | "constructors";
+      leader: string | null;
+      gap: number | null;
+      roundsRun: number | null;
+      roundsLeft: number | null;
+    }
+  | {
+      kind: "session";
+      sessionId: number;
+      sessionType: string;
+      season: number;
+      round: number;
+      winner: string | null;
+      fastestLap: string | null;
+      classified: number;
+    };
 
 export type Surface<C> = {
   scripts: ClutchScript[];
@@ -54,6 +67,7 @@ export type ResolvedSegment = {
   /** The entity to take a colour from, or null for plain ink. */
   code: string | null;
   tint: ScriptTint | null;
+  color: string | null;
 };
 
 export type ResolvedFollowup =
@@ -124,7 +138,7 @@ function resolveParts<C>(
   const segments: ResolvedSegment[] = [];
   for (const part of script.parts) {
     if ("text" in part) {
-      segments.push({ text: part.text, code: null, tint: null });
+      segments.push({ text: part.text, code: null, tint: null, color: null });
       continue;
     }
     const value = surface.resolveSlot(context, part.slot);
@@ -133,6 +147,7 @@ function resolveParts<C>(
       text: value.text,
       code: part.tint ? value.code : null,
       tint: part.tint ?? null,
+      color: part.tint ? (value.color ?? null) : null,
     });
   }
   return segments;
@@ -160,6 +175,18 @@ export function resolveScript<C>(
     visual: script.visual,
     followups,
   };
+}
+
+/** The first script, in catalogue order, that the data in hand can fill. */
+export function firstScript<C>(
+  surface: Surface<C>,
+  context: C,
+): ResolvedScript | null {
+  for (const script of surface.scripts) {
+    const resolved = resolveScript(surface, script, context);
+    if (resolved) return resolved;
+  }
+  return null;
 }
 
 function dayOfYear(now: Date): number {
