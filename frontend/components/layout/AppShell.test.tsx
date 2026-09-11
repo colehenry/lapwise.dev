@@ -11,6 +11,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/components/providers/AuthProvider", () => ({
   default: ({ children }: { children: React.ReactNode }) => children,
+  useAuth: () => ({ user: null, isAuthenticated: false }),
 }));
 
 vi.mock("@/components/providers/QueryProvider", () => ({

@@ -225,6 +225,7 @@ export default function ClutchCorner<C>({
         id={bubbleId}
         anchorRef={headRef}
         open={open}
+        revision={answered ? hops.length + 1 : 0}
         role={answered ? "dialog" : "tooltip"}
         labelledBy={answered ? `${bubbleId}-title` : undefined}
         onDismiss={close}

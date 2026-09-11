@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import ChatInput from "@/components/chat/ChatInput";
 import ChatTranscript from "@/components/chat/ChatTranscript";
@@ -10,20 +11,32 @@ import { ClutchNavIcon } from "@/components/ui/BrandLogo";
 import { useAskChat } from "@/hooks/useAskChat";
 import { buildClutchHref } from "@/lib/ai/clutch-links";
 import {
+  DOCK_MIN_WIDTH,
+  forgetThread,
+  rememberedDockWidth,
+  rememberThread,
+  threadFor,
+  threadRoute,
+} from "@/lib/clutch/dockMemory";
+import {
   type ClutchHandoff,
   remainingFollowups,
   seededMessages,
 } from "@/lib/clutch/handoff";
+import DockResizeHandle from "./DockResizeHandle";
 
 const TOTAL_LIMIT = 3;
+/** The placeholder answer shown while a hand-off question is still queued. */
+const PENDING_ANSWER_ID = "clutch-dock-pending-answer";
 
 function SignIn({ handoff }: { handoff: ClutchHandoff }) {
-  const returnTo = buildClutchHref(handoff.question, handoff.pageContext);
+  const question = handoff.question ?? "";
+  const returnTo = buildClutchHref(question, handoff.pageContext);
   return (
     <div className="px-4 pb-4 pt-2">
       <p className="m-0 text-[13px] leading-[1.55] text-ink-base">
         Sign in to ask <span className="text-accent-bright">Clutch</span>{" "}
-        <q className="text-ink-strong">{handoff.question}</q>
+        {question && <q className="text-ink-strong">{question}</q>}
       </p>
       <Link
         href={`/login?redirect=${encodeURIComponent(returnTo)}`}
@@ -40,8 +53,12 @@ function SignIn({ handoff }: { handoff: ClutchHandoff }) {
  * corner started continues here for the rest of the session. It is the /ask
  * workspace in a panel: the same transcript, input and chat state.
  */
+/** A hand-off question waiting for the thread it belongs in to be ready. */
+type Pending = { question: string; conversationId: string | null };
+
 function Thread({ handoff }: { handoff: ClutchHandoff }) {
   const { user, isAuthenticated } = useAuth();
+  const userId = isAuthenticated && user ? user.id : null;
   const { expanded, expand, collapse } = useClutchDock();
   const {
     activeConversationId,
@@ -53,47 +70,102 @@ function Thread({ handoff }: { handoff: ClutchHandoff }) {
     error,
     pendingConversationId,
     startNewConversation,
+    loadConversation,
     abortResponse,
     sendMessage,
-  } = useAskChat(isAuthenticated && user ? user.id : null, handoff.pageContext);
+  } = useAskChat(userId, handoff.pageContext);
 
-  const [pending, setPending] = useState<string | null>(null);
+  const [pending, setPending] = useState<Pending | null>(null);
+  const [resumed, setResumed] = useState(false);
   const [chipsUsed, setChipsUsed] = useState(false);
   const [unread, setUnread] = useState(false);
+  const [width, setWidth] = useState(DOCK_MIN_WIDTH);
 
-  /* Each hand-off is a new thread: the corner's exchange first, then the
-     question that could not be answered on the page. The provider makes a
-     fresh object per hand-off, so the same question twice still restarts. */
+  useEffect(() => setWidth(rememberedDockWidth()), []);
+
+  /* A page keeps its thread: a hand-off from a page this reader has already
+     talked about continues that conversation; anywhere else starts one, with
+     the corner's exchange as its first turns. The provider makes a fresh
+     object per hand-off, so the same question twice still restarts. */
   useEffect(() => {
-    startNewConversation();
-    setPending(handoff.question);
+    const remembered =
+      userId !== null ? threadFor(userId, handoff.pageContext.route) : null;
+    if (remembered) loadConversation(remembered.conversationId);
+    else startNewConversation();
+    setResumed(remembered !== null);
+    setPending(
+      handoff.question
+        ? {
+            question: handoff.question,
+            conversationId: remembered?.conversationId ?? null,
+          }
+        : null,
+    );
     setChipsUsed(false);
-  }, [handoff, startNewConversation]);
+  }, [handoff, userId, loadConversation, startNewConversation]);
 
   useEffect(() => {
-    if (!pending || !isAuthenticated) return;
-    if (activeConversationId !== null || messages.length > 0 || isAsking)
+    if (!pending || !isAuthenticated || isAsking) return;
+    /* A remembered conversation that no longer loads (deleted from /ask, say)
+       is forgotten, and the question starts a fresh thread instead. */
+    if (pending.conversationId && error && userId !== null) {
+      forgetThread(userId, handoff.pageContext.route);
+      startNewConversation();
+      setResumed(false);
+      setPending({ question: pending.question, conversationId: null });
       return;
+    }
+    const ready = pending.conversationId
+      ? activeConversationId === pending.conversationId &&
+        pendingConversationId === null
+      : activeConversationId === null && messages.length === 0;
+    if (!ready) return;
     setPending(null);
-    void sendMessage(pending);
+    void sendMessage(pending.question);
   }, [
     pending,
     isAuthenticated,
     activeConversationId,
+    pendingConversationId,
     messages.length,
     isAsking,
+    error,
+    userId,
+    handoff,
+    startNewConversation,
     sendMessage,
   ]);
+
+  useEffect(() => {
+    if (userId === null || !activeConversationId) return;
+    rememberThread(userId, handoff.pageContext.route, {
+      conversationId: activeConversationId,
+      title: handoff.title,
+    });
+  }, [userId, activeConversationId, handoff]);
 
   useEffect(() => {
     if (expanded) setUnread(false);
     else if (messages.length > 0) setUnread(true);
   }, [expanded, messages.length]);
 
-  const transcript = useMemo(
-    () => [...seededMessages(handoff), ...messages],
-    [handoff, messages],
-  );
+  /* A resumed thread already holds its history; only a new one is seeded.
+     While the hand-off question waits for its thread, it is on screen as a
+     turn with Clutch already working, so the dock never opens looking idle. */
+  const waiting = pending !== null;
+  const transcript = useMemo(() => {
+    const base = resumed ? messages : [...seededMessages(handoff), ...messages];
+    if (!pending) return base;
+    return [
+      ...base,
+      {
+        id: `pending-q-${handoff.seq}`,
+        role: "user" as const,
+        content: pending.question,
+      },
+      { id: PENDING_ANSWER_ID, role: "assistant" as const, content: "" },
+    ];
+  }, [resumed, handoff, messages, pending]);
   const chips = chipsUsed ? [] : remainingFollowups(handoff);
 
   const send = async (question: string) => {
@@ -101,12 +173,7 @@ function Thread({ handoff }: { handoff: ClutchHandoff }) {
     await sendMessage(question);
   };
 
-  const quota =
-    remaining !== null
-      ? `${remaining}/${TOTAL_LIMIT}`
-      : user?.role === "admin"
-        ? "∞"
-        : null;
+  const quota = remaining !== null ? `${remaining}/${TOTAL_LIMIT}` : null;
 
   if (!expanded) {
     return (
@@ -130,8 +197,10 @@ function Thread({ handoff }: { handoff: ClutchHandoff }) {
   return (
     <section
       aria-label="Clutch"
-      className="fixed inset-x-2 bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px)+0.5rem)] z-[1250] flex h-[min(560px,80dvh)] flex-col overflow-hidden rounded-sm border border-line-strong bg-surface-panel shadow-floating motion-safe:animate-[clutchRise_120ms_ease-out] md:inset-x-auto md:bottom-4 md:right-4 md:w-[360px]"
+      style={{ "--dock-width": `${width}px` } as React.CSSProperties}
+      className="fixed inset-x-2 bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px)+0.5rem)] z-[1250] flex h-[min(560px,80dvh)] flex-col overflow-hidden rounded-sm border border-line-strong bg-surface-panel shadow-floating motion-safe:animate-[clutchRise_120ms_ease-out] md:inset-x-auto md:bottom-4 md:right-4 md:w-[var(--dock-width)]"
     >
+      <DockResizeHandle width={width} onResize={setWidth} />
       <header className="flex h-[38px] flex-none items-center gap-2 border-b border-line-soft px-2.5">
         <ClutchNavIcon className="h-[18px] w-[18px]" />
         <span className="text-[12.5px] font-semibold text-ink-strong">
@@ -169,11 +238,14 @@ function Thread({ handoff }: { handoff: ClutchHandoff }) {
             key={activeConversationId ?? `handoff-${handoff.seq}`}
             messages={transcript}
             error={error}
-            streamingAssistantId={streamingAssistantId}
-            streamStatus={streamStatus}
-            isAsking={isAsking}
-            disabled={isAsking || pendingConversationId !== null}
+            streamingAssistantId={
+              waiting ? PENDING_ANSWER_ID : streamingAssistantId
+            }
+            streamStatus={waiting ? { stage: "starting" } : streamStatus}
+            isAsking={waiting || isAsking}
+            disabled={waiting || isAsking || pendingConversationId !== null}
             onSend={send}
+            variant="dock"
           />
           {chips.length > 0 && (
             <div className="flex flex-none flex-wrap gap-[5px] px-3 pb-1.5 pt-1.5">
@@ -194,7 +266,7 @@ function Thread({ handoff }: { handoff: ClutchHandoff }) {
             <ChatInput
               onSend={send}
               onAbort={abortResponse}
-              isLoading={isAsking}
+              isLoading={waiting || isAsking}
               disabled={pendingConversationId !== null}
             />
           </div>
@@ -206,8 +278,25 @@ function Thread({ handoff }: { handoff: ClutchHandoff }) {
   );
 }
 
+/**
+ * The dock belongs to the page. Arriving on a page this reader has talked
+ * about brings its thread back, folded; arriving anywhere else clears the
+ * head. A thread is never shown under another page's head — it waits on its
+ * own page and on /ask.
+ */
 export default function ClutchDock() {
-  const { handoff } = useClutchDock();
+  const { handoff, resume, dismiss } = useClutchDock();
+  const { user, isAuthenticated } = useAuth();
+  const userId = isAuthenticated && user ? user.id : null;
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (handoff && threadRoute(handoff.pageContext.route) === pathname) return;
+    const remembered = userId !== null ? threadFor(userId, pathname) : null;
+    if (remembered) resume(remembered, pathname);
+    else if (handoff) dismiss();
+  }, [pathname, handoff, userId, resume, dismiss]);
+
   if (!handoff) return null;
   return <Thread handoff={handoff} />;
 }

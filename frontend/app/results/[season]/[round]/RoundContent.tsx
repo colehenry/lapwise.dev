@@ -221,26 +221,20 @@ export default function RoundContent() {
                   </span>
                 </div>
 
-                <div className="min-w-0 md:flex-1 flex items-center justify-end gap-2">
+                <div className="min-w-0 md:flex-1 flex justify-end">
                   <JumpToRace
                     currentSeason={season}
                     availableSeasons={availableYears}
                     label="Jump"
                     excludeRound={roundNum}
                   />
-                  <ClutchCorner
-                    surface={SESSION_SURFACE}
-                    context={activeSessionData}
-                    title={`${availability.event_name} · ${TAB_LABELS[resolvedTab]}`}
-                    pageContext={clutchPageContext}
-                    place="page"
-                  />
                 </div>
               </div>
 
-              {/* Tab Bar */}
-              <div className="px-4">
-                <div className="flex items-center justify-center gap-1 overflow-x-auto pb-2">
+              {/* Tab Bar, with Clutch at its right end under Jump. The tabs
+                  keep their centre; the head sits in the row's padding. */}
+              <div className="relative px-4">
+                <div className="flex items-center justify-center gap-1 overflow-x-auto pb-2 pr-10">
                   {availableTabs.map((tab) => {
                     const isActive = resolvedTab === tab;
 
@@ -261,6 +255,16 @@ export default function RoundContent() {
                       </button>
                     );
                   })}
+                </div>
+                {/* Offset so the head sits under Jump's centre, not its edge. */}
+                <div className="absolute inset-y-0 right-[38px] flex items-center pb-2 md:right-[54px]">
+                  <ClutchCorner
+                    surface={SESSION_SURFACE}
+                    context={activeSessionData}
+                    title={`${availability.event_name} · ${TAB_LABELS[resolvedTab]}`}
+                    pageContext={clutchPageContext}
+                    place="page"
+                  />
                 </div>
               </div>
             </div>

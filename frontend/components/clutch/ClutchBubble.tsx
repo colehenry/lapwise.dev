@@ -13,9 +13,9 @@ import { createPortal } from "react-dom";
 /** Distance kept from the viewport edge before the bubble flips. */
 const EDGE = 12;
 /** Space between the head and the bubble's tail. */
-const GAP = 4;
-/** How far the bubble overlaps the head so the tail points at it. */
-const OVERLAP = 8;
+const GAP = 6;
+/** Where the tail sits, measured from the bubble's near edge. */
+const TAIL_INSET = 18;
 
 type Placement = {
   left: number;
@@ -25,18 +25,20 @@ type Placement = {
 };
 
 /**
- * Where the bubble goes: top-right of the head, flipped to the left when it
- * would cross the right edge and below when it would cross the top. Never
- * pushes the panel it belongs to.
+ * Where the bubble goes: above the head with its tail under the head's
+ * centre, opening to the right; flipped to open left when it would cross
+ * the right edge, and below when it would cross the top. Never pushes the
+ * panel it belongs to.
  */
 function place(anchor: HTMLElement, bubble: HTMLElement): Placement {
   const rect = anchor.getBoundingClientRect();
   const width = bubble.offsetWidth;
   const height = bubble.offsetHeight;
+  const centre = rect.left + rect.width / 2;
 
-  let left = rect.right - OVERLAP;
+  let left = centre - TAIL_INSET;
   const flipX = left + width > window.innerWidth - EDGE;
-  if (flipX) left = rect.left + OVERLAP - width;
+  if (flipX) left = centre + TAIL_INSET - width;
 
   let top = rect.top - GAP - height;
   const flipY = top < EDGE;
@@ -49,6 +51,7 @@ export default function ClutchBubble({
   id,
   anchorRef,
   open,
+  revision,
   role,
   labelledBy,
   onDismiss,
@@ -59,6 +62,8 @@ export default function ClutchBubble({
   id: string;
   anchorRef: RefObject<HTMLElement | null>;
   open: boolean;
+  /** Changes when the content changes shape; the bubble re-places and pops. */
+  revision: number;
   role: "tooltip" | "dialog";
   /** The element naming a dialog; a tooltip is named by its content. */
   labelledBy?: string;
@@ -120,13 +125,18 @@ export default function ClutchBubble({
   const aria =
     role === "dialog" ? { role, "aria-labelledby": labelledBy } : { role };
 
-  const tailSide = placement?.flipX ? "right-[7px]" : "left-[7px]";
+  const tailSide = placement?.flipX ? "right-[14px]" : "left-[14px]";
   const tailEdge = placement?.flipY
     ? "-top-[5px] rotate-[135deg]"
     : "-bottom-[5px] -rotate-45";
+  /* The pop grows out of the tail, so it reads as coming from the head. */
+  const origin = `${placement?.flipY ? "top" : "bottom"} ${placement?.flipX ? "right" : "left"}`;
 
   return createPortal(
+    /* Keyed on the revision: a new shape mounts fresh, is measured before
+       paint, and pops in — never a frame in the old place. */
     <div
+      key={`${id}-${revision}`}
       id={id}
       ref={bubbleRef}
       {...aria}
@@ -136,8 +146,9 @@ export default function ClutchBubble({
         left: placement?.left ?? 0,
         top: placement?.top ?? 0,
         visibility: placement ? "visible" : "hidden",
+        transformOrigin: origin,
       }}
-      className="fixed z-[1300] rounded-sm border border-line-strong bg-surface-panel text-[12.5px] leading-[1.4] text-ink-base shadow-floating-soft motion-safe:animate-[clutchRise_120ms_ease-out]"
+      className="fixed z-[1300] rounded-sm border border-line-strong bg-surface-panel text-[12.5px] leading-[1.4] text-ink-base shadow-floating-soft motion-safe:animate-[clutchPop_180ms_cubic-bezier(0.34,1.4,0.64,1)]"
     >
       <span
         aria-hidden="true"

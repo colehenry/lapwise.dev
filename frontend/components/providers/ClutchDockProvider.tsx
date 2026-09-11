@@ -9,13 +9,18 @@ import {
   useRef,
   useState,
 } from "react";
+import type { RememberedThread } from "@/lib/clutch/dockMemory";
 import type { ClutchHandoff } from "@/lib/clutch/handoff";
 
 type DockState = {
-  /** The latest hand-off; null until a corner has handed one off. */
+  /** The thread on this page: a hand-off, or one remembered from a visit. */
   handoff: ClutchHandoff | null;
   expanded: boolean;
   handOff: (handoff: Omit<ClutchHandoff, "seq">) => void;
+  /** Show a page's remembered thread, folded, with nothing to send. */
+  resume: (thread: RememberedThread, route: string) => void;
+  /** This page has no thread: no head. */
+  dismiss: () => void;
   expand: () => void;
   collapse: () => void;
 };
@@ -41,12 +46,26 @@ export default function ClutchDockProvider({
     setHandoff({ ...next, seq: seq.current });
     setExpanded(true);
   }, []);
+  const resume = useCallback((thread: RememberedThread, route: string) => {
+    seq.current += 1;
+    setHandoff({
+      seq: seq.current,
+      trail: [],
+      title: thread.title,
+      pageContext: { route },
+    });
+    setExpanded(false);
+  }, []);
+  const dismiss = useCallback(() => {
+    setHandoff(null);
+    setExpanded(false);
+  }, []);
   const expand = useCallback(() => setExpanded(true), []);
   const collapse = useCallback(() => setExpanded(false), []);
 
   const value = useMemo(
-    () => ({ handoff, expanded, handOff, expand, collapse }),
-    [handoff, expanded, handOff, expand, collapse],
+    () => ({ handoff, expanded, handOff, resume, dismiss, expand, collapse }),
+    [handoff, expanded, handOff, resume, dismiss, expand, collapse],
   );
 
   return <DockContext.Provider value={value}>{children}</DockContext.Provider>;

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  AGENT_CONTINUATION_TOKEN_BUDGET,
   AGENT_MAX_OUTPUT_TOKENS,
+  AGENT_MAX_SQL_CALLS,
   AGENT_MAX_STEPS,
   AGENT_STEP_TIMEOUT_MS,
   AGENT_TOTAL_TIMEOUT_MS,
@@ -22,25 +24,25 @@ describe("agent budget", () => {
     expect(AGENT_TOTAL_TIMEOUT_MS).toBeLessThanOrEqual(180_000);
   });
 
-  it("finishes after a complete season context result", () => {
+  it("keeps going after a season context result", () => {
     expect(
       shouldForceFinalAnswer(
         [step(4_000, [{ toolName: "get_season_context" }])],
         1,
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
 
-  it("finishes after two SQL calls or a repeated tool call", () => {
+  it("finishes at the SQL call limit or a repeated tool call", () => {
+    const sql = (id: string) =>
+      step(2_000, [{ toolName: "run_sql_query", input: { sql: id } }]);
     expect(
       shouldForceFinalAnswer(
-        [
-          step(2_000, [{ toolName: "run_sql_query", input: { sql: "a" } }]),
-          step(3_000, [{ toolName: "run_sql_query", input: { sql: "b" } }]),
-        ],
-        2,
+        Array.from({ length: AGENT_MAX_SQL_CALLS }, (_, i) => sql(String(i))),
+        AGENT_MAX_SQL_CALLS,
       ),
     ).toBe(true);
+    expect(shouldForceFinalAnswer([sql("a"), sql("b")], 2)).toBe(false);
     expect(
       shouldForceFinalAnswer(
         [
@@ -53,7 +55,10 @@ describe("agent budget", () => {
   });
 
   it("finishes at the token or step budget while allowing a normal next step", () => {
-    expect(shouldForceFinalAnswer([step(10_000)], 1)).toBe(true);
+    expect(
+      shouldForceFinalAnswer([step(AGENT_CONTINUATION_TOKEN_BUDGET)], 1),
+    ).toBe(true);
+    expect(shouldForceFinalAnswer([step(10_000)], 1)).toBe(false);
     expect(shouldForceFinalAnswer([step(1_000)], AGENT_MAX_STEPS - 1)).toBe(
       true,
     );

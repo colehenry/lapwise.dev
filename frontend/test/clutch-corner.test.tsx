@@ -223,19 +223,22 @@ describe("ClutchCorner", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("pops top-right of the head, and flips left at the viewport edge", () => {
+  it("puts its tail under the head's centre, and flips at the viewport edge", () => {
     layout(600);
     const { head } = renderCorner();
     fireEvent.pointerEnter(head, { pointerType: "mouse" });
     const bubble = screen.getByRole("tooltip");
-    expect(bubble.style.left).toBe(`${600 - 8}px`);
-    expect(bubble.style.top).toBe(`${300 - 4 - 40}px`);
+    /* Head centre is 586; the tail sits 18px in from the bubble's left edge. */
+    expect(bubble.style.left).toBe(`${586 - 18}px`);
+    expect(bubble.style.top).toBe(`${300 - 6 - 40}px`);
+    expect(bubble.style.transformOrigin).toBe("bottom left");
     vi.restoreAllMocks();
 
     layout(1190);
     const { head: edgeHead } = renderCorner(vi.fn(), "the edge");
     fireEvent.pointerEnter(edgeHead, { pointerType: "mouse" });
     const flipped = screen.getByRole("tooltip");
-    expect(flipped.style.left).toBe(`${1190 - 28 + 8 - 240}px`);
+    expect(flipped.style.left).toBe(`${1176 + 18 - 240}px`);
+    expect(flipped.style.transformOrigin).toBe("bottom right");
   });
 });

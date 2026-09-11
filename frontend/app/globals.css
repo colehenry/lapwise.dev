@@ -630,7 +630,15 @@ body {
   }
 }
 
-/* A Clutch bubble arrives with a short rise; `motion-safe:` gates it. */
+/* A Clutch bubble pops out of its tail; `motion-safe:` gates it. The dock
+   rises instead, having no tail to come from. */
+@keyframes clutchPop {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
 @keyframes clutchRise {
   from {
     opacity: 0;

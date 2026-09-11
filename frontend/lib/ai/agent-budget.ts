@@ -1,7 +1,10 @@
-export const AGENT_MAX_STEPS = 4;
+/* Room to actually chase a question — a grid penalty is a qualifying lookup,
+   a grid lookup and a penalty lookup before any prose. Cost is bounded by
+   the token ceiling and the repeated-call check, not by the step count. */
+export const AGENT_MAX_STEPS = 10;
 export const AGENT_MAX_OUTPUT_TOKENS = 1_800;
-export const AGENT_CONTINUATION_TOKEN_BUDGET = 10_000;
-export const AGENT_MAX_SQL_CALLS = 2;
+export const AGENT_CONTINUATION_TOKEN_BUDGET = 40_000;
+export const AGENT_MAX_SQL_CALLS = 5;
 export const AGENT_STEP_TIMEOUT_MS = 90_000;
 export const AGENT_TOTAL_TIMEOUT_MS = 180_000;
 
@@ -35,9 +38,6 @@ export function shouldForceFinalAnswer(
   if (nextStepNumber >= AGENT_MAX_STEPS - 1) return true;
 
   const calls = steps.flatMap((step) => step.toolCalls);
-  if (calls.some((call) => call.toolName === "get_season_context")) {
-    return true;
-  }
   if (
     calls.filter((call) => call.toolName === "run_sql_query").length >=
     AGENT_MAX_SQL_CALLS

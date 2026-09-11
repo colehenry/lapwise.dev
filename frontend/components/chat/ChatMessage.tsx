@@ -23,6 +23,8 @@ interface ChatMessageProps {
   isLoading?: boolean;
   isStreaming?: boolean;
   progressStatus?: ClutchProgressStatus | null;
+  /** The dock is 360px wide: a question is an outlined chip, not a prompt line. */
+  variant?: "page" | "dock";
 }
 
 /**
@@ -41,6 +43,7 @@ export default function ChatMessage({
   isLoading,
   isStreaming,
   progressStatus,
+  variant = "page",
 }: ChatMessageProps) {
   const [copied, setCopied] = useState(false);
 
@@ -52,6 +55,14 @@ export default function ChatMessage({
     } catch {
       // clipboard not available
     }
+  }
+
+  if (messageRole === "user" && variant === "dock") {
+    return (
+      <p className="m-0 ml-auto w-fit max-w-[92%] whitespace-pre-wrap break-words rounded-sm border border-line-soft bg-surface-page px-[9px] py-1.5 text-[12.5px] leading-[1.5] text-ink-soft">
+        {content}
+      </p>
+    );
   }
 
   if (messageRole === "user") {
@@ -74,7 +85,7 @@ export default function ChatMessage({
 
   return (
     <article
-      className="mt-3.5 min-w-0 max-w-full space-y-3 overflow-hidden pb-5"
+      className={`min-w-0 max-w-full space-y-3 overflow-hidden ${variant === "dock" ? "mt-2 pb-3" : "mt-3.5 pb-5"}`}
       aria-label="Clutch response"
       aria-busy={Boolean(isLoading || isStreaming)}
     >
@@ -114,37 +125,39 @@ export default function ChatMessage({
                 </button>
               ))}
           </div>
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="ml-2 shrink-0 rounded-sm p-1.5 text-ink-faint transition-colors hover:text-ink-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-bright"
-            title="Copy response"
-          >
-            {copied ? (
-              <svg
-                className="h-3.5 w-3.5 text-success"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <title>Copied</title>
-                <path
-                  fillRule="evenodd"
-                  d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            ) : (
-              <svg
-                className="h-3.5 w-3.5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <title>Copy</title>
-                <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.379a3 3 0 00-.879-2.121L10.5 5.379A3 3 0 008.379 4.5H7v-1z" />
-                <path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-5.879a1.5 1.5 0 00-.44-1.06L9.44 6.439A1.5 1.5 0 008.378 6H4.5z" />
-              </svg>
-            )}
-          </button>
+          {variant === "page" && (
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="ml-2 shrink-0 rounded-sm p-1.5 text-ink-faint transition-colors hover:text-ink-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-bright"
+              title="Copy response"
+            >
+              {copied ? (
+                <svg
+                  className="h-3.5 w-3.5 text-success"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <title>Copied</title>
+                  <path
+                    fillRule="evenodd"
+                    d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="h-3.5 w-3.5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <title>Copy</title>
+                  <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.379a3 3 0 00-.879-2.121L10.5 5.379A3 3 0 008.379 4.5H7v-1z" />
+                  <path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-5.879a1.5 1.5 0 00-.44-1.06L9.44 6.439A1.5 1.5 0 008.378 6H4.5z" />
+                </svg>
+              )}
+            </button>
+          )}
         </div>
       )}
     </article>

@@ -7,11 +7,17 @@ import ClutchDock from "@/components/clutch/ClutchDock";
 import ClutchDockProvider, {
   useClutchDock,
 } from "@/components/providers/ClutchDockProvider";
+import {
+  rememberedDockWidth,
+  rememberThread,
+  threadFor,
+} from "@/lib/clutch/dockMemory";
 import type { ClutchHandoff } from "@/lib/clutch/handoff";
 
+const navigation = { pathname: "/results/2025/1" };
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), prefetch: vi.fn(), replace: vi.fn() }),
-  usePathname: () => "/results/2025/1",
+  usePathname: () => navigation.pathname,
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -30,9 +36,10 @@ const chat = {
   streamingAssistantId: null,
   streamStatus: null,
   remaining: 2,
-  error: null,
+  error: null as string | null,
   pendingConversationId: null,
   startNewConversation: vi.fn(),
+  loadConversation: vi.fn(),
   abortResponse: vi.fn(),
   sendMessage: vi.fn(async () => {}),
 };
@@ -78,20 +85,27 @@ function renderDock() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
-  return render(
+  const build = () => (
     <QueryClientProvider client={client}>
       <ClutchDockProvider>
         <Trigger />
         <ClutchDock />
       </ClutchDockProvider>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+  const view = render(build());
+  /* The chat hook is a mock: after changing its state, render the tree again
+     (a fresh element, or React skips the unchanged subtree) so the dock sees it. */
+  return { ...view, rerender: () => view.rerender(build()) };
 }
 
 afterEach(() => {
   vi.clearAllMocks();
+  window.localStorage.clear();
+  navigation.pathname = "/results/2025/1";
   chat.messages = [];
   chat.activeConversationId = null;
+  chat.error = null;
   auth.user = { id: 7, role: "user" };
   auth.isAuthenticated = true;
 });
@@ -151,6 +165,108 @@ describe("ClutchDock", () => {
     expect(
       screen.getByRole("link", { name: "Open in Clutch" }).getAttribute("href"),
     ).toBe("/ask?c=abc-123");
+  });
+
+  it("remembers the thread for the page and resumes it next time", () => {
+    const { rerender, unmount } = renderDock();
+    fireEvent.click(screen.getByText("hand off"));
+    expect(chat.startNewConversation).toHaveBeenCalled();
+
+    /* The server answers with a conversation id: that is now this page's. */
+    chat.activeConversationId = "conv-1";
+    rerender();
+    unmount();
+    expect(threadFor(7, "/results/2025/1")?.conversationId).toBe("conv-1");
+
+    /* Next visit: the corner's question joins the same conversation. */
+    chat.activeConversationId = null;
+    chat.startNewConversation.mockClear();
+    chat.sendMessage.mockClear();
+    const second = renderDock();
+    fireEvent.click(screen.getByText("hand off"));
+    expect(chat.loadConversation).toHaveBeenCalledWith("conv-1");
+    expect(chat.startNewConversation).not.toHaveBeenCalled();
+    expect(chat.sendMessage).not.toHaveBeenCalled();
+
+    chat.activeConversationId = "conv-1";
+    chat.messages = [{ id: "m1", role: "user", content: "earlier" }];
+    second.rerender();
+    /* Loaded history is the transcript; the corner's answer is not re-seeded. */
+    expect(screen.getByRole("log").textContent).toContain("earlier");
+    expect(screen.getByRole("log").textContent).not.toContain(
+      "Norris won by 0.9s.",
+    );
+  });
+
+  it("forgets a remembered thread that no longer loads", () => {
+    rememberThread(7, "/results/2025/1", {
+      conversationId: "gone",
+      title: "x",
+    });
+    const { rerender } = renderDock();
+    fireEvent.click(screen.getByText("hand off"));
+    expect(chat.loadConversation).toHaveBeenCalledWith("gone");
+
+    chat.error = "Failed to load conversation";
+    rerender();
+    expect(threadFor(7, "/results/2025/1")).toBeNull();
+    expect(chat.startNewConversation).toHaveBeenCalled();
+  });
+
+  it("belongs to the page: gone elsewhere, back folded on a page with a thread", () => {
+    rememberThread(7, "/drivers/norris", {
+      conversationId: "conv-nor",
+      title: "Lando Norris",
+    });
+    const { rerender } = renderDock();
+    fireEvent.click(screen.getByText("hand off"));
+    expect(screen.getByRole("region", { name: "Clutch" })).toBeTruthy();
+
+    /* A page with no thread has no head at all. */
+    navigation.pathname = "/results/2025";
+    rerender();
+    expect(screen.queryByRole("region", { name: "Clutch" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Open Clutch" })).toBeNull();
+
+    /* A page with a remembered thread gets its head, folded, and expanding
+       it loads that page's conversation — never the one from before. */
+    chat.loadConversation.mockClear();
+    navigation.pathname = "/drivers/norris";
+    rerender();
+    expect(screen.queryByRole("region", { name: "Clutch" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Open Clutch" }));
+    expect(chat.loadConversation).toHaveBeenCalledWith("conv-nor");
+    expect(chat.sendMessage).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Lando Norris")).toBeTruthy();
+  });
+
+  it("shows a page's remembered thread before any hand-off this session", () => {
+    rememberThread(7, "/results/2025/1", {
+      conversationId: "conv-1",
+      title: "Australian GP",
+    });
+    renderDock();
+    expect(screen.getByRole("button", { name: "Open Clutch" })).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Clutch" })).toBeNull();
+  });
+
+  it("widens from its left edge and keeps the width", () => {
+    vi.stubGlobal("innerWidth", 1400);
+    renderDock();
+    fireEvent.click(screen.getByText("hand off"));
+    const handle = screen.getByRole("separator", { name: "Resize Clutch" });
+    const region = screen.getByRole("region", { name: "Clutch" });
+    expect(region.style.getPropertyValue("--dock-width")).toBe("360px");
+
+    fireEvent.pointerDown(handle, { clientX: 900, pointerId: 1 });
+    fireEvent.pointerMove(handle, { clientX: 700, pointerId: 1 });
+    fireEvent.pointerUp(handle, { clientX: 700, pointerId: 1 });
+    expect(region.style.getPropertyValue("--dock-width")).toBe("560px");
+    expect(rememberedDockWidth()).toBe(560);
+
+    fireEvent.keyDown(handle, { key: "ArrowRight" });
+    expect(region.style.getPropertyValue("--dock-width")).toBe("536px");
+    vi.unstubAllGlobals();
   });
 
   it("asks a signed-out reader to sign in, keeping the question", () => {

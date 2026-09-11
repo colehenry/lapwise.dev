@@ -9,7 +9,8 @@ import type { ResolvedScript, SurfaceDigest } from "./script";
 export type ClutchHandoff = {
   /** Distinguishes two hand-offs of the same question. */
   seq: number;
-  question: string;
+  /** Absent for a remembered thread: nothing to send, only history to show. */
+  question?: string;
   /** The answers read on the way here, the one on screen last. */
   trail: ResolvedScript[];
   /** The panel's title, for the dock's caption and the model's context. */
@@ -62,7 +63,7 @@ export function seededMessages(handoff: ClutchHandoff): DisplayMessage[] {
 export function remainingFollowups(handoff: ClutchHandoff): string[] {
   const current = handoff.trail[handoff.trail.length - 1];
   const asked = new Set(handoff.trail.map((script) => script.question));
-  asked.add(handoff.question);
+  if (handoff.question) asked.add(handoff.question);
   return (current?.followups ?? [])
     .map((followup) => followup.question)
     .filter((question) => !asked.has(question));
