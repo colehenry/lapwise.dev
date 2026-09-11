@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import DeferredSection from "@/components/ui/DeferredSection";
 import { useCompactViewport, useHomeConsole } from "@/hooks/useHomeConsole";
 import { useRaceClock } from "@/hooks/useRaceClock";
-import type { ClutchContext } from "@/lib/homeClutchScript";
+import type { ClutchContext } from "@/lib/clutch/script";
 import {
   EMPTY_ENTITY_COLORS,
   seasonStandingsQuery,

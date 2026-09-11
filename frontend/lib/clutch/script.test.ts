@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { StandingsResponse } from "./championshipTypes";
-import { CLUTCH_SCRIPTS } from "./clutchScriptCatalogue";
-import type { ClutchContext, ClutchScript } from "./homeClutchScript";
-import { pickClutchScript, resolveScript } from "./homeClutchScript";
-import type { SessionResultsResponse } from "./types";
+import type { StandingsResponse } from "../championshipTypes";
+import { CLUTCH_SCRIPTS } from "./scripts/home";
+import type { ClutchContext, ClutchScript } from "./script";
+import { pickClutchScript, resolveScript } from "./script";
+import type { SessionResultsResponse } from "../types";
 
 function standings(): StandingsResponse {
   const scoring = {

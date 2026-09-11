@@ -1,5 +1,5 @@
 import type { StandingsResponse } from "@/lib/championshipTypes";
-import { CLUTCH_SCRIPTS } from "@/lib/clutchScriptCatalogue";
+import { CLUTCH_SCRIPTS } from "@/lib/clutch/scripts/home";
 import type { RoundSummary, SessionResultsResponse } from "@/lib/types";
 
 export type ScriptTint = "driver" | "team";

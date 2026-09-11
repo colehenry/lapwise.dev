@@ -1,4 +1,4 @@
-import type { ClutchScript } from "@/lib/homeClutchScript";
+import type { ClutchScript } from "@/lib/clutch/script";
 
 /**
  * The authored questions and their answers. The prose is written; every number
