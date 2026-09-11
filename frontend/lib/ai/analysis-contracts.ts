@@ -19,6 +19,43 @@ export const presentationSchema = z.enum([
   "timeline",
 ]);
 
+const shortText = z.string().trim().min(1).max(200);
+
+/* What a Clutch corner knows about the panel it sits on. Ids and what is
+   visible, never the rows: the runtime loads those itself. */
+export const surfaceDigestSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("standings"),
+    season: z.number().int().min(1950).max(2100),
+    mode: z.enum(["drivers", "constructors"]),
+    leader: shortText.nullable(),
+    gap: z.number().nullable(),
+    roundsRun: z.number().int().nonnegative().nullable(),
+    roundsLeft: z.number().int().nonnegative().nullable(),
+  }),
+  z.object({
+    kind: z.literal("session"),
+    sessionId: z.number().int().positive(),
+    sessionType: shortText,
+    season: z.number().int().min(1950).max(2100),
+    round: z.number().int().positive().max(40),
+    winner: shortText.nullable(),
+    fastestLap: shortText.nullable(),
+    classified: z.number().int().nonnegative(),
+  }),
+]);
+
+export const surfaceSchema = z.object({
+  id: z.string().min(1).max(60),
+  title: shortText,
+  digest: surfaceDigestSchema,
+  asked: z
+    .array(
+      z.object({ question: shortText, answer: z.string().min(1).max(600) }),
+    )
+    .max(3),
+});
+
 export const analysisPageContextSchema = z.object({
   route: z.string().startsWith("/").max(300),
   season: z.number().int().min(1950).max(2100).optional(),
@@ -36,6 +73,7 @@ export const analysisPageContextSchema = z.object({
     )
     .refine((filters) => Object.keys(filters).length <= 8)
     .optional(),
+  surface: surfaceSchema.optional(),
 });
 
 export const analysisRequestSchema = z.object({
@@ -138,6 +176,7 @@ export const answerArtifactSchema = z.object({
 
 export type AnalysisFamily = z.infer<typeof analysisFamilySchema>;
 export type AnalysisPageContext = z.infer<typeof analysisPageContextSchema>;
+export type PageSurface = z.infer<typeof surfaceSchema>;
 export type AnalysisRequest = z.infer<typeof analysisRequestSchema>;
 export type AnalysisPlan = z.infer<typeof analysisPlanSchema>;
 export type AnswerArtifact = z.infer<typeof answerArtifactSchema>;

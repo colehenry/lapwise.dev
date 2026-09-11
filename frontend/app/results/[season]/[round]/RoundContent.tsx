@@ -13,7 +13,7 @@ import JumpToRace from "@/components/layout/JumpToRace";
 import SessionDetail from "@/components/session/SessionDetail";
 import type { SessionSummary } from "@/components/session/SessionSummaryCard";
 import DeferredSection from "@/components/ui/DeferredSection";
-import { buildClutchHref } from "@/lib/ai/clutch-links";
+import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
 import { SESSION_SURFACE } from "@/lib/clutch/scripts/session";
 import { seasonsQuery } from "@/lib/queries/seasons";
 import {
@@ -185,18 +185,12 @@ export default function RoundContent() {
           : resolvedTab === "sprint-qualifying"
             ? "sprint_qualifying"
             : undefined;
-  /* Until the dock lands, a question the corner cannot answer opens /ask
-     with the same page context the old action bar carried. */
-  const askClutch = (question: string) => {
-    router.push(
-      buildClutchHref(question, {
-        route: `/results/${season}/${round}${resolvedTab === "race" ? "" : `?tab=${resolvedTab}`}`,
-        season: seasonNum,
-        round: roundNum,
-        sessionId: activeSessionData.session.id,
-        sessionType: clutchSessionType,
-      }),
-    );
+  const clutchPageContext: AnalysisPageContext = {
+    route: `/results/${season}/${round}${resolvedTab === "race" ? "" : `?tab=${resolvedTab}`}`,
+    season: seasonNum,
+    round: roundNum,
+    sessionId: activeSessionData.session.id,
+    sessionType: clutchSessionType,
   };
 
   return (
@@ -237,9 +231,9 @@ export default function RoundContent() {
                   <ClutchCorner
                     surface={SESSION_SURFACE}
                     context={activeSessionData}
-                    label={`the ${TAB_LABELS[resolvedTab].toLowerCase()} at the ${availability.event_name}`}
+                    title={`${availability.event_name} · ${TAB_LABELS[resolvedTab]}`}
+                    pageContext={clutchPageContext}
                     place="page"
-                    onAsk={askClutch}
                   />
                 </div>
               </div>

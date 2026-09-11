@@ -10,6 +10,7 @@ import {
   deleteConversation,
   fetchCachedResponse,
   getConversation,
+  isAbortError,
   renameConversation,
   streamQuestion,
 } from "@/lib/chat";
@@ -27,10 +28,6 @@ import {
   invalidateConversations,
   removeCachedConversation,
 } from "@/lib/queries/conversations";
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === "AbortError";
-}
 
 export function useAskChat(
   userId: number | null,

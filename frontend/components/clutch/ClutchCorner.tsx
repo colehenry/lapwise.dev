@@ -12,12 +12,15 @@ import {
   useRef,
   useState,
 } from "react";
+import { useClutchDock } from "@/components/providers/ClutchDockProvider";
 import { ClutchNavIcon } from "@/components/ui/BrandLogo";
+import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
 import {
   closeCorner,
   openCorner,
   useCornerOpen,
 } from "@/lib/clutch/cornerStore";
+import { handoffPageContext } from "@/lib/clutch/handoff";
 import {
   firstScript,
   type ResolvedFollowup,
@@ -79,19 +82,20 @@ function Answer({ script }: { script: ResolvedScript }) {
 export default function ClutchCorner<C>({
   surface,
   context,
-  label,
+  title,
+  pageContext,
   place = "title",
-  onAsk,
 }: {
   surface: Surface<C>;
   context: C;
-  /** What the head sits on, for the accessible name: "the session summary". */
-  label: string;
+  /** What the head sits on — the accessible name and the dock's caption. */
+  title: string;
+  /** The page's ids, sent with a question the corner cannot answer itself. */
+  pageContext: AnalysisPageContext;
   place?: "title" | "page";
-  /** A question the corner cannot answer itself. */
-  onAsk: (question: string, from: ResolvedScript) => void;
 }) {
   const id = useId();
+  const dock = useClutchDock();
   const bubbleId = `clutch-bubble-${id}`;
   const headRef = useRef<HTMLButtonElement>(null);
   const open = useCornerOpen(id);
@@ -103,6 +107,23 @@ export default function ClutchCorner<C>({
 
   const root = useMemo(() => firstScript(surface, context), [surface, context]);
   const current = hops[hops.length - 1] ?? root;
+
+  const handOff = (question: string) => {
+    if (!root) return;
+    const trail = [root, ...hops];
+    dock.handOff({
+      question,
+      trail,
+      title,
+      pageContext: handoffPageContext(
+        pageContext,
+        trail,
+        title,
+        surface.digest(context),
+      ),
+    });
+    close();
+  };
 
   const close = useCallback(() => closeCorner(id), [id]);
 
@@ -163,8 +184,7 @@ export default function ClutchCorner<C>({
 
   const follow = (followup: ResolvedFollowup) => {
     if (followup.kind === "ask" || hops.length + 1 >= MAX_DEPTH) {
-      onAsk(followup.question, current);
-      close();
+      handOff(followup.question);
       return;
     }
     const target = surface.scripts.find((entry) => entry.id === followup.id);
@@ -175,9 +195,7 @@ export default function ClutchCorner<C>({
   const submit = (event: FormEvent) => {
     event.preventDefault();
     const question = draft.trim();
-    if (!question) return;
-    onAsk(question, current);
-    close();
+    if (question) handOff(question);
   };
 
   return (
@@ -185,7 +203,7 @@ export default function ClutchCorner<C>({
       <button
         ref={headRef}
         type="button"
-        aria-label={`Ask Clutch about ${label}`}
+        aria-label={`Ask Clutch about ${title}`}
         aria-expanded={open}
         aria-controls={open ? bubbleId : undefined}
         onPointerDown={(event: ReactPointerEvent) => {

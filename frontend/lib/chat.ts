@@ -142,6 +142,11 @@ export async function askQuestion(
 /**
  * Stream a question response from the AI analyst.
  */
+/** A stream ended by the reader, not by a failure. */
+export function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
+}
+
 export async function streamQuestion(
   question: string,
   conversationId: string | undefined,

@@ -10,6 +10,8 @@ const chatApi = vi.hoisted(() => ({
   deleteConversation: vi.fn(),
   fetchCachedResponse: vi.fn(),
   getConversation: vi.fn(),
+  isAbortError: (error: unknown) =>
+    error instanceof Error && error.name === "AbortError",
   listConversations: vi.fn(),
   renameConversation: vi.fn(),
   streamQuestion: vi.fn(),

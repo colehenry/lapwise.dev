@@ -3,6 +3,10 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import ClutchCorner from "@/components/clutch/ClutchCorner";
+import ClutchDockProvider, {
+  useClutchDock,
+} from "@/components/providers/ClutchDockProvider";
+import type { ClutchHandoff } from "@/lib/clutch/handoff";
 import type { ClutchScript, Surface } from "@/lib/clutch/script";
 
 vi.mock("next/navigation", () => ({
@@ -38,20 +42,31 @@ const surface: Surface<Ctx> = {
 };
 
 const context: Ctx = { leader: "NOR", margin: "22 points" };
+const pageContext = { route: "/results/2025", season: 2025 };
 
-function renderCorner(onAsk = vi.fn(), label = "the standings") {
+/** Reads what the corner handed to the dock. */
+function Probe({ onHandoff }: { onHandoff: (h: ClutchHandoff) => void }) {
+  const { handoff } = useClutchDock();
+  if (handoff) onHandoff(handoff);
+  return null;
+}
+
+function renderCorner(onHandoff = vi.fn(), title = "the standings") {
   const view = render(
-    <ClutchCorner
-      surface={surface}
-      context={context}
-      label={label}
-      onAsk={onAsk}
-    />,
+    <ClutchDockProvider>
+      <ClutchCorner
+        surface={surface}
+        context={context}
+        title={title}
+        pageContext={pageContext}
+      />
+      <Probe onHandoff={onHandoff} />
+    </ClutchDockProvider>,
   );
   return {
     ...view,
-    onAsk,
-    head: screen.getByRole("button", { name: `Ask Clutch about ${label}` }),
+    onHandoff,
+    head: screen.getByRole("button", { name: `Ask Clutch about ${title}` }),
   };
 }
 
@@ -87,12 +102,14 @@ describe("ClutchCorner", () => {
     expect(screen.queryByText("Who is leading?")).toBeNull();
 
     const { container } = render(
-      <ClutchCorner
-        surface={surface}
-        context={{ leader: null, margin: null }}
-        label="nothing"
-        onAsk={vi.fn()}
-      />,
+      <ClutchDockProvider>
+        <ClutchCorner
+          surface={surface}
+          context={{ leader: null, margin: null }}
+          title="nothing"
+          pageContext={pageContext}
+        />
+      </ClutchDockProvider>,
     );
     expect(container.querySelector("button")).toBeNull();
   });
@@ -134,36 +151,44 @@ describe("ClutchCorner", () => {
 
   it("answers a script follow-up in place and hands off an ask", () => {
     layout(600);
-    const { head, onAsk } = renderCorner();
+    const { head, onHandoff } = renderCorner();
     fireEvent.click(head);
 
     fireEvent.click(screen.getByRole("button", { name: "By how much?" }));
     expect(
       screen.getByRole("dialog", { name: "By how much?" }).textContent,
     ).toContain("By 22 points.");
-    expect(onAsk).not.toHaveBeenCalled();
+    expect(onHandoff).not.toHaveBeenCalled();
 
-    /* A second hop is the depth limit: the script follow-up becomes a hand-off. */
+    /* A second hop is the depth limit: the script follow-up becomes a hand-off,
+       and the whole trail travels with it. */
     fireEvent.click(screen.getByRole("button", { name: "Who is leading?" }));
-    expect(onAsk).toHaveBeenCalledWith(
-      "Who is leading?",
-      expect.objectContaining({ id: "margin" }),
-    );
     expect(screen.queryByRole("dialog")).toBeNull();
+    const handoff = onHandoff.mock.calls[0][0] as ClutchHandoff;
+    expect(handoff.question).toBe("Who is leading?");
+    expect(handoff.title).toBe("the standings");
+    expect(handoff.trail.map((script) => script.id)).toEqual([
+      "leader",
+      "margin",
+    ]);
+    /* This surface has no digest, so the page context goes as it came. */
+    expect(handoff.pageContext).toEqual(pageContext);
   });
 
   it("hands off a typed question", () => {
     layout(600);
-    const { head, onAsk } = renderCorner();
+    const { head, onHandoff } = renderCorner();
     fireEvent.click(head);
     const input = screen.getByRole("textbox", {
       name: "Ask Clutch your own question",
     });
     fireEvent.change(input, { target: { value: "  Why?  " } });
     fireEvent.submit(input.closest("form") as HTMLFormElement);
-    expect(onAsk).toHaveBeenCalledWith(
-      "Why?",
-      expect.objectContaining({ id: "leader" }),
+    expect(onHandoff).toHaveBeenCalledWith(
+      expect.objectContaining({
+        question: "Why?",
+        trail: [expect.objectContaining({ id: "leader" })],
+      }),
     );
   });
 

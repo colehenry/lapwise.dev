@@ -176,6 +176,21 @@ async function handlePost(request: NextRequest, log: RequestLog) {
         deterministicAnalysis?.model ?? analysisModel?.modelId ?? "unknown",
       );
       log.conversationId = conversationId;
+      /* A thread handed off from a Clutch corner starts with what the corner
+         already answered, so the transcript and the model share one history. */
+      if (!seedMode) {
+        for (const turn of pageContext?.surface?.asked ?? []) {
+          await saveConversationMessage(conversationId, "user", turn.question);
+          await saveConversationMessage(
+            conversationId,
+            "assistant",
+            turn.answer,
+            {
+              model: "clutch-corner",
+            },
+          );
+        }
+      }
     }
 
     const history =

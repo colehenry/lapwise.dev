@@ -5,6 +5,19 @@ import {
   type KnowledgeTopic,
   selectKnowledgeNodes,
 } from "./knowledge-registry";
+import { describeAsked, describeSurface } from "./surfaces";
+
+/* The surface is rendered as prose below; the JSON keeps only the ids. */
+function withoutSurface(context: AnalysisPageContext): AnalysisPageContext {
+  const { surface: _surface, ...rest } = context;
+  return rest;
+}
+
+function surfaceBlock(surface: AnalysisPageContext["surface"]): string {
+  if (!surface) return "";
+  const asked = describeAsked(surface);
+  return `\n${describeSurface(surface)}${asked ? `\n${asked}` : ""}`;
+}
 
 interface SystemPromptOptions {
   question?: string;
@@ -39,7 +52,7 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
   const currentSeason = new Date().getUTCFullYear();
   const { nodes } = selectPromptKnowledge(question);
   const pageContext = options.pageContext
-    ? `\nValidated page state for resolving references such as "this race" or "these drivers":\n${JSON.stringify(options.pageContext)}`
+    ? `\nValidated page state for resolving references such as "this race" or "these drivers":\n${JSON.stringify(withoutSurface(options.pageContext))}${surfaceBlock(options.pageContext.surface)}`
     : "";
   const capabilityGuidance = capabilityQuestion
     ? `\n## Capability answer\n\nAnswer without calling a tool. Briefly describe useful things a fan can ask Clutch to explain, compare, or explore. Use one opening sentence, three to five natural examples, and one inviting example question. Do not list data sources, output formats, technical features, or internal categories.`
