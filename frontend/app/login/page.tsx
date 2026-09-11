@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import GoogleButton, { OrDivider } from "@/components/auth/GoogleButton";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { LapwiseWordmark } from "@/components/ui/BrandLogo";
 import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
@@ -62,8 +63,8 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-ink-strong mb-1">
-          Log in to <span className="text-accent">Lapwise</span>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-ink-strong mb-1">
+          Log in to <LapwiseWordmark className="h-5" />
         </h1>
         <p className="text-ink-faint text-sm mb-8">
           Welcome back. Enter your credentials below.

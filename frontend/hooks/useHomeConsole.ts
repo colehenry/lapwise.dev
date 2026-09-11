@@ -2,9 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
+import { useDailyGamePlayer } from "@/hooks/useDailyGamePlayer";
 import type { ConsoleReplay } from "@/lib/queries/consoleReplay";
 import { consoleReplayQuery } from "@/lib/queries/consoleReplay";
-import { dailySummaryQuery } from "@/lib/queries/dailySummary";
+import { dailyGamesSummaryQuery } from "@/lib/queries/dailyGames";
 import { headlinesQuery } from "@/lib/queries/headlines";
 import { replayTrackQuery } from "@/lib/queries/replay";
 import { latestRoundQuery } from "@/lib/queries/seasons";
@@ -27,7 +28,7 @@ export type HomeConsoleData = {
   retryReplay: () => void;
   track: ReplayTrackResponse | null | undefined;
   classification: ReturnType<typeof useRoundClassification>;
-  daily: ReturnType<typeof useDaily>;
+  dailyGames: ReturnType<typeof useDailyGames>;
   headlines: ReturnType<typeof useHeadlines>;
 };
 
@@ -39,8 +40,8 @@ function useRoundClassification(season: number | null, round: number | null) {
   return { data: query.data, state: resolve(query, query.data != null) };
 }
 
-function useDaily() {
-  const query = useQuery(dailySummaryQuery());
+function useDailyGames(playerId: string) {
+  const query = useQuery(dailyGamesSummaryQuery(playerId));
   return { data: query.data, state: resolve(query, query.data != null) };
 }
 
@@ -65,6 +66,7 @@ function resolve(query: QueryLike, hasContent: boolean): PanelState {
  * season is current, and which round actually has lap data to replay.
  */
 export function useHomeConsole(): HomeConsoleData {
+  const playerId = useDailyGamePlayer();
   const latest = useQuery(latestRoundQuery());
   const season = latest.data ? Number(latest.data.date.slice(0, 4)) : null;
   const latestRound = latest.data?.round ?? null;
@@ -83,7 +85,7 @@ export function useHomeConsole(): HomeConsoleData {
   });
 
   const classification = useRoundClassification(season, latestRound);
-  const daily = useDaily();
+  const dailyGames = useDailyGames(playerId);
   const headlines = useHeadlines(season);
 
   return {
@@ -99,7 +101,7 @@ export function useHomeConsole(): HomeConsoleData {
     },
     track: track.data,
     classification,
-    daily,
+    dailyGames,
     headlines,
   };
 }

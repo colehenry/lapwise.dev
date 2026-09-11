@@ -46,7 +46,7 @@ export default function AdminLayout({
     { href: "/admin", label: "Dashboard" },
     { href: "/admin/users", label: "Users" },
     { href: "/admin/comments", label: "Comments" },
-    { href: "/admin/puzzles", label: "Grids" },
+    { href: "/admin/puzzles", label: "Games" },
   ];
 
   return (

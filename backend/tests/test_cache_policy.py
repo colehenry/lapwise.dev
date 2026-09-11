@@ -97,6 +97,7 @@ def test_latest_round_refreshes_faster_than_season_metadata():
         "/api/daily/1",
         "/api/daily/drivers",
         "/api/daily/drivers/catalog",
+        "/api/guess/drivers/catalog",
     ],
 )
 def test_archive_endpoints_are_publicly_cacheable(path):
@@ -132,6 +133,15 @@ def test_the_daily_summary_stays_out_of_shared_caches():
 def test_daily_grid_refreshes_without_caching_guess_submissions():
     assert max_age("/api/daily") == 300
     assert directive("/api/daily/guess") == NO_STORE
+
+
+def test_guess_game_caches_only_public_reads():
+    assert max_age("/api/guess") == 300
+    assert directive("/api/guess/sessions") == NO_STORE
+    assert directive("/api/guess/guesses") == NO_STORE
+    assert directive("/api/guess/stats") == NO_STORE
+    assert directive("/api/guess/leaderboard") == NO_STORE
+    assert directive("/api/games/summary") == NO_STORE
 
 
 def test_public_directives_are_marked_public():

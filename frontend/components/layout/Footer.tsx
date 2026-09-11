@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { LapwiseWordmark } from "@/components/ui/BrandLogo";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -10,19 +10,7 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Brand */}
           <div className="flex items-center gap-3">
-            <div className="relative h-8 w-8 rounded-sm overflow-hidden">
-              <Image
-                src="/favicon.ico"
-                alt="Lapwise"
-                width={32}
-                height={32}
-                className="object-cover"
-              />
-            </div>
-            <span className="text-sm font-bold">
-              <span className="text-accent">Lap</span>
-              <span className="text-ink-strong">wise</span>
-            </span>
+            <LapwiseWordmark className="h-5" />
             <span className="text-ink-faint text-[10px] tracking-widest uppercase font-bold">
               &copy; {currentYear}
             </span>

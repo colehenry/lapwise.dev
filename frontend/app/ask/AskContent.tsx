@@ -8,7 +8,7 @@ import ChatTranscript from "@/components/chat/ChatTranscript";
 import ConversationSidebar from "@/components/chat/ConversationSidebar";
 import { PanelLabel } from "@/components/home/ConsolePanel";
 import { useAuth } from "@/components/providers/AuthProvider";
-import ClutchIcon from "@/components/ui/ClutchIcon";
+import { ClutchNavIcon } from "@/components/ui/BrandLogo";
 import { useAskChat } from "@/hooks/useAskChat";
 import { pageContextFromSearchParams } from "@/lib/ai/page-context";
 
@@ -108,7 +108,7 @@ export default function AskContent() {
           }`}
         >
           Clutch
-          <ClutchIcon className="h-4 w-4 text-accent-bright" />
+          <ClutchNavIcon className="h-5 w-5" />
         </h1>
         <div className="col-start-3 flex items-center justify-end gap-2">
           {quota && (

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Container from "@/components/ui/Container";
 import DailyGameGrid from "./DailyGameGrid";
 
 export const metadata: Metadata = {
@@ -24,9 +23,7 @@ export default async function DailyGridPage({
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)] bg-surface-page">
-      <Container className="py-4 sm:py-6">
-        <DailyGameGrid puzzleNumber={puzzleNumber} />
-      </Container>
+      <DailyGameGrid puzzleNumber={puzzleNumber} />
     </div>
   );
 }

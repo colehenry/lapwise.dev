@@ -14,6 +14,12 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
+const PLAYER_ID = "00000000-0000-4000-8000-000000000001";
+
+vi.mock("@/hooks/useDailyGamePlayer", () => ({
+  useDailyGamePlayer: () => PLAYER_ID,
+}));
+
 const SEASON = fixtures.FIXTURE_SEASON;
 const ROUND = fixtures.FIXTURE_ROUND;
 const CONSOLE_PATH = `/api/replay/console/${SEASON}/${ROUND}`;
@@ -42,7 +48,26 @@ const ROUTES: Record<string, unknown> = {
   },
   [`/api/results/${SEASON}/${ROUND}`]: { session: {}, results: [] },
   [`/api/results/${SEASON}/standings`]: fixtures.standings,
-  "/api/daily/summary": fixtures.dailySummary,
+  [`/api/games/summary?anon_id=${PLAYER_ID}`]: {
+    games: [
+      {
+        game: "grid",
+        name: "Daily Grid",
+        href: "/daily",
+        state: "not_started",
+        puzzle_number: 1,
+        published_on: "2026-09-10",
+      },
+      {
+        game: "guess",
+        name: "Who's on Pole?",
+        href: "/guess",
+        state: "not_started",
+        puzzle_number: 1,
+        published_on: "2026-09-10",
+      },
+    ],
+  },
   [`/api/headlines?season=${SEASON}`]: fixtures.headlines,
 };
 
@@ -57,7 +82,7 @@ describe("home console request inventory", () => {
     await flushRequests();
 
     expect([...new Set(recorder.paths())].sort()).toEqual([
-      "/api/daily/summary",
+      `/api/games/summary?anon_id=${PLAYER_ID}`,
       `/api/headlines?season=${SEASON}`,
       CONSOLE_PATH,
       `${CONSOLE_PATH}/telemetry/VER`,

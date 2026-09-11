@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
 import { buildClutchHref } from "@/lib/ai/clutch-links";
-import ClutchIcon from "../ui/ClutchIcon";
+import { ClutchNavIcon } from "../ui/BrandLogo";
 
 interface ClutchAction {
   label: string;
@@ -25,7 +25,7 @@ export default function ClutchContextActions({
       className={`flex flex-wrap items-center gap-2 ${compact ? "" : "rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] p-3"}`}
     >
       <span className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-widest text-purple-300">
-        <ClutchIcon className="h-4 w-4" />
+        <ClutchNavIcon className="h-5 w-5" />
         Ask Clutch
       </span>
       {actions.map((action) => (
