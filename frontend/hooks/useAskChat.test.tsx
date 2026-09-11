@@ -185,6 +185,24 @@ describe("useAskChat", () => {
     expect(result.current.isAsking).toBe(false);
   });
 
+  it("shows a stream failure instead of leaving an empty response", async () => {
+    chatApi.streamQuestion.mockRejectedValue(
+      new Error(
+        "Clutch lost the connection before finishing. Please try again.",
+      ),
+    );
+    const { result } = renderHook(() => useAskChat(1), { wrapper });
+
+    await act(async () => result.current.sendMessage("Long question"));
+
+    expect(result.current.error).toBe(
+      "Clutch lost the connection before finishing. Please try again.",
+    );
+    expect(result.current.messages).toEqual([
+      expect.objectContaining({ role: "user", content: "Long question" }),
+    ]);
+  });
+
   it("clears chat state when the signed-in user changes", () => {
     const stream = deferred<void>();
     chatApi.streamQuestion.mockReturnValue(stream.promise);

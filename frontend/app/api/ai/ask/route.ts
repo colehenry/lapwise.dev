@@ -11,6 +11,10 @@ import { analysisRequestSchema } from "@/lib/ai/analysis-contracts";
 import { tryRunDeterministicAnalysis } from "@/lib/ai/analysis-engine";
 import { verifyAIUser } from "@/lib/ai/auth";
 import {
+  createClutchPreflightResponse,
+  withClutchCors,
+} from "@/lib/ai/clutch-cors";
+import {
   buildConversationTitle,
   checkUserQueryLimit,
   createConversation,
@@ -22,6 +26,9 @@ import { createDeterministicAnalysisResponse } from "@/lib/ai/deterministic-resp
 import { createLegacyAgentResponse } from "@/lib/ai/legacy-agent-response";
 import { getAIModel } from "@/lib/ai/provider";
 import { checkIpRateLimit, getClientIp } from "@/lib/ai/request-limits";
+import { resolveClutchRequestRedirect } from "@/lib/clutch-endpoint";
+
+export const maxDuration = 300;
 
 const AI_TOTAL_QUERY_LIMIT = Number.parseInt(
   process.env.AI_TOTAL_QUERY_LIMIT || "3",
@@ -50,7 +57,7 @@ async function authenticate(
   return verifyAIUser(request.headers.get("authorization"));
 }
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   const seedMode = isSeedModeRequest(request);
   if (!seedMode) {
     const ipLimit = checkIpRateLimit(getClientIp(request));
@@ -176,4 +183,19 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
+}
+
+export async function POST(request: NextRequest) {
+  const redirect = resolveClutchRequestRedirect(
+    process.env.NEXT_PUBLIC_CLUTCH_API_URL,
+    request.url,
+  );
+  if (redirect) {
+    return NextResponse.redirect(redirect, 307);
+  }
+  return withClutchCors(request, await handlePost(request));
+}
+
+export function OPTIONS(request: NextRequest) {
+  return createClutchPreflightResponse(request);
 }

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { AGENT_MAX_STEPS, shouldForceFinalAnswer } from "./agent-budget";
+import {
+  AGENT_MAX_OUTPUT_TOKENS,
+  AGENT_MAX_STEPS,
+  AGENT_STEP_TIMEOUT_MS,
+  AGENT_TOTAL_TIMEOUT_MS,
+  shouldForceFinalAnswer,
+} from "./agent-budget";
 
 function step(
   totalTokens: number,
@@ -9,6 +15,13 @@ function step(
 }
 
 describe("agent budget", () => {
+  it("allows slow inference while retaining explicit cost bounds", () => {
+    expect(AGENT_MAX_OUTPUT_TOKENS).toBeGreaterThanOrEqual(1_800);
+    expect(AGENT_STEP_TIMEOUT_MS).toBeGreaterThanOrEqual(90_000);
+    expect(AGENT_TOTAL_TIMEOUT_MS).toBeGreaterThan(AGENT_STEP_TIMEOUT_MS);
+    expect(AGENT_TOTAL_TIMEOUT_MS).toBeLessThanOrEqual(180_000);
+  });
+
   it("finishes after a complete season context result", () => {
     expect(
       shouldForceFinalAnswer(

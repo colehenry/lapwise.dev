@@ -3,6 +3,7 @@ import { stepCountIs, streamText } from "ai";
 import {
   AGENT_MAX_OUTPUT_TOKENS,
   AGENT_MAX_STEPS,
+  AGENT_STEP_TIMEOUT_MS,
   AGENT_TOTAL_TIMEOUT_MS,
   shouldForceFinalAnswer,
 } from "./agent-budget";
@@ -42,6 +43,26 @@ interface StreamUsage {
   costUsd?: number;
 }
 
+export function publicAgentErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  const name = error instanceof Error ? error.name : "";
+  if (
+    /abort/i.test(name) ||
+    /timeout|timed out|deadline|aborted/i.test(message)
+  ) {
+    return "Clutch ran out of time while building that answer. Please try again.";
+  }
+  if (/without an answer|no content|length/i.test(message)) {
+    return "Clutch couldn't finish that answer. Please try again—the next run will start fresh.";
+  }
+  return "Clutch hit a problem while building that answer. Please try again.";
+}
+
+export function requireAgentAnswer(answer: string): string {
+  if (!answer.trim()) throw new Error("Model completed without an answer");
+  return answer;
+}
+
 export async function createLegacyAgentResponse(params: {
   question: string;
   conversationId: string;
@@ -70,7 +91,10 @@ export async function createLegacyAgentResponse(params: {
     toolChoice: "auto",
     maxOutputTokens: AGENT_MAX_OUTPUT_TOKENS,
     maxRetries: 1,
-    timeout: { totalMs: AGENT_TOTAL_TIMEOUT_MS, stepMs: 20_000 },
+    timeout: {
+      totalMs: AGENT_TOTAL_TIMEOUT_MS,
+      stepMs: AGENT_STEP_TIMEOUT_MS,
+    },
     stopWhen: stepCountIs(AGENT_MAX_STEPS),
     prepareStep: ({ steps, stepNumber }) =>
       shouldForceFinalAnswer(steps, stepNumber)
@@ -115,6 +139,7 @@ export async function createLegacyAgentResponse(params: {
           }
 
           if (part.type === "error") throw part.error;
+          if (part.type === "tool-error") throw part.error;
           if (part.type === "abort") throw new Error("Request cancelled");
 
           if (part.type === "tool-call") {
@@ -172,7 +197,9 @@ export async function createLegacyAgentResponse(params: {
           }
         }
 
-        answer = presentAgentAnswer(answer, entityReferences);
+        answer = requireAgentAnswer(
+          presentAgentAnswer(answer, entityReferences),
+        );
         if (answer) {
           controller.enqueue(
             encodeStreamLine({ type: "text-delta", text: answer }),
@@ -218,14 +245,10 @@ export async function createLegacyAgentResponse(params: {
         );
       } catch (error) {
         Sentry.captureException(error);
-        const message =
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred";
         controller.enqueue(
           encodeStreamLine({
             type: "error",
-            error: `AI processing failed: ${message}`,
+            error: publicAgentErrorMessage(error),
           }),
         );
       } finally {
@@ -239,6 +262,7 @@ export async function createLegacyAgentResponse(params: {
       "Content-Type": "application/x-ndjson; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
     },
   });
 }

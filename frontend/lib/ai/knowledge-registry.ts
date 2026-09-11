@@ -135,6 +135,29 @@ export const KNOWLEDGE_NODES: KnowledgeNode[] = [
 From 2019 through 2024, a race fastest lap earned one championship point only when the driver finished in the top ten. The bonus was removed from the 2025 season onward. Separate the rule in force for the requested season from what the database records for one event.`,
   },
   {
+    id: "championship-points-system",
+    topics: ["rules"],
+    tags: ["rules", "points", "scoring", "history"],
+    keywords: [
+      "scoring",
+      "points system",
+      "points work",
+      "score points",
+      "scored points",
+    ],
+    related: ["fastest-lap-bonus"],
+    relations: [],
+    tools: [],
+    markdown: `## Championship points system
+
+- A full-distance Grand Prix awards the top ten 25, 18, 15, 12, 10, 8, 6, 4, 2, and 1 point. A Sprint awards the top eight 8 points down to 1.
+- A driver keeps the points they score; the Constructors' Championship adds the points scored by both of a team's cars. The highest season total wins, with countback used to break a tie.
+- Major historical shifts: only the top five scored in 1950; the field expanded to six scorers in 1960, eight in 2003, and ten under the current scale in 2010. Only a selection of a driver's best results counted until 1991.
+- The fastest-lap bonus applied from 2019 through 2024 and was removed for 2025.
+- Scoring is part of the sporting rules. It can change independently of major car, engine, or aerodynamic regulation changes; the calendars may coincide, but one does not automatically cause the other.
+- Source: Formula 1 points-system overview: https://www.formula1.com/en/latest/article/how-many-world-championship-titles-would-f1-drivers-have-won-using-the.182RC42vohx8STIpJR5o26`,
+  },
+  {
     id: "parc-ferme",
     topics: ["rules", "general"],
     tags: ["rules", "car-setup", "scrutineering"],
@@ -168,7 +191,11 @@ Use line charts for trends and tables for rankings or exact comparisons. Chart v
 export function inferKnowledgeTopics(question: string): KnowledgeTopic[] {
   const q = question.toLowerCase();
   const topics: KnowledgeTopic[] = [];
-  if (/\b(rule|allowed|eligible|could .* earn|fastest[- ]lap point)\b/.test(q))
+  if (
+    /\b(rule|allowed|eligible|scoring|points? system|points? work|score points|could .* earn|fastest[- ]lap point)\b/.test(
+      q,
+    )
+  )
     topics.push("rules");
   if (
     /\b(led|lead|dominant|controlled|safety car|vsc|recovered|lucky|turning points?|what decided|why did|how did)\b/.test(

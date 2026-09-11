@@ -6,6 +6,7 @@
 
 import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
 import { fetchWithAuth } from "@/lib/auth";
+import { CLUTCH_ASK_BASE } from "@/lib/clutch-endpoint";
 import type { ClutchProgressStatus } from "@/lib/clutch-progress";
 
 const BASE = "/api/ai";
@@ -123,7 +124,7 @@ export async function askQuestion(
   conversationId?: string,
   pageContext?: AnalysisPageContext,
 ): Promise<AskResponse> {
-  const res = await fetchWithAuth(`${BASE}/ask`, {
+  const res = await fetchWithAuth(`${CLUTCH_ASK_BASE}/ask`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question, conversationId, pageContext }),
@@ -148,7 +149,7 @@ export async function streamQuestion(
   signal?: AbortSignal,
   pageContext?: AnalysisPageContext,
 ): Promise<void> {
-  const res = await fetchWithAuth(`${BASE}/ask`, {
+  const res = await fetchWithAuth(`${CLUTCH_ASK_BASE}/ask`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question, conversationId, pageContext }),
@@ -167,6 +168,18 @@ export async function streamQuestion(
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  let completed = false;
+
+  function emitLine(line: string) {
+    let event: AskStreamEvent;
+    try {
+      event = JSON.parse(line) as AskStreamEvent;
+    } catch {
+      throw new Error("Clutch's response was interrupted. Please try again.");
+    }
+    if (event.type === "metadata" || event.type === "error") completed = true;
+    onEvent(event);
+  }
 
   while (true) {
     if (signal?.aborted) {
@@ -182,15 +195,21 @@ export async function streamQuestion(
 
     for (const line of lines) {
       if (!line.trim()) continue;
-      onEvent(JSON.parse(line) as AskStreamEvent);
+      emitLine(line);
     }
 
     if (done) {
       if (buffer.trim()) {
-        onEvent(JSON.parse(buffer) as AskStreamEvent);
+        emitLine(buffer);
       }
       break;
     }
+  }
+
+  if (!completed) {
+    throw new Error(
+      "Clutch lost the connection before finishing. Please try again.",
+    );
   }
 }
 

@@ -24,6 +24,18 @@ describe("rules analysis", () => {
     expect(execution?.artifact.metrics[0].value).toBe(0);
   });
 
+  it("answers a conversational scoring-history follow-up without the agent", () => {
+    const execution = tryRunRulesAnalysis(
+      "Yeah, how does the scoring work? How has it changed over the years? Does it usually change with the regulation changes?",
+    );
+
+    expect(execution?.model).toBe("deterministic/rules-scoring-v1");
+    expect(execution?.queries).toEqual([]);
+    expect(execution?.artifact.summary).toContain("25–18–15");
+    expect(execution?.artifact.summary).toContain("sporting rules");
+    expect(execution?.artifact.tables[0].rows).toHaveLength(6);
+  });
+
   it("leaves unrelated or unscoped rules questions to clarification", () => {
     expect(tryRunRulesAnalysis("What is parc ferme?")).toBeNull();
     expect(

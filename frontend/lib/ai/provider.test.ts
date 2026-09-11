@@ -3,6 +3,7 @@ import {
   extractAIProviderUsage,
   getAIModel,
   resolveAIProviderConfig,
+  resolveOpenRouterExtraBody,
   resolveOpenRouterProviderRouting,
 } from "./provider";
 
@@ -58,6 +59,15 @@ describe("resolveOpenRouterProviderRouting", () => {
       require_parameters: true,
       data_collection: "deny",
     });
+  });
+});
+
+describe("resolveOpenRouterExtraBody", () => {
+  it("keeps DeepSeek reasoning from consuming the visible answer budget", () => {
+    expect(
+      resolveOpenRouterExtraBody("deepseek/deepseek-v4-flash-0731"),
+    ).toEqual({ reasoning: { effort: "low", exclude: true } });
+    expect(resolveOpenRouterExtraBody("google/another-model")).toBeUndefined();
   });
 });
 

@@ -54,6 +54,14 @@ export function resolveOpenRouterProviderRouting(
   };
 }
 
+export function resolveOpenRouterExtraBody(
+  modelId: string,
+): Record<string, unknown> | undefined {
+  return modelId === DEFAULT_OPENROUTER_ANALYSIS_MODEL
+    ? { reasoning: { effort: "low", exclude: true } }
+    : undefined;
+}
+
 export function resolveAIProviderConfig(
   purpose: AIModelPurpose,
   env: AIEnvironment = process.env,
@@ -84,6 +92,7 @@ export function getAIModel(
   return {
     ...config,
     model: provider(config.modelId, {
+      extraBody: resolveOpenRouterExtraBody(config.modelId),
       provider: resolveOpenRouterProviderRouting(config.modelId),
       usage: { include: true },
     }),
