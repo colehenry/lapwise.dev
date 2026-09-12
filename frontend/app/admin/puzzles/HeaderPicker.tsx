@@ -181,7 +181,7 @@ export default function HeaderPicker({
                               the header's own depth before that. */}
                           <span
                             className={`shrink-0 font-mono text-[10px] ${
-                              thinnest !== null && thinnest < 3
+                              thinnest === 1
                                 ? "text-amber-400"
                                 : "text-ink-faint"
                             }`}

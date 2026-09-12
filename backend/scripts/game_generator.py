@@ -37,15 +37,27 @@ INTERSECTION_REPEAT_DAYS = 30
 # Two headers selecting nearly the same drivers make a cell that tests one
 # thing. Measured on the sandbox boards: podium-finisher against
 # race-entries-100 overlaps 86%.
-MAX_HEADER_CORRELATION = 0.7
+MAX_HEADER_CORRELATION = 0.5
 
 # A header accepting most of the pool cannot carry a board on its own, but it
 # is fine crossed with a narrow one. At most one per board.
 BROAD_HEADER_SHARE = 0.6
 
 # Venue headers outnumber every other kind in the catalog, so an unconstrained
-# sample drifts towards boards asking "won at ..." four times over.
+# sample drifts towards boards asking "won at ..." four times over. Decade
+# headers are capped harder: two eras on one board is one question asked
+# twice ("Raced in the 2010s" against "Debuted in the 2010s").
 MAX_HEADERS_PER_KIND = 2
+KIND_CAPS = {"race_decade": 1, "debut_decade": 1}
+
+# Every board carries a team. Constructors are the category a casual fan
+# recognises first, and a board without one reads as trivia.
+MIN_CONSTRUCTOR_HEADERS = 1
+
+# Boards past this play as a slog rather than a puzzle. The score is the
+# generator's own estimate, so this is a soft ceiling on its output, not a
+# rule about hand-built boards.
+MAX_DIFFICULTY = 45
 
 # Kinds that read as a special move rather than a category. One of each per
 # board at most: two "Won at" or two "Teammate of" headers stop being flavour
@@ -433,10 +445,13 @@ def propose(
             return False
         chosen = picked + [candidate]
         kinds = Counter(catalog[header_id][0].kind for header_id in chosen)
-        if kinds.most_common(1)[0][1] > MAX_HEADERS_PER_KIND:
-            return False
         for kind, count in kinds.items():
-            if kind in NICHE_KINDS and count > MAX_NICHE_HEADERS_PER_KIND:
+            cap = (
+                MAX_NICHE_HEADERS_PER_KIND
+                if kind in NICHE_KINDS
+                else MAX_HEADERS_PER_KIND
+            )
+            if count > KIND_CAPS.get(kind, cap):
                 return False
         retro = sum(1 for header_id in chosen if profiles[header_id].is_retro)
         if retro > MAX_RETRO_HEADERS:
@@ -498,6 +513,8 @@ def propose(
         kinds = [header.kind for header in headers]
         if sum(1 for kind in kinds if kind in PRIMARY_KINDS) < MIN_PRIMARY_HEADERS:
             continue
+        if kinds.count("constructor") < MIN_CONSTRUCTOR_HEADERS:
+            continue
         if not set(kinds) - PRIMARY_KINDS:
             continue
 
@@ -515,12 +532,15 @@ def propose(
         report = validate(db, board, pool, recognition)
         if not report.ok:
             continue
+        score = difficulty(cells, recognition, headers)
+        if score > MAX_DIFFICULTY:
+            continue
 
         return Proposal(
             rows=rows,
             columns=columns,
             cells=cells,
-            difficulty=difficulty(cells, recognition, headers),
+            difficulty=score,
             findings=[
                 {"level": f.level, "code": f.code, "message": f.message}
                 for f in report.findings

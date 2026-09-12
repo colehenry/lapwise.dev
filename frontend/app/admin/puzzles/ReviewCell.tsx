@@ -6,8 +6,6 @@ import type {
   PuzzleFinding,
 } from "@/lib/queries/adminGrid";
 
-const STANDARD_MIN_ANSWERS = 3;
-
 /** Findings name their cell as `row__column` inside a longer message, so the
  *  cell id is matched as a substring rather than parsed out of it. */
 export function findingsForCell(cellId: string, findings: PuzzleFinding[]) {
@@ -37,10 +35,11 @@ function AnswerRow({ answer }: { answer: PuzzleAnswer }) {
   );
 }
 
-/** Tone for an answer count, shared by cells and the queue's heatmaps. */
+/** Tone for an answer count, shared by cells and the queue's heatmaps. An
+ *  empty cell is broken; a single answer is worth a look, not a problem. */
 export function depthTone(depth: number): "fail" | "warn" | "ok" {
-  if (depth < 2) return "fail";
-  if (depth < STANDARD_MIN_ANSWERS) return "warn";
+  if (depth === 0) return "fail";
+  if (depth === 1) return "warn";
   return "ok";
 }
 

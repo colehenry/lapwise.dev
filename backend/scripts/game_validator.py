@@ -35,10 +35,10 @@ from scripts.game_predicates import (
 from scripts.ingest.utils import get_db_session
 
 STANDARD_MIN_ANSWERS = 3
-MAX_TWO_ANSWER_CELLS = 2
+MAX_TWO_ANSWER_CELLS = 4
 
-# A two-answer cell is allowed when neither answer is obscure. All three tests
-# are already shipped predicates.
+# A thin cell is fine when a player has a famous way in. Thin is not the same
+# as bad: Mercedes × Won from P6+ is Hamilton, and that is a good square.
 FLOOR_MIN_WINS = 5
 FLOOR_MIN_ENTRIES = 100
 
@@ -278,32 +278,32 @@ def _check_depths(
         )
 
     if len(thin) > MAX_TWO_ANSWER_CELLS:
-        report.error(
+        report.warn(
             "too_many_thin_cells",
-            f"{len(thin)} two-answer cells, at most {MAX_TWO_ANSWER_CELLS} allowed",
+            f"{len(thin)} two-answer cells, more than {MAX_TWO_ANSWER_CELLS}",
         )
     if thin and singletons:
-        report.error(
+        report.warn(
             "thin_cell_with_singleton",
-            "a board with a signature singleton may not also carry a two-answer cell",
+            "a two-answer cell alongside a single-answer cell plays tight",
         )
 
-    for cell_id, answers in thin.items():
+    # A thin cell is an error only when nobody in it is recognisable; one
+    # famous answer is a way in, whoever sits beside them.
+    for cell_id, answers in {**thin, **{c: cells[c] for c in singletons}}.items():
         known = [recognition[slug] for slug in sorted(answers) if slug in recognition]
         if len(known) != len(answers):
             continue
-        below = [r for r in known if not r.clears_floor]
-        if below:
+        if not any(r.clears_floor for r in known):
             report.error(
                 "thin_cell_below_floor",
-                f"{cell_id}: {', '.join(r.describe() for r in below)}"
-                " below the recognition floor",
+                f"{cell_id}: {', '.join(r.describe() for r in known)}"
+                " — nobody here clears the recognition floor",
             )
-        if not any(r.clears_anchor for r in known):
-            report.error(
+        elif not any(r.clears_anchor for r in known):
+            report.warn(
                 "thin_cell_without_anchor",
-                f"{cell_id}: no answer clears the anchor gate"
-                f" — {', '.join(r.describe() for r in known)}",
+                f"{cell_id}: no big name — {', '.join(r.describe() for r in known)}",
             )
 
     # A driver anchoring two thin cells can only fill one of them, so the board
