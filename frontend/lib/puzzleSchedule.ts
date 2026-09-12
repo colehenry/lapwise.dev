@@ -1,7 +1,5 @@
-import type { PuzzleStatus } from "./adminTypes";
-
 /** The board in play changes at 07:00 UTC. Mirrors PUZZLE_ROLLOVER_UTC_HOUR in
- *  `backend/app/services/daily_grid_service.py`, which is the authority. */
+ *  `backend/app/services/daily_game_clock.py`, which is the authority. */
 export const PUZZLE_ROLLOVER_UTC_HOUR = 7;
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -26,17 +24,48 @@ export function nextRollover(now: Date = new Date()): Date {
   return new Date(`${tomorrow}T0${PUZZLE_ROLLOVER_UTC_HOUR}:00:00Z`);
 }
 
-/** Where a board sits relative to the date gate.
+/** Where a puzzle sits relative to the date gate.
  *
- *  `published` is not the same as live: the player service serves a board only
- *  once its date arrives, so a future-dated one is scheduled. */
+ *  The date is the whole state: undated is a draft, dated is scheduled, and
+ *  dated on or before today is live. */
 export type PuzzlePhase = "draft" | "scheduled" | "live";
 
 export function puzzlePhase(
-  puzzle: { status: PuzzleStatus; published_on: string | null },
+  puzzle: { status: string; published_on: string | null },
   now: Date = new Date(),
 ): PuzzlePhase {
-  if (puzzle.status === "draft") return "draft";
-  if (puzzle.status !== "published" || !puzzle.published_on) return "scheduled";
+  if (puzzle.status === "draft" || !puzzle.published_on) return "draft";
   return puzzle.published_on <= puzzleDate(0, now) ? "live" : "scheduled";
+}
+
+/** "Today", "Tomorrow", or "Thu 17 Sep", relative to the board day in play. */
+export function formatDay(iso: string, now: Date = new Date()): string {
+  if (iso === puzzleDate(0, now)) return "Today";
+  if (iso === puzzleDate(1, now)) return "Tomorrow";
+  return new Date(`${iso}T12:00:00Z`).toLocaleDateString(undefined, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
+}
+
+export function addDays(iso: string, days: number): string {
+  const shifted = new Date(`${iso}T12:00:00Z`);
+  shifted.setUTCDate(shifted.getUTCDate() + days);
+  return shifted.toISOString().slice(0, 10);
+}
+
+/** Every day from today through the last scheduled one, plus one open day
+ *  after it, so the run always shows where the next puzzle will land. */
+export function upcomingDays(
+  lastScheduled: string | null,
+  now: Date = new Date(),
+): string[] {
+  const today = puzzleDate(0, now);
+  const last = lastScheduled && lastScheduled > today ? lastScheduled : today;
+  const days: string[] = [];
+  for (let day = today; day <= last; day = addDays(day, 1)) days.push(day);
+  days.push(addDays(last, 1));
+  return days;
 }

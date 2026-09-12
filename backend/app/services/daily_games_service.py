@@ -34,7 +34,7 @@ class DailyGamesService:
             select(GuessGamePuzzle)
             .where(
                 GuessGamePuzzle.status == "published",
-                GuessGamePuzzle.published_on == today,
+                GuessGamePuzzle.published_on <= today,
             )
             .order_by(
                 GuessGamePuzzle.published_on.desc(),

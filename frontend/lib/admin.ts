@@ -2,12 +2,7 @@ import type {
   AdminCommentListResponse,
   AdminDashboardPeriod,
   AdminDashboardStats,
-  AdminPuzzleDetail,
-  AdminPuzzleListResponse,
   AdminUserListResponse,
-  PuzzleGenerateRequest,
-  PuzzleGenerateResponse,
-  PuzzleHeaderCatalogResponse,
 } from "./adminTypes";
 import { apiUrl } from "./api";
 import { fetchWithAuth } from "./auth";
@@ -114,111 +109,4 @@ export async function adminSetThreadLock(
     },
   );
   if (!res.ok) throw new Error("Failed to update thread lock");
-}
-
-/**
- * Lists boards in the editorial queue. Returns complete answer sets, so every
- * call here is admin-only on the server.
- *
- * The whole queue, unfiltered: the page splits it into drafts, scheduled and
- * live boards, and that split turns on dates the server does not filter on.
- */
-export async function fetchAdminPuzzles(): Promise<AdminPuzzleListResponse> {
-  const res = await fetchWithAuth(apiUrl("/api/admin/puzzles"));
-  if (!res.ok) throw new Error("Failed to fetch puzzles");
-  return res.json();
-}
-
-/** Headers the generator can build a board from, with each one's depth. The
- *  first call at a given floor builds the catalog and is slow; the server
- *  caches it after that. */
-export async function fetchAdminPuzzleHeaders(
-  floor: number,
-): Promise<PuzzleHeaderCatalogResponse> {
-  const res = await fetchWithAuth(
-    apiUrl(`/api/admin/puzzles/headers?floor=${floor}`),
-  );
-  if (!res.ok) throw new Error("Failed to fetch headers");
-  return res.json();
-}
-
-/** Proposes boards as drafts. Loading the driver pool and header catalog
- *  dominates the cost, so a batch of ten costs about what one does — and the
- *  request runs for seconds rather than milliseconds. */
-export async function adminGeneratePuzzles(
-  request: PuzzleGenerateRequest,
-): Promise<PuzzleGenerateResponse> {
-  const res = await fetchWithAuth(apiUrl("/api/admin/puzzles/generate"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-  });
-  if (!res.ok)
-    throw new Error(await extractAdminError(res, "Failed to generate boards"));
-  return res.json();
-}
-
-/** Discards every draft. Approved and published boards are untouched. */
-export async function adminDeleteAllDrafts(): Promise<{ deleted: number }> {
-  const res = await fetchWithAuth(apiUrl("/api/admin/puzzles/drafts"), {
-    method: "DELETE",
-  });
-  if (!res.ok)
-    throw new Error(await extractAdminError(res, "Failed to delete drafts"));
-  return res.json();
-}
-
-export async function fetchAdminPuzzle(
-  number: number,
-): Promise<AdminPuzzleDetail> {
-  const res = await fetchWithAuth(apiUrl(`/api/admin/puzzles/${number}`));
-  if (!res.ok) throw new Error("Failed to fetch puzzle");
-  return res.json();
-}
-
-/** Approving a board is also dating it; the date gate does the publishing. */
-export async function adminSchedulePuzzle(
-  number: number,
-  publishedOn: string,
-): Promise<void> {
-  const res = await fetchWithAuth(
-    apiUrl(`/api/admin/puzzles/${number}/schedule`),
-    {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ published_on: publishedOn, status: "published" }),
-    },
-  );
-  if (!res.ok)
-    throw new Error(await extractAdminError(res, "Failed to schedule"));
-}
-
-export async function adminRevertPuzzle(number: number): Promise<void> {
-  const res = await fetchWithAuth(
-    apiUrl(`/api/admin/puzzles/${number}/revert`),
-    {
-      method: "PUT",
-    },
-  );
-  if (!res.ok)
-    throw new Error(await extractAdminError(res, "Failed to revert"));
-}
-
-export async function adminDeletePuzzle(number: number): Promise<void> {
-  const res = await fetchWithAuth(apiUrl(`/api/admin/puzzles/${number}`), {
-    method: "DELETE",
-  });
-  if (!res.ok)
-    throw new Error(await extractAdminError(res, "Failed to delete"));
-}
-
-/** The API refuses scheduling for reasons a reviewer needs to read — a date
- *  clash, or validator errors — so the detail is surfaced rather than dropped. */
-async function extractAdminError(res: Response, fallback: string) {
-  try {
-    const body = await res.json();
-    return typeof body?.detail === "string" ? body.detail : fallback;
-  } catch {
-    return fallback;
-  }
 }

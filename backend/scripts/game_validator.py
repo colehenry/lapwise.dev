@@ -411,10 +411,14 @@ def validate(
     board: dict,
     pool: Pool,
     recognition: dict[str, Recognition],
+    by_category: dict[str, set[str]] | None = None,
 ) -> Report:
+    """`by_category` is the answer set per header id. Passed when the caller
+    already holds the resolved catalog; resolved here otherwise."""
     report = Report(board_id=board["id"])
     categories = board["rows"] + board["columns"]
-    by_category = resolve_categories(db, categories, pool)
+    if by_category is None:
+        by_category = resolve_categories(db, categories, pool)
     cells = materialize(board["rows"], board["columns"], by_category)
 
     unresolved = {

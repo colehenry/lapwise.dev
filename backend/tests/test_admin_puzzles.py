@@ -4,15 +4,14 @@ The queue exists so a human reads the answers before a board publishes, so the
 tests care most about what it exposes and what it refuses.
 """
 
-from datetime import date
-
 import pytest
 from sqlalchemy import select
 
 from app.config import settings
 from app.models import GameSession, Puzzle
-from app.schemas.admin_puzzle import PuzzleScheduleRequest
+from app.services.admin_board_builder_service import GRID_SCHEDULE
 from app.services.admin_puzzle_service import AdminPuzzleService
+from app.services.daily_game_clock import puzzle_date
 
 
 def api_headers() -> dict[str, str]:
@@ -68,32 +67,27 @@ async def test_detail_reports_the_headers_a_reviewer_is_judging(db_session):
         assert cell.column_label
 
 
-async def test_scheduling_refuses_a_date_another_board_holds(db_session):
+async def test_moving_onto_a_served_day_is_refused(db_session):
     """One board per day. The partial unique index enforces it in the
     database; this is the readable error before that fires."""
     published = (
         await db_session.execute(
-            select(Puzzle).where(Puzzle.status == "published").limit(1)
-        )
-    ).scalar_one_or_none()
-    if published is None:
-        pytest.skip("needs two published boards")
-    other = (
-        await db_session.execute(
             select(Puzzle)
-            .where(Puzzle.status == "published", Puzzle.number != published.number)
+            .where(Puzzle.status == "published", Puzzle.published_on <= puzzle_date())
             .limit(1)
         )
     ).scalar_one_or_none()
-    if other is None:
-        pytest.skip("needs two published boards")
+    draft = (
+        await db_session.execute(
+            select(Puzzle).where(Puzzle.status == "draft").limit(1)
+        )
+    ).scalar_one_or_none()
+    if published is None or draft is None:
+        pytest.skip("needs a served board and a draft")
 
-    with pytest.raises(ValueError, match="already published on that date"):
-        await AdminPuzzleService.schedule(
-            db_session,
-            other.number,
-            PuzzleScheduleRequest(published_on=published.published_on),
-            reviewer_id=None,
+    with pytest.raises(ValueError, match="already runs on"):
+        await GRID_SCHEDULE.move(
+            db_session, draft.number, published.published_on, reviewer_id=None
         )
 
 
@@ -109,21 +103,8 @@ async def test_a_played_board_cannot_be_reverted(db_session):
     if played is None:
         pytest.skip("no played boards")
 
-    with pytest.raises(ValueError, match="cannot be reverted"):
-        await AdminPuzzleService.revert(db_session, played.number)
-
-
-async def test_reverting_frees_the_date(db_session, scratch_puzzle):
-    """A draft holding a date reads as scheduled in the queue and blocks the
-    calendar slot, so the date goes back when the status does."""
-    scratch_puzzle.status = "published"
-    scratch_puzzle.published_on = date(2999, 1, 1)
-    await db_session.commit()
-
-    result = await AdminPuzzleService.revert(db_session, scratch_puzzle.number)
-
-    assert result.status == "draft"
-    assert result.published_on is None
+    with pytest.raises(ValueError, match="cannot be unscheduled"):
+        await GRID_SCHEDULE.unschedule(db_session, played.number)
 
 
 async def test_a_played_board_cannot_be_deleted(db_session):
@@ -139,7 +120,7 @@ async def test_a_played_board_cannot_be_deleted(db_session):
         pytest.skip("no played boards")
 
     with pytest.raises(ValueError, match="cannot be deleted"):
-        await AdminPuzzleService.delete(db_session, played.number)
+        await GRID_SCHEDULE.delete(db_session, played.number)
 
 
 async def test_queue_routes_require_an_admin(client):

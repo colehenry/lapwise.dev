@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, true
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -78,11 +78,9 @@ class GuessGameService:
     async def puzzle(
         db: AsyncSession, number: int | None = None
     ) -> GuessGamePuzzleResponse:
-        target = (
-            GuessGamePuzzle.published_on == puzzle_date()
-            if number is None
-            else GuessGamePuzzle.number == number
-        )
+        # No number means the latest published puzzle whose date has arrived,
+        # so a missed day serves yesterday's rather than nothing.
+        target = true() if number is None else GuessGamePuzzle.number == number
         row = (
             await db.execute(
                 select(

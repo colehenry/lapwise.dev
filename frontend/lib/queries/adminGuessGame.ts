@@ -3,6 +3,7 @@ import { apiUrl, extractErrorMessage } from "@/lib/api";
 import { fetchWithAuth } from "@/lib/auth";
 import type { GameDriverCatalogResponse } from "./dailyGrid";
 import { hours } from "./durations";
+import type { GuessGameResult } from "./guessGame";
 
 export type AdminGuessPuzzle = {
   number: number;
@@ -21,9 +22,20 @@ export type AdminGuessPuzzle = {
   created_at: string | null;
 };
 
+/** The puzzle as a player meets it: the winning row, then the eligible
+ *  drivers whose clues land closest to it, each drawn as the guess it would
+ *  be. */
+export type AdminGuessPreview = {
+  puzzle: AdminGuessPuzzle;
+  answer: GuessGameResult;
+  similar: GuessGameResult[];
+};
+
 export const adminGuessGameKeys = {
   queue: ["admin", "guess-game", "queue"] as const,
   catalog: ["admin", "guess-game", "catalog"] as const,
+  preview: (number: number) =>
+    ["admin", "guess-game", "preview", number] as const,
 };
 
 async function adminRequest<T>(path: string, init?: RequestInit): Promise<T> {
@@ -55,6 +67,17 @@ export function adminGuessGameCatalogQuery() {
   });
 }
 
+export function adminGuessPreviewQuery(number: number) {
+  return queryOptions({
+    queryKey: adminGuessGameKeys.preview(number),
+    queryFn: () =>
+      adminRequest<AdminGuessPreview>(
+        `/api/admin/guess-puzzles/${number}/preview`,
+      ),
+    staleTime: hours(1),
+  });
+}
+
 export function adminGuessGameInvalidation() {
   return { queryKey: adminGuessGameKeys.queue };
 }
@@ -67,32 +90,34 @@ export function randomizeAdminGuessPuzzles(count: number) {
   });
 }
 
-export function addManualAdminGuessPuzzle(
-  driverSlug: string,
-  publishedOn: string,
-) {
-  return adminRequest("/api/admin/guess-puzzles/manual", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      driver_slug: driverSlug,
-      published_on: publishedOn,
-    }),
-  });
+/** A chosen driver joins the upcoming run straight away. */
+export function addManualAdminGuessPuzzle(driverSlug: string) {
+  return adminRequest<{ published_on: string }>(
+    "/api/admin/guess-puzzles/manual",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ driver_slug: driverSlug }),
+    },
+  );
 }
 
 export function approveAdminGuessPuzzle(number: number) {
-  return adminRequest(`/api/admin/guess-puzzles/${number}/approve`, {
-    method: "PUT",
-  });
+  return adminRequest<{ published_on: string }>(
+    `/api/admin/guess-puzzles/${number}/approve`,
+    { method: "PUT" },
+  );
 }
 
-export function scheduleAdminGuessPuzzle(number: number, publishedOn: string) {
-  return adminRequest(`/api/admin/guess-puzzles/${number}/schedule`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ published_on: publishedOn }),
-  });
+export function moveAdminGuessPuzzle(number: number, publishedOn: string) {
+  return adminRequest<{ published_on: string }>(
+    `/api/admin/guess-puzzles/${number}/date`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ published_on: publishedOn }),
+    },
+  );
 }
 
 export function revertAdminGuessPuzzle(number: number) {
