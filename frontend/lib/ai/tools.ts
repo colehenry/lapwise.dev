@@ -2,7 +2,11 @@ export {
   generateChart,
   runSQLQuery,
 } from "./general-ai-tools";
-export { getRaceDynamics, resolveSession } from "./session-tools";
+export {
+  getRaceDynamics,
+  getRaceStrategyInsights,
+  resolveSession,
+} from "./session-tools";
 export {
   ensureLimit,
   extractReferencedTables,

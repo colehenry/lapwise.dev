@@ -32,6 +32,7 @@ import { buildSystemPrompt, selectPromptKnowledge } from "./system-prompt";
 import {
   generateChart,
   getRaceDynamics,
+  getRaceStrategyInsights,
   resolveSession,
   runSQLQuery,
 } from "./tools";
@@ -68,6 +69,7 @@ export async function createLegacyAgentResponse(params: {
     get_season_context: getSeasonContext,
     resolve_session: resolveSession,
     get_race_dynamics: getRaceDynamics,
+    get_race_strategy_insights: getRaceStrategyInsights,
     generate_chart: generateChart,
     run_sql_query: runSQLQuery,
   };

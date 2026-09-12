@@ -29,6 +29,7 @@ const QUALIFYING_PATH = `/api/results/${SEASON}/${ROUND}/qualifying`;
 const SPRINT_PATH = `/api/results/${SEASON}/${ROUND}/sprint`;
 const PRACTICE_PATH = `/api/results/${SEASON}/${ROUND}/practice/`;
 const SUMMARIES_PATH = `/api/results/${SEASON}/${ROUND}/summaries`;
+const INSIGHT_PATH = "/api/ai/race-insight?session_id=1";
 
 const availability = {
   season: SEASON,
@@ -63,6 +64,7 @@ const ROUTES = {
   [SPRINT_PATH]: session,
   [PRACTICE_PATH]: session,
   [RACE_PATH]: session,
+  [INSIGHT_PATH]: { insight: null },
   "/api/results/seasons": [SEASON],
 };
 
@@ -71,7 +73,7 @@ afterEach(() => {
 });
 
 describe("race weekend initial load", () => {
-  it("requests availability, the active session, summaries, and seasons only", async () => {
+  it("requests the active session and its race insight without probing other tabs", async () => {
     const recorder = installFetchRecorder(ROUTES);
     renderWithQueryClient(<RoundContent />);
     await flushRequests();
@@ -79,6 +81,7 @@ describe("race weekend initial load", () => {
     expect([...new Set(recorder.paths())].sort()).toEqual(
       [
         AVAILABILITY_PATH,
+        INSIGHT_PATH,
         RACE_PATH,
         SUMMARIES_PATH,
         "/api/results/seasons",

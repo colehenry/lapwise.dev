@@ -15,6 +15,7 @@ type AllowedRelation = (typeof ALLOWED_AI_TABLES)[number];
 type AnalysisTool =
   | "resolve_session"
   | "get_race_dynamics"
+  | "get_race_strategy_insights"
   | "run_sql_query"
   | "generate_chart";
 
@@ -44,6 +45,7 @@ export const KNOWLEDGE_NODES: KnowledgeNode[] = [
 - sessions identifies event sessions by id, year, round, session_type, event_name, date, and circuit_id.
 - session_results is canonical for classification, grid, points, laps completed, fastest lap, and Q1/Q2/Q3 times.
 - drivers supplies full_name and slug. teams are constructor-season rows joined through session_results.team_id.
+- Some missing floating-point values are PostgreSQL NaN rather than NULL. Typed tools filter both; raw SQL coverage checks must use a finite-value predicate rather than IS NOT NULL alone.
 - Resolve an event-specific session early. Distinguish no matching rows, missing coverage, and an event that has not occurred.`,
   },
   {
@@ -57,14 +59,16 @@ export const KNOWLEDGE_NODES: KnowledgeNode[] = [
       "track_status",
       "race_control_messages",
     ],
-    tools: ["get_race_dynamics"],
+    tools: ["get_race_dynamics", "get_race_strategy_insights"],
     markdown: `## Race-shape evidence
 
 - Use lap positions, leader segments, laps led, stints, stop-lap markers, and race control before interpreting a race.
+- Use get_race_strategy_insights for undercut failures, safe-stop margins, and double-stack questions. It applies finite-value, coverage, and model-quality gates.
 - "Led from pole to flag" requires grid P1, lap-one P1, every leader segment, and finish P1.
 - Dominance or control requires lap-position, pace, or gap evidence; final margin alone is insufficient.
 - SC/VSC benefit requires a stop or position change overlapping verified neutralized laps.
-- Stop laps come from lap pit-in/pit-out markers. They are not stationary pit-stop durations.`,
+- Pit duration is entry-to-exit pit-lane transit. It is never stationary service or pit-crew time.
+- The pace model's per-driver intercept is adjusted driver-entry pace, not a separable car or driver effect.`,
   },
   {
     id: "qualifying-classification",

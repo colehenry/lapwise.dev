@@ -141,12 +141,32 @@ describe("the session surface", () => {
         id: "biggest-mover",
         question: "Who gained the most places?",
       },
-      {
-        kind: "script",
-        id: "fastest-lap",
-        question: "Who set the fastest lap?",
-      },
       { kind: "ask", question: "What decided this race?" },
+    ]);
+  });
+
+  it("leads with a calculated race insight when one is available", () => {
+    const resolved = firstScript(SESSION_SURFACE, {
+      ...race,
+      clutchInsight: {
+        kind: "failed_undercut",
+        question: "Why didn't Norris's undercut work?",
+        answer: "The gap grew by 2.157s through the pit window.",
+        followupQuestion: "Why didn't Norris's undercut on Russell work?",
+        score: 85,
+      },
+    });
+
+    expect(resolved?.id).toBe("race-insight");
+    expect(resolved?.question).toBe("Why didn't Norris's undercut work?");
+    expect(text(resolved?.segments)).toBe(
+      "The gap grew by 2.157s through the pit window.",
+    );
+    expect(resolved?.followups).toEqual([
+      {
+        kind: "ask",
+        question: "Why didn't Norris's undercut on Russell work?",
+      },
     ]);
   });
 
@@ -231,5 +251,9 @@ describe("the session catalogue", () => {
       }
       expect(script.followups.length).toBeLessThanOrEqual(3);
     }
+  });
+
+  it("never falls back to a fastest-lap prompt", () => {
+    expect([...ids].some((id) => id.includes("fastest"))).toBe(false);
   });
 });

@@ -5,6 +5,7 @@ import {
 } from "./analysis-engine";
 import type { DriverCandidate } from "./driver-resolution";
 import { extractSeason } from "./question-parsing";
+import { raceStrategyIntent } from "./race-strategy-analysis";
 
 const candidates: DriverCandidate[] = [
   {
@@ -34,6 +35,19 @@ const candidates: DriverCandidate[] = [
 ];
 
 describe("deterministic analysis planning", () => {
+  it("routes the three bounded pit-strategy questions", () => {
+    expect(raceStrategyIntent("Why didn't the undercut work?")).toBe(
+      "undercut_failure",
+    );
+    expect(raceStrategyIntent("Could Norris pit and keep position?")).toBe(
+      "safe_stop",
+    );
+    expect(raceStrategyIntent("What did the double-stack cost?")).toBe(
+      "double_stack",
+    );
+    expect(raceStrategyIntent("Explain the winning strategy")).toBeNull();
+  });
+
   it("recognizes a qualifying comparison and preserves driver order", () => {
     const question =
       "Compare Oscar Piastri versus Lando Norris in qualifying in 2025";

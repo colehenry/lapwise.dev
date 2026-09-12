@@ -14,6 +14,8 @@ function toolStage(toolName: string): ClutchProgressStage | null {
       return "event";
     case "get_race_dynamics":
       return "race";
+    case "get_race_strategy_insights":
+      return "strategy";
     case "generate_chart":
       return "chart";
     default:
@@ -43,6 +45,17 @@ function toolMetrics(
         {
           value: arrayLength(output.neutralizedLaps),
           label: "neutralized laps",
+        },
+      ];
+    case "get_race_strategy_insights":
+      return [
+        {
+          value: arrayLength(output.undercutFailures),
+          label: "undercuts checked",
+        },
+        {
+          value: arrayLength(output.doubleStacks),
+          label: "double-stacks checked",
         },
       ];
     case "generate_chart": {

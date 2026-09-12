@@ -296,6 +296,21 @@ describe("ClutchDock", () => {
     expect(screen.queryByRole("region", { name: "Clutch" })).toBeNull();
   });
 
+  it("offers a page's proactive question before its remembered thread", () => {
+    rememberThread(7, "/results/2025/1", {
+      conversationId: "conv-1",
+      title: "Australian GP",
+    });
+    renderDock(<Page />);
+
+    expect(
+      screen.getByRole("button", {
+        name: "Ask Clutch about Australian Grand Prix",
+      }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Open Clutch" })).toBeNull();
+  });
+
   it("widens from its left edge and keeps the width", () => {
     vi.stubGlobal("innerWidth", 1400);
     renderDock();

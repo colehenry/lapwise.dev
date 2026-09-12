@@ -36,6 +36,8 @@ import ClutchBubble from "./ClutchBubble";
 const MAX_DEPTH = 2;
 /** Long enough to cross the gap between the head and the bubble. */
 const LEAVE_DELAY_MS = 120;
+/** Let the page settle, then offer its question without waiting for a hover. */
+const AUTO_OPEN_DELAY_MS = 450;
 
 const HEAD_SIZE = { title: "h-8 w-8", dock: "h-12 w-12" } as const;
 
@@ -105,9 +107,18 @@ export default function ClutchCorner<C>({
   const [draft, setDraft] = useState("");
   const lastPointer = useRef<string>("mouse");
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const interacted = useRef(false);
 
   const root = useMemo(() => firstScript(surface, context), [surface, context]);
   const current = hops[hops.length - 1] ?? root;
+  useEffect(() => {
+    interacted.current = false;
+    if (!root) return;
+    const timer = setTimeout(() => {
+      if (!interacted.current) openCorner(id);
+    }, AUTO_OPEN_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [id, root]);
 
   const handOff = (question: string) => {
     if (!root) return;
@@ -148,6 +159,7 @@ export default function ClutchCorner<C>({
   }, []);
 
   const show = () => {
+    interacted.current = true;
     cancelLeave();
     if (!open) openCorner(id);
   };
@@ -164,6 +176,7 @@ export default function ClutchCorner<C>({
     leave();
   };
   const answer = () => {
+    interacted.current = true;
     cancelLeave();
     openCorner(id);
     setAnswered(true);

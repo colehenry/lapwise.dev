@@ -136,6 +136,18 @@ describe("ClutchCorner", () => {
     ).toBeTruthy();
   });
 
+  it("offers the question automatically after page load", () => {
+    vi.useFakeTimers();
+    layout(600);
+    renderCorner();
+
+    expect(screen.queryByRole("tooltip")).toBeNull();
+    act(() => vi.advanceTimersByTime(500));
+    expect(screen.getByRole("tooltip").textContent).toContain(
+      "Who is leading?",
+    );
+  });
+
   it("closes the question when the pointer leaves, after a beat", () => {
     vi.useFakeTimers();
     layout(600);

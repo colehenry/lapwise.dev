@@ -1,3 +1,8 @@
+import {
+  finiteNumber as asNumber,
+  nonEmptyText as asString,
+} from "./race-evidence-quality";
+
 type DataRow = Record<string, unknown>;
 export interface RacePositionPath {
   driverCode: string;
@@ -43,17 +48,6 @@ export interface RaceDynamicsEvidence {
   stintSummaries: RaceStintSummary[];
   raceControl: DataRow[];
   evidenceRules: string[];
-}
-
-function asNumber(value: unknown): number | null {
-  const parsed = Number(value);
-  return value !== null && value !== "" && Number.isFinite(parsed)
-    ? parsed
-    : null;
-}
-
-function asString(value: unknown): string | null {
-  return typeof value === "string" && value.trim() ? value : null;
 }
 
 function compressRanges(numbers: number[]): string[] {

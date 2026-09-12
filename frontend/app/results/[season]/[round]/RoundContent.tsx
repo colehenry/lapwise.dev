@@ -14,7 +14,11 @@ import SessionDetail from "@/components/session/SessionDetail";
 import type { SessionSummary } from "@/components/session/SessionSummaryCard";
 import DeferredSection from "@/components/ui/DeferredSection";
 import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
-import { SESSION_SURFACE } from "@/lib/clutch/scripts/session";
+import {
+  SESSION_SURFACE,
+  type SessionContext,
+} from "@/lib/clutch/scripts/session";
+import { raceCornerInsightQuery } from "@/lib/queries/raceInsight";
 import { seasonsQuery } from "@/lib/queries/seasons";
 import {
   defaultPracticeNumber,
@@ -147,6 +151,21 @@ export default function RoundContent() {
             ? "sprint_qualifying"
             : undefined;
   const sessionId = sessionData?.session.id;
+  const strategySession =
+    sessionData?.session.session_type === "race" ||
+    sessionData?.session.session_type === "sprint_race";
+  const { data: cornerInsight, isLoading: cornerInsightLoading } = useQuery(
+    raceCornerInsightQuery(
+      strategySession && sessionId !== undefined ? sessionId : null,
+    ),
+  );
+  const surfaceContext = useMemo<SessionContext | null>(() => {
+    if (!sessionData || (strategySession && cornerInsightLoading)) return null;
+    return {
+      ...sessionData,
+      clutchInsight: cornerInsight?.insight ?? null,
+    };
+  }, [sessionData, strategySession, cornerInsightLoading, cornerInsight]);
   const clutchPageContext = useMemo<AnalysisPageContext | null>(
     () =>
       sessionId === undefined
@@ -170,7 +189,7 @@ export default function RoundContent() {
   );
   usePageSurface(
     SESSION_SURFACE,
-    sessionData ?? null,
+    surfaceContext,
     availability
       ? `${availability.event_name} · ${TAB_LABELS[resolvedTab]}`
       : "",

@@ -302,11 +302,26 @@ export default function ClutchDock() {
   const pathname = usePathname();
 
   useEffect(() => {
+    /* A page's fresh, proactive question wins over a passively remembered
+       thread. The thread is still resumed when that question hands off. */
+    if (
+      pageSurface &&
+      handoff &&
+      handoff.question == null &&
+      handoff.trail.length === 0
+    ) {
+      dismiss();
+      return;
+    }
     if (handoff && threadRoute(handoff.pageContext.route) === pathname) return;
+    if (pageSurface) {
+      if (handoff) dismiss();
+      return;
+    }
     const remembered = userId !== null ? threadFor(userId, pathname) : null;
     if (remembered) resume(remembered, pathname);
     else if (handoff) dismiss();
-  }, [pathname, handoff, userId, resume, dismiss]);
+  }, [pathname, handoff, pageSurface, userId, resume, dismiss]);
 
   if (handoff) return <Thread handoff={handoff} />;
   /* A surface with nothing to say about this page is no corner at all. */

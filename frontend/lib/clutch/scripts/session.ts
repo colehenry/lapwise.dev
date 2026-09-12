@@ -1,3 +1,4 @@
+import type { RaceCornerInsight } from "@/lib/ai/race-corner-insight";
 import type {
   ClutchScript,
   SlotValue,
@@ -7,7 +8,9 @@ import type {
 import { teamTint } from "@/lib/consoleFormat";
 import type { SessionResultDetail, SessionResultsResponse } from "@/lib/types";
 
-export type SessionContext = SessionResultsResponse;
+export type SessionContext = SessionResultsResponse & {
+  clutchInsight?: RaceCornerInsight | null;
+};
 
 /**
  * Catalogue order is the order the corner prefers: the first script the
@@ -15,6 +18,12 @@ export type SessionContext = SessionResultsResponse;
  * winner; a qualifying session falls through to `pole`.
  */
 const SCRIPTS: ClutchScript[] = [
+  {
+    id: "race-insight",
+    question: "{insight.question}",
+    parts: [{ slot: "insight.answer" }],
+    followups: [{ ask: "{insight.followup}" }],
+  },
   {
     id: "winner",
     question: "Who won, and by how much?",
@@ -32,22 +41,7 @@ const SCRIPTS: ClutchScript[] = [
     ],
     followups: [
       { script: "biggest-mover" },
-      { script: "fastest-lap" },
       { ask: "What decided this race?" },
-    ],
-  },
-  {
-    id: "fastest-lap",
-    question: "Who set the fastest lap?",
-    parts: [
-      { slot: "fastest.name", tint: "driver" },
-      { text: " set the fastest lap of the race and finished P" },
-      { slot: "fastest.position" },
-      { text: "." },
-    ],
-    followups: [
-      { script: "winner" },
-      { ask: "How did the tyre strategies compare?" },
     ],
   },
   {
@@ -182,17 +176,19 @@ function resolveSlot(context: SessionContext, slot: string): SlotValue | null {
   const [group, field] = slot.split(".");
   if (!field) return null;
 
+  if (group === "insight") {
+    if (field === "question") return plain(context.clutchInsight?.question);
+    if (field === "answer") return plain(context.clutchInsight?.answer);
+    if (field === "followup")
+      return plain(context.clutchInsight?.followupQuestion);
+    return null;
+  }
+
   if (group === "winner") return rowSlot(atPosition(context, 1), field);
   if (group === "runnerUp") {
     const second = atPosition(context, 2);
     if (field === "margin") return plain(seconds(second?.time_seconds));
     return rowSlot(second, field);
-  }
-  if (group === "fastest") {
-    return rowSlot(
-      context.results.find((row) => row.fastest_lap),
-      field,
-    );
   }
   if (group === "mover") {
     const mover = biggestMover(context);

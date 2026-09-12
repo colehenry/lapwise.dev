@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { executeAIParamQuery } from "./db";
 import { loadRaceDynamics } from "./race-dynamics";
+import { loadRaceStrategyEvidence } from "./race-strategy";
 
 export const resolveSession = tool({
   description:
@@ -73,6 +74,36 @@ export const getRaceDynamics = tool({
   execute: async ({ session_id, driver_codes }) => {
     try {
       return await loadRaceDynamics(session_id, driver_codes);
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  },
+});
+
+export const getRaceStrategyInsights = tool({
+  description:
+    "Return bounded, deterministic pit-strategy evidence for a resolved race: failed undercut anatomy, safe-stop position margins, likely double-stacks, data coverage, and pace-model quality. Pit duration is total pit-lane transit, not stationary service time.",
+  inputSchema: z.object({
+    session_id: z.number().int().positive(),
+  }),
+  execute: async ({ session_id }) => {
+    try {
+      const evidence = await loadRaceStrategyEvidence(session_id);
+      return {
+        ...evidence,
+        pitStops: evidence.pitStops.slice(0, 50),
+        undercutFailures: evidence.undercutFailures.slice(0, 10),
+        doubleStacks: evidence.doubleStacks.slice(0, 10),
+        safeStopCases: evidence.safeStopCases.slice(0, 20),
+        stopLoss: evidence.stopLoss
+          ? {
+              ...evidence.stopLoss,
+              samples: evidence.stopLoss.samples.slice(0, 20),
+            }
+          : null,
+      };
     } catch (error) {
       return {
         error: error instanceof Error ? error.message : "Unknown error",
