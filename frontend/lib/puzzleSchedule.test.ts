@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  countdown,
   nextRollover,
   puzzleDate,
   puzzlePhase,
@@ -66,5 +67,22 @@ describe("upcomingDays", () => {
       "2026-09-08",
       "2026-09-09",
     ]);
+  });
+});
+
+describe("countdown", () => {
+  it("reads as hours and minutes until the rollover", () => {
+    expect(
+      countdown(
+        new Date("2026-09-09T02:48:00Z"),
+        new Date("2026-09-09T07:00:00Z"),
+      ),
+    ).toBe("4h 12m");
+    expect(
+      countdown(
+        new Date("2026-09-09T06:23:00Z"),
+        new Date("2026-09-09T07:00:00Z"),
+      ),
+    ).toBe("37m");
   });
 });

@@ -69,3 +69,21 @@ export function upcomingDays(
   days.push(addDays(last, 1));
   return days;
 }
+
+/** "4h 12m" or "37m" until `to`. */
+export function countdown(from: Date, to: Date): string {
+  const minutes = Math.max(
+    0,
+    Math.round((to.getTime() - from.getTime()) / 60000),
+  );
+  const hours = Math.floor(minutes / 60);
+  return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
+}
+
+/** The rollover as a local wall-clock time, e.g. "3:00 AM". */
+export function localTime(at: Date): string {
+  return at.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}

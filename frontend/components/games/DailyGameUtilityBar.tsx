@@ -2,6 +2,7 @@
 
 import { type ReactNode, useCallback, useState } from "react";
 import DailyGameMenu, { type DailyGameMenuName } from "./DailyGameMenu";
+import NextGameNotice from "./NextGameNotice";
 
 const iconClass = "h-[19px] w-[19px] fill-none stroke-current stroke-[1.8]";
 
@@ -49,7 +50,8 @@ export default function DailyGameUtilityBar({
   }, []);
   return (
     <div className="h-10 border-b border-line-soft">
-      <div className="page-frame flex h-full items-center justify-end gap-[5px]">
+      <div className="page-frame flex h-full items-center gap-[5px]">
+        <NextGameNotice className="mr-auto" />
         <DailyGameMenu
           name="settings"
           label="Settings"

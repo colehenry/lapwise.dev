@@ -2,26 +2,12 @@
 
 import { useEffect, useState } from "react";
 import {
+  countdown,
+  localTime,
   nextRollover,
   PUZZLE_ROLLOVER_UTC_HOUR,
   puzzleDate,
 } from "@/lib/puzzleSchedule";
-
-function countdown(from: Date, to: Date): string {
-  const minutes = Math.max(
-    0,
-    Math.round((to.getTime() - from.getTime()) / 60000),
-  );
-  const hours = Math.floor(minutes / 60);
-  return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
-}
-
-function localTime(at: Date): string {
-  return at.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
 
 /** The date gate, spelled out. Dates here are the board's UTC day, which is
  *  not the reviewer's day for part of every evening west of the meridian, so
