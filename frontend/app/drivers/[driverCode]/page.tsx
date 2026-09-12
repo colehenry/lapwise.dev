@@ -5,20 +5,22 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
 import ArchiveMetricBar from "@/components/archive/ArchiveMetricBar";
 import ArchivePanel from "@/components/archive/ArchivePanel";
-import ClutchContextActions from "@/components/chat/ClutchContextActions";
 import DriverSuperlativesCard from "@/components/entities/DriverSuperlativesCard";
 import PageHeader from "@/components/layout/PageHeader";
+import { usePageSurface } from "@/components/providers/ClutchDockProvider";
 import DeferredSection from "@/components/ui/DeferredSection";
 import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
 import Skeleton from "@/components/ui/Skeleton";
 import SprintToggle from "@/components/ui/SprintToggle";
 import TabBar from "@/components/ui/TabBar";
 import { useTabSync } from "@/hooks/useTabSync";
+import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
 import { apiHeaders, apiUrl } from "@/lib/api";
+import { CAREER_SURFACE, driverCareer } from "@/lib/clutch/scripts/career";
 import {
   getDriverBannerUrl,
   getDriverPortraitUrl,
@@ -88,6 +90,26 @@ export default function DriverProfilePage() {
       router.replace(`/drivers/${data.driver_slug}${window.location.search}`);
     }
   }, [data?.driver_slug, driverCode, router]);
+
+  const superlatives = superlativesData?.superlatives;
+  const career = useMemo(
+    () => (data ? driverCareer(data, superlatives) : null),
+    [data, superlatives],
+  );
+  const slug = data?.driver_slug ?? driverCode;
+  const clutchPageContext = useMemo<AnalysisPageContext>(
+    () => ({
+      route: `/drivers/${slug}`,
+      driverSlugs: data?.driver_slug ? [data.driver_slug] : undefined,
+    }),
+    [slug, data?.driver_slug],
+  );
+  usePageSurface(
+    CAREER_SURFACE,
+    career,
+    data?.full_name ?? "",
+    clutchPageContext,
+  );
 
   if (isLoading) {
     return <ProfileSkeleton />;
@@ -177,21 +199,7 @@ export default function DriverProfilePage() {
             </div>
           </div>
         }
-      >
-        <ClutchContextActions
-          compact
-          context={{
-            route: `/drivers/${data.driver_slug ?? driverCode}`,
-            driverSlugs: data.driver_slug ? [data.driver_slug] : undefined,
-          }}
-          actions={[
-            {
-              label: "Analyze career",
-              question: `What stands out about ${data.full_name}'s career?`,
-            },
-          ]}
-        />
-      </PageHeader>
+      />
 
       {/* Tab Content */}
       <div

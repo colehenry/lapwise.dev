@@ -13,7 +13,7 @@ import {
   useState,
 } from "react";
 import { useClutchDock } from "@/components/providers/ClutchDockProvider";
-import { ClutchNavIcon } from "@/components/ui/BrandLogo";
+import { ClutchHead, ClutchNavIcon } from "@/components/ui/BrandLogo";
 import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
 import {
   closeCorner,
@@ -219,7 +219,11 @@ export default function ClutchCorner<C>({
         onClick={onHeadClick}
         className={`inline-flex shrink-0 items-center justify-center rounded-full transition-transform motion-reduce:transition-none hover:-translate-y-px hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-bright ${HEAD_SIZE[place]} ${open ? "-translate-y-px scale-105" : ""}`}
       >
-        <ClutchNavIcon className="h-full w-full" />
+        {place === "dock" ? (
+          <ClutchHead className="h-full w-full" />
+        ) : (
+          <ClutchNavIcon className="h-full w-full" />
+        )}
       </button>
 
       <ClutchBubble

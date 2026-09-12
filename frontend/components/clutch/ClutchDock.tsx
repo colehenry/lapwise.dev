@@ -7,7 +7,7 @@ import ChatInput from "@/components/chat/ChatInput";
 import ChatTranscript from "@/components/chat/ChatTranscript";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useClutchDock } from "@/components/providers/ClutchDockProvider";
-import { ClutchNavIcon } from "@/components/ui/BrandLogo";
+import { ClutchHead, ClutchNavIcon } from "@/components/ui/BrandLogo";
 import { useAskChat } from "@/hooks/useAskChat";
 import { buildClutchHref } from "@/lib/ai/clutch-links";
 import {
@@ -192,7 +192,7 @@ function Thread({ handoff }: { handoff: ClutchHandoff }) {
           aria-label="Open Clutch"
           className={HEAD_CLASS}
         >
-          <ClutchNavIcon className="h-full w-full" />
+          <ClutchHead className="h-full w-full" />
           {unread && (
             <span
               aria-hidden="true"
@@ -325,7 +325,7 @@ export default function ClutchDock() {
         />
       ) : (
         <Link href="/ask" aria-label="Ask Clutch" className={HEAD_CLASS}>
-          <ClutchNavIcon className="h-full w-full" />
+          <ClutchHead className="h-full w-full" />
         </Link>
       )}
     </div>

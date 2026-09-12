@@ -29,8 +29,14 @@ export type ClutchScript = {
 };
 
 /** `color` is the entity's own tint when the surface knows it; the home band
- *  looks colours up separately and leaves it unset. */
-export type SlotValue = { text: string; code: string | null; color?: string };
+ *  looks colours up separately and leaves it unset. `tint` is set when only
+ *  the resolver knows what kind of entity filled the slot. */
+export type SlotValue = {
+  text: string;
+  code: string | null;
+  color?: string;
+  tint?: ScriptTint;
+};
 
 export type SlotResolver<C> = (context: C, slot: string) => SlotValue | null;
 
@@ -54,6 +60,14 @@ export type SurfaceDigest =
       winner: string | null;
       fastestLap: string | null;
       classified: number;
+    }
+  | {
+      kind: "career";
+      entity: "driver" | "constructor";
+      slug: string;
+      seasons: number;
+      wins: number;
+      championships: number;
     };
 
 export type Surface<C> = {
@@ -143,11 +157,12 @@ function resolveParts<C>(
     }
     const value = surface.resolveSlot(context, part.slot);
     if (!value) return null;
+    const tint = part.tint ? (value.tint ?? part.tint) : null;
     segments.push({
       text: value.text,
-      code: part.tint ? value.code : null,
-      tint: part.tint ?? null,
-      color: part.tint ? (value.color ?? null) : null,
+      code: tint ? value.code : null,
+      tint,
+      color: tint ? (value.color ?? null) : null,
     });
   }
   return segments;

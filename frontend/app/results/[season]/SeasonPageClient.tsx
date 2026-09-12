@@ -2,18 +2,21 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import ClutchContextActions from "@/components/chat/ClutchContextActions";
+import { useEffect, useMemo, useState } from "react";
 import DriverHeadshot from "@/components/entities/DriverHeadshot";
 import JumpToRace from "@/components/layout/JumpToRace";
 import PageHeader from "@/components/layout/PageHeader";
+import { usePageSurface } from "@/components/providers/ClutchDockProvider";
 import { TrackMapCompact } from "@/components/track/TrackMapDisplay";
 import TiltCard from "@/components/ui/TiltCard";
 import { useChampionshipDisplay } from "@/hooks/useChampionshipDisplay";
+import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
+import { STANDINGS_SURFACE } from "@/lib/clutch/scripts/standings";
 import {
   qualifyingRoundsQuery,
   seasonRoundsQuery,
   seasonsQuery,
+  selectUniqueRounds,
 } from "@/lib/queries/seasons";
 import {
   qualifyingStandingsQuery,
@@ -63,6 +66,27 @@ export default function SeasonPageClient() {
   const isLoading = standingsLoading || roundsLoading;
 
   const championshipDisplay = useChampionshipDisplay(standings);
+
+  const standingsContext = useMemo(
+    () =>
+      standings
+        ? {
+            standings,
+            roundsRun: rounds ? selectUniqueRounds(rounds).length : null,
+          }
+        : null,
+    [standings, rounds],
+  );
+  const clutchPageContext = useMemo<AnalysisPageContext>(
+    () => ({ route: `/results/${season}`, season: seasonYear }),
+    [season, seasonYear],
+  );
+  usePageSurface(
+    STANDINGS_SURFACE,
+    standingsContext,
+    `${season} · Standings`,
+    clutchPageContext,
+  );
 
   const handleYearChange = (newYear: string) => {
     router.push(`/results/${newYear}`);
@@ -164,21 +188,6 @@ export default function SeasonPageClient() {
       </PageHeader>
 
       <div className="max-w-6xl mx-auto p-3 md:p-6">
-        <div className="mb-4">
-          <ClutchContextActions
-            context={{ route: `/results/${season}`, season: seasonYear }}
-            actions={[
-              {
-                label: "Top standings",
-                question: `Show the top 5 in the ${season} drivers' championship`,
-              },
-              {
-                label: "Season story",
-                question: `What defined the ${season} Formula 1 season?`,
-              },
-            ]}
-          />
-        </div>
         <SeasonStandingsPanels
           sessionType={sessionType}
           standings={standings}

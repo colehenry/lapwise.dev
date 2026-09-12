@@ -43,6 +43,14 @@ export const surfaceDigestSchema = z.discriminatedUnion("kind", [
     fastestLap: shortText.nullable(),
     classified: z.number().int().nonnegative(),
   }),
+  z.object({
+    kind: z.literal("career"),
+    entity: z.enum(["driver", "constructor"]),
+    slug: shortText,
+    seasons: z.number().int().nonnegative(),
+    wins: z.number().int().nonnegative(),
+    championships: z.number().int().nonnegative(),
+  }),
 ]);
 
 export const surfaceSchema = z.object({

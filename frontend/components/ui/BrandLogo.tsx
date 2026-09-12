@@ -51,6 +51,26 @@ export function ClutchNavIcon({
   );
 }
 
+/**
+ * Clutch in colour, for the one place he is a character rather than a glyph:
+ * the page corner. White shell and black outline, so he reads on both themes.
+ */
+export function ClutchHead({
+  className = "h-12 w-12",
+}: {
+  className?: string;
+}) {
+  return (
+    <Image
+      src="/brand/clutch-head.png"
+      alt=""
+      width={192}
+      height={192}
+      className={`object-contain ${className}`}
+    />
+  );
+}
+
 export function LapwiseIcon({
   className = "h-8 w-8",
   priority,

@@ -22,6 +22,10 @@ export function describeSurface(surface: PageSurface): string {
     ].filter(Boolean);
     return `The reader is looking at "${surface.title}": the ${digest.season} round ${digest.round} ${label} (session id ${digest.sessionId}; ${facts.join(", ")}).`;
   }
+  if (digest.kind === "career") {
+    const title = digest.championships === 1 ? "title" : "titles";
+    return `The reader is looking at "${surface.title}": the career of ${digest.entity} ${digest.slug} (${digest.seasons} seasons, ${digest.wins} wins, ${digest.championships} ${title}).`;
+  }
   const facts = [
     digest.leader ? `leader ${digest.leader}` : null,
     digest.gap != null ? `gap ${digest.gap} points` : null,

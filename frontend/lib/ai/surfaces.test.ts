@@ -76,6 +76,26 @@ describe("page surfaces", () => {
     );
   });
 
+  it("describes a career by its shape, not its rows", () => {
+    expect(
+      describeSurface({
+        id: "record",
+        title: "Lewis Hamilton",
+        digest: {
+          kind: "career",
+          entity: "driver",
+          slug: "HAM",
+          seasons: 19,
+          wins: 105,
+          championships: 7,
+        },
+        asked: [],
+      }),
+    ).toBe(
+      'The reader is looking at "Lewis Hamilton": the career of driver HAM (19 seasons, 105 wins, 7 titles).',
+    );
+  });
+
   it("reaches the system prompt as prose, not as JSON", () => {
     const prompt = buildSystemPrompt({
       question: "What decided this race?",

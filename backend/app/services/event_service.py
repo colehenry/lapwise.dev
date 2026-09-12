@@ -182,20 +182,35 @@ class EventService:
     async def _find_matching_circuit(
         db: AsyncSession, location: str, country: str
     ) -> Circuit | None:
-        """Helper to find circuit by location/country"""
-        # Exact match first
-        circuit_query = select(Circuit).where(
-            Circuit.location == location, Circuit.country == country
+        """The layout a schedule entry names, by location then by country.
+
+        A location can carry more than one layout — Madrid is Jarama through
+        1981 and the Madring from 2026 — so a match is the layout raced most
+        recently, and a layout never raced yet outranks one long retired.
+        """
+        circuit = await EventService._latest_layout(
+            db, Circuit.location == location, Circuit.country == country
         )
-        circuit_result = await db.execute(circuit_query)
-        circuit = circuit_result.scalar_one_or_none()
         if circuit:
             return circuit
-
-        # Fallback: case-insensitive match on location or country name
-        circuit_query = select(Circuit).where(
-            func.lower(Circuit.country) == country.lower()
+        return await EventService._latest_layout(
+            db, func.lower(Circuit.country) == country.lower()
         )
-        circuit_result = await db.execute(circuit_query)
-        circuit = circuit_result.scalar_one_or_none()
-        return circuit
+
+    @staticmethod
+    async def _latest_layout(db: AsyncSession, *criteria) -> Circuit | None:
+        """One layout among those matching: most recent session first, then
+        the newest row for a layout with no sessions at all."""
+        last_session = (
+            select(Session.circuit_id, func.max(Session.date).label("last"))
+            .group_by(Session.circuit_id)
+            .subquery()
+        )
+        query = (
+            select(Circuit)
+            .outerjoin(last_session, last_session.c.circuit_id == Circuit.id)
+            .where(*criteria)
+            .order_by(last_session.c.last.desc().nulls_last(), Circuit.id.desc())
+            .limit(1)
+        )
+        return (await db.execute(query)).scalar_one_or_none()
