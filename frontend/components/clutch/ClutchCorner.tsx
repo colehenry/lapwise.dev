@@ -37,7 +37,7 @@ const MAX_DEPTH = 2;
 /** Long enough to cross the gap between the head and the bubble. */
 const LEAVE_DELAY_MS = 120;
 
-const HEAD_SIZE = { title: "h-7 w-7", page: "h-8 w-8" } as const;
+const HEAD_SIZE = { title: "h-8 w-8", dock: "h-12 w-12" } as const;
 
 function hrefFor(segment: ResolvedSegment): string | null {
   if (!segment.code) return null;
@@ -92,7 +92,8 @@ export default function ClutchCorner<C>({
   title: string;
   /** The page's ids, sent with a question the corner cannot answer itself. */
   pageContext: AnalysisPageContext;
-  place?: "title" | "page";
+  /** In a panel's title bar, or the page's head in the dock corner. */
+  place?: "title" | "dock";
 }) {
   const id = useId();
   const dock = useClutchDock();

@@ -25,7 +25,7 @@ export default function ClutchContextActions({
       className={`flex flex-wrap items-center gap-2 ${compact ? "" : "rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-soft)] p-3"}`}
     >
       <span className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-widest text-purple-300">
-        <ClutchNavIcon className="h-5 w-5" />
+        <ClutchNavIcon className="h-6 w-6" />
         Ask Clutch
       </span>
       {actions.map((action) => (

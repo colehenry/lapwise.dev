@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import ClutchDock from "@/components/clutch/ClutchDock";
 import ClutchDockProvider, {
   useClutchDock,
+  usePageSurface,
 } from "@/components/providers/ClutchDockProvider";
 import {
   rememberedDockWidth,
@@ -13,6 +14,7 @@ import {
   threadFor,
 } from "@/lib/clutch/dockMemory";
 import type { ClutchHandoff } from "@/lib/clutch/handoff";
+import type { Surface } from "@/lib/clutch/script";
 
 const navigation = { pathname: "/results/2025/1" };
 vi.mock("next/navigation", () => ({
@@ -81,13 +83,37 @@ function Trigger() {
   );
 }
 
-function renderDock() {
+type PageCtx = { winner: string | null };
+const pageSurface: Surface<PageCtx> = {
+  scripts: [
+    {
+      id: "winner",
+      question: "Who won?",
+      parts: [{ slot: "winner", tint: "driver" }, { text: " won." }],
+      followups: [],
+    },
+  ],
+  resolveSlot: (context) =>
+    context.winner ? { text: context.winner, code: context.winner } : null,
+  digest: () => null,
+};
+const pageCtx: PageCtx = { winner: "NOR" };
+const pageRoute = { route: "/results/2025/1", sessionId: 1234 };
+
+/** A page with its own corner, registered for the dock's head to answer. */
+function Page({ context = pageCtx }: { context?: PageCtx | null }) {
+  usePageSurface(pageSurface, context, "Australian Grand Prix", pageRoute);
+  return null;
+}
+
+function renderDock(page?: React.ReactNode) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
   const build = () => (
     <QueryClientProvider client={client}>
       <ClutchDockProvider>
+        {page}
         <Trigger />
         <ClutchDock />
       </ClutchDockProvider>
@@ -222,11 +248,14 @@ describe("ClutchDock", () => {
     fireEvent.click(screen.getByText("hand off"));
     expect(screen.getByRole("region", { name: "Clutch" })).toBeTruthy();
 
-    /* A page with no thread has no head at all. */
+    /* A page with no thread keeps Clutch in the corner as a link to /ask. */
     navigation.pathname = "/results/2025";
     rerender();
     expect(screen.queryByRole("region", { name: "Clutch" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Open Clutch" })).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Ask Clutch" }).getAttribute("href"),
+    ).toBe("/ask");
 
     /* A page with a remembered thread gets its head, folded, and expanding
        it loads that page's conversation — never the one from before. */
@@ -238,6 +267,23 @@ describe("ClutchDock", () => {
     expect(chat.loadConversation).toHaveBeenCalledWith("conv-nor");
     expect(chat.sendMessage).toHaveBeenCalledTimes(1);
     expect(screen.getByText("Lando Norris")).toBeTruthy();
+  });
+
+  it("answers for the page from the corner when the page registers a surface", () => {
+    renderDock(<Page />);
+    expect(screen.queryByRole("link", { name: "Ask Clutch" })).toBeNull();
+    const head = screen.getByRole("button", {
+      name: "Ask Clutch about Australian Grand Prix",
+    });
+    fireEvent.pointerEnter(head, { pointerType: "mouse" });
+    expect(screen.getByRole("tooltip").textContent).toBe("Who won?");
+    fireEvent.click(head);
+    expect(screen.getByRole("dialog").textContent).toContain("NOR won.");
+  });
+
+  it("falls back to /ask when the page's surface has nothing to say", () => {
+    renderDock(<Page context={{ winner: null }} />);
+    expect(screen.getByRole("link", { name: "Ask Clutch" })).toBeTruthy();
   });
 
   it("shows a page's remembered thread before any hand-off this session", () => {

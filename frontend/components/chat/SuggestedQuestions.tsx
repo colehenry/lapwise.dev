@@ -21,7 +21,7 @@ export default function SuggestedQuestions({
       <div className="mx-auto w-full max-w-3xl">
         <h2 className="m-0 whitespace-nowrap text-center text-[clamp(1rem,4.9vw,1.625rem)] font-bold leading-[1.12] tracking-[-0.03em] text-ink-strong">
           Ask <span className="text-accent-bright">Clutch</span>
-          <ClutchNavIcon className="mx-[0.15em] inline-flex h-[1.1em] w-[1.1em] align-[-0.18em]" />
+          <ClutchNavIcon className="mx-[0.15em] inline-flex h-[1.3em] w-[1.3em] align-[-0.28em]" />
           anything about Formula 1.
         </h2>
 

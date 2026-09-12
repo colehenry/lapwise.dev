@@ -1,8 +1,8 @@
 const CODE_BLOCK_TOKEN = "@@CODEBLOCK";
 const CLUTCH_ICON_TOKEN = ":clutch:";
 
-const CLUTCH_ICON_SVG =
-  '<svg class="markdown-clutch-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Clutch"><rect x="2" y="2" width="20" height="3" rx="0.6"></rect><path d="M6 5 L5.2 9"></path><path d="M12 5 L12 9"></path><path d="M17.2 5 L17.9 9"></path><path d="M3.7 9 H6.7 L7.1 14 H3.3 Z"></path><path d="M4.3 11.3 H6.5"></path><path d="M4.1 12.6 H6.7"></path><path d="M10.5 9 H13.5 L13.8 14 H10.2 Z"></path><path d="M10.9 11.3 H13.3"></path><path d="M10.8 12.6 H13.4"></path><path d="M16.4 9 H19.4 L19.9 20 H16.1 Z"></path><path d="M16.8 11.2 H19.1"></path><path d="M16.85 13 H19.2"></path><path d="M16.9 14.8 H19.25"></path><path d="M16.95 16.6 H19.3"></path><path d="M17 18.4 H19.35"></path></svg>';
+const CLUTCH_ICON_HTML =
+  '<span class="markdown-clutch-icon clutch-mark" role="img" aria-label="Clutch"></span>';
 
 function escapeHtml(value: string): string {
   return value
@@ -119,7 +119,7 @@ export function markdownToHtml(raw: string): string {
     },
   );
 
-  html = html.replaceAll(CLUTCH_ICON_TOKEN, CLUTCH_ICON_SVG);
+  html = html.replaceAll(CLUTCH_ICON_TOKEN, CLUTCH_ICON_HTML);
 
   return html;
 }

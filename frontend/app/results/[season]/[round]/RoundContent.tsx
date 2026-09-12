@@ -6,10 +6,10 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import ClutchCorner from "@/components/clutch/ClutchCorner";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import RaceComments from "@/components/comments/RaceComments";
 import JumpToRace from "@/components/layout/JumpToRace";
+import { usePageSurface } from "@/components/providers/ClutchDockProvider";
 import SessionDetail from "@/components/session/SessionDetail";
 import type { SessionSummary } from "@/components/session/SessionSummaryCard";
 import DeferredSection from "@/components/ui/DeferredSection";
@@ -136,6 +136,47 @@ export default function RoundContent() {
     }
   }, [availability, isActiveTabAvailable, router, season, round]);
 
+  const clutchSessionType =
+    resolvedTab === "race"
+      ? "race"
+      : resolvedTab === "sprint"
+        ? "sprint_race"
+        : resolvedTab === "qualifying"
+          ? "qualifying"
+          : resolvedTab === "sprint-qualifying"
+            ? "sprint_qualifying"
+            : undefined;
+  const sessionId = sessionData?.session.id;
+  const clutchPageContext = useMemo<AnalysisPageContext | null>(
+    () =>
+      sessionId === undefined
+        ? null
+        : {
+            route: `/results/${season}/${round}${resolvedTab === "race" ? "" : `?tab=${resolvedTab}`}`,
+            season: seasonNum,
+            round: roundNum,
+            sessionId,
+            sessionType: clutchSessionType,
+          },
+    [
+      season,
+      round,
+      resolvedTab,
+      seasonNum,
+      roundNum,
+      sessionId,
+      clutchSessionType,
+    ],
+  );
+  usePageSurface(
+    SESSION_SURFACE,
+    sessionData ?? null,
+    availability
+      ? `${availability.event_name} · ${TAB_LABELS[resolvedTab]}`
+      : "",
+    clutchPageContext,
+  );
+
   if (loading) {
     return (
       <main className="min-h-screen bg-surface-band p-8">
@@ -175,23 +216,6 @@ export default function RoundContent() {
   const activeSummary = summariesData?.summaries.find(
     (summary) => summary.session_type === activeSessionType,
   ) as SessionSummary | undefined;
-  const clutchSessionType =
-    resolvedTab === "race"
-      ? "race"
-      : resolvedTab === "sprint"
-        ? "sprint_race"
-        : resolvedTab === "qualifying"
-          ? "qualifying"
-          : resolvedTab === "sprint-qualifying"
-            ? "sprint_qualifying"
-            : undefined;
-  const clutchPageContext: AnalysisPageContext = {
-    route: `/results/${season}/${round}${resolvedTab === "race" ? "" : `?tab=${resolvedTab}`}`,
-    season: seasonNum,
-    round: roundNum,
-    sessionId: activeSessionData.session.id,
-    sessionType: clutchSessionType,
-  };
 
   return (
     <main className="min-h-screen bg-surface-band">
@@ -231,10 +255,9 @@ export default function RoundContent() {
                 </div>
               </div>
 
-              {/* Tab Bar, with Clutch at its right end under Jump. The tabs
-                  keep their centre; the head sits in the row's padding. */}
-              <div className="relative px-4">
-                <div className="flex items-center justify-center gap-1 overflow-x-auto pb-2 pr-10">
+              {/* Tab Bar */}
+              <div className="px-4">
+                <div className="flex items-center justify-center gap-1 overflow-x-auto pb-2">
                   {availableTabs.map((tab) => {
                     const isActive = resolvedTab === tab;
 
@@ -255,16 +278,6 @@ export default function RoundContent() {
                       </button>
                     );
                   })}
-                </div>
-                {/* Offset so the head sits under Jump's centre, not its edge. */}
-                <div className="absolute inset-y-0 right-[38px] flex items-center pb-2 md:right-[54px]">
-                  <ClutchCorner
-                    surface={SESSION_SURFACE}
-                    context={activeSessionData}
-                    title={`${availability.event_name} · ${TAB_LABELS[resolvedTab]}`}
-                    pageContext={clutchPageContext}
-                    place="page"
-                  />
                 </div>
               </div>
             </div>

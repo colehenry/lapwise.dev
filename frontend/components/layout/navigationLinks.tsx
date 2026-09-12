@@ -95,7 +95,7 @@ export const navLinksAfter: NavLink[] = [
   {
     href: "/ask",
     label: "Ask",
-    renderIcon: () => <ClutchNavIcon className="h-5 w-5 shrink-0" />,
+    renderIcon: () => <ClutchNavIcon className="h-6 w-6 shrink-0" />,
   },
 ];
 

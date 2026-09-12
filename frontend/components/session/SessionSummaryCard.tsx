@@ -45,7 +45,7 @@ export default function SessionSummaryCard({
     <div className="bg-surface-raised border border-line-soft rounded-sm overflow-hidden">
       {/* Header */}
       <div className="px-4 py-3 flex items-center gap-2 border-b border-line-soft/60">
-        <ClutchNavIcon className="h-5 w-5" />
+        <ClutchNavIcon className="h-6 w-6" />
         <span className="text-[10px] tracking-widest text-accent-bright font-bold uppercase font-mono">
           Clutch's {sessionLabel} Summary
         </span>

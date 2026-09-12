@@ -1102,10 +1102,18 @@ textarea {
 /* Emitted by markdownToHtml, so the class name is fixed. */
 .prose .markdown-clutch-icon {
   display: inline-block;
-  width: 1em;
-  height: 1em;
+  width: 1.2em;
+  height: 1.2em;
   margin-left: 0.25rem;
-  vertical-align: -0.15em;
+  vertical-align: -0.25em;
+}
+
+/* Clutch's helmet: the SVG masks a currentColor fill, so the one asset
+   follows the text colour in both themes. */
+.clutch-mark {
+  background-color: currentColor;
+  mask: url("/brand/clutch.svg") center / contain no-repeat;
+  -webkit-mask: url("/brand/clutch.svg") center / contain no-repeat;
 }
 
 /* Chat: a step tighter throughout. Links go unadorned because an answer tints

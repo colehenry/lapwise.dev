@@ -23,11 +23,19 @@ import {
   remainingFollowups,
   seededMessages,
 } from "@/lib/clutch/handoff";
+import { firstScript } from "@/lib/clutch/script";
+import ClutchCorner from "./ClutchCorner";
 import DockResizeHandle from "./DockResizeHandle";
 
 const TOTAL_LIMIT = 3;
 /** The placeholder answer shown while a hand-off question is still queued. */
 const PENDING_ANSWER_ID = "clutch-dock-pending-answer";
+/** Clutch at rest: the page corner, above the mobile nav. */
+const CORNER_CLASS =
+  "fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px)+1rem)] right-6 z-[1250] drop-shadow-md md:bottom-6";
+/** The bare helmet as a button or link, sized like the dock corner. */
+const HEAD_CLASS =
+  "relative flex h-12 w-12 items-center justify-center transition-transform motion-reduce:transition-none hover:-translate-y-px hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-bright";
 
 function SignIn({ handoff }: { handoff: ClutchHandoff }) {
   const question = handoff.question ?? "";
@@ -177,20 +185,22 @@ function Thread({ handoff }: { handoff: ClutchHandoff }) {
 
   if (!expanded) {
     return (
-      <button
-        type="button"
-        onClick={expand}
-        aria-label="Open Clutch"
-        className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px)+0.75rem)] right-4 z-[1250] flex h-9 w-9 items-center justify-center rounded-full border border-line-strong bg-surface-panel shadow-floating-soft transition-transform motion-reduce:transition-none hover:-translate-y-px hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-bright md:bottom-4"
-      >
-        <ClutchNavIcon className="h-7 w-7" />
-        {unread && (
-          <span
-            aria-hidden="true"
-            className="absolute right-0 top-0 h-2 w-2 rounded-full bg-accent-bright"
-          />
-        )}
-      </button>
+      <div className={CORNER_CLASS}>
+        <button
+          type="button"
+          onClick={expand}
+          aria-label="Open Clutch"
+          className={HEAD_CLASS}
+        >
+          <ClutchNavIcon className="h-full w-full" />
+          {unread && (
+            <span
+              aria-hidden="true"
+              className="absolute right-0 top-0 h-2 w-2 rounded-full bg-accent-bright"
+            />
+          )}
+        </button>
+      </div>
     );
   }
 
@@ -198,11 +208,11 @@ function Thread({ handoff }: { handoff: ClutchHandoff }) {
     <section
       aria-label="Clutch"
       style={{ "--dock-width": `${width}px` } as React.CSSProperties}
-      className="fixed inset-x-2 bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px)+0.5rem)] z-[1250] flex h-[min(560px,80dvh)] flex-col overflow-hidden rounded-sm border border-line-strong bg-surface-panel shadow-floating motion-safe:animate-[clutchRise_120ms_ease-out] md:inset-x-auto md:bottom-4 md:right-4 md:w-[var(--dock-width)]"
+      className="fixed inset-x-2 bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px)+0.5rem)] z-[1250] flex h-[min(560px,80dvh)] flex-col overflow-hidden rounded-sm border border-line-strong bg-surface-panel shadow-floating motion-safe:animate-[clutchRise_120ms_ease-out] md:inset-x-auto md:bottom-6 md:right-6 md:w-[var(--dock-width)]"
     >
       <DockResizeHandle width={width} onResize={setWidth} />
       <header className="flex h-[38px] flex-none items-center gap-2 border-b border-line-soft px-2.5">
-        <ClutchNavIcon className="h-[18px] w-[18px]" />
+        <ClutchNavIcon className="h-5 w-5" />
         <span className="text-[12.5px] font-semibold text-ink-strong">
           Clutch
         </span>
@@ -280,12 +290,13 @@ function Thread({ handoff }: { handoff: ClutchHandoff }) {
 
 /**
  * The dock belongs to the page. Arriving on a page this reader has talked
- * about brings its thread back, folded; arriving anywhere else clears the
- * head. A thread is never shown under another page's head — it waits on its
- * own page and on /ask.
+ * about brings its thread back, folded. Anywhere else the head is the page's
+ * corner when the page registered one, and the way to /ask when it did not.
+ * A thread is never shown under another page's head — it waits on its own
+ * page and on /ask.
  */
 export default function ClutchDock() {
-  const { handoff, resume, dismiss } = useClutchDock();
+  const { handoff, pageSurface, resume, dismiss } = useClutchDock();
   const { user, isAuthenticated } = useAuth();
   const userId = isAuthenticated && user ? user.id : null;
   const pathname = usePathname();
@@ -297,6 +308,26 @@ export default function ClutchDock() {
     else if (handoff) dismiss();
   }, [pathname, handoff, userId, resume, dismiss]);
 
-  if (!handoff) return null;
-  return <Thread handoff={handoff} />;
+  if (handoff) return <Thread handoff={handoff} />;
+  /* A surface with nothing to say about this page is no corner at all. */
+  const answerable =
+    pageSurface !== null &&
+    firstScript(pageSurface.surface, pageSurface.context) !== null;
+  return (
+    <div className={CORNER_CLASS}>
+      {pageSurface && answerable ? (
+        <ClutchCorner
+          surface={pageSurface.surface}
+          context={pageSurface.context}
+          title={pageSurface.title}
+          pageContext={pageSurface.pageContext}
+          place="dock"
+        />
+      ) : (
+        <Link href="/ask" aria-label="Ask Clutch" className={HEAD_CLASS}>
+          <ClutchNavIcon className="h-full w-full" />
+        </Link>
+      )}
+    </div>
+  );
 }
