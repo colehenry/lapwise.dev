@@ -148,24 +148,47 @@ describe("the session surface", () => {
   it("leads with a calculated race insight when one is available", () => {
     const resolved = firstScript(SESSION_SURFACE, {
       ...race,
-      clutchInsight: {
-        kind: "failed_undercut",
-        question: "Why didn't Norris's undercut work?",
-        answer: "The gap grew by 2.157s through the pit window.",
-        followupQuestion: "Why didn't Norris's undercut on Russell work?",
-        score: 85,
-      },
+      clutchInsights: [
+        {
+          kind: "covered_undercut",
+          question: "How did Russell cover Norris's undercut?",
+          answer: "Norris remained behind after the pit window.",
+          score: 85,
+          subjectFinishPosition: 2,
+          subjectDriverCode: "RUS",
+        },
+        {
+          kind: "recovery",
+          question: "How did Leclerc recover to P4?",
+          answer: "Leclerc gained eight positions.",
+          score: 78,
+          subjectFinishPosition: 4,
+          subjectDriverCode: "LEC",
+        },
+        {
+          kind: "high_grid_drop",
+          question: "What happened to Piastri?",
+          answer: "Piastri retired.",
+          score: 72,
+          subjectFinishPosition: 20,
+          subjectDriverCode: "PIA",
+        },
+      ],
     });
 
     expect(resolved?.id).toBe("race-insight");
-    expect(resolved?.question).toBe("Why didn't Norris's undercut work?");
+    expect(resolved?.question).toBe("How did Russell cover Norris's undercut?");
     expect(text(resolved?.segments)).toBe(
-      "The gap grew by 2.157s through the pit window.",
+      "Norris remained behind after the pit window.",
     );
     expect(resolved?.followups).toEqual([
       {
         kind: "ask",
-        question: "Why didn't Norris's undercut on Russell work?",
+        question: "How did Leclerc recover to P4?",
+      },
+      {
+        kind: "ask",
+        question: "What happened to Piastri?",
       },
     ]);
   });

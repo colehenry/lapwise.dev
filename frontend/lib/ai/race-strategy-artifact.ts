@@ -83,15 +83,15 @@ export function undercutFailureArtifact(
   }
   const tyreSentence =
     failure.comparedNewTyreLaps > 0
-      ? `${failure.attacker.driverName}'s fresh-tyre laps gained ${seconds(
+      ? `${failure.attacker.driverName} gained ${seconds(
           failure.newTyreGainSeconds,
-        )} over ${failure.comparedNewTyreLaps} comparable lap${
+        )} with newer tyres over ${failure.comparedNewTyreLaps} comparable lap${
           failure.comparedNewTyreLaps === 1 ? "" : "s"
         }.`
-      : "There was no clean representative lap between the two stops to price the fresh-tyre gain.";
+      : "There was no full racing lap between the stops to measure the effect of the newer tyres separately.";
   const transitDirection =
     failure.transitDeltaSeconds >= 0 ? "longer" : "shorter";
-  const summary = `${failure.attacker.driverName} stopped on lap ${failure.attacker.inLap}, ${failure.target.driverName} on lap ${failure.target.inLap}. The gap changed from ${seconds(failure.gapBeforeSeconds)} behind to ${seconds(failure.gapAfterSeconds)} behind. ${tyreSentence} The earlier stopper's total pit-lane transit was ${seconds(Math.abs(failure.transitDeltaSeconds))} ${transitDirection}.`;
+  const summary = `${failure.attacker.driverName} stopped on lap ${failure.attacker.inLap}, ${failure.target.driverName} on lap ${failure.target.inLap}. The gap changed from ${seconds(failure.gapBeforeSeconds)} behind to ${seconds(failure.gapAfterSeconds)} behind. ${tyreSentence} The earlier stopper spent ${seconds(Math.abs(failure.transitDeltaSeconds))} ${transitDirection} in the pit lane.`;
   return answerArtifactSchema.parse({
     version: 1,
     family: "strategy",
@@ -114,7 +114,7 @@ export function undercutFailureArtifact(
       },
       {
         id: "lane-transit-delta",
-        label: "Earlier stopper lane delta",
+        label: "Earlier stopper's pit-lane time difference",
         value: failure.transitDeltaSeconds,
         displayValue: seconds(failure.transitDeltaSeconds, true),
         evidenceIds: [calculationId],
@@ -123,7 +123,7 @@ export function undercutFailureArtifact(
         ? [
             {
               id: "new-tyre-gain",
-              label: "Fresh-tyre lap gain",
+              label: "Pace difference on newer tyres",
               value: failure.newTyreGainSeconds,
               displayValue: seconds(failure.newTyreGainSeconds),
               evidenceIds: [calculationId],
@@ -139,7 +139,7 @@ export function undercutFailureArtifact(
           { key: "driver", label: "Driver" },
           { key: "lap", label: "In lap" },
           { key: "compound", label: "New tyre" },
-          { key: "transit", label: "Pit-lane transit" },
+          { key: "transit", label: "Time in pit lane" },
         ],
         rows: [failure.attacker, failure.target].map((stop) => ({
           driver: stop.driverName,
@@ -157,7 +157,7 @@ export function undercutFailureArtifact(
       comparedNewTyreLaps: failure.comparedNewTyreLaps,
     }),
     caveats: [
-      "Pit-lane transit is entry to exit, not stationary service time.",
+      "Time in the pit lane is measured from pit entry to pit exit, not only while the car is stationary.",
       "Timing alone cannot separate queueing, driving through the lane, operational delay, traffic, or team intent.",
     ],
     actions: [action(context)],
@@ -177,7 +177,7 @@ export function safeStopArtifact(
     ? distribution
       ? "A safe-stop answer was withheld because no stop had both a clock-aligned gap to the next car and a verified rejoin position."
       : `A safe-stop answer was withheld. ${evidence.paceModelSummary}`
-    : `Before ${stop.driverName}'s lap-${stop.inLap} stop, the gap to ${stop.carBehindCode} was ${seconds(stop.gapBehindSeconds)}. The race's modeled green-stop loss was ${seconds(stop.expectedStopLossSeconds)}, leaving ${seconds(stop.bufferSeconds, true)} of margin. ${stop.retainedPosition ? `The car remained P${stop.positionBefore} after the out-lap.` : `It changed from P${stop.positionBefore} to P${stop.positionAfter ?? "?"} through the stop.`}`;
+    : `Before ${stop.driverName}'s lap-${stop.inLap} stop, the gap to ${stop.carBehindCode} was ${seconds(stop.gapBehindSeconds)}. A pit stop made while the race was at full speed typically cost ${seconds(stop.expectedStopLossSeconds)}, leaving ${seconds(stop.bufferSeconds, true)} of margin. ${stop.retainedPosition ? `The car remained P${stop.positionBefore} after the out-lap.` : `It changed from P${stop.positionBefore} to P${stop.positionAfter ?? "?"} through the stop.`}`;
   return answerArtifactSchema.parse({
     version: 1,
     family: "strategy",
@@ -196,7 +196,7 @@ export function safeStopArtifact(
             },
             {
               id: "expected-stop-loss",
-              label: "Median green-stop loss",
+              label: "Typical time lost during a full-speed stop",
               value: distribution.medianSeconds,
               displayValue: seconds(distribution.medianSeconds),
               evidenceIds: [calculationId],
@@ -219,7 +219,7 @@ export function safeStopArtifact(
       ...evidence.coverage.limitations,
       ...(distribution
         ? [
-            `The estimate is based on ${distribution.sampleCount} green stops; its middle 50% spans ${seconds(distribution.lowerQuartileSeconds)} to ${seconds(distribution.upperQuartileSeconds)}.`,
+            `The estimate is based on ${distribution.sampleCount} stops made while the race was at full speed; its middle 50% spans ${seconds(distribution.lowerQuartileSeconds)} to ${seconds(distribution.upperQuartileSeconds)}.`,
           ]
         : []),
       "The estimate cannot predict a rival reaction, future caution, penalty, or traffic after rejoining.",
@@ -264,11 +264,11 @@ export function doubleStackArtifact(
       ? [
           {
             id: "double-stack-stops",
-            title: "Pit-lane transit",
+            title: "Time in pit lane",
             columns: [
               { key: "order", label: "Arrival" },
               { key: "driver", label: "Driver" },
-              { key: "transit", label: "Transit" },
+              { key: "transit", label: "Time in pit lane" },
             ],
             rows: [
               {
@@ -291,7 +291,7 @@ export function doubleStackArtifact(
       selected: stack,
     }),
     caveats: [
-      "This measures total pit-lane transit, not stationary service or pit-crew performance.",
+      "This measures time from pit entry to pit exit, not only stationary service or pit-crew performance.",
       "The data cannot separate queueing, tyre handling, penalties, or deliberate delay.",
     ],
     actions: [action(context)],

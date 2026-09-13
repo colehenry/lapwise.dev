@@ -14,6 +14,7 @@ import {
 } from "react";
 import { useClutchDock } from "@/components/providers/ClutchDockProvider";
 import { ClutchHead, ClutchNavIcon } from "@/components/ui/BrandLogo";
+import F1GlossaryTerm from "@/components/ui/F1GlossaryTerm";
 import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
 import {
   closeCorner,
@@ -30,6 +31,7 @@ import {
   type Surface,
 } from "@/lib/clutch/script";
 import { constructorHref, driverHref } from "@/lib/entityLinks";
+import { splitF1GlossaryText } from "@/lib/f1Glossary";
 import ClutchBubble from "./ClutchBubble";
 
 /** The first answer and one follow-up; a third hop is a hand-off. */
@@ -49,6 +51,19 @@ function hrefFor(segment: ResolvedSegment): string | null {
 }
 
 function Answer({ script }: { script: ResolvedScript }) {
+  const definedText = (value: string, keyPrefix: string) =>
+    splitF1GlossaryText(value).map((fragment) =>
+      fragment.definition ? (
+        <F1GlossaryTerm
+          key={`${keyPrefix}-${fragment.term}-${fragment.start}`}
+          definition={fragment.definition}
+        >
+          {fragment.text}
+        </F1GlossaryTerm>
+      ) : (
+        <span key={`${keyPrefix}-text-${fragment.start}`}>{fragment.text}</span>
+      ),
+    );
   return (
     <p className="m-0 whitespace-pre-line text-[13px] leading-[1.55] text-ink-base">
       {script.segments.map((segment, index) => {
@@ -68,7 +83,7 @@ function Answer({ script }: { script: ResolvedScript }) {
           </Link>
         ) : (
           <span key={key} style={style}>
-            {segment.text}
+            {definedText(segment.text, key)}
           </span>
         );
       })}
@@ -263,7 +278,20 @@ export default function ClutchCorner<C>({
                   ‹
                 </button>
               )}
-              <span id={`${bubbleId}-title`}>{current.question}</span>
+              <span id={`${bubbleId}-title`}>
+                {splitF1GlossaryText(current.question).map((fragment) =>
+                  fragment.definition ? (
+                    <F1GlossaryTerm
+                      key={`${fragment.term}-${fragment.start}`}
+                      definition={fragment.definition}
+                    >
+                      {fragment.text}
+                    </F1GlossaryTerm>
+                  ) : (
+                    <span key={`text-${fragment.start}`}>{fragment.text}</span>
+                  ),
+                )}
+              </span>
             </div>
             <button
               type="button"

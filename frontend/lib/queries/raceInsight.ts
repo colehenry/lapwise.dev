@@ -3,11 +3,12 @@ import type { RaceCornerInsight } from "@/lib/ai/race-corner-insight";
 import { minutes } from "./durations";
 
 interface RaceCornerInsightResponse {
-  insight: RaceCornerInsight | null;
+  insights: RaceCornerInsight[];
 }
 
 export const raceInsightKeys = {
-  session: (sessionId: number) => ["race-corner-insight", sessionId] as const,
+  session: (sessionId: number) =>
+    ["race-corner-insights-v2", sessionId] as const,
 };
 
 export function raceCornerInsightQuery(sessionId: number | null) {

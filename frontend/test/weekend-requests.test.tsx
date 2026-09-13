@@ -64,7 +64,7 @@ const ROUTES = {
   [SPRINT_PATH]: session,
   [PRACTICE_PATH]: session,
   [RACE_PATH]: session,
-  [INSIGHT_PATH]: { insight: null },
+  [INSIGHT_PATH]: { insights: [] },
   "/api/results/seasons": [SEASON],
 };
 

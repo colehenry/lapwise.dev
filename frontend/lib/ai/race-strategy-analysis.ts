@@ -56,6 +56,16 @@ export function looksLikeRaceStrategyInsight(question: string): boolean {
   return raceStrategyIntent(question) !== null;
 }
 
+export function supportsRaceStrategyIntent(
+  intent: RaceStrategyIntent,
+  pageContext?: AnalysisPageContext,
+): boolean {
+  return (
+    intent !== "safe_stop" ||
+    /^\/(?:live|replay)(?:\/|$)/.test(pageContext?.route ?? "")
+  );
+}
+
 function mentionsEntity(
   question: string,
   name: string | null,
@@ -197,7 +207,7 @@ function buildPlan(params: {
       },
     ],
     assumptions: [
-      "Pit duration is entry-to-exit pit-lane transit.",
+      "Pit duration is the time from pit entry to pit exit.",
       "Modeled estimates are withheld when coverage or fit-quality gates fail.",
     ],
     unresolvedTerms: [],
@@ -211,6 +221,7 @@ export async function tryRunRaceStrategyInsight(
   const intent = raceStrategyIntent(question);
   const season = extractSeason(question) ?? pageContext?.season ?? null;
   if (!intent || season === null) return null;
+  if (!supportsRaceStrategyIntent(intent, pageContext)) return null;
   const sessionType: ResultSessionType =
     pageContext?.sessionType === "sprint_race" || /\bsprint\b/i.test(question)
       ? "sprint_race"

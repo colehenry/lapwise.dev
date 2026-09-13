@@ -84,7 +84,7 @@ export const getRaceDynamics = tool({
 
 export const getRaceStrategyInsights = tool({
   description:
-    "Return bounded, deterministic pit-strategy evidence for a resolved race: failed undercut anatomy, safe-stop position margins, likely double-stacks, data coverage, and pace-model quality. Pit duration is total pit-lane transit, not stationary service time.",
+    "Return bounded, deterministic pit-strategy evidence for a resolved race: covered undercut attempts, position margins around pit stops, likely double-stacks, data coverage, and pace-model quality. Pit duration is the time from pit entry to pit exit, not only stationary service time.",
   inputSchema: z.object({
     session_id: z.number().int().positive(),
   }),

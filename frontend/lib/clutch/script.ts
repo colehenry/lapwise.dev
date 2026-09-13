@@ -18,7 +18,7 @@ export type ClutchVisual = {
  * `script` names another script in the same surface and answers in place if
  * it resolves; `ask` is a question for the dock and may carry slots.
  */
-export type Followup = { script: string } | { ask: string };
+export type Followup = { script: string } | { ask: string; optional?: boolean };
 
 export type ClutchScript = {
   id: string;
@@ -128,7 +128,10 @@ function resolveFollowups<C>(
   for (const followup of script.followups) {
     if ("ask" in followup) {
       const question = fillTemplate(surface, context, followup.ask);
-      if (question === null) return null;
+      if (question === null) {
+        if (followup.optional) continue;
+        return null;
+      }
       followups.push({ kind: "ask", question });
       continue;
     }

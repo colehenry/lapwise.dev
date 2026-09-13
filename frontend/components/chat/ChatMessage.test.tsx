@@ -40,6 +40,20 @@ describe("ChatMessage", () => {
     expect(screen.getByText("The answer is streaming.")).toBeTruthy();
   });
 
+  it("provides definitions for F1 terms in an answer", () => {
+    render(
+      <ChatMessage
+        messageRole="assistant"
+        content="Russell covered the undercut."
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "undercut" })).toBeTruthy();
+    expect(screen.getByRole("tooltip").textContent).toContain(
+      "pitting before the car ahead",
+    );
+  });
+
   it("shows friendly progress only while the answer is being prepared", () => {
     const { rerender } = render(
       <ChatMessage

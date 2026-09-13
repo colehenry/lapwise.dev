@@ -264,7 +264,7 @@ export function calculateRaceDynamics(params: {
 
   return {
     sessionId: params.sessionId,
-    finalResults: params.results.slice(0, 10),
+    finalResults: params.results,
     leaderTimeline: compressLeaders(leaders),
     lapsLed: Object.fromEntries(
       [...lapsLed.entries()].sort((a, b) => b[1] - a[1]),

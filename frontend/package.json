@@ -10,6 +10,7 @@
     "format": "biome format --write",
     "test": "vitest run",
     "test:watch": "vitest",
+    "audit:race-insights": "node --env-file-if-exists=.env.local scripts/audit-race-insight-coverage.mjs",
     "smoke:openrouter": "node --env-file-if-exists=.env.local scripts/smoke-openrouter.mjs",
     "seed:ai-suggestions": "node scripts/seed-suggested-question-cache.mjs"
   },

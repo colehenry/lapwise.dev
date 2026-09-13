@@ -101,8 +101,8 @@ describe("race strategy artifacts", () => {
     });
     const markdown = renderArtifactMarkdown(artifact);
 
-    expect(markdown).toContain("fresh-tyre laps gained 1.231s");
-    expect(markdown).toContain("total pit-lane transit was 5.676s longer");
+    expect(markdown).toContain("gained 1.231s with newer tyres");
+    expect(markdown).toContain("spent 5.676s longer in the pit lane");
     expect(markdown).toContain("cannot separate queueing");
   });
 
@@ -112,7 +112,7 @@ describe("race strategy artifacts", () => {
     expect(artifact.summary).toContain("rank deficient");
   });
 
-  it("labels a double-stack delta as transit rather than service", () => {
+  it("labels a double-stack delta as time in the pit lane", () => {
     const stackEvidence = evidence();
     const artifact = doubleStackArtifact(context, stackEvidence, {
       teamId: 1,
@@ -126,6 +126,6 @@ describe("race strategy artifacts", () => {
     const markdown = renderArtifactMarkdown(artifact);
 
     expect(markdown).toContain("2.500s longer in the pit lane");
-    expect(markdown).toContain("not stationary service");
+    expect(markdown).toContain("not only stationary service");
   });
 });

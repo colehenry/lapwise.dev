@@ -9,7 +9,7 @@ import { teamTint } from "@/lib/consoleFormat";
 import type { SessionResultDetail, SessionResultsResponse } from "@/lib/types";
 
 export type SessionContext = SessionResultsResponse & {
-  clutchInsight?: RaceCornerInsight | null;
+  clutchInsights?: RaceCornerInsight[];
 };
 
 /**
@@ -22,7 +22,10 @@ const SCRIPTS: ClutchScript[] = [
     id: "race-insight",
     question: "{insight.question}",
     parts: [{ slot: "insight.answer" }],
-    followups: [{ ask: "{insight.followup}" }],
+    followups: [
+      { ask: "{insight.suggestionOne}", optional: true },
+      { ask: "{insight.suggestionTwo}", optional: true },
+    ],
   },
   {
     id: "winner",
@@ -177,10 +180,13 @@ function resolveSlot(context: SessionContext, slot: string): SlotValue | null {
   if (!field) return null;
 
   if (group === "insight") {
-    if (field === "question") return plain(context.clutchInsight?.question);
-    if (field === "answer") return plain(context.clutchInsight?.answer);
-    if (field === "followup")
-      return plain(context.clutchInsight?.followupQuestion);
+    if (field === "question")
+      return plain(context.clutchInsights?.[0]?.question);
+    if (field === "answer") return plain(context.clutchInsights?.[0]?.answer);
+    if (field === "suggestionOne")
+      return plain(context.clutchInsights?.[1]?.question);
+    if (field === "suggestionTwo")
+      return plain(context.clutchInsights?.[2]?.question);
     return null;
   }
 

@@ -5,7 +5,10 @@ import {
 } from "./analysis-engine";
 import type { DriverCandidate } from "./driver-resolution";
 import { extractSeason } from "./question-parsing";
-import { raceStrategyIntent } from "./race-strategy-analysis";
+import {
+  raceStrategyIntent,
+  supportsRaceStrategyIntent,
+} from "./race-strategy-analysis";
 
 const candidates: DriverCandidate[] = [
   {
@@ -46,6 +49,27 @@ describe("deterministic analysis planning", () => {
       "double_stack",
     );
     expect(raceStrategyIntent("Explain the winning strategy")).toBeNull();
+  });
+
+  it("limits stop-position questions to live or replay context", () => {
+    expect(
+      supportsRaceStrategyIntent("safe_stop", {
+        route: "/results/2026/13",
+        season: 2026,
+      }),
+    ).toBe(false);
+    expect(
+      supportsRaceStrategyIntent("safe_stop", {
+        route: "/replay",
+        season: 2026,
+      }),
+    ).toBe(true);
+    expect(
+      supportsRaceStrategyIntent("undercut_failure", {
+        route: "/results/2026/13",
+        season: 2026,
+      }),
+    ).toBe(true);
   });
 
   it("recognizes a qualifying comparison and preserves driver order", () => {

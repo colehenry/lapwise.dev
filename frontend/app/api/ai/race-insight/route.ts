@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { selectRaceCornerInsight } from "@/lib/ai/race-corner-insight";
+import { selectRaceCornerInsights } from "@/lib/ai/race-corner-insight";
+import { loadRaceDynamics } from "@/lib/ai/race-dynamics";
 import { loadRaceStrategyEvidence } from "@/lib/ai/race-strategy";
 
 export const dynamic = "force-dynamic";
@@ -15,9 +16,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const evidence = await loadRaceStrategyEvidence(sessionId);
+    const [strategy, dynamics] = await Promise.all([
+      loadRaceStrategyEvidence(sessionId),
+      loadRaceDynamics(sessionId),
+    ]);
     return NextResponse.json(
-      { insight: selectRaceCornerInsight(evidence) },
+      { insights: selectRaceCornerInsights({ strategy, dynamics }) },
       { headers: { "Cache-Control": "private, max-age=300" } },
     );
   } catch {

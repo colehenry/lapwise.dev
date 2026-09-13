@@ -163,7 +163,7 @@ export default function RoundContent() {
     if (!sessionData || (strategySession && cornerInsightLoading)) return null;
     return {
       ...sessionData,
-      clutchInsight: cornerInsight?.insight ?? null,
+      clutchInsights: cornerInsight?.insights ?? [],
     };
   }, [sessionData, strategySession, cornerInsightLoading, cornerInsight]);
   const clutchPageContext = useMemo<AnalysisPageContext | null>(

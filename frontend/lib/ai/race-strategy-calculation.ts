@@ -58,7 +58,7 @@ export function calculateRaceStrategyEvidence(params: {
     safeStopCases: findSafeStopCases(laps, pitStops, stopLoss),
     evidenceRules: [
       "Missing numeric values include NULL and non-finite values such as PostgreSQL NaN.",
-      "Pit duration means entry-to-exit pit-lane transit, never stationary service time.",
+      "Pit duration means time from pit entry to pit exit, never only stationary service time.",
       "Undercut components are observed separately; the data does not assign operational cause.",
       "Safe-stop estimates are withheld when pace-model quality or stop-loss support fails.",
       "The pace intercept describes a driver-entry, not a car or driver in isolation.",
