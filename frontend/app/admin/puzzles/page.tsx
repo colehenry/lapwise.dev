@@ -140,7 +140,7 @@ export default function AdminPuzzlesPage() {
           onApprove={(number) =>
             run(() =>
               approveAdminGuessPuzzle(number).then(
-                scheduled(`Pole #${number}`),
+                scheduled(`Guess #${number}`),
               ),
             )
           }

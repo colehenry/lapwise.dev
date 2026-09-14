@@ -73,7 +73,7 @@ export const gamesLinks: NavLink[] = [
   },
   {
     href: "/guess",
-    label: "Who's on Pole?",
+    label: "Guess the Driver",
     icon: "M12 3a7 7 0 0 0-7 7c0 5 7 11 7 11s7-6 7-11a7 7 0 0 0-7-7Zm0 4a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z",
   },
 ];

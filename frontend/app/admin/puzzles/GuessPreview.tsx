@@ -25,7 +25,7 @@ function closeness(row: GuessGameResult) {
   };
 }
 
-/** One Who's on Pole puzzle as a player meets it.
+/** One Guess the Driver puzzle as a player meets it.
  *
  *  The winning row first, then the eligible drivers whose clues sit closest
  *  to the answer — each drawn as the guess it would be, so the reviewer sees
@@ -71,7 +71,7 @@ export default function GuessPreview({ number }: { number: number }) {
           ← Games
         </Link>
         <h2 className="font-mono text-sm font-bold text-ink-strong">
-          Pole #{String(puzzle.number).padStart(3, "0")}
+          Guess #{String(puzzle.number).padStart(3, "0")}
         </h2>
         <span className="text-xs text-ink-faint">
           {phase === "draft"
@@ -108,7 +108,7 @@ export default function GuessPreview({ number }: { number: number }) {
               variant="ghost"
               disabled={action.isPending}
               onClick={() => {
-                if (window.confirm(`Delete Pole #${puzzle.number}?`))
+                if (window.confirm(`Delete Guess #${puzzle.number}?`))
                   action.mutate(() => deleteAdminGuessPuzzle(puzzle.number));
               }}
             >

@@ -35,6 +35,8 @@ class DailyGamesSummaryItem(BaseModel):
     name: str
     href: str
     state: Literal["not_started", "in_progress", "complete"]
+    progress: int
+    total: int
     puzzle_number: int | None
     published_on: str | None
 

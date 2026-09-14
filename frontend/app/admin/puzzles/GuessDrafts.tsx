@@ -87,7 +87,7 @@ export default function GuessDrafts({
     <section className="rounded-sm border border-line-soft bg-surface-band">
       <div className="flex flex-wrap items-center gap-2 border-b border-line-soft px-3 py-2">
         <h2 className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-          Pole drafts · {drafts.length}
+          Guess drafts · {drafts.length}
         </h2>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <input

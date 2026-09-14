@@ -566,6 +566,73 @@ body {
   }
 }
 
+/* Daily Games tiles: each miniature board plays itself under the pointer.
+   The grid's open cells fill in a sweep; the clue row resolves to a pattern. */
+.game-tile__clue {
+  --reveal: var(--surface-raised);
+  background-color: var(--surface-raised);
+}
+
+.game-tile__clue--exact {
+  background-color: var(--compound-inter);
+}
+
+.game-tile__clue--reveal-exact {
+  --reveal: var(--compound-inter);
+}
+
+.game-tile__clue--reveal-close {
+  --reveal: var(--compound-medium);
+}
+
+@keyframes gameTileSweep {
+  0%,
+  100% {
+    background-color: transparent;
+    border-color: var(--line-strong);
+  }
+  40% {
+    background-color: var(--accent);
+    border-color: var(--accent-bright);
+  }
+}
+
+@keyframes gameTileReveal {
+  0%,
+  15%,
+  85%,
+  100% {
+    background-color: var(--surface-raised);
+  }
+  35%,
+  65% {
+    background-color: var(--reveal);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .game-tile:hover .game-tile__cell--open,
+  .game-tile:focus-visible .game-tile__cell--open {
+    animation: gameTileSweep 1.5s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 110ms);
+  }
+
+  .game-tile:hover .game-tile__clue--reveal-exact,
+  .game-tile:hover .game-tile__clue--reveal-close,
+  .game-tile:focus-visible .game-tile__clue--reveal-exact,
+  .game-tile:focus-visible .game-tile__clue--reveal-close {
+    animation: gameTileReveal 2.2s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 140ms);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-tile:hover .game-tile__clue--reveal-exact,
+  .game-tile:hover .game-tile__clue--reveal-close {
+    background-color: var(--reveal);
+  }
+}
+
 /* The lane runs unless the reader is hovering it or has asked for stillness. */
 @keyframes tickerRoll {
   from {

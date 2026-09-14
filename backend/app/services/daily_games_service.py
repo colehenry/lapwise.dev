@@ -7,6 +7,9 @@ from app.models import GameSession, GuessGamePuzzle, GuessGameSession, Puzzle
 from app.schemas.daily_games import DailyGamesSummaryItem, DailyGamesSummaryResponse
 from app.services.daily_game_clock import puzzle_date
 
+GRID_CELLS = 9
+DEFAULT_MAX_GUESSES = 10
+
 
 def _state(session, progress: int) -> str:
     if session is None:
@@ -76,18 +79,18 @@ class DailyGamesService:
                     )
                     .limit(1)
                 )
+        grid_solved = grid_session.cells_solved if grid_session else 0
+        grid_missed = grid_session.misses if grid_session else 0
+        guesses_used = guess_session.guesses_used if guess_session else 0
         return DailyGamesSummaryResponse(
             games=[
                 DailyGamesSummaryItem(
                     game="grid",
                     name="Daily Grid",
                     href="/daily",
-                    state=_state(
-                        grid_session,
-                        (grid_session.cells_solved + grid_session.misses)
-                        if grid_session
-                        else 0,
-                    ),
+                    state=_state(grid_session, grid_solved + grid_missed),
+                    progress=grid_solved,
+                    total=GRID_CELLS,
                     puzzle_number=grid.number if grid else None,
                     published_on=(
                         grid.published_on.isoformat()
@@ -97,12 +100,11 @@ class DailyGamesService:
                 ),
                 DailyGamesSummaryItem(
                     game="guess",
-                    name="Who's on Pole?",
+                    name="Guess the Driver",
                     href="/guess",
-                    state=_state(
-                        guess_session,
-                        guess_session.guesses_used if guess_session else 0,
-                    ),
+                    state=_state(guess_session, guesses_used),
+                    progress=guesses_used,
+                    total=guess.max_guesses if guess else DEFAULT_MAX_GUESSES,
                     puzzle_number=guess.number if guess else None,
                     published_on=(
                         guess.published_on.isoformat()

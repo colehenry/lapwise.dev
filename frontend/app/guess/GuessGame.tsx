@@ -39,7 +39,7 @@ function GuessGameLoaded({ puzzleNumber }: { puzzleNumber?: number }) {
   const answer = session?.answer;
   const count = finished
     ? session?.status === "won"
-      ? `On pole in ${guesses.length}`
+      ? `Guessed in ${guesses.length}`
       : `Answer: ${answer?.full_name ?? "—"}`
     : `Guess ${guesses.length + 1} of ${total}`;
   const excluded = new Set(guesses.map((guess) => guess.driver.driver_slug));
