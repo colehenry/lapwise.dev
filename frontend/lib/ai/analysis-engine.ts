@@ -18,6 +18,7 @@ import {
 } from "./qualifying-comparison";
 import { extractSeason } from "./question-parsing";
 import { tryRunRaceAnalysis } from "./race-analysis";
+import { tryRunRaceStrategyInsight } from "./race-strategy-analysis";
 import { tryRunRulesAnalysis } from "./rules-analysis";
 import { tryRunSessionResultAnalysis } from "./session-result-analysis";
 import { tryRunStandingsAnalysis } from "./standings-analysis";
@@ -152,6 +153,9 @@ export async function tryRunDeterministicAnalysis(
 
   const weather = await tryRunWeatherAnalysis(question, pageContext);
   if (weather) return finalizeExecution(weather);
+
+  const strategy = await tryRunRaceStrategyInsight(question, pageContext);
+  if (strategy) return finalizeExecution(strategy);
 
   const race = await tryRunRaceAnalysis(question, pageContext);
   if (race) return finalizeExecution(race);

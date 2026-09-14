@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { analysisPlanSchema } from "./analysis-contracts";
 import type { DeterministicAnalysisResult } from "./analysis-engine";
 import { createDeterministicAnalysisResponse } from "./deterministic-response";
+import { beginRequestLog, type RequestLogRow } from "./request-log";
 
 const analysis: DeterministicAnalysisResult = {
   plan: analysisPlanSchema.parse({
@@ -43,12 +44,24 @@ const analysis: DeterministicAnalysisResult = {
 
 describe("deterministic analysis response", () => {
   it("uses the existing stream protocol without a model request", async () => {
+    const rows: RequestLogRow[] = [];
+    const log = beginRequestLog(
+      new Request("http://localhost/api/ai/ask"),
+      "unknown",
+      {
+        write: async (row) => {
+          rows.push(row);
+        },
+      },
+    );
+    log.question = analysis.plan.question;
     const response = createDeterministicAnalysisResponse({
       analysis,
       conversationId: "seed",
       question: analysis.plan.question,
       remaining: 2,
       seedMode: true,
+      log,
     });
     const events = (await response.text())
       .trim()
@@ -71,5 +84,14 @@ describe("deterministic analysis response", () => {
         provider: "deterministic",
       },
     });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      status: "ok",
+      path: "deterministic",
+      analysis_model: "deterministic/qualifying-comparison-v1",
+      sql_calls: 1,
+      http_status: 200,
+    });
+    expect(rows[0].time_to_first_token_ms).not.toBeNull();
   });
 });

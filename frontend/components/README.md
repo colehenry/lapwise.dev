@@ -8,6 +8,7 @@ Grouped by the surface each component serves. Nothing lives at the top level.
 | `auth/` | Sign-in and connected-account controls |
 | `charts/` | Every Recharts and canvas chart, plus `chart-primitives` |
 | `chat/` | Clutch conversation surface |
+| `clutch/` | Clutch in the corner of a panel: the head, its bubble, and the surfaces in `lib/clutch` they read |
 | `comments/` | Race comment threads and moderation |
 | `entities/` | Driver, constructor, and circuit panels and tables |
 | `favorites/` | Favorites picker and prompts |

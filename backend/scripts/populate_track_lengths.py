@@ -62,6 +62,7 @@ TRACK_LENGTHS = {
     "Nürburgring": 5.148,
     "Hockenheim": 4.574,
     "Sochi": 5.848,
+    "Madrid": 5.470,
 }
 
 

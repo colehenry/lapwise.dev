@@ -1,6 +1,7 @@
-const AVAILABLE_STATIC_TRACK_MAP_IDS = new Set(
-  Array.from({ length: 35 }, (_, index) => index + 1),
-);
+const AVAILABLE_STATIC_TRACK_MAP_IDS = new Set([
+  ...Array.from({ length: 35 }, (_, index) => index + 1),
+  84,
+]);
 
 export function hasStaticTrackMap(circuitId: number | null | undefined) {
   return (

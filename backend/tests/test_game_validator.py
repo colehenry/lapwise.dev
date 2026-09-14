@@ -11,6 +11,7 @@ from scripts.game_validator import (
     _check_decoy_pools,
     _check_depths,
     _check_marquee_answers,
+    _check_structure,
     hall_deficiency,
     has_perfect_assignment,
 )
@@ -95,7 +96,8 @@ def test_two_answer_cell_passes_when_both_are_known_and_one_anchors():
     assert not report.errors
 
 
-def test_two_answer_cell_fails_when_an_answer_is_obscure():
+def test_two_answer_cell_passes_when_one_answer_is_famous():
+    """Thin is not bad. A famous name beside an obscure one is a way in."""
     report = Report(board_id="test")
     cells = _cells({"r1__c1": {"prost", "nobody"}})
     recognition = {
@@ -105,12 +107,26 @@ def test_two_answer_cell_fails_when_an_answer_is_obscure():
 
     _check_depths(report, cells, recognition)
 
-    assert "thin_cell_below_floor" in _codes(report, "error")
+    assert not report.errors
 
 
-def test_two_answer_cell_fails_without_an_anchor():
+def test_thin_cell_fails_when_nobody_is_recognisable():
+    report = Report(board_id="test")
+    cells = _cells({"r1__c1": {"nobody", "noone"}, "r2__c2": {"whom"}})
+    recognition = {
+        "nobody": _named("nobody", wins=0, entries=12),
+        "noone": _named("noone", wins=0, entries=30),
+        "whom": _named("whom", wins=0, entries=8),
+    }
+
+    _check_depths(report, cells, recognition)
+
+    assert _codes(report, "error") == {"thin_cell_below_floor"}
+
+
+def test_two_answer_cell_without_an_anchor_is_a_note():
     """Both answers clear the floor on entries alone, and neither is a name a
-    casual player reaches for first."""
+    casual player reaches for first. Playable, but worth a look."""
     report = Report(board_id="test")
     cells = _cells({"r1__c1": {"journeyman", "grafter"}})
     recognition = {
@@ -120,24 +136,25 @@ def test_two_answer_cell_fails_without_an_anchor():
 
     _check_depths(report, cells, recognition)
 
-    assert "thin_cell_without_anchor" in _codes(report, "error")
-    assert "thin_cell_below_floor" not in _codes(report, "error")
+    assert not report.errors
+    assert "thin_cell_without_anchor" in _codes(report, "warning")
 
 
-def test_three_two_answer_cells_are_rejected():
+def test_many_two_answer_cells_are_a_note():
     report = Report(board_id="test")
     champion = _named("champ", wins=40, entries=200, champion=True)
     recognition = {"champ": champion} | {
-        f"other{n}": _named(f"other{n}", wins=6, entries=120) for n in range(3)
+        f"other{n}": _named(f"other{n}", wins=6, entries=120) for n in range(5)
     }
-    cells = _cells({f"r{n}__c1": {"champ", f"other{n}"} for n in range(3)})
+    cells = _cells({f"r{n}__c1": {"champ", f"other{n}"} for n in range(5)})
 
     _check_depths(report, cells, recognition)
 
-    assert "too_many_thin_cells" in _codes(report, "error")
+    assert not report.errors
+    assert "too_many_thin_cells" in _codes(report, "warning")
 
 
-def test_singleton_and_thin_cell_cannot_share_a_board():
+def test_singleton_beside_a_thin_cell_is_a_note():
     report = Report(board_id="test")
     recognition = {
         "champ": _named("champ", wins=40, entries=200, champion=True),
@@ -148,7 +165,8 @@ def test_singleton_and_thin_cell_cannot_share_a_board():
 
     _check_depths(report, cells, recognition)
 
-    assert "thin_cell_with_singleton" in _codes(report, "error")
+    assert not report.errors
+    assert "thin_cell_with_singleton" in _codes(report, "warning")
 
 
 def test_shared_anchor_across_thin_cells_is_reported():
@@ -182,6 +200,48 @@ def test_single_axis_decoys_are_reported_when_a_row_adds_nothing():
     _check_decoy_pools(report, board, cells)
 
     assert "single_axis_decoys" in _codes(report, "warning")
+
+
+def _structured_grid() -> dict:
+    board = _grid()
+    board["rows"][0]["predicate"] = {"kind": "won_at"}
+    for category in board["rows"][1:] + board["columns"]:
+        category["predicate"] = {"kind": "constructor"}
+    return board
+
+
+def _structure_cells(**overrides: set[str]) -> dict[str, set[str]]:
+    cells = {
+        f"{row}__{column}": {f"{row}{column}", f"{row}{column}x"}
+        for row in ("r1", "r2", "r3")
+        for column in ("c1", "c2", "c3")
+    }
+    cells.update(overrides)
+    return cells
+
+
+def test_identical_cells_are_an_error():
+    report = Report(board_id="test")
+    board = _structured_grid()
+    cells = _structure_cells(r1__c1={"a", "b", "c"}, r1__c2={"a", "b", "c"})
+
+    _check_structure(report, board, cells)
+
+    assert "identical_cells" in _codes(report, "error")
+    assert "near_identical_cells" not in _codes(report)
+
+
+def test_near_identical_cells_stay_a_warning():
+    report = Report(board_id="test")
+    board = _structured_grid()
+    cells = _structure_cells(
+        r1__c1={"a", "b", "c", "d", "e"}, r1__c2={"a", "b", "c", "d"}
+    )
+
+    _check_structure(report, board, cells)
+
+    assert "near_identical_cells" in _codes(report, "warning")
+    assert not report.errors
 
 
 def test_a_cell_of_journeymen_is_rejected_however_deep_it_is():

@@ -51,9 +51,6 @@ function getTotalHeight(showDelta: boolean, showDrs: boolean) {
 
 const LABEL_FONT = "bold 8px monospace";
 const TICK_FONT = "8px monospace";
-const AXIS_COLOR = "rgba(255, 255, 255, 0.15)";
-const GRID_COLOR = "rgba(255, 255, 255, 0.06)";
-const PROGRESS_LINE_COLOR = "rgba(255, 255, 255, 0.4)";
 
 /**
  * Precompute per-driver, per-lap telemetry data from replay frames.
@@ -115,6 +112,8 @@ function drawTraces(
   showDrs: boolean,
 ) {
   const chartWidth = width - CHART_PADDING_LEFT - CHART_PADDING_RIGHT;
+  const inkToken = resolveToken("--ink-strong");
+  const ink = (alpha: number) => hexToRgba(inkToken, alpha);
 
   // Use max samples across all configs for x-axis normalization
   const maxSamples = Math.max(...configs.map((c) => c.lapData.speeds.length));
@@ -140,8 +139,8 @@ function drawTraces(
 
   // --- Y-axis labels and grid ---
   ctx.font = TICK_FONT;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-  ctx.strokeStyle = GRID_COLOR;
+  ctx.fillStyle = ink(0.3);
+  ctx.strokeStyle = ink(0.06);
   ctx.lineWidth = 1;
 
   // Speed Y-axis ticks
@@ -159,16 +158,16 @@ function drawTraces(
   }
   // Speed unit label
   ctx.font = LABEL_FONT;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+  ctx.fillStyle = ink(0.4);
   ctx.fillText("km/h", CHART_PADDING_LEFT - 6, speedY0 - 1);
 
   // Throttle/Brake Y-axis
   ctx.font = TICK_FONT;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+  ctx.fillStyle = ink(0.3);
   ctx.fillText("100%", CHART_PADDING_LEFT - 6, tbY0 + 4);
   ctx.fillText("100%", CHART_PADDING_LEFT - 6, tbY0 + tbH - 4);
   // Center divider
-  ctx.strokeStyle = AXIS_COLOR;
+  ctx.strokeStyle = ink(0.15);
   ctx.setLineDash([2, 2]);
   ctx.beginPath();
   ctx.moveTo(CHART_PADDING_LEFT, tbY0 + tbH / 2);
@@ -177,25 +176,25 @@ function drawTraces(
   ctx.setLineDash([]);
   // Labels
   ctx.font = LABEL_FONT;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+  ctx.fillStyle = ink(0.4);
   ctx.fillText("THR", CHART_PADDING_LEFT - 6, tbY0 + tbH / 4);
   ctx.fillText("BRK", CHART_PADDING_LEFT - 6, tbY0 + (tbH * 3) / 4);
 
   // Gear Y-axis
   ctx.font = TICK_FONT;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+  ctx.fillStyle = ink(0.3);
   for (const g of [2, 4, 6, 8]) {
     const y = gearY0 + gearH - (g / maxGear) * gearH;
     ctx.fillText(`${g}`, CHART_PADDING_LEFT - 6, y);
   }
   ctx.font = LABEL_FONT;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+  ctx.fillStyle = ink(0.4);
   ctx.fillText("GEAR", CHART_PADDING_LEFT - 6, gearY0 - 1);
 
   // DRS label (hidden for 2026+ seasons)
   if (showDrs) {
     ctx.font = LABEL_FONT;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.fillStyle = ink(0.4);
     ctx.textBaseline = "middle";
     ctx.fillText("DRS", CHART_PADDING_LEFT - 6, drsY0 + drsH / 2);
   }
@@ -353,17 +352,17 @@ function drawTraces(
 
     // Y-axis labels
     ctx.font = LABEL_FONT;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.fillStyle = ink(0.4);
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
     ctx.fillText("Δ SPD", CHART_PADDING_LEFT - 6, deltaY0 + deltaH / 2);
     ctx.font = TICK_FONT;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
+    ctx.fillStyle = ink(0.25);
     ctx.fillText(`+${deltaCeil}`, CHART_PADDING_LEFT - 6, deltaY0 + 4);
     ctx.fillText(`-${deltaCeil}`, CHART_PADDING_LEFT - 6, deltaY0 + deltaH - 2);
 
     // Zero line
-    ctx.strokeStyle = AXIS_COLOR;
+    ctx.strokeStyle = ink(0.15);
     ctx.setLineDash([2, 2]);
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -402,7 +401,7 @@ function drawTraces(
     }
 
     // Delta line trace
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+    ctx.strokeStyle = ink(0.6);
     ctx.lineWidth = 1;
     ctx.beginPath();
     for (let i = 0; i < drawUpTo; i++) {
@@ -433,7 +432,7 @@ function drawTraces(
     const xScale = chartWidth / (maxSamples - 1);
     const sampleScale = (maxSamples - 1) / Math.max(totalSamples - 1, 1);
     const px = CHART_PADDING_LEFT + primaryProgressIdx * sampleScale * xScale;
-    ctx.strokeStyle = PROGRESS_LINE_COLOR;
+    ctx.strokeStyle = ink(0.4);
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
@@ -444,7 +443,7 @@ function drawTraces(
   }
 
   // Bottom axis
-  ctx.strokeStyle = AXIS_COLOR;
+  ctx.strokeStyle = ink(0.15);
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(CHART_PADDING_LEFT, chartBottomY);
@@ -772,7 +771,8 @@ export default function TelemetryPanel({
                     left: tooltip.snappedX,
                     height: getTotalHeight(!!compareLapData, hasDrs),
                     width: 1,
-                    background: "rgba(255, 255, 255, 0.2)",
+                    background:
+                      "color-mix(in srgb, var(--ink-strong) 20%, transparent)",
                   }}
                 />
               )}

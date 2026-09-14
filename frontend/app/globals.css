@@ -519,6 +519,8 @@ body {
      empty, and nothing shrinks because a neighbour is full. An `auto` row here
      meant the drivers' table was silently dictating the height of the map. */
   .home-console {
+    --right-rail-rise: 72px;
+
     grid-template-columns:
       clamp(276px, 22vw, 348px)
       minmax(0, 1fr)
@@ -563,6 +565,84 @@ body {
   }
   .home-console__clutch {
     grid-area: clutch;
+  }
+}
+
+@media (min-width: 1180px) {
+  /* Give the right rail its own tighter split without moving the console's
+     outer edges or the shared map/race row line. */
+  .home-console__grid {
+    margin-bottom: var(--right-rail-rise);
+  }
+  .home-console__clutch {
+    margin-top: calc(-1 * var(--right-rail-rise));
+  }
+}
+
+/* Daily Games tiles: each miniature board plays itself under the pointer.
+   The grid's open cells fill in a sweep; the clue row resolves to a pattern. */
+.game-tile__clue {
+  --reveal: var(--surface-raised);
+  background-color: var(--surface-raised);
+}
+
+.game-tile__clue--exact {
+  background-color: var(--compound-inter);
+}
+
+.game-tile__clue--reveal-exact {
+  --reveal: var(--compound-inter);
+}
+
+.game-tile__clue--reveal-close {
+  --reveal: var(--compound-medium);
+}
+
+@keyframes gameTileSweep {
+  0%,
+  100% {
+    background-color: transparent;
+    border-color: var(--line-strong);
+  }
+  40% {
+    background-color: var(--accent);
+    border-color: var(--accent-bright);
+  }
+}
+
+@keyframes gameTileReveal {
+  0%,
+  15%,
+  85%,
+  100% {
+    background-color: var(--surface-raised);
+  }
+  35%,
+  65% {
+    background-color: var(--reveal);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .game-tile:hover .game-tile__cell--open,
+  .game-tile:focus-visible .game-tile__cell--open {
+    animation: gameTileSweep 1.5s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 110ms);
+  }
+
+  .game-tile:hover .game-tile__clue--reveal-exact,
+  .game-tile:hover .game-tile__clue--reveal-close,
+  .game-tile:focus-visible .game-tile__clue--reveal-exact,
+  .game-tile:focus-visible .game-tile__clue--reveal-close {
+    animation: gameTileReveal 2.2s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 140ms);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-tile:hover .game-tile__clue--reveal-exact,
+  .game-tile:hover .game-tile__clue--reveal-close {
+    background-color: var(--reveal);
   }
 }
 
@@ -630,6 +710,22 @@ body {
   }
 }
 
+/* A Clutch bubble pops out of its tail; `motion-safe:` gates it. The dock
+   rises instead, having no tail to come from. */
+@keyframes clutchPop {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes clutchRise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
 /* Clutch is working: the start gantry. Lights fill left to right, hold, then
    go out together — three separate keyframes because one shared keyframe with
    per-lamp delays would stagger the extinguish too, and going out at once is
@@ -679,18 +775,20 @@ body {
   }
 }
 
+/* Each lamp carries the full shorthand: a nameless `animation: 2s …` base
+   rule minifies to `animation: none` in production, which zeroes the duration
+   before the per-lamp names apply. */
 .start-lights > span {
   opacity: 0.16;
-  animation: 2s linear infinite;
 }
 .start-lights > span:nth-child(1) {
-  animation-name: startLight1;
+  animation: startLight1 2s linear infinite;
 }
 .start-lights > span:nth-child(2) {
-  animation-name: startLight2;
+  animation: startLight2 2s linear infinite;
 }
 .start-lights > span:nth-child(3) {
-  animation-name: startLight3;
+  animation: startLight3 2s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1084,10 +1182,18 @@ textarea {
 /* Emitted by markdownToHtml, so the class name is fixed. */
 .prose .markdown-clutch-icon {
   display: inline-block;
-  width: 1em;
-  height: 1em;
+  width: 1.2em;
+  height: 1.2em;
   margin-left: 0.25rem;
-  vertical-align: -0.15em;
+  vertical-align: -0.25em;
+}
+
+/* Clutch's helmet: the SVG masks a currentColor fill, so the one asset
+   follows the text colour in both themes. */
+.clutch-mark {
+  background-color: currentColor;
+  mask: url("/brand/clutch.svg") center / contain no-repeat;
+  -webkit-mask: url("/brand/clutch.svg") center / contain no-repeat;
 }
 
 /* Chat: a step tighter throughout. Links go unadorned because an answer tints

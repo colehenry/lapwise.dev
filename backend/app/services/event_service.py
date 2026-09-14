@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import fastf1
 import pandas as pd
@@ -33,37 +33,23 @@ class EventService:
         # Validate limit
         limit = max(1, min(limit, 10))
 
-        # Get current year (check current year first, then next year)
-        current_year = datetime.now().year
-        today = datetime.now().date()
+        now = datetime.now(timezone.utc)
+        current_year = now.year
 
         upcoming = None
 
         # Try current year first
         try:
-            schedule = fastf1.get_event_schedule(current_year, include_testing=True)
-            all_events = schedule.sort_values("EventDate")
-
-            # Filter for upcoming events
-            upcoming = all_events[
-                all_events["EventDate"].apply(
-                    lambda x: x.date() if hasattr(x, "date") else x
-                )
-                >= today
-            ]
+            upcoming = EventService._still_to_run(
+                fastf1.get_event_schedule(current_year, include_testing=True), now
+            )
 
             # If no upcoming events in current year, try next year
             if len(upcoming) == 0:
-                schedule = fastf1.get_event_schedule(
-                    current_year + 1, include_testing=True
+                upcoming = EventService._still_to_run(
+                    fastf1.get_event_schedule(current_year + 1, include_testing=True),
+                    now,
                 )
-                all_events = schedule.sort_values("EventDate")
-                upcoming = all_events[
-                    all_events["EventDate"].apply(
-                        lambda x: x.date() if hasattr(x, "date") else x
-                    )
-                    >= today
-                ]
 
         except Exception as e:
             # Log error ideally
@@ -136,6 +122,32 @@ class EventService:
         return response_events
 
     @staticmethod
+    def _still_to_run(schedule: pd.DataFrame, now: datetime) -> pd.DataFrame:
+        """The schedule's events whose race has not started, in date order.
+
+        The race day is not the boundary: on the Sunday the card would sit at
+        zero all day. An event is upcoming until lights out, and a weekend
+        with no race (testing) until its final day has passed.
+        """
+        schedule = schedule.sort_values("EventDate")
+        if schedule.empty:
+            return schedule
+        return schedule[
+            schedule.apply(lambda event: EventService._closes_at(event) > now, axis=1)
+        ]
+
+    @staticmethod
+    def _closes_at(event) -> datetime:
+        start = EventService._race_start_utc(event)
+        if start is not None:
+            return datetime.fromisoformat(start).replace(tzinfo=timezone.utc)
+        event_date = event["EventDate"]
+        last_day = event_date.date() if hasattr(event_date, "date") else event_date
+        return datetime.combine(
+            last_day + timedelta(days=1), datetime.min.time(), timezone.utc
+        )
+
+    @staticmethod
     async def _last_races(
         db: AsyncSession, circuit_ids: list[int]
     ) -> dict[int, tuple[int, int]]:
@@ -182,20 +194,35 @@ class EventService:
     async def _find_matching_circuit(
         db: AsyncSession, location: str, country: str
     ) -> Circuit | None:
-        """Helper to find circuit by location/country"""
-        # Exact match first
-        circuit_query = select(Circuit).where(
-            Circuit.location == location, Circuit.country == country
+        """The layout a schedule entry names, by location then by country.
+
+        A location can carry more than one layout — Madrid is Jarama through
+        1981 and the Madring from 2026 — so a match is the layout raced most
+        recently, and a layout never raced yet outranks one long retired.
+        """
+        circuit = await EventService._latest_layout(
+            db, Circuit.location == location, Circuit.country == country
         )
-        circuit_result = await db.execute(circuit_query)
-        circuit = circuit_result.scalar_one_or_none()
         if circuit:
             return circuit
-
-        # Fallback: case-insensitive match on location or country name
-        circuit_query = select(Circuit).where(
-            func.lower(Circuit.country) == country.lower()
+        return await EventService._latest_layout(
+            db, func.lower(Circuit.country) == country.lower()
         )
-        circuit_result = await db.execute(circuit_query)
-        circuit = circuit_result.scalar_one_or_none()
-        return circuit
+
+    @staticmethod
+    async def _latest_layout(db: AsyncSession, *criteria) -> Circuit | None:
+        """One layout among those matching: most recent session first, then
+        the newest row for a layout with no sessions at all."""
+        last_session = (
+            select(Session.circuit_id, func.max(Session.date).label("last"))
+            .group_by(Session.circuit_id)
+            .subquery()
+        )
+        query = (
+            select(Circuit)
+            .outerjoin(last_session, last_session.c.circuit_id == Circuit.id)
+            .where(*criteria)
+            .order_by(last_session.c.last.desc().nulls_last(), Circuit.id.desc())
+            .limit(1)
+        )
+        return (await db.execute(query)).scalar_one_or_none()

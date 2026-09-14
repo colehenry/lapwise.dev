@@ -14,6 +14,7 @@ interface ChatTranscriptProps {
   isAsking: boolean;
   disabled: boolean;
   onSend: (question: string) => void;
+  variant?: "page" | "dock";
 }
 
 const FOLLOW_DISTANCE_PX = 96;
@@ -26,6 +27,7 @@ export default function ChatTranscript({
   isAsking,
   disabled,
   onSend,
+  variant = "page",
 }: ChatTranscriptProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const shouldFollowRef = useRef(true);
@@ -66,13 +68,22 @@ export default function ChatTranscript({
       aria-relevant="additions text"
     >
       {messages.length === 0 ? (
-        <SuggestedQuestions onSelect={onSend} disabled={disabled} />
+        variant === "page" && (
+          <SuggestedQuestions onSelect={onSend} disabled={disabled} />
+        )
       ) : (
-        <div className="page-frame py-5 md:py-7">
+        <div
+          className={
+            variant === "dock"
+              ? "flex flex-col gap-2 px-3 py-3"
+              : "page-frame py-5 md:py-7"
+          }
+        >
           <div className="mx-auto w-full min-w-0 max-w-3xl">
             {messages.map((message) => (
               <ChatMessage
                 key={message.id}
+                variant={variant}
                 messageRole={message.role}
                 content={message.content}
                 charts={message.charts}

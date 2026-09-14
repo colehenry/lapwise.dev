@@ -71,7 +71,7 @@ afterEach(() => {
 });
 
 describe("race weekend initial load", () => {
-  it("requests availability, the active session, summaries, and seasons only", async () => {
+  it("requests the active session without probing other tabs", async () => {
     const recorder = installFetchRecorder(ROUTES);
     renderWithQueryClient(<RoundContent />);
     await flushRequests();

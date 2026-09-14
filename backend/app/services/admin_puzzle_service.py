@@ -1,20 +1,19 @@
-"""The editorial queue: generate proposals, read one in full, then schedule it.
+"""The editorial queue: generate proposals and read one in full.
 
-Generating and freezing run the authoring path, which is synchronous
-SQLAlchemy against its own session. Both are offloaded to a thread rather than
-rewritten async: they are admin-only, they run for seconds rather than
-milliseconds, and a second implementation of either is a second thing that can
-disagree with the evidence a player is shown.
+Generation runs the authoring path, which is synchronous SQLAlchemy against
+its own session. It is offloaded to a thread rather than rewritten async: it is
+admin-only, runs for seconds, and a second implementation is a second thing
+that can disagree with the evidence a player is shown.
+
+Scheduling lives in `daily_schedule_service`; hand-building in
+`admin_board_builder_service`.
 """
 
-from datetime import datetime, timezone
-
 from fastapi.concurrency import run_in_threadpool
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import AggDriverCareer, Puzzle
-from app.models.game import GameSession
 from app.schemas.admin_puzzle import (
     AdminPuzzleDetail,
     AdminPuzzleListResponse,
@@ -26,14 +25,9 @@ from app.schemas.admin_puzzle import (
     PuzzleGenerateResponse,
     PuzzleHeaderCatalogResponse,
     PuzzleHeaderOption,
-    PuzzleScheduleRequest,
-    PuzzleStatusResponse,
 )
 from app.schemas.daily_grid import GameCategory
-
-# Keyed by eligibility floor. The catalog is a pure function of ingested
-# results, so a process-lifetime cache is correct until the next deploy.
-_HEADER_CATALOG_CACHE: dict[int, PuzzleHeaderCatalogResponse] = {}
+from app.services.grid_catalog_cache import catalog_bundle
 
 
 def _findings(puzzle: Puzzle) -> list[PuzzleFinding]:
@@ -41,17 +35,19 @@ def _findings(puzzle: Puzzle) -> list[PuzzleFinding]:
     return [PuzzleFinding(**finding) for finding in report.get("findings", [])]
 
 
-def _depths(puzzle: Puzzle) -> tuple[int, int]:
+def _depths(puzzle: Puzzle) -> list[int]:
+    """Answer counts in board order."""
     answers = puzzle.answers or {}
-    if not answers:
-        return 0, 0
-    sizes = [len(value) for value in answers.values()]
-    return min(sizes), max(sizes)
+    return [
+        len(answers.get(f"{row['id']}__{column['id']}", []))
+        for row in puzzle.row_categories or []
+        for column in puzzle.column_categories or []
+    ]
 
 
-def _summary(puzzle: Puzzle) -> AdminPuzzleSummary:
+def summary(puzzle: Puzzle) -> AdminPuzzleSummary:
     findings = _findings(puzzle)
-    minimum, maximum = _depths(puzzle)
+    depths = _depths(puzzle)
     return AdminPuzzleSummary(
         number=puzzle.number,
         public_id=puzzle.public_id,
@@ -59,8 +55,9 @@ def _summary(puzzle: Puzzle) -> AdminPuzzleSummary:
         published_on=puzzle.published_on,
         eligibility_floor=puzzle.eligibility_floor,
         difficulty_score=puzzle.difficulty_score,
-        min_depth=minimum,
-        max_depth=maximum,
+        min_depth=min(depths, default=0),
+        max_depth=max(depths, default=0),
+        cell_depths=depths,
         error_count=sum(1 for f in findings if f.level == "error"),
         warning_count=sum(1 for f in findings if f.level == "warning"),
         created_at=puzzle.created_at,
@@ -84,52 +81,30 @@ class AdminPuzzleService:
         if status:
             statement = statement.where(Puzzle.status == status)
         puzzles = (await db.execute(statement)).scalars().all()
-        return AdminPuzzleListResponse(puzzles=[_summary(puzzle) for puzzle in puzzles])
+        return AdminPuzzleListResponse(puzzles=[summary(puzzle) for puzzle in puzzles])
 
     @staticmethod
     async def header_catalog(floor: int) -> PuzzleHeaderCatalogResponse:
-        """Every header the generator can build a board from, at one floor.
-
-        Cached per floor: building it resolves every predicate against the
-        whole pool, which is seconds of work and changes only when results
-        are ingested.
-        """
-        cached = _HEADER_CATALOG_CACHE.get(floor)
-        if cached is not None:
-            return cached
-
-        def _run() -> PuzzleHeaderCatalogResponse:
-            from scripts.game_catalog import build_catalog
-            from scripts.game_predicates import load_pool
-            from scripts.ingest.utils import get_db_session
-
-            session = get_db_session()
-            try:
-                pool = load_pool(session, floor)
-                catalog = build_catalog(session, pool)
-            finally:
-                session.close()
-            return PuzzleHeaderCatalogResponse(
-                eligibility_floor=floor,
-                pool_size=len(pool),
-                headers=sorted(
-                    (
-                        PuzzleHeaderOption(
-                            id=header.id,
-                            label=header.label,
-                            prompt_label=header.prompt_label,
-                            kind=header.kind,
-                            depth=len(answers),
-                        )
-                        for header, answers in catalog.values()
-                    ),
-                    key=lambda option: (option.kind, option.label),
+        """Every header a board can be built from at one floor, with depth."""
+        bundle = await catalog_bundle(floor)
+        return PuzzleHeaderCatalogResponse(
+            eligibility_floor=floor,
+            pool_size=len(bundle.pool),
+            headers=sorted(
+                (
+                    PuzzleHeaderOption(
+                        id=header.id,
+                        label=header.label,
+                        prompt_label=header.prompt_label,
+                        kind=header.kind,
+                        depth=len(answers),
+                        answers=sorted(answers),
+                    )
+                    for header, answers in bundle.catalog.values()
                 ),
-            )
-
-        response = await run_in_threadpool(_run)
-        _HEADER_CATALOG_CACHE[floor] = response
-        return response
+                key=lambda option: (option.kind, option.label),
+            ),
+        )
 
     @staticmethod
     async def generate(
@@ -165,7 +140,7 @@ class AdminPuzzleService:
         ).scalars()
         return PuzzleGenerateResponse(
             requested=request.count,
-            created=[_summary(puzzle) for puzzle in created],
+            created=[summary(puzzle) for puzzle in created],
         )
 
     @staticmethod
@@ -240,175 +215,9 @@ class AdminPuzzleService:
                 )
 
         return AdminPuzzleDetail(
-            **_summary(puzzle).model_dump(),
+            **summary(puzzle).model_dump(),
             rows=rows,
             columns=columns,
             cells=cells,
             findings=_findings(puzzle),
         )
-
-    @staticmethod
-    async def schedule(
-        db: AsyncSession,
-        number: int,
-        request: PuzzleScheduleRequest,
-        reviewer_id: int | None,
-    ) -> PuzzleStatusResponse:
-        """Approve a board onto a date.
-
-        A published board dated in the future is scheduled rather than live,
-        so this is the whole publication mechanism: no job runs, the date gate
-        in the player service does the rest. A past date backdates the board
-        into the archive, which is how a historical board is made.
-
-        Freezing Rookie Mode happens here rather than by hand, so a board
-        cannot reach a player in one mode only. Its refusal gate is the last
-        check before publication.
-        """
-        puzzle = await AdminPuzzleService._puzzle(db, number)
-        if any(finding.level == "error" for finding in _findings(puzzle)):
-            raise ValueError("This board has validator errors and cannot be scheduled")
-
-        clash = (
-            await db.execute(
-                select(Puzzle.number).where(
-                    Puzzle.published_on == request.published_on,
-                    Puzzle.status == "published",
-                    Puzzle.number != number,
-                )
-            )
-        ).scalar_one_or_none()
-        if clash is not None:
-            raise ValueError(f"Grid #{clash} is already published on that date")
-
-        if not puzzle.rookie_options:
-            await AdminPuzzleService._freeze_rookie(number)
-            await db.refresh(puzzle)
-
-        puzzle.published_on = request.published_on
-        puzzle.status = request.status
-        puzzle.reviewed_at = datetime.now(timezone.utc)
-        puzzle.reviewed_by_id = reviewer_id
-        await db.commit()
-        return PuzzleStatusResponse(
-            number=puzzle.number,
-            status=puzzle.status,
-            published_on=puzzle.published_on,
-            reviewed_at=puzzle.reviewed_at,
-            reviewed_by_id=puzzle.reviewed_by_id,
-        )
-
-    @staticmethod
-    async def _freeze_rookie(number: int) -> None:
-        """Build and store this board's option lists and evidence.
-
-        Runs on its own synchronous session in a thread, like generation. The
-        refusal is surfaced as a scheduling error rather than swallowed: a
-        board whose evidence contradicts its answer sets must not publish, and
-        that gate has already caught a real bug once.
-        """
-        from scripts.freeze_rookie_options import FreezeRefused, freeze
-        from scripts.ingest.utils import get_db_session
-
-        def _run() -> list[str]:
-            db = get_db_session()
-            try:
-                return freeze(db, number)
-            finally:
-                db.close()
-
-        try:
-            await run_in_threadpool(_run)
-        except FreezeRefused as refusal:
-            raise ValueError(
-                f"Rookie Mode could not be frozen for this board: {refusal}"
-            ) from refusal
-
-    @staticmethod
-    async def _session_count(db: AsyncSession, puzzle_id: int) -> int:
-        return (
-            await db.execute(
-                select(func.count(GameSession.id)).where(
-                    GameSession.puzzle_id == puzzle_id
-                )
-            )
-        ).scalar_one()
-
-    @staticmethod
-    async def _refuse_if_played(db: AsyncSession, puzzle: Puzzle, action: str) -> None:
-        """The immutability gate is play, not status.
-
-        A board nobody has attempted is a proposal whatever its status column
-        says, and before launch the archive is still being curated. A board
-        with a single recorded attempt is a result: unpublishing or deleting it
-        destroys a player's time and orphans their standing. This starts
-        refusing on its own once sessions accumulate rather than relying on
-        anyone remembering to stop.
-        """
-        played = await AdminPuzzleService._session_count(db, puzzle.id)
-        if played:
-            raise ValueError(
-                f"Grid #{puzzle.number} has {played} recorded session"
-                f"{'' if played == 1 else 's'} and cannot be {action}"
-            )
-
-    @staticmethod
-    async def revert(db: AsyncSession, number: int) -> PuzzleStatusResponse:
-        """Return a board to draft, so its date can be reassigned or its
-        content replaced. Refused once the board has been played.
-
-        The date goes with the status. A draft that keeps the date it was
-        scheduled on reads as scheduled everywhere the queue is listed, and
-        holds a slot in the calendar that nothing serves.
-        """
-        puzzle = await AdminPuzzleService._puzzle(db, number)
-        await AdminPuzzleService._refuse_if_played(db, puzzle, "reverted")
-        puzzle.status = "draft"
-        puzzle.published_on = None
-        puzzle.reviewed_at = None
-        puzzle.reviewed_by_id = None
-        await db.commit()
-        return PuzzleStatusResponse(
-            number=puzzle.number,
-            status=puzzle.status,
-            published_on=puzzle.published_on,
-            reviewed_at=None,
-        )
-
-    @staticmethod
-    async def delete_all_drafts(db: AsyncSession) -> int:
-        """Clear the unreviewed queue in one action, and report the count.
-
-        Drafts are cheap — a generation run makes thirty — so rejecting a batch
-        one row at a time is the wrong shape. Only drafts: an approved or
-        published board was a decision someone made, and clearing those is the
-        per-board delete with its own confirmation.
-        """
-        drafts = (
-            (
-                await db.execute(
-                    select(Puzzle)
-                    .where(Puzzle.status == "draft")
-                    .order_by(Puzzle.number)
-                )
-            )
-            .scalars()
-            .all()
-        )
-        removed = 0
-        for puzzle in drafts:
-            if await AdminPuzzleService._session_count(db, puzzle.id):
-                continue
-            await db.delete(puzzle)
-            removed += 1
-        await db.commit()
-        return removed
-
-    @staticmethod
-    async def delete(db: AsyncSession, number: int) -> None:
-        """Remove a board entirely, published or not, provided nobody has
-        played it. Deleting frees its date for a replacement."""
-        puzzle = await AdminPuzzleService._puzzle(db, number)
-        await AdminPuzzleService._refuse_if_played(db, puzzle, "deleted")
-        await db.delete(puzzle)
-        await db.commit()

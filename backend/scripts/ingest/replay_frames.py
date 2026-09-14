@@ -13,7 +13,11 @@ import pandas as pd
 
 from app.services.replay_preview import build_preview, preview_stats
 
-from .utils import datetime_or_timedelta_to_seconds, timedelta_to_seconds
+from .utils import (
+    datetime_or_timedelta_to_seconds,
+    timedelta_to_seconds,
+    track_rotation_degrees,
+)
 from .team_colors import enrich_team_color
 
 # Constants
@@ -186,10 +190,9 @@ def extract_track_polyline(fastf1_session):
             return None, None
 
         telemetry = fastest_lap.get_telemetry()
-        circuit_info = fastf1_session.get_circuit_info()
 
         track = telemetry.loc[:, ("X", "Y")].to_numpy()
-        rotation_deg = circuit_info.rotation
+        rotation_deg = track_rotation_degrees(fastf1_session)
         track_angle = rotation_deg / 180 * np.pi
         rotated = rotate(track, angle=track_angle)
         normalized = normalize_coords(rotated)

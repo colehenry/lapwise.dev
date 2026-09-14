@@ -54,6 +54,9 @@ class AdminPuzzleSummary(BaseModel):
     difficulty_score: int | None
     min_depth: int
     max_depth: int
+    # Row-major, nine entries for a complete board. The queue draws each
+    # board as a small heatmap from these.
+    cell_depths: list[int]
     error_count: int
     warning_count: int
     created_at: datetime | None
@@ -79,6 +82,9 @@ class PuzzleHeaderOption(BaseModel):
     kind: str
     # How many eligible drivers satisfy it on its own, before any intersection.
     depth: int
+    # Their slugs, so the builder can count intersections as headers are
+    # picked without a round trip.
+    answers: list[str]
 
 
 class PuzzleHeaderCatalogResponse(BaseModel):
@@ -107,11 +113,36 @@ class PuzzleGenerateResponse(BaseModel):
     created: list[AdminPuzzleSummary]
 
 
-class PuzzleScheduleRequest(BaseModel):
-    """Approving a board is also dating it; the date gate does the publishing."""
+class PuzzleHeadersRequest(BaseModel):
+    """Six header ids in board order. A null slot is one still being chosen."""
 
+    eligibility_floor: int = Field(default=1990, ge=1950, le=2100)
+    rows: list[str | None] = Field(min_length=3, max_length=3)
+    columns: list[str | None] = Field(min_length=3, max_length=3)
+
+    @property
+    def complete(self) -> bool:
+        return all(self.rows) and all(self.columns)
+
+
+class PuzzlePreviewResponse(BaseModel):
+    """What the chosen headers produce, before anything is stored.
+
+    Cells cover only the filled row/column pairs. Findings and difficulty
+    exist only once all six headers are set.
+    """
+
+    pool_size: int
+    cells: list[PuzzleCell]
+    findings: list[PuzzleFinding]
+    difficulty_score: int | None
+    # One distinct driver per cell, favouring the names a player would reach
+    # for. Present only for a complete, completable board.
+    solution: dict[str, PuzzleAnswer] | None = None
+
+
+class PuzzleDateRequest(BaseModel):
     published_on: date
-    status: Literal["approved", "published"] = "published"
 
 
 class PuzzleStatusResponse(BaseModel):

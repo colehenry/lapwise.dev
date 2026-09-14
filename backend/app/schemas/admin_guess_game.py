@@ -5,6 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.schemas.guess_game import GuessGameGuessResponse
+
 GuessPuzzleStatus = Literal["draft", "approved", "published"]
 
 
@@ -41,11 +43,13 @@ class AdminGuessPuzzleRandomizeResponse(BaseModel):
 
 
 class AdminGuessPuzzleManualRequest(BaseModel):
+    """A chosen driver. It joins the upcoming run straight away: picking the
+    answer by hand is the review."""
+
     driver_slug: str = Field(min_length=1, max_length=120)
-    published_on: date
 
 
-class AdminGuessPuzzleScheduleRequest(BaseModel):
+class AdminGuessPuzzleDateRequest(BaseModel):
     published_on: date
 
 
@@ -59,3 +63,16 @@ class AdminGuessPuzzleStatusResponse(BaseModel):
 
 class AdminGuessPuzzleDeleteResponse(BaseModel):
     deleted: int
+
+
+class AdminGuessPuzzlePreviewResponse(BaseModel):
+    """The puzzle as a player meets it.
+
+    `answer` is the winning row. `similar` are the eligible drivers whose
+    clues land closest to it, each rendered as the guess it would be, so a
+    reviewer sees how much the clues give away.
+    """
+
+    puzzle: AdminGuessPuzzleSummary
+    answer: GuessGameGuessResponse
+    similar: list[GuessGameGuessResponse]

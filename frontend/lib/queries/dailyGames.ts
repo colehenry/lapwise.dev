@@ -8,6 +8,9 @@ export type DailyGameSummaryItem = {
   name: string;
   href: "/daily" | "/guess";
   state: "not_started" | "in_progress" | "complete";
+  /** Cells solved for the grid; guesses used for the driver game. */
+  progress: number;
+  total: number;
   puzzle_number: number | null;
   published_on: string | null;
 };

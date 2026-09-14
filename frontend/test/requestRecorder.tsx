@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { vi } from "vitest";
+import ClutchDockProvider from "@/components/providers/ClutchDockProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 
 /** One recorded outbound request, normalized to a path + query string. */
@@ -105,7 +106,9 @@ export function renderWithQueryClient(
     });
   const result = render(
     <ThemeProvider>
-      <QueryClientProvider client={client}>{ui}</QueryClientProvider>
+      <QueryClientProvider client={client}>
+        <ClutchDockProvider>{ui}</ClutchDockProvider>
+      </QueryClientProvider>
     </ThemeProvider>,
   );
   return { ...result, client };

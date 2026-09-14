@@ -10,7 +10,9 @@ import {
 } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import F1GlossaryTerm from "@/components/ui/F1GlossaryTerm";
 import { useEntityLinkColors } from "@/hooks/useEntityLinkColors";
+import { splitF1GlossaryText } from "@/lib/f1Glossary";
 
 const AIDataTable = dynamic(() => import("./AIDataTable"), {
   ssr: false,
@@ -51,11 +53,28 @@ function renderDeltaText(text: string): ReactNode {
   return parts.length > 0 ? parts : text;
 }
 
+function renderAnnotatedText(text: string): ReactNode {
+  return splitF1GlossaryText(text).map((fragment) =>
+    fragment.definition ? (
+      <F1GlossaryTerm
+        key={`${fragment.term}-${fragment.start}`}
+        definition={fragment.definition}
+      >
+        {fragment.text}
+      </F1GlossaryTerm>
+    ) : (
+      <span key={`text-${fragment.start}`}>
+        {renderDeltaText(fragment.text)}
+      </span>
+    ),
+  );
+}
+
 function renderDeltaChildren(children: ReactNode): ReactNode {
   return Array.isArray(children)
     ? children.map((child) => renderDeltaChildren(child))
     : typeof children === "string"
-      ? renderDeltaText(children)
+      ? renderAnnotatedText(children)
       : isValidElement<{ children?: ReactNode }>(children)
         ? cloneElement(children as ReactElement<{ children?: ReactNode }>, {
             children: renderDeltaChildren(children.props.children),

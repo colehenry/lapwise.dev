@@ -167,7 +167,7 @@ def _finished_every_race(context: HeadlineContext, career: Career) -> list[Headl
         candidate(
             id=f"streak.all_finishes.{career.driver_code}",
             category="streak",
-            kicker="Every race",
+            kicker="Consistency",
             parts=(
                 driver(context.surname(career.full_name), career.driver_code),
                 " has finished every race this season",
@@ -282,7 +282,10 @@ def _team_droughts(context: HeadlineContext) -> list[Headline]:
                 id=f"streak.team_drought.{name}",
                 category="streak",
                 kicker="Dry spell",
-                parts=(team(name), f" have not scored since round {last}"),
+                parts=(
+                    team(name),
+                    f" have not scored since {context.circuit_names.get(last) or f'round {last}'}",
+                ),
                 rarity=RARITY_SEASON,
                 href=team_href(name),
             )
@@ -314,9 +317,9 @@ def firsts(context: HeadlineContext) -> list[Headline]:
                     category="firsts",
                     kicker="First points",
                     parts=(
+                        context.marks(latest.round),
                         driver(name, code),
-                        f" scores for the first time in his "
-                        f"{ordinal(len(career.entries))} start",
+                        f"'s first points, in his {ordinal(len(career.entries))} start",
                     ),
                     rarity=RARITY_CAREER_FIRST,
                     href=driver_href(code),
@@ -334,7 +337,10 @@ def _first_or_gap(context, career, name, code, history, test, noun) -> list[Head
                 id=f"firsts.{noun}.{code}",
                 category="firsts",
                 kicker=f"First {noun}",
-                parts=(driver(name, code), f"'s first career {noun}"),
+                parts=(
+                    driver(name, code),
+                    f"'s first career {noun}{context.comes(career.latest.round)}",
+                ),
                 rarity=RARITY_CAREER_FIRST,
                 href=driver_href(code),
             )
@@ -349,7 +355,8 @@ def _first_or_gap(context, career, name, code, history, test, noun) -> list[Head
             kicker="Drought over",
             parts=(
                 driver(name, code),
-                f"'s first {noun} in {gap} {plural(gap, 'race')}",
+                f"'s first {noun} in {gap} {plural(gap, 'race')}"
+                f"{context.comes(career.latest.round)}",
             ),
             rarity=RARITY_SEASON,
             href=driver_href(code),
@@ -383,8 +390,8 @@ def runs_ended(context: HeadlineContext) -> list[Headline]:
                         kicker="Run ended",
                         parts=(
                             driver(name, code),
-                            f" finishes outside the points for the first time "
-                            f"in {run} races",
+                            f" finishes outside the points{context.venue(latest.round)} "
+                            f"for the first time in {run} races",
                         ),
                         rarity=RARITY_SEASON,
                         href=driver_href(code),
@@ -400,7 +407,8 @@ def runs_ended(context: HeadlineContext) -> list[Headline]:
                         kicker="Run ended",
                         parts=(
                             driver(name, code),
-                            f"'s first non-podium in {run} rounds",
+                            f"'s first non-podium in {run} rounds"
+                            f"{context.comes(latest.round)}",
                         ),
                         rarity=RARITY_SEASON,
                         href=driver_href(code),
@@ -416,7 +424,8 @@ def runs_ended(context: HeadlineContext) -> list[Headline]:
                         kicker="Run ended",
                         parts=(
                             driver(name, code),
-                            f" retires for the first time in {run} races",
+                            f" retires{context.venue(latest.round)} "
+                            f"for the first time in {run} races",
                         ),
                         rarity=RARITY_SEASON,
                         href=driver_href(code),

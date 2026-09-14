@@ -1,7 +1,7 @@
 """Race-weekend availability metadata across weekend shapes."""
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import func, select, tuple_
 
 from app.models import Session as RaceSession
 from app.services.weekend_service import WeekendService
@@ -10,10 +10,15 @@ from .perf.statement_counter import count_statements
 
 
 async def _round_with_type(db, session_type: str):
+    """The latest weekend holding `session_type` whose race has run."""
+    raced = select(RaceSession.year, RaceSession.round).where(
+        RaceSession.session_type == "race"
+    )
     row = (
         await db.execute(
             select(RaceSession.year, RaceSession.round)
             .where(RaceSession.session_type == session_type)
+            .where(tuple_(RaceSession.year, RaceSession.round).in_(raced))
             .order_by(RaceSession.year.desc(), RaceSession.round.desc())
             .limit(1)
         )

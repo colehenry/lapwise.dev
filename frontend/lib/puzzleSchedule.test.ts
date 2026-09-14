@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { nextRollover, puzzleDate, puzzlePhase } from "./puzzleSchedule";
+import {
+  countdown,
+  nextRollover,
+  puzzleDate,
+  puzzlePhase,
+  upcomingDays,
+} from "./puzzleSchedule";
 
 /** 17:27 US Pacific on 8 September, which is already 9 September in UTC. */
 const PACIFIC_EVENING = new Date("2026-09-09T00:27:00Z");
@@ -40,9 +46,43 @@ describe("puzzlePhase", () => {
     expect(at("published", "2026-09-09")).toBe("scheduled");
   });
 
-  it("never calls an unpublished board live", () => {
+  it("treats an undated or draft board as a draft", () => {
     expect(at("draft", "2026-09-08")).toBe("draft");
-    expect(at("approved", "2026-09-08")).toBe("scheduled");
-    expect(at("published", null)).toBe("scheduled");
+    expect(at("published", null)).toBe("draft");
+  });
+});
+
+describe("upcomingDays", () => {
+  it("runs from today through the last scheduled day plus one open day", () => {
+    expect(upcomingDays("2026-09-10", PACIFIC_EVENING)).toEqual([
+      "2026-09-08",
+      "2026-09-09",
+      "2026-09-10",
+      "2026-09-11",
+    ]);
+  });
+
+  it("shows today and one open day when nothing is scheduled", () => {
+    expect(upcomingDays(null, PACIFIC_EVENING)).toEqual([
+      "2026-09-08",
+      "2026-09-09",
+    ]);
+  });
+});
+
+describe("countdown", () => {
+  it("reads as hours and minutes until the rollover", () => {
+    expect(
+      countdown(
+        new Date("2026-09-09T02:48:00Z"),
+        new Date("2026-09-09T07:00:00Z"),
+      ),
+    ).toBe("4h 12m");
+    expect(
+      countdown(
+        new Date("2026-09-09T06:23:00Z"),
+        new Date("2026-09-09T07:00:00Z"),
+      ),
+    ).toBe("37m");
   });
 });

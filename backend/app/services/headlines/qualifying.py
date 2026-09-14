@@ -72,7 +72,8 @@ def qualifying(context: HeadlineContext) -> list[Headline]:
                         kicker="Run ended",
                         parts=(
                             driver(name, code),
-                            f" was out in Q1 for the first time in {run} races",
+                            f"'s first Q1 exit in {run} races"
+                            f"{context.comes(newest.round)}",
                         ),
                         rarity=RARITY_SEASON,
                         href=driver_href(code),
@@ -136,7 +137,8 @@ def _q3_drought_broken(context, sessions, name, code) -> list[Headline]:
             kicker="Back in Q3",
             parts=(
                 driver(name, code),
-                f" has reached Q3 for the first time in {gap} {plural(gap, 'round')}",
+                f"'s first Q3 in {gap} {plural(gap, 'round')}"
+                f"{context.comes(sessions[-1].round)}",
             ),
             rarity=RARITY_SEASON,
             href=driver_href(code),
@@ -195,7 +197,7 @@ def _teammate_qualifying(context: HeadlineContext) -> list[Headline]:
                         context.surname(entries[chase_id].full_name),
                         entries[chase_id].driver_code,
                     ),
-                    f" {lead}–{chase} in qualifying",
+                    f" {lead}–{chase} in qualifying this season",
                 ),
                 rarity=RARITY_SEASON,
                 href=team_href(name),
@@ -260,8 +262,8 @@ def _pole_conversion(context: HeadlineContext) -> list[Headline]:
             category="qualifying",
             kicker="From pole",
             parts=(
-                f"Pole has converted to a win {spell(converted)} "
-                f"{plural(converted, 'time')} from {len(poles)}",
+                f"Pole has converted to a win {converted} of "
+                f"{len(poles)} {plural(len(poles), 'time')} this season",
             ),
             rarity=RARITY_SEASON,
         )
@@ -298,7 +300,7 @@ def _poles(context: HeadlineContext) -> list[Headline]:
                 entries[driver_id].driver_code,
             )
         )
-    lead_in = f"{spell(best).capitalize()} {plural(best, 'pole')} for "
+    lead_in = f"{spell(best).capitalize()} {plural(best, 'pole')} this season for "
     tail = ", more than anyone" if len(holders) == 1 else " — nobody else has more"
     return [
         candidate(

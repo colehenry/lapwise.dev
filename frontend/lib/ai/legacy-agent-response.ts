@@ -18,13 +18,21 @@ import {
   writeCachedResponse,
 } from "./conversation-store";
 import { encodeStreamLine } from "./deterministic-response";
+import {
+  agentErrorStage,
+  agentOutcomeStatus,
+  publicAgentErrorMessage,
+  requireAgentAnswer,
+} from "./legacy-agent-outcome";
 import { agentToolProgress } from "./legacy-agent-support";
 import { type AIModelSelection, extractAIProviderUsage } from "./provider";
+import type { RequestLog } from "./request-log";
 import { getSeasonContext } from "./season-context-tool";
-import { buildSystemPrompt } from "./system-prompt";
+import { buildSystemPrompt, selectPromptKnowledge } from "./system-prompt";
 import {
   generateChart,
   getRaceDynamics,
+  getRaceStrategyInsights,
   resolveSession,
   runSQLQuery,
 } from "./tools";
@@ -43,26 +51,6 @@ interface StreamUsage {
   costUsd?: number;
 }
 
-export function publicAgentErrorMessage(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-  const name = error instanceof Error ? error.name : "";
-  if (
-    /abort/i.test(name) ||
-    /timeout|timed out|deadline|aborted/i.test(message)
-  ) {
-    return "Clutch ran out of time while building that answer. Please try again.";
-  }
-  if (/without an answer|no content|length/i.test(message)) {
-    return "Clutch couldn't finish that answer. Please try again—the next run will start fresh.";
-  }
-  return "Clutch hit a problem while building that answer. Please try again.";
-}
-
-export function requireAgentAnswer(answer: string): string {
-  if (!answer.trim()) throw new Error("Model completed without an answer");
-  return answer;
-}
-
 export async function createLegacyAgentResponse(params: {
   question: string;
   conversationId: string;
@@ -72,11 +60,16 @@ export async function createLegacyAgentResponse(params: {
   model: AIModelSelection;
   abortSignal?: AbortSignal;
   pageContext?: AnalysisPageContext;
+  log: RequestLog;
 }): Promise<Response> {
+  const { log } = params;
+  log.path = "agent";
+  const knowledge = selectPromptKnowledge(params.question);
   const tools = {
     get_season_context: getSeasonContext,
     resolve_session: resolveSession,
     get_race_dynamics: getRaceDynamics,
+    get_race_strategy_insights: getRaceStrategyInsights,
     generate_chart: generateChart,
     run_sql_query: runSQLQuery,
   };
@@ -108,6 +101,7 @@ export async function createLegacyAgentResponse(params: {
       const charts: unknown[] = [];
       const entityReferences: EntityReference[] = [];
       const queries: string[] = [];
+      const toolCalls: { tool: string; sql?: string }[] = [];
       let answer = "";
       let actualModelId = params.model.modelId;
       let upstreamProvider: string | undefined;
@@ -116,6 +110,22 @@ export async function createLegacyAgentResponse(params: {
         outputTokens: 0,
         totalTokens: 0,
       };
+      let steps = 0;
+      let finishReason: string | undefined;
+      const modelStartedAt = performance.now();
+      let modelMs: number | undefined;
+      const logDetails = () => ({
+        analysisModel: actualModelId,
+        upstreamProvider,
+        knowledgeNodes: knowledge.nodes.map((node) => node.id),
+        topics: knowledge.topics,
+        usage,
+        steps,
+        sqlCalls: queries.length,
+        toolCalls,
+        modelMs,
+        finishReason,
+      });
 
       controller.enqueue(
         encodeStreamLine({
@@ -134,6 +144,7 @@ export async function createLegacyAgentResponse(params: {
       try {
         for await (const part of result.fullStream) {
           if (part.type === "text-delta") {
+            log.markFirstToken();
             answer += part.text;
             continue;
           }
@@ -149,6 +160,9 @@ export async function createLegacyAgentResponse(params: {
               typeof input.sql === "string"
             ) {
               queries.push(input.sql);
+              toolCalls.push({ tool: part.toolName, sql: input.sql });
+            } else {
+              toolCalls.push({ tool: part.toolName });
             }
             const progress = agentToolProgress(part.toolName);
             if (progress) {
@@ -177,6 +191,7 @@ export async function createLegacyAgentResponse(params: {
           }
 
           if (part.type === "finish-step") {
+            steps += 1;
             actualModelId = part.response.modelId ?? actualModelId;
             const { upstreamProvider: resolvedProvider, ...measured } =
               extractAIProviderUsage(part.providerMetadata);
@@ -186,6 +201,8 @@ export async function createLegacyAgentResponse(params: {
           }
 
           if (part.type === "finish") {
+            finishReason = part.finishReason;
+            modelMs = Math.round(performance.now() - modelStartedAt);
             usage = {
               ...usage,
               inputTokens: part.totalUsage.inputTokens ?? 0,
@@ -207,8 +224,9 @@ export async function createLegacyAgentResponse(params: {
         }
 
         const followUps: string[] = [];
+        let messageId: string | null = null;
         if (!params.seedMode) {
-          await saveConversationMessage(
+          messageId = await saveConversationMessage(
             params.conversationId,
             "assistant",
             answer,
@@ -243,6 +261,12 @@ export async function createLegacyAgentResponse(params: {
             },
           }),
         );
+        await log.finish({
+          status: "ok",
+          httpStatus: 200,
+          messageId,
+          ...logDetails(),
+        });
       } catch (error) {
         Sentry.captureException(error);
         controller.enqueue(
@@ -251,6 +275,13 @@ export async function createLegacyAgentResponse(params: {
             error: publicAgentErrorMessage(error),
           }),
         );
+        await log.finish({
+          status: agentOutcomeStatus(error),
+          stage: agentErrorStage(error),
+          httpStatus: 200,
+          error,
+          ...logDetails(),
+        });
       } finally {
         controller.close();
       }
@@ -261,7 +292,6 @@ export async function createLegacyAgentResponse(params: {
     headers: {
       "Content-Type": "application/x-ndjson; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
       "X-Accel-Buffering": "no",
     },
   });

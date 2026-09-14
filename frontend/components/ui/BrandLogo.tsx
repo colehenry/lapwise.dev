@@ -34,28 +34,40 @@ export function LapwiseWordmark({
   );
 }
 
+/**
+ * Clutch's helmet, painted in the current text colour: the SVG is a CSS mask
+ * over `currentColor`, so one asset serves both themes and any tint.
+ */
 export function ClutchNavIcon({
-  className = "h-6 w-6",
+  className = "h-6 w-6 text-ink-strong",
 }: {
   className?: string;
 }) {
   return (
-    <span className={`inline-flex items-center justify-center ${className}`}>
-      <Image
-        src="/brand/clutch-icon-dark.png"
-        alt=""
-        width={1254}
-        height={1254}
-        className="brand-logo-dark h-full w-full object-contain"
-      />
-      <Image
-        src="/brand/clutch-icon-light.png"
-        alt=""
-        width={1254}
-        height={1254}
-        className="brand-logo-light h-full w-full object-contain"
-      />
-    </span>
+    <span
+      aria-hidden="true"
+      className={`clutch-mark inline-block shrink-0 ${className}`}
+    />
+  );
+}
+
+/**
+ * Clutch in colour, for the one place he is a character rather than a glyph:
+ * the page corner. White shell and black outline, so he reads on both themes.
+ */
+export function ClutchHead({
+  className = "h-12 w-12",
+}: {
+  className?: string;
+}) {
+  return (
+    <Image
+      src="/brand/clutch-head.png"
+      alt=""
+      width={192}
+      height={192}
+      className={`object-contain ${className}`}
+    />
   );
 }
 

@@ -1,26 +1,15 @@
 import type { StandingsResponse } from "@/lib/championshipTypes";
-import { CLUTCH_SCRIPTS } from "@/lib/clutchScriptCatalogue";
+import {
+  type ClutchScript,
+  pickScript,
+  type ResolvedScript,
+  type SlotValue,
+  type Surface,
+  type SurfaceDigest,
+} from "@/lib/clutch/script";
 import type { RoundSummary, SessionResultsResponse } from "@/lib/types";
 
-export type ScriptTint = "driver" | "team";
-
-export type ScriptPart = { text: string } | { slot: string; tint?: ScriptTint };
-
-export type ClutchVisual = {
-  kind: "points_progression";
-  mode: "drivers" | "constructors";
-  entities: "top3";
-};
-
-export type ClutchScript = {
-  id: string;
-  question: string;
-  parts: ScriptPart[];
-  visual?: ClutchVisual;
-  followups: string[];
-};
-
-export type ClutchContext = {
+export type HomeContext = {
   season: number | null;
   standings?: StandingsResponse;
   latest?: RoundSummary;
@@ -29,22 +18,58 @@ export type ClutchContext = {
   roundsUpcoming?: number;
 };
 
-export type ResolvedSegment = {
-  text: string;
-  /** The entity to take a colour from, or null for plain ink. */
-  code: string | null;
-  tint: ScriptTint | null;
-};
-
-export type ResolvedScript = {
-  id: string;
-  question: string;
-  segments: ResolvedSegment[];
-  visual?: ClutchVisual;
-  followups: string[];
-};
-
-type SlotValue = { text: string; code: string | null };
+/**
+ * The authored questions and their answers. The prose is written; every number
+ * in it is a slot resolved from responses the page already holds, so a script
+ * cannot go stale between races.
+ *
+ * Adding one is adding an entry here. Nothing else changes.
+ */
+const SCRIPTS: ClutchScript[] = [
+  {
+    id: "championship-state",
+    question: "Who is winning the {season} championship, and how close is it?",
+    parts: [
+      { slot: "drivers.1.name", tint: "driver" },
+      { text: " leads the " },
+      { slot: "season" },
+      { text: " drivers' championship on " },
+      { slot: "drivers.1.points" },
+      { text: " points after " },
+      { slot: "rounds.run" },
+      { text: " rounds — " },
+      { slot: "gap.drivers.1_2" },
+      { text: " clear of " },
+      { slot: "drivers.2.name", tint: "driver" },
+      { text: ", with " },
+      { slot: "drivers.3.name", tint: "driver" },
+      { text: " a further " },
+      { slot: "gap.drivers.2_3" },
+      { text: " back.\n\n" },
+      { slot: "constructors.1.team", tint: "team" },
+      { text: " lead the constructors' championship from " },
+      { slot: "constructors.2.team", tint: "team" },
+      { text: " by " },
+      { slot: "gap.constructors.1_2" },
+      { text: ". Most recently " },
+      { slot: "latest.winner", tint: "driver" },
+      { text: " won the " },
+      { slot: "latest.event" },
+      { text: " from " },
+      { slot: "latest.winnerGrid" },
+      { text: ", " },
+      { slot: "latest.margin" },
+      { text: " clear of second." },
+    ],
+    visual: { kind: "points_progression", mode: "drivers", entities: "top3" },
+    followups: [
+      { ask: "Can {drivers.2.surname} still win it?" },
+      { ask: "Points swing by round" },
+      { ask: "{constructors.1.team} vs {constructors.2.team}" },
+      { ask: "Every result this season" },
+    ],
+  },
+];
 
 function number(value: number | null | undefined): string | null {
   if (value == null || !Number.isFinite(value)) return null;
@@ -57,7 +82,7 @@ function surnameOf(fullName: string): string {
 }
 
 function driverSlot(
-  context: ClutchContext,
+  context: HomeContext,
   rank: number,
   field: string,
 ): SlotValue | null {
@@ -80,7 +105,7 @@ function driverSlot(
 }
 
 function constructorSlot(
-  context: ClutchContext,
+  context: HomeContext,
   rank: number,
   field: string,
 ): SlotValue | null {
@@ -98,7 +123,7 @@ function constructorSlot(
   return null;
 }
 
-function gapSlot(context: ClutchContext, path: string): SlotValue | null {
+function gapSlot(context: HomeContext, path: string): SlotValue | null {
   const [kind, pair] = path.split(".");
   const [a, b] = (pair ?? "").split("_").map(Number);
   if (!a || !b) return null;
@@ -113,7 +138,7 @@ function gapSlot(context: ClutchContext, path: string): SlotValue | null {
   return gap ? { text: `${gap} points`, code: null } : null;
 }
 
-function latestSlot(context: ClutchContext, field: string): SlotValue | null {
+function latestSlot(context: HomeContext, field: string): SlotValue | null {
   const latest = context.latest;
   if (!latest) return null;
   if (field === "event") return { text: latest.event_name, code: null };
@@ -137,7 +162,7 @@ function latestSlot(context: ClutchContext, field: string): SlotValue | null {
   return null;
 }
 
-function resolveSlot(context: ClutchContext, slot: string): SlotValue | null {
+function resolveSlot(context: HomeContext, slot: string): SlotValue | null {
   if (slot === "season") {
     return context.season ? { text: String(context.season), code: null } : null;
   }
@@ -160,81 +185,32 @@ function resolveSlot(context: ClutchContext, slot: string): SlotValue | null {
   return null;
 }
 
-/** Replaces `{slot}` occurrences, or returns null if any of them is unknown. */
-function fillTemplate(context: ClutchContext, template: string): string | null {
-  let failed = false;
-  const filled = template.replace(/\{([^}]+)\}/g, (_, slot: string) => {
-    const value = resolveSlot(context, slot.trim());
-    if (!value) {
-      failed = true;
-      return "";
-    }
-    return value.text;
-  });
-  return failed ? null : filled;
-}
-
-/** An unresolvable slot drops the whole script; a literal never reaches screen. */
-export function resolveScript(
-  script: ClutchScript,
-  context: ClutchContext,
-): ResolvedScript | null {
-  const question = fillTemplate(context, script.question);
-  if (question === null) return null;
-
-  const segments: ResolvedSegment[] = [];
-  for (const part of script.parts) {
-    if ("text" in part) {
-      segments.push({ text: part.text, code: null, tint: null });
-      continue;
-    }
-    const value = resolveSlot(context, part.slot);
-    if (!value) return null;
-    segments.push({
-      text: value.text,
-      code: part.tint ? value.code : null,
-      tint: part.tint ?? null,
-    });
-  }
-
-  const followups: string[] = [];
-  for (const followup of script.followups) {
-    const filled = fillTemplate(context, followup);
-    if (filled === null) return null;
-    followups.push(filled);
-  }
-
+function digest(context: HomeContext): SurfaceDigest | null {
+  if (!context.season) return null;
+  const drivers = context.standings?.drivers ?? [];
+  const leader = drivers[0];
+  const runnerUp = drivers[1];
   return {
-    id: script.id,
-    question,
-    segments,
-    visual: script.visual,
-    followups,
+    kind: "standings",
+    season: context.season,
+    mode: "drivers",
+    leader: leader?.driver_code ?? leader?.full_name ?? null,
+    gap:
+      leader && runnerUp ? leader.total_points - runnerUp.total_points : null,
+    roundsRun: context.roundsRun ?? null,
+    roundsLeft: context.roundsUpcoming ?? null,
   };
 }
 
-function dayOfYear(now: Date): number {
-  const start = Date.UTC(now.getUTCFullYear(), 0, 0);
-  return Math.floor((now.getTime() - start) / 86_400_000);
-}
+export const HOME_SURFACE: Surface<HomeContext> = {
+  scripts: SCRIPTS,
+  resolveSlot,
+  digest,
+};
 
-/**
- * The script of the day, or the next one that resolves. Returns null when no
- * script can be filled from the data in hand.
- */
-export function pickClutchScript(
-  context: ClutchContext,
+export function pickHomeScript(
+  context: HomeContext,
   now: Date = new Date(),
-  scripts: ClutchScript[] = CLUTCH_SCRIPTS,
 ): ResolvedScript | null {
-  if (scripts.length === 0) return null;
-  const offset = dayOfYear(now) % scripts.length;
-  for (let i = 0; i < scripts.length; i++) {
-    const resolved = resolveScript(
-      scripts[(offset + i) % scripts.length],
-      context,
-    );
-    if (resolved) return resolved;
-  }
-  return null;
+  return pickScript(HOME_SURFACE, context, now);
 }

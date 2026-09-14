@@ -77,7 +77,7 @@ export async function saveConversationMessage(
     tokensUsed?: number;
     model?: string;
   } = {},
-): Promise<void> {
+): Promise<string | null> {
   try {
     const sql = getConversationClient();
     const toolCallsJson = extra.toolCalls
@@ -89,9 +89,10 @@ export async function saveConversationMessage(
     const tokensUsed = extra.tokensUsed ?? null;
     const model = extra.model ?? null;
 
-    await sql`
+    const inserted = await sql`
       INSERT INTO ai_messages (id, conversation_id, role, content, tool_calls, tool_results, tokens_used, model)
       VALUES (gen_random_uuid(), ${conversationId}::uuid, ${role}, ${content}, ${toolCallsJson}::jsonb, ${toolResultsJson}::jsonb, ${tokensUsed}, ${model})
+      RETURNING id
     `;
 
     await sql`
@@ -105,8 +106,11 @@ export async function saveConversationMessage(
         END
       WHERE id = ${conversationId}::uuid
     `;
+    const id = inserted[0]?.id;
+    return typeof id === "string" ? id : null;
   } catch (error) {
     Sentry.captureException(error);
+    return null;
   }
 }
 

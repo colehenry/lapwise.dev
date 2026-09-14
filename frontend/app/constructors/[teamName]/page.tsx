@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
 import ArchiveMetricBar from "@/components/archive/ArchiveMetricBar";
 import ArchivePanel from "@/components/archive/ArchivePanel";
-import ClutchContextActions from "@/components/chat/ClutchContextActions";
 import PageHeader from "@/components/layout/PageHeader";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import DeferredSection from "@/components/ui/DeferredSection";
@@ -188,23 +187,7 @@ export default function ConstructorProfilePage() {
             </div>
           </div>
         }
-      >
-        <ClutchContextActions
-          compact
-          context={{
-            route: constructorUrl,
-            constructorSlugs: data.constructor_slug
-              ? [data.constructor_slug]
-              : undefined,
-          }}
-          actions={[
-            {
-              label: "Analyze team",
-              question: `What stands out about ${data.team_name}'s history?`,
-            },
-          ]}
-        />
-      </PageHeader>
+      />
 
       {/* Tab Content */}
       <div

@@ -19,12 +19,15 @@ from app.nationality import PREFERRED_DEMONYM
 from scripts.game_evidence import build_context
 from scripts.game_predicates import Pool, resolve
 
-# A header thinner than this cannot reliably reach three answers once it is
-# intersected with anything, so it is not worth offering to the generator.
-MIN_HEADER_DEPTH = 12
+# Headers thinner than this are dropped before the generator searches. The
+# per-cell depth checks and the validator decide what a board may hold; this
+# only trims headers that cannot cross anything. Twelve was the old floor,
+# and it hid two thirds of the catalog — most modern teammate, constructor
+# and nationality headers — which left the generator the retro tail.
+MIN_HEADER_DEPTH = 4
 
 # Teammate headers are only interesting for drivers the player has heard of.
-TEAMMATE_MIN_ENTRIES = 150
+TEAMMATE_MIN_ENTRIES = 50
 
 DECADES = (1980, 1990, 2000, 2010, 2020)
 

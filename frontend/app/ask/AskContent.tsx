@@ -108,7 +108,7 @@ export default function AskContent() {
           }`}
         >
           Clutch
-          <ClutchNavIcon className="h-5 w-5" />
+          <ClutchNavIcon className="h-6 w-6" />
         </h1>
         <div className="col-start-3 flex items-center justify-end gap-2">
           {quota && (

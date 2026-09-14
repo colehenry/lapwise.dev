@@ -25,7 +25,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session as OrmSession
 
 from app.models import Puzzle
-from scripts.game_catalog import Header, build_catalog
+from scripts.game_catalog import MIN_HEADER_DEPTH, Header, build_catalog
 from scripts.game_predicates import DEFAULT_ELIGIBILITY_FLOOR, Pool, load_pool
 from scripts.game_validator import Recognition, load_recognition, validate
 from scripts.ingest.utils import get_db_session
@@ -37,30 +37,40 @@ INTERSECTION_REPEAT_DAYS = 30
 # Two headers selecting nearly the same drivers make a cell that tests one
 # thing. Measured on the sandbox boards: podium-finisher against
 # race-entries-100 overlaps 86%.
-MAX_HEADER_CORRELATION = 0.7
+MAX_HEADER_CORRELATION = 0.5
 
 # A header accepting most of the pool cannot carry a board on its own, but it
 # is fine crossed with a narrow one. At most one per board.
 BROAD_HEADER_SHARE = 0.6
 
 # Venue headers outnumber every other kind in the catalog, so an unconstrained
-# sample drifts towards boards asking "won at ..." four times over.
+# sample drifts towards boards asking "won at ..." four times over. Decade
+# headers are capped harder: two eras on one board is one question asked
+# twice ("Raced in the 2010s" against "Debuted in the 2010s").
 MAX_HEADERS_PER_KIND = 2
+KIND_CAPS = {"race_decade": 1, "debut_decade": 1}
 
-# Kinds that read as a special move rather than a category. Two of them on one
-# board stops being a theme and starts being the board's whole personality, so
-# each is capped at one regardless of the general per-kind limit.
-#
-# `won_at_venue` sat here and is not niche. It is the strongest kind in the
-# catalog — Monaco, Spa and Suzuka are the most recognisable propositions in
-# the sport — and capping it at one per board reserved the other five slots for
-# the weak constructor and nationality tail. It now sits under the general
-# per-kind limit like any other category. With two niche kinds left, each
-# capped at one, the former board-wide niche total is unreachable and gone.
-NICHE_KINDS = {"named_teammate", "defunct_venue"}
+# Every board carries a team. Constructors are the category a casual fan
+# recognises first, and a board without one reads as trivia.
+MIN_CONSTRUCTOR_HEADERS = 1
+
+# Boards past this play as a slog rather than a puzzle. The score is the
+# generator's own estimate, so this is a soft ceiling on its output, not a
+# rule about hand-built boards.
+MAX_DIFFICULTY = 45
+
+# Kinds that read as a special move rather than a category. One of each per
+# board at most: two "Won at" or two "Teammate of" headers stop being flavour
+# and become the board's whole personality. Venue and teammate headers are
+# also the bulk of the catalog by count, so without this cap an unconstrained
+# walk fills four of six slots with them.
+NICHE_KINDS = {"named_teammate", "defunct_venue", "won_at_venue"}
 MAX_NICHE_HEADERS_PER_KIND = 1
 
+# Kinds a player recalls rather than reasons about. A board is anchored by at
+# least this many of them so it reads as categories, not trivia.
 PRIMARY_KINDS = {"constructor", "nationality", "race_decade"}
+MIN_PRIMARY_HEADERS = 3
 
 # Sampling weights. Uniform sampling over the catalog is what produced boards
 # built on Ligier and Larrousse: the catalog's only entry requirement is twelve
@@ -255,6 +265,49 @@ class Profile:
         )
 
 
+# A named-teammate header is as reachable as the driver it names. Its answers
+# are the people who sat beside them, whose fame says nothing about whether
+# "Teammate of Latifi" is a question anyone can start on.
+TEAMMATE_APPEAL = {
+    "champion": 3.0,
+    "anchor": 2.4,
+    "marquee": 1.8,
+    "veteran": 1.0,
+    "other": 0.3,
+}
+
+# Headers below this are not offered to the generator at all. Appeal weights
+# only bias a shuffle; with the catalog's long tail of Onyx, AGS and Forti,
+# a bias is not enough to keep the tail off the board.
+MIN_HEADER_APPEAL = 0.6
+
+
+def teammate_profile(
+    driver_slug: str, answers: set[str], recognition: dict[str, Recognition]
+) -> Profile:
+    named = recognition.get(driver_slug)
+    median = header_profile(answers, recognition).median_season
+    if named is None:
+        return Profile(TEAMMATE_APPEAL["other"], median)
+    if named.is_champion:
+        return Profile(TEAMMATE_APPEAL["champion"], median)
+    if named.clears_anchor:
+        return Profile(TEAMMATE_APPEAL["anchor"], median)
+    if named.is_marquee:
+        return Profile(TEAMMATE_APPEAL["marquee"], median)
+    if named.entries >= 150:
+        return Profile(TEAMMATE_APPEAL["veteran"], median)
+    return Profile(TEAMMATE_APPEAL["other"], median)
+
+
+def profile_for(
+    header: Header, answers: set[str], recognition: dict[str, Recognition]
+) -> Profile:
+    if header.kind == "named_teammate":
+        return teammate_profile(header.predicate["driver_slug"], answers, recognition)
+    return header_profile(answers, recognition)
+
+
 def header_profile(answers: set[str], recognition: dict[str, Recognition]) -> Profile:
     """How readily a modern audience can answer this header, as a weight.
 
@@ -372,10 +425,19 @@ def propose(
         return None
 
     profiles = {
-        header_id: header_profile(catalog[header_id][1], recognition)
+        header_id: profile_for(
+            catalog[header_id][0], catalog[header_id][1], recognition
+        )
         for header_id in available
     }
-    appeal = {header_id: profile.appeal for header_id, profile in profiles.items()}
+    available = [
+        header_id
+        for header_id in available
+        if profiles[header_id].appeal >= MIN_HEADER_APPEAL
+    ]
+    if len(available) < 6:
+        return None
+    appeal = {header_id: profiles[header_id].appeal for header_id in available}
 
     def compatible(picked: list[str], candidate: str) -> bool:
         """Cheap constraints, checked before any intersection is computed."""
@@ -383,10 +445,13 @@ def propose(
             return False
         chosen = picked + [candidate]
         kinds = Counter(catalog[header_id][0].kind for header_id in chosen)
-        if kinds.most_common(1)[0][1] > MAX_HEADERS_PER_KIND:
-            return False
         for kind, count in kinds.items():
-            if kind in NICHE_KINDS and count > MAX_NICHE_HEADERS_PER_KIND:
+            cap = (
+                MAX_NICHE_HEADERS_PER_KIND
+                if kind in NICHE_KINDS
+                else MAX_HEADERS_PER_KIND
+            )
+            if count > KIND_CAPS.get(kind, cap):
                 return False
         retro = sum(1 for header_id in chosen if profiles[header_id].is_retro)
         if retro > MAX_RETRO_HEADERS:
@@ -445,7 +510,12 @@ def propose(
 
         if avoid_structure and _structure(headers) == avoid_structure:
             continue
-        if not {header.kind for header in headers} - PRIMARY_KINDS:
+        kinds = [header.kind for header in headers]
+        if sum(1 for kind in kinds if kind in PRIMARY_KINDS) < MIN_PRIMARY_HEADERS:
+            continue
+        if kinds.count("constructor") < MIN_CONSTRUCTOR_HEADERS:
+            continue
+        if not set(kinds) - PRIMARY_KINDS:
             continue
 
         cells = {
@@ -462,12 +532,15 @@ def propose(
         report = validate(db, board, pool, recognition)
         if not report.ok:
             continue
+        score = difficulty(cells, recognition, headers)
+        if score > MAX_DIFFICULTY:
+            continue
 
         return Proposal(
             rows=rows,
             columns=columns,
             cells=cells,
-            difficulty=difficulty(cells, recognition, headers),
+            difficulty=score,
             findings=[
                 {"level": f.level, "code": f.code, "message": f.message}
                 for f in report.findings
@@ -482,7 +555,7 @@ def generate(
     floor: int,
     seed: int | None = None,
     theme: set[str] | None = None,
-    min_depth: int = 12,
+    min_depth: int = MIN_HEADER_DEPTH,
     header_window: int = HEADER_REPEAT_DAYS,
 ) -> list[Proposal]:
     pool = load_pool(db, floor)
@@ -578,7 +651,7 @@ def generate_and_store(
     floor: int,
     seed: int | None = None,
     theme: set[str] | None = None,
-    min_depth: int = 12,
+    min_depth: int = MIN_HEADER_DEPTH,
     header_window: int = HEADER_REPEAT_DAYS,
 ) -> list[int]:
     """Generate and persist in one synchronous unit.
