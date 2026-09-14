@@ -85,7 +85,8 @@ def _gainer(context: HeadlineContext, results) -> list[Headline]:
             kicker=f"From P{entry.grid_position}",
             parts=(
                 driver(context.surname(entry.full_name), entry.driver_code),
-                f" gained {best} places, P{entry.grid_position} → P{entry.position}",
+                f" gained {best} places{context.venue(entry.round)}, "
+                f"P{entry.grid_position} → P{entry.position}",
             ),
             rarity=RARITY_SEASON,
             href=driver_href(entry.driver_code),
@@ -109,8 +110,8 @@ def _fastest_lap(context: HeadlineContext, rnd: int) -> list[Headline]:
             category="last_race",
             kicker="Fastest lap",
             parts=(
-                f"{_mmss(facts.fastest_lap_seconds)}, ",
                 driver(context.surname(setter.full_name), setter.driver_code),
+                f", {_mmss(facts.fastest_lap_seconds)}{context.venue(rnd)}",
             ),
             rarity=RARITY_SEASON,
             href=driver_href(setter.driver_code),
@@ -129,7 +130,7 @@ def _race_shape(context: HeadlineContext, results, rnd: int, circuit: str):
                 category="last_race",
                 kicker="Lead changes",
                 parts=(
-                    f"{spell(facts.lead_changes).capitalize()} lead changes at {circuit}",
+                    f"{spell(facts.lead_changes).capitalize()} lead changes in {circuit}",
                 ),
                 rarity=RARITY_SEASON,
             )
@@ -144,7 +145,7 @@ def _race_shape(context: HeadlineContext, results, rnd: int, circuit: str):
                 kicker="Retirements",
                 parts=(
                     f"{spell(retirements).capitalize()} "
-                    f"{plural(retirements, 'car')} failed to finish at {circuit}",
+                    f"{plural(retirements, 'car')} failed to finish in {circuit}",
                 ),
                 rarity=RARITY_SEASON,
             )
@@ -158,7 +159,7 @@ def _race_shape(context: HeadlineContext, results, rnd: int, circuit: str):
                 id=f"last_race.red_flag.{context.season}.{rnd}",
                 category="last_race",
                 kicker="Red flag",
-                parts=(f"{circuit} was red-flagged",),
+                parts=(f"The race{context.venue(rnd)} was red-flagged",),
                 rarity=RARITY_SEASON,
             )
         )
@@ -185,7 +186,7 @@ def _laps_led(context: HeadlineContext, rnd: int, circuit: str) -> list[Headline
             kicker="Out front",
             parts=(
                 driver(context.surname(entry.full_name), code),
-                f" led {laps} of {total} laps at {circuit}",
+                f" led {laps} of {total} laps in {circuit}",
             ),
             rarity=RARITY_SEASON,
             href=driver_href(code),
@@ -213,7 +214,7 @@ def season_shape(context: HeadlineContext) -> list[Headline]:
                 kicker="Winners",
                 parts=(
                     f"{spell(len(winners)).capitalize()} different winners "
-                    f"in {rounds} rounds",
+                    f"in {rounds} rounds this season",
                 ),
                 rarity=RARITY_SEASON,
                 valid_until=SEASON_END,
@@ -244,7 +245,7 @@ def _margins(context: HeadlineContext) -> list[Headline]:
             category="records",
             kicker="Closest",
             parts=(
-                f"Closest finish of the season: {num(round(closest[0], 3))}s at "
+                f"Closest finish of the season: {num(round(closest[0], 3))}s in "
                 f"{context.circuit_names.get(closest[1], '')}",
             ),
             rarity=RARITY_SEASON,
@@ -256,7 +257,7 @@ def _margins(context: HeadlineContext) -> list[Headline]:
             category="records",
             kicker="Largest",
             parts=(
-                f"Largest margin: {num(round(largest[0], 1))}s at "
+                f"Largest margin of the season: {num(round(largest[0], 1))}s in "
                 f"{context.circuit_names.get(largest[1], '')}",
             ),
             rarity=RARITY_SEASON,
@@ -316,7 +317,7 @@ def _heat(context: HeadlineContext) -> list[Headline]:
             category="records",
             kicker="Hottest",
             parts=(
-                f"Hottest race of the year: {round(hottest)}°C track at "
+                f"Hottest race of the year: {round(hottest)}°C track in "
                 f"{context.circuit_names.get(rnd, '')}",
             ),
             rarity=RARITY_SEASON,
@@ -357,7 +358,7 @@ def _one_twos(context: HeadlineContext) -> list[Headline]:
             id=f"records.one_two.{name}.{rnd}",
             category="records",
             kicker="One-two",
-            parts=(team(name), f"'s first one-two{since}"),
+            parts=(context.marks(rnd), team(name), f"'s first one-two{since}"),
             rarity=RARITY_SEASON,
             href=team_href(name),
         )

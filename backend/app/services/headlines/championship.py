@@ -48,7 +48,7 @@ def championship(context: HeadlineContext) -> list[Headline]:
         candidate(
             id=f"championship.standings.{context.season}",
             category="championship",
-            kicker="Drivers",
+            kicker="Standings",
             parts=tuple(parts),
             rarity=RARITY_SEASON,
             valid_until=NEXT_RACE,
@@ -93,7 +93,7 @@ def championship(context: HeadlineContext) -> list[Headline]:
                 parts=(
                     driver(context.surname(leader.full_name), leader.driver_code),
                     f" has {grand_prix_wins} {plural(grand_prix_wins, 'win')} "
-                    f"from {context.latest_round} rounds",
+                    f"from {context.latest_round} rounds this season",
                 ),
                 rarity=RARITY_SEASON,
                 href=driver_href(leader.driver_code),
@@ -164,7 +164,10 @@ def teams(context: HeadlineContext) -> list[Headline]:
                     id=f"records.team_wins.{name}",
                     category="records",
                     kicker="Team wins",
-                    parts=(team(name), f" have won {wins} of {rounds}"),
+                    parts=(
+                        team(name),
+                        f" have won {wins} of {rounds} rounds this season",
+                    ),
                     rarity=RARITY_SEASON,
                     href=team_href(name),
                 )
@@ -204,8 +207,9 @@ def _career_wins(
             category="records",
             kicker="All-time",
             parts=(
+                context.marks(context.latest_round),
                 team(latest_winner),
-                f"{apostrophe(latest_winner)} {ordinal(career[0])} win{suffix}",
+                f"{apostrophe(latest_winner)} {ordinal(career[0])} all-time win{suffix}",
             ),
             rarity=RARITY_LEADS_COUNT,
             href=team_href(latest_winner),
@@ -234,7 +238,7 @@ def milestones(context: HeadlineContext) -> list[Headline]:
                     kicker="Milestone",
                     parts=(
                         driver(context.surname(full_name), code),
-                        f" starts his {ordinal(total + 1)} Grand Prix at "
+                        f" starts his {ordinal(total + 1)} Grand Prix in "
                         f"{next_event.location}",
                     ),
                     rarity=RARITY_LEADS_COUNT,
@@ -248,6 +252,7 @@ def milestones(context: HeadlineContext) -> list[Headline]:
                     category="milestone",
                     kicker="Milestone",
                     parts=(
+                        context.marks(context.latest_round),
                         driver(context.surname(full_name), code),
                         f"{apostrophe(context.surname(full_name))} "
                         f"{ordinal(podium_total)} podium",
@@ -379,7 +384,7 @@ def _circuit_history(context: HeadlineContext, circuit: str) -> list[Headline]:
             parts.append(" and " if index == len(leaders) - 1 else ", ")
         full_name, code = names[driver_id]
         parts.append(driver(context.surname(full_name), code))
-    parts.append(f" {'have' if len(leaders) > 1 else 'has'} won at {circuit} ")
+    parts.append(f" {'have' if len(leaders) > 1 else 'has'} won in {circuit} ")
     parts.append(f"{spell(best)} times")
     return [
         candidate(

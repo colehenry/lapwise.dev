@@ -212,7 +212,7 @@ function Thread({ handoff }: { handoff: ClutchHandoff }) {
     >
       <DockResizeHandle width={width} onResize={setWidth} />
       <header className="flex h-[38px] flex-none items-center gap-2 border-b border-line-soft px-2.5">
-        <ClutchNavIcon className="h-5 w-5" />
+        <ClutchNavIcon className="h-5 w-5 text-ink-strong" />
         <span className="text-[12.5px] font-semibold text-ink-strong">
           Clutch
         </span>

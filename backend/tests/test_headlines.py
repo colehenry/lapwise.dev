@@ -10,7 +10,7 @@ import pytest
 from sqlalchemy import select
 
 from app.models import Session as RaceSession
-from app.services.headlines.championship import championship
+from app.services.headlines.championship import championship, milestones, teams
 from app.services.headlines.common import (
     MIN_RUN_ENDED,
     MIN_STREAK,
@@ -20,10 +20,11 @@ from app.services.headlines.common import (
 from app.services.headlines.context import (
     HeadlineContext,
     HeadlineContextLoader,
+    QualifyingEntry,
     RaceEntry,
 )
 from app.services.headlines.qualifying import qualifying
-from app.services.headlines.race import last_race
+from app.services.headlines.race import last_race, season_shape
 from app.services.headlines.service import HeadlinesService
 from app.services.headlines.streaks import firsts, runs_ended, streaks
 
@@ -184,6 +185,99 @@ def test_tokens_address_the_span_they_name():
     for headline in streaks(context_for(wins)):
         for token in headline.tokens:
             assert headline.text[token.start : token.end]
+
+
+def qualifying_entry(round_number: int, *, q2: bool = True, q3: bool = True):
+    return QualifyingEntry(
+        year=SEASON,
+        round=round_number,
+        driver_id=1,
+        driver_code="AAA",
+        full_name="Ada Aalto",
+        team_name="Team A",
+        position=1 if q3 else 12,
+        q1=90.0,
+        q2=89.0 if q2 else None,
+        q3=88.0 if q3 else None,
+    )
+
+
+def test_a_claim_about_one_round_names_that_round():
+    """Read cold on the homepage, "first time in 14 races" has to say where."""
+    madrid = MIN_RUN_ENDED + 2
+    scoring = [entry(1, position=15, points=0.0, status="Retired")] + [
+        entry(r, position=1, points=25.0) for r in range(2, madrid)
+    ]
+    race = context_for(
+        scoring + [entry(madrid, position=15, points=0.0, status="Retired")]
+    )
+    race.circuit_names = {madrid: "Madrid"}
+    found = texts(runs_ended(race))
+    assert "Aalto finishes outside the points in Madrid for the first time" in found[0]
+    assert "Aalto's first non-podium in 12 rounds comes in Madrid" in found
+    assert "Aalto retires in Madrid for the first time in 12 races" in found
+
+    debut = context_for(
+        [entry(r, position=8, points=0.0) for r in range(1, 5)]
+        + [entry(5, position=1, points=25.0)]
+    )
+    debut.circuit_names = {5: "Madrid"}
+    debut.driver_careers = {1: (5, 50)}
+    debut.constructor_careers = {"Team A": (141, 900)}
+    debut.team_one_twos = {"Team A": [(SEASON, 5), (2019, 3)]}
+    debut.season_races.append(
+        entry(5, driver_id=2, code="BBB", name="Bo Berg", position=2, points=18.0)
+    )
+    assert "Aalto's first career win comes in Madrid" in texts(firsts(debut))
+    assert "Madrid marks Aalto's first points, in his 5th start" in texts(firsts(debut))
+    assert "Madrid marks Aalto's 50th podium" in texts(milestones(debut))
+    assert "Madrid marks Team A's 141st all-time win, and their first this season" in (
+        texts(teams(debut))
+    )
+    assert "Madrid marks Team A's first one-two since 2019" in texts(
+        season_shape(debut)
+    )
+
+    drought = context_for(
+        [entry(1, position=1, points=25.0)]
+        + [entry(r, position=8, points=4.0) for r in range(2, 8)]
+        + [entry(8, position=1, points=25.0)]
+    )
+    drought.circuit_names = {8: "Madrid"}
+    assert "Aalto's first win in 6 races comes in Madrid" in texts(firsts(drought))
+
+    q1_exit = context_for([entry(madrid)])
+    q1_exit.circuit_names = {madrid: "Madrid"}
+    q1_exit.career_qualifying = (
+        [qualifying_entry(1, q2=False, q3=False)]
+        + [qualifying_entry(r) for r in range(2, madrid)]
+        + [qualifying_entry(madrid, q2=False, q3=False)]
+    )
+    assert "Aalto's first Q1 exit in 12 races comes in Madrid" in texts(
+        qualifying(q1_exit)
+    )
+
+    q3_return = context_for([entry(8)])
+    q3_return.circuit_names = {8: "Madrid"}
+    q3_return.career_qualifying = (
+        [qualifying_entry(1)]
+        + [qualifying_entry(r, q3=False) for r in range(2, 8)]
+        + [qualifying_entry(8)]
+    )
+    assert "Aalto's first Q3 in 6 rounds comes in Madrid" in texts(
+        qualifying(q3_return)
+    )
+
+
+def test_a_round_without_a_known_circuit_still_reads_as_a_sentence():
+    scoring = [entry(1, position=15, points=0.0)] + [
+        entry(r, position=5, points=10.0) for r in range(2, MIN_RUN_ENDED + 2)
+    ]
+    found = texts(
+        runs_ended(context_for(scoring + [entry(MIN_RUN_ENDED + 2, points=0.0)]))
+    )
+    assert "Aalto finishes outside the points for the first time in 12 races" in found
+    assert not any("  " in text or " in ," in text for text in found)
 
 
 def test_apostrophe_follows_the_catalogue_convention():

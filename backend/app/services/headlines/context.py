@@ -120,6 +120,25 @@ class HeadlineContext:
             return 0
         return max(0, self.latest_round - round_number)
 
+    def circuit(self, round_number: int | None) -> str | None:
+        return self.circuit_names.get(round_number) if round_number else None
+
+    def venue(self, round_number: int | None) -> str:
+        """` in Madrid` — the round a fact belongs to, or nothing if unknown."""
+        name = self.circuit(round_number)
+        return f" in {name}" if name else ""
+
+    def comes(self, round_number: int | None) -> str:
+        """` comes in Madrid` — after a race count, a bare `in` would read as
+        races at that circuit."""
+        name = self.circuit(round_number)
+        return f" comes in {name}" if name else ""
+
+    def marks(self, round_number: int | None) -> str:
+        """`Madrid marks ` — the lead-in for a career total the round moved."""
+        name = self.circuit(round_number)
+        return f"{name} marks " if name else ""
+
     def surname(self, full_name: str) -> str:
         """Surname only, unless two drivers this season share it."""
         last = full_name.split()[-1]

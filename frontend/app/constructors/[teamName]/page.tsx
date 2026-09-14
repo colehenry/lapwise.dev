@@ -5,12 +5,11 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import ArchiveDataHeader from "@/components/archive/ArchiveDataHeader";
 import ArchiveMetricBar from "@/components/archive/ArchiveMetricBar";
 import ArchivePanel from "@/components/archive/ArchivePanel";
 import PageHeader from "@/components/layout/PageHeader";
-import { usePageSurface } from "@/components/providers/ClutchDockProvider";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import DeferredSection from "@/components/ui/DeferredSection";
 import ProfileSkeleton from "@/components/ui/ProfileSkeleton";
@@ -18,9 +17,7 @@ import Skeleton from "@/components/ui/Skeleton";
 import SprintToggle from "@/components/ui/SprintToggle";
 import TabBar from "@/components/ui/TabBar";
 import { useTabSync } from "@/hooks/useTabSync";
-import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
 import { apiHeaders, apiUrl } from "@/lib/api";
-import { CAREER_SURFACE, constructorCareer } from "@/lib/clutch/scripts/career";
 import {
   getConstructorBannerUrl,
   getConstructorLogoUrl,
@@ -100,22 +97,6 @@ export default function ConstructorProfilePage() {
       );
     }
   }, [data?.constructor_slug, router, teamName]);
-
-  const career = useMemo(() => (data ? constructorCareer(data) : null), [data]);
-  const constructorSlug = data?.constructor_slug;
-  const clutchPageContext = useMemo<AnalysisPageContext>(
-    () => ({
-      route: constructorUrl,
-      constructorSlugs: constructorSlug ? [constructorSlug] : undefined,
-    }),
-    [constructorUrl, constructorSlug],
-  );
-  usePageSurface(
-    CAREER_SURFACE,
-    career,
-    data?.team_name ?? "",
-    clutchPageContext,
-  );
 
   if (isLoading) {
     return <ProfileSkeleton />;

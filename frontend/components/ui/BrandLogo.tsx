@@ -39,14 +39,14 @@ export function LapwiseWordmark({
  * over `currentColor`, so one asset serves both themes and any tint.
  */
 export function ClutchNavIcon({
-  className = "h-6 w-6",
+  className = "h-6 w-6 text-ink-strong",
 }: {
   className?: string;
 }) {
   return (
     <span
       aria-hidden="true"
-      className={`clutch-mark inline-block shrink-0 text-ink-strong ${className}`}
+      className={`clutch-mark inline-block shrink-0 ${className}`}
     />
   );
 }

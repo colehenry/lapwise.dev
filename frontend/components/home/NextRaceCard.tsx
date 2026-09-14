@@ -117,18 +117,6 @@ export default function NextRaceCard() {
           "radial-gradient(130% 100% at 100% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%), var(--surface-panel)",
       }}
     >
-      {/* The circuit sits in the top-right corner, where the card had nothing. */}
-      <div className="pointer-events-none absolute right-4 top-4 h-[110px] w-[110px]">
-        <CircuitOutline
-          circuitId={next.circuit_id}
-          circuitName={next.circuit_name ?? next.location}
-          className="h-full w-full"
-          stroke="var(--ink-soft)"
-          strokeWidth={1.5}
-          opacity={0.8}
-        />
-      </div>
-
       <div className="relative">
         <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft">
           Next race
@@ -164,8 +152,21 @@ export default function NextRaceCard() {
           round={next.last_raced_round}
         />
       </div>
+      {/* The circuit takes the slack between the headline and the list, so the
+          countdown never shares its line with it and the card has no dead
+          band: a taller row means a larger drawing. */}
+      <div className="pointer-events-none relative my-3 flex min-h-[78px] flex-1 items-center justify-end">
+        <CircuitOutline
+          circuitId={next.circuit_id}
+          circuitName={next.circuit_name ?? next.location}
+          className="h-full w-full max-w-[240px]"
+          stroke="var(--ink-soft)"
+          strokeWidth={1.5}
+          opacity={0.8}
+        />
+      </div>
       {races.length > 1 && (
-        <div className="relative mt-auto border-t border-line-strong pt-3">
+        <div className="relative border-t border-line-strong pt-3">
           {races.slice(1, 4).map((event) => (
             <div
               key={`${event.event_name}-${event.event_date}`}

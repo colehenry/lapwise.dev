@@ -43,9 +43,9 @@ function RaceCard({
         {utcDate(round.date, { day: "numeric", month: "short" })}
       </p>
 
-      {/* A band of its own, so every circuit sits in the same place at the
-          same vertical size however differently shaped it is. */}
-      <div className="my-3 flex h-[78px] items-center justify-center overflow-hidden">
+      {/* The circuit takes whatever height the row leaves over, so a card
+          that stands taller than its podium shows more track, not more panel. */}
+      <div className="my-3 flex min-h-[78px] flex-1 items-center justify-center overflow-hidden">
         <CircuitOutline
           circuitId={round.circuit_id}
           circuitName={round.circuit_name}
@@ -92,7 +92,7 @@ function RaceCard({
         ))}
       </div>
 
-      <span className="mt-auto flex origin-left items-center gap-1.5 pt-3 font-mono text-[9.5px] uppercase tracking-[0.14em] text-accent-bright transition-transform duration-200 ease-out group-hover:scale-110">
+      <span className="flex origin-left items-center gap-1.5 pt-3 font-mono text-[9.5px] uppercase tracking-[0.14em] text-accent-bright transition-transform duration-200 ease-out group-hover:scale-110">
         Race details
         <span
           aria-hidden="true"

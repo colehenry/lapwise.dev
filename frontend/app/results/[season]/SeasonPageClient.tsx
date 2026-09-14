@@ -2,23 +2,17 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import DriverHeadshot from "@/components/entities/DriverHeadshot";
 import JumpToRace from "@/components/layout/JumpToRace";
 import PageHeader from "@/components/layout/PageHeader";
-import {
-  useLazySurface,
-  usePageSurface,
-} from "@/components/providers/ClutchDockProvider";
 import { TrackMapCompact } from "@/components/track/TrackMapDisplay";
 import TiltCard from "@/components/ui/TiltCard";
 import { useChampionshipDisplay } from "@/hooks/useChampionshipDisplay";
-import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
 import {
   qualifyingRoundsQuery,
   seasonRoundsQuery,
   seasonsQuery,
-  selectUniqueRounds,
 } from "@/lib/queries/seasons";
 import {
   qualifyingStandingsQuery,
@@ -26,11 +20,6 @@ import {
 } from "@/lib/queries/standings";
 import SeasonAnalysisPanels from "./SeasonAnalysisPanels";
 import SeasonStandingsPanels from "./SeasonStandingsPanels";
-
-const loadStandingsSurface = () =>
-  import("@/lib/clutch/scripts/standings-surface").then(
-    (module) => module.STANDINGS_SURFACE,
-  );
 
 export default function SeasonPageClient() {
   const params = useParams();
@@ -73,28 +62,6 @@ export default function SeasonPageClient() {
   const isLoading = standingsLoading || roundsLoading;
 
   const championshipDisplay = useChampionshipDisplay(standings);
-
-  const standingsContext = useMemo(
-    () =>
-      standings
-        ? {
-            standings,
-            roundsRun: rounds ? selectUniqueRounds(rounds).length : null,
-          }
-        : null,
-    [standings, rounds],
-  );
-  const clutchPageContext = useMemo<AnalysisPageContext>(
-    () => ({ route: `/results/${season}`, season: seasonYear }),
-    [season, seasonYear],
-  );
-  const standingsSurface = useLazySurface(loadStandingsSurface);
-  usePageSurface(
-    standingsSurface,
-    standingsContext,
-    `${season} · Standings`,
-    clutchPageContext,
-  );
 
   const handleYearChange = (newYear: string) => {
     router.push(`/results/${newYear}`);

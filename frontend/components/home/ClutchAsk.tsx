@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { formatLapTime } from "@/lib/chart-utils";
-import { seconds3, teamTint } from "@/lib/consoleFormat";
+import { teamTint } from "@/lib/consoleFormat";
 import { driverHref } from "@/lib/entityLinks";
 import type { ConsoleReplay } from "@/lib/queries/consoleReplay";
 import ConsolePanel from "./ConsolePanel";
@@ -15,33 +14,52 @@ type Answer = {
 /**
  * One worked question, answered off the same rows the console is replaying.
  *
- * Every clause is derived, never written down: the driver, the time, the lap
- * and whether it was the last one all come from `fastest_lap` and `total_laps`,
- * so the answer cannot drift from the race on screen.
+ * It follows the winner's recorded position by lap, showing when the final
+ * lead began and how much of the race they actually led.
  */
 function buildAnswer(replay: ConsoleReplay): Answer | null {
-  const fastest = replay.fastest_lap;
-  if (!fastest?.driver_code || fastest.lap == null) return null;
-
-  const car = replay.cars.find(
-    (entry) => entry.driver_code === fastest.driver_code,
+  const winner = replay.cars.find(
+    (entry) => entry.final_position === 1 && entry.driver_code,
   );
-  if (!car) return null;
+  if (!winner?.driver_code) return null;
 
-  const onTheLast = fastest.lap === replay.total_laps;
+  const positions = winner.laps
+    .slice(0, replay.total_laps)
+    .map((lap) => lap.pos);
+  if (positions.length === 0 || positions.at(-1) !== 1) return null;
+
+  let finalLeadIndex = positions.length - 1;
+  while (finalLeadIndex > 0 && positions[finalLeadIndex - 1] === 1) {
+    finalLeadIndex -= 1;
+  }
+
+  const lapsLed = positions.filter((position) => position === 1).length;
+  const finalLeadLap = finalLeadIndex + 1;
+  const closingLaps = positions.length - finalLeadIndex;
+  const recordedPositions = positions.filter(
+    (position): position is number => position !== null,
+  );
+  const lowestPosition =
+    recordedPositions.length > 0 ? Math.max(...recordedPositions) : null;
+  const surname =
+    winner.full_name.trim().split(/\s+/).at(-1) ?? winner.full_name;
+  const ledThroughout = finalLeadLap === 1 && lapsLed === positions.length;
+
+  const raceShape = ledThroughout
+    ? ` held P1 at the end of every recorded lap, leading all ${positions.length}.`
+    : ` moved into P1 for the final time on lap ${finalLeadLap} and stayed there for the last ${closingLaps} lap${closingLaps === 1 ? "" : "s"}. ${surname} led ${lapsLed} of ${positions.length} laps overall${lowestPosition !== null && lowestPosition > 1 ? ` after running as low as P${lowestPosition}` : ""}.`;
 
   return {
-    question: `Who had the fastest lap at ${replay.circuit_name} in ${replay.date.slice(0, 4)}?`,
+    question: ledThroughout
+      ? `Did ${surname} lead from start to finish?`
+      : `When did ${surname} take the lead for good?`,
     segments: [
       {
-        text: car.full_name,
-        tint: teamTint(car.team_color),
-        href: driverHref(car),
+        text: winner.full_name,
+        tint: teamTint(winner.team_color),
+        href: driverHref(winner),
       },
-      { text: ` set it on lap ${fastest.lap} of ${replay.total_laps}` },
-      { text: onTheLast ? " — the last lap of the race — in " : " in " },
-      { text: formatLapTime(fastest.seconds) },
-      { text: `, ${seconds3(fastest.seconds)} seconds.` },
+      { text: raceShape },
     ],
   };
 }
@@ -111,7 +129,7 @@ export default function ClutchAsk({
         </div>
       ) : (
         <p className="flex flex-1 items-center px-3 text-[12.5px] text-ink-soft">
-          No fastest lap was recorded for this round.
+          No complete winner position path was recorded for this round.
         </p>
       )}
     </ConsolePanel>

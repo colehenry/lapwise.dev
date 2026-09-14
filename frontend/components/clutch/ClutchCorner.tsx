@@ -250,7 +250,7 @@ export default function ClutchCorner<C>({
         {place === "dock" ? (
           <ClutchHead className="h-full w-full" />
         ) : (
-          <ClutchNavIcon className="h-full w-full" />
+          <ClutchNavIcon className="h-full w-full text-ink-strong" />
         )}
       </button>
 

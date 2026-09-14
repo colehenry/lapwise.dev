@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import fastf1
 import pandas as pd
@@ -33,37 +33,23 @@ class EventService:
         # Validate limit
         limit = max(1, min(limit, 10))
 
-        # Get current year (check current year first, then next year)
-        current_year = datetime.now().year
-        today = datetime.now().date()
+        now = datetime.now(timezone.utc)
+        current_year = now.year
 
         upcoming = None
 
         # Try current year first
         try:
-            schedule = fastf1.get_event_schedule(current_year, include_testing=True)
-            all_events = schedule.sort_values("EventDate")
-
-            # Filter for upcoming events
-            upcoming = all_events[
-                all_events["EventDate"].apply(
-                    lambda x: x.date() if hasattr(x, "date") else x
-                )
-                >= today
-            ]
+            upcoming = EventService._still_to_run(
+                fastf1.get_event_schedule(current_year, include_testing=True), now
+            )
 
             # If no upcoming events in current year, try next year
             if len(upcoming) == 0:
-                schedule = fastf1.get_event_schedule(
-                    current_year + 1, include_testing=True
+                upcoming = EventService._still_to_run(
+                    fastf1.get_event_schedule(current_year + 1, include_testing=True),
+                    now,
                 )
-                all_events = schedule.sort_values("EventDate")
-                upcoming = all_events[
-                    all_events["EventDate"].apply(
-                        lambda x: x.date() if hasattr(x, "date") else x
-                    )
-                    >= today
-                ]
 
         except Exception as e:
             # Log error ideally
@@ -134,6 +120,32 @@ class EventService:
                 event.last_raced_season, event.last_raced_round = raced
 
         return response_events
+
+    @staticmethod
+    def _still_to_run(schedule: pd.DataFrame, now: datetime) -> pd.DataFrame:
+        """The schedule's events whose race has not started, in date order.
+
+        The race day is not the boundary: on the Sunday the card would sit at
+        zero all day. An event is upcoming until lights out, and a weekend
+        with no race (testing) until its final day has passed.
+        """
+        schedule = schedule.sort_values("EventDate")
+        if schedule.empty:
+            return schedule
+        return schedule[
+            schedule.apply(lambda event: EventService._closes_at(event) > now, axis=1)
+        ]
+
+    @staticmethod
+    def _closes_at(event) -> datetime:
+        start = EventService._race_start_utc(event)
+        if start is not None:
+            return datetime.fromisoformat(start).replace(tzinfo=timezone.utc)
+        event_date = event["EventDate"]
+        last_day = event_date.date() if hasattr(event_date, "date") else event_date
+        return datetime.combine(
+            last_day + timedelta(days=1), datetime.min.time(), timezone.utc
+        )
 
     @staticmethod
     async def _last_races(

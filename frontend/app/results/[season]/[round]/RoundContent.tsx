@@ -6,19 +6,12 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import RaceComments from "@/components/comments/RaceComments";
 import JumpToRace from "@/components/layout/JumpToRace";
-import { usePageSurface } from "@/components/providers/ClutchDockProvider";
 import SessionDetail from "@/components/session/SessionDetail";
 import type { SessionSummary } from "@/components/session/SessionSummaryCard";
 import DeferredSection from "@/components/ui/DeferredSection";
-import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
-import {
-  SESSION_SURFACE,
-  type SessionContext,
-} from "@/lib/clutch/scripts/session";
-import { raceCornerInsightQuery } from "@/lib/queries/raceInsight";
 import { seasonsQuery } from "@/lib/queries/seasons";
 import {
   defaultPracticeNumber,
@@ -139,62 +132,6 @@ export default function RoundContent() {
       router.replace(`/results/${season}/${round}`, { scroll: false });
     }
   }, [availability, isActiveTabAvailable, router, season, round]);
-
-  const clutchSessionType =
-    resolvedTab === "race"
-      ? "race"
-      : resolvedTab === "sprint"
-        ? "sprint_race"
-        : resolvedTab === "qualifying"
-          ? "qualifying"
-          : resolvedTab === "sprint-qualifying"
-            ? "sprint_qualifying"
-            : undefined;
-  const sessionId = sessionData?.session.id;
-  const strategySession =
-    sessionData?.session.session_type === "race" ||
-    sessionData?.session.session_type === "sprint_race";
-  const { data: cornerInsight, isLoading: cornerInsightLoading } = useQuery(
-    raceCornerInsightQuery(
-      strategySession && sessionId !== undefined ? sessionId : null,
-    ),
-  );
-  const surfaceContext = useMemo<SessionContext | null>(() => {
-    if (!sessionData || (strategySession && cornerInsightLoading)) return null;
-    return {
-      ...sessionData,
-      clutchInsights: cornerInsight?.insights ?? [],
-    };
-  }, [sessionData, strategySession, cornerInsightLoading, cornerInsight]);
-  const clutchPageContext = useMemo<AnalysisPageContext | null>(
-    () =>
-      sessionId === undefined
-        ? null
-        : {
-            route: `/results/${season}/${round}${resolvedTab === "race" ? "" : `?tab=${resolvedTab}`}`,
-            season: seasonNum,
-            round: roundNum,
-            sessionId,
-            sessionType: clutchSessionType,
-          },
-    [
-      season,
-      round,
-      resolvedTab,
-      seasonNum,
-      roundNum,
-      sessionId,
-      clutchSessionType,
-    ],
-  );
-  usePageSurface(
-    SESSION_SURFACE,
-    surfaceContext,
-    availability
-      ? `${availability.event_name} · ${TAB_LABELS[resolvedTab]}`
-      : "",
-    clutchPageContext,
-  );
 
   if (loading) {
     return (
