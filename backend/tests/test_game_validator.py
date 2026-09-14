@@ -11,6 +11,7 @@ from scripts.game_validator import (
     _check_decoy_pools,
     _check_depths,
     _check_marquee_answers,
+    _check_structure,
     hall_deficiency,
     has_perfect_assignment,
 )
@@ -199,6 +200,48 @@ def test_single_axis_decoys_are_reported_when_a_row_adds_nothing():
     _check_decoy_pools(report, board, cells)
 
     assert "single_axis_decoys" in _codes(report, "warning")
+
+
+def _structured_grid() -> dict:
+    board = _grid()
+    board["rows"][0]["predicate"] = {"kind": "won_at"}
+    for category in board["rows"][1:] + board["columns"]:
+        category["predicate"] = {"kind": "constructor"}
+    return board
+
+
+def _structure_cells(**overrides: set[str]) -> dict[str, set[str]]:
+    cells = {
+        f"{row}__{column}": {f"{row}{column}", f"{row}{column}x"}
+        for row in ("r1", "r2", "r3")
+        for column in ("c1", "c2", "c3")
+    }
+    cells.update(overrides)
+    return cells
+
+
+def test_identical_cells_are_an_error():
+    report = Report(board_id="test")
+    board = _structured_grid()
+    cells = _structure_cells(r1__c1={"a", "b", "c"}, r1__c2={"a", "b", "c"})
+
+    _check_structure(report, board, cells)
+
+    assert "identical_cells" in _codes(report, "error")
+    assert "near_identical_cells" not in _codes(report)
+
+
+def test_near_identical_cells_stay_a_warning():
+    report = Report(board_id="test")
+    board = _structured_grid()
+    cells = _structure_cells(
+        r1__c1={"a", "b", "c", "d", "e"}, r1__c2={"a", "b", "c", "d"}
+    )
+
+    _check_structure(report, board, cells)
+
+    assert "near_identical_cells" in _codes(report, "warning")
+    assert not report.errors
 
 
 def test_a_cell_of_journeymen_is_rejected_however_deep_it_is():

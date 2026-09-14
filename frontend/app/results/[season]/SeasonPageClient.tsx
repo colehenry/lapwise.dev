@@ -11,7 +11,7 @@ import { TrackMapCompact } from "@/components/track/TrackMapDisplay";
 import TiltCard from "@/components/ui/TiltCard";
 import { useChampionshipDisplay } from "@/hooks/useChampionshipDisplay";
 import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
-import { STANDINGS_SURFACE } from "@/lib/clutch/scripts/standings";
+import { STANDINGS_SURFACE } from "@/lib/clutch/scripts/standings-surface";
 import {
   qualifyingRoundsQuery,
   seasonRoundsQuery,

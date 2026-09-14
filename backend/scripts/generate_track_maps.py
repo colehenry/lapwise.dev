@@ -25,6 +25,7 @@ from sqlalchemy import select
 
 from app.database import get_db
 from app.models.circuit import Circuit
+from scripts.ingest.utils import track_rotation_degrees
 
 # Use non-interactive backend
 matplotlib.use("Agg")
@@ -60,11 +61,10 @@ def generate_track_map(
             return False
 
         telemetry = lap.get_telemetry()
-        circuit_info = session.get_circuit_info()
 
         # Extract and rotate track coordinates
         track = telemetry.loc[:, ("X", "Y")].to_numpy()
-        track_angle = circuit_info.rotation / 180 * np.pi
+        track_angle = track_rotation_degrees(session) / 180 * np.pi
         rotated_track = rotate(track, angle=track_angle)
 
         # Create figure with no background
@@ -166,6 +166,9 @@ async def async_main():
         default="R",
         help="Session type to use for data (default: R = Race)",
     )
+    parser.add_argument(
+        "--round", type=int, default=None, help="Only this round (default: all)"
+    )
 
     args = parser.parse_args()
 
@@ -199,6 +202,8 @@ async def async_main():
 
     # Filter to actual race events (exclude testing)
     race_events = schedule[schedule["EventFormat"] != "testing"]
+    if args.round is not None:
+        race_events = race_events[race_events["RoundNumber"] == args.round]
 
     success_count = 0
     failed_events = []

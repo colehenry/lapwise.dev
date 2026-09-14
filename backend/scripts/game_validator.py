@@ -46,7 +46,8 @@ FLOOR_MIN_ENTRIES = 100
 # knows only the famous era of an intersection still has a way in.
 ANCHOR_MIN_WINS = 10
 
-# Two cells whose answer sets differ by less than this are the same cell twice.
+# Two cells whose answer sets differ by less than this read as the same cell
+# twice; cells that accept exactly the same drivers are one cell twice.
 NEAR_IDENTICAL_RATIO = 0.8
 
 # A cell accepting this share of the eligible pool is a free square: almost any
@@ -332,6 +333,12 @@ def _check_structure(report: Report, board: dict, cells: dict[str, set[str]]) ->
     for index, (left_id, left) in enumerate(items):
         for right_id, right in items[index + 1 :]:
             if not left or not right:
+                continue
+            if left == right:
+                report.error(
+                    "identical_cells",
+                    f"{left_id} and {right_id} accept exactly the same drivers",
+                )
                 continue
             overlap = len(left & right) / len(left | right)
             if overlap >= NEAR_IDENTICAL_RATIO:

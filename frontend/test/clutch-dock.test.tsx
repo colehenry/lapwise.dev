@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ClutchDock from "@/components/clutch/ClutchDock";
 import ClutchDockProvider, {
   useClutchDock,
@@ -125,9 +125,11 @@ function renderDock(page?: React.ReactNode) {
   return { ...view, rerender: () => view.rerender(build()) };
 }
 
+/* The setup file unmounts after this file's afterEach runs. */
+beforeEach(() => window.localStorage.clear());
+
 afterEach(() => {
   vi.clearAllMocks();
-  window.localStorage.clear();
   navigation.pathname = "/results/2025/1";
   chat.messages = [];
   chat.activeConversationId = null;

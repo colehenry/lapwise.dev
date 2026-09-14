@@ -5,7 +5,7 @@ import type {
   StandingsResponse,
 } from "../../championshipTypes";
 import { firstScript, resolveScript } from "../script";
-import { STANDINGS_SURFACE, type StandingsContext } from "./standings";
+import { STANDINGS_SURFACE, type StandingsContext } from "./standings-surface";
 
 const scoring = {
   kind: "provisional",

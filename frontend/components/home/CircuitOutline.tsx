@@ -10,7 +10,7 @@ import { hasStaticTrackMap } from "@/lib/trackMapAssets";
 /**
  * The shape of a circuit, in three falling-back sources: the replay polyline,
  * which is theme-aware SVG and covers anything with lap data; the static PNG
- * set, which stops at circuit 35; and nothing at all.
+ * set, which covers the current calendar; and nothing at all.
  *
  * Nothing at all is deliberate. `TrackMapImage`'s own fallback renders the
  * words "No map available", which is worse than an empty corner.

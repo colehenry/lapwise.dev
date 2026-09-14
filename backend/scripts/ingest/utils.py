@@ -220,3 +220,15 @@ def session_exists(event, session_type_name):
 
     # FP1, race, and qualifying exist at all events
     return True
+
+
+def track_rotation_degrees(fastf1_session):
+    """Circuit rotation from FastF1's circuit info, or 0 when none is published.
+
+    Circuit info comes from a third-party API that lags new venues by a season;
+    the outline still draws correctly unrotated.
+    """
+    try:
+        return float(fastf1_session.get_circuit_info().rotation)
+    except Exception:
+        return 0.0
