@@ -6,12 +6,14 @@ import { useEffect, useMemo, useState } from "react";
 import DriverHeadshot from "@/components/entities/DriverHeadshot";
 import JumpToRace from "@/components/layout/JumpToRace";
 import PageHeader from "@/components/layout/PageHeader";
-import { usePageSurface } from "@/components/providers/ClutchDockProvider";
+import {
+  useLazySurface,
+  usePageSurface,
+} from "@/components/providers/ClutchDockProvider";
 import { TrackMapCompact } from "@/components/track/TrackMapDisplay";
 import TiltCard from "@/components/ui/TiltCard";
 import { useChampionshipDisplay } from "@/hooks/useChampionshipDisplay";
 import type { AnalysisPageContext } from "@/lib/ai/analysis-contracts";
-import { STANDINGS_SURFACE } from "@/lib/clutch/scripts/standings-surface";
 import {
   qualifyingRoundsQuery,
   seasonRoundsQuery,
@@ -24,6 +26,11 @@ import {
 } from "@/lib/queries/standings";
 import SeasonAnalysisPanels from "./SeasonAnalysisPanels";
 import SeasonStandingsPanels from "./SeasonStandingsPanels";
+
+const loadStandingsSurface = () =>
+  import("@/lib/clutch/scripts/standings-surface").then(
+    (module) => module.STANDINGS_SURFACE,
+  );
 
 export default function SeasonPageClient() {
   const params = useParams();
@@ -81,8 +88,9 @@ export default function SeasonPageClient() {
     () => ({ route: `/results/${season}`, season: seasonYear }),
     [season, seasonYear],
   );
+  const standingsSurface = useLazySurface(loadStandingsSurface);
   usePageSurface(
-    STANDINGS_SURFACE,
+    standingsSurface,
     standingsContext,
     `${season} · Standings`,
     clutchPageContext,

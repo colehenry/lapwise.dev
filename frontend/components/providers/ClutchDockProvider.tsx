@@ -122,8 +122,28 @@ export default function ClutchDockProvider({
  * the page still loading — registers nothing. `context` and `pageContext`
  * are effect dependencies, so the caller keeps them referentially stable.
  */
+/**
+ * Resolves a surface on the client after mount, so its scripts stay out of
+ * the route's first-load bundle. `load` must be a module-level constant.
+ */
+export function useLazySurface<C>(
+  load: () => Promise<Surface<C>>,
+): Surface<C> | null {
+  const [surface, setSurface] = useState<Surface<C> | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void load().then((loaded) => {
+      if (!cancelled) setSurface(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [load]);
+  return surface;
+}
+
 export function usePageSurface<C>(
-  surface: Surface<C>,
+  surface: Surface<C> | null,
   context: C | null,
   title: string,
   pageContext: AnalysisPageContext | null,
@@ -131,7 +151,7 @@ export function usePageSurface<C>(
   const register = useContext(RegistryContext);
   if (!register) throw new Error("usePageSurface needs a ClutchDockProvider");
   useEffect(() => {
-    if (context === null || pageContext === null) return;
+    if (surface === null || context === null || pageContext === null) return;
     register({
       surface: surface as Surface<never>,
       context: context as never,

@@ -222,12 +222,20 @@ def session_exists(event, session_type_name):
     return True
 
 
+# Degrees, by event location, for venues FastF1's circuit-info API has not
+# published. Chosen by eye against the official circuit map.
+TRACK_ROTATION_OVERRIDES = {"Madrid": 270.0}
+
+
 def track_rotation_degrees(fastf1_session):
-    """Circuit rotation from FastF1's circuit info, or 0 when none is published.
+    """Circuit rotation for drawing the track outline.
 
     Circuit info comes from a third-party API that lags new venues by a season;
-    the outline still draws correctly unrotated.
+    an override wins, then the API, then unrotated.
     """
+    override = TRACK_ROTATION_OVERRIDES.get(fastf1_session.event["Location"])
+    if override is not None:
+        return override
     try:
         return float(fastf1_session.get_circuit_info().rotation)
     except Exception:
