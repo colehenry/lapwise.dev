@@ -29,6 +29,14 @@ export const metadata: Metadata = {
   description:
     "Professional Formula 1 analytics platform with race results, telemetry data, and comprehensive driver statistics.",
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/brand/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/brand/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/brand/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     title: "Lapwise",

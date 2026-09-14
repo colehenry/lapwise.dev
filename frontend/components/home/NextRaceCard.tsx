@@ -155,11 +155,11 @@ export default function NextRaceCard() {
       {/* The circuit takes the slack between the headline and the list, so the
           countdown never shares its line with it and the card has no dead
           band: a taller row means a larger drawing. */}
-      <div className="pointer-events-none relative my-3 flex min-h-[78px] flex-1 items-center justify-end">
+      <div className="pointer-events-none relative my-3 flex min-h-[78px] flex-1 items-center justify-center">
         <CircuitOutline
           circuitId={next.circuit_id}
           circuitName={next.circuit_name ?? next.location}
-          className="h-full w-full max-w-[240px]"
+          className="h-full w-full"
           stroke="var(--ink-soft)"
           strokeWidth={1.5}
           opacity={0.8}

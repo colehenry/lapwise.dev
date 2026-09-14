@@ -519,6 +519,8 @@ body {
      empty, and nothing shrinks because a neighbour is full. An `auto` row here
      meant the drivers' table was silently dictating the height of the map. */
   .home-console {
+    --right-rail-rise: 72px;
+
     grid-template-columns:
       clamp(276px, 22vw, 348px)
       minmax(0, 1fr)
@@ -563,6 +565,17 @@ body {
   }
   .home-console__clutch {
     grid-area: clutch;
+  }
+}
+
+@media (min-width: 1180px) {
+  /* Give the right rail its own tighter split without moving the console's
+     outer edges or the shared map/race row line. */
+  .home-console__grid {
+    margin-bottom: var(--right-rail-rise);
+  }
+  .home-console__clutch {
+    margin-top: calc(-1 * var(--right-rail-rise));
   }
 }
 
