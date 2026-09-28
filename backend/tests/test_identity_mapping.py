@@ -310,3 +310,62 @@ def test_unknown_team_without_team_id_is_still_provisional():
 
     assert team.constructor_id != constructor_id
     assert db.execute(select(func.count()).select_from(Constructor)).scalar() == 2
+
+
+def test_stale_provisional_constructor_yields_to_the_season_team():
+    """An id-less ingest that ran before the season team existed left a
+    provisional constructor behind. Later id-less rows must land on the
+    canonical constructor, not keep feeding the provisional one."""
+    db, constructor_id = _season_team_session()
+    stale = Constructor(slug="mercedes-2", canonical_name="Mercedes")
+    db.add(stale)
+    db.flush()
+    db.add(
+        ConstructorExternalId(
+            constructor_id=stale.id,
+            source="lapwise-provisional",
+            external_id="2026:mercedes",
+        )
+    )
+    db.add(
+        Team(
+            year=2026,
+            constructor_id=stale.id,
+            name="Mercedes",
+            source_name="Mercedes",
+        )
+    )
+    db.commit()
+
+    team = resolve_constructor(
+        db,
+        year=2026,
+        external_id=None,
+        source_name="Mercedes",
+        display_name="Mercedes",
+        color="00D7B6",
+    )
+
+    assert team.constructor_id == constructor_id
+
+
+def test_second_constructor_on_a_season_team_name_is_flagged():
+    """A TeamId the registry has never seen still names an existing season
+    team. The row is kept, and the split is recorded for review."""
+    db, constructor_id = _season_team_session()
+
+    team = resolve_constructor(
+        db,
+        year=2026,
+        external_id="mercedes_amg",
+        source_name="Mercedes",
+        display_name="Mercedes",
+        color="00D7B6",
+    )
+
+    assert team.constructor_id != constructor_id
+    issues = db.execute(select(IngestIdentityIssue)).scalars().all()
+    assert [issue.details for issue in issues] == [
+        f"Second constructor for season team 'Mercedes'; "
+        f"constructor {constructor_id} already holds it"
+    ]

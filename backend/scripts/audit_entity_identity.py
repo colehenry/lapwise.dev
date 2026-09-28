@@ -30,6 +30,12 @@ CHECKS = {
         FROM teams GROUP BY year, constructor_id HAVING COUNT(*) > 1
         ORDER BY year, constructor_id
     """,
+    "season team names split across constructors": """
+        SELECT year, name, COUNT(*),
+               STRING_AGG(constructor_id::text, ',' ORDER BY constructor_id)
+        FROM teams GROUP BY year, name HAVING COUNT(*) > 1
+        ORDER BY year, name
+    """,
     "duplicate external driver mappings": """
         SELECT source, external_id, COUNT(DISTINCT driver_id)
         FROM driver_external_ids GROUP BY source, external_id

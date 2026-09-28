@@ -70,6 +70,7 @@ class EventService:
             # Try to find matching circuit in database
             circuit_id = None
             circuit_name = None
+            location = event["Location"]
 
             # Match by location and country
             # We use _find_matching_circuit helper which encapsulates the query
@@ -80,6 +81,9 @@ class EventService:
             if circuit:
                 circuit_id = circuit.id
                 circuit_name = circuit.name
+                # The matched row is canonical; the schedule feed carries the
+                # wrong venue for some events.
+                location = circuit.location
 
             # Determine event type
             event_type = "testing" if event["RoundNumber"] == 0 else "race"
@@ -99,7 +103,7 @@ class EventService:
                     event_type=event_type,
                     event_date=event_date_str,
                     race_start_utc=race_start_utc,
-                    location=event["Location"],
+                    location=location,
                     country=event["Country"],
                     round_number=int(event["RoundNumber"])
                     if event["RoundNumber"] != 0
