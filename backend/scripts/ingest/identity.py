@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 import re
 import unicodedata
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.models import (
@@ -23,6 +24,8 @@ from app.models import (
 from app.models import (
     Session as RaceSession,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class IdentityResolutionError(RuntimeError):
@@ -264,7 +267,8 @@ def _resolve_constructor_by_season_team(
 
     Sources that omit a TeamId — FastF1 derives Sprint Qualifying results from
     timing data, and practice reserve drivers have no Ergast entry — still name
-    the team as the season's registered team does.
+    the team as the season's registered team does. When a stale provisional
+    constructor shares the name, the source-backed constructor wins.
     """
     for column, value in ((Team.source_name, source_name), (Team.name, display_name)):
         if not value:
@@ -276,9 +280,58 @@ def _resolve_constructor_by_season_team(
                 .where(Team.year == year, column == value)
             ).scalars()
         )
+        if len(matches) > 1:
+            matches = [
+                constructor
+                for constructor in matches
+                if any(
+                    external.source != "lapwise-provisional"
+                    for external in constructor.external_ids
+                )
+            ]
         if len(matches) == 1:
             return matches[0]
     return None
+
+
+def _flag_duplicate_season_team(
+    db, *, year: int, source_name: str, display_name: str
+) -> None:
+    """Record when a second constructor is about to share a season team name.
+
+    Two constructors named alike in one season split that team's results across
+    the archive, so every ingestion path surfaces the split the moment it forms.
+    """
+    existing = (
+        db.execute(
+            select(Team).where(
+                Team.year == year,
+                or_(Team.name == display_name, Team.source_name == source_name),
+            )
+        )
+        .scalars()
+        .first()
+    )
+    if existing is None:
+        return
+    logger.warning(
+        "Duplicate season team: %s %r already belongs to constructor %s",
+        year,
+        display_name,
+        existing.constructor_id,
+    )
+    record_issue(
+        db,
+        entity_type="constructor",
+        source="fastf1",
+        source_id=None,
+        raw_name=source_name,
+        year=year,
+        details=(
+            f"Second constructor for season team {display_name!r}; "
+            f"constructor {existing.constructor_id} already holds it"
+        ),
+    )
 
 
 def resolve_constructor(
@@ -292,14 +345,22 @@ def resolve_constructor(
 ) -> Team:
     source = "jolpica" if external_id else "lapwise-provisional"
     lookup_id = external_id or f"{year}:{slugify(source_name)}"
-    constructor = db.execute(
-        select(Constructor)
-        .join(ConstructorExternalId)
-        .where(
-            ConstructorExternalId.source == source,
-            ConstructorExternalId.external_id == lookup_id,
+    constructor = None
+    if not external_id:
+        # The season's registered team outranks any provisional record so an
+        # earlier id-less ingest can never keep shadowing the canonical entry.
+        constructor = _resolve_constructor_by_season_team(
+            db, year=year, source_name=source_name, display_name=display_name
         )
-    ).scalar_one_or_none()
+    if constructor is None:
+        constructor = db.execute(
+            select(Constructor)
+            .join(ConstructorExternalId)
+            .where(
+                ConstructorExternalId.source == source,
+                ConstructorExternalId.external_id == lookup_id,
+            )
+        ).scalar_one_or_none()
     if constructor is None and external_id:
         provisional_id = f"{year}:{slugify(source_name)}"
         constructor = db.execute(
@@ -318,10 +379,6 @@ def resolve_constructor(
                     external_id=external_id,
                 )
             )
-    if constructor is None and not external_id:
-        constructor = _resolve_constructor_by_season_team(
-            db, year=year, source_name=source_name, display_name=display_name
-        )
     if constructor is None:
         constructor = Constructor(
             slug=unique_slug(db, Constructor, external_id or display_name),
@@ -351,6 +408,9 @@ def resolve_constructor(
         select(Team).where(Team.year == year, Team.constructor_id == constructor.id)
     ).scalar_one_or_none()
     if team is None:
+        _flag_duplicate_season_team(
+            db, year=year, source_name=source_name, display_name=display_name
+        )
         team = Team(
             year=year,
             constructor_id=constructor.id,

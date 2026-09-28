@@ -51,6 +51,9 @@ def generate_openrouter_json(
                 "messages": [{"role": "user", "content": prompt}],
                 "max_tokens": max_tokens,
                 "response_format": {"type": "json_object"},
+                # A reasoning model spends the whole token budget thinking and
+                # returns null content; the callers here want the object only.
+                "reasoning": {"enabled": False},
                 "provider": {
                     "data_collection": "deny",
                     "require_parameters": True,
