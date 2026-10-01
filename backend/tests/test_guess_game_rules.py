@@ -1,5 +1,7 @@
 """Pure regression tests for the guess game contracts."""
 
+import ast
+import pathlib
 from datetime import date, timedelta
 from types import SimpleNamespace
 
@@ -9,6 +11,7 @@ from sqlalchemy import select
 from app.models import Driver, GuessGameGuess, GuessGamePuzzle, GuessGameSession
 from app.schemas.daily_grid import GameDriver
 from app.schemas.guess_game import GuessGamePuzzleResponse
+from app.services import driver_fact_service
 from app.services.daily_game_results_service import (
     assert_session_owner,
     leaderboard_page,
@@ -19,7 +22,15 @@ from app.services.driver_attribute_service import (
     DriverAttributeService,
     select_signature_constructor,
 )
-from app.services.driver_fact_service import DriverFactService, FactCandidate
+from app.services.driver_fact_service import (
+    DriverFactService,
+    FactCandidate,
+    _count,
+    _possessive,
+    _reached_the_finish,
+    _series,
+    _times,
+)
 from app.services.guess_game_service import GuessGameService
 
 
@@ -328,3 +339,84 @@ async def test_signature_constructor_regressions(ingested_data):
         driver.full_name: attributes[driver.id].signature_constructor.name
         for driver in drivers
     } == expected
+
+
+@pytest.mark.parametrize(
+    "total,expected",
+    [
+        (1, "1 Grand Prix start"),
+        (2, "2 Grand Prix starts"),
+        (0, "0 Grand Prix starts"),
+    ],
+)
+def test_counts_agree_with_their_noun(total, expected):
+    assert _count(total, "Grand Prix start") == expected
+
+
+def test_counts_accept_an_irregular_plural():
+    assert _count(1, "retirement") == "1 retirement"
+    assert _count(3, "Grand Prix entry", "Grand Prix entries") == "3 Grand Prix entries"
+
+
+@pytest.mark.parametrize("total,expected", [(1, "once"), (2, "twice"), (9, "9 times")])
+def test_small_tallies_read_as_words(total, expected):
+    assert _times(total) == expected
+
+
+def test_possessive_respects_a_trailing_s():
+    assert _possessive("Lando Norris") == "Lando Norris'"
+    assert _possessive("Valtteri Bottas") == "Valtteri Bottas'"
+    assert _possessive("Sergio Perez") == "Sergio Perez's"
+
+
+def test_series_joins_with_a_conjunction():
+    assert _series(["1992"]) == "1992"
+    assert _series(["1963", "1965"]) == "1963 and 1965"
+    assert _series(["2008", "2014", "2015"]) == "2008, 2014 and 2015"
+
+
+@pytest.mark.parametrize(
+    "status,reached",
+    [
+        ("Finished", True),
+        ("+1 Lap", True),
+        ("+3 Laps", True),
+        ("Lapped", True),
+        (None, True),
+        ("Engine", False),
+        ("Accident", False),
+        ("Disqualified", False),
+    ],
+)
+def test_classified_runners_are_told_from_retirements(status, reached):
+    assert _reached_the_finish(status) is reached
+
+
+def test_fact_ids_are_prefixed_with_their_own_category():
+    """select_fact drops a category by an id prefix, so the two must agree."""
+    source = ast.parse(
+        pathlib.Path(driver_fact_service.__file__).read_text(encoding="utf-8")
+    )
+    guessable = {
+        "candidates",
+        "_championship_facts",
+        "_mystery_relationship",
+    }
+    mismatched = []
+    for function in ast.walk(source):
+        if not isinstance(function, ast.AsyncFunctionDef):
+            continue
+        if function.name not in guessable:
+            continue
+        for node in ast.walk(function):
+            if not isinstance(node, ast.Call):
+                continue
+            if getattr(node.func, "id", None) != "FactCandidate":
+                continue
+            args = node.args[:2]
+            if len(args) < 2 or not all(isinstance(arg, ast.Constant) for arg in args):
+                continue
+            fact_id, category = args[0].value, args[1].value
+            if fact_id.split(".", 1)[0] != category:
+                mismatched.append((fact_id, category))
+    assert mismatched == []

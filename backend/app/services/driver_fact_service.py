@@ -1,6 +1,7 @@
 """Database-proven facts and winner highlights for driver surfaces."""
 
 import hashlib
+import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from typing import Iterable
@@ -24,7 +25,47 @@ from app.schemas.driver import (
 from app.services.driver_attribute_service import DriverAttributes
 from app.services.driver_identity_service import DriverIdentityService
 
-FACT_ALGORITHM_VERSION = 1
+FACT_ALGORITHM_VERSION = 3
+
+RANK_SUBLABEL_LIMIT = 50
+BEST_CHAMPIONSHIP_FINISH_FLOOR = 6
+
+_CLASSIFIED_LAPPED = re.compile(r"^\+\d+ Laps?$")
+_CLASSIFIED_STATUS = frozenset({"Finished", "Lapped"})
+
+
+def _noun(total: int, singular: str, plural: str | None = None) -> str:
+    """The noun form that matches the tally."""
+    return singular if total == 1 else (plural or f"{singular}s")
+
+
+def _count(total: int, singular: str, plural: str | None = None) -> str:
+    """Numbers travel with the noun form that matches them."""
+    return f"{total} {_noun(total, singular, plural)}"
+
+
+def _times(total: int) -> str:
+    """Small tallies read as words, larger ones as digits."""
+    return {1: "once", 2: "twice"}.get(total, f"{total} times")
+
+
+def _possessive(name: str) -> str:
+    """Names already ending in s take the bare apostrophe."""
+    return f"{name}'" if name.endswith(("s", "S")) else f"{name}'s"
+
+
+def _series(items: list[str]) -> str:
+    """Comma-separated until the final item, which takes the conjunction."""
+    if len(items) == 1:
+        return items[0]
+    return f"{', '.join(items[:-1])} and {items[-1]}"
+
+
+def _reached_the_finish(status: str | None) -> bool:
+    """Classified runners finished, were lapped, or trailed by whole laps."""
+    if not status:
+        return True
+    return status in _CLASSIFIED_STATUS or bool(_CLASSIFIED_LAPPED.match(status))
 
 
 @dataclass(frozen=True)
@@ -59,6 +100,7 @@ class DriverFactService:
                     SessionResult.position,
                     SessionResult.grid_position,
                     SessionResult.points,
+                    SessionResult.status,
                     Team.constructor_id,
                     Constructor.canonical_name.label("constructor_name"),
                 )
@@ -81,29 +123,44 @@ class DriverFactService:
             FactCandidate(
                 "career.starts",
                 "career",
-                f"Made {len(rows)} Grand Prix starts across {len(seasons)} seasons.",
+                f"{_count(len(rows), 'Grand Prix start')} across"
+                f" {_count(len(seasons), 'season')}.",
                 20,
             )
         )
-        if len(constructors) > 1:
+        constructor_starts = Counter(row.constructor_name for row in rows)
+        primary_constructor, primary_starts = constructor_starts.most_common(1)[0]
+        if len(constructors) == 1:
+            candidates.append(
+                FactCandidate(
+                    "constructors.only",
+                    "constructors",
+                    f"Every Grand Prix start for {primary_constructor}.",
+                    30,
+                )
+            )
+        else:
             candidates.append(
                 FactCandidate(
                     "constructors.count",
                     "constructors",
-                    f"Raced for {len(constructors)} canonical constructors.",
+                    f"Grand Prix starts for"
+                    f" {_count(len(constructors), 'different constructor')}.",
                     35,
                 )
             )
-        constructor_starts = Counter(row.constructor_name for row in rows)
-        primary_constructor, primary_starts = constructor_starts.most_common(1)[0]
-        candidates.append(
-            FactCandidate(
-                "constructor.most_starts",
-                "constructors",
-                f"Made the most starts for {primary_constructor}, with"
-                f" {primary_starts} Grand Prix entries.",
-                30,
+            candidates.append(
+                FactCandidate(
+                    "constructors.most_starts",
+                    "constructors",
+                    f"{_count(primary_starts, 'Grand Prix start')} for"
+                    f" {primary_constructor}, the most for any constructor.",
+                    30,
+                )
             )
+
+        candidates.extend(
+            await DriverFactService._championship_facts(db, driver.driver_id)
         )
 
         finishes = [row.position for row in rows if row.position is not None]
@@ -114,11 +171,66 @@ class DriverFactService:
                 FactCandidate(
                     "finish.best",
                     "finish",
-                    f"Best Grand Prix finish was P{best}, achieved {count}"
-                    f" {'time' if count == 1 else 'times'}.",
+                    f"Best Grand Prix finish P{best}, {_times(count)}.",
                     50 if best <= 3 else 28,
                 )
             )
+
+        front_row = sum(row.grid_position == 1 for row in rows)
+        if front_row:
+            candidates.append(
+                FactCandidate(
+                    "grid.front",
+                    "grid",
+                    f"{_count(front_row, 'Grand Prix start')} from P1 on the grid.",
+                    52,
+                )
+            )
+
+        retirements = sum(not _reached_the_finish(row.status) for row in rows)
+        if retirements:
+            candidates.append(
+                FactCandidate(
+                    "reliability.retirements",
+                    "reliability",
+                    f"{_count(retirements, 'retirement')} from"
+                    f" {_count(len(rows), 'Grand Prix start')}.",
+                    32,
+                )
+            )
+
+        wins_by_season = Counter(row.year for row in rows if row.position == 1)
+        if wins_by_season:
+            best_year, best_year_wins = min(
+                wins_by_season.items(), key=lambda item: (-item[1], item[0])
+            )
+            if best_year_wins >= 2:
+                candidates.append(
+                    FactCandidate(
+                        "season.best",
+                        "season",
+                        f"{_count(best_year_wins, 'win')} in {best_year},"
+                        " more than in any other season.",
+                        62,
+                    )
+                )
+            win_years = sorted(wins_by_season)
+            drought = max(
+                (
+                    later - earlier - 1
+                    for earlier, later in zip(win_years, win_years[1:])
+                ),
+                default=0,
+            )
+            if drought >= 2:
+                candidates.append(
+                    FactCandidate(
+                        "drought.between_wins",
+                        "drought",
+                        f"{_count(drought, 'full season')} between Grand Prix wins.",
+                        57,
+                    )
+                )
 
         circuit_counts: dict[str, list[int | None]] = defaultdict(list)
         for row in rows:
@@ -136,16 +248,15 @@ class DriverFactService:
             positions = circuit_counts[event]
             wins = positions.count(1)
             podiums = sum(position in (1, 2, 3) for position in positions)
+            text = None
             if wins:
-                text = f"Won the {event} {wins} {'time' if wins == 1 else 'times'}."
+                text = f"{_count(wins, 'win')} at the {event}."
             elif podiums:
-                text = (
-                    f"Finished on the {event} podium {podiums}"
-                    f" {'time' if podiums == 1 else 'times'}."
+                text = f"{_count(podiums, 'podium')} at the {event}."
+            if text:
+                candidates.append(
+                    FactCandidate("circuit.strongest", "circuit", text, 45)
                 )
-            else:
-                text = f"Made {len(positions)} starts at the {event}."
-            candidates.append(FactCandidate("circuit.strongest", "circuit", text, 45))
 
         recoveries = [
             (row.grid_position - row.position, row)
@@ -159,7 +270,8 @@ class DriverFactService:
                     FactCandidate(
                         "recovery.biggest",
                         "recovery",
-                        f"Gained {gain} places from grid to finish at the"
+                        f"Gained {_count(gain, 'place')} to finish"
+                        f" P{recovered.position} in the {recovered.year}"
                         f" {recovered.event_name}.",
                         55,
                     )
@@ -181,8 +293,7 @@ class DriverFactService:
                 FactCandidate(
                     f"milestone.first_{label}",
                     "milestone",
-                    f"Scored a first Grand Prix {label} at the {row.event_name}"
-                    f" in {row.year}.",
+                    f"First {label} at the {row.year} {row.event_name}.",
                     weight,
                 )
             )
@@ -194,8 +305,8 @@ class DriverFactService:
                 FactCandidate(
                     "longevity.comeback",
                     "longevity",
-                    f"Returned after {gap} complete"
-                    f" {'season' if gap == 1 else 'seasons'} away from Formula 1.",
+                    f"Returned after {_count(gap, 'complete season')} away"
+                    " from Formula 1.",
                     60,
                 )
             )
@@ -207,8 +318,7 @@ class DriverFactService:
                 FactCandidate(
                     "teammate.most_shared_starts",
                     "teammate",
-                    f"Shared a constructor most often with {name}, across"
-                    f" {weekends} Grand Prix weekends.",
+                    f"{_count(weekends, 'race')} as {_possessive(name)} teammate.",
                     58,
                 )
             )
@@ -219,6 +329,58 @@ class DriverFactService:
             if relation:
                 candidates.append(relation)
         return candidates
+
+    @staticmethod
+    async def _championship_facts(
+        db: AsyncSession, driver_id: int
+    ) -> list[FactCandidate]:
+        standings = (
+            await db.execute(
+                select(
+                    DriverChampionshipStanding.year,
+                    DriverChampionshipStanding.position,
+                )
+                .where(
+                    DriverChampionshipStanding.driver_id == driver_id,
+                    DriverChampionshipStanding.is_final.is_(True),
+                    DriverChampionshipStanding.position.is_not(None),
+                )
+                .order_by(DriverChampionshipStanding.year)
+            )
+        ).all()
+        if not standings:
+            return []
+        titles = [str(row.year) for row in standings if row.position == 1]
+        if titles:
+            return [
+                FactCandidate(
+                    "championship.titles",
+                    "championship",
+                    f"World champion in {_series(titles)}.",
+                    90,
+                )
+            ]
+        best = min(row.position for row in standings)
+        years = [str(row.year) for row in standings if row.position == best]
+        if best == 2:
+            return [
+                FactCandidate(
+                    "championship.runner_up",
+                    "championship",
+                    f"Championship runner-up in {_series(years)}.",
+                    70,
+                )
+            ]
+        if best > BEST_CHAMPIONSHIP_FINISH_FLOOR:
+            return []
+        return [
+            FactCandidate(
+                "championship.best_finish",
+                "championship",
+                f"Best championship finish P{best}, in {_series(years)}.",
+                40,
+            )
+        ]
 
     @staticmethod
     async def _most_frequent_teammate(
@@ -290,8 +452,8 @@ class DriverFactService:
             return FactCandidate(
                 "relationship.teammates",
                 "relationship",
-                f"Was an actual teammate of the mystery driver at {teammate_weekends}"
-                f" Grand Prix weekends.",
+                f"{_count(teammate_weekends, 'race')} as the mystery driver's"
+                " teammate.",
                 100,
             )
         shared_podiums = sum(
@@ -304,8 +466,8 @@ class DriverFactService:
             return FactCandidate(
                 "relationship.shared_podium",
                 "relationship",
-                f"Shared a Grand Prix podium with the mystery driver"
-                f" {shared_podiums} {'time' if shared_podiums == 1 else 'times'}.",
+                f"{_count(shared_podiums, 'Grand Prix podium')} alongside the"
+                " mystery driver.",
                 95,
             )
         overlap = driver.constructor_ids & mystery.constructor_ids
@@ -313,8 +475,7 @@ class DriverFactService:
             return FactCandidate(
                 "relationship.constructor",
                 "relationship",
-                "Raced for one of the mystery driver's constructors, though not"
-                " necessarily in the same season.",
+                "Shares a constructor with the mystery driver.",
                 85,
             )
         driver_win_events = {row.event_name for row in driver_rows if row.position == 1}
@@ -326,9 +487,22 @@ class DriverFactService:
             return FactCandidate(
                 "relationship.shared_win_circuit",
                 "relationship",
-                f"Won at the {shared_win_events[0]}, a race also won by the"
-                " mystery driver.",
+                f"A winner of the {shared_win_events[0]}, as is the mystery driver.",
                 80,
+            )
+        overlap_seasons = len(
+            range(
+                max(driver.debut, mystery.debut),
+                min(driver.last_raced, mystery.last_raced) + 1,
+            )
+        )
+        if overlap_seasons:
+            return FactCandidate(
+                "relationship.shared_era",
+                "relationship",
+                f"{_count(overlap_seasons, 'season')} on the grid alongside the"
+                " mystery driver.",
+                75,
             )
         return None
 
@@ -350,6 +524,15 @@ class DriverFactService:
         seed = f"{puzzle_public_id}:{driver_id}".encode()
         index = int(hashlib.sha256(seed).hexdigest(), 16) % len(strongest)
         return sorted(strongest, key=lambda item: item.id)[index]
+
+    @staticmethod
+    def _rank_sublabel(rank: int) -> str | None:
+        """An all-time rank only informs while the driver is near the top."""
+        if rank == 1:
+            return "all-time leader"
+        if rank <= RANK_SUBLABEL_LIMIT:
+            return f"#{rank} all-time"
+        return None
 
     @staticmethod
     async def highlights(
@@ -430,11 +613,12 @@ class DriverFactService:
                     "World champion",
                 )
             )
+        race = "Race" if include_sprint else "Grand Prix"
         for id_, value, label in (
-            ("wins", wins, "Grand Prix wins"),
-            ("podiums", podiums, "Podium finishes"),
-            ("poles", poles, "Pole positions"),
-            ("starts", len(rows), "Grand Prix starts"),
+            ("wins", wins, f"{race} {_noun(wins, 'win')}"),
+            ("podiums", podiums, _noun(podiums, "Podium finish", "Podium finishes")),
+            ("poles", poles, _noun(poles, "Start from P1", "Starts from P1")),
+            ("starts", len(rows), f"{race} {_noun(len(rows), 'start')}"),
         ):
             if value:
                 rank = ranks[id_]
@@ -446,7 +630,7 @@ class DriverFactService:
                         60,
                         str(value),
                         label,
-                        "all-time leader" if rank == 1 else f"#{rank} all-time",
+                        DriverFactService._rank_sublabel(rank),
                     )
                 )
         circuit_wins = Counter(
@@ -461,7 +645,7 @@ class DriverFactService:
                     "",
                     55,
                     str(total),
-                    f"Wins at {event}",
+                    f"{race} wins at {event}",
                 )
             )
         constructor_wins = Counter(
@@ -476,7 +660,7 @@ class DriverFactService:
                     "",
                     50,
                     str(total),
-                    f"Wins with {name}",
+                    f"{race} wins with {name}",
                 )
             )
         years = {row.year for row in rows}
@@ -488,7 +672,7 @@ class DriverFactService:
                     "",
                     45,
                     str(max(years) - min(years) + 1),
-                    "Year career span",
+                    "Seasons spanned",
                 )
             )
         recoveries = [
@@ -515,7 +699,7 @@ class DriverFactService:
                     "",
                     42,
                     str(len(driver.constructor_ids)),
-                    "Constructors represented",
+                    "Constructors driven for",
                 )
             )
         longest_podium_run = 0
