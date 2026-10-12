@@ -6,6 +6,8 @@ per-lap car traces, the track-status windows and the event feed.
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.replay import ReplayTrackResponse
+
 
 class ConsoleFastestLap(BaseModel):
     """The quickest lap of the race and who set it."""
@@ -83,3 +85,4 @@ class ConsoleReplayResponse(BaseModel):
     status: list[ConsoleStatusWindow]
     cars: list[ConsoleCar]
     feed: list[ConsoleFeedEvent]
+    track: ReplayTrackResponse | None = None

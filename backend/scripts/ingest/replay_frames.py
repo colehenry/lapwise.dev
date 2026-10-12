@@ -5,13 +5,10 @@ Extracts telemetry from FastF1, interpolates to 10 FPS frames,
 and stores as compressed MessagePack blobs for race replay playback.
 """
 
-import gzip
-
-import msgpack
 import numpy as np
 import pandas as pd
 
-from app.services.replay_preview import build_preview, preview_stats
+from app.services.replay_artifact_service import build_replay_artifacts
 
 from .utils import (
     datetime_or_timedelta_to_seconds,
@@ -961,31 +958,10 @@ def generate_replay_data(fastf1_session, session_id, season, round_num, event_na
         "race_control": race_control,
     }
 
-    # Step 13: Serialize with MessagePack + gzip
-    packed = msgpack.packb(payload, use_bin_type=True)
-    compressed = gzip.compress(packed, compresslevel=6)
-
-    size_mb = len(compressed) / (1024 * 1024)
-    print(f"    Compressed size: {size_mb:.2f} MB")
-
-    # Step 14: Build the downsampled artifact the home page autoplays
-    preview = build_preview(payload)
-    stats = preview_stats(preview, payload)
+    compressed, metadata = build_replay_artifacts(payload)
+    print(f"    Compressed size: {len(compressed) / (1024 * 1024):.2f} MB")
     print(
-        f"    Preview size: {stats['preview_size_bytes'] / 1024:.0f} KB "
-        f"({stats['preview_frames']} frames @ {stats['preview_fps']}fps)"
+        f"    Preview size: {metadata['preview_size_bytes'] / 1024:.0f} KB "
+        f"({metadata['preview_frames']} frames @ {metadata['preview_fps']}fps)"
     )
-
-    metadata = {
-        "total_frames": n_frames,
-        "total_duration_seconds": round(float(t_max - t_min), 2),
-        "total_laps": total_laps,
-        "driver_count": len(driver_meta),
-        "compressed_size_bytes": len(compressed),
-        "preview_data": preview,
-        "preview_frames": stats["preview_frames"],
-        "preview_fps": stats["preview_fps"],
-        "preview_size_bytes": stats["preview_size_bytes"],
-    }
-
     return compressed, metadata

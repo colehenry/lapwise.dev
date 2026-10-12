@@ -160,7 +160,7 @@ function TrackPlaceholder({
   track: { polyline: number[][]; rotation_deg: number | null } | undefined;
 }) {
   const circuitName = data.replay?.circuit_name ?? data.latest?.circuit_name;
-  const round = data.latest?.round;
+  const round = data.replayRound ?? data.latest?.round;
   const loading =
     data.replayState === "loading" || data.latestState === "loading";
 
@@ -171,7 +171,9 @@ function TrackPlaceholder({
       message={
         loading
           ? "Loading the lap record for the most recent round."
-          : `Lap data for round ${round ?? "—"} has not published yet. The result is already in.`
+          : data.replay
+            ? "The track outline is not available for this round."
+            : `Lap data for round ${round ?? "—"} has not published yet. The result is already in.`
       }
       href={
         !loading && data.season && round

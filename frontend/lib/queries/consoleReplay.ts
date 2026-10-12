@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
+import type { ReplayTrackResponse } from "@/lib/types";
 import { hours } from "./durations";
 import { getJsonOrNull } from "./http";
 
@@ -69,6 +70,7 @@ export type ConsoleReplay = {
   status: ConsoleStatusWindow[];
   cars: ConsoleCar[];
   feed: ConsoleFeedEvent[];
+  track: ReplayTrackResponse | null;
 };
 
 /** Which round the walk-back settled on, and its replay. */
@@ -77,9 +79,11 @@ export type ConsoleReplayResult = {
   replay: ConsoleReplay;
 };
 
+const CONSOLE_RESPONSE_VERSION = 2;
+
 export const consoleKeys = {
   replay: (season: number, latestRound: number) =>
-    ["console-replay", season, latestRound] as const,
+    ["console-replay", CONSOLE_RESPONSE_VERSION, season, latestRound] as const,
 };
 
 /** How far back the walk-back looks for a round that has lap data. */
@@ -104,7 +108,9 @@ export function consoleReplayQuery(
       const floor = Math.max(1, start - WALK_BACK_ROUNDS);
       for (let round = start; round >= floor; round--) {
         const replay = await getJsonOrNull<ConsoleReplay>(
-          `/api/replay/console/${season}/${round}`,
+          // Older deployments return an uncacheable 404 for this path rather
+          // than storing a seven-day response that has no geometry.
+          `/api/replay/console/${season}/${round}/v${CONSOLE_RESPONSE_VERSION}`,
         );
         if (replay?.cars?.length) return { round, replay };
       }

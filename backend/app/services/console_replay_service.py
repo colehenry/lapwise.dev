@@ -21,6 +21,7 @@ from app.schemas.console import (
     ConsoleReplayResponse,
     ConsoleStatusWindow,
 )
+from app.services.replay_service import ReplayService
 from app.services.results.common import (
     headshot_fallback_expr,
     pit_durations,
@@ -124,6 +125,7 @@ class ConsoleReplayService:
             status=ConsoleReplayService._status(status_events, t_end),
             cars=cars,
             feed=ConsoleReplayService._feed(drivers, total_laps, race_control),
+            track=await ReplayService.get_latest_track_geometry(db, session.circuit_id),
         )
 
     @staticmethod

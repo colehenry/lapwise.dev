@@ -23,7 +23,7 @@ from app.schemas.driver import (
     SeasonHistory,
 )
 from app.services.archive_aggregate_service import ArchiveAggregateService
-from app.services.driver_fact_service import DriverFactService
+from app.services.driver_highlight_service import DriverHighlightService
 from app.services.driver_identity_service import DriverIdentityService
 
 
@@ -338,7 +338,7 @@ class DriverService:
     async def get_driver_superlatives(
         db: AsyncSession, driver_code: str, include_sprint: bool = True
     ) -> Optional[DriverSuperlativesResponse]:
-        return await DriverFactService.driver_page_superlatives(
+        return await DriverHighlightService.driver_page_superlatives(
             db, driver_code, include_sprint
         )
 

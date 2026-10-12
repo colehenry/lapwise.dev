@@ -23,6 +23,7 @@ vi.mock("@/hooks/useDailyGamePlayer", () => ({
 const SEASON = fixtures.FIXTURE_SEASON;
 const ROUND = fixtures.FIXTURE_ROUND;
 const CONSOLE_PATH = `/api/replay/console/${SEASON}/${ROUND}`;
+const CONSOLE_REQUEST = `${CONSOLE_PATH}/v2`;
 const REPLAY_BLOB_PATH = `/api/replay/${SEASON}/${ROUND}`;
 
 const ROUTES: Record<string, unknown> = {
@@ -88,9 +89,8 @@ describe("home console request inventory", () => {
     expect([...new Set(recorder.paths())].sort()).toEqual([
       `/api/games/summary?anon_id=${PLAYER_ID}`,
       `/api/headlines?season=${SEASON}`,
-      CONSOLE_PATH,
       `${CONSOLE_PATH}/telemetry/VER`,
-      "/api/replay/track/16",
+      CONSOLE_REQUEST,
       `/api/results/${SEASON}/${ROUND}`,
       `/api/results/${SEASON}/standings`,
       "/api/results/latest",
@@ -103,6 +103,46 @@ describe("home console request inventory", () => {
     await flushRequests();
 
     expect(recorder.countMatching(REPLAY_BLOB_PATH)).toBe(0);
+  });
+
+  it("draws the map from the console without a dependent geometry request", async () => {
+    const recorder = installFetchRecorder(ROUTES);
+    const { container } = renderWithQueryClient(<HomeConsole />);
+    await flushRequests();
+
+    expect(recorder.countMatching("/api/replay/track/")).toBe(0);
+    expect(container.querySelector("svg[aria-label]")).not.toBeNull();
+    expect(container.textContent).not.toContain("Loading the lap record");
+  });
+
+  it("keeps other panels available when a playable console has no geometry", async () => {
+    const recorder = installFetchRecorder({
+      ...ROUTES,
+      [CONSOLE_PATH]: { ...fixtures.consoleReplay, track: null },
+    });
+    const { container } = renderWithQueryClient(<HomeConsole />);
+    await flushRequests();
+
+    expect(recorder.countMatching("/api/replay/track/")).toBe(0);
+    expect(container.textContent).toContain("Daily Grid");
+    expect(container.textContent).not.toContain("Loading the lap record");
+  });
+
+  it("loads a standalone outline only after every replay candidate is absent", async () => {
+    const recorder = installFetchRecorder({
+      ...ROUTES,
+      "/api/results/latest": { ...fixtures.latestRound, circuit_id: 16 },
+      [CONSOLE_PATH]: null,
+    });
+    renderWithQueryClient(<HomeConsole />);
+    await flushRequests(20);
+
+    expect(recorder.countMatching("/api/replay/track/16")).toBe(1);
+    const paths = recorder.paths();
+    const lastReplay = paths
+      .map((path) => path.startsWith("/api/replay/console/"))
+      .lastIndexOf(true);
+    expect(paths.indexOf("/api/replay/track/16")).toBeGreaterThan(lastReplay);
   });
 
   it("requests standings once for every colour consumer on the page", async () => {
@@ -158,12 +198,16 @@ describe("the walk-back", () => {
     await flushRequests(20);
 
     expect(recorder.paths()).toContain(
-      `/api/replay/console/${SEASON}/${LATEST}`,
+      `/api/replay/console/${SEASON}/${LATEST}/v2`,
     );
     expect(recorder.paths()).toContain(
-      `/api/replay/console/${SEASON}/${LATEST - 2}`,
+      `/api/replay/console/${SEASON}/${LATEST - 2}/v2`,
     );
     expect(container.textContent).toContain(`R${LATEST - 2}`);
+    expect(recorder.countMatching("/api/replay/track/")).toBe(0);
+    expect(
+      container.querySelector('svg[aria-label="Fixture Park circuit map"]'),
+    ).not.toBeNull();
   });
 
   it("says on screen which newer round is still missing its lap data", async () => {

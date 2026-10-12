@@ -22,9 +22,9 @@ from app.services.driver_attribute_service import (
     DriverAttributeService,
     select_signature_constructor,
 )
+from app.services.driver_fact_common import FactCandidate
 from app.services.driver_fact_service import (
     DriverFactService,
-    FactCandidate,
     _count,
     _possessive,
     _reached_the_finish,

@@ -5,6 +5,6 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "preDeployCommand": "alembic upgrade head && PYTHONPATH=. python scripts/backfill_canonical_championships.py --missing-only --apply && PYTHONPATH=. python scripts/refresh_archive_aggregates.py"
+    "preDeployCommand": "alembic upgrade head && PYTHONPATH=. python -m scripts.backfill_replay_geometry && PYTHONPATH=. python scripts/backfill_canonical_championships.py --missing-only --apply && PYTHONPATH=. python scripts/refresh_archive_aggregates.py"
   }
 }

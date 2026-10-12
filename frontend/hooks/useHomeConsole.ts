@@ -74,14 +74,13 @@ export function useHomeConsole(): HomeConsoleData {
   const replay = useQuery(consoleReplayQuery(season, latestRound));
   const replayRound = replay.data?.round ?? null;
 
-  /* Falls back to the latest round's circuit only once the replay has settled
-     without one, so a resolving walk-back does not fetch two circuits. */
-  const circuitId = replay.isPending
-    ? undefined
-    : (replay.data?.replay.circuit_id ?? latest.data?.circuit_id);
-  const track = useQuery({
-    ...replayTrackQuery(circuitId ?? 0),
-    enabled: circuitId != null,
+  // Only an outline-only state needs the standalone endpoint. A playable
+  // console carries its geometry, including when it walks back to an older race.
+  const outlineCircuitId = latest.data?.circuit_id;
+  const outline = useQuery({
+    ...replayTrackQuery(outlineCircuitId ?? 0),
+    enabled:
+      replay.isSuccess && replay.data === null && outlineCircuitId != null,
   });
 
   const classification = useRoundClassification(season, latestRound);
@@ -99,7 +98,7 @@ export function useHomeConsole(): HomeConsoleData {
     retryReplay: () => {
       void replay.refetch();
     },
-    track: track.data,
+    track: replay.data ? replay.data.replay.track : outline.data,
     classification,
     dailyGames,
     headlines,

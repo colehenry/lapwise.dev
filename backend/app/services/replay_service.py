@@ -4,9 +4,6 @@ Replay Service
 Business logic for fetching replay data.
 """
 
-import gzip
-
-import msgpack
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -107,10 +104,10 @@ class ReplayService:
     async def get_latest_track_geometry(
         db: AsyncSession, circuit_id: int
     ) -> ReplayTrackResponse | None:
-        """Get latest replay-backed track geometry for a circuit."""
+        """Read latest replay-backed geometry without loading any frame blob."""
         result = await db.execute(
             select(
-                ReplayData.data,
+                ReplayData.track_geometry,
                 Session.year,
                 Session.round,
                 Session.event_name,
@@ -128,8 +125,7 @@ class ReplayService:
         if row is None:
             return None
 
-        payload = msgpack.unpackb(gzip.decompress(row[0]), raw=False)
-        track = payload.get("track")
+        track = row[0]
         if not track or not track.get("polyline"):
             return None
 
