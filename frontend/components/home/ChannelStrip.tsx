@@ -180,6 +180,29 @@ export default function ChannelStrip({
   /* The frame is drawn whether or not the channels arrived, so the panel is the
      same height either way. */
   if (!chart) {
+    if (loading)
+      return (
+        <div
+          className="flex min-h-0 flex-1 flex-col gap-2"
+          aria-busy="true"
+          role="img"
+          aria-label="Loading leader telemetry"
+        >
+          {["Throttle / Brake", "Speed", "Gear"].map((label) => (
+            <Lane key={label} label={<PanelLabel>{label}</PanelLabel>}>
+              <rect
+                x="0"
+                y="20"
+                width={WIDTH}
+                height="72"
+                rx="3"
+                fill="var(--surface-raised)"
+                className="animate-pulse"
+              />
+            </Lane>
+          ))}
+        </div>
+      );
     return (
       <div className="grid min-h-0 flex-1 place-items-center rounded-[3px] border border-dashed border-line-soft">
         <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-ink-faint">

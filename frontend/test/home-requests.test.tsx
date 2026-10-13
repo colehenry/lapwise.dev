@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent } from "@testing-library/react";
+import { fireEvent, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import HomeConsole from "@/components/home/HomeConsole";
 import { consoleKeys } from "@/lib/queries/consoleReplay";
@@ -91,6 +91,73 @@ afterEach(() => {
 });
 
 describe("home console request inventory", () => {
+  it("reserves the same panel nodes before discovery, replay and telemetry arrive", async () => {
+    const telemetryPath = `${CONSOLE_PATH}/telemetry/VER`;
+    installFetchRecorder({
+      ...ROUTES,
+      [telemetryPath]: msgpackBody({
+        v: 1,
+        code: "VER",
+        fps: 10,
+        samples: 2,
+        speed: new Uint8Array([10, 0, 20, 0]),
+        gear: new Uint8Array([1, 2]),
+        throttle: new Uint8Array([10, 80]),
+        brake: new Uint8Array([0, 0]),
+        lap_starts: [0],
+      }),
+    });
+    const recordedFetch = globalThis.fetch;
+    let releaseDiscovery: () => void = () => {};
+    let releaseTelemetry: () => void = () => {};
+    const discoveryGate = new Promise<void>((resolve) => {
+      releaseDiscovery = resolve;
+    });
+    const telemetryGate = new Promise<void>((resolve) => {
+      releaseTelemetry = resolve;
+    });
+    vi.stubGlobal(
+      "fetch",
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const path = new URL(input.toString(), "http://localhost").pathname;
+        if (path === AVAILABILITY_PATH) await discoveryGate;
+        if (path === telemetryPath) await telemetryGate;
+        return recordedFetch(input, init);
+      },
+    );
+    const { container } = renderWithQueryClient(<HomeConsole />);
+    const frame = container.querySelector(".home-console");
+    const panels = Array.from(frame?.children ?? []);
+    const telemetryPanel = container.querySelector(".home-console__race");
+    expect(panels).toHaveLength(4);
+    expect(telemetryPanel).not.toBeNull();
+    expect(
+      within(telemetryPanel as HTMLElement).getByRole("img", {
+        name: "Loading leader telemetry",
+      }),
+    ).toBeTruthy();
+
+    releaseDiscovery();
+    await flushRequests(12);
+    expect(telemetryPanel?.textContent).toContain("Max Verstappen");
+    expect(
+      within(telemetryPanel as HTMLElement).getByRole("img", {
+        name: "Loading leader telemetry",
+      }),
+    ).toBeTruthy();
+    expect(Array.from(frame?.children ?? [])).toEqual(panels);
+
+    releaseTelemetry();
+    await flushRequests(12);
+    expect(
+      within(telemetryPanel as HTMLElement).queryByRole("img", {
+        name: "Loading leader telemetry",
+      }),
+    ).toBeNull();
+    expect(container.querySelector(".home-console")).toBe(frame);
+    expect(Array.from(frame?.children ?? [])).toEqual(panels);
+  });
+
   it("records the endpoints the console requests before any interaction", async () => {
     const recorder = installFetchRecorder(ROUTES);
     renderWithQueryClient(<HomeConsole />);
@@ -250,10 +317,14 @@ describe("backend replay selection and freshness", () => {
           ? new Response("unavailable", { status: 503 })
           : fixtures.consoleReplay,
     });
-    const { container, getByRole } = renderWithQueryClient(<HomeConsole />);
+    const { container } = renderWithQueryClient(<HomeConsole />);
     await flushRequests();
     failed = false;
-    fireEvent.click(getByRole("button", { name: "Retry" }));
+    fireEvent.click(
+      within(
+        container.querySelector(".home-console__map") as HTMLElement,
+      ).getByRole("button", { name: "Retry" }),
+    );
     await flushRequests();
     expect(container.textContent).not.toContain(
       "The replay could not be loaded.",

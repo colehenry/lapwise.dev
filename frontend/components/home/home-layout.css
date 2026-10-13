@@ -1,0 +1,187 @@
+/* ==========================================================================
+   HOME CONSOLE
+   Three columns sharing one pair of row lines. Every panel in a row ends on
+   the same edge, which is what makes the console read as one instrument
+   rather than a pile of widgets.
+   ========================================================================== */
+.home-console {
+  --console-row-two: 224px;
+
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "grid" "map" "clutch";
+  grid-template-rows: 320px 320px 320px;
+  align-items: stretch;
+}
+
+.home-console > * {
+  min-width: 0;
+  min-height: 0;
+}
+
+.home-console__grid {
+  grid-area: grid;
+}
+.home-console__map {
+  grid-area: map;
+}
+.home-console__clutch {
+  grid-area: clutch;
+}
+.home-console__race {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .home-console {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "map map" "race race" "grid clutch";
+    grid-template-rows: 420px var(--console-row-two) 320px;
+  }
+  .home-console__race {
+    display: flex;
+    grid-area: race;
+  }
+}
+
+@media (min-width: 1180px) {
+  .home-console {
+    grid-template-columns:
+      clamp(276px, 22vw, 348px)
+      minmax(0, 1fr)
+      clamp(268px, 21vw, 336px);
+    grid-template-rows: minmax(300px, 1fr) var(--console-row-two);
+    grid-template-areas: "map map grid" "race race clutch";
+    height: clamp(660px, 76vh, 880px);
+  }
+}
+
+/* The same slots exist before discovery, playback and channels have arrived. */
+.home-race-card {
+  height: 336px;
+}
+.home-race-card__name {
+  height: 38px;
+  overflow: hidden;
+}
+.home-races-row {
+  display: grid;
+  gap: 12px;
+}
+.home-recent-grid {
+  display: grid;
+  gap: 12px;
+}
+.home-recent-header {
+  height: 32px;
+}
+.home-next-card {
+  height: 540px;
+}
+.home-next-clock {
+  height: 62px;
+}
+.home-next-name {
+  height: 56px;
+  overflow: hidden;
+}
+.home-next-list {
+  height: 112px;
+  flex: none;
+}
+.home-entry-tile {
+  height: 240px;
+}
+
+@media (min-width: 640px) {
+  .home-recent-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .home-races-row {
+    grid-template-columns: 344px minmax(0, 1fr);
+  }
+  .home-next-card {
+    height: 716px;
+  }
+}
+@media (min-width: 1280px) {
+  .home-recent-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .home-race-card {
+    height: 508px;
+  }
+  .home-next-card {
+    height: 540px;
+  }
+}
+
+.home-entry-value {
+  height: 60px;
+}
+.home-entry-body {
+  height: 60px;
+}
+.home-entry-action {
+  min-height: 28px;
+}
+.home-clutch-band {
+  height: 860px;
+}
+.home-clutch-inner {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+.home-clutch-heading {
+  height: 168px;
+  flex: none;
+}
+.home-clutch-question {
+  height: 96px;
+  flex: none;
+  overflow-y: auto;
+}
+.home-clutch-answer {
+  height: 240px;
+  flex: none;
+  overflow-y: auto;
+}
+.home-clutch-followups {
+  height: 100px;
+  flex: none;
+  overflow-y: auto;
+}
+.home-clutch-chart {
+  height: 312px;
+  flex: none;
+}
+.home-clutch-form {
+  height: 57px;
+  flex: none;
+}
+@media (min-width: 640px) {
+  .home-clutch-band {
+    height: 1136px;
+  }
+  .home-clutch-heading {
+    height: 128px;
+  }
+  .home-clutch-answer {
+    height: 216px;
+  }
+}
+@media (min-width: 1024px) {
+  .home-clutch-band {
+    height: 1056px;
+  }
+  .home-clutch-heading {
+    height: 64px;
+  }
+  .home-clutch-followups {
+    height: 80px;
+  }
+}

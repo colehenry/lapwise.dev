@@ -212,7 +212,7 @@ export default function ClutchAsk({
       bodyClassName="flex flex-col"
     >
       {answer ? (
-        <div className="flex min-h-0 flex-1 flex-col px-3 py-3">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-3">
           <p className="m-0 flex justify-end gap-2 text-right text-[12.5px] leading-[1.5] text-ink-soft">
             <span className="min-w-0">{answer.question}</span>
             <span

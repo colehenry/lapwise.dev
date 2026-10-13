@@ -11,6 +11,7 @@ import { constructorHref, driverHref } from "@/lib/entityLinks";
 import { pointsProgressionQuery } from "@/lib/queries/pointsProgression";
 import type { EntityColors } from "@/lib/queries/standings";
 import type { ProgressionSeries } from "./ClutchProgressionChart";
+import { HomeClutchFrame, HomeClutchPlaceholder } from "./HomeClutchFrame";
 
 /* Recharts is heavier than the rest of the console put together, and the band
    sits below the fold, so it arrives with the band rather than the page. */
@@ -110,10 +111,12 @@ export default function ClutchBand({
   context,
   colors,
   animate,
+  loading = false,
 }: {
   context: HomeContext;
   colors: EntityColors;
   animate: boolean;
+  loading?: boolean;
 }) {
   const router = useRouter();
   const script = useMemo(() => pickHomeScript(context), [context]);
@@ -147,7 +150,7 @@ export default function ClutchBand({
     }));
   }, [progression.data, mode]);
 
-  if (!script) return null;
+  if (!script) return <HomeClutchPlaceholder loading={loading} />;
 
   const goToAsk = (question: string) => {
     router.push(`/ask?q=${encodeURIComponent(question)}`);
@@ -159,143 +162,145 @@ export default function ClutchBand({
   };
 
   return (
-    <section className="border-y border-line-soft bg-surface-band px-3 pb-12 pt-10">
-      <div className="mx-auto max-w-[1060px] px-2">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 className="m-0 text-[30px] font-bold leading-[1.08] tracking-[-0.035em] text-ink-strong">
-            <span className="text-accent-bright">Ask Clutch</span> anything
-            about Formula 1.
-          </h2>
-          <button
-            type="button"
-            onClick={() => goToAsk(script.question)}
-            className="flex-none rounded-sm border border-accent-bright bg-accent px-5 py-2.5 text-[14px] font-semibold text-ink-strong transition-colors hover:bg-accent-bright focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-bright"
-          >
-            Try it out
-          </button>
-        </div>
+    <HomeClutchFrame>
+      <div className="home-clutch-heading flex flex-wrap items-center justify-between gap-4">
+        <h2 className="m-0 text-[30px] font-bold leading-[1.08] tracking-[-0.035em] text-ink-strong">
+          <span className="text-accent-bright">Ask Clutch</span> anything about
+          Formula 1.
+        </h2>
+        <button
+          type="button"
+          onClick={() => goToAsk(script.question)}
+          className="flex-none rounded-sm border border-accent-bright bg-accent px-5 py-2.5 text-[14px] font-semibold text-ink-strong transition-colors hover:bg-accent-bright focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-bright"
+        >
+          Try it out
+        </button>
+      </div>
 
-        {/* One transcript, top to bottom: what was asked, what came back, and
+      {/* One transcript, top to bottom: what was asked, what came back, and
             the rows it came from. A second column only stretched the answer to
             the chart's height and left a hole under two lines of text. */}
-        <p className="m-0 mt-7 flex max-w-[78ch] justify-end gap-2.5 text-right text-[17px] font-medium leading-[1.6] text-ink-strong">
-          <span className="min-w-0">{script.question}</span>
-          {/* Outfit has no glyph for the chevron, so it keeps the mono face
+      <p className="home-clutch-question m-0 mt-7 flex max-w-[78ch] justify-end gap-2.5 text-right text-[17px] font-medium leading-[1.6] text-ink-strong">
+        <span className="min-w-0">{script.question}</span>
+        {/* Outfit has no glyph for the chevron, so it keeps the mono face
               rather than falling back differently on every platform. */}
-          <span
-            aria-hidden="true"
-            className="shrink-0 font-mono text-accent-bright"
-          >
-            ❮
-          </span>
-        </p>
-
-        <p className="m-0 mt-3 max-w-[78ch] whitespace-pre-line text-[16px] leading-[1.7] text-ink-base">
-          {script.segments.map((segment, index) => {
-            const href = hrefFor(segment);
-            const style = {
-              color: tintFor(segment, colors),
-              fontWeight: segment.tint ? 600 : undefined,
-            };
-            const attach = (node: HTMLElement | null) => {
-              spanRefs.current[index] = node;
-            };
-            /* The typewriter writes into whichever element this is, so a named
-               entity can be an anchor without the typing changing. */
-            return href ? (
-              <Link
-                key={`${script.id}-${index}`}
-                href={href}
-                ref={attach}
-                className="underline decoration-transparent underline-offset-2 transition-colors hover:decoration-current"
-                style={style}
-              />
-            ) : (
-              <span key={`${script.id}-${index}`} ref={attach} style={style} />
-            );
-          })}
-          {!finished && (
-            <span
-              aria-hidden="true"
-              className="caret-blink ml-0.5 inline-block h-[15px] w-[8px] translate-y-px bg-accent-bright"
-            />
-          )}
-        </p>
-
-        {script.visual && (
-          <figure
-            className={`m-0 mt-7 hidden transition-opacity duration-500 sm:block ${
-              finished ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            <figcaption className="mb-3 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-ink-soft">
-              Cumulative {mode === "constructors" ? "constructor" : "driver"}{" "}
-              points by round
-              {context.season ? ` · ${context.season}` : ""}
-            </figcaption>
-            <div className="h-[280px] w-full">
-              <ClutchProgressionChart series={series} />
-            </div>
-          </figure>
-        )}
-
-        <div className="mt-6 flex flex-wrap gap-2">
-          {script.followups.map((followup) => (
-            <button
-              key={followup.question}
-              type="button"
-              onClick={() => goToAsk(followup.question)}
-              className="rounded-sm border border-line-soft bg-surface-panel px-3 py-[7px] text-[13px] text-ink-soft transition-colors hover:border-accent hover:text-ink-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-bright"
-            >
-              {followup.question}
-            </button>
-          ))}
-        </div>
-
-        {/* A real prompt, not a button dressed as one. The caret waits until the
-            answer has finished, so attention hands off rather than competing. */}
-        <form
-          onSubmit={submit}
-          className="mt-7 flex items-center gap-3 rounded-[5px] border border-line-strong bg-surface-panel py-2.5 pl-[15px] pr-2.5 transition-colors focus-within:border-accent"
+        <span
+          aria-hidden="true"
+          className="shrink-0 font-mono text-accent-bright"
         >
+          ❮
+        </span>
+      </p>
+
+      <p className="home-clutch-answer m-0 mt-3 max-w-[78ch] whitespace-pre-line text-[16px] leading-[1.7] text-ink-base">
+        {script.segments.map((segment, index) => {
+          const href = hrefFor(segment);
+          const style = {
+            color: tintFor(segment, colors),
+            fontWeight: segment.tint ? 600 : undefined,
+          };
+          const attach = (node: HTMLElement | null) => {
+            spanRefs.current[index] = node;
+          };
+          /* The typewriter writes into whichever element this is, so a named
+               entity can be an anchor without the typing changing. */
+          return href ? (
+            <Link
+              key={`${script.id}-${index}`}
+              href={href}
+              ref={attach}
+              className="underline decoration-transparent underline-offset-2 transition-colors hover:decoration-current"
+              style={style}
+            />
+          ) : (
+            <span key={`${script.id}-${index}`} ref={attach} style={style} />
+          );
+        })}
+        {!finished && (
           <span
             aria-hidden="true"
-            className={`font-mono text-[15px] text-accent-bright ${
-              finished && draft.length === 0 ? "caret-blink" : ""
-            }`}
-          >
-            ❯
-          </span>
-          <input
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="Ask about any race, driver or season…"
-            aria-label="Ask Clutch a question about Formula 1"
-            className="min-w-0 flex-1 bg-transparent text-[15px] text-ink-strong outline-none placeholder:text-ink-faint"
+            className="caret-blink ml-0.5 inline-block h-[15px] w-[8px] translate-y-px bg-accent-bright"
           />
+        )}
+      </p>
+
+      <figure
+        className={`home-clutch-chart m-0 mt-7 hidden transition-opacity duration-500 sm:block ${
+          finished ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <figcaption className="mb-3 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-ink-soft">
+          Cumulative {mode === "constructors" ? "constructor" : "driver"} points
+          by round
+          {context.season ? ` · ${context.season}` : ""}
+        </figcaption>
+        <div className="h-[280px] w-full">
+          {script.visual ? (
+            <ClutchProgressionChart series={series} />
+          ) : (
+            <p className="grid h-full place-items-center text-[12px] text-ink-soft">
+              A season chart will appear when points are available.
+            </p>
+          )}
+        </div>
+      </figure>
+
+      <div className="home-clutch-followups mt-6 flex flex-wrap content-start gap-2">
+        {script.followups.map((followup) => (
           <button
-            type="submit"
-            aria-label="Send this question to Clutch"
-            className="flex h-9 w-9 flex-none items-center justify-center rounded-sm border border-accent-bright bg-accent text-ink-strong transition-colors hover:bg-accent-bright focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-bright"
+            key={followup.question}
+            type="button"
+            onClick={() => goToAsk(followup.question)}
+            className="rounded-sm border border-line-soft bg-surface-panel px-3 py-[7px] text-[13px] text-ink-soft transition-colors hover:border-accent hover:text-ink-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-bright"
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <title>Send</title>
-              <path d="M4 12h14" />
-              <path d="M13 6l6 6-6 6" />
-            </svg>
+            {followup.question}
           </button>
-        </form>
+        ))}
       </div>
-    </section>
+
+      {/* A real prompt, not a button dressed as one. The caret waits until the
+            answer has finished, so attention hands off rather than competing. */}
+      <form
+        onSubmit={submit}
+        className="home-clutch-form mt-7 flex items-center gap-3 rounded-[5px] border border-line-strong bg-surface-panel py-2.5 pl-[15px] pr-2.5 transition-colors focus-within:border-accent"
+      >
+        <span
+          aria-hidden="true"
+          className={`font-mono text-[15px] text-accent-bright ${
+            finished && draft.length === 0 ? "caret-blink" : ""
+          }`}
+        >
+          ❯
+        </span>
+        <input
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          placeholder="Ask about any race, driver or season…"
+          aria-label="Ask Clutch a question about Formula 1"
+          className="min-w-0 flex-1 bg-transparent text-[15px] text-ink-strong outline-none placeholder:text-ink-faint"
+        />
+        <button
+          type="submit"
+          aria-label="Send this question to Clutch"
+          className="flex h-9 w-9 flex-none items-center justify-center rounded-sm border border-accent-bright bg-accent text-ink-strong transition-colors hover:bg-accent-bright focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-bright"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <title>Send</title>
+            <path d="M4 12h14" />
+            <path d="M13 6l6 6-6 6" />
+          </svg>
+        </button>
+      </form>
+    </HomeClutchFrame>
   );
 }

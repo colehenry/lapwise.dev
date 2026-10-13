@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Skeleton from "@/components/ui/Skeleton";
 import { utcDate } from "@/lib/consoleFormat";
 import { upcomingEventsQuery } from "@/lib/queries/events";
 import CircuitOutline from "./CircuitOutline";
@@ -100,24 +101,43 @@ function Unit({ value, label }: { value: number; label: string }) {
  * long the season is.
  */
 export default function NextRaceCard() {
-  const { data } = useQuery(upcomingEventsQuery());
+  const { data, isPending, isError } = useQuery(upcomingEventsQuery());
   const races = (data ?? []).filter((event) => event.event_type === "race");
   const next = races[0];
   const countdown = useCountdown(next?.race_start_utc);
 
-  if (!next) return null;
+  if (!next)
+    return (
+      <section
+        className="home-next-card flex flex-col rounded-sm border border-line-soft bg-surface-panel p-5"
+        aria-busy={isPending}
+      >
+        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft">
+          Next race
+        </span>
+        {isPending ? (
+          <Skeleton height="100%" className="mt-3 flex-1" />
+        ) : (
+          <p className="text-[12px] text-ink-soft">
+            {isError
+              ? "Upcoming races could not be loaded."
+              : "No upcoming races are scheduled."}
+          </p>
+        )}
+      </section>
+    );
 
   const days = daysUntil(next.event_date);
 
   return (
     <section
-      className="relative flex h-full flex-col overflow-hidden rounded-sm border border-line-soft p-5"
+      className="home-next-card relative flex flex-col overflow-hidden rounded-sm border border-line-soft p-5"
       style={{
         background:
           "radial-gradient(130% 100% at 100% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%), var(--surface-panel)",
       }}
     >
-      <div className="relative">
+      <div className="home-next-clock relative">
         <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft">
           Next race
         </span>
@@ -138,7 +158,7 @@ export default function NextRaceCard() {
         )}
       </div>
 
-      <h3 className="relative m-0 mt-3.5 text-[21px] font-bold tracking-[-0.025em] text-ink-strong">
+      <h3 className="home-next-name relative m-0 mt-3.5 text-[21px] leading-[1.25] font-bold tracking-[-0.025em] text-ink-strong">
         {next.event_name}
       </h3>
       <p className="relative m-0 mt-[5px] font-mono text-[10px] uppercase tracking-[0.12em] text-ink-base">
@@ -165,30 +185,28 @@ export default function NextRaceCard() {
           opacity={0.8}
         />
       </div>
-      {races.length > 1 && (
-        <div className="relative border-t border-line-strong pt-3">
-          {races.slice(1, 4).map((event) => (
-            <div
-              key={`${event.event_name}-${event.event_date}`}
-              className="flex items-center justify-between gap-3 py-[5px] text-[12.5px] text-ink-base"
-            >
-              <span className="min-w-0 truncate">{event.event_name}</span>
-              <span className="flex flex-none items-center gap-3">
-                <LastTime
-                  season={event.last_raced_season}
-                  round={event.last_raced_round}
-                />
-                <span className="w-[46px] text-right font-mono text-[11px] tabular-nums text-ink-soft">
-                  {utcDate(event.event_date, {
-                    day: "numeric",
-                    month: "short",
-                  })}
-                </span>
+      <div className="home-next-list relative border-t border-line-strong pt-3">
+        {races.slice(1, 4).map((event) => (
+          <div
+            key={`${event.event_name}-${event.event_date}`}
+            className="flex items-center justify-between gap-3 py-[5px] text-[12.5px] text-ink-base"
+          >
+            <span className="min-w-0 truncate">{event.event_name}</span>
+            <span className="flex flex-none items-center gap-3">
+              <LastTime
+                season={event.last_raced_season}
+                round={event.last_raced_round}
+              />
+              <span className="w-[46px] text-right font-mono text-[11px] tabular-nums text-ink-soft">
+                {utcDate(event.event_date, {
+                  day: "numeric",
+                  month: "short",
+                })}
               </span>
-            </div>
-          ))}
-        </div>
-      )}
+            </span>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

@@ -116,7 +116,7 @@ export function useHomeConsole(): HomeConsoleData {
   };
 }
 
-/** Below `md` the console is replaced rather than reflowed. */
+/** Below `md` the map uses its reduced view and telemetry stays disabled. */
 const COMPACT_QUERY = "(max-width: 767px)";
 
 function subscribeToWidth(onChange: () => void) {
