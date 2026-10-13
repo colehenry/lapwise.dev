@@ -10,8 +10,8 @@ import {
   skipStoppages,
 } from "@/lib/raceClockMath";
 
-export const PLAYBACK_RATES = [1, 3, 10, 30] as const;
-const DEFAULT_RATE = 10;
+export const PLAYBACK_RATES = [1, 5, 10, 30] as const;
+const DEFAULT_RATE = 5;
 
 /**
  * Positions are written every animation frame, because a car drawn at 30 Hz on
