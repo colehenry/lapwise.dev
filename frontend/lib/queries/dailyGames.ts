@@ -36,6 +36,7 @@ export function dailyGamesSummaryQuery(playerId: string) {
   return queryOptions({
     queryKey: dailyGamesKeys.summary(playerId),
     queryFn: () => fetchDailyGamesSummary(playerId),
+    enabled: playerId.length > 0,
     staleTime: minutes(5),
   });
 }

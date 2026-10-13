@@ -1,4 +1,3 @@
-import { decode } from "@msgpack/msgpack";
 import { queryOptions } from "@tanstack/react-query";
 import { apiHeaders, apiUrl } from "@/lib/api";
 import { hours, minutes } from "./durations";
@@ -85,9 +84,11 @@ export function consoleTelemetryQuery(
       );
       if (response.status === 404) return null;
       assertResponseOk(response);
-      const packed = decode(
-        new Uint8Array(await response.arrayBuffer()),
-      ) as PackedTelemetry;
+      const [buffer, { decode }] = await Promise.all([
+        response.arrayBuffer(),
+        import("@msgpack/msgpack"),
+      ]);
+      const packed = decode(new Uint8Array(buffer)) as PackedTelemetry;
       return {
         code: packed.code,
         fps: packed.fps,

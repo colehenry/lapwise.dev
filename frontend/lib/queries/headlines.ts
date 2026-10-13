@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { minutes } from "./durations";
-import { getJson } from "./http";
+import { getJson, type RequestOptions } from "./http";
 
 /** A span of `text` naming an entity, for the client to tint. */
 export type HeadlineToken = {
@@ -36,13 +36,17 @@ export const headlineKeys = {
   season: (season: number) => ["headlines", season] as const,
 };
 
-export function headlinesQuery(season: number | null) {
+export function headlinesQuery(
+  season: number | null,
+  options?: RequestOptions,
+) {
   return queryOptions({
     queryKey: headlineKeys.season(season ?? 0),
     queryFn: () =>
       getJson<HeadlinesResponse>(
         `/api/headlines?season=${season}`,
         "Failed to fetch headlines",
+        options,
       ),
     enabled: season !== null,
     staleTime: minutes(10),

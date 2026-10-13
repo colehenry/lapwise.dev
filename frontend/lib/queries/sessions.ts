@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { SessionResultsResponse } from "@/lib/types";
-import { getJsonOrNull } from "./http";
+import { minutes } from "./durations";
+import { getJsonOrNull, type RequestOptions } from "./http";
 
 export type RoundTabKind =
   | "race"
@@ -83,6 +84,7 @@ export function roundSessionQuery(
   round: number,
   tab: RoundTabKind,
   practiceNumber: 1 | 2 | 3 = 1,
+  options?: RequestOptions,
 ) {
   return queryOptions({
     queryKey: sessionKeys.session(
@@ -94,8 +96,9 @@ export function roundSessionQuery(
     queryFn: () =>
       getJsonOrNull<SessionResultsResponse>(
         sessionPath(season, round, tab, practiceNumber),
-        { cache: "no-store" },
+        options ?? { cache: "no-store" },
       ),
+    staleTime: minutes(1),
     enabled: Number.isFinite(season) && Number.isFinite(round),
   });
 }

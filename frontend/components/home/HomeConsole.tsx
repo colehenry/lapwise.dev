@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import { useMemo } from "react";
 import DeferredSection from "@/components/ui/DeferredSection";
 import { useCompactViewport, useHomeConsole } from "@/hooks/useHomeConsole";
@@ -12,7 +13,6 @@ import {
   selectEntityColors,
 } from "@/lib/queries/standings";
 import ClutchAsk from "./ClutchAsk";
-import ClutchBand from "./ClutchBand";
 import ConsoleFrame from "./ConsoleFrame";
 import ConsolePanel, { PanelFailure } from "./ConsolePanel";
 import DailyGamesCard from "./DailyGamesCard";
@@ -23,6 +23,11 @@ import RaceMap from "./RaceMap";
 import RacePanel from "./RacePanel";
 import RecentRaces from "./RecentRaces";
 import TrackOutline from "./TrackOutline";
+
+// The band mounts on scroll; its scripts arrive with it rather than the map.
+const ClutchBand = dynamic(() => import("./ClutchBand"), {
+  loading: () => <div className="min-h-[420px]" aria-busy="true" />,
+});
 
 /** The reduced map is animation only, at a fixed height. */
 const COMPACT_MAP_HEIGHT = 320;

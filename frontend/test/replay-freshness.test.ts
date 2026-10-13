@@ -2,7 +2,9 @@
 import {
   focusManager,
   QueryClient,
+  type QueryKey,
   QueryObserver,
+  type QueryObserverOptions,
 } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -27,12 +29,14 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function watch<T>(options: ConstructorParameters<typeof QueryObserver<T>>[1]) {
+function watch<T, K extends QueryKey>(
+  options: QueryObserverOptions<T, Error, T, T, K>,
+) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   client.mount();
-  const observer = new QueryObserver(client, options);
+  const observer = new QueryObserver<T, Error, T, T, K>(client, options);
   const unsubscribe = observer.subscribe(() => {});
   disposers.push(() => {
     unsubscribe();

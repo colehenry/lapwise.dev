@@ -1,11 +1,10 @@
 import { queryOptions } from "@tanstack/react-query";
-import { fetchStandings } from "@/lib/api";
 import type {
   QualifyingStandingsResponse,
   StandingsResponse,
 } from "@/lib/types";
 import { minutes } from "./durations";
-import { getJson } from "./http";
+import { getJson, type RequestOptions } from "./http";
 
 /**
  * One key and one fetcher for a season's standings. The response carries both
@@ -25,10 +24,15 @@ export function currentStandingsSeason(): number {
   return new Date().getFullYear();
 }
 
-export function seasonStandingsQuery(season: number) {
+export function seasonStandingsQuery(season: number, options?: RequestOptions) {
   return queryOptions({
     queryKey: standingsKeys.season(season),
-    queryFn: () => fetchStandings(season),
+    queryFn: () =>
+      getJson<StandingsResponse>(
+        `/api/results/${season}/standings`,
+        "Failed to fetch standings",
+        options ?? { revalidate: 60 },
+      ),
     staleTime: STANDINGS_STALE_TIME,
   });
 }

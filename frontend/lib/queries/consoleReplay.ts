@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { ReplayTrackResponse, RoundSummary } from "@/lib/types";
 import { hours, minutes } from "./durations";
-import { getJson, getJsonOrNull } from "./http";
+import { getJson, getJsonOrNull, type RequestOptions } from "./http";
 
 /** A non-green stretch of the session, on the replay clock. */
 export type ConsoleStatusWindow = {
@@ -96,13 +96,14 @@ export const consoleKeys = {
     ["console-replay", CONSOLE_RESPONSE_VERSION, reference] as const,
 };
 
-export function consoleAvailabilityQuery() {
+export function consoleAvailabilityQuery(options?: RequestOptions) {
   return queryOptions({
     queryKey: consoleKeys.availability,
     queryFn: () =>
       getJson<ConsoleAvailability>(
         "/api/replay/console/availability",
         "Could not check replay availability",
+        options,
       ),
     staleTime: DISCOVERY_STALE_TIME,
     refetchInterval: DISCOVERY_STALE_TIME,
@@ -112,12 +113,16 @@ export function consoleAvailabilityQuery() {
 }
 
 /** Completed payloads stay cached; missing outlines recheck while visible. */
-export function consoleReplayQuery(reference: ConsoleReplayReference | null) {
+export function consoleReplayQuery(
+  reference: ConsoleReplayReference | null,
+  options?: RequestOptions,
+) {
   return queryOptions({
     queryKey: consoleKeys.replay(reference),
     queryFn: () =>
       getJsonOrNull<ConsoleReplay>(
         `/api/replay/console/${reference?.season}/${reference?.round}/v${CONSOLE_RESPONSE_VERSION}?revision=${reference?.revision}`,
+        options,
       ),
     enabled: reference !== null,
     staleTime: (query) =>

@@ -13,16 +13,23 @@ type NextFetchInit = RequestInit & { next?: { revalidate?: number } };
 /** How long a server-rendered page may serve a cached list before revalidating. */
 export const DEFAULT_REVALIDATE_SECONDS = 300;
 
-type RequestOptions = {
+export type RequestOptions = {
   /** Server-render revalidate window. Omit for request-time freshness. */
   revalidate?: number;
   /** Set `"no-store"` for data that must never be reused across requests. */
   cache?: RequestCache;
+  /** Shared server prefetch deadline; omitted for ordinary browser requests. */
+  signal?: AbortSignal;
 };
 
-function init({ revalidate, cache }: RequestOptions = {}): NextFetchInit {
+function init({
+  revalidate,
+  cache,
+  signal,
+}: RequestOptions = {}): NextFetchInit {
   const base: NextFetchInit = { headers: apiHeaders() };
   if (cache) base.cache = cache;
+  if (signal) base.signal = signal;
   if (revalidate !== undefined) base.next = { revalidate };
   return base;
 }

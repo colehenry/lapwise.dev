@@ -6,6 +6,10 @@
  * are the same number written two ways, and both appeared here.
  */
 
+export function seconds(n: number): number {
+  return n * 1000;
+}
+
 export function minutes(n: number): number {
   return n * 60_000;
 }
