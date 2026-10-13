@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import { useMemo } from "react";
 import DeferredSection from "@/components/ui/DeferredSection";
 import { useCompactViewport, useHomeConsole } from "@/hooks/useHomeConsole";
@@ -12,20 +13,23 @@ import {
   selectEntityColors,
 } from "@/lib/queries/standings";
 import ClutchAsk from "./ClutchAsk";
-import ClutchBand from "./ClutchBand";
 import ConsoleFrame from "./ConsoleFrame";
 import ConsolePanel, { PanelFailure } from "./ConsolePanel";
 import DailyGamesCard from "./DailyGamesCard";
-import EntryTiles from "./EntryTiles";
+import { HomeClutchPlaceholder } from "./HomeClutchFrame";
+import HomeTailSkeleton from "./HomeTailSkeleton";
 import HomeTicker from "./HomeTicker";
-import NextRaceCard from "./NextRaceCard";
 import RaceMap from "./RaceMap";
 import RacePanel from "./RacePanel";
-import RecentRaces from "./RecentRaces";
 import TrackOutline from "./TrackOutline";
 
-/** The reduced map is animation only, at a fixed height. */
-const COMPACT_MAP_HEIGHT = 320;
+// The band mounts on scroll; its scripts arrive with it rather than the map.
+const ClutchBand = dynamic(() => import("./ClutchBand"), {
+  loading: () => <HomeClutchPlaceholder />,
+});
+const HomeTail = dynamic(() => import("./HomeTail"), {
+  loading: HomeTailSkeleton,
+});
 
 export default function HomeConsole() {
   const data = useHomeConsole();
@@ -64,16 +68,12 @@ export default function HomeConsole() {
     <DailyGamesCard
       summary={data.dailyGames.data ?? undefined}
       state={data.dailyGames.state}
-      className={compact ? "" : "home-console__grid"}
+      className="home-console__grid"
     />
   );
 
   const map = (
-    <ConsolePanel
-      bare
-      className={compact ? "" : "home-console__map"}
-      bodyClassName="p-px"
-    >
+    <ConsolePanel bare className="home-console__map" bodyClassName="p-px">
       {data.replayState === "error" ? (
         <PanelFailure
           message="The replay could not be loaded."
@@ -103,50 +103,39 @@ export default function HomeConsole() {
         loading={data.headlines.state === "loading"}
       />
 
-      {compact ? (
-        <div className="page-frame flex flex-col gap-3 py-3">
-          {gridCard}
-          <div style={{ height: COMPACT_MAP_HEIGHT }}>{map}</div>
-          <ClutchAsk replay={data.replay} />
-        </div>
-      ) : (
-        <ConsoleFrame viewportRef={clock.viewportRef} quiet={!hasTelemetry}>
-          {gridCard}
-          {map}
-          {hasTelemetry && data.replay && (
-            <RacePanel
-              season={data.season}
-              round={data.replayRound}
-              clock={clock}
-              className="home-console__race"
-            />
-          )}
-          <ClutchAsk replay={data.replay} className="home-console__clutch" />
-        </ConsoleFrame>
-      )}
+      <ConsoleFrame viewportRef={clock.viewportRef}>
+        {gridCard}
+        {map}
+        <RacePanel
+          season={data.season}
+          round={data.replayRound}
+          clock={clock}
+          state={data.replayState}
+          enabled={!compact}
+          onRetry={data.retryReplay}
+          className="home-console__race"
+        />
+        <ClutchAsk replay={data.replay} className="home-console__clutch" />
+      </ConsoleFrame>
 
-      <DeferredSection minHeight={420}>
+      <DeferredSection minHeight={0} placeholder={<HomeClutchPlaceholder />}>
         <ClutchBand
           context={clutchContext}
           colors={entityColors}
           animate={!clock.reducedMotion}
+          loading={
+            data.latestState === "loading" ||
+            (data.season !== null && standings.isPending)
+          }
         />
       </DeferredSection>
 
-      <DeferredSection minHeight={520}>
-        <div className="page-frame grid gap-3 py-3">
-          {/* Next race leads on the left; the rounds already run fill the rest
-              and end on its bottom edge. */}
-          <div className="grid items-stretch gap-3 lg:grid-cols-[344px_minmax(0,1fr)]">
-            <NextRaceCard />
-            <RecentRaces season={data.season} />
-          </div>
-          <EntryTiles
-            season={data.season}
-            round={data.latest?.round ?? null}
-            circuitName={data.latest?.circuit_name ?? null}
-          />
-        </div>
+      <DeferredSection minHeight={0} placeholder={<HomeTailSkeleton />}>
+        <HomeTail
+          season={data.season}
+          round={data.latest?.round ?? null}
+          circuitName={data.latest?.circuit_name ?? null}
+        />
       </DeferredSection>
     </div>
   );
@@ -173,7 +162,9 @@ function TrackPlaceholder({
           ? "Loading the lap record for the most recent round."
           : data.replay
             ? "The track outline is not available for this round."
-            : `Lap data for round ${round ?? "—"} has not published yet. The result is already in.`
+            : data.latest
+              ? `Lap data for round ${round} has not published yet. The result is already in.`
+              : "No race results have published yet."
       }
       href={
         !loading && data.season && round

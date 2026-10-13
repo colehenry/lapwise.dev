@@ -86,7 +86,7 @@ function GameTile({ game }: { game: DailyGameSummaryItem }) {
   return (
     <Link
       href={game.href}
-      className="game-tile group flex flex-1 items-center gap-3 rounded-sm border border-line-soft bg-surface-page px-3 py-2.5 transition-colors hover:border-accent-bright focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-bright"
+      className="game-tile group flex min-h-0 h-full items-center gap-3 rounded-sm border border-line-soft bg-surface-page px-3 py-2.5 transition-colors hover:border-accent-bright focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-bright"
     >
       <span className="flex w-[64px] flex-none justify-center">
         {game.game === "grid" ? (
@@ -132,7 +132,7 @@ export default function DailyGamesCard({
       {state === "error" ? (
         <PanelFailure message="Today's games could not be loaded." />
       ) : (
-        <div className="flex flex-1 flex-col gap-2 p-3">
+        <div className="grid min-h-0 flex-1 grid-rows-2 gap-2 p-3">
           {(summary?.games ?? []).map((game) => (
             <GameTile key={game.game} game={game} />
           ))}

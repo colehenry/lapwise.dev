@@ -23,6 +23,7 @@ _ARCHIVE = (600, 3600)
 _DAILY = (86400, 7 * 24 * 3600)
 _METADATA = (3600, 86400)
 _LATEST = (300, 3600)
+_DISCOVERY = (60, 0)
 _STATIC_ASSET = (7 * 24 * 3600, 30 * 24 * 3600)
 
 # Paths that must never enter a shared cache, matched before anything else.
@@ -41,7 +42,8 @@ _PUBLIC_RULES: list[tuple[re.Pattern[str], tuple[int, int]]] = [
     (re.compile(r"^/api/results/latest$"), _LATEST),
     (re.compile(r"^/api/replay/(seasons|available)$"), _METADATA),
     (re.compile(r"^/api/replay/track/\d+$"), _STATIC_ASSET),
-    (re.compile(r"^/api/replay/console/\d+/\d+(?:/v2)?$"), _STATIC_ASSET),
+    (re.compile(r"^/api/replay/console/availability$"), _DISCOVERY),
+    (re.compile(r"^/api/replay/console/\d+/\d+(?:/v[23])?$"), _STATIC_ASSET),
     (
         re.compile(r"^/api/replay/console/\d+/\d+/telemetry/[A-Za-z]{2,4}$"),
         _STATIC_ASSET,

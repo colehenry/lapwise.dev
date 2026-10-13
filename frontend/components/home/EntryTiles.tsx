@@ -56,18 +56,18 @@ export default function EntryTiles({
         <Link
           key={tile.heading}
           href={tile.href}
-          className="flex min-h-[116px] flex-col gap-1.5 rounded-sm border border-line-soft bg-surface-panel p-4 transition-colors hover:border-accent"
+          className="home-entry-tile flex flex-col gap-1.5 rounded-sm border border-line-soft bg-surface-panel p-4 transition-colors hover:border-accent"
         >
-          <span className="font-mono text-[22px] tracking-[-0.03em] tabular-nums text-ink-strong">
+          <span className="home-entry-value font-mono text-[22px] tracking-[-0.03em] tabular-nums text-ink-strong">
             {tile.value ?? <ValueSkeleton width={72} height={18} />}
           </span>
           <h4 className="m-0 text-[15px] font-bold tracking-[-0.01em] text-ink-strong">
             {tile.heading}
           </h4>
-          <p className="m-0 text-[12px] leading-relaxed text-ink-soft">
+          <p className="home-entry-body m-0 text-[12px] leading-relaxed text-ink-soft">
             {tile.body}
           </p>
-          <span className="mt-auto font-mono text-[9.5px] uppercase tracking-[0.14em] text-accent-bright">
+          <span className="home-entry-action mt-auto font-mono text-[9.5px] uppercase tracking-[0.14em] text-accent-bright">
             {tile.action} →
           </span>
         </Link>

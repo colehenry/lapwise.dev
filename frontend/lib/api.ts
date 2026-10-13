@@ -5,13 +5,10 @@
  * Uses NEXT_PUBLIC_API_URL environment variable for backend API base URL.
  */
 
-import { decode } from "@msgpack/msgpack";
 import type {
   ReplayData,
   ReplayListResponse,
   ReplaySeasonsResponse,
-  ReplayTrackResponse,
-  StandingsResponse,
 } from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -78,21 +75,6 @@ export async function fetchSeasons(): Promise<number[]> {
 }
 
 /**
- * Fetches driver and constructor standings for a given season
- */
-export async function fetchStandings(
-  season: number,
-): Promise<StandingsResponse> {
-  const res = await fetch(apiUrl(`/api/results/${season}/standings`), {
-    headers: apiHeaders(),
-    // Server renders revalidate on this interval; browsers ignore `next`.
-    next: { revalidate: 60 },
-  });
-  if (!res.ok) throw new Error("Failed to fetch standings");
-  return res.json();
-}
-
-/**
  * Fetches seasons that have replay data available
  */
 export async function fetchReplaySeasons(): Promise<number[]> {
@@ -130,22 +112,11 @@ export async function fetchReplayData(
     headers: apiHeaders(),
   });
   if (!res.ok) throw new Error("Failed to fetch replay data");
-  const buffer = await res.arrayBuffer();
+  const [buffer, { decode }] = await Promise.all([
+    res.arrayBuffer(),
+    import("@msgpack/msgpack"),
+  ]);
   return decode(new Uint8Array(buffer)) as ReplayData;
-}
-
-/**
- * Fetches lightweight replay-backed track geometry for a circuit.
- */
-export async function fetchReplayTrackGeometry(
-  circuitId: number,
-): Promise<ReplayTrackResponse | null> {
-  const res = await fetch(apiUrl(`/api/replay/track/${circuitId}`), {
-    headers: apiHeaders(),
-  });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error("Failed to fetch replay track geometry");
-  return res.json();
 }
 
 export function isValidHeadshotUrl(

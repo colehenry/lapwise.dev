@@ -3,7 +3,7 @@
   "sizeCaps": {
     "backend/app/routers/auth.py": 528,
     "backend/app/routers/oauth.py": 409,
-    "backend/app/routers/season_results.py": 633,
+    "backend/app/routers/season_results.py": 593,
     "backend/app/services/circuit_service.py": 742,
     "frontend/app/replay/components/TelemetryPanel.tsx": 924,
     "frontend/app/replay/components/TrackCanvas.tsx": 782,

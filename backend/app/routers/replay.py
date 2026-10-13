@@ -10,12 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.schemas.console import ConsoleReplayResponse
+from app.schemas.console_availability import ConsoleAvailabilityResponse
 from app.schemas.replay import (
     ReplayListResponse,
     ReplaySeasonsResponse,
     ReplayTrackResponse,
 )
 from app.security import verify_api_key
+from app.services.console_availability_service import console_availability
 from app.services.console_replay_service import ConsoleReplayService
 from app.services.console_telemetry import build_driver_telemetry
 from app.services.replay_service import ReplayService
@@ -69,11 +71,22 @@ async def get_latest_replay_preview(
     )
 
 
+@router.get("/console/availability", response_model=ConsoleAvailabilityResponse)
+async def get_console_availability(
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(verify_api_key),
+):
+    """Latest published result and the newest playable race in its five-round window."""
+    return await console_availability(db)
+
+
+@router.get("/console/{season}/{round}/v3", response_model=ConsoleReplayResponse)
 @router.get("/console/{season}/{round}", response_model=ConsoleReplayResponse)
 @router.get("/console/{season}/{round}/v2", response_model=ConsoleReplayResponse)
 async def get_console_replay(
     season: int,
     round: int,
+    response: Response,
     db: AsyncSession = Depends(get_db),
     _: str = Depends(verify_api_key),
 ):
@@ -82,8 +95,8 @@ async def get_console_replay(
 
     Reshapes the ingested lap rows into a single payload: the session clock,
     per-car lap traces, track-status windows, stoppage skips and the event
-    feed and stored geometry. The versioned path cannot be cached by an older
-    deployment that does not include geometry; the original supports old clients.
+    feed and stored geometry. Versioned paths keep older HTTP cache entries
+    separate; incomplete geometry is never stored in an HTTP cache.
     """
     data = await ConsoleReplayService.get_console_replay(db, season, round)
     if data is None:
@@ -91,6 +104,10 @@ async def get_console_replay(
             status_code=404,
             detail=f"No console replay data found for {season} round {round}",
         )
+    if data.track is None:
+        # An outline may arrive after the lap rows. Do not freeze that gap in
+        # a week-long HTTP cache; v3 avoids old deployments' v2 cache entries.
+        response.headers["Cache-Control"] = "private, no-store"
     return data
 
 

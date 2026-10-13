@@ -1,7 +1,7 @@
-import { decode } from "@msgpack/msgpack";
 import { queryOptions } from "@tanstack/react-query";
 import { apiHeaders, apiUrl } from "@/lib/api";
-import { hours } from "./durations";
+import { hours, minutes } from "./durations";
+import { assertResponseOk } from "./http";
 
 /** One driver's channels for a whole race, already unpacked. */
 export type DriverTelemetry = {
@@ -82,10 +82,13 @@ export function consoleTelemetryQuery(
         ),
         { headers: apiHeaders() },
       );
-      if (!response.ok) return null;
-      const packed = decode(
-        new Uint8Array(await response.arrayBuffer()),
-      ) as PackedTelemetry;
+      if (response.status === 404) return null;
+      assertResponseOk(response);
+      const [buffer, { decode }] = await Promise.all([
+        response.arrayBuffer(),
+        import("@msgpack/msgpack"),
+      ]);
+      const packed = decode(new Uint8Array(buffer)) as PackedTelemetry;
       return {
         code: packed.code,
         fps: packed.fps,
@@ -97,7 +100,10 @@ export function consoleTelemetryQuery(
       };
     },
     enabled: season !== null && round !== null && Boolean(driverCode),
-    staleTime: TELEMETRY_STALE_TIME,
+    staleTime: (query) =>
+      query.state.data ? TELEMETRY_STALE_TIME : minutes(1),
+    refetchInterval: (query) => (query.state.data ? false : minutes(1)),
+    refetchOnWindowFocus: true,
     gcTime: TELEMETRY_STALE_TIME,
     retry: false,
   });

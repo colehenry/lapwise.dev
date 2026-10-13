@@ -109,6 +109,7 @@ function replay(overrides: Partial<ConsoleReplay> = {}): ConsoleReplay {
       { t: 260, lap: 2, kind: "red", text: "two", driver_code: null },
       { t: 460, lap: 4, kind: "fast", text: "three", driver_code: null },
     ],
+    track: null,
     ...overrides,
   };
 }

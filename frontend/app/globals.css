@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../components/home/home-layout.css";
 
 :root {
   /* ==========================================================================
@@ -478,105 +479,6 @@ body {
 .page-frame {
   width: 100%;
   padding-inline: clamp(0.75rem, 2.5vw, 2rem);
-}
-
-/* ==========================================================================
-   HOME CONSOLE
-   Three columns sharing one pair of row lines. Every panel in a row ends on
-   the same edge, which is what makes the console read as one instrument
-   rather than a pile of widgets.
-   ========================================================================== */
-.home-console {
-  /* Fixed. Adding a channel shortens the lanes rather than growing the box, so
-     the map above never loses height to the telemetry below it. */
-  --console-row-two: 224px;
-
-  display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(0, 1fr);
-  align-items: stretch;
-}
-
-.home-console > * {
-  min-width: 0;
-  min-height: 0;
-}
-
-@media (min-width: 768px) {
-  .home-console {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas:
-      "map map"
-      "race race"
-      "grid clutch";
-  }
-}
-
-@media (min-width: 1180px) {
-  /* Every track is set, not negotiated. Row two is a fixed height and row one
-     takes the rest, so a panel with no data in it occupies exactly the space it
-     will occupy once the data lands — nothing grows because a neighbour is
-     empty, and nothing shrinks because a neighbour is full. An `auto` row here
-     meant the drivers' table was silently dictating the height of the map. */
-  .home-console {
-    --right-rail-rise: 72px;
-
-    grid-template-columns:
-      clamp(276px, 22vw, 348px)
-      minmax(0, 1fr)
-      clamp(268px, 21vw, 336px);
-    grid-template-rows: minmax(300px, 1fr) var(--console-row-two);
-    /* The replay sits directly above its own telemetry, the board beside it,
-       and Clutch takes the corner the championship tables used to hold. */
-    grid-template-areas:
-      "map map grid"
-      "race race clutch";
-    height: clamp(660px, 76vh, 880px);
-  }
-}
-
-/* With no telemetry to draw, the instruments that need it are removed rather
-   than left hollow, and the rest of the row closes up. */
-@media (min-width: 768px) and (max-width: 1179px) {
-  .home-console--quiet {
-    grid-template-areas:
-      "map map"
-      "grid clutch";
-  }
-}
-
-@media (min-width: 1180px) {
-  .home-console--quiet {
-    grid-template-areas:
-      "map map grid"
-      "map map clutch";
-  }
-}
-
-@media (min-width: 768px) {
-  .home-console__grid {
-    grid-area: grid;
-  }
-  .home-console__map {
-    grid-area: map;
-  }
-  .home-console__race {
-    grid-area: race;
-  }
-  .home-console__clutch {
-    grid-area: clutch;
-  }
-}
-
-@media (min-width: 1180px) {
-  /* Give the right rail its own tighter split without moving the console's
-     outer edges or the shared map/race row line. */
-  .home-console__grid {
-    margin-bottom: var(--right-rail-rise);
-  }
-  .home-console__clutch {
-    margin-top: calc(-1 * var(--right-rail-rise));
-  }
 }
 
 /* Daily Games tiles: each miniature board plays itself under the pointer.

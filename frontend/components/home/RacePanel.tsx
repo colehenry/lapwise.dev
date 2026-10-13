@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import DriverHeadshot from "@/components/entities/DriverHeadshot";
+import type { PanelState } from "@/hooks/useHomeConsole";
 import type { RaceClockController } from "@/hooks/useRaceClock";
 import { useTeamTint } from "@/hooks/useTeamTint";
 import { driverHref } from "@/lib/entityLinks";
@@ -14,7 +15,7 @@ import {
   sampleAt,
 } from "@/lib/queries/consoleTelemetry";
 import ChannelStrip from "./ChannelStrip";
-import ConsolePanel from "./ConsolePanel";
+import ConsolePanel, { PanelFailure, ValueSkeleton } from "./ConsolePanel";
 
 /** One live value, labelled. Written through a ref, never through state. */
 function Readout({
@@ -32,7 +33,9 @@ function Readout({
       <span
         ref={cell}
         className="mt-px font-mono text-[13px] tabular-nums text-ink-strong"
-      />
+      >
+        —
+      </span>
     </span>
   );
 }
@@ -48,11 +51,17 @@ export default function RacePanel({
   season,
   round,
   clock,
+  state = "ready",
+  enabled = true,
+  onRetry,
   className = "",
 }: {
   season: number | null;
   round: number | null;
   clock: RaceClockController;
+  state?: PanelState;
+  enabled?: boolean;
+  onRetry?: () => void;
   className?: string;
 }) {
   const tint = useTeamTint();
@@ -60,11 +69,16 @@ export default function RacePanel({
   const lap = clock.frame?.lap ?? 1;
   const { subscribe } = clock;
 
-  /* Only the leader's channels, and only once the console has drawn. A round
-     with lap data but no replay blob answers 404 and the strip stays away. */
-  const { data: telemetry } = useQuery(
-    consoleTelemetryQuery(season, round, leader?.car.driver_code ?? null),
+  const options = consoleTelemetryQuery(
+    season,
+    round,
+    leader?.car.driver_code ?? null,
   );
+  const telemetryQuery = useQuery({
+    ...options,
+    enabled: enabled && options.enabled,
+  });
+  const telemetry = telemetryQuery.data;
 
   const cells = useRef<Record<string, HTMLSpanElement | null>>({});
   const telemetryRef = useRef(telemetry);
@@ -97,9 +111,7 @@ export default function RacePanel({
     });
   }, [subscribe]);
 
-  if (!leader) return null;
-
-  const running = leader.car.laps[leader.lapIndex];
+  const running = leader?.car.laps[leader.lapIndex];
   const compound = running ? compoundFromInitial(running.c) : null;
 
   return (
@@ -107,35 +119,49 @@ export default function RacePanel({
       title={
         /* Whose channels these are, rather than which race — the map above
            already names the race, and the leader is what changes. */
-        <span className="flex min-w-0 items-center gap-2.5">
+        <span className="flex h-[36px] w-full min-w-0 items-center gap-2.5">
           <span className="flex-none font-mono text-[8.5px] font-bold uppercase leading-[1.25] tracking-[0.16em] text-ink-faint">
             Leader
             <br />
             Telemetry
           </span>
-          <DriverHeadshot
-            code={leader.car.driver_code}
-            fullName={leader.car.full_name}
-            src={leader.car.headshot_url}
-            size={28}
-            shape="circle"
-            bordered={false}
-            focalY={0.12}
-          />
-          <span className="min-w-0">
-            <Link
-              href={driverHref(leader.car) ?? "/drivers"}
-              className="block truncate text-[14px] font-bold tracking-[-0.01em] underline-offset-2 hover:underline"
-              style={{ color: tint(leader.car.team_color) }}
-            >
-              {leader.car.full_name}
-            </Link>
+          {leader ? (
+            <DriverHeadshot
+              code={leader.car.driver_code}
+              fullName={leader.car.full_name}
+              src={leader.car.headshot_url}
+              size={28}
+              shape="circle"
+              bordered={false}
+              focalY={0.12}
+            />
+          ) : (
+            <ValueSkeleton
+              width={28}
+              height={28}
+              className="shrink-0 rounded-full"
+            />
+          )}
+          <span className="min-w-0 flex-1">
+            {leader ? (
+              <Link
+                href={driverHref(leader.car) ?? "/drivers"}
+                className="block truncate text-[14px] font-bold tracking-[-0.01em] underline-offset-2 hover:underline"
+                style={{ color: tint(leader.car.team_color) }}
+              >
+                {leader.car.full_name}
+              </Link>
+            ) : (
+              <ValueSkeleton width={140} height={18} className="block" />
+            )}
             <span className="mt-px block truncate font-mono text-[9px] uppercase tracking-[0.12em] text-ink-faint">
-              {leader.car.team_name}
+              {leader?.car.team_name ?? (
+                <ValueSkeleton width={90} height={12} />
+              )}
             </span>
           </span>
-          {running && (
-            <span className="flex flex-none flex-col items-center gap-0.5 pl-1">
+          {running ? (
+            <span className="flex w-[42px] flex-none flex-col items-center gap-0.5 pl-1">
               <span className="font-mono text-[8px] uppercase tracking-[0.14em] text-ink-faint">
                 Tyre
               </span>
@@ -153,6 +179,10 @@ export default function RacePanel({
                   {running.age ?? "?"}
                 </span>
               </span>
+            </span>
+          ) : (
+            <span className="w-[42px] flex-none pl-1">
+              <ValueSkeleton width={36} height={32} />
             </span>
           )}
 
@@ -177,7 +207,27 @@ export default function RacePanel({
       className={className}
       bodyClassName="flex min-h-0 flex-col px-3 py-2.5"
     >
-      <ChannelStrip telemetry={telemetry} clock={clock} />
+      {state === "error" && !leader ? (
+        <PanelFailure
+          message="Replay data could not be loaded."
+          onRetry={onRetry}
+        />
+      ) : state === "empty" && !leader ? (
+        <div className="grid flex-1 place-items-center text-[12px] text-ink-soft">
+          Lap data has not published yet.
+        </div>
+      ) : telemetryQuery.isError && !telemetry ? (
+        <PanelFailure
+          message="Telemetry could not be loaded."
+          onRetry={() => void telemetryQuery.refetch()}
+        />
+      ) : (
+        <ChannelStrip
+          telemetry={telemetry}
+          clock={clock}
+          loading={telemetryQuery.isPending}
+        />
+      )}
     </ConsolePanel>
   );
 }

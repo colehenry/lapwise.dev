@@ -4,11 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 import { useDailyGamePlayer } from "@/hooks/useDailyGamePlayer";
 import type { ConsoleReplay } from "@/lib/queries/consoleReplay";
-import { consoleReplayQuery } from "@/lib/queries/consoleReplay";
+import {
+  consoleAvailabilityQuery,
+  consoleReplayQuery,
+} from "@/lib/queries/consoleReplay";
 import { dailyGamesSummaryQuery } from "@/lib/queries/dailyGames";
 import { headlinesQuery } from "@/lib/queries/headlines";
 import { replayTrackQuery } from "@/lib/queries/replay";
-import { latestRoundQuery } from "@/lib/queries/seasons";
 import { roundSessionQuery } from "@/lib/queries/sessions";
 import type { ReplayTrackResponse, RoundSummary } from "@/lib/types";
 
@@ -56,9 +58,10 @@ function useHeadlines(season: number | null) {
 type QueryLike = { isPending: boolean; isError: boolean; fetchStatus: string };
 
 function resolve(query: QueryLike, hasContent: boolean): PanelState {
+  if (hasContent) return "ready";
   if (query.isError) return "error";
-  if (query.isPending) return "loading";
-  return hasContent ? "ready" : "empty";
+  if (query.isPending && query.fetchStatus !== "idle") return "loading";
+  return "empty";
 }
 
 /**
@@ -67,20 +70,21 @@ function resolve(query: QueryLike, hasContent: boolean): PanelState {
  */
 export function useHomeConsole(): HomeConsoleData {
   const playerId = useDailyGamePlayer();
-  const latest = useQuery(latestRoundQuery());
-  const season = latest.data ? Number(latest.data.date.slice(0, 4)) : null;
-  const latestRound = latest.data?.round ?? null;
-
-  const replay = useQuery(consoleReplayQuery(season, latestRound));
-  const replayRound = replay.data?.round ?? null;
+  const availability = useQuery(consoleAvailabilityQuery());
+  const latest = availability.data?.latest ?? undefined;
+  const season = availability.data?.season ?? null;
+  const latestRound = latest?.round ?? null;
+  const reference = availability.data?.replay ?? null;
+  const replay = useQuery(consoleReplayQuery(reference));
+  const replayRound = reference?.round ?? null;
 
   // Only an outline-only state needs the standalone endpoint. A playable
   // console carries its geometry, including when it walks back to an older race.
-  const outlineCircuitId = latest.data?.circuit_id;
+  const outlineCircuitId = latest?.circuit_id;
   const outline = useQuery({
     ...replayTrackQuery(outlineCircuitId ?? 0),
     enabled:
-      replay.isSuccess && replay.data === null && outlineCircuitId != null,
+      availability.isSuccess && reference === null && outlineCircuitId != null,
   });
 
   const classification = useRoundClassification(season, latestRound);
@@ -89,23 +93,30 @@ export function useHomeConsole(): HomeConsoleData {
 
   return {
     season,
-    latest: latest.data,
-    latestState: resolve(latest, latest.data != null),
+    latest,
+    latestState: resolve(availability, latest != null),
     replayRound,
     walkedBack: replayRound != null && replayRound !== latestRound,
-    replay: replay.data?.replay,
-    replayState: resolve(replay, replay.data != null),
+    replay: replay.data ?? undefined,
+    replayState:
+      availability.data == null
+        ? resolve(availability, false)
+        : reference === null && outline.isError
+          ? "error"
+          : resolve(replay, replay.data != null),
     retryReplay: () => {
-      void replay.refetch();
+      void availability.refetch();
+      if (reference) void replay.refetch();
+      else if (outlineCircuitId != null) void outline.refetch();
     },
-    track: replay.data ? replay.data.replay.track : outline.data,
+    track: replay.data ? replay.data.track : outline.data,
     classification,
     dailyGames,
     headlines,
   };
 }
 
-/** Below `md` the console is replaced rather than reflowed. */
+/** Below `md` the map uses its reduced view and telemetry stays disabled. */
 const COMPACT_QUERY = "(max-width: 767px)";
 
 function subscribeToWidth(onChange: () => void) {

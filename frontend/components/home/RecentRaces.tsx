@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import DriverHeadshot from "@/components/entities/DriverHeadshot";
+import Skeleton from "@/components/ui/Skeleton";
 import { useTeamTint } from "@/hooks/useTeamTint";
 import { gapLabel, utcDate } from "@/lib/consoleFormat";
 import { seasonRoundsQuery, selectUniqueRounds } from "@/lib/queries/seasons";
@@ -11,7 +12,7 @@ import CircuitOutline from "./CircuitOutline";
 import { PanelFailure, PanelLabel } from "./ConsolePanel";
 
 /** Enough to show the shape of the season's recent form. */
-const CARD_COUNT = 4;
+const CARD_SLOTS = [1, 2, 3, 4] as const;
 
 /**
  * One card per round, sized to end level with the next-race card beside it.
@@ -33,9 +34,9 @@ function RaceCard({
   return (
     <Link
       href={`/results/${season}/${round.round}`}
-      className="group flex h-full flex-col rounded-sm border border-line-soft bg-surface-panel p-3.5 transition-colors hover:border-accent"
+      className="home-race-card group flex flex-col rounded-sm border border-line-soft bg-surface-panel p-3.5 transition-colors hover:border-accent"
     >
-      <p className="m-0 text-[16px] font-bold leading-[1.15] tracking-[-0.02em] text-ink-strong">
+      <p className="home-race-card__name m-0 text-[16px] font-bold leading-[1.15] tracking-[-0.02em] text-ink-strong">
         {round.event_name}
       </p>
       <p className="m-0 mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-faint">
@@ -106,38 +107,53 @@ function RaceCard({
 }
 
 export default function RecentRaces({ season }: { season: number | null }) {
-  const { data, isError, refetch } = useQuery({
+  const { data, isError, isPending, refetch } = useQuery({
     ...seasonRoundsQuery(season),
     select: selectUniqueRounds,
   });
 
   const rounds = [...(data ?? [])]
     .sort((a, b) => b.round - a.round)
-    .slice(0, CARD_COUNT);
+    .slice(0, CARD_SLOTS.length);
 
   return (
     <section className="flex h-full flex-col">
-      <div className="mb-3 flex flex-none items-baseline justify-between gap-3">
+      <div className="home-recent-header flex flex-none items-baseline justify-between gap-3">
         <h2 className="m-0 text-[14px] font-bold tracking-[-0.01em] text-ink-strong">
           Recent races
         </h2>
         <PanelLabel>{season ?? ""}</PanelLabel>
       </div>
 
-      {isError ? (
-        <div className="rounded-sm border border-line-soft bg-surface-panel">
-          <PanelFailure
-            message="Recent results could not be loaded."
-            onRetry={() => void refetch()}
-          />
-        </div>
-      ) : (
-        <div className="grid h-full gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {rounds.map((round) => (
-            <RaceCard key={round.round} round={round} season={season} />
-          ))}
-        </div>
-      )}
+      <div className="home-recent-grid">
+        {CARD_SLOTS.map((slot) =>
+          rounds[slot - 1] ? (
+            <RaceCard
+              key={`slot-${slot}`}
+              round={rounds[slot - 1]}
+              season={season}
+            />
+          ) : (
+            <div
+              key={`slot-${slot}`}
+              className="home-race-card flex items-center justify-center rounded-sm border border-line-soft bg-surface-panel p-3.5"
+            >
+              {isPending && season !== null ? (
+                <Skeleton height="100%" />
+              ) : isError ? (
+                <PanelFailure
+                  message="Recent results could not be loaded."
+                  onRetry={() => void refetch()}
+                />
+              ) : (
+                <p className="text-[12px] text-ink-soft">
+                  Earlier race results will appear here.
+                </p>
+              )}
+            </div>
+          ),
+        )}
+      </div>
     </section>
   );
 }

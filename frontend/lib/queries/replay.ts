@@ -3,9 +3,10 @@ import {
   fetchAvailableReplays,
   fetchReplayData,
   fetchReplaySeasons,
-  fetchReplayTrackGeometry,
 } from "@/lib/api";
+import type { ReplayTrackResponse } from "@/lib/types";
 import { minutes } from "./durations";
+import { getJsonOrNull, type RequestOptions } from "./http";
 
 /** Replay resources, addressed once so every route shares a cache entry. */
 export const replayKeys = {
@@ -44,11 +45,18 @@ export function replayDataQuery(season: number | null, round: number | null) {
   });
 }
 
-export function replayTrackQuery(circuitId: number) {
+export function replayTrackQuery(circuitId: number, options?: RequestOptions) {
   return queryOptions({
     queryKey: replayKeys.track(circuitId),
-    queryFn: () => fetchReplayTrackGeometry(circuitId),
-    staleTime: Number.POSITIVE_INFINITY,
+    queryFn: () =>
+      getJsonOrNull<ReplayTrackResponse>(
+        `/api/replay/track/${circuitId}`,
+        options,
+      ),
+    staleTime: (query) =>
+      query.state.data ? Number.POSITIVE_INFINITY : minutes(1),
+    refetchInterval: (query) =>
+      query.state.data === null ? minutes(1) : false,
     retry: false,
   });
 }

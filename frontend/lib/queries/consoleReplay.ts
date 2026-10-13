@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { ReplayTrackResponse } from "@/lib/types";
-import { hours } from "./durations";
-import { getJsonOrNull } from "./http";
+import type { ReplayTrackResponse, RoundSummary } from "@/lib/types";
+import { hours, minutes } from "./durations";
+import { getJson, getJsonOrNull, type RequestOptions } from "./http";
 
 /** A non-green stretch of the session, on the replay clock. */
 export type ConsoleStatusWindow = {
@@ -73,51 +73,63 @@ export type ConsoleReplay = {
   track: ReplayTrackResponse | null;
 };
 
-/** Which round the walk-back settled on, and its replay. */
-export type ConsoleReplayResult = {
+/** The backend owns replay selection; the browser fetches only this reference. */
+export type ConsoleReplayReference = {
+  season: number;
   round: number;
-  replay: ConsoleReplay;
+  revision: string;
 };
 
-const CONSOLE_RESPONSE_VERSION = 2;
-
-export const consoleKeys = {
-  replay: (season: number, latestRound: number) =>
-    ["console-replay", CONSOLE_RESPONSE_VERSION, season, latestRound] as const,
+export type ConsoleAvailability = {
+  season: number | null;
+  latest: RoundSummary | null;
+  replay: ConsoleReplayReference | null;
 };
 
-/** How far back the walk-back looks for a round that has lap data. */
-export const WALK_BACK_ROUNDS = 4;
-
-/** A finished race never changes. */
+const CONSOLE_RESPONSE_VERSION = 3;
+const DISCOVERY_STALE_TIME = minutes(1);
 const REPLAY_STALE_TIME = hours(6);
 
-/**
- * Results publish before telemetry, so the newest round often has no laps for
- * several days. Walk back from `latestRound` until a round answers, and report
- * which one it was. A 404 is the expected answer while ingest catches up.
- */
+export const consoleKeys = {
+  availability: ["console-availability"] as const,
+  replay: (reference: ConsoleReplayReference | null) =>
+    ["console-replay", CONSOLE_RESPONSE_VERSION, reference] as const,
+};
+
+export function consoleAvailabilityQuery(options?: RequestOptions) {
+  return queryOptions({
+    queryKey: consoleKeys.availability,
+    queryFn: () =>
+      getJson<ConsoleAvailability>(
+        "/api/replay/console/availability",
+        "Could not check replay availability",
+        options,
+      ),
+    staleTime: DISCOVERY_STALE_TIME,
+    refetchInterval: DISCOVERY_STALE_TIME,
+    refetchOnWindowFocus: true,
+    retry: false,
+  });
+}
+
+/** Completed payloads stay cached; missing outlines recheck while visible. */
 export function consoleReplayQuery(
-  season: number | null,
-  latestRound: number | null,
+  reference: ConsoleReplayReference | null,
+  options?: RequestOptions,
 ) {
   return queryOptions({
-    queryKey: consoleKeys.replay(season ?? 0, latestRound ?? 0),
-    queryFn: async (): Promise<ConsoleReplayResult | null> => {
-      const start = latestRound as number;
-      const floor = Math.max(1, start - WALK_BACK_ROUNDS);
-      for (let round = start; round >= floor; round--) {
-        const replay = await getJsonOrNull<ConsoleReplay>(
-          // Older deployments return an uncacheable 404 for this path rather
-          // than storing a seven-day response that has no geometry.
-          `/api/replay/console/${season}/${round}/v${CONSOLE_RESPONSE_VERSION}`,
-        );
-        if (replay?.cars?.length) return { round, replay };
-      }
-      return null;
-    },
-    enabled: season !== null && latestRound !== null,
-    staleTime: REPLAY_STALE_TIME,
+    queryKey: consoleKeys.replay(reference),
+    queryFn: () =>
+      getJsonOrNull<ConsoleReplay>(
+        `/api/replay/console/${reference?.season}/${reference?.round}/v${CONSOLE_RESPONSE_VERSION}?revision=${reference?.revision}`,
+        options,
+      ),
+    enabled: reference !== null,
+    staleTime: (query) =>
+      query.state.data?.track ? REPLAY_STALE_TIME : DISCOVERY_STALE_TIME,
+    refetchInterval: (query) =>
+      query.state.data?.track ? false : DISCOVERY_STALE_TIME,
+    refetchOnWindowFocus: true,
     gcTime: REPLAY_STALE_TIME,
     retry: false,
   });

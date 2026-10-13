@@ -108,7 +108,7 @@ def test_replay_track_geometry_is_treated_as_a_static_asset():
     assert max_age("/api/replay/track/14") == 7 * 24 * 3600
 
 
-@pytest.mark.parametrize("suffix", ["", "/v2"])
+@pytest.mark.parametrize("suffix", ["", "/v2", "/v3"])
 def test_a_finished_race_console_is_cached_as_hard_as_a_static_asset(suffix):
     assert max_age(f"/api/replay/console/2026/13{suffix}") == 7 * 24 * 3600
 
