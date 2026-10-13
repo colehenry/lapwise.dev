@@ -65,7 +65,9 @@ export function installFetchRecorder(
       requests.push({ path, method: init?.method ?? "GET" });
 
       const key = keys.find((candidate) => path.startsWith(candidate));
-      const body = key === undefined ? null : routes[key];
+      const value = key === undefined ? null : routes[key];
+      const body = typeof value === "function" ? value(path) : value;
+      if (body instanceof Response) return body.clone();
       if (body === null) {
         return new Response("null", {
           status: 404,

@@ -173,7 +173,9 @@ function TrackPlaceholder({
           ? "Loading the lap record for the most recent round."
           : data.replay
             ? "The track outline is not available for this round."
-            : `Lap data for round ${round ?? "—"} has not published yet. The result is already in.`
+            : data.latest
+              ? `Lap data for round ${round} has not published yet. The result is already in.`
+              : "No race results have published yet."
       }
       href={
         !loading && data.season && round

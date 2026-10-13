@@ -70,9 +70,11 @@ function Lane({
 export default function ChannelStrip({
   telemetry,
   clock,
+  loading = false,
 }: {
   telemetry: DriverTelemetry | null | undefined;
   clock: RaceClockController;
+  loading?: boolean;
 }) {
   const lap = clock.frame?.lap ?? 1;
   const { subscribe } = clock;
@@ -181,7 +183,11 @@ export default function ChannelStrip({
     return (
       <div className="grid min-h-0 flex-1 place-items-center rounded-[3px] border border-dashed border-line-soft">
         <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-ink-faint">
-          No telemetry ingested for this round
+          {loading
+            ? "Loading telemetry"
+            : telemetry
+              ? "No telemetry for this lap"
+              : "No telemetry ingested for this round"}
         </span>
       </div>
     );

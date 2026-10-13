@@ -60,11 +60,17 @@ class SessionDataService:
     @staticmethod
     async def get_latest_race_session(db: AsyncSession) -> Optional[Session]:
         """
-        Get the most recent race session.
+        Get the most recent race session with published podium results.
         """
         query = (
             select(Session)
             .where(Session.session_type == "race")
+            .where(
+                select(SessionResult.id)
+                .where(SessionResult.session_id == Session.id)
+                .where(SessionResult.position.between(1, 3))
+                .exists()
+            )
             .order_by(Session.date.desc())
             .limit(1)
         )

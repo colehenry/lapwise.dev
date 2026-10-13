@@ -14,7 +14,7 @@ import {
   sampleAt,
 } from "@/lib/queries/consoleTelemetry";
 import ChannelStrip from "./ChannelStrip";
-import ConsolePanel from "./ConsolePanel";
+import ConsolePanel, { PanelFailure } from "./ConsolePanel";
 
 /** One live value, labelled. Written through a ref, never through state. */
 function Readout({
@@ -62,9 +62,10 @@ export default function RacePanel({
 
   /* Only the leader's channels, and only once the console has drawn. A round
      with lap data but no replay blob answers 404 and the strip stays away. */
-  const { data: telemetry } = useQuery(
+  const telemetryQuery = useQuery(
     consoleTelemetryQuery(season, round, leader?.car.driver_code ?? null),
   );
+  const telemetry = telemetryQuery.data;
 
   const cells = useRef<Record<string, HTMLSpanElement | null>>({});
   const telemetryRef = useRef(telemetry);
@@ -177,7 +178,18 @@ export default function RacePanel({
       className={className}
       bodyClassName="flex min-h-0 flex-col px-3 py-2.5"
     >
-      <ChannelStrip telemetry={telemetry} clock={clock} />
+      {telemetryQuery.isError && !telemetry ? (
+        <PanelFailure
+          message="Telemetry could not be loaded."
+          onRetry={() => void telemetryQuery.refetch()}
+        />
+      ) : (
+        <ChannelStrip
+          telemetry={telemetry}
+          clock={clock}
+          loading={telemetryQuery.isPending}
+        />
+      )}
     </ConsolePanel>
   );
 }

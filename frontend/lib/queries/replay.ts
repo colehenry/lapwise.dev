@@ -48,7 +48,10 @@ export function replayTrackQuery(circuitId: number) {
   return queryOptions({
     queryKey: replayKeys.track(circuitId),
     queryFn: () => fetchReplayTrackGeometry(circuitId),
-    staleTime: Number.POSITIVE_INFINITY,
+    staleTime: (query) =>
+      query.state.data ? Number.POSITIVE_INFINITY : minutes(1),
+    refetchInterval: (query) =>
+      query.state.data === null ? minutes(1) : false,
     retry: false,
   });
 }

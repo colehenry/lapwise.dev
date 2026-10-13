@@ -19,7 +19,6 @@ from app.schemas.result import (
     PointsProgressionResponse,
     QualifyingSectorResponse,
     QualifyingStandingsResponse,
-    RoundPodiumDriver,
     RoundSummary,
     SeasonRoundsResponse,
     SessionResultsResponse,
@@ -34,6 +33,7 @@ from app.schemas.summary import (
 )
 from app.security import verify_api_key
 from app.services.canonical_standings_service import CanonicalStandingsService
+from app.services.latest_race_service import latest_race
 from app.services.results import (
     LapsService,
     PracticeService,
@@ -42,7 +42,6 @@ from app.services.results import (
     QualifyingStandingsService,
     SessionDataService,
     TeammateService,
-    _make_slug,
 )
 
 router = APIRouter()
@@ -75,49 +74,10 @@ async def get_latest_race(
     Returns the latest race session ordered by date, showing podium finishers.
     Used for the homepage to display a quick preview of the most recent race.
     """
-    # Get the most recent race session
-    latest_session = await SessionDataService.get_latest_race_session(db)
-
-    if not latest_session:
+    latest = await latest_race(db)
+    if latest is None:
         raise HTTPException(status_code=404, detail="No race results found")
-
-    # Get top 3 finishers for this race
-    rows = await SessionDataService.get_podium_results(db, latest_session.id)
-
-    if not rows:
-        raise HTTPException(
-            status_code=404, detail="No podium results found for latest race"
-        )
-
-    # Build podium list
-    podium = [
-        RoundPodiumDriver(
-            full_name=row.full_name,
-            driver_code=row.driver_code,
-            driver_slug=_make_slug(row.jolpica_id, row.full_name),
-            country_code=row.country_code,
-            team_name=row.team_name,
-            team_color=row.team_color,
-            headshot_url=row.headshot_url,
-            fastest_lap=row.fastest_lap,
-            time_seconds=row.time_seconds,
-        )
-        for row in rows
-    ]
-
-    # Return the round summary
-    first_row = rows[0]
-    return RoundSummary(
-        round=first_row.round,
-        event_name=first_row.event_name,
-        date=first_row.date,
-        circuit_name=first_row.circuit_name,
-        circuit_id=first_row.circuit_id,
-        circuit_location=first_row.circuit_location,
-        circuit_country=first_row.circuit_country,
-        session_type=first_row.session_type,
-        podium=podium,
-    )
+    return latest.summary
 
 
 @router.get("/{season}/standings", response_model=StandingsResponse)
