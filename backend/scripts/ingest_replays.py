@@ -171,6 +171,10 @@ def main():
                         preview_frames=metadata["preview_frames"],
                         preview_fps=metadata["preview_fps"],
                         preview_size_bytes=metadata["preview_size_bytes"],
+                        track_geometry=metadata["track_geometry"],
+                        track_geometry_refreshed_at=metadata[
+                            "track_geometry_refreshed_at"
+                        ],
                     )
                     db.add(replay)
                     db.commit()

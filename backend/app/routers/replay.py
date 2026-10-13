@@ -70,6 +70,7 @@ async def get_latest_replay_preview(
 
 
 @router.get("/console/{season}/{round}", response_model=ConsoleReplayResponse)
+@router.get("/console/{season}/{round}/v2", response_model=ConsoleReplayResponse)
 async def get_console_replay(
     season: int,
     round: int,
@@ -81,7 +82,8 @@ async def get_console_replay(
 
     Reshapes the ingested lap rows into a single payload: the session clock,
     per-car lap traces, track-status windows, stoppage skips and the event
-    feed. A finished race never changes, so this caches hard.
+    feed and stored geometry. The versioned path cannot be cached by an older
+    deployment that does not include geometry; the original supports old clients.
     """
     data = await ConsoleReplayService.get_console_replay(db, season, round)
     if data is None:

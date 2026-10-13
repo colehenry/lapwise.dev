@@ -40,6 +40,7 @@ from app.services.driver_attribute_service import (
     DriverAttributeService,
 )
 from app.services.driver_fact_service import DriverFactService
+from app.services.driver_highlight_service import DriverHighlightService
 from app.services.game_driver_catalog_service import GameDriverCatalogService
 from app.services.media_service import MediaService
 
@@ -266,7 +267,9 @@ class GuessGameService:
         sequence = session.guesses_used + 1
         exhausted = not correct and sequence >= puzzle.max_guesses
         highlights = (
-            (await DriverFactService.highlights(db, guessed))[:WINNER_HIGHLIGHT_LIMIT]
+            (await DriverHighlightService.highlights(db, guessed))[
+                :WINNER_HIGHLIGHT_LIMIT
+            ]
             if correct
             else []
         )

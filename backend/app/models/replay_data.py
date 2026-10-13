@@ -16,6 +16,7 @@ from sqlalchemy import (
     LargeBinary,
     func,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -62,6 +63,10 @@ class ReplayData(Base):
     preview_frames = Column(Integer, nullable=True)
     preview_fps = Column(Float, nullable=True)
     preview_size_bytes = Column(Integer, nullable=True)
+
+    # Rebuildable from data, stored separately to keep geometry reads small.
+    track_geometry = Column(JSONB(none_as_null=True), nullable=True)
+    track_geometry_refreshed_at = Column(DateTime(timezone=True), nullable=True)
 
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
 

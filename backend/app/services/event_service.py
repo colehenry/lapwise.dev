@@ -70,7 +70,6 @@ class EventService:
             # Try to find matching circuit in database
             circuit_id = None
             circuit_name = None
-            location = event["Location"]
 
             # Match by location and country
             # We use _find_matching_circuit helper which encapsulates the query
@@ -81,9 +80,6 @@ class EventService:
             if circuit:
                 circuit_id = circuit.id
                 circuit_name = circuit.name
-                # The matched row is canonical; the schedule feed carries the
-                # wrong venue for some events.
-                location = circuit.location
 
             # Determine event type
             event_type = "testing" if event["RoundNumber"] == 0 else "race"
@@ -103,7 +99,7 @@ class EventService:
                     event_type=event_type,
                     event_date=event_date_str,
                     race_start_utc=race_start_utc,
-                    location=location,
+                    location=event["Location"],
                     country=event["Country"],
                     round_number=int(event["RoundNumber"])
                     if event["RoundNumber"] != 0
@@ -203,9 +199,18 @@ class EventService:
         A location can carry more than one layout — Madrid is Jarama through
         1981 and the Madring from 2026 — so a match is the layout raced most
         recently, and a layout never raced yet outranks one long retired.
+
+        The venue decides the layout, so location alone outranks country: an
+        event's name need not share its host country, as the 2026 Bahrain Grand
+        Prix ran at Kuala Lumpur.
         """
         circuit = await EventService._latest_layout(
             db, Circuit.location == location, Circuit.country == country
+        )
+        if circuit:
+            return circuit
+        circuit = await EventService._latest_layout(
+            db, func.lower(Circuit.location) == location.lower()
         )
         if circuit:
             return circuit

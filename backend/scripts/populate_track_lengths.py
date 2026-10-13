@@ -63,6 +63,8 @@ TRACK_LENGTHS = {
     "Hockenheim": 4.574,
     "Sochi": 5.848,
     "Madrid": 5.470,
+    "Sepang": 5.543,
+    "Kuala Lumpur": 5.543,
 }
 
 

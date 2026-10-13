@@ -26,6 +26,7 @@ from app.services.driver_attribute_service import (
     DriverAttributeService,
 )
 from app.services.driver_fact_service import FACT_ALGORITHM_VERSION, DriverFactService
+from app.services.driver_highlight_service import DriverHighlightService
 from app.services.game_driver_catalog_service import GameDriverCatalogService
 from app.services.guess_game_generation_service import choose_driver, eligible_drivers
 from app.services.guess_game_service import GuessGameService
@@ -225,7 +226,7 @@ async def _as_guess(
     highlights = (
         [
             GuessGameHighlight(id=item.id, value=item.value, label=item.label)
-            for item in (await DriverFactService.highlights(db, guessed))[:5]
+            for item in (await DriverHighlightService.highlights(db, guessed))[:5]
             if item.value and item.label
         ]
         if correct
