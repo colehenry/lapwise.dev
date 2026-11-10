@@ -162,6 +162,30 @@ From 2019 through 2024, a race fastest lap earned one championship point only wh
 - Source: Formula 1 points-system overview: https://www.formula1.com/en/latest/article/how-many-world-championship-titles-would-f1-drivers-have-won-using-the.182RC42vohx8STIpJR5o26`,
   },
   {
+    id: "clinching-a-title",
+    topics: ["rules"],
+    tags: ["points", "champion", "classification"],
+    keywords: [
+      "clinch",
+      "clinched",
+      "mathematically",
+      "wrap up the title",
+      "won the title",
+      "still catch",
+      "title decided",
+    ],
+    related: ["championship-points-system", "championship-classification"],
+    relations: [],
+    tools: [],
+    markdown: `## Clinching a championship
+
+- A title is clinched when the leader's advantage over the nearest rival is larger than everything that rival can still score. With 25 for a Grand Prix win and 8 for a Sprint, four Grands Prix and no Sprints left means 100 points are still available.
+- Lapwise marks a clinch only when the gap is strictly larger than the points remaining. An exact tie would be settled on win countback, which it does not try to predict, so a clinch it reports is certain and may be one round later than a countback would allow.
+- \`clinched_round\` on a standings row is the round the title stopped being winnable by anyone else, and is set only on the entrant who won it. A season whose rules counted only a driver's best N results — every season before 1991 — carries no clinched round at all.
+- A clinched season is still not \`is_final\`: the standings stay provisional until the last round is run. Treat "has clinched" and "the season is over" as different facts.
+- The Drivers' and Constructors' titles clinch separately, and often at different rounds.`,
+  },
+  {
     id: "parc-ferme",
     topics: ["rules", "general"],
     tags: ["rules", "car-setup", "scrutineering"],
@@ -210,7 +234,7 @@ export function inferKnowledgeTopics(question: string): KnowledgeTopic[] {
   if (/\b(pit|strategy|undercut|overcut|stint|tyre|tire)\b/.test(q))
     topics.push("strategy");
   if (/\b(quali|qualifying|q1|q2|q3|pole)\b/.test(q)) topics.push("qualifying");
-  if (/\b(standings|championship|title|constructor)\b/.test(q))
+  if (/\b(standings|championship|title|constructor|clinch|clinched)\b/.test(q))
     topics.push("standings");
   if (/\b(weather|rain|wet|dry|temperature|humidity|wind)\b/.test(q))
     topics.push("weather");

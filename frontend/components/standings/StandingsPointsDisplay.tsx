@@ -37,6 +37,7 @@ export function MedalsWithBreakdown({
   name,
   positionCounts,
   mode,
+  clinchedRound = null,
 }: {
   p1: number;
   p2: number;
@@ -45,6 +46,8 @@ export function MedalsWithBreakdown({
   name: string;
   positionCounts: Record<string, number>;
   mode: "race" | "qualifying";
+  /** Round the title was settled, when this entrant is the one who settled it. */
+  clinchedRound?: number | null;
 }) {
   const medals = [
     { count: p1, icon: "🥇", label: "P1s" },
@@ -104,6 +107,15 @@ export function MedalsWithBreakdown({
             <p className="text-[10px] font-bold text-ink-strong mb-1.5 truncate">
               {name}
             </p>
+            {/* The title sits above the finishes: it is what they add up to. */}
+            {clinchedRound !== null && (
+              <div className="mb-1.5 flex items-center justify-between border-b border-line-soft pb-1.5 font-mono text-[10px] text-accent-light">
+                <span>Champion</span>
+                <span className="whitespace-nowrap font-bold">
+                  Clinched R{clinchedRound}
+                </span>
+              </div>
+            )}
             {positions.length === 0 ? (
               <p className="text-[10px] text-ink-faint">No results</p>
             ) : (

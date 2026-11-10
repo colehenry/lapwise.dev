@@ -16,6 +16,8 @@ export type DriverProgression = {
   team_name?: string | null;
   team_color: string | null;
   final_position: number;
+  /** Round this driver's title became certain; null for everyone else. */
+  clinched_round?: number | null;
   progression: ProgressionRound[];
 };
 
@@ -26,6 +28,8 @@ export type ConstructorProgression = {
   team_name: string;
   team_color: string | null;
   final_position: number;
+  /** Round this team's title became certain; null for everyone else. */
+  clinched_round?: number | null;
   progression: ProgressionRound[];
   all_positions?: number[][] | null;
 };

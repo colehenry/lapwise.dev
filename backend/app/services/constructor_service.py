@@ -24,6 +24,7 @@ from app.schemas.constructor import (
     ConstructorSeasonHistoryResponse,
 )
 from app.services.archive_aggregate_service import ArchiveAggregateService
+from app.services.championship_clinch_service import clinched_champion
 from app.services.championship_errors import MissingCanonicalStandingsError
 from app.services.results.common import _make_slug, as_records, json_rows
 
@@ -45,6 +46,14 @@ class ConstructorService:
         computation when it has not been refreshed yet.
         """
         return await ArchiveAggregateService.constructor_list(db, include_sprint)
+
+    @staticmethod
+    async def _running_title(db, running_year, team_ids) -> int:
+        """1 when this constructor has already clinched the running season."""
+        if running_year is None:
+            return 0
+        clinch = await clinched_champion(db, int(running_year), "constructor")
+        return 1 if clinch and clinch[1] in set(team_ids) else 0
 
     @staticmethod
     async def get_constructor_profile(
@@ -91,6 +100,14 @@ class ConstructorService:
                     )
                     .scalar_subquery()
                     .label("total_championships"),
+                    select(func.max(ConstructorChampionshipStanding.year))
+                    .where(
+                        ConstructorChampionshipStanding.team_id.in_(team_ids),
+                        ConstructorChampionshipStanding.position == 1,
+                        ConstructorChampionshipStanding.is_final.is_(False),
+                    )
+                    .scalar_subquery()
+                    .label("running_title_year"),
                 )
                 .select_from(SessionResult)
                 .join(Session, SessionResult.session_id == Session.id)
@@ -125,7 +142,10 @@ class ConstructorService:
             logo_url=identity.logo_url,
             total_seasons=int(stats.total_seasons),
             total_races=int(stats.total_races),
-            total_championships=int(stats.total_championships or 0),
+            total_championships=int(stats.total_championships or 0)
+            + await ConstructorService._running_title(
+                db, stats.running_title_year, team_ids
+            ),
             total_wins=int(stats.total_wins),
             total_podiums=int(stats.total_podiums),
             total_points=float(stats.total_points),

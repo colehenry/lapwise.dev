@@ -9,7 +9,7 @@ Position/Time fields for practice sessions.
 from sqlalchemy import select
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from app.models import SessionResult
+from app.models import DriverSeason, Session, SessionResult
 
 from .participants import (
     apply_participant_identity_override,
@@ -95,3 +95,80 @@ def ingest_practice_results(db: SQLAlchemySession, fastf1_session, session_id, y
 
     db.commit()
     print(f"  ✓ Added {new_results} new practice results")
+
+
+def ingest_openf1_practice_results(db, openf1_session, session_id, year):
+    """Ingest practice results from OpenF1, resolving identity from our own data.
+
+    OpenF1 carries no Jolpica driver or constructor id, so entrants are matched
+    to the identities a classified session already established that season.
+    Unmatched entrants are reported and skipped rather than given new ones.
+
+    Returns: number of results written
+    """
+    laps = openf1_session.laps
+    if laps is None or laps.empty:
+        print("  ⏭️  No laps to derive practice results from")
+        return 0
+
+    entrants = _season_entrants(db, year)
+    codes = openf1_session.acronyms()
+
+    best = laps.groupby("DriverNumber")["LapTime"].min().dropna().sort_values()
+
+    new_results = 0
+    unmatched = []
+    for position, (driver_number, lap_time) in enumerate(best.items(), 1):
+        code = codes.get(safe_int(driver_number))
+        entrant = entrants.get(code)
+        if entrant is None:
+            unmatched.append(f"{driver_number}/{code}")
+            continue
+
+        driver_id, team_id = entrant
+        existing = db.execute(
+            select(SessionResult).where(
+                SessionResult.session_id == session_id,
+                SessionResult.driver_id == driver_id,
+            )
+        ).scalar_one_or_none()
+        if existing:
+            continue
+
+        db.add(
+            SessionResult(
+                session_id=session_id,
+                driver_id=driver_id,
+                team_id=team_id,
+                position=position,
+                status="",
+                time_seconds=lap_time.total_seconds(),
+            )
+        )
+        new_results += 1
+
+    db.commit()
+    if unmatched:
+        print(f"  ⚠️  Unmatched entrants skipped: {', '.join(unmatched)}")
+    print(f"  ✓ Added {new_results} practice results")
+    return new_results
+
+
+def _season_entrants(db, year):
+    """Driver and team ids by driver code, from that season's classified results."""
+    rows = db.execute(
+        select(DriverSeason.driver_code, SessionResult.driver_id, SessionResult.team_id)
+        .join(Session, Session.year == DriverSeason.year)
+        .join(
+            SessionResult,
+            (SessionResult.session_id == Session.id)
+            & (SessionResult.driver_id == DriverSeason.driver_id),
+        )
+        .where(DriverSeason.year == year, SessionResult.team_id.isnot(None))
+    ).all()
+
+    entrants = {}
+    for driver_code, driver_id, team_id in rows:
+        if driver_code:
+            entrants[driver_code] = (driver_id, team_id)
+    return entrants

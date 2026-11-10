@@ -141,6 +141,8 @@ class DriverStanding(BaseModel):
     scoring_explanation: Optional[str] = None
     scoring_explanation_url: Optional[str] = None
     headshot_url: Optional[str] = None
+    # Set only on the entrant who clinched, and only once nobody could catch them.
+    clinched_round: Optional[int] = None
     wins: int = 0
     p2s: int = 0
     p3s: int = 0
@@ -164,6 +166,8 @@ class ConstructorStanding(BaseModel):
     classification_status: str = "classified"
     scoring_explanation: Optional[str] = None
     scoring_explanation_url: Optional[str] = None
+    # Set only on the entrant who clinched, and only once nobody could catch them.
+    clinched_round: Optional[int] = None
     wins: int = 0
     p2s: int = 0
     p3s: int = 0
@@ -345,6 +349,8 @@ class DriverProgressionData(BaseModel):
     team_name: Optional[str] = None
     team_color: Optional[str] = None
     final_position: int  # Final championship position for sorting
+    # Round this driver's title became mathematically certain; None for everyone else.
+    clinched_round: Optional[int] = None
     progression: List[PointsProgressionRound]
 
     class Config:
@@ -357,6 +363,8 @@ class ConstructorProgressionData(BaseModel):
     team_name: str
     team_color: Optional[str] = None
     final_position: int  # Final championship position for sorting
+    # Round this team's title became mathematically certain; None for everyone else.
+    clinched_round: Optional[int] = None
     progression: List[PointsProgressionRound]
     # For qualifying mode, we might want to return all positions for the team
     all_positions: Optional[List[List[int]]] = None

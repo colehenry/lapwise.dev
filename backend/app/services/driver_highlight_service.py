@@ -5,8 +5,9 @@ from collections import Counter
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import DriverChampionshipStanding, Session, SessionResult, Team
+from app.models import Session, SessionResult, Team
 from app.schemas.driver import DriverSuperlative, DriverSuperlativesResponse
+from app.services.championship_clinch_service import driver_title_count
 from app.services.driver_attribute_service import DriverAttributes
 from app.services.driver_fact_common import FactCandidate, noun
 from app.services.driver_identity_service import DriverIdentityService
@@ -52,18 +53,7 @@ class DriverHighlightService:
                 .order_by(Session.date, Session.round)
             )
         ).all()
-        championships = int(
-            await db.scalar(
-                select(func.count())
-                .select_from(DriverChampionshipStanding)
-                .where(
-                    DriverChampionshipStanding.driver_id == driver.driver_id,
-                    DriverChampionshipStanding.position == 1,
-                    DriverChampionshipStanding.is_final.is_(True),
-                )
-            )
-            or 0
-        )
+        championships = await driver_title_count(db, driver.driver_id)
         wins = sum(row.position == 1 for row in rows)
         podiums = sum(row.position in (1, 2, 3) for row in rows)
         poles = sum(row.grid_position == 1 for row in rows)

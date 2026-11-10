@@ -20,7 +20,7 @@ import fastf1
 from sqlalchemy import func, select
 from scripts.ingest import (
     get_db_session,
-    load_session_with_retry,
+    load_timing_session,
     session_exists,
     ingest_circuit,
     ingest_session_metadata,
@@ -140,15 +140,20 @@ def main():
             db.close()
             return
 
-        # 3. Load FastF1 data
+        # 3. Load timing data
         is_practice = session_type in ("fp1", "fp2", "fp3")
-        print(f"  📥 Loading FastF1 data for {fastf1_name}...")
-        fastf1_session = load_session_with_retry(
-            year, round_num, fastf1_name, practice=is_practice
+        print(f"  📥 Loading timing data for {fastf1_name}...")
+        fastf1_session = load_timing_session(
+            year,
+            round_num,
+            session_type,
+            fastf1_name,
+            event_date,
+            practice=is_practice,
         )
 
         if fastf1_session is None:
-            print("  ❌ FastF1 session data not available yet")
+            print("  ❌ Session timing data not available yet")
             sys.exit(1)
 
         # 4. Ingest results

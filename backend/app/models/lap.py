@@ -100,7 +100,7 @@ class Lap(Base):
     # Provenance
     source = Column(
         String(20), nullable=False, server_default="fastf1", default="fastf1"
-    )  # fastf1 (2018+, full detail) or jolpica (1996-2017, timing only)
+    )  # openf1 (2023+), fastf1 (2018+, full detail), jolpica (1996-2017, timing only)
 
     # Relationships
     session = relationship("Session", back_populates="laps")

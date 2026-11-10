@@ -8,6 +8,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.config import settings
 
+from .openf1 import load_openf1_session
+
+OPENF1_FIRST_SEASON = 2023
+
 
 def write_failure_log(season_year, failures):
     """
@@ -184,6 +188,38 @@ def load_session_with_retry(
                 raise
 
     return None
+
+
+def _has_laps(session):
+    """Whether a session's lap data actually loaded."""
+    try:
+        return session is not None and len(session.laps) > 0
+    except Exception:
+        return False
+
+
+def load_timing_session(
+    year, round_num, session_type, fastf1_name, event_date, practice=False
+):
+    """Load a session, taking laps from OpenF1 when the archive withholds them.
+
+    Classification keeps coming from FastF1, which still serves it without the
+    archive: only FastF1 carries the source driver, constructor and grid
+    identity the result ingest resolves against. OpenF1 starts at 2023.
+    """
+    session = load_session_with_retry(year, round_num, fastf1_name, practice=practice)
+    if _has_laps(session) or year < OPENF1_FIRST_SEASON:
+        return session
+
+    timing = load_openf1_session(year, event_date, session_type)
+    if not _has_laps(timing):
+        print("    ⚠️  Neither source has laps for this session")
+        return session
+
+    if session is not None:
+        timing.adopt_classification(session)
+    print(f"    ✓ OpenF1 laps: {len(timing.laps)}")
+    return timing
 
 
 def session_exists(event, session_type_name):

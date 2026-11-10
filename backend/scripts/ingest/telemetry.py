@@ -21,6 +21,7 @@ def ingest_lap_data(db, fastf1_session, session_id):
             return 0
 
         print(f"  📊 Processing {len(laps)} laps...")
+        source = getattr(fastf1_session, "source", "fastf1")
 
         # sessions.py clears laps before re-ingestion; this is a safety net only
         existing_count = (
@@ -130,7 +131,7 @@ def ingest_lap_data(db, fastf1_session, session_id):
                 is_accurate=safe_bool(lap_data.get("IsAccurate")),
                 deleted=safe_bool(lap_data.get("Deleted")),
                 deleted_reason=deleted_reason,
-                source="fastf1",
+                source=source,
             )
             db.add(lap)
             new_laps += 1

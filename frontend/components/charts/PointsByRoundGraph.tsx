@@ -20,18 +20,19 @@ import {
   type ProgressionChartPoint,
   pointsProgressionQuery,
 } from "@/lib/queries/pointsProgression";
+import ChampionshipClinchMarker from "./ChampionshipClinchMarker";
 import {
   CHART_COLORS,
-  CHART_TYPOGRAPHY,
   CustomDot,
   resolveChartSeriesColor,
 } from "./chart-primitives";
 import {
   PointsProgressionAxisLabel,
-  PointsProgressionNote,
   PointsProgressionRoundLabel,
   PointsProgressionTitle,
 } from "./PointsProgressionLabels";
+import PointsProgressionLegend from "./PointsProgressionLegend";
+import { CustomTooltip, CustomXAxisTick } from "./PointsProgressionTooltip";
 
 type ChartDataPoint = ProgressionChartPoint;
 
@@ -41,115 +42,6 @@ interface PointsByRoundGraphProps {
   initialMode?: "drivers" | "constructors";
   initialEntities?: string[];
 }
-
-// Custom X-axis Tick Component
-interface XAxisTickProps {
-  x?: number;
-  y?: number;
-  payload?: { value: string | number };
-}
-
-const CustomXAxisTick = (props: XAxisTickProps) => {
-  const { x, y, payload } = props;
-  const label = String(payload?.value ?? "").replace("-sprint", "-s");
-
-  return (
-    <g transform={`translate(${x},${y})`}>
-      <text
-        x={0}
-        y={0}
-        dy={12}
-        textAnchor="middle"
-        fill={CHART_COLORS.textTertiary}
-        fontSize={12}
-      >
-        {label}
-      </text>
-    </g>
-  );
-};
-
-// Custom Tooltip Component
-interface TooltipPayloadEntry {
-  dataKey: string;
-  value: number;
-  color: string;
-  name: string;
-  payload: Record<string, unknown>;
-}
-
-interface TooltipProps {
-  active?: boolean;
-  payload?: TooltipPayloadEntry[];
-  label?: string | number;
-  pointsType?: string;
-  mode?: string;
-}
-
-const CustomTooltip = ({
-  active,
-  payload,
-  label,
-  pointsType,
-}: TooltipProps) => {
-  if (!active || !payload || !payload.length) return null;
-
-  // Skip tooltip for round 0
-  if (label === "0") return null;
-
-  // Get event name from first payload entry
-  const rawEventName = payload[0]?.payload?.event_name;
-  const eventName = (
-    typeof rawEventName === "string" ? rawEventName : `Round ${label}`
-  ).replace("Grand Prix", "GP");
-
-  const labelStr2 = typeof label === "string" ? label : String(label ?? "");
-  const isSprint = labelStr2.endsWith("-sprint");
-  const isSprintQualy = labelStr2.endsWith("-sq");
-
-  let sessionLabel = "";
-  if (isSprint) sessionLabel = ": Sprint";
-  if (isSprintQualy) sessionLabel = ": SQ";
-
-  const displayName = `${eventName}${sessionLabel}`;
-
-  // Filter out null entries
-  const filteredPayload = payload.filter(
-    (entry: TooltipPayloadEntry) => entry.value != null,
-  );
-  if (filteredPayload.length === 0) return null;
-
-  return (
-    <div className="bg-surface-panel border border-line-soft rounded-lg p-3 shadow-xl">
-      <p className={`${CHART_TYPOGRAPHY.tooltipTitleClassName} mb-2`}>
-        {displayName}
-      </p>
-      {filteredPayload.map((entry: TooltipPayloadEntry) => {
-        const value = entry.value;
-        const isQualy = pointsType === "qualifying";
-        const labelStr = isQualy
-          ? value === 21
-            ? "DNF"
-            : `P${value}`
-          : `${value.toFixed(0)} pts`;
-
-        return (
-          <div key={entry.dataKey} className="flex items-center gap-2 mb-1">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: entry.color }}
-            />
-            <span
-              className={`${CHART_TYPOGRAPHY.tooltipValueClassName} text-sm`}
-            >
-              {entry.name}: {labelStr}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
 
 export default function PointsByRoundGraph({
   season,
@@ -371,6 +263,29 @@ export default function PointsByRoundGraph({
   const entities = getEntities();
   const isQualy = pointsType === "qualifying";
 
+  const seriesKeyOf = (entity: DriverProgression | ConstructorProgression) =>
+    mode === "drivers"
+      ? driverSeriesKey(entity as DriverProgression)
+      : (entity as ConstructorProgression).team_name;
+  const seriesNameOf = (entity: DriverProgression | ConstructorProgression) =>
+    mode === "drivers"
+      ? (entity as DriverProgression).full_name
+      : (entity as ConstructorProgression).team_name;
+  const selectedSeries = entities.filter((entity) =>
+    selectedEntities.includes(seriesKeyOf(entity)),
+  );
+
+  // A title is only marked on the championship chart, and only for a season
+  // whose scoring rules let the backend prove one was clinched.
+  const clinched = isQualy
+    ? undefined
+    : selectedSeries.find(
+        (entity) => typeof entity.clinched_round === "number",
+      );
+  const champion = clinched
+    ? { key: seriesKeyOf(clinched), name: seriesNameOf(clinched) }
+    : null;
+
   const getYAxisMax = (): number => {
     if (isQualy) return 20;
     if (chartData.length === 0) return 500;
@@ -511,39 +426,28 @@ export default function PointsByRoundGraph({
                     margin={{ top: 20, right: 20, left: 0, bottom: 8 }}
                   >
                     <defs>
-                      {entities
-                        .filter((entity) => {
-                          const key =
-                            mode === "drivers"
-                              ? driverSeriesKey(entity as DriverProgression)
-                              : (entity as ConstructorProgression).team_name;
-                          return selectedEntities.includes(key);
-                        })
-                        .map((entity) => {
-                          const key =
-                            mode === "drivers"
-                              ? driverSeriesKey(entity as DriverProgression)
-                              : (entity as ConstructorProgression).team_name;
-                          return (
-                            <filter
-                              key={`glow-${key}`}
-                              id={`glow-${key}`}
-                              x="-50%"
-                              y="-50%"
-                              width="200%"
-                              height="200%"
-                            >
-                              <feGaussianBlur
-                                stdDeviation="2"
-                                result="coloredBlur"
-                              />
-                              <feMerge>
-                                <feMergeNode in="coloredBlur" />
-                                <feMergeNode in="SourceGraphic" />
-                              </feMerge>
-                            </filter>
-                          );
-                        })}
+                      {selectedSeries.map((entity) => {
+                        const key = seriesKeyOf(entity);
+                        return (
+                          <filter
+                            key={`glow-${key}`}
+                            id={`glow-${key}`}
+                            x="-50%"
+                            y="-50%"
+                            width="200%"
+                            height="200%"
+                          >
+                            <feGaussianBlur
+                              stdDeviation="2"
+                              result="coloredBlur"
+                            />
+                            <feMerge>
+                              <feMergeNode in="coloredBlur" />
+                              <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                          </filter>
+                        );
+                      })}
                     </defs>
                     <CartesianGrid
                       strokeDasharray="3 3"
@@ -574,116 +478,86 @@ export default function PointsByRoundGraph({
                         <CustomTooltip mode={mode} pointsType={pointsType} />
                       }
                     />
-                    {entities
-                      .filter((entity) => {
-                        const key =
-                          mode === "drivers"
-                            ? driverSeriesKey(entity as DriverProgression)
-                            : (entity as ConstructorProgression).team_name;
-                        return selectedEntities.includes(key);
-                      })
-                      .flatMap((entity) => {
-                        const color = getEntityColor(entity);
-                        const name =
-                          mode === "drivers"
-                            ? (entity as DriverProgression).full_name
-                            : (entity as ConstructorProgression).team_name;
+                    {selectedSeries.flatMap((entity) => {
+                      const color = getEntityColor(entity);
+                      const name = seriesNameOf(entity);
 
-                        if (mode === "drivers") {
-                          const driver = entity as DriverProgression;
-                          const driverKey = driverSeriesKey(driver);
+                      if (mode === "drivers") {
+                        const driver = entity as DriverProgression;
+                        const driverKey = driverSeriesKey(driver);
+                        return [
+                          <Line
+                            key={driverKey}
+                            type="linear"
+                            dataKey={driverKey}
+                            name={name}
+                            stroke={color}
+                            strokeWidth={2}
+                            dot={<CustomDot />}
+                            activeDot={{ r: 6, fill: color, stroke: color }}
+                            filter={`url(#glow-${driverKey})`}
+                            isAnimationActive={true}
+                            connectNulls={false}
+                          />,
+                        ];
+                      } else {
+                        const team = entity as ConstructorProgression;
+                        if (isQualy) {
+                          // Render dots for each driver, no lines
+                          // Use stroke={color} so CustomDot picks up the team color
+                          return [0, 1, 2].map((dIdx) => (
+                            <Line
+                              key={`${team.team_name}-${dIdx}`}
+                              type="linear"
+                              dataKey={`${team.team_name}-${dIdx}`}
+                              name={name}
+                              stroke={color}
+                              strokeWidth={0}
+                              dot={<CustomDot />}
+                              activeDot={{ r: 6, fill: color, stroke: color }}
+                              isAnimationActive={true}
+                              connectNulls={false}
+                            />
+                          ));
+                        } else {
                           return [
                             <Line
-                              key={driverKey}
+                              key={team.team_name}
                               type="linear"
-                              dataKey={driverKey}
+                              dataKey={team.team_name}
                               name={name}
                               stroke={color}
                               strokeWidth={2}
                               dot={<CustomDot />}
                               activeDot={{ r: 6, fill: color, stroke: color }}
-                              filter={`url(#glow-${driverKey})`}
+                              filter={`url(#glow-${team.team_name})`}
                               isAnimationActive={true}
                               connectNulls={false}
                             />,
                           ];
-                        } else {
-                          const team = entity as ConstructorProgression;
-                          if (isQualy) {
-                            // Render dots for each driver, no lines
-                            // Use stroke={color} so CustomDot picks up the team color
-                            return [0, 1, 2].map((dIdx) => (
-                              <Line
-                                key={`${team.team_name}-${dIdx}`}
-                                type="linear"
-                                dataKey={`${team.team_name}-${dIdx}`}
-                                name={name}
-                                stroke={color}
-                                strokeWidth={0}
-                                dot={<CustomDot />}
-                                activeDot={{ r: 6, fill: color, stroke: color }}
-                                isAnimationActive={true}
-                                connectNulls={false}
-                              />
-                            ));
-                          } else {
-                            return [
-                              <Line
-                                key={team.team_name}
-                                type="linear"
-                                dataKey={team.team_name}
-                                name={name}
-                                stroke={color}
-                                strokeWidth={2}
-                                dot={<CustomDot />}
-                                activeDot={{ r: 6, fill: color, stroke: color }}
-                                filter={`url(#glow-${team.team_name})`}
-                                isAnimationActive={true}
-                                connectNulls={false}
-                              />,
-                            ];
-                          }
                         }
-                      })}
+                      }
+                    })}
+                    <ChampionshipClinchMarker
+                      clinchedRound={clinched?.clinched_round ?? null}
+                      seriesKey={champion?.key ?? null}
+                      chartData={chartData}
+                      label={
+                        champion
+                          ? `${champion.name} clinched the title at this round`
+                          : ""
+                      }
+                    />
                   </LineChart>
                 </StableResponsiveContainer>
 
-                {/* Custom Legend - Positioned in top-left */}
-                <div className="absolute top-8 left-25 bg-surface-page/90 border border-line-soft rounded-sm p-3 backdrop-blur-sm pointer-events-none">
-                  <div className="flex flex-col gap-1.5">
-                    {entities
-                      .filter((entity) => {
-                        const key =
-                          mode === "drivers"
-                            ? driverSeriesKey(entity as DriverProgression)
-                            : (entity as ConstructorProgression).team_name;
-                        return selectedEntities.includes(key);
-                      })
-                      .map((entity) => {
-                        const key =
-                          mode === "drivers"
-                            ? driverSeriesKey(entity as DriverProgression)
-                            : (entity as ConstructorProgression).team_name;
-                        const name =
-                          mode === "drivers"
-                            ? (entity as DriverProgression).full_name
-                            : (entity as ConstructorProgression).team_name;
-                        const color = getEntityColor(entity);
-
-                        return (
-                          <div key={key} className="flex items-center gap-2">
-                            <div
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: color }}
-                            />
-                            <span className={CHART_TYPOGRAPHY.keyClassName}>
-                              {name}
-                            </span>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
+                <PointsProgressionLegend
+                  entities={selectedSeries}
+                  seriesKey={seriesKeyOf}
+                  seriesName={seriesNameOf}
+                  seriesColor={getEntityColor}
+                  championKey={champion?.key ?? null}
+                />
               </>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
@@ -699,7 +573,6 @@ export default function PointsByRoundGraph({
       </div>
 
       {chartData.length > 0 && <PointsProgressionRoundLabel />}
-      {!isQualy && chartData.length > 0 && <PointsProgressionNote />}
     </div>
   );
 }

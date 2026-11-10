@@ -4,6 +4,9 @@ from app.services.results.common import _make_slug
 from app.services.results.laps import LapsService
 from app.services.results.practice import PracticeService
 from app.services.results.progression import ProgressionService
+from app.services.results.qualifying_progression import (
+    QualifyingProgressionService,
+)
 from app.services.results.qualifying_sessions import QualifyingSessionsService
 from app.services.results.qualifying_standings import QualifyingStandingsService
 from app.services.results.session_data import SessionDataService
@@ -13,6 +16,7 @@ __all__ = [
     "LapsService",
     "PracticeService",
     "ProgressionService",
+    "QualifyingProgressionService",
     "QualifyingSessionsService",
     "QualifyingStandingsService",
     "SessionDataService",

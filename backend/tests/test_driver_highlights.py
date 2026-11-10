@@ -12,11 +12,23 @@ from app.services.driver_identity_service import DriverIdentityService
 
 
 def highlight_db(rows, aggregates, championships=0):
+    """Three reads, in order: career results, titles won, then field aggregates.
+
+    Titles are settled seasons here, so the clinch path is never reached — a
+    season still running would cost another read this mock does not stand in for.
+    """
+    titles = [
+        SimpleNamespace(year=2000 + index, is_final=True)
+        for index in range(championships)
+    ]
     return SimpleNamespace(
         execute=AsyncMock(
-            side_effect=[Mock(all=lambda: rows), Mock(all=lambda: aggregates)]
+            side_effect=[
+                Mock(all=lambda: rows),
+                Mock(all=lambda: titles),
+                Mock(all=lambda: aggregates),
+            ]
         ),
-        scalar=AsyncMock(return_value=championships),
     )
 
 
@@ -52,8 +64,16 @@ async def test_career_highlights_keep_labels_rankings_and_session_scope(
     assert by_id["poles"].label == "Start from P1"
     assert by_id["circuit_wins"].label == f"{race} wins at Test Grand Prix"
     assert by_id["podium_streak"].value == "3"
-    for call in db.execute.await_args_list:
-        params = call.args[0].compile().params.values()
+    # Championship standings are per season, not per session, so only the
+    # queries that read results carry the sprint toggle.
+    result_reads = [
+        call.args[0]
+        for call in db.execute.await_args_list
+        if "session_results" in str(call.args[0])
+    ]
+    assert result_reads
+    for statement in result_reads:
+        params = statement.compile().params.values()
         assert (["race", "sprint_race"] if include_sprint else ["race"]) in params
 
 

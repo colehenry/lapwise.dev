@@ -7,6 +7,7 @@ from .utils import (
     timedelta_to_seconds,
     datetime_or_timedelta_to_seconds,
     load_session_with_retry,
+    load_timing_session,
     session_exists,
 )
 from .circuits import ingest_circuit
@@ -15,7 +16,7 @@ from .participants import ingest_driver, ingest_team
 from .results import ingest_race_results, ingest_qualifying_results
 from .practice import ingest_practice_results
 from .telemetry import ingest_lap_data, ingest_weather_data, ingest_track_status
-from .pit_stops import ingest_pit_stops
+from .pit_stops import ingest_openf1_pit_stops, ingest_pit_stops
 from .race_control import ingest_race_control_messages
 from .replay_frames import generate_replay_data
 
@@ -28,6 +29,7 @@ __all__ = [
     "timedelta_to_seconds",
     "datetime_or_timedelta_to_seconds",
     "load_session_with_retry",
+    "load_timing_session",
     "session_exists",
     "ingest_circuit",
     "ingest_session_metadata",
@@ -38,6 +40,7 @@ __all__ = [
     "ingest_practice_results",
     "ingest_lap_data",
     "ingest_pit_stops",
+    "ingest_openf1_pit_stops",
     "ingest_weather_data",
     "ingest_track_status",
     "ingest_race_control_messages",

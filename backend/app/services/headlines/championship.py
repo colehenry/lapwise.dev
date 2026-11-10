@@ -56,7 +56,8 @@ def championship(context: HeadlineContext) -> list[Headline]:
         )
     )
 
-    if len(teams) >= 2:
+    constructors_settled = any(row.clinched_round is not None for row in teams)
+    if len(teams) >= 2 and not constructors_settled:
         margin = round(teams[0].total_points - teams[1].total_points, 3)
         if margin > 0:
             out.append(
@@ -100,13 +101,65 @@ def championship(context: HeadlineContext) -> list[Headline]:
             )
         )
 
+    out.extend(_clinched(context))
     out.extend(_gap(context))
     return out
 
 
+def _clinched(context: HeadlineContext) -> list[Headline]:
+    """A settled title, for the seasons that end before the calendar does."""
+    out: list[Headline] = []
+    for entrants, is_driver, kicker, label in (
+        (context.standings.drivers, True, "Champion", "is {season} world champion"),
+        (
+            context.standings.constructors,
+            False,
+            "Champions",
+            "win the {season} constructors' title",
+        ),
+    ):
+        winner = next((row for row in entrants if row.clinched_round is not None), None)
+        if winner is None:
+            continue
+        out.append(
+            candidate(
+                id=f"championship.clinched.{context.season}.{kicker.lower()}",
+                category="championship",
+                kicker=kicker,
+                parts=(
+                    driver(context.surname(winner.full_name), winner.driver_code)
+                    if is_driver
+                    else team(winner.team_name),
+                    " ",
+                    label.format(season=context.season),
+                    f", clinched with {_rounds_left(context, winner.clinched_round)}",
+                ),
+                rarity=RARITY_SEASON,
+                valid_until=SEASON_END,
+                href=(
+                    driver_href(winner.driver_code)
+                    if is_driver
+                    else team_href(winner.team_name)
+                ),
+            )
+        )
+    return out
+
+
+def _rounds_left(context: HeadlineContext, clinched_round: int) -> str:
+    """How much of the season was still to run when the title was settled."""
+    remaining = len([e for e in context.upcoming if e.round_number])
+    if not remaining:
+        return f"the title decided at round {clinched_round}"
+    floor = "at least " if remaining >= UPCOMING_LIMIT else ""
+    return f"{floor}{spell(remaining)} {plural(remaining, 'round')} to spare"
+
+
 def _gap(context: HeadlineContext) -> list[Headline]:
-    """The championship gap, always eligible, stated as the data holds it."""
+    """The championship gap, stated only while the title is still open."""
     drivers = context.standings.drivers
+    if any(row.clinched_round is not None for row in drivers):
+        return []
     margin = round(drivers[0].total_points - drivers[1].total_points, 3)
     if margin <= 0:
         return []

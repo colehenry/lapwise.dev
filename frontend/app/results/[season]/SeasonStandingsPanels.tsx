@@ -5,6 +5,7 @@ import Link from "next/link";
 import DriverHeadshot from "@/components/entities/DriverHeadshot";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import ChampionshipPanelHeader from "@/components/standings/ChampionshipPanelHeader";
+import ChampionTrophy from "@/components/standings/ChampionTrophy";
 import ClassificationBadge from "@/components/standings/ClassificationBadge";
 import {
   MedalsWithBreakdown,
@@ -111,12 +112,17 @@ export default function SeasonStandingsPanels({
 
                     {/* Driver Info */}
                     <div className="flex-1 flex flex-col justify-center">
-                      <Link
-                        href={driverHref(driver) ?? "/drivers"}
-                        className="font-semibold text-ink-strong text-sm hover:text-accent-light transition-colors duration-150"
-                      >
-                        {driver.full_name}
-                      </Link>
+                      <span className="text-sm">
+                        <Link
+                          href={driverHref(driver) ?? "/drivers"}
+                          className="font-semibold text-ink-strong hover:text-accent-light transition-colors duration-150"
+                        >
+                          {driver.full_name}
+                        </Link>
+                        {sessionType === "race" && (
+                          <ChampionTrophy entrant={driver as DriverStanding} />
+                        )}
+                      </span>
                       <div
                         className="text-xs font-medium"
                         style={{
@@ -172,6 +178,9 @@ export default function SeasonStandingsPanels({
                         name={driver.full_name}
                         positionCounts={
                           (driver as DriverStanding).position_counts
+                        }
+                        clinchedRound={
+                          (driver as DriverStanding).clinched_round ?? null
                         }
                       />
                     )}
@@ -269,6 +278,11 @@ export default function SeasonStandingsPanels({
                           >
                             {team.team_name}
                           </Link>
+                          {sessionType === "race" && (
+                            <ChampionTrophy
+                              entrant={team as ConstructorStanding}
+                            />
+                          )}
                         </div>
                         {sessionType === "race" && (
                           <ClassificationBadge
@@ -335,6 +349,9 @@ export default function SeasonStandingsPanels({
                           name={team.team_name}
                           positionCounts={
                             (team as ConstructorStanding).position_counts
+                          }
+                          clinchedRound={
+                            (team as ConstructorStanding).clinched_round ?? null
                           }
                         />
                       )}

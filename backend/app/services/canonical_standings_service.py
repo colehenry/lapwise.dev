@@ -24,6 +24,13 @@ from app.schemas.result import (
     DriverStanding,
     StandingsResponse,
 )
+from app.services.championship_clinch_service import (
+    clinched_round,
+    cumulative_by_round_subquery,
+    observed_shape_columns,
+    pivot_cumulative,
+    season_shape,
+)
 from app.services.championship_errors import MissingCanonicalStandingsError
 from app.services.results.common import as_records, json_rows
 
@@ -74,6 +81,22 @@ class CanonicalStandingsService:
         exceptions = canonical["exceptions"]
         driver_exceptions = {row.driver_id: row for row in exceptions if row.driver_id}
         constructor_exceptions = {row.team_id: row for row in exceptions if row.team_id}
+        driver_clinch = CanonicalStandingsService._clinch(
+            driver_raw,
+            "driver_id",
+            season,
+            canonical["shape"],
+            driver_official,
+            "driver",
+        )
+        constructor_clinch = CanonicalStandingsService._clinch(
+            constructor_raw,
+            "team_id",
+            season,
+            canonical["shape"],
+            constructor_official,
+            "constructor",
+        )
         drivers = []
         for raw_rank, row in enumerate(driver_raw, 1):
             official = driver_official.get(row["driver_id"])
@@ -130,6 +153,9 @@ class CanonicalStandingsService:
                         else None
                     ),
                     headshot_url=row["headshot_url"],
+                    clinched_round=CanonicalStandingsService._clinch_for(
+                        driver_clinch, row["driver_id"]
+                    ),
                     wins=row["positions"].get(1, 0),
                     p2s=row["positions"].get(2, 0),
                     p3s=row["positions"].get(3, 0),
@@ -209,6 +235,9 @@ class CanonicalStandingsService:
                         if explanation and official
                         else None
                     ),
+                    clinched_round=CanonicalStandingsService._clinch_for(
+                        constructor_clinch, team_id
+                    ),
                     wins=row["positions"].get(1, 0),
                     p2s=row["positions"].get(2, 0),
                     p3s=row["positions"].get(3, 0),
@@ -230,6 +259,28 @@ class CanonicalStandingsService:
                 contexts.get("constructor"), constructors
             ),
         )
+
+    @staticmethod
+    def _clinch(
+        raw, id_key: str, season: int, shape, official, entrant: str
+    ) -> tuple[int, int] | None:
+        """Round and entrant id of the clinch, or None when there is not one."""
+        if shape is None:
+            return None
+        champion = next(
+            (key for key, row in official.items() if row.position == 1), None
+        )
+        return clinched_round(
+            pivot_cumulative({row[id_key]: row["cumulative"] for row in raw}),
+            year=season,
+            shape=shape,
+            entrant=entrant,
+            official_champion_id=champion,
+        )
+
+    @staticmethod
+    def _clinch_for(clinch: tuple[int, int] | None, entity_id: int) -> int | None:
+        return clinch[0] if clinch and clinch[1] == entity_id else None
 
     @staticmethod
     def _scoring_info(context, rows) -> ChampionshipScoringInfo:
@@ -298,6 +349,7 @@ class CanonicalStandingsService:
         def for_season(model, alias_name):
             return json_rows(model, alias_name, lambda m: (m.year == season,))
 
+        observed_total, observed_sprints = observed_shape_columns(season)
         record = (
             await db.execute(
                 select(
@@ -311,10 +363,12 @@ class CanonicalStandingsService:
                     for_season(ChampionshipClassificationException, "cce").label(
                         "exceptions"
                     ),
+                    observed_total.label("observed_total"),
+                    observed_sprints.label("observed_sprints"),
                 )
             )
         ).one()
-        return {
+        records = {
             key: as_records(getattr(record, key))
             for key in (
                 "driver_official",
@@ -323,6 +377,12 @@ class CanonicalStandingsService:
                 "exceptions",
             )
         }
+        records["shape"] = season_shape(
+            season,
+            observed_total=record.observed_total,
+            observed_sprints=record.observed_sprints,
+        )
+        return records
 
     @staticmethod
     def _position_counts_subquery(season: int, owner_column, result_owner_column):
@@ -384,6 +444,9 @@ class CanonicalStandingsService:
         positions = CanonicalStandingsService._position_counts_subquery(
             season, Driver.id, SessionResult.driver_id
         )
+        cumulative = cumulative_by_round_subquery(
+            Driver.id, SessionResult.driver_id, season
+        )
         # Latest scoring entry per driver in the season, resolved set-based
         # rather than with one query per driver. Restricted to the session types
         # these standings are built from, so a one-off practice entry for
@@ -433,6 +496,7 @@ class CanonicalStandingsService:
                     latest.c.team_color,
                     headshot,
                     positions.c.positions,
+                    cumulative.c.cumulative,
                 )
                 .join(SessionResult, SessionResult.driver_id == Driver.id)
                 .join(Session, Session.id == SessionResult.session_id)
@@ -443,6 +507,7 @@ class CanonicalStandingsService:
                 )
                 .outerjoin(latest, latest.c.driver_id == Driver.id)
                 .outerjoin(positions, positions.c.owner_id == Driver.id)
+                .outerjoin(cumulative, cumulative.c.owner_id == Driver.id)
                 .where(
                     Session.year == season,
                     Session.session_type.in_(CanonicalStandingsService.RACE_TYPES),
@@ -454,6 +519,7 @@ class CanonicalStandingsService:
                     latest.c.team_color,
                     latest.c.headshot_url,
                     positions.c.positions,
+                    cumulative.c.cumulative,
                 )
                 .order_by(points.desc())
             )
@@ -470,6 +536,7 @@ class CanonicalStandingsService:
                 "team_color": row[8],
                 "headshot_url": row[9],
                 "positions": CanonicalStandingsService._position_counts(row[10]),
+                "cumulative": row[11],
             }
             for row in rows
         ]
@@ -478,6 +545,9 @@ class CanonicalStandingsService:
     async def _constructor_raw(db: AsyncSession, season: int) -> list[dict]:
         positions = CanonicalStandingsService._position_counts_subquery(
             season, Team.id, SessionResult.team_id
+        )
+        cumulative = cumulative_by_round_subquery(
+            Team.id, SessionResult.team_id, season
         )
         points = func.coalesce(func.sum(SessionResult.points), 0)
         rows = (
@@ -490,16 +560,23 @@ class CanonicalStandingsService:
                     Constructor.slug,
                     points,
                     positions.c.positions,
+                    cumulative.c.cumulative,
                 )
                 .join(Constructor, Constructor.id == Team.constructor_id)
                 .join(SessionResult, SessionResult.team_id == Team.id)
                 .join(Session, Session.id == SessionResult.session_id)
                 .outerjoin(positions, positions.c.owner_id == Team.id)
+                .outerjoin(cumulative, cumulative.c.owner_id == Team.id)
                 .where(
                     Session.year == season,
                     Session.session_type.in_(CanonicalStandingsService.RACE_TYPES),
                 )
-                .group_by(Team.id, Constructor.slug, positions.c.positions)
+                .group_by(
+                    Team.id,
+                    Constructor.slug,
+                    positions.c.positions,
+                    cumulative.c.cumulative,
+                )
                 .order_by(points.desc())
             )
         ).all()
@@ -512,6 +589,7 @@ class CanonicalStandingsService:
                 "constructor_slug": row[4],
                 "points_scored": float(row[5]),
                 "positions": CanonicalStandingsService._position_counts(row[6]),
+                "cumulative": row[7],
             }
             for row in rows
         ]

@@ -13,6 +13,8 @@ export interface DriverStanding {
   scoring_explanation: string | null;
   scoring_explanation_url: string | null;
   headshot_url: string | null;
+  /** Round the title became mathematically certain; null for everyone else. */
+  clinched_round?: number | null;
   wins: number;
   p2s: number;
   p3s: number;
@@ -31,6 +33,8 @@ export interface ConstructorStanding {
   classification_status: ClassificationStatus;
   scoring_explanation: string | null;
   scoring_explanation_url: string | null;
+  /** Round the title became mathematically certain; null for everyone else. */
+  clinched_round?: number | null;
   wins: number;
   p2s: number;
   p3s: number;

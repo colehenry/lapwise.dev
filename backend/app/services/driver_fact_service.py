@@ -17,6 +17,7 @@ from app.models import (
     SessionResult,
     Team,
 )
+from app.services.championship_clinch_service import driver_title_years
 from app.services.driver_attribute_service import DriverAttributes
 from app.services.driver_fact_common import FactCandidate, noun
 
@@ -328,7 +329,7 @@ class DriverFactService:
         ).all()
         if not standings:
             return []
-        titles = [str(row.year) for row in standings if row.position == 1]
+        titles = [str(year) for year in await driver_title_years(db, driver_id)]
         if titles:
             return [
                 FactCandidate(

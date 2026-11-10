@@ -23,6 +23,7 @@ from app.schemas.driver import (
     SeasonHistory,
 )
 from app.services.archive_aggregate_service import ArchiveAggregateService
+from app.services.championship_clinch_service import driver_title_count
 from app.services.driver_highlight_service import DriverHighlightService
 from app.services.driver_identity_service import DriverIdentityService
 
@@ -105,18 +106,7 @@ class DriverService:
                 latest_season=None,
             )
 
-        total_championships = (
-            await db.scalar(
-                select(func.count())
-                .select_from(DriverChampionshipStanding)
-                .where(
-                    DriverChampionshipStanding.driver_id == driver.id,
-                    DriverChampionshipStanding.position == 1,
-                    DriverChampionshipStanding.is_final.is_(True),
-                )
-            )
-            or 0
-        )
+        total_championships = await driver_title_count(db, driver.id)
 
         # Most recent result — current team, headshot, latest season
         recent = (
